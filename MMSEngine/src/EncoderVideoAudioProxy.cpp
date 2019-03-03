@@ -6387,7 +6387,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 
-			time_t utcCurrentRecordedFileLastModificationTime = utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
+			time_t utcCurrentRecordedFileLastModificationTime =
+				utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
 			/*
 			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
 				currentRecordedAssetPathName);
@@ -6880,8 +6881,6 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
             string directoryEntry;
             try
             {
-				_logger->info(__FILEREF__ + "FileIO::readDirectory");
-
                 string directoryEntry = FileIO::readDirectory (directory,
                     &detDirectoryEntryType);
 
@@ -6889,6 +6888,13 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
 					+ ", directoryEntry: " + directoryEntry
 					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
 				);
+
+				// next statement is endWith and .lck is used during the move of a file
+				string suffix(".lck");
+				if (directoryEntry.size() >= suffix.size()
+					&& 0 == directoryEntry.compare(directoryEntry.size()-suffix.size(),
+						suffix.size(), suffix))
+					continue;
 
                 if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     continue;

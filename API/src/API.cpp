@@ -20,6 +20,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/Convert.h"
+#include "PersistenceLock.h"
 #include "Validator.h"
 #include "EMailSender.h"
 #include "API.h"
@@ -5688,7 +5689,7 @@ void API::addEMailConf(
     try
     {
         string label;
-        string address;
+        string addresses;
         string subject;
         string message;
         
@@ -5729,7 +5730,7 @@ void API::addEMailConf(
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "Address";
+            field = "Addresses";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -5738,7 +5739,7 @@ void API::addEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            address = requestBodyRoot.get(field, "XXX").asString();            
+            addresses = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Subject";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
@@ -5786,7 +5787,7 @@ void API::addEMailConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addEMailConf(
-                workspace->_workspaceKey, label, address, subject, message);
+                workspace->_workspaceKey, label, addresses, subject, message);
 
             sResponse = (
                     string("{ ") 
@@ -5861,7 +5862,7 @@ void API::modifyEMailConf(
     try
     {
         string label;
-        string address;
+        string addresses;
         string subject;
         string message;
         
@@ -5902,7 +5903,7 @@ void API::modifyEMailConf(
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "Address";
+            field = "Addresses";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -5911,7 +5912,7 @@ void API::modifyEMailConf(
 
                 throw runtime_error(errorMessage);
             }    
-            address = requestBodyRoot.get(field, "XXX").asString();            
+            addresses = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Subject";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
@@ -5973,7 +5974,7 @@ void API::modifyEMailConf(
 
             _mmsEngineDBFacade->modifyEMailConf(
                 confKey, workspace->_workspaceKey, label, 
-				address, subject, message);
+				addresses, subject, message);
 
             sResponse = (
                     string("{ ") 
@@ -6306,14 +6307,23 @@ void API::ingestion(
 
         string responseBody;    
         shared_ptr<MySQLConnection> conn;
+		bool dbTransactionStarted = false;
 
         try
-        {       
+        {
+			int waitingTimeoutInSecondsIfLocked = 30;
+
+			PersistenceLock persistenceLock(_mmsEngineDBFacade,
+				MMSEngineDBFacade::LockType::Ingestion,
+				waitingTimeoutInSecondsIfLocked,
+				_hostName);
+
             // used to save <label of the task> ---> vector of ingestionJobKey. A vector is used in case the same label is used more times
             // It is used when ReferenceLabel is used.
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
-            
+
             conn = _mmsEngineDBFacade->beginIngestionJobs();
+			dbTransactionStarted = true;
 
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
@@ -6394,10 +6404,28 @@ void API::ingestion(
             responseBody.insert(0, beginOfResponseBody);
             responseBody += " ] }";
         }
+        catch(AlreadyLocked e)
+        {
+			if (dbTransactionStarted)
+			{
+				bool commit = false;
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+			}
+
+            _logger->error(__FILEREF__ + "Ingestion locked"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
         catch(runtime_error e)
         {
-            bool commit = false;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+			if (dbTransactionStarted)
+			{
+				bool commit = false;
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+			}
+
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -6407,8 +6435,12 @@ void API::ingestion(
         }
         catch(exception e)
         {
-            bool commit = false;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+			if (dbTransactionStarted)
+			{
+				bool commit = false;
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+			}
+
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()

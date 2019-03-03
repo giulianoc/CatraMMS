@@ -69,6 +69,7 @@ public:
     
 protected:
     Json::Value                     _configuration;
+	string							_hostName;
     shared_ptr<spdlog::logger>      _logger;
     mutex*                          _fcgiAcceptMutex;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;

@@ -20,7 +20,7 @@
 #include "spdlog/spdlog.h"
 #include "Workspace.h"
 #include "json/json.h"
-#include "MySQLConnection.h"
+#include "catralibraries/MySQLConnection.h"
 
 
 
@@ -63,17 +63,51 @@ struct MediaItemKeyNotFound: public exception {
     }; 
 };
 
+struct AlreadyLocked: public exception {    
+    char const* what() const throw() 
+    {
+		return "Already locked";
+    };
+};
+
 class MMSEngineDBFacade {
 
 public:
+    enum class LockType {
+		Ingestion		= 0
+    };
+    static const char* toString(const LockType& lockType)
+    {
+        switch (lockType)
+        {
+            case LockType::Ingestion:
+                return "Ingestion";
+            default:
+                throw runtime_error(string("Wrong LockType"));
+        }
+    }
+    static LockType toLockType(const string& lockType)
+    {
+        string lowerCase;
+        lowerCase.resize(lockType.size());
+        transform(lockType.begin(), lockType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "ingestion")
+            return LockType::Ingestion;
+        else
+            throw runtime_error(string("Wrong LockType")
+                    + ", current lockType: " + lockType
+                    );
+    }
+
     enum class ContentType {
-        Video		= 0,
-	Audio		= 1,
-	Image		= 2
-//	Application	= 3,
-//	Ringtone	= 4,
-//	Playlist	= 5,
-//	Live		= 6
+		Video		= 0,
+		Audio		= 1,
+		Image		= 2
+//		Application	= 3,
+//		Ringtone	= 4,
+//		Playlist	= 5,
+//		Live		= 6
     };
     static const char* toString(const ContentType& contentType)
     {
@@ -723,7 +757,7 @@ public:
     ~MMSEngineDBFacade();
 
     // vector<shared_ptr<Customer>> getCustomers();
-    
+
     shared_ptr<Workspace> getWorkspace(int64_t workspaceKey);
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
@@ -1315,7 +1349,7 @@ public:
     int64_t addEMailConf(
         int64_t workspaceKey,
         string label,
-        string address,
+        string addresses,
 		string subject,
 		string message);
 
@@ -1323,7 +1357,7 @@ public:
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string address,
+        string addresses,
 		string subject,
 		string message);
 
@@ -1337,6 +1371,11 @@ public:
     tuple<string, string, string> getEMailByConfigurationLabel(
         int64_t workspaceKey, string liveURLConfigurationLabel);
     
+	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
+			string owner, string data = "no data");
+
+	void releaseLock(LockType lockType, string data = "no data");
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

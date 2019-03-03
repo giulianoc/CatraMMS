@@ -17,6 +17,7 @@
 #include <fstream>
 #include <curl/curl.h>
 #include "catralibraries/Convert.h"
+#include "catralibraries/System.h"
 #include "catralibraries/Encrypt.h"
 #include "APICommon.h"
 
@@ -33,6 +34,8 @@ APICommon::APICommon(Json::Value configuration,
     _mmsStorage         = mmsStorage;
     _fcgiAcceptMutex    = fcgiAcceptMutex;
     _logger             = logger;
+
+	_hostName			= System::getHostName();                                                  
 
     _managedRequestsNumber = 0;
     _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();

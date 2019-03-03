@@ -12,6 +12,7 @@
  */
 
 #include "EMailSender.h"
+#include <sstream>
 #include <curl/curl.h>
 #include "catralibraries/Encrypt.h"
 
@@ -27,7 +28,7 @@ EMailSender::EMailSender(
 EMailSender::~EMailSender() {
 }
 
-void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBody)
+void EMailSender:: sendEmail(string tosCommaSeparated, string subject, vector<string>& emailBody)
 {
     // curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd   
     //      --mail-from 'giulianocatrambone@gmail.com' 
@@ -60,22 +61,24 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
   
     emailLines.push_back(string("From: <") + from + ">" + "\r\n");
 
-	/*
+	string sTosForEmail;
 	{
-		vector<string> tos;
-		string sTos;
-		for (string to: tos)
+		stringstream ssTosCommaSeparated(tosCommaSeparated);
+		string sTo;
+		char delim = ',';
+		while (getline(ssTosCommaSeparated, sTo, delim))
 		{
-			if (sTos == "")
-				sTos = string("<") + to + ">";
-			else
-				sTos += (string(", <") + to + ">");
+			if (!sTo.empty())
+			{
+				if (sTosForEmail == "")
+					sTosForEmail = string("<") + sTo + ">";
+				else
+					sTosForEmail += (string(", <") + sTo + ">");
+			}
 		}
-
-		emailLines.push_back(string("To: ") + sTos + "\r\n");
 	}
-	*/
-    emailLines.push_back(string("To: <") + to + ">" + "\r\n");
+	emailLines.push_back(string("To: ") + sTosForEmail + "\r\n");
+    // emailLines.push_back(string("To: <") + to + ">" + "\r\n");
 
     if (cc != "")
 	{
@@ -112,7 +115,20 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
         /* Add two recipients, in this particular case they correspond to the
          * To: and Cc: addressees in the header, but they could be any kind of
          * recipient. */
-        recipients = curl_slist_append(recipients, to.c_str());
+		{
+			stringstream ssTosCommaSeparated(tosCommaSeparated);
+			string sTo;
+			char delim = ',';
+			while (getline(ssTosCommaSeparated, sTo, delim))
+			{
+				if (!sTo.empty())
+				{
+					recipients = curl_slist_append(recipients, sTo.c_str());
+				}
+			}
+		}
+        // recipients = curl_slist_append(recipients, to.c_str());
+
         if (cc != "")
             recipients = curl_slist_append(recipients, cc.c_str());
         curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
@@ -130,7 +146,7 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
             + ", emailServerURL: " + emailServerURL
             + ", userName: " + userName
             + ", from: " + from
-            + ", to: " + to
+            + ", to: " + tosCommaSeparated
             + ", cc: " + cc
             + ", subject: " + subject
         );

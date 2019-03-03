@@ -15,6 +15,7 @@
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
 #include "RetentionTimes.h"
+#include "PersistenceLock.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
@@ -441,9 +442,26 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         
         try
         {
-            _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-                    _processorMMS, _maxIngestionJobsPerEvent 
+			int waitingTimeoutInSecondsIfLocked = 0;
+
+			PersistenceLock persistenceLock(_mmsEngineDBFacade,
+				MMSEngineDBFacade::LockType::Ingestion,
+				waitingTimeoutInSecondsIfLocked,
+				_processorMMS);
+
+			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
+				_processorMMS, _maxIngestionJobsPerEvent 
             );
+        }
+        catch(AlreadyLocked e)
+        {
+            _logger->warn(__FILEREF__ + "getIngestionsToBeManaged failed"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", exception: " + e.what()
+            );
+
+			return;
+            // throw e;
         }
         catch(runtime_error e)
         {
@@ -7911,6 +7929,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         }
         
 		string firstTitle;
+		int64_t mediaItemKey;
 		if (dependencies.size() > 0)
 		{
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
@@ -7924,6 +7943,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         	if (dependencyType == Validator::DependencyType::MediaItemKey)
         	{
         		bool warningIfMissing = false;
+
+				mediaItemKey = key;
 
         		tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate
                 	= _mmsEngineDBFacade->getMediaItemKeyDetails(key, warningIfMissing);
@@ -7940,11 +7961,10 @@ void MMSEngineProcessor::manageEmailNotificationTask(
                 	_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     	key, warningIfMissing);
 
-				int64_t sourceMediaItemKey;
             	MMSEngineDBFacade::ContentType localContentType;
             	string userData;
                 string ingestionDate;
-            	tie(sourceMediaItemKey,localContentType, firstTitle, userData, ingestionDate)
+            	tie(mediaItemKey,localContentType, firstTitle, userData, ingestionDate)
                     = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         	}
 		}
@@ -7960,15 +7980,15 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         }
         string configurationLabel = parametersRoot.get(field, "XXX").asString();
 
-		string emailAddress;
+		string emailAddresses;
 		string subject;
 		string message;
         tuple<string, string, string> email = _mmsEngineDBFacade->getEMailByConfigurationLabel(
                 workspace->_workspaceKey, configurationLabel);            
-        tie(emailAddress, subject, message) = email;
+        tie(emailAddresses, subject, message) = email;
 
         {
-            string strToBeReplaced = "{INGESTIONJOBKEY}";
+            string strToBeReplaced = "{IngestionJobKey}";
             string strToReplace = sIngestionJobKeyDependency;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
@@ -7976,19 +7996,28 @@ void MMSEngineProcessor::manageEmailNotificationTask(
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
         {
-            string strToBeReplaced = "{FIRSTTITLE}";
+            string strToBeReplaced = "{FirstTitle}";
             string strToReplace = firstTitle;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
             if (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
+        {
+            string strToBeReplaced = "{MediaItemKey}";
+            string strToReplace = to_string(mediaItemKey);
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+
 
         vector<string> emailBody;
         emailBody.push_back(message);
             
         EMailSender emailSender(_logger, _configuration);
-        emailSender.sendEmail(emailAddress, subject, emailBody);
+        emailSender.sendEmail(emailAddresses, subject, emailBody);
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

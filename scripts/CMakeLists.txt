@@ -25,6 +25,7 @@ SET (SCRIPTs
 	api.rsi.sh
 	encoder.sh
 	encoder.rsi.sh
+	mmsEnv.sh
 	mmsEngineService.sh
 	mmsEngineService.rsi.sh
 	ffmpegHelper.sh

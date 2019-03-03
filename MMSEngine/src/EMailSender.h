@@ -41,7 +41,7 @@ public:
     
     virtual ~EMailSender();
     
-    void sendEmail(string to, string subject, vector<string>& emailBody);
+    void sendEmail(string tosCommaSeparated, string subject, vector<string>& emailBody);
   
 private:
     shared_ptr<spdlog::logger>          _logger;

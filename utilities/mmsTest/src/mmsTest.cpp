@@ -1,50 +1,45 @@
 
 #include <fstream>
-#include <iostream>
-#include "EMailSender.h"
-
-
-using namespace std;
+#include "PersistenceLock.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 3)
+    if (iArgc != 2)
     {
-        std::cerr << "Usage: " << pArgv[0] << " config-path-name destination-email-addresses (comma separated)" << endl;
+        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
         
         return 1;
     }
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
-    string emailAddresses = pArgv[2];
 
-    auto logger = spdlog::stdout_logger_mt("sendEmail");
+    auto logger = spdlog::stdout_logger_mt("encodingEngine");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
-    try
-    {
-        logger->info(__FILEREF__ + "Sending email to " + emailAddresses
-                );
-        
-        vector<string> emailBody;
-        emailBody.push_back("Test body");
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
+            );
+    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
+            configuration, logger);
 
-        EMailSender emailSender(logger, configuration);
-        emailSender.sendEmail(emailAddresses, "Test subject", emailBody);
-    }
-    catch(...)
-    {
-        logger->error(__FILEREF__ + "emailSender.sendEmail failed");
-    }
+	this_thread::sleep_for(chrono::seconds(30));
+
+	int waitingTimeoutInSecondsIfLocked = 10;
+
+	PersistenceLock persistenceLock(mmsEngineDBFacade,
+		MMSEngineDBFacade::LockType::Ingestion,
+		waitingTimeoutInSecondsIfLocked,
+		"test");
+  
+	this_thread::sleep_for(chrono::seconds(30));
 
     logger->info(__FILEREF__ + "Shutdown done"
             );
-    
+
     return 0;
 }
 

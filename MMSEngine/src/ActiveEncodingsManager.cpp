@@ -174,13 +174,16 @@ void ActiveEncodingsManager::operator()()
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed");
                             }
 
-                            if (chrono::duration_cast<chrono::hours>(
+                            if (encodingJob->_encodingItem->_encodingType !=
+									MMSEngineDBFacade::EncodingType::LiveRecorder
+									&& chrono::duration_cast<chrono::hours>(
                                     chrono::system_clock::now() - encodingJob->_encodingJobStart) >
                                     chrono::hours(24))
                             {
                                 _logger->error(__FILEREF__ + "EncodingJob is not finishing"
-                                        + ", elapsed (hours): " + 
-                                            to_string(chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+									+ ", elapsed (hours): " + 
+									to_string(chrono::duration_cast<chrono::hours>(
+										chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
                                 );
                             }
                             else
