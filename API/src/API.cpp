@@ -20,6 +20,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/Convert.h"
+#include "catralibraries/LdapWrapper.h"
 #include "PersistenceLock.h"
 #include "Validator.h"
 #include "EMailSender.h"
@@ -260,6 +261,28 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost: " + _deliveryHost
     );
+
+    _ldapURL  = api["activeDirectory"].get("ldapURL", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->ldapURL: " + _ldapURL
+    );
+    _ldapManagerUserName  = api["activeDirectory"].get("managerUserName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->managerUserName: " + _ldapManagerUserName
+    );
+    _ldapManagerPassword  = api["activeDirectory"].get("managerPassword", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->managerPassword: " + _ldapManagerPassword
+    );
+    _ldapBaseDn  = api["activeDirectory"].get("baseDn", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->baseDn: " + _ldapBaseDn
+    );
+    _ldapDefaultWorkspaceKey  = api["activeDirectory"].get("defaultWorkspaceKey", 0).asInt64();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->defaultWorkspaceKey: " + to_string(_ldapDefaultWorkspaceKey)
+    );
+
         
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -365,8 +388,9 @@ void API::manageRequestAndResponse(
             + ", requestURI: " + requestURI
             + ", requestMethod: " + requestMethod
             + ", contentLength: " + to_string(contentLength)
-            + ", requestBody: " + requestBody
-        );        
+			// next is to avoid to log the password
+            + (requestMethod == "login" ? "" : (", requestBody: " + requestBody))
+        );
     }
         
 
@@ -2130,14 +2154,12 @@ void API::login(
     string api = "login";
 
     _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
+		// commented because of the password
+        // + ", requestBody: " + requestBody
     );
 
     try
     {
-        string email;
-        string password;
-
         Json::Value metadataRoot;
         try
         {
@@ -2175,10 +2197,14 @@ void API::login(
             throw runtime_error(errorMessage);
         }
 
+        string sLoginType;
+		MMSEngineDBFacade::LoginType loginType;
+		Json::Value loginDetailsRoot;
+		int64_t userKey;
+
         {
             vector<string> mandatoryFields = {
-                "EMail",
-                "Password"
+                "LoginType"
             };
             for (string field: mandatoryFields)
             {
@@ -2193,53 +2219,288 @@ void API::login(
                     throw runtime_error(errorMessage);
                 }
             }
+            sLoginType = metadataRoot.get("LoginType", "XXX").asString();
+			loginType = MMSEngineDBFacade::toLoginType(sLoginType);
 
-            email = metadataRoot.get("EMail", "XXX").asString();
-            password = metadataRoot.get("Password", "XXX").asString();
+			if (loginType == MMSEngineDBFacade::LoginType::MMS)
+			{
+				vector<string> mandatoryFields = {
+					"EMail",
+					"Password"
+				};
+				for (string field: mandatoryFields)
+				{
+					if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+					{
+						string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						sendError(request, 400, errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+
+				string email = metadataRoot.get("EMail", "XXX").asString();
+				string password = metadataRoot.get("Password", "XXX").asString();
+
+				try
+				{
+					_logger->info(__FILEREF__ + "Login User"
+						+ ", email: " + email
+					);
+                        
+					loginDetailsRoot = _mmsEngineDBFacade->login(
+							loginType,
+							email, 
+							password
+					);
+
+					string field = "userKey";
+					userKey = loginDetailsRoot.get(field, 0).asInt64();
+            
+					_logger->info(__FILEREF__ + "Login User"
+						+ ", userKey: " + to_string(userKey)
+						+ ", email: " + email
+					);
+				}
+				catch(LoginFailed e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = e.what();
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 401, errorMessage);   // unauthorized
+
+					throw runtime_error(errorMessage);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error: ") + e.what();
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error");
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			else // if (loginType == MMSEngineDBFacade::LoginType::ActiveDirectory)
+			{
+				vector<string> mandatoryFields = {
+					"Name",
+					"Password"
+				};
+				for (string field: mandatoryFields)
+				{
+					if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+					{
+						string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						sendError(request, 400, errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+
+				string userName = metadataRoot.get("Name", "XXX").asString();
+				string password = metadataRoot.get("Password", "XXX").asString();
+
+				try
+				{
+					LdapWrapper ldapWrapper;
+
+					ldapWrapper.init(_ldapURL, _ldapManagerUserName, _ldapManagerPassword);
+
+					pair<bool, string> testCredentialsSuccessfulAndEmail =
+						ldapWrapper.testCredentials(userName, password, _ldapBaseDn);
+
+					bool testCredentialsSuccessful;
+					string email;
+					tie(testCredentialsSuccessful, email) = testCredentialsSuccessfulAndEmail;
+
+					bool userAlreadyRegistered;
+					try
+					{
+						_logger->info(__FILEREF__ + "Login User"
+							+ ", email: " + email
+						);
+
+						loginDetailsRoot = _mmsEngineDBFacade->login(
+							loginType,
+							email,
+							string("")		// password in case of ActiveDirectory is empty
+						);
+
+						string field = "userKey";
+						userKey = loginDetailsRoot.get(field, 0).asInt64();
+            
+						_logger->info(__FILEREF__ + "Login User"
+							+ ", userKey: " + to_string(userKey)
+							+ ", email: " + email
+						);
+
+						userAlreadyRegistered = true;
+					}
+					catch(LoginFailed e)
+					{
+						userAlreadyRegistered = false;
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + api + " failed"
+							+ ", e.what(): " + e.what()
+						);
+
+						string errorMessage = string("Internal server error: ") + e.what();
+						_logger->error(__FILEREF__ + errorMessage);
+
+						sendError(request, 500, errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + api + " failed"
+							+ ", e.what(): " + e.what()
+						);
+
+						string errorMessage = string("Internal server error");
+						_logger->error(__FILEREF__ + errorMessage);
+
+						sendError(request, 500, errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					if (!userAlreadyRegistered)
+					{
+						_logger->info(__FILEREF__ + "Register ActiveDirectory User"
+							+ ", email: " + email
+						);
+
+						// flags set by default
+						bool ingestWorkflow = true;
+						bool createProfiles = false;
+						bool deliveryAuthorization = true;
+						bool shareWorkspace = false;
+						bool editMedia = true;
+						pair<int64_t,string> userKeyAndEmail =
+							_mmsEngineDBFacade->registerActiveDirectoryUser(
+							userName,
+							email,
+							string(""),	// userCountry,
+							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+							editMedia,
+							_ldapDefaultWorkspaceKey,  
+							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+								// chrono::system_clock::time_point userExpirationDate
+						);
+
+						string apiKey;
+						tie(userKey, apiKey) = userKeyAndEmail;
+
+						_logger->info(__FILEREF__ + "Login User"
+							+ ", userKey: " + to_string(userKey)
+							+ ", apiKey: " + apiKey
+							+ ", email: " + email
+						);
+
+						loginDetailsRoot = _mmsEngineDBFacade->login(
+							loginType,
+							email,
+							string("")		// password in case of ActiveDirectory is empty
+						);
+
+						string field = "userKey";
+						userKey = loginDetailsRoot.get(field, 0).asInt64();
+            
+						_logger->info(__FILEREF__ + "Login User"
+							+ ", userKey: " + to_string(userKey)
+							+ ", email: " + email
+						);
+					}
+				}
+				catch(LoginFailed e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = e.what();
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 401, errorMessage);   // unauthorized
+
+					throw runtime_error(errorMessage);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error: ") + e.what();
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + api + " failed"
+						+ ", e.what(): " + e.what()
+					);
+
+					string errorMessage = string("Internal server error");
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
         }
 
         try
         {
             _logger->info(__FILEREF__ + "Login User"
-                + ", email: " + email
-            );
-                        
-            Json::Value loginDetailsRoot = _mmsEngineDBFacade->login(
-                    email, 
-                    password
-                );
-
-            string field = "userKey";
-            int64_t userKey = loginDetailsRoot.get(field, 0).asInt64();
-            
-            _logger->info(__FILEREF__ + "Login User"
                 + ", userKey: " + to_string(userKey)
-                + ", email: " + email
             );
             
             Json::Value workspaceDetailsRoot =
                     _mmsEngineDBFacade->getWorkspaceDetails(userKey);
             
-            field = "workspaces";
+            string field = "workspaces";
             loginDetailsRoot[field] = workspaceDetailsRoot;
             
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
             
             sendSuccess(request, 200, responseBody);            
-        }
-        catch(LoginFailed e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = e.what();
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 401, errorMessage);   // unauthorized
-
-            throw runtime_error(errorMessage);
         }
         catch(runtime_error e)
         {

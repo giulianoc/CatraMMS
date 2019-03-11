@@ -42,23 +42,25 @@ SET (HEADERS
 	APICommon.h
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
-include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
-else()
-	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
 endif()
 
-link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()
-	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
-	link_directories ("/home/giuliano/catramms/opencv/lib")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-10/lib")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 endif()
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.0.2/lib")
 
 #API
     add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
@@ -163,6 +165,7 @@ endif()
 	target_link_libraries (ffmpegEncoder.fcgi opencv_videostab)
 	target_link_libraries (ffmpegEncoder.fcgi opencv_objdetect)
 	target_link_libraries (ffmpegEncoder.fcgi opencv_face)
+	target_link_libraries (ffmpegEncoder.fcgi avcodec)
     list(APPEND TARGETS ffmpegEncoder.fcgi)
 
 

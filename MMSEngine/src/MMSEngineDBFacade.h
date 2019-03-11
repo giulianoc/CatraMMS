@@ -100,6 +100,38 @@ public:
                     );
     }
 
+    enum class LoginType {
+		MMS					= 0,
+		ActiveDirectory		= 1
+    };
+    static const char* toString(const LoginType& loginType)
+    {
+        switch (loginType)
+        {
+            case LoginType::MMS:
+                return "MMS";
+            case LoginType::ActiveDirectory:
+                return "ActiveDirectory";
+            default:
+                throw runtime_error(string("Wrong LoginType"));
+        }
+    }
+    static LoginType toLoginType(const string& loginType)
+    {
+        string lowerCase;
+        lowerCase.resize(loginType.size());
+        transform(loginType.begin(), loginType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "mms")
+            return LoginType::MMS;
+        else if (lowerCase == "activedirectory")
+            return LoginType::ActiveDirectory;
+        else
+            throw runtime_error(string("Wrong LoginType")
+                    + ", current loginType: " + loginType
+                    );
+    }
+
     enum class ContentType {
 		Video		= 0,
 		Audio		= 1,
@@ -805,11 +837,21 @@ public:
 
     tuple<string,string,string> confirmRegistration(string confirmationCode);
 
+	pair<int64_t,string> registerActiveDirectoryUser(
+		string userName,
+		string userEmailAddress,
+		string userCountry,
+		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		int64_t defaultWorkspaceKey,
+		chrono::system_clock::time_point userExpirationDate
+	);
+
     pair<string,string> getUserDetails(int64_t userKey);
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
 
-    Json::Value login (string eMailAddress, string password);
+    Json::Value login (LoginType loginType, string eMailAddress, string password);
 
     Json::Value getWorkspaceDetails (int64_t userKey);
 

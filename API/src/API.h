@@ -100,6 +100,12 @@ private:
     string              _deliveryProtocol;
     string              _deliveryHost;
     
+    string				_ldapURL;
+    string				_ldapManagerUserName;
+    string				_ldapManagerPassword;
+    string				_ldapBaseDn;
+    int64_t				_ldapDefaultWorkspaceKey;
+
     FileUploadProgressData*     _fileUploadProgressData;
     
 

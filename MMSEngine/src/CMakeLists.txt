@@ -24,7 +24,9 @@ SET (SOURCES
 	Workspace.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
+	MMSEngineDBFacade_CreateTables.cpp
 	MMSEngineDBFacade_Lock.cpp
+	MMSEngineDBFacade_UserWorkspace.cpp
 	PersistenceLock.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
@@ -47,17 +49,17 @@ SET (HEADERS
 	MultiLocalAssetIngestionEvent.h
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
-include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
-	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
-	include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include/ImageMagick-7")
-	include_directories ("/home/giuliano/catramms/opencv/include/opencv4")
+	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-10/include/ImageMagick-7")
+	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 endif()
 
 if (APPLE)
