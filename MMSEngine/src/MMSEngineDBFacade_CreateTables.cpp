@@ -186,6 +186,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "country				VARCHAR (64) NULL,"
                     "creationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate			DATETIME NOT NULL,"
+                    "lastSuccessfulLogin	DATETIME NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
                     "UNIQUE KEY loginTypeAndEmailAddress (loginType, eMailAddress))"
                     "ENGINE=InnoDB";

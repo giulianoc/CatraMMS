@@ -47,6 +47,7 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-lin
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-10/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.0.2/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 
 add_executable(registerCustomer ${SOURCES} ${HEADERS})
 

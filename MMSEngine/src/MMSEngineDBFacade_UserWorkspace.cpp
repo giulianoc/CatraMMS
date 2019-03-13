@@ -156,8 +156,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			// This method is called only in case of MMS user, so loginType has to be MMS
             lastSQLCommand = 
                 "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
-				"creationDate, expirationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+				"creationDate, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -872,8 +872,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         {
             lastSQLCommand = 
                 "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
-				"creationDate, expirationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+				"creationDate, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, toString(LoginType::MMS));
@@ -1197,8 +1197,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 
             lastSQLCommand = 
                 "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
-				"creationDate, expirationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+				"creationDate, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2239,8 +2239,10 @@ Json::Value MMSEngineDBFacade::login (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+				int64_t userKey = resultSet->getInt64("userKey");
+
                 string field = "userKey";
-                loginDetailsRoot[field] = resultSet->getInt64("userKey");
+                loginDetailsRoot[field] = userKey;
 
                 field = "name";
                 loginDetailsRoot[field] = static_cast<string>(resultSet->getString("name"));
@@ -2256,6 +2258,30 @@ Json::Value MMSEngineDBFacade::login (
 
                 field = "expirationDate";
                 loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
+
+				{
+					lastSQLCommand = 
+						"update MMS_User set lastSuccessfulLogin = NOW() "
+						"where userKey = ?";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+					int rowsUpdated = preparedStatement->executeUpdate();
+					if (rowsUpdated != 1)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+								+ ", userKey: " + to_string(userKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->warn(errorMessage);
+
+						// throw runtime_error(errorMessage);
+					}
+				}
             }
             else
             {

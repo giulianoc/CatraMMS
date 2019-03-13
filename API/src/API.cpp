@@ -382,17 +382,6 @@ void API::manageRequestAndResponse(
             + ", editMedia: " + to_string(editMedia)
         );        
     }
-    else
-    {
-        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
-            + ", requestURI: " + requestURI
-            + ", requestMethod: " + requestMethod
-            + ", contentLength: " + to_string(contentLength)
-			// next is to avoid to log the password
-            + (requestMethod == "login" ? "" : (", requestBody: " + requestBody))
-        );
-    }
-        
 
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
@@ -405,6 +394,17 @@ void API::manageRequestAndResponse(
         throw runtime_error(errorMessage);
     }
     string method = methodIt->second;
+
+    if (!basicAuthenticationPresent)
+    {
+        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
+            + ", requestURI: " + requestURI
+            + ", requestMethod: " + requestMethod
+            + ", contentLength: " + to_string(contentLength)
+			// next is to avoid to log the password
+            + (method == "login" ? ", requestBody: ..." : (", requestBody: " + requestBody))
+        );
+    }
 
     if (method == "binaryAuthorization")
     {
@@ -2330,6 +2330,10 @@ void API::login(
 
 				try
 				{
+					_logger->info(__FILEREF__ + "Login User"
+						+ ", userName: " + userName
+					);
+
 					LdapWrapper ldapWrapper;
 
 					ldapWrapper.init(_ldapURL, _ldapManagerUserName, _ldapManagerPassword);

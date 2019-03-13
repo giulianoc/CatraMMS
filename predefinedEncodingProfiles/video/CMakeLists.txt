@@ -33,6 +33,7 @@ SET (PROFILEs
 	MMS_H264_medium_480p30_AAC_160.json
 	MMS_H264_veryfast_480p30_AAC_160.json
 	MMS_H264_veryslow_480p30_AAC_160.json
+	MMS_H264_veryslow_720p25_AAC_160.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/video)

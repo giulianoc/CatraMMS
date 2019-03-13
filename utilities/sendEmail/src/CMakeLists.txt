@@ -45,6 +45,7 @@ else()
 endif()
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.0.2/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 
 add_executable(sendEmail ${SOURCES} ${HEADERS})
 

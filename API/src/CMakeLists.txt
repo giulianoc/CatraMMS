@@ -47,6 +47,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 endif()
@@ -61,6 +62,7 @@ else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 endif()
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.0.2/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 
 #API
     add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
