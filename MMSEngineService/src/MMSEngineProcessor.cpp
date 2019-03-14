@@ -4277,6 +4277,7 @@ void MMSEngineProcessor::localCopyContentTask(
             string fileName;
             int64_t sizeInBytes;
             string deliveryFileName;
+			string fileFormat;
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -4327,7 +4328,8 @@ void MMSEngineProcessor::localCopyContentTask(
             
             // check on thread availability was done at the beginning in this method
             thread copyContentThread(&MMSEngineProcessor::copyContentThread, this, 
-                _processorsThreadsNumber, ingestionJobKey, mmsAssetPathName, localPath, localFileName);
+                _processorsThreadsNumber, ingestionJobKey, mmsAssetPathName,
+				localPath, localFileName);
             copyContentThread.detach();
         }
     }
@@ -5194,8 +5196,34 @@ void MMSEngineProcessor::copyContentThread(
             if (localPathName.back() != '/')
                 localPathName += "/";
             localPathName += localFileName;
-        }            
-        
+
+			string fileFormat;
+			{
+                size_t extensionIndex = mmsAssetPathName.find_last_of(".");
+                if (extensionIndex == string::npos)
+                {
+                    string errorMessage = __FILEREF__ +
+						"No fileFormat (extension of the file) found in mmsAssetPathName"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
+			}
+
+			string suffix = "." + fileFormat;
+			if (localPathName.size() >= suffix.size()
+					&& 0 == localPathName.compare(localPathName.size()-suffix.size(),
+						suffix.size(), suffix))
+				;
+			else
+				localPathName += suffix;
+        }
+
         FileIO::copyFile(mmsAssetPathName, localPathName);
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
