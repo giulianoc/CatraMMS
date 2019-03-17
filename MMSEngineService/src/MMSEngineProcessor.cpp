@@ -4285,6 +4285,7 @@ void MMSEngineProcessor::localCopyContentTask(
             
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+			int64_t physicalPathKey;
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 int64_t encodingProfileKey = -1;
@@ -4293,7 +4294,6 @@ void MMSEngineProcessor::localCopyContentTask(
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
-                int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
                 string title;
                 
@@ -4303,6 +4303,8 @@ void MMSEngineProcessor::localCopyContentTask(
             }
             else
             {
+				physicalPathKey = key;
+
                 tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -4314,7 +4316,8 @@ void MMSEngineProcessor::localCopyContentTask(
                 workspaceDirectoryName = workspace->_directoryName;
             }
 
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+            _logger->info(__FILEREF__ + "getMMSAssetPathName to be copied"
+                + ", physicalPathKey: " + to_string(physicalPathKey)
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
                 + ", relativePath: " + relativePath
@@ -5181,6 +5184,58 @@ void MMSEngineProcessor::copyContentThread(
 
     try 
     {
+        string localPathName = localPath;
+        if (localFileName != "")
+        {
+			string cleanedFileName;
+			{
+				cleanedFileName.resize(localFileName.size());
+				transform(localFileName.begin(), localFileName.end(), cleanedFileName.begin(),
+					[](unsigned char c)
+						{
+							if(c == '/'
+								)
+								return (int) ' ';
+							else
+								return (int) c;
+						}
+				);
+
+				string fileFormat;
+				{
+					size_t extensionIndex = mmsAssetPathName.find_last_of(".");
+					if (extensionIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__ +
+							"No fileFormat (extension of the file) found in mmsAssetPathName"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
+				}
+
+				string suffix = "." + fileFormat;
+				if (cleanedFileName.size() >= suffix.size()
+					&& 0 == cleanedFileName.compare(cleanedFileName.size()-suffix.size(),
+						suffix.size(), suffix))
+					;
+				else
+					cleanedFileName += suffix;
+
+				string prefix = "MMS ";
+				cleanedFileName = prefix + cleanedFileName;
+			}
+
+            if (localPathName.back() != '/')
+                localPathName += "/";
+            localPathName += cleanedFileName;
+        }
+
         _logger->info(__FILEREF__ + "Coping"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
@@ -5188,41 +5243,8 @@ void MMSEngineProcessor::copyContentThread(
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", localPath: " + localPath
             + ", localFileName: " + localFileName
+            + ", localPathName: " + localPathName
         );
-        
-        string localPathName = localPath;
-        if (localFileName != "")
-        {
-            if (localPathName.back() != '/')
-                localPathName += "/";
-            localPathName += localFileName;
-
-			string fileFormat;
-			{
-                size_t extensionIndex = mmsAssetPathName.find_last_of(".");
-                if (extensionIndex == string::npos)
-                {
-                    string errorMessage = __FILEREF__ +
-						"No fileFormat (extension of the file) found in mmsAssetPathName"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                fileFormat = mmsAssetPathName.substr(extensionIndex + 1);
-			}
-
-			string suffix = "." + fileFormat;
-			if (localPathName.size() >= suffix.size()
-					&& 0 == localPathName.compare(localPathName.size()-suffix.size(),
-						suffix.size(), suffix))
-				;
-			else
-				localPathName += suffix;
-        }
 
         FileIO::copyFile(mmsAssetPathName, localPathName);
             
@@ -7942,7 +7964,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 		*/
         
         string sIngestionJobKeyDependency;
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType: dependencies)
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -7960,7 +7983,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 		int64_t mediaItemKey;
 		if (dependencies.size() > 0)
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType
+				= dependencies[0];
 
         	int64_t key;
         	MMSEngineDBFacade::ContentType referenceContentType;
@@ -7974,18 +7998,21 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
 				mediaItemKey = key;
 
-        		tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate
+        		tuple<MMSEngineDBFacade::ContentType,string,string,string>
+					contentTypeTitleUserDataAndIngestionDate
                 	= _mmsEngineDBFacade->getMediaItemKeyDetails(key, warningIfMissing);
         
         		MMSEngineDBFacade::ContentType contentType;
         		string userData;
                 string ingestionDate;
-        		tie(contentType, firstTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
+        		tie(contentType, firstTitle, userData, ingestionDate)
+					= contentTypeTitleUserDataAndIngestionDate;
         	}
         	else
         	{
             	bool warningIfMissing = false;
-            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
+            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string>
+					mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 	_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     	key, warningIfMissing);
 
@@ -7995,6 +8022,39 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             	tie(mediaItemKey,localContentType, firstTitle, userData, ingestionDate)
                     = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         	}
+		}
+
+		int64_t referenceIngestionJobKey = 0;
+		string referenceLabel;
+		string referenceErrorMessage;
+		// if (dependencies.size() == 0)
+		{
+			// since we do not have dependency, that means we had an error
+			// and here we will get the error message
+			// Parameters will be something like:
+			// { "ConfigurationLabel" : "Error", "References" : [ { "ReferenceIngestionJobKey" : 203471 } ] }
+			// We will retrieve the error associated to ReferenceIngestionJobKey
+
+			string field = "References";
+			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			{
+				Json::Value referencesRoot = parametersRoot[field];
+				for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
+				{
+					Json::Value referenceRoot = referencesRoot[referenceIndex];
+					field = "ReferenceIngestionJobKey";
+					if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
+					{
+						referenceIngestionJobKey = referenceRoot.get(field, 0).asInt64();
+
+						pair<string, string> labelAndErrorMessage =
+							_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
+						tie(referenceLabel, referenceErrorMessage);
+
+						break;
+					}
+				}
+			}
 		}
 
         string field = "ConfigurationLabel";
@@ -8017,6 +8077,14 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
         {
             string strToBeReplaced = "{IngestionJobKey}";
+            string strToReplace = to_string(ingestionJobKey);
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+        {
+            string strToBeReplaced = "{IngestionJobKeyDependency}";
             string strToReplace = sIngestionJobKeyDependency;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
@@ -8039,7 +8107,30 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             if (message.find(strToBeReplaced) != string::npos)
                 message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
         }
-
+        {
+            string strToBeReplaced = "{ReferenceIngestionJobKey}";
+            string strToReplace = to_string(referenceIngestionJobKey);
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+        {
+            string strToBeReplaced = "{ReferenceLabel}";
+            string strToReplace = referenceLabel;
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+        {
+            string strToBeReplaced = "{ReferenceErrorMessage}";
+            string strToReplace = referenceErrorMessage;
+            if (subject.find(strToBeReplaced) != string::npos)
+                subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
 
         vector<string> emailBody;
         emailBody.push_back(message);

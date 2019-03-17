@@ -831,7 +831,9 @@ public:
         string userEmailAddress,
         string userPassword,
         string userCountry,
-        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
+        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
@@ -843,13 +845,15 @@ public:
 		string userCountry,
 		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding,
 		int64_t defaultWorkspaceKey,
 		chrono::system_clock::time_point userExpirationDate
 	);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
+		checkAPIKey (string apiKey);
 
     Json::Value login (LoginType loginType, string eMailAddress, string password);
 
@@ -863,7 +867,7 @@ public:
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia);
+        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding);
 
     Json::Value updateUser (
         int64_t userKey,
@@ -997,6 +1001,9 @@ public:
 
 	string getIngestionRootMetaDataContent (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
+
+	pair<string,string> getIngestionJobDetails(
+		int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -1445,6 +1452,8 @@ private:
         bool deliveryAuthorization,
         bool shareWorkspace,
         bool editMedia,
+		bool editConfiguration,
+		bool killEncoding,
         string workspaceName,
         string workspaceDirectoryName,
         WorkspaceType workspaceType,

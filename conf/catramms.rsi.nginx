@@ -11,6 +11,7 @@ server {
 #	listen 443 ssl http2;
 	server_name mms.rsi.ch rsi.ch;
 	listen 80;
+	listen 443;
 
 #	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 #	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
@@ -33,6 +34,7 @@ server {
 #	server_name mms-api.rsi.ch;
 	server_name mms-api.rsi.ch;
 	listen 80;
+	listen 443;
 
 #	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 #	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
@@ -130,10 +132,10 @@ server {
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addModifyYouTubeConf last;
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=addModifyYouTubeConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=modifyYouTubeConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=removeYouTubeConf&confKey=$2 last;
@@ -143,10 +145,10 @@ server {
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=addModifyFacebookConf last;
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=addFacebookConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=addModifyFacebookConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=modifyFacebookConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=removeFacebookConf&confKey=$2 last;
@@ -266,6 +268,7 @@ server {
 server {
 	server_name mms-delivery.rsi.ch;
 	listen 80;
+	listen 443;
 	#listen 443;
 
 #	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
@@ -293,8 +296,7 @@ server {
 	location = /catramms/delivery/checkAuthorization {
 		internal;
 
-		#proxy_pass https://mms-delivery.rsi.ch/catramms/delivery/authorization;
-		proxy_pass http://mms-delivery.rsi.ch/catramms/delivery/authorization;
+		proxy_pass https://mms-delivery.rsi.ch/catramms/delivery/authorization;
 		proxy_pass_request_body off;
 		proxy_set_header Content-Length "";
 		#proxy_set_header X-Original-METHOD $request_method;
@@ -325,6 +327,7 @@ server {
 
 server {
 	listen 80;
+	listen 443;
 
 	server_name mms-binary.rsi.ch localhost;
 
@@ -428,6 +431,7 @@ server {
 	server_name mms-gui.rsi.ch;
 	#listen 443 ssl http2;
 	listen 80;
+	listen 443;
 
 #	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 #	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
@@ -447,6 +451,7 @@ server {
 	location / {
 		proxy_set_header X-Forwarded-Host $host;
 		proxy_set_header X-Forwarded-Server $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_pass http://127.0.0.1:8080/;
 	}

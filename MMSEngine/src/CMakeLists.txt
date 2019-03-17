@@ -24,8 +24,12 @@ SET (SOURCES
 	Workspace.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
+	MMSEngineDBFacade_Configuration.cpp
 	MMSEngineDBFacade_CreateTables.cpp
+	MMSEngineDBFacade_EncodingJobs.cpp
+	MMSEngineDBFacade_IngestionJobs.cpp
 	MMSEngineDBFacade_Lock.cpp
+	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
 	PersistenceLock.cpp
 	Validator.cpp
@@ -37,7 +41,6 @@ SET (SOURCES
 SET (HEADERS
 	Workspace.h
 	MMSStorage.h
-	#MySQLConnection.h
 	MMSEngineDBFacade.h
 	PersistenceLock.h
 	Validator.h

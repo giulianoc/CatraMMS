@@ -196,6 +196,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool deliveryAuthorization = true;
             bool shareWorkspace = true;
             bool editMedia = true;
+            bool editConfiguration = true;
+            bool killEncoding = true;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -207,6 +209,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     deliveryAuthorization,
                     shareWorkspace,
                     editMedia,
+					editConfiguration,
+					killEncoding,
                     workspaceName,
                     workspaceDirectoryName,
                     workspaceType,
@@ -588,6 +592,8 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
             bool deliveryAuthorization = true;
             bool shareWorkspace = true;
             bool editMedia = true;
+            bool editConfiguration = true;
+            bool killEncoding = true;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -599,6 +605,8 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     deliveryAuthorization,
                     shareWorkspace,
                     editMedia,
+					editConfiguration,
+					killEncoding,
                     workspaceName,
                     workspaceDirectoryName,
                     workspaceType,
@@ -811,6 +819,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     string userCountry,
     bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
+	bool editConfiguration, bool killEncoding,
     int64_t workspaceKeyToBeShared,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -953,6 +962,20 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("EDIT_MEDIA");
+                }
+
+                if (editConfiguration)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_CONFIGURATION");
+                }
+
+                if (killEncoding)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("KILL_ENCODING");
                 }
             }
 
@@ -1164,6 +1187,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     string userCountry,
     bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
+	bool editConfiguration, bool killEncoding,
     int64_t defaultWorkspaceKey,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1275,6 +1299,20 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                     if (flags != "")
                        flags.append(",");
                     flags.append("EDIT_MEDIA");
+                }
+
+                if (editConfiguration)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_CONFIGURATION");
+                }
+
+                if (killEncoding)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("KILL_ENCODING");
                 }
             }
 
@@ -1512,6 +1550,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         int64_t userKey,
         bool admin, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
         bool shareWorkspace, bool editMedia,
+        bool editConfiguration, bool killEncoding,
         string workspaceName,
         string workspaceDirectoryName,
         WorkspaceType workspaceType,
@@ -1607,6 +1646,20 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("EDIT_MEDIA");
+                }
+
+                if (editConfiguration)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_CONFIGURATION");
+                }
+
+                if (killEncoding)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("KILL_ENCODING");
                 }
             }
             
@@ -2061,7 +2114,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
     }    
 }
 
-tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool>
+tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
 	MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
@@ -2195,18 +2248,16 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool>
         throw e;
     }
     
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags;
-    
-    userKeyWorkspaceAndFlags = make_tuple(userKey, workspace,
+    return make_tuple(userKey, workspace,
         flags.find("ADMIN") == string::npos ? false : true,
         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
         flags.find("CREATE_PROFILES") == string::npos ? false : true,
         flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
         flags.find("SHARE_WORKSPACE") == string::npos ? false : true,
-        flags.find("EDIT_MEDIA") == string::npos ? false : true
+        flags.find("EDIT_MEDIA") == string::npos ? false : true,
+        flags.find("EDIT_CONFIGURATION") == string::npos ? false : true,
+        flags.find("KILL_ENCODING") == string::npos ? false : true
     );
-            
-    return userKeyWorkspaceAndFlags;
 }
 
 Json::Value MMSEngineDBFacade::login (
@@ -2470,6 +2521,12 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
                 field = "editMedia";
                 workspaceDetailRoot[field] = flags.find("EDIT_MEDIA") == string::npos ? false : true;
                 
+                field = "editConfiguration";
+                workspaceDetailRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos ? false : true;
+
+                field = "killEncoding";
+                workspaceDetailRoot[field] = flags.find("KILL_ENCODING") == string::npos ? false : true;
+
                 workspaceDetailsRoot.append(workspaceDetailRoot);                        
             }
         }
@@ -2550,7 +2607,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia)
+        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding)
 {
     Json::Value workspaceDetailRoot;
     string          lastSQLCommand;
@@ -2652,6 +2709,18 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                     flags.append(",");
                 flags.append("EDIT_MEDIA");
             }
+            if (newEditConfiguration)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("EDIT_CONFIGURATION");
+            }
+            if (newKillEncoding)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("KILL_ENCODING");
+            }
 
             lastSQLCommand = 
                 "update MMS_APIKey set flags = ? "
@@ -2716,6 +2785,12 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
         field = "editMedia";
         workspaceDetailRoot[field] = newEditMedia ? true : false;
+        
+        field = "editConfiguration";
+        workspaceDetailRoot[field] = newEditConfiguration ? true : false;
+        
+        field = "killEncoding";
+        workspaceDetailRoot[field] = newKillEncoding ? true : false;
         
         {
             lastSQLCommand = 
@@ -2810,6 +2885,91 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
     }
     
     return workspaceDetailRoot;
+}
+
+pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey)
+{
+    int64_t         totalSizeInBytes;
+    int64_t         maxStorageInMB;
+    
+    string      lastSQLCommand;
+
+    try
+    {
+        {
+            lastSQLCommand = 
+                "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                if (resultSet->isNull("totalSizeInBytes"))
+                    totalSizeInBytes = -1;
+                else
+                    totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
+            }
+        }
+        
+        {
+            lastSQLCommand = 
+                "select maxStorageInMB from MMS_Workspace where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                maxStorageInMB = resultSet->getInt("maxStorageInMB");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+        
+        return make_pair(totalSizeInBytes, maxStorageInMB);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
 }
 
 pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)

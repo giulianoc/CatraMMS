@@ -214,7 +214,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey       BIGINT UNSIGNED NOT NULL,"
                     "isOwner            TINYINT (1) NOT NULL,"
                     // same in MMS_ConfirmationCode
-                    "flags              SET('ADMIN', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA') NOT NULL,"
+                    "flags              SET('ADMIN', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA', 'EDIT_CONFIGURATION', 'KILL_ENCODING') NOT NULL,"
                     "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate		DATETIME NOT NULL,"
                     "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
@@ -263,7 +263,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_ConfirmationCode ("
                     "userKey                        BIGINT UNSIGNED NOT NULL,"
                     // same in MMS_APIKey
-                    "flags              SET('ADMIN', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA') NOT NULL,"
+                    "flags              SET('ADMIN', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA', 'EDIT_CONFIGURATION', 'KILL_ENCODING') NOT NULL,"
                     "workspaceKey                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "isSharedWorkspace              TINYINT (1) NOT NULL,"
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

@@ -346,7 +346,8 @@ void API::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>&
+			userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         unordered_map<string, string>& requestDetails
@@ -361,10 +362,13 @@ void API::manageRequestAndResponse(
     bool deliveryAuthorization;
     bool shareWorkspace;
     bool editMedia;
+    bool editConfiguration;
+    bool killEncoding;
 
     if (basicAuthenticationPresent)
     {
-        tie(userKey, workspace, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia) 
+        tie(userKey, workspace, admin, ingestWorkflow, createProfiles,
+				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding) 
                 = userKeyWorkspaceAndFlags;
 
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
@@ -380,6 +384,8 @@ void API::manageRequestAndResponse(
             + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
             + ", shareWorkspace: " + to_string(shareWorkspace)
             + ", editMedia: " + to_string(editMedia)
+            + ", editConfiguration: " + to_string(editConfiguration)
+            + ", killEncoding: " + to_string(killEncoding)
         );        
     }
 
@@ -1846,6 +1852,33 @@ void API::shareWorkspace_(
         }
         editMedia = (editMediaIt->second == "true" ? true : false);
 
+        bool editConfiguration;
+        auto editConfigurationIt = queryParameters.find("editConfiguration");
+        if (editConfigurationIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'editConfiguration' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        editConfiguration = (editConfigurationIt->second == "true" ? true : false);
+
+        bool killEncoding;
+        auto killEncodingIt = queryParameters.find("killEncoding");
+        if (killEncodingIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'killEncoding' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        killEncoding = (killEncodingIt->second == "true" ? true : false);
+
+
         string name;
         string email;
         string password;
@@ -1950,7 +1983,8 @@ void API::shareWorkspace_(
                     email, 
                     password,
                     country, 
-                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
+                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+					editMedia, editConfiguration, killEncoding,
                     workspace->_workspaceKey,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
@@ -2345,6 +2379,15 @@ void API::login(
 					string email;
 					tie(testCredentialsSuccessful, email) = testCredentialsSuccessfulAndEmail;
 
+					if (!testCredentialsSuccessful)
+					{
+						_logger->error(__FILEREF__ + "Ldap Login failed"
+							+ ", userName: " + userName
+						);
+
+						throw LoginFailed();
+					}
+
 					bool userAlreadyRegistered;
 					try
 					{
@@ -2411,13 +2454,15 @@ void API::login(
 						bool deliveryAuthorization = true;
 						bool shareWorkspace = false;
 						bool editMedia = true;
+						bool editConfiguration = false;
+						bool killEncoding = false;
 						pair<int64_t,string> userKeyAndEmail =
 							_mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName,
 							email,
 							string(""),	// userCountry,
 							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-							editMedia,
+							editMedia, editConfiguration, killEncoding,
 							_ldapDefaultWorkspaceKey,  
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
@@ -2747,6 +2792,8 @@ void API::updateWorkspace(
         bool newDeliveryAuthorization;
         bool newShareWorkspace;
         bool newEditMedia;
+        bool newEditConfiguration;
+        bool newKillEncoding;
 
         Json::Value metadataRoot;
         try
@@ -2797,7 +2844,9 @@ void API::updateWorkspace(
                 "CreateProfiles",
                 "DeliveryAuthorization",
                 "ShareWorkspace",
-                "EditMedia"
+                "EditMedia",
+                "EditConfiguration",
+                "KillEncoding"
             };
             for (string field: mandatoryFields)
             {
@@ -2824,6 +2873,8 @@ void API::updateWorkspace(
             newDeliveryAuthorization = metadataRoot.get("DeliveryAuthorization", "XXX").asBool();
             newShareWorkspace = metadataRoot.get("ShareWorkspace", "XXX").asBool();
             newEditMedia = metadataRoot.get("EditMedia", "XXX").asBool();
+            newEditConfiguration = metadataRoot.get("EditConfiguration", "XXX").asBool();
+            newKillEncoding = metadataRoot.get("KillEncoding", "XXX").asBool();
         }
 
         try
@@ -2841,7 +2892,7 @@ void API::updateWorkspace(
                     newMaxStorageInMB, newLanguageCode,
                     newIngestWorkflow, newCreateProfiles,
                     newDeliveryAuthorization, newShareWorkspace,
-                    newEditMedia);
+                    newEditMedia, newEditConfiguration, newKillEncoding);
 
             _logger->info(__FILEREF__ + "WorkspaceDetails updated"
                 + ", userKey: " + to_string(userKey)
@@ -7468,7 +7519,7 @@ void API::uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )
