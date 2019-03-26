@@ -3417,7 +3417,6 @@ void API::ingestionJobsStatus(
             status = statusIt->second;
         }
 
-		_logger->info(__FILEREF__ + "aaaaaaaa: " + ingestionType);
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
                     workspace, ingestionJobKey,
