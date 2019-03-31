@@ -7684,7 +7684,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
             sourcePhysicalPathKey_1 = -1;
         }
-        else
+        else if (dependencyType_1 == Validator::DependencyType::PhysicalPathKey)
         {
             sourcePhysicalPathKey_1 = key_1;
             
@@ -7700,6 +7700,15 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             tie(sourceMediaItemKey_1,localContentType, localTitle, userData, ingestionDate)
                     = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         }
+		else
+        {
+            string errorMessage = __FILEREF__ + "Wrong dependencyType"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1));
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
 
         int64_t sourceMediaItemKey_2;
         int64_t sourcePhysicalPathKey_2;
@@ -7709,7 +7718,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         MMSEngineDBFacade::ContentType referenceContentType_2;
         Validator::DependencyType dependencyType_2;
 
-        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_1;
+        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_2;
 
         if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
         {
@@ -7717,7 +7726,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
             sourcePhysicalPathKey_2 = -1;
         }
-        else
+        else if (dependencyType_2 == Validator::DependencyType::PhysicalPathKey)
         {
             sourcePhysicalPathKey_2 = key_2;
             
@@ -7732,6 +7741,15 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             string ingestionDate;
             tie(sourceMediaItemKey_2,localContentType, localTitle, userData, ingestionDate)
                     = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
+        }
+		else
+        {
+            string errorMessage = __FILEREF__ + "Wrong dependencyType"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2));
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
@@ -8620,7 +8638,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 }
 
 void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
-        string ftpDirectoryMediaSourceFileName,
+        string mediaSourcePathName,
         string md5FileCheckSum, int fileSizeInBytes)
 {
 	// we added the following two parameters for the FileIO::fileExisting method
@@ -8630,13 +8648,13 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	// delay to present the file 
 	long maxMillisecondsToWait = 5000;
 	long milliSecondsWaitingBetweenChecks = 100;
-    if (!FileIO::fileExisting(ftpDirectoryMediaSourceFileName,
+    if (!FileIO::fileExisting(mediaSourcePathName,
 				maxMillisecondsToWait, milliSecondsWaitingBetweenChecks))
     {
         string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName;
+                + ", mediaSourcePathName: " + mediaSourcePathName;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -8647,14 +8665,14 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
         MD5         md5;
         char        md5RealDigest [32 + 1];
 
-        strcpy (md5RealDigest, md5.digestFile((char *) ftpDirectoryMediaSourceFileName.c_str()));
+        strcpy (md5RealDigest, md5.digestFile((char *) mediaSourcePathName.c_str()));
 
         if (md5FileCheckSum != md5RealDigest)
         {
             string errorMessage = __FILEREF__ + "MD5 check failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
+                + ", mediaSourcePathName: " + mediaSourcePathName
                 + ", md5FileCheckSum: " + md5FileCheckSum
                 + ", md5RealDigest: " + md5RealDigest
                     ;
@@ -8667,14 +8685,14 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long downloadedFileSizeInBytes = 
-            FileIO:: getFileSizeInBytes (ftpDirectoryMediaSourceFileName, inCaseOfLinkHasItToBeRead);
+            FileIO:: getFileSizeInBytes (mediaSourcePathName, inCaseOfLinkHasItToBeRead);
 
         if (fileSizeInBytes != downloadedFileSizeInBytes)
         {
             string errorMessage = __FILEREF__ + "FileSize check failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
+                + ", mediaSourcePathName: " + mediaSourcePathName
                 + ", metadataFileSizeInBytes: " + to_string(fileSizeInBytes)
                 + ", downloadedFileSizeInBytes: " + to_string(downloadedFileSizeInBytes)
             ;

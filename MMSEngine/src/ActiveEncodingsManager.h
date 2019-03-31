@@ -56,7 +56,7 @@ public:
 private:
     struct EncodingJob
     {
-        EncodingJobStatus			_status;
+		EncoderVideoAudioProxy::EncodingJobStatus			_status;
         chrono::system_clock::time_point	_encodingJobStart;
 
         shared_ptr<MMSEngineDBFacade::EncodingItem>	_encodingItem;
@@ -64,7 +64,7 @@ private:
         
         EncodingJob()
         {
-            _status         = EncodingJobStatus::Free;
+            _status         = EncoderVideoAudioProxy::EncodingJobStatus::Free;
         }
     };
 

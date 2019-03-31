@@ -138,12 +138,22 @@ void ActiveEncodingsManager::operator()()
                 {
                     EncodingJob* encodingJob = &(encodingJobs[encodingJobIndex]);
 
-                    if (encodingJob->_status == EncodingJobStatus::Free)
+                    if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Free)
                         continue;
-                    else if (encodingJob->_status == EncodingJobStatus::Running)
+                    else if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running
+						|| encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun)
                     {
-                        // if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
-                        //         || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::Overlay)
+						/*
+						// We will start to check the encodingProgress after at least XXX seconds.
+						// This is because the status is set to EncodingJobStatus::Running as soon as it is created
+						// the encoderVideoAudioProxyThread thread. Many times the thread returns soon because
+						// of 'No encoding available' and in this case getEncodingProgress will return 'No encoding job key found'
+
+                        if (chrono::system_clock::now() - encodingJob->_encodingJobStart >= chrono::seconds(secondsToBlock))
+
+						2019-03-31: Above commented because it was introduced the GoingToRun status
+						*/
+						if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running)
                         {
                             try
                             {
@@ -174,34 +184,36 @@ void ActiveEncodingsManager::operator()()
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed");
                             }
 
-                            if (encodingJob->_encodingItem->_encodingType !=
-									MMSEngineDBFacade::EncodingType::LiveRecorder
-									&& chrono::duration_cast<chrono::hours>(
-                                    chrono::system_clock::now() - encodingJob->_encodingJobStart) >
-                                    chrono::hours(24))
-                            {
-                                _logger->error(__FILEREF__ + "EncodingJob is not finishing"
-									+ ", elapsed (hours): " + 
-									to_string(chrono::duration_cast<chrono::hours>(
-										chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
-                                );
-                            }
-                            else
-                            {
-                                _logger->info(__FILEREF__ + "EncodingJob still running"
-                                        + ", elapsed (minutes): " + 
-                                            to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
-                                        + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
-                                        + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                                        + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                                        + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
-                                        + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                        + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-                                );
-                            }
                         }
+
+						if (encodingJob->_encodingItem->_encodingType !=
+							MMSEngineDBFacade::EncodingType::LiveRecorder
+							&& chrono::duration_cast<chrono::hours>(
+								chrono::system_clock::now() - encodingJob->_encodingJobStart) >
+								chrono::hours(24))
+						{
+							_logger->error(__FILEREF__ + "EncodingJob is not finishing"
+								+ ", elapsed (hours): " + to_string(chrono::duration_cast<chrono::hours>(
+									chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+								+ ", encodingJob->_status: " + EncoderVideoAudioProxy::toString(encodingJob->_status)
+							);
+						}
+						else
+						{
+							_logger->info(__FILEREF__ + "EncodingJob still running"
+								+ ", elapsed (minutes): " + 
+								to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
+								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+								+ ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+								+ ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+								+ ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+								+ ", encodingJob->_status: " + EncoderVideoAudioProxy::toString(encodingJob->_status)
+							);
+						}
                     }
-                    else // if (encodingJob._status == EncodingJobStatus::ToBeRun)
+                    else // if (encodingJob._status == EncoderVideoAudioProxy::EncodingJobStatus::ToBeRun)
                     {
                         chrono::system_clock::time_point        processingItemStart;
 
@@ -278,7 +290,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         // the lock guarantees us that the _ejsStatus is not updated
         // before the below _ejsStatus setting
         encodingJob->_encodingJobStart		= chrono::system_clock::now();
-        encodingJob->_status			= EncodingJobStatus::Running;
+        encodingJob->_status			= EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun;
     }
     else if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
     {    
@@ -315,7 +327,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
             );
 
-            encodingJob->_status = EncodingJobStatus::Free;
+            encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 
             // throw e;
             return;
@@ -360,7 +372,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
             );
 
-            encodingJob->_status = EncodingJobStatus::Free;
+            encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 
             // throw e;
             return;
@@ -385,13 +397,13 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what());
 
-            encodingJob->_status = EncodingJobStatus::Free;
+            encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 
             // throw e;
             return;
         }
 
-        encodingJob->_status = EncodingJobStatus::Free;
+        encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
     }
     else
     {
@@ -830,9 +842,9 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
     int encodingJobIndex;
     for (encodingJobIndex = 0; encodingJobIndex < maxEncodingsToBeManaged; encodingJobIndex++)
     {
-        if ((encodingJobs [encodingJobIndex])._status == EncodingJobStatus::Free)
+        if ((encodingJobs [encodingJobIndex])._status == EncoderVideoAudioProxy::EncodingJobStatus::Free)
         {
-            (encodingJobs [encodingJobIndex])._status	= EncodingJobStatus::ToBeRun;
+            (encodingJobs [encodingJobIndex])._status	= EncoderVideoAudioProxy::EncodingJobStatus::ToBeRun;
             (encodingJobs [encodingJobIndex])._encodingJobStart	= chrono::system_clock::now();
             (encodingJobs [encodingJobIndex])._encodingItem		= encodingItem;
             // (encodingJobs [encodingJobIndex])._petEncodingThread			= (void *) NULL;

@@ -1355,7 +1355,7 @@ void Validator::validateAddContentMetadata(
 
 void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
-{     
+{
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
@@ -1375,7 +1375,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
     }    
@@ -1448,7 +1448,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = true;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
     }    
@@ -1479,7 +1479,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1554,7 +1554,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1609,7 +1609,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1662,7 +1662,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1719,7 +1719,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1844,7 +1844,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -1918,9 +1918,13 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() != 2)
+		// before the check was
+		//	if (referencesRoot.size() != 2)
+		// This was changed to > 2 because it could be used
+		// the "DependOnIngestionJobKeysToBeAddedToReferences" thg
+        if (referencesRoot.size() > 2)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it does not have two elements"
+            string errorMessage = __FILEREF__ + "Field is present but it has more than two elements"
                     + ", Field: " + field
                     + ", label: " + label
                     ;
@@ -1931,7 +1935,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -2135,7 +2139,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -2215,7 +2219,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 			*/
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 			/*
@@ -2315,7 +2319,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
         } 
@@ -2420,7 +2424,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
         } 
@@ -2490,7 +2494,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
         }  
@@ -2605,7 +2609,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 
@@ -2682,7 +2686,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 
@@ -2776,7 +2780,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 
@@ -2886,7 +2890,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 
@@ -2995,7 +2999,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 
@@ -3174,7 +3178,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
             bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
             bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, parametersRoot, dependencies,
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
 			if (validateDependenciesToo)
@@ -3231,7 +3235,7 @@ bool Validator::isMetadataPresent(Json::Value root, string field)
         return false;
 }
 
-void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoot, 
+void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value parametersRoot, 
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
         bool encodingProfileFieldsToBeManaged)
@@ -3303,6 +3307,15 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
         MMSEngineDBFacade::ContentType      referenceContentType;
         try
         {
+			_logger->debug(__FILEREF__ + "fillDependencies"
+				+ ", label: " + label
+				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+				+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", referenceUniqueName: " + referenceUniqueName
+				+ ", referenceLabel: " + to_string(referenceLabel)
+			);
+
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
@@ -3358,9 +3371,27 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
                                 mediaItemKeyPhysicalPathKeyAndContentType;
 
                             if (referencePhysicalPathKey != -1)
+							{
+								_logger->debug(__FILEREF__ + "fillDependencies"
+									+ ", label: " + label
+									+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+									+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+									+ ", DependencyType::PhysicalPathKey"
+								);
+
                                 dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey));
+							}
                             else if (referenceMediaItemKey != -1)
+							{
+								_logger->debug(__FILEREF__ + "fillDependencies"
+									+ ", label: " + label
+									+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+									+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+									+ ", DependencyType::MediaItemKey"
+								);
+
                                 dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+							}
                             else    // referenceLabel
                                 ;
                         }
@@ -3377,7 +3408,16 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
                             else 
                             */
                             if (referenceMediaItemKey != -1)
+							{
+								_logger->debug(__FILEREF__ + "fillDependencies"
+									+ ", label: " + label
+									+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+									+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+									+ ", DependencyType::MediaItemKey"
+								);
+
                                 dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+							}
                             else    // referenceLabel
                                 ;
                         }
@@ -3450,9 +3490,26 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
             }
             
             if (referencePhysicalPathKey != -1)
+			{
+				_logger->debug(__FILEREF__ + "fillDependencies"
+					+ ", label: " + label
+					+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+					+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+					+ ", DependencyType::PhysicalPathKey"
+				);
+
                 dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey));
+			}
             else if (referenceMediaItemKey != -1)
+			{
+				_logger->debug(__FILEREF__ + "fillDependencies"
+					+ ", label: " + label
+					+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+					+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+					+ ", DependencyType::MediaItemKey"
+				);
                 dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+			}
             else    // referenceLabel
                 ;
         }

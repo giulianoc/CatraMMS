@@ -6,6 +6,14 @@
 	"Type": "Overlay-Image-On-Video",
 
 	"Parameters": {
+		// Optional. This tag is used in the scenario where the Video is inherit from the parent Task
+		//	and the Image is already inside MMS. In this case the References tag referes the Image
+		//	and the Video is inherit from the parent Task.
+		//	It works also in the viceversa case where the Video is already into MMS and the Image is
+		//	inherit from the parent Task
+		//	In both the above cases, this tag has to be set to true
+		"DependenciesToBeAddedToReferences": false,
+
 		// mandatory
 		"References": [
 			// mandatory. Two References needed to identify the Image and the Video.

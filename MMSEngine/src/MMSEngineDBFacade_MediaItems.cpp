@@ -441,14 +441,16 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             else
             {
-                string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist");
+                string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist"
+						+ ", physicalPathKey: " + to_string(physicalPathKey)
+						);
                 _logger->error(errorMessage);
 
                 // throw runtime_error(errorMessage);
 				newMediaItemKey = 0;	// let's force a MIK that does not exist
             }
         }
-        
+
         string sqlWhere;
 		if (tags.size() > 0)
 			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");

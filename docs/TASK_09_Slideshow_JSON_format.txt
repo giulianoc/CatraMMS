@@ -6,6 +6,11 @@
 	"Type": "Slideshow",
 
 	"Parameters": {
+		// Optional. This tag is used in the scenario where it is needed to use both
+		//	the media inherited by the parent Task and the media specified by the References tag
+		//  In this case, this tag has to be set to true
+		"DependenciesToBeAddedToReferences": false,
+
 		// mandatory
 		"References": [
 			// mandatory. As many References as the number of images.

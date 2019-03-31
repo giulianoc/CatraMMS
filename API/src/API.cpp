@@ -6800,8 +6800,11 @@ void API::ingestion(
 
 vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
+
         vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
+
         vector<int64_t> dependOnIngestionJobKeysReferences,
+
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
 {
@@ -7021,6 +7024,18 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		}
 	}
 
+	// Generally if the References tag is present, these will be used as references to the Task
+	// In case the References tag is NOT present, dependOnIngestionJobKeysReferences are used
+	// In same cases, we want to use both. For example a video is ingested and we want to overlay
+	// a logo that is already present into MMS. In this case we add the Reference for the Image and
+	// we inherit the video from the Add-Content Task.
+    bool dependenciesToBeAddedToReferences = false;
+    field = "DependenciesToBeAddedToReferences";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+		dependenciesToBeAddedToReferences = parametersRoot.get(field, false).asBool();
+	}
+
     bool referencesSectionPresent = false;
     Json::Value referencesRoot(Json::arrayValue);
     if (parametersSectionPresent)
@@ -7033,11 +7048,13 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             referencesSectionPresent = true;
         }
     }
-    
+
     if (referencesSectionPresent)
     {
+		// Inside the References Tag, If present ReferenceLabel, replace it with ReferenceIngestionJobKey
+
         bool referencesChanged = false;
-        
+
         for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
         {
             Json::Value referenceRoot = referencesRoot[referenceIndex];
@@ -7121,8 +7138,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         }
         */
     }
-    else if (dependOnIngestionJobKeysReferences.size() > 0)
+
+    if ((!referencesSectionPresent || dependenciesToBeAddedToReferences)
+			&& dependOnIngestionJobKeysReferences.size() > 0)
     {
+		// Enter here if No References tag is present OR we want to add dependOnReferences to the Raferences tag
+
         for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysReferences.size(); ++referenceIndex)
         {
             Json::Value referenceRoot;
@@ -7131,7 +7152,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             
             referencesRoot.append(referenceRoot);
         }
-        
+
         field = "Parameters";
         string arrayField = "References";
         parametersRoot[arrayField] = referencesRoot;

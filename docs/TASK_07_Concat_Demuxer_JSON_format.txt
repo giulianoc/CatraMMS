@@ -6,6 +6,11 @@
 	"Type": "Concat-Demuxer",
 
 	"Parameters": {
+		// Optional. This tag is used in the scenario where it is needed to concatenate both
+		//	the media inherited by the parent Task and the media specified by the References tag
+		//  In this case, this tag has to be set to true
+		"DependenciesToBeAddedToReferences": false,
+
 		// mandatory
 		"References": [
 			// mandatory. At least two References have to be present

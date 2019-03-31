@@ -168,7 +168,7 @@ private:
     void validateEncodingProfileRootImageMetadata(
         Json::Value encodingProfileRoot);
     
-    void fillDependencies(int64_t workspaceKey,
+    void fillDependencies(int64_t workspaceKey, string label,
         Json::Value parametersRoot,         
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,

@@ -1205,9 +1205,15 @@ void FFMpeg::overlayImageOnVideo(
             ffmpegImagePosition_Y_InPixel = 
                     regex_replace(ffmpegImagePosition_Y_InPixel, regex("image_height"), "overlay_h");
 
+			/*
             string ffmpegFilterComplex = string("-filter_complex 'overlay=")
                     + ffmpegImagePosition_X_InPixel + ":"
                     + ffmpegImagePosition_Y_InPixel + "'"
+                    ;
+			*/
+            string ffmpegFilterComplex = string("-filter_complex overlay=")
+                    + ffmpegImagePosition_X_InPixel + ":"
+                    + ffmpegImagePosition_Y_InPixel
                     ;
 		#ifdef __EXECUTE__
             string ffmpegExecuteCommand;

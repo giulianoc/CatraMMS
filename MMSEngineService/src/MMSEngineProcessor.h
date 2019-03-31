@@ -306,7 +306,7 @@ private:
         Json::Value root);
 
     void validateMediaSourceFile (int64_t ingestionJobKey,
-        string ftpDirectoryMediaSourceFileName,
+        string mediaSourcePathName,
         string md5FileCheckSum, int fileSizeInBytes);
 
     bool isMetadataPresent(Json::Value root, string field);

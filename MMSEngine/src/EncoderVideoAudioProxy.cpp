@@ -1359,6 +1359,12 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 */                        
             }
             
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
@@ -2215,6 +2221,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 */                        
             }
             
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
@@ -3048,7 +3060,13 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 }
                 */                        
             }
-            
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
@@ -3884,7 +3902,13 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 }
                 */                        
             }
-            
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
@@ -4395,7 +4419,13 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 }
                 */                        
             }
-            
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
@@ -4616,6 +4646,12 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 string EncoderVideoAudioProxy::faceRecognition()
 {
     
+	{
+		lock_guard<mutex> locker(*_mtEncodingJobs);
+
+		*_status = EncodingJobStatus::Running;
+	}
+
 	string faceRecognitionCascadeName;
 	string sourcePhysicalPath;
 	string faceRecognitionOutput;
@@ -5085,6 +5121,12 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 
 string EncoderVideoAudioProxy::faceIdentification()
 {
+	{
+		lock_guard<mutex> locker(*_mtEncodingJobs);
+
+		*_status = EncodingJobStatus::Running;
+	}
+
 	// build the deep learned model
 	vector<cv::Mat> images;
 	vector<int> idImages;
@@ -6001,7 +6043,13 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     }                        
                 }
             }
-            
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
 			_logger->info(__FILEREF__ + "Update EncodingJob"
 				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost

@@ -49,13 +49,6 @@ struct EncodingKilledByUser: public exception {
     };
 };
 
-enum class EncodingJobStatus
-{
-    Free,
-    ToBeRun,
-    Running
-};
-
 /*
 struct EncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
@@ -67,6 +60,30 @@ struct EncodingStatusNotAvailable: public exception {
 
 class EncoderVideoAudioProxy {
 public:
+	enum class EncodingJobStatus
+	{
+		Free,
+		ToBeRun,
+		GoingToRun,	// EncoderVideoAudioProxy thread created but still not confirmed by Encoder process (ffmpegEncoder.fcgi)
+		Running
+	};
+	static const char* toString(const EncodingJobStatus& encodingJobStatus)
+	{
+		switch (encodingJobStatus)
+		{
+			case EncodingJobStatus::Free:
+				return "Free";
+			case EncodingJobStatus::ToBeRun:
+				return "ToBeRun";
+			case EncodingJobStatus::GoingToRun:
+				return "GoingToRun";
+			case EncodingJobStatus::Running:
+				return "Running";
+			default:
+				throw runtime_error(string("Wrong encodingJobStatus"));
+		}
+	}
+
     EncoderVideoAudioProxy();
 
     virtual ~EncoderVideoAudioProxy();

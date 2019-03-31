@@ -3746,7 +3746,11 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         {
             string errorMessage = __FILEREF__ + "addOverlayImageOnVideoJob is not receiving one Video and one Image"
                     + ", contentType_1: " + toString(contentType_1)
+					+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
+					+ ", physicalPathKey_1: " + to_string(physicalPathKey_1)
                     + ", contentType_2: " + toString(contentType_2)
+					+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
+					+ ", physicalPathKey_2: " + to_string(physicalPathKey_2)
             ;
             _logger->error(errorMessage);
 
