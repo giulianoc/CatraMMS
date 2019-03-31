@@ -2543,6 +2543,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     chrono::system_clock::time_point now = chrono::system_clock::now();
                     time_t utcTime = chrono::system_clock::to_time_t(now);
 
+					// 2019-03-31: in case startPublishing is wrong, check how gmtime is used in MMSEngineDBFacade_Lock.cpp
                 	gmtime_r (&utcTime, &tmDateTime);
 
                     sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
@@ -2565,6 +2566,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                     time_t utcTime = chrono::system_clock::to_time_t(forever);
 
+					// 2019-03-31: in case startPublishing is wrong, check how gmtime is used in MMSEngineDBFacade_Lock.cpp
                 	gmtime_r (&utcTime, &tmDateTime);
 
                     sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",

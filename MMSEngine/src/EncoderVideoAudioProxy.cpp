@@ -5802,11 +5802,14 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		segmentListPathName =
 			contentsPath + "/"
 			+ to_string(_encodingItem->_ingestionJobKey)
+			+ "_" + to_string(_encodingItem->_encodingJobKey)
 			+ ".liveRecorder.list"
 		;
 
-		recordedFileNamePrefix = string("liveRecorder_") + to_string(
-				_encodingItem->_ingestionJobKey);
+		recordedFileNamePrefix = string("liveRecorder_")
+			+ to_string(_encodingItem->_ingestionJobKey)
+			+ "_" + to_string(_encodingItem->_encodingJobKey)
+			;
     }
 
 	time_t utcNow = 0;
@@ -6115,6 +6118,8 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNow)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", encodingFinished: " + to_string(encodingFinished)
+                    + ", killedByUser: " + to_string(killedByUser)
                     + ", body: " + body
                     + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
@@ -6127,6 +6132,7 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", autoRenew: " + to_string(autoRenew) 
+                    + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
@@ -7004,6 +7010,58 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
 time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	string mediaLiveRecorderFileName)
 {
+	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
+	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
+
+	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
+		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+	);
+
+	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
+	if (mediaLiveRecorderFileName.length() < 20 ||
+		   endIndex == string::npos)
+	{
+		string errorMessage = __FILEREF__ + "wrong media live recorder format"
+			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+			;
+			_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	size_t beginUTCIndex = mediaLiveRecorderFileName.find_last_of("_");
+	if (mediaLiveRecorderFileName.length() < 20 ||
+		   beginUTCIndex == string::npos)
+	{
+		string errorMessage = __FILEREF__ + "wrong media live recorder format"
+			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+			;
+			_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	time_t utcMediaLiveRecorderStartTime = stol(mediaLiveRecorderFileName.substr(beginUTCIndex + 1,
+				endIndex - beginUTCIndex + 1));
+
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, utcMediaLiveRecorderStartTime is fixed.
+	// From the other side the first generated file is the only one where we can have seconds
+	// different from 0, anyway here this is not possible because we discard the first chunk
+	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
+	if (seconds != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+				+ ", seconds: " + to_string(seconds)
+				);
+		utcMediaLiveRecorderStartTime -= seconds;
+	}
+
+	return utcMediaLiveRecorderStartTime;
+	/*
 	tm                      tmDateTime;
 
 
@@ -7054,9 +7112,10 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	}
 	tmDateTime.tm_sec      = seconds;
 
-	utcMediaLiveRecorderStartTime = mktime (&tmDateTime);
+	utcMediaLiveRecorderStartTime = timegm (&tmDateTime);
 
 	return utcMediaLiveRecorderStartTime;
+	*/
 }
 
 time_t EncoderVideoAudioProxy::getMediaLiveRecorderEndTime(

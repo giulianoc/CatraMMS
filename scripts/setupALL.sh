@@ -6,6 +6,8 @@ chmod u+x /opt/catramms/CatraMMS/scripts/*.sh
 echo "crontab"
 crontab -u mms /opt/catramms/CatraMMS/conf/crontab.txt
 
+/opt/catramms/CatraMMS/scripts/stopAll.sh stop
+
 echo "nginx"
 /opt/catramms/CatraMMS/scripts/nginx.sh stop
 /opt/catramms/CatraMMS/scripts/nginx.sh status

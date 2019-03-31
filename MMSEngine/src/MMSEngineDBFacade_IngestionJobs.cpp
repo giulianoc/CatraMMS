@@ -114,10 +114,20 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             bool moreRows = true;
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
+				// 2019-03-31: scenario: we have a long link of encodings to be done (113 encodings) and among these we have 2 live recordings.
+				//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
+				//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
                 lastSQLCommand = 
                     "select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
                         "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+						"and ij.ingestionType = 'Live-Recorder' "
+                        "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						"union "
+                    "select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                        "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+						"and ij.ingestionType != 'Live-Recorder' "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
                         "limit ? offset ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -127,6 +137,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
