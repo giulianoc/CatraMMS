@@ -407,19 +407,21 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
         }
         
         {
-			// if the ingestionJob is 'just' finished, anyway we have to get the ingestionJob in order to
-			// remove the last backup file 
+			// if the ingestionJob is 'just' finished, anyway we have to get the ingestionJob
+			// in order to remove the last backup file 
 			int toleranceMinutes = 5;
             lastSQLCommand =
 				string("select ingestionJobKey from MMS_IngestionJob "
 					"where ingestionType = 'Live-Recorder' "
 					"and JSON_EXTRACT(metaDataContent, '$.HighAvailability') = true "
 					"and (status = 'EncodingQueued' "
-					"or (status = 'End_TaskSuccess' and NOW() <= DATE_ADD(endProcessing, INTERVAL ? MINUTE))) "
+					"or (status = 'End_TaskSuccess' and "
+						"NOW() <= DATE_ADD(endProcessing, INTERVAL ? MINUTE))) "
 				);
 			// This select returns all the ingestion job key of running HA LiveRecording
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, toleranceMinutes);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -427,54 +429,70 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
             {
 				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-				// get all the couples, main and backup, and set one validated and the other not validated
+				// get all the couples, main and backup, and set one validated
+				//	and the other not validated
 				{
 					_logger->info(__FILEREF__ + "Manage HA LiveRecording, main and backup (couple)"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						);
 
 					lastSQLCommand =
-						string("select JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') as utcChunkStartTime "
-							"from MMS_MediaItem where JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
-							"and retentionInMinutes != 0 group by utcChunkStartTime having count(*) = 2 for update"
+						string("select JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') "
+							"as utcChunkStartTime from MMS_MediaItem where "
+							"JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
+							"and retentionInMinutes != 0 "
+							"group by JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') "
+								"having count(*) = 2 for update"
 						);
-					// This select returns all the chunks (media item utcChunkStartTime) that are present two times
-					// (because of HA live recording)
+					// This select returns all the chunks (media item utcChunkStartTime)
+					// that are present two times (because of HA live recording)
 
-					shared_ptr<sql::PreparedStatement> preparedStatementChunkStartTime (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					shared_ptr<sql::PreparedStatement> preparedStatementChunkStartTime (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
-					preparedStatementChunkStartTime->setInt64(queryParameterIndex++, ingestionJobKey);
-					shared_ptr<sql::ResultSet> resultSetChunkStartTime (preparedStatementChunkStartTime->executeQuery());
+					preparedStatementChunkStartTime->setInt64(
+							queryParameterIndex++, ingestionJobKey);
+					shared_ptr<sql::ResultSet> resultSetChunkStartTime (
+							preparedStatementChunkStartTime->executeQuery());
 					while (resultSetChunkStartTime->next())
 					{
-						int64_t utcChunkStartTime = resultSetChunkStartTime->getInt64("utcChunkStartTime");
+						int64_t utcChunkStartTime =
+							resultSetChunkStartTime->getInt64("utcChunkStartTime");
 
-						_logger->info(__FILEREF__ + "Manage HA LiveRecording Chunk, main and backup (couple)"
+						_logger->info(__FILEREF__
+								+ "Manage HA LiveRecording Chunk, main and backup (couple)"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 							);
 
 						int64_t mediaItemKeyChunk_1;
 						bool mainChunk_1;
-						int64_t durationInMilliSecondsChunk_1;                                                   
+						int64_t durationInMilliSecondsChunk_1;
 						int64_t mediaItemKeyChunk_2;
 						bool mainChunk_2;
-						int64_t durationInMilliSecondsChunk_2;                                                   
+						int64_t durationInMilliSecondsChunk_2;
 
 						lastSQLCommand =
-							string("select mediaItemKey, CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main from MMS_MediaItem "
+							string("select mediaItemKey, "
+									"CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main from MMS_MediaItem "
 								"where JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 								"and JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
 							);
-						shared_ptr<sql::PreparedStatement> preparedStatementMediaItemDetails (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						shared_ptr<sql::PreparedStatement> preparedStatementMediaItemDetails (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 						int queryParameterIndex = 1;
-						preparedStatementMediaItemDetails->setInt64(queryParameterIndex++, ingestionJobKey);
-						preparedStatementMediaItemDetails->setInt64(queryParameterIndex++, utcChunkStartTime);
-						shared_ptr<sql::ResultSet> resultSetMediaItemDetails (preparedStatementMediaItemDetails->executeQuery());
+						preparedStatementMediaItemDetails->setInt64(
+								queryParameterIndex++, ingestionJobKey);
+						preparedStatementMediaItemDetails->setInt64(
+								queryParameterIndex++, utcChunkStartTime);
+						shared_ptr<sql::ResultSet> resultSetMediaItemDetails (
+								preparedStatementMediaItemDetails->executeQuery());
 						if (resultSetMediaItemDetails->next())
 						{
-							mediaItemKeyChunk_1 = resultSetMediaItemDetails->getInt64("mediaItemKey");
-							mainChunk_1 = resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
+							mediaItemKeyChunk_1 =
+								resultSetMediaItemDetails->getInt64("mediaItemKey");
+							mainChunk_1 =
+								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
 							{
 								int videoWidth;
@@ -491,11 +509,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 								int64_t physicalPathKey = -1;
 								tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-									videoDetails = getVideoDetails(mediaItemKeyChunk_1, physicalPathKey);
+									videoDetails = getVideoDetails(mediaItemKeyChunk_1,
+											physicalPathKey);
 
 								tie(durationInMilliSecondsChunk_1, bitRate,
-									videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-									audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+									videoCodecName, videoProfile, videoWidth, videoHeight,
+										videoAvgFrameRate, videoBitRate,
+									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
+										= videoDetails;
 							}
 						}
 						else
@@ -511,8 +532,10 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 						if (resultSetMediaItemDetails->next())
 						{
-							mediaItemKeyChunk_2 = resultSetMediaItemDetails->getInt64("mediaItemKey");
-							mainChunk_2 = resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
+							mediaItemKeyChunk_2 =
+								resultSetMediaItemDetails->getInt64("mediaItemKey");
+							mainChunk_2 =
+								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
 							{
 								int videoWidth;
@@ -529,11 +552,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 								int64_t physicalPathKey = -1;
 								tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-									videoDetails = getVideoDetails(mediaItemKeyChunk_2, physicalPathKey);
+									videoDetails = getVideoDetails(mediaItemKeyChunk_2,
+											physicalPathKey);
 
 								tie(durationInMilliSecondsChunk_2, bitRate,
-									videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-									audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+									videoCodecName, videoProfile, videoWidth, videoHeight,
+										videoAvgFrameRate, videoBitRate,
+									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
+										= videoDetails;
 							}
 						}
 						else
@@ -558,15 +584,18 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							continue;
 						}
 
-						_logger->info(__FILEREF__ + "Manage HA LiveRecording Chunks, main and backup (couple)"
+						_logger->info(__FILEREF__
+							+ "Manage HA LiveRecording Chunks, main and backup (couple)"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 							+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
 							+ ", mainChunk_1: " + to_string(mainChunk_1)
-							+ ", durationInMilliSecondsChunk_1: " + to_string(durationInMilliSecondsChunk_1)
+							+ ", durationInMilliSecondsChunk_1: "
+								+ to_string(durationInMilliSecondsChunk_1)
 							+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
 							+ ", mainChunk_2: " + to_string(mainChunk_2)
-							+ ", durationInMilliSecondsChunk_2: " + to_string(durationInMilliSecondsChunk_2)
+							+ ", durationInMilliSecondsChunk_2: "
+								+ to_string(durationInMilliSecondsChunk_2)
 							);
 
 						{
@@ -596,16 +625,20 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 									mediaItemKeyValidated = mediaItemKeyChunk_1;
 							}
 
-							_logger->info(__FILEREF__ + "Manage HA LiveRecording, reset of chunk, main and backup (couple)"
+							_logger->info(__FILEREF__
+								+ "Manage HA LiveRecording, reset of chunk, main and backup (couple)"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 								+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
 								+ ", mainChunk_1: " + to_string(mainChunk_1)
-								+ ", durationInMilliSecondsChunk_1: " + to_string(durationInMilliSecondsChunk_1)
+								+ ", durationInMilliSecondsChunk_1: "
+									+ to_string(durationInMilliSecondsChunk_1)
 								+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
 								+ ", mainChunk_2: " + to_string(mainChunk_2)
-								+ ", durationInMilliSecondsChunk_2: " + to_string(durationInMilliSecondsChunk_2)
-								+ ", mediaItemKeyNotValidated: " + to_string(mediaItemKeyNotValidated)
+								+ ", durationInMilliSecondsChunk_2: "
+									+ to_string(durationInMilliSecondsChunk_2)
+								+ ", mediaItemKeyNotValidated: "
+									+ to_string(mediaItemKeyNotValidated)
 								+ ", mediaItemKeyValidated: " + to_string(mediaItemKeyValidated)
 							);
 
@@ -614,14 +647,17 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 								lastSQLCommand = 
 									"update MMS_MediaItem set userData = JSON_INSERT(`userData`, '$.mmsData.validated', true) "
 									"where mediaItemKey = ?";
-								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
 								int queryParameterIndex = 1;
-								preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyValidated);
+								preparedStatementUpdate->setInt64(
+										queryParameterIndex++, mediaItemKeyValidated);
 
-								int rowsUpdated = preparedStatementUpdate->executeUpdate();            
+								int rowsUpdated = preparedStatementUpdate->executeUpdate();
 								if (rowsUpdated != 1)
 									_logger->error(__FILEREF__ + "It should never happen"
-										+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyValidated)
+										+ ", mediaItemKeyToBeValidated: "
+										+ to_string(mediaItemKeyValidated)
 									);
 							}
 
@@ -644,8 +680,10 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 					}
 				}
 
-				// get all the singles, main or backup, that, after a while, was not marked as validated ot not. Mark them as validated.
-				// This is the scenario where just one chunk is generated, main or backup, So it has to be marked as validated
+				// get all the singles, main or backup, that, after a while,
+				// was not marked as validated ot not. Mark them as validated.
+				// This is the scenario where just one chunk is generated, main or backup,
+				// So it has to be marked as validated
 				{
 					int chunksToBeManagedWithinSeconds = 60;
 

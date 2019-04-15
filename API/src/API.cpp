@@ -658,6 +658,10 @@ void API::manageRequestAndResponse(
     {
         mediaItemsList(request, workspace, queryParameters, requestBody, admin);
     }
+    else if (method == "tagsList")
+    {
+        tagsList(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "uploadedBinary")
     {
         uploadedBinary(request, requestMethod,
@@ -3694,9 +3698,103 @@ void API::killEncodingJob(
         }
 
         {
-			string transcoder = _mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
+			tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngineDBFacade::EncodingStatus,int64_t> encodingJobDetails =
+				_mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
 
-			killEncodingJob(transcoder, encodingJobKey);
+			string type;
+			string transcoder;
+			MMSEngineDBFacade::EncodingStatus status;
+			bool highAvailability;
+			bool main;
+			int64_t theOtherEncodingJobKey;
+			string theOtherTranscoder;
+			MMSEngineDBFacade::EncodingStatus theOtherStatus;
+
+			tie(type, transcoder, status, highAvailability, main, theOtherTranscoder, theOtherStatus, theOtherEncodingJobKey) =
+				encodingJobDetails;
+
+			_logger->info(__FILEREF__ + "getEncodingJobDetails"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", type: " + type
+				+ ", transcoder: " + transcoder
+				+ ", status: " + MMSEngineDBFacade::toString(status)
+				+ ", highAvailability: " + to_string(highAvailability)
+				+ ", main: " + to_string(main)
+				+ ", theOtherTranscoder: " + theOtherTranscoder
+				+ ", theOtherStatus: " + MMSEngineDBFacade::toString(theOtherStatus)
+				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
+			);
+
+			if (type == "LiveRecorder")
+			{
+				if (highAvailability)
+				{
+					// first has to be killed the main encodingJob, it updates the encoder status
+					// later the other encodingJob
+					if (main)
+					{
+						if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+						{
+							_logger->info(__FILEREF__ + "killEncodingJob"
+								+ ", transcoder: " + transcoder
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+							);
+							killEncodingJob(transcoder, encodingJobKey);
+						}
+
+						if (theOtherStatus == MMSEngineDBFacade::EncodingStatus::Processing)
+						{
+							_logger->info(__FILEREF__ + "killEncodingJob"
+								+ ", transcoder: " + theOtherTranscoder
+								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
+							);
+							killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+						}
+					}
+					else
+					{
+						if (theOtherStatus == MMSEngineDBFacade::EncodingStatus::Processing)
+						{
+							_logger->info(__FILEREF__ + "killEncodingJob"
+								+ ", transcoder: " + theOtherTranscoder
+								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
+							);
+							killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+						}
+
+						if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+						{
+							_logger->info(__FILEREF__ + "killEncodingJob"
+								+ ", transcoder: " + transcoder
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+							);
+							killEncodingJob(transcoder, encodingJobKey);
+						}
+					}
+				}
+				else
+				{
+					if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+					{
+						_logger->info(__FILEREF__ + "killEncodingJob"
+							+ ", transcoder: " + transcoder
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						);
+						killEncodingJob(transcoder, encodingJobKey);
+					}
+				}
+			}
+			else
+			{
+				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+				{
+					_logger->info(__FILEREF__ + "killEncodingJob"
+						+ ", transcoder: " + transcoder
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					);
+					killEncodingJob(transcoder, encodingJobKey);
+				}
+			}
 
             string responseBody;
             sendSuccess(request, 200, responseBody);
@@ -3913,6 +4011,87 @@ void API::mediaItemsList(
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::tagsList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "tagsList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end() && startIt->second != "")
+        {
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
+        {
+            rows = stoll(rowsIt->second);
+        }
+        
+        bool contentTypePresent = false;
+        MMSEngineDBFacade::ContentType contentType;
+        auto contentTypeIt = queryParameters.find("contentType");
+        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+        {
+            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+            
+            contentTypePresent = true;
+        }
+        
+        {
+            Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
+                    workspace->_workspaceKey, start, rows,
+                    contentTypePresent, contentType);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, tagsRoot);
             
             sendSuccess(request, 200, responseBody);
         }

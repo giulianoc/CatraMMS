@@ -710,6 +710,28 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     }
                 }
 
+                {                    
+                    lastSQLCommand = 
+                        "select uniqueName from MMS_ExternalUniqueName where workspaceKey = ? and mediaItemKey = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatementUniqueName (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementUniqueName->setInt64(queryParameterIndex++, workspaceKey);
+                    preparedStatementUniqueName->setInt64(queryParameterIndex++, localMediaItemKey);
+                    shared_ptr<sql::ResultSet> resultSetUniqueName (preparedStatementUniqueName->executeQuery());
+                    if (resultSetUniqueName->next())
+                    {
+                        field = "uniqueName";
+                        mediaItemRoot[field] = static_cast<string>(resultSetUniqueName->getString("uniqueName"));
+                    }
+					else
+					{
+                        field = "uniqueName";
+                        mediaItemRoot[field] = string("");
+					}
+                }
+
                 {
                     Json::Value mediaItemTagsRoot(Json::arrayValue);
                     
@@ -1778,8 +1800,8 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_ExternalUniqueName eun"
-                "where mi.mediaItemKey == eun.mediaItemKey "
+                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
+                "where mi.mediaItemKey = eun.mediaItemKey "
                 "and eun.workspaceKey = ? and eun.uniqueName = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3829,5 +3851,178 @@ void MMSEngineDBFacade::removeMediaItem (
         
         throw e;
     }
+}
+
+Json::Value MMSEngineDBFacade::getTagsList (
+        int64_t workspaceKey, int start, int rows,
+        bool contentTypePresent, ContentType contentType
+)
+{
+    string      lastSQLCommand;
+    Json::Value tagsListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getTagsList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", start: " + to_string(start)
+            + ", rows: " + to_string(rows)
+            + ", contentTypePresent: " + to_string(contentTypePresent)
+            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+
+            field = "start";
+            requestParametersRoot[field] = start;
+
+            field = "rows";
+            requestParametersRoot[field] = rows;
+            
+            if (contentTypePresent)
+            {
+                field = "contentType";
+                requestParametersRoot[field] = toString(contentType);
+            }
+            
+            field = "requestParameters";
+            tagsListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere;
+		sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
+        if (contentTypePresent)
+            sqlWhere += ("and mi.contentType = ? ");
+        
+        Json::Value responseRoot;
+        {
+			lastSQLCommand = 
+				string("select count(distinct t.name) from MMS_MediaItem mi, MMS_Tag t ")
+				+ sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        Json::Value tagsRoot(Json::arrayValue);
+        {
+        	lastSQLCommand = 
+           		string("select distinct t.name from MMS_MediaItem mi, MMS_Tag t ")
+            	+ sqlWhere
+       			+ "limit ? offset ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                tagsRoot.append(static_cast<string>(resultSet->getString("name")));
+            }
+        }
+
+        field = "tags";
+        responseRoot[field] = tagsRoot;
+
+        field = "response";
+        tagsListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return tagsListRoot;
 }
 

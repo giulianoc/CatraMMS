@@ -65,6 +65,15 @@ private:
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>      _ffmpeg;
 		pid_t					_childPid;
+
+		int64_t					_ingestionJobKey;
+		Json::Value				_encodingParametersRoot;
+		Json::Value				_liveRecorderParametersRoot;
+        string					_transcoderStagingContentsPath;
+        string					_stagingContentsPath;
+        string					_segmentListFileName;
+        string					_recordedFileNamePrefix;
+		string					_lastRecordedAssetFileName;
     };
 
 	struct EncodingCompleted
@@ -82,11 +91,20 @@ private:
     mutex                       _liveRecordingMutex;
     int                         _maxLiveRecordingsCapability;
     vector<shared_ptr<LiveRecording>>    _liveRecordingsCapability;
+	int							_liveRecorderChunksIngestionCheckInSeconds;
+	bool						_liveRecorderChunksIngestionThreadShutdown;
 
     mutex						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<EncodingCompleted>>		_encodingCompletedMap;
 	chrono::system_clock::time_point				_lastEncodingCompletedCheck;
+
+    string								_mmsAPIProtocol;
+    string								_mmsAPIHostname;
+    int									_mmsAPIPort;
+    string								_mmsAPIUser;
+    string								_mmsAPIPassword;
+    string								_mmsAPIIngestionURI;
 
     void encodeContent(
         // FCGX_Request& request,
@@ -123,6 +141,31 @@ private:
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
+	void liveRecorderChunksIngestionThread();
+	string liveRecorder_processLastGeneratedLiveRecorderFiles(
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,                                                                              
+		Json::Value liveRecorderParametersRoot,
+		string transcoderStagingContentsPath,
+		string stagingContentsPath,
+		string segmentListFileName,
+		string recordedFileNamePrefix,
+		string lastRecordedAssetFileName);
+	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
+			string mediaLiveRecorderFileName);
+	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
+			string mediaLiveRecorderFileName);
+	bool liveRecorder_isLastLiveRecorderFile(int64_t ingestionJobKey, int64_t encodingJobKey,
+			time_t currentRecordedFileCreationTime, string transcoderStagingContentsPath,
+			string recordedFileNamePrefix);
+	void liveRecorder_ingestRecordedMedia(
+		int64_t ingestionJobKey,
+		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+		string stagingContentsPath,
+		string title,
+		Json::Value userDataRoot,
+		string fileFormat,
+		Json::Value liveRecorderParametersRoot);
 
 	void addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,

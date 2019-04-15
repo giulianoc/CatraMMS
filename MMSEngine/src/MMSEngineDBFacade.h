@@ -1002,7 +1002,7 @@ public:
 	string getIngestionRootMetaDataContent (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
 
-	pair<string,string> getIngestionJobDetails(
+	tuple<string,MMSEngineDBFacade::IngestionType,string> getIngestionJobDetails(
 		int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
@@ -1032,6 +1032,10 @@ public:
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition, vector<string>& tags,
 		string ingestionDateAndTitleOrder, string jsonOrderBy, bool admin);
+
+Json::Value getTagsList (
+        int64_t workspaceKey, int start, int rows,
+        bool contentTypePresent, ContentType contentType);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
@@ -1228,8 +1232,8 @@ public:
         int64_t encodingJobKey,
         string transcoder);
 
-	string getEncodingJobDetails (
-		int64_t encodingJobKey);
+	tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngineDBFacade::EncodingStatus,int64_t>
+		getEncodingJobDetails (int64_t encodingJobKey);
 
     void checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
     

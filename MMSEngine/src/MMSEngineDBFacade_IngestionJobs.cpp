@@ -2203,12 +2203,13 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
     return metaDataContent;
 }
 
-pair<string,string> MMSEngineDBFacade::getIngestionJobDetails(
+tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getIngestionJobDetails(
 	int64_t ingestionJobKey
 )
 {
     string      lastSQLCommand;
 	string		label;
+	IngestionType	ingestionType;
 	string		errorMessage;
     
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -2222,7 +2223,8 @@ pair<string,string> MMSEngineDBFacade::getIngestionJobDetails(
 
         {
             lastSQLCommand = 
-                string("select label, errorMessage from MMS_IngestionJob where ingestionJobKey = ?");
+                string("select label, ingestionType, errorMessage "
+						"from MMS_IngestionJob where ingestionJobKey = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2232,6 +2234,7 @@ pair<string,string> MMSEngineDBFacade::getIngestionJobDetails(
             if (resultSet->next())
             {
                 label = static_cast<string>(resultSet->getString("label"));
+				ingestionType = toIngestionType(resultSet->getString("ingestionType"));
                 errorMessage = static_cast<string>(resultSet->getString("errorMessage"));
             }
 			else
@@ -2310,7 +2313,7 @@ pair<string,string> MMSEngineDBFacade::getIngestionJobDetails(
         throw e;
     }
     
-    return make_pair(label, errorMessage);
+    return make_tuple(label, ingestionType, errorMessage);
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (

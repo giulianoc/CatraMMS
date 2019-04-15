@@ -12,9 +12,17 @@
  */
 
 #include <fstream>
+#include <sstream>
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
+#include "catralibraries/Convert.h"
 #include "FFMPEGEncoder.h"
+
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
 
 extern char** environ;
 
@@ -125,9 +133,39 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
+    _liveRecorderChunksIngestionCheckInSeconds =  _configuration["ffmpeg"].get("liveRecorderChunksIngestionCheckInSeconds", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
+    );
+
     _encodingCompletedRetentionInSeconds = _configuration["ffmpeg"].get("encodingCompletedRetentionInSeconds", 0).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
+    );
+
+    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->protocol: " + _mmsAPIProtocol
+    );
+    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->hostname: " + _mmsAPIHostname
+    );
+    _mmsAPIPort = _configuration["api"].get("port", "").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->port: " + to_string(_mmsAPIPort)
+    );
+    _mmsAPIUser = _configuration["api"].get("user", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->user: " + _mmsAPIUser
+    );
+    _mmsAPIPassword = _configuration["api"].get("password", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->password: " + "..."
+    );
+    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
 
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
@@ -144,11 +182,19 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     {
         shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
         liveRecording->_running   = false;
+        liveRecording->_ingestionJobKey		= 0;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_childPid		= 0;
         liveRecording->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 
         _liveRecordingsCapability.push_back(liveRecording);
     }
+
+	{
+		_liveRecorderChunksIngestionThreadShutdown = false;
+		thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread, this);
+		liveRecorderChunksIngestion.detach();
+	}
 
 	_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
@@ -2107,45 +2153,86 @@ void FFMPEGEncoder::liveRecorder(
 
             throw runtime_error(errorMessage);
         }
-        
-        int64_t ingestionJobKey = liveRecorderMedatada.get("ingestionJobKey", -1).asInt64();
-        string segmentListPathName = liveRecorderMedatada.get("segmentListPathName", "XXX").asString();
-        string recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "XXX").asString();
-        string liveURL = liveRecorderMedatada.get("liveURL", "XXX").asString();
-        time_t utcRecordingPeriodStart = liveRecorderMedatada.get("utcRecordingPeriodStart", -1).asInt64();
-        time_t utcRecordingPeriodEnd = liveRecorderMedatada.get("utcRecordingPeriodEnd", -1).asInt64();
-        int segmentDurationInSeconds = liveRecorderMedatada.get("segmentDurationInSeconds", -1).asInt();
-        string outputFileFormat = liveRecorderMedatada.get("outputFileFormat", "XXX").asString();
 
-        liveRecording->_ffmpeg->liveRecorder(
-                ingestionJobKey,
-				encodingJobKey,
-                segmentListPathName,
-				recordedFileNamePrefix,
-                liveURL,
-                utcRecordingPeriodStart,
-                utcRecordingPeriodEnd,
-                segmentDurationInSeconds,
-                outputFileFormat,
-				&(liveRecording->_childPid)
-        );
-        
+        liveRecording->_ingestionJobKey = liveRecorderMedatada.get("ingestionJobKey", -1).asInt64();
+
+		// _transcoderStagingContentsPath is a transcoder LOCAL path, this is important because in case of high bitrate,
+		//		nfs would not be enough fast and could create random file system error
+        liveRecording->_transcoderStagingContentsPath = liveRecorderMedatada.get("transcoderStagingContentsPath", "XXX").asString();
+
+		// this is the global shared path where the chunks would be moved for the ingestion
+        liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "XXX").asString();
+        liveRecording->_segmentListFileName = liveRecorderMedatada.get("segmentListFileName", "XXX").asString();
+        liveRecording->_recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "XXX").asString();
+
+		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
+		//		checks this field is set before to see if there are chunks to be ingested
+		liveRecording->_encodingParametersRoot = liveRecorderMedatada["encodingParametersRoot"];
+		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
+
+        string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
+        time_t utcRecordingPeriodStart = liveRecording->_encodingParametersRoot.get("utcRecordingPeriodStart", -1).asInt64();
+        time_t utcRecordingPeriodEnd = liveRecording->_encodingParametersRoot.get("utcRecordingPeriodEnd", -1).asInt64();
+        int segmentDurationInSeconds = liveRecording->_encodingParametersRoot.get("segmentDurationInSeconds", -1).asInt();
+        string outputFileFormat = liveRecording->_encodingParametersRoot.get("outputFileFormat", "XXX").asString();
+
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+					exceptionInCaseOfError);
+		}
+
+		liveRecording->_ffmpeg->liveRecorder(
+			liveRecording->_ingestionJobKey,
+			encodingJobKey,
+			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+			liveRecording->_recordedFileNamePrefix,
+			liveURL,
+			utcRecordingPeriodStart,
+			utcRecordingPeriodEnd,
+			segmentDurationInSeconds,
+			outputFileFormat,
+			&(liveRecording->_childPid)
+		);
+
+		// to wait the ingestion of the last chunk
+		this_thread::sleep_for(chrono::seconds(2 * _liveRecorderChunksIngestionCheckInSeconds));
+
         liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_childPid = 0;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
+
+        liveRecording->_ingestionJobKey		= 0;
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, killedByUser);
+
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+					exceptionInCaseOfError);
+		}
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
         liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
         string errorMessage = string ("API failed")
@@ -2154,17 +2241,28 @@ void FFMPEGEncoder::liveRecorder(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
 		bool killedByUser				= true;
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, killedByUser);
+
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+					exceptionInCaseOfError);
+		}
     }
     catch(runtime_error e)
     {
         liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
         string errorMessage = string ("API failed")
@@ -2180,10 +2278,22 @@ void FFMPEGEncoder::liveRecorder(
 		bool killedByUser				= false;
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, killedByUser);
+
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+					exceptionInCaseOfError);
+		}
     }
     catch(exception e)
     {
         liveRecording->_running = false;
+		liveRecording->_encodingParametersRoot = Json::nullValue;
+        liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
         string errorMessage = string("API failed")
@@ -2199,7 +2309,970 @@ void FFMPEGEncoder::liveRecorder(
 		bool killedByUser				= false;
 		addEncodingCompleted(encodingJobKey,
 				completedWithError, killedByUser);
+
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		{
+			_logger->info(__FILEREF__ + "remove"
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+			);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
+					exceptionInCaseOfError);
+		}
     }
+}
+
+void FFMPEGEncoder::liveRecorderChunksIngestionThread()
+{
+
+	while(!_liveRecorderChunksIngestionThreadShutdown)
+	{
+		try
+		{
+			lock_guard<mutex> locker(_liveRecordingMutex);
+
+			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			{
+				if (liveRecording->_running)
+				{
+					_logger->info(__FILEREF__ + "liveRecorderChunksIngestion ..."
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+					);
+
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+
+					try
+					{
+						if (liveRecording->_encodingParametersRoot != Json::nullValue)
+						{
+							bool highAvailability;
+							bool main;
+							int segmentDurationInSeconds;
+							string outputFileFormat;
+							{
+								string field = "highAvailability";                                                                    
+								highAvailability = liveRecording->_encodingParametersRoot.get(field, 0).asBool();                             
+
+								field = "main";                                                                                       
+								main = liveRecording->_encodingParametersRoot.get(field, 0).asBool();                                         
+
+								field = "segmentDurationInSeconds";
+								segmentDurationInSeconds = liveRecording->_encodingParametersRoot.get(field, 0).asInt();
+
+								field = "outputFileFormat";                                                                
+								outputFileFormat = liveRecording->_encodingParametersRoot.get(field, "XXX").asString();                   
+							}
+
+							liveRecording->_lastRecordedAssetFileName = liveRecorder_processLastGeneratedLiveRecorderFiles(
+								liveRecording->_ingestionJobKey,
+								liveRecording->_encodingJobKey,
+								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
+								liveRecording->_liveRecorderParametersRoot,
+
+								liveRecording->_transcoderStagingContentsPath,
+								liveRecording->_stagingContentsPath,
+								liveRecording->_segmentListFileName,
+								liveRecording->_recordedFileNamePrefix,
+								liveRecording->_lastRecordedAssetFileName);
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecorderChunksIngestion failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecorderChunksIngestion failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+
+					_logger->info(__FILEREF__ + "liveRecorderChunksIngestion"
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", elapsed time: " + to_string(
+							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
+						)
+					);
+				}
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string ("liveRecorderChunksIngestion failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string ("liveRecorderChunksIngestion failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+
+		this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
+	}
+}
+
+string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,                                                                              
+	Json::Value liveRecorderParametersRoot,
+	string transcoderStagingContentsPath,
+	string stagingContentsPath,
+	string segmentListFileName,
+	string recordedFileNamePrefix,
+	string lastRecordedAssetFileName)
+{
+
+	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
+	// the same lastRecordedAssetFileName has to be returned
+	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
+    try
+    {
+		_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", highAvailability: " + to_string(highAvailability)
+			+ ", main: " + to_string(main)
+			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+			+ ", outputFileFormat: " + outputFileFormat
+			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", segmentListFileName: " + segmentListFileName
+			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
+			);
+
+		ifstream segmentList(transcoderStagingContentsPath + segmentListFileName);
+		if (!segmentList)
+        {
+            string errorMessage = __FILEREF__ + "No segment list file found yet"
+				+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+				+ ", segmentListFileName: " + segmentListFileName
+				+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
+            _logger->warn(errorMessage);
+
+			return lastRecordedAssetFileName;
+            // throw runtime_error(errorMessage);
+        }
+
+		bool reachedNextFileToProcess = false;
+		string currentRecordedAssetFileName;
+		while(getline(segmentList, currentRecordedAssetFileName))
+		{
+			if (!reachedNextFileToProcess)
+			{
+				if (lastRecordedAssetFileName == "")
+				{
+					reachedNextFileToProcess = true;
+				}
+				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
+				{
+					reachedNextFileToProcess = true;
+
+					continue;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+			_logger->info(__FILEREF__ + "processing LiveRecorder file"
+				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
+
+			time_t utcCurrentRecordedFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
+				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName);
+
+			if (!FileIO::fileExisting(transcoderStagingContentsPath + currentRecordedAssetFileName))
+			{
+				// it could be the scenario where mmsEngineService is restarted,
+				// the segments list file still contains obsolete filenames
+				_logger->error(__FILEREF__ + "file not existing"
+						", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+				);
+
+				continue;
+			}
+			/*
+			time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			if (utcNow - utcCurrentRecordedFileCreationTime < _secondsToWaitNFSBuffers)
+			{
+				long secondsToWait = _secondsToWaitNFSBuffers
+					- (utcNow - utcCurrentRecordedFileCreationTime);
+
+				_logger->info(__FILEREF__ + "processing LiveRecorder file too young"
+					+ ", secondsToWait: " + to_string(secondsToWait));
+				this_thread::sleep_for(chrono::seconds(secondsToWait));
+			}
+			*/
+
+			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
+					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
+					transcoderStagingContentsPath, recordedFileNamePrefix);
+			_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+					+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+					+ ", ingestionRowToBeUpdatedAsSuccess: " + to_string(ingestionRowToBeUpdatedAsSuccess));
+
+			newLastRecordedAssetFileName = currentRecordedAssetFileName;
+
+			time_t utcCurrentRecordedFileLastModificationTime =
+				utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
+			/*
+			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
+				currentRecordedAssetPathName);
+			*/
+
+			// UserData
+			Json::Value userDataRoot;
+			{
+				if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, "UserData"))
+				{
+					userDataRoot = liveRecorderParametersRoot["UserData"];
+				}
+
+				Json::Value mmsDataRoot;
+				mmsDataRoot["dataType"] = "liveRecordingChunk";
+				mmsDataRoot["main"] = main;
+				if (!highAvailability)
+				{
+					bool validated = true;
+					mmsDataRoot["validated"] = validated;
+				}
+				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
+				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
+
+				userDataRoot["mmsData"] = mmsDataRoot;
+			}
+
+			// Title
+			string newTitle;
+			{
+				// ConfigurationLabel is the label associated to the live URL
+				newTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "XXX").asString();
+
+				newTitle += " - ";
+
+				{
+					tm		tmDateTime;
+					char	strCurrentRecordedFileTime [64];
+
+					// from utc to local time
+					localtime_r (&utcCurrentRecordedFileCreationTime, &tmDateTime);
+
+					sprintf (strCurrentRecordedFileTime,
+						"%04d-%02d-%02d %02d:%02d:%02d",
+						tmDateTime. tm_year + 1900,
+						tmDateTime. tm_mon + 1,
+						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+
+					newTitle += strCurrentRecordedFileTime;	// local time
+				}
+
+				newTitle += " - ";
+
+				{
+					tm		tmDateTime;
+					char	strCurrentRecordedFileTime [64];
+
+					// from utc to local time
+					localtime_r (&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
+
+					sprintf (strCurrentRecordedFileTime,
+						"%04d-%02d-%02d %02d:%02d:%02d",
+						tmDateTime. tm_year + 1900,
+						tmDateTime. tm_mon + 1,
+						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+
+					newTitle += strCurrentRecordedFileTime;	// local time
+				}
+
+				if (!main)
+					newTitle += " (BCK)";
+			}
+
+			if (lastRecordedAssetFileName == "")
+			{
+				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+					+ ", title: " + newTitle
+				);
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+				);
+
+                FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName);
+			}
+			else
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "ingest Recorded media"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
+						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", title: " + newTitle
+					);
+
+					liveRecorder_ingestRecordedMedia(ingestionJobKey,
+						transcoderStagingContentsPath, currentRecordedAssetFileName,
+						stagingContentsPath,
+						newTitle, userDataRoot, outputFileFormat, liveRecorderParametersRoot);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
+						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", newTitle: " + newTitle
+						+ ", outputFileFormat: " + outputFileFormat
+						+ ", e.what(): " + e.what()
+					);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "liveRecorder_ingestRecordedMedia failed"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
+						+ ", stagingContentsPath: " + stagingContentsPath
+						+ ", newTitle: " + newTitle
+						+ ", outputFileFormat: " + outputFileFormat
+					);
+                
+					// throw e;
+				}
+			}
+		}
+
+		if (reachedNextFileToProcess == false)
+		{
+			// this scenario should never happens, we have only one option when mmEngineService
+			// is restarted, the new LiveRecorder is not started and the segments list file
+			// contains still old files. So newLastRecordedAssetFileName is initialized
+			// with the old file that will never be found once LiveRecorder starts and reset
+			// the segment list file
+			// In this scenario, we will reset newLastRecordedAssetFileName
+			newLastRecordedAssetFileName	= "";
+		}
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", segmentListFileName: " + segmentListFileName
+            + ", e.what(): " + e.what()
+        );
+                
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+			+ ", stagingContentsPath: " + stagingContentsPath
+			+ ", segmentListFileName: " + segmentListFileName
+        );
+                
+        throw e;
+    }
+
+	return newLastRecordedAssetFileName;
+}
+
+void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
+	int64_t ingestionJobKey,
+	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
+	string stagingContentsPath,
+	string title,
+	Json::Value userDataRoot,
+	string fileFormat,
+	Json::Value liveRecorderParametersRoot)
+{
+	string mmsAPIURL;
+	ostringstream response;
+	string workflowMetadata;
+	try
+	{
+		// moving chunk from transcoder staging path to shared staging path
+		{
+			_logger->info(__FILEREF__ + "Chunk moving"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + stagingContentsPath
+			);
+
+			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
+			FileIO::moveFile(transcoderStagingContentsPath + currentRecordedAssetFileName, stagingContentsPath);
+			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Chunk moved"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
+				+ ", dest: " + stagingContentsPath
+				+ ", movingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
+			);
+		}
+
+		/*
+		{
+        	"Label": "<workflow label>",
+        	"Type": "Workflow",
+        	"Task": {
+                "Label": "<task label 1>",
+                "Type": "Add-Content"
+                "Parameters": {
+                        "FileFormat": "ts",
+                        "Ingester": "Giuliano",
+                        "SourceURL": "move:///abc...."
+                },
+        	}
+		}
+		*/
+		Json::Value addContentRoot;
+
+		string field = "Label";
+		addContentRoot[field] = title;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		bool internalMMSRootPresent = false;
+		{
+			field = "InternalMMS";
+    		if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			{
+				internalMMSRootPresent = true;
+
+				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
+
+				field = "OnSuccess";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
+
+				field = "OnError";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
+
+				field = "OnComplete";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
+			}
+		}
+
+		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
+		if (internalMMSRootPresent)
+		{
+			Json::Value removed;
+			field = "InternalMMS";
+			addContentParametersRoot.removeMember(field, &removed);
+		}
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = fileFormat;
+
+		string sourceURL = string("move") + "://" + stagingContentsPath + currentRecordedAssetFileName;
+		field = "SourceURL";
+		addContentParametersRoot[field] = sourceURL;
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Live Recorder Task";
+
+		field = "Title";
+		addContentParametersRoot[field] = title;
+
+		field = "UserData";
+		addContentParametersRoot[field] = userDataRoot;
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = title;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+
+		mmsAPIURL =
+			_mmsAPIProtocol
+			+ "://"
+			+ _mmsAPIHostname + ":"
+			+ to_string(_mmsAPIPort)
+			+ _mmsAPIIngestionURI
+            ;
+
+		list<string> header;
+
+		header.push_back("Content-Type: application/json");
+		{
+			string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+		if (_mmsAPIProtocol == "https")
+		{
+			/*
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+			*/
+
+			/*
+			// cert is stored PEM coded in file... 
+			// since PEM is default, we needn't set it for PEM 
+			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			equest.setOpt(sslCertType);
+
+			// set the cert for client authentication
+			// "testcert.pem"
+			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			request.setOpt(sslCert);
+			*/
+
+			/*
+			// sorry, for engine we must set the passphrase
+			//   (if the key has one...)
+			// const char *pPassphrase = NULL;
+			if(pPassphrase)
+			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+			// if we use a key stored in a crypto engine,
+			//   we must set the key type to "ENG"
+			// pKeyType  = "PEM";
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+			// set the private key (file or ID in engine)
+			// pKeyName  = "testkey.pem";
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+			// set the file with the certs vaildating the server
+			// *pCACertFile = "cacert.pem";
+			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+			*/
+
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+               
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+               
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "Ingesting recorded media file"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
+		request.perform();
+		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
+
+		string sResponse = response.str();
+		// LF and CR create problems to the json parser...
+		while (sResponse.back() == 10 || sResponse.back() == 13)
+			sResponse.pop_back();
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);
+		if (responseCode == 201)
+		{
+			string message = __FILEREF__ + "Ingested recorded response"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				;
+			_logger->info(message);
+		}
+		else
+		{
+			string message = __FILEREF__ + "Ingested recorded response"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				+ ", responseCode: " + to_string(responseCode)
+				;
+			_logger->error(message);
+
+           	throw runtime_error(message);
+		}
+	}
+	catch (curlpp::LogicError & e) 
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+            
+		throw e;
+	}
+	catch (curlpp::RuntimeError & e) 
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+}
+
+bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	time_t utcCurrentRecordedFileCreationTime, string transcoderStagingContentsPath,
+	string recordedFileNamePrefix)
+{
+	bool isLastLiveRecorderFile = true;
+
+    try
+    {
+		_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
+			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
+			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+		);
+
+        FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (transcoderStagingContentsPath);
+
+        bool scanDirectoryFinished = false;
+        while (!scanDirectoryFinished)
+        {
+            string directoryEntry;
+            try
+            {
+                string directoryEntry = FileIO::readDirectory (directory,
+                    &detDirectoryEntryType);
+
+				_logger->info(__FILEREF__ + "FileIO::readDirectory"
+					+ ", directoryEntry: " + directoryEntry
+					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
+				);
+
+				// next statement is endWith and .lck is used during the move of a file
+				string suffix(".lck");
+				if (directoryEntry.size() >= suffix.size()
+					&& 0 == directoryEntry.compare(directoryEntry.size()-suffix.size(),
+						suffix.size(), suffix))
+					continue;
+
+                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    continue;
+
+                if (directoryEntry.size() >= recordedFileNamePrefix.size()
+						&& directoryEntry.compare(0, recordedFileNamePrefix.size(),
+							recordedFileNamePrefix) == 0)
+                {
+					time_t utcFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
+							ingestionJobKey, encodingJobKey, directoryEntry);
+
+					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
+					{
+						isLastLiveRecorderFile = false;
+
+						break;
+					}
+				}
+            }
+            catch(DirectoryListFinished e)
+            {
+                scanDirectoryFinished = true;
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+        }
+
+        FileIO::closeDirectory (directory);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile failed"
+            + ", e.what(): " + e.what()
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile failed");
+    }
+
+	return isLastLiveRecorderFile;
+}
+
+time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	string mediaLiveRecorderFileName)
+{
+	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
+	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
+
+	_logger->info(__FILEREF__ + "liveRecorder_getMediaLiveRecorderStartTime"
+		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+	);
+
+	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
+	if (mediaLiveRecorderFileName.length() < 20 ||
+		   endIndex == string::npos)
+	{
+		string errorMessage = __FILEREF__ + "wrong media live recorder format"
+			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+			;
+			_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	size_t beginUTCIndex = mediaLiveRecorderFileName.find_last_of("_");
+	if (mediaLiveRecorderFileName.length() < 20 ||
+		   beginUTCIndex == string::npos)
+	{
+		string errorMessage = __FILEREF__ + "wrong media live recorder format"
+			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+			;
+			_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	time_t utcMediaLiveRecorderStartTime = stol(mediaLiveRecorderFileName.substr(beginUTCIndex + 1,
+				endIndex - beginUTCIndex + 1));
+
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, utcMediaLiveRecorderStartTime is fixed.
+	// From the other side the first generated file is the only one where we can have seconds
+	// different from 0, anyway here this is not possible because we discard the first chunk
+	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
+	if (seconds != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+				+ ", seconds: " + to_string(seconds)
+				);
+		utcMediaLiveRecorderStartTime -= seconds;
+	}
+
+	return utcMediaLiveRecorderStartTime;
+	/*
+	tm                      tmDateTime;
+
+
+	// liveRecorder_6405_2019-02-02_22-11-00.ts
+
+	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
+		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+	);
+
+	size_t index = mediaLiveRecorderFileName.find_last_of(".");
+	if (mediaLiveRecorderFileName.length() < 20 ||
+		   index == string::npos)
+	{
+		string errorMessage = __FILEREF__ + "wrong media live recorder format"
+			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+			;
+			_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	time_t utcMediaLiveRecorderStartTime;
+	time (&utcMediaLiveRecorderStartTime);
+	gmtime_r(&utcMediaLiveRecorderStartTime, &tmDateTime);
+
+	tmDateTime.tm_year		= stoi(mediaLiveRecorderFileName.substr(index - 19, 4))
+		- 1900;
+	tmDateTime.tm_mon		= stoi(mediaLiveRecorderFileName.substr(index - 14, 2))
+		- 1;
+	tmDateTime.tm_mday		= stoi(mediaLiveRecorderFileName.substr(index - 11, 2));
+	tmDateTime.tm_hour		= stoi(mediaLiveRecorderFileName.substr(index - 8, 2));
+	tmDateTime.tm_min      = stoi(mediaLiveRecorderFileName.substr(index - 5, 2));
+
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, 0 is set.
+	// From the other side the first generated file is the only one where we can have seconds
+	// different from 0, anyway here this is not possible because we discard the first chunk
+	int seconds = stoi(mediaLiveRecorderFileName.substr(index - 2, 2));
+	if (seconds != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+				+ ", seconds: " + to_string(seconds)
+				);
+		seconds = 0;
+	}
+	tmDateTime.tm_sec      = seconds;
+
+	utcMediaLiveRecorderStartTime = timegm (&tmDateTime);
+
+	return utcMediaLiveRecorderStartTime;
+	*/
+}
+
+time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	string mediaLiveRecorderFileName)
+{
+	tm                      tmDateTime;
+
+	time_t utcCurrentRecordedFileLastModificationTime;
+
+	FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
+		&utcCurrentRecordedFileLastModificationTime);
+
+	localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
+
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, 0 is set
+	if (tmDateTime.tm_sec != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+				+ ", seconds: " + to_string(tmDateTime.tm_sec)
+				);
+		tmDateTime.tm_sec = 0;
+	}
+
+	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
+
+	return utcCurrentRecordedFileLastModificationTime;
 }
 
 void FFMPEGEncoder::addEncodingCompleted(

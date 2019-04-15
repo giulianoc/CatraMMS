@@ -7096,8 +7096,8 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
     }
 }
 
-string MMSEngineDBFacade::getEncodingJobDetails (
-        int64_t encodingJobKey)
+tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngineDBFacade::EncodingStatus,int64_t>
+	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey)
 {
     
     string      lastSQLCommand;
@@ -7111,10 +7111,18 @@ string MMSEngineDBFacade::getEncodingJobDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		int64_t		ingestionJobKey;
+		string      type;
 		string      transcoder;
+		EncodingStatus	status;
+		bool		highAvailability = false;
+		bool		main = false;
         {
             lastSQLCommand = 
-                "select transcoder from MMS_EncodingJob where encodingJobKey = ?";
+                "select ingestionJobKey, type, transcoder, status, "
+				"JSON_EXTRACT(parameters, '$.highAvailability') as highAvailability, "
+				"JSON_EXTRACT(parameters, '$.main') as main from MMS_EncodingJob "
+				"where encodingJobKey = ? and status = 'Processing'";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -7122,7 +7130,52 @@ string MMSEngineDBFacade::getEncodingJobDetails (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+                ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+                type = resultSet->getString("type");
                 transcoder = resultSet->getString("transcoder");
+                status = toEncodingStatus(resultSet->getString("status"));
+
+				if (!resultSet->isNull("highAvailability"))
+					highAvailability = resultSet->getInt("highAvailability") == 1 ? true : false;
+				if (highAvailability)
+				{
+					if (!resultSet->isNull("main"))
+						main = resultSet->getInt("main") == 1 ? true : false;
+				}
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+		int64_t theOtherEncodingJobKey = 0;
+		string theOtherTranscoder;
+		EncodingStatus theOtherStatus;
+		if (type == "LiveRecorder" && highAvailability)
+        {
+			// select to get the other encodingJobKey
+
+            lastSQLCommand = 
+                "select encodingJobKey, transcoder, status from MMS_EncodingJob "
+				"where ingestionJobKey = ? and encodingJobKey != ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                theOtherEncodingJobKey = resultSet->getInt64("encodingJobKey");
+                theOtherTranscoder = resultSet->getString("transcoder");
+                theOtherStatus = toEncodingStatus(resultSet->getString("status"));
             }
             else
             {
@@ -7142,7 +7195,8 @@ string MMSEngineDBFacade::getEncodingJobDetails (
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return transcoder;
+		return make_tuple(type, transcoder, status, highAvailability, main,
+				theOtherTranscoder, theOtherStatus, theOtherEncodingJobKey);
     }
     catch(sql::SQLException se)
     {

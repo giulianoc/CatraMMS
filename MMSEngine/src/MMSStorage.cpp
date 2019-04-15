@@ -26,9 +26,11 @@ MMSStorage::MMSStorage(
     _streamingRootRepository = _storage + "StreamingRepository/";
 
     _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
+    _transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
+
+    string ffmpegArea = _storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
     
     string nginxArea = _storage + "MMSWorkingAreaRepository/nginx/";
-    string ffmpegArea = _storage + "MMSWorkingAreaRepository/ffmpeg/";
 
     _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
 
@@ -86,6 +88,13 @@ MMSStorage::MMSStorage(
         + ", _stagingRootRepository: " + _stagingRootRepository
     );
     FileIO::createDirectory(_stagingRootRepository,
+            S_IRUSR | S_IWUSR | S_IXUSR |
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
+        + ", _transcoderStagingRootRepository: " + _transcoderStagingRootRepository
+    );
+    FileIO::createDirectory(_transcoderStagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -907,6 +916,9 @@ string MMSStorage::getStreamingLinkPathName(
 }
 
 string MMSStorage::getStagingAssetPathName(
+		// neededForTranscoder=true uses a faster file system i.e. for recording
+		bool neededForTranscoder,
+
         string workspaceDirectoryName,
         
         // it is a prefix of the directory name because I saw two different threads got the same dir name,
@@ -965,7 +977,10 @@ string MMSStorage::getStagingAssetPathName(
 
     // create the 'date' directory in staging if not exist
     {
-        assetPathName = _stagingRootRepository;
+		if (neededForTranscoder)
+			assetPathName = _transcoderStagingRootRepository;
+		else
+			assetPathName = _stagingRootRepository;
         assetPathName
             .append(workspaceDirectoryName)
             .append("_")    // .append("/")

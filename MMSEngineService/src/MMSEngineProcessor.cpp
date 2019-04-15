@@ -7644,29 +7644,40 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
+        string imagePosition_X_InPixel;
         field = "ImagePosition_X_InPixel";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
+			/*
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
+			*/
+			imagePosition_X_InPixel = "0";
         }
-        string imagePosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
+		else
+			imagePosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
 
+        string imagePosition_Y_InPixel;
         field = "ImagePosition_Y_InPixel";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
+			/*
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
+			*/
+
+			imagePosition_Y_InPixel = "0";
         }
-        string imagePosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
+		else
+			imagePosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
 
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
@@ -8063,11 +8074,14 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 					field = "ReferenceIngestionJobKey";
 					if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
 					{
+						MMSEngineDBFacade::IngestionType ingestionType;
+
 						referenceIngestionJobKey = referenceRoot.get(field, 0).asInt64();
 
-						pair<string, string> labelAndErrorMessage =
+						tuple<string, MMSEngineDBFacade::IngestionType, string>
+							labelIngestionTypeAndErrorMessage =
 							_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
-						tie(referenceLabel, referenceErrorMessage);
+						tie(referenceLabel, ingestionType, referenceErrorMessage);
 
 						break;
 					}

@@ -3608,7 +3608,9 @@ void FFMpeg::liveRecorder(
 	int iReturnedStatus = 0;
 #endif
 	string segmentListPath;
-	// string recordedFileNamePrefix = string("liveRecorder_") + to_string(ingestionJobKey);
+	chrono::system_clock::time_point startFfmpegCommand;
+	chrono::system_clock::time_point endFfmpegCommand;
+	time_t utcNow;
 
     try
     {
@@ -3625,7 +3627,6 @@ void FFMpeg::liveRecorder(
 		}
 		segmentListPath = segmentListPathName.substr(0, segmentListPathIndex);
 
-		time_t utcNow;
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
@@ -3659,7 +3660,8 @@ void FFMpeg::liveRecorder(
 
 		_outputFfmpegPathFileName =
 			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey)
 			+ ".liveRecorder.log"
 			;
     
@@ -3728,7 +3730,7 @@ void FFMpeg::liveRecorder(
         );
 	#endif
 
-        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+        startFfmpegCommand = chrono::system_clock::now();
 
 	#ifdef __EXECUTE__
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
@@ -3769,7 +3771,7 @@ void FFMpeg::liveRecorder(
         }
 	#endif
         
-        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+        endFfmpegCommand = chrono::system_clock::now();
 
 	#ifdef __EXECUTE__
         _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
@@ -3900,6 +3902,38 @@ void FFMpeg::liveRecorder(
 		else
 			throw e;
     }
+
+	if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcRecordingPeriodEnd - utcNow - 60))
+	{
+		char		sEndFfmpegCommand [64];
+
+		time_t	utcEndFfmpegCommand = chrono::system_clock::to_time_t(endFfmpegCommand);
+		tm		tmUtcEndFfmpegCommand;
+		localtime_r (&utcEndFfmpegCommand, &tmUtcEndFfmpegCommand);
+		sprintf (sEndFfmpegCommand, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcEndFfmpegCommand. tm_year + 1900,
+			tmUtcEndFfmpegCommand. tm_mon + 1,
+			tmUtcEndFfmpegCommand. tm_mday,
+			tmUtcEndFfmpegCommand. tm_hour,
+			tmUtcEndFfmpegCommand. tm_min,
+			tmUtcEndFfmpegCommand. tm_sec);
+
+		string debugOutputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey) + "_"
+			+ sEndFfmpegCommand
+			+ ".liveRecorder.log.debug"
+			;
+
+		_logger->info(__FILEREF__ + "Coping"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+			);
+		FileIO::copyFile(_outputFfmpegPathFileName, debugOutputFfmpegPathFileName);    
+	}
 
     _logger->info(__FILEREF__ + "Remove"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)

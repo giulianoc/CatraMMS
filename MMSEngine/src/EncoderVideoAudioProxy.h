@@ -125,7 +125,7 @@ private:
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;
-	int									_secondsToWaitNFSBuffers;
+	// int									_secondsToWaitNFSBuffers;
     
     string                              _ffmpegEncoderProtocol;
     int                                 _ffmpegEncoderPort;
@@ -140,12 +140,14 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     
+	/*
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
     int									_mmsAPIPort;
     string								_mmsAPIUser;
     string								_mmsAPIPassword;
     string								_mmsAPIIngestionURI;
+	*/
 
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
@@ -189,9 +191,10 @@ private:
     string faceIdentification();
     void processFaceIdentification(string stagingEncodedAssetPathName);    
 
-    tuple<string, bool, bool> liveRecorder();
-    tuple<string, bool, bool> liveRecorder_through_ffmpeg();
-    void processLiveRecorder(string stagingEncodedAssetPathName, bool killedByUser);    
+    tuple<bool, bool> liveRecorder();
+    tuple<bool, bool> liveRecorder_through_ffmpeg();
+    void processLiveRecorder(bool killedByUser);    
+	/*
 	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
 			string recordedFileNamePrefix);
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
@@ -204,6 +207,7 @@ private:
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
+	*/
 
     pair<bool, bool> getEncodingStatus();
 

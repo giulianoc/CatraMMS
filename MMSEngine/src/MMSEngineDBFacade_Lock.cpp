@@ -40,9 +40,10 @@ void MMSEngineDBFacade::setLock(
 			bool active;
 			long maxDurationInMinutes;
 			string start;
+			string previousOwner;
 			{
 				lastSQLCommand = 
-					"select active, maxDurationInMinutes, "
+					"select active, maxDurationInMinutes, owner, "
 					"DATE_FORMAT(convert_tz(start, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as start "
 					"from MMS_Lock where type = ? for update";
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -64,6 +65,7 @@ void MMSEngineDBFacade::setLock(
 				active = resultSet->getInt("active") == 1 ? true : false;
 				maxDurationInMinutes = resultSet->getInt("maxDurationInMinutes");
 				start = resultSet->getString("start");
+				previousOwner = resultSet->getString("owner");
 			}
 
 			alreadyLocked = false;
@@ -122,7 +124,7 @@ void MMSEngineDBFacade::setLock(
 
 				if (utcNow - utcStart <= maxDurationInMinutes * 60)
 				{
-					string errorMessage = __FILEREF__ + "Already locked"
+					string errorMessage = __FILEREF__ + "Already locked by " + previousOwner
 						;
 					_logger->warn(errorMessage);
 
@@ -132,6 +134,7 @@ void MMSEngineDBFacade::setLock(
 				{
 					_logger->warn(__FILEREF__ + "Already locked since too much time. Reset it"
 						+ ", type: " + sLockType
+						+ ", previousOwner: " + previousOwner
 					);
 				}
 			}
@@ -471,9 +474,10 @@ void MMSEngineDBFacade::releaseLock(
         }
         
 		bool active;
+		string owner;
 		{
 			lastSQLCommand = 
-				"select active from MMS_Lock where type = ? for update";
+				"select owner, active from MMS_Lock where type = ? for update";
 			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndexIngestionJob = 1;
 			preparedStatement->setString(queryParameterIndexIngestionJob++, sLockType);
@@ -491,12 +495,14 @@ void MMSEngineDBFacade::releaseLock(
 			}
 
 			active = resultSet->getInt("active") == 1 ? true : false;
+			owner = resultSet->getString("owner");
 		}
 
 		if (!active)
 		{
 			string errorMessage = __FILEREF__ + "Lock already not locked"
 				+ ", type: " + sLockType
+				+ ", owner: " + owner
 				;
 			_logger->error(errorMessage);
 
@@ -526,8 +532,9 @@ void MMSEngineDBFacade::releaseLock(
 			int rowsUpdated = preparedStatement->executeUpdate();
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done"
-                       + ", type: " + sLockType
+				string errorMessage = __FILEREF__ + "MMS_Lock, no update was done"
+					+ ", type: " + sLockType
+					+ ", owner: " + owner
 				;
 				_logger->warn(errorMessage);
 

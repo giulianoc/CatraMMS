@@ -189,6 +189,12 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody, bool admin);
 
+    void tagsList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void encodingProfilesSetsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

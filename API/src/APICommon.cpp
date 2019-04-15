@@ -407,6 +407,12 @@ int APICommon::operator()()
                     basicAuthenticationPresent, userKeyWorkspaceAndFlags, 
                     contentLength, requestBody, requestDetails);            
         }
+        catch(AlreadyLocked e)
+        {
+            _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+                + ", e: " + e.what()
+            );
+        }
         catch(runtime_error e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"

@@ -114,13 +114,15 @@ public:
     // to clean/remove that path if already existing in order
     // to give to the encoder a clean place where to write
     string getStagingAssetPathName (
-	string workspaceDirectoryName,
+		// neededForTranscoder=true uses a faster file system i.e. for recording
+		bool neededForTranscoder,
+		string workspaceDirectoryName,
         string directoryNamePrefix,
-	string relativePath,
-	string fileName,                // may be empty ("")
-	long long llMediaItemKey,       // used only if fileName is ""
-	long long llPhysicalPathKey,    // used only if fileName is ""
-	bool removeLinuxPathIfExist);
+		string relativePath,
+		string fileName,                // may be empty ("")
+		long long llMediaItemKey,       // used only if fileName is ""
+		long long llPhysicalPathKey,    // used only if fileName is ""
+		bool removeLinuxPathIfExist);
 
     string getEncodingProfilePathName (
 	long long llEncodingProfileKey,
@@ -144,6 +146,7 @@ private:
     string                      _downloadRootRepository;
     string                      _streamingRootRepository;
     string                      _stagingRootRepository;
+	string						_transcoderStagingRootRepository;
     string                      _ingestionRootRepository;
     string                      _profilesRootRepository;
 

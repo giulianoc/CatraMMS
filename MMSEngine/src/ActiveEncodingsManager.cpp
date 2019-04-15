@@ -515,7 +515,9 @@ string ActiveEncodingsManager::encodeContentImage(
             encodedFileName.append(encodingItem->_encodeData->_fileName.substr(extensionIndex));
 
             bool removeLinuxPathIfExist = true;
+			bool neededForTranscoder = false;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
+					neededForTranscoder,
                 encodingItem->_workspace->_directoryName,
                 to_string(encodingItem->_encodingJobKey),
                 encodingItem->_encodeData->_relativePath,
@@ -546,7 +548,9 @@ string ActiveEncodingsManager::encodeContentImage(
             }
 
             bool removeLinuxPathIfExist = true;
+			bool neededForTranscoder = false;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
                 encodingItem->_workspace->_directoryName,
                 to_string(encodingItem->_encodingJobKey),
                 "/",    // encodingItem->_encodeData->_relativePath,

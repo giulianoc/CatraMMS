@@ -1890,28 +1890,6 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     
-    vector<string> mandatoryFields = {
-        "ImagePosition_X_InPixel",
-        "ImagePosition_Y_InPixel"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                    
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
@@ -3342,6 +3320,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             }
             else if (referenceIngestionJobKey != -1)
             {
+
                 // the difference with the other if is that here, associated to the ingestionJobKey,
                 // we may have a list of mediaItems (i.e.: periodic-frame)
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
@@ -3365,7 +3344,28 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
                             mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
                     {
-                        if (priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey)
+						// scenario: user adds OnSuccess on the Encode Task. In this case the user wants
+						// to apply the current task to the profile by the encode and not to the source media item.
+						// So the generic rule s that, if referenceIngestionJobKey refers a Task generating
+						// just one profile of a media item already present, so do not generates the media item,
+						// (i.e.: Encode Task), it means the user asked implicitely to use
+						// the generated profile and not the source media item
+						bool isIngestionTaskGeneratingAProfile = false;
+						{
+							string localLabel;
+							MMSEngineDBFacade::IngestionType ingestionType;
+							string errorMessage;
+
+							tuple<string, MMSEngineDBFacade::IngestionType, string>                                                  labelIngestionTypeAndErrorMessage =
+								_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
+							tie(localLabel, ingestionType, errorMessage) = labelIngestionTypeAndErrorMessage;
+
+							if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
+								isIngestionTaskGeneratingAProfile = true;
+						}
+
+                        if (priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey
+							|| isIngestionTaskGeneratingAProfile)
                         {
                             tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
                                 mediaItemKeyPhysicalPathKeyAndContentType;
