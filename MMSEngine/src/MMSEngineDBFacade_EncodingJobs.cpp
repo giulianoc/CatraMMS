@@ -5512,6 +5512,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", parameters.length: " + to_string(parameters.length()));
         
         {
+			/*
             int savedEncodingPriority = static_cast<int>(encodingPriority);
             if (savedEncodingPriority > workspace->_maxEncodingPriority)
             {
@@ -5522,6 +5523,10 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
                 savedEncodingPriority = workspace->_maxEncodingPriority;
             }
+			*/
+			// 2019-04-23: we will force the encoding priority to high to be sure this EncodingJob
+			//	will be managed as soon as possible
+			int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
@@ -7114,7 +7119,8 @@ tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngine
 		int64_t		ingestionJobKey;
 		string      type;
 		string      transcoder;
-		EncodingStatus	status;
+		// default initialization, important in case the calling methid calls the tie function
+		EncodingStatus	status = EncodingStatus::ToBeProcessed;
 		bool		highAvailability = false;
 		bool		main = false;
         {
@@ -7157,7 +7163,8 @@ tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngine
 
 		int64_t theOtherEncodingJobKey = 0;
 		string theOtherTranscoder;
-		EncodingStatus theOtherStatus;
+		// default initialization, important in case the calling methid calls the tie function
+		EncodingStatus theOtherStatus = EncodingStatus::ToBeProcessed;
 		if (type == "LiveRecorder" && highAvailability)
         {
 			// select to get the other encodingJobKey

@@ -273,23 +273,36 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 		);
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			_mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -314,32 +327,36 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 		);
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -364,32 +381,36 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 		);
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::KilledByUser, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -414,35 +435,38 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 		);
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", main: " + to_string(main)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -467,34 +491,38 @@ void EncoderVideoAudioProxy::operator()()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 		);
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -633,34 +661,38 @@ void EncoderVideoAudioProxy::operator()()
             }
         }
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        encodedPhysicalPathKey = -1;
-        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -713,34 +745,38 @@ void EncoderVideoAudioProxy::operator()()
             }
         }
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+		try
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
 
-		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
-		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
-		// 'no update is done'
-        int64_t mediaItemKey = -1;
-        int64_t encodedPhysicalPathKey = -1;
-        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1);
-
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-        );
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -6141,7 +6177,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
-                        throw runtime_error(errorMessage);
+                        // throw runtime_error(errorMessage);
 					}
                 }
             }

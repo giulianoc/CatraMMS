@@ -14,8 +14,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
     try
     {
-        chrono::system_clock::time_point now = chrono::system_clock::now();
-        if (now - _lastConnectionStatsReport >= chrono::seconds(_dbConnectionPoolStatsReportPeriodInSeconds))
+        chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+        if (startPoint - _lastConnectionStatsReport >= chrono::seconds(_dbConnectionPoolStatsReportPeriodInSeconds))
         {
             _lastConnectionStatsReport = chrono::system_clock::now();
             
@@ -362,6 +362,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+        chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "getIngestionsToBeManaged statistics"
+			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+        );
     }
     catch(sql::SQLException se)
     {

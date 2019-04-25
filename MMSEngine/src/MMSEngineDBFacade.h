@@ -232,7 +232,7 @@ public:
             case EncodingStatus::End_KilledByUser:
                 return "End_KilledByUser";
             default:
-            throw runtime_error(string("Wrong EncodingStatus"));
+            throw runtime_error(string("Wrong EncodingStatus: ") + to_string(static_cast<int>(encodingStatus)));
         }
     }
     static EncodingStatus toEncodingStatus(const string& encodingStatus)
@@ -911,10 +911,16 @@ public:
     void removeEncodingProfilesSet(
         int64_t workspaceKey, int64_t encodingProfilesSetKey);
 
-    void getExpiredMediaItemKeys(
+    void getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
         int maxMediaItemKeysNumber);
+
+	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+			int64_t ingestionJobKey);
+
+	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+			shared_ptr<MySQLConnection> conn, int64_t ingestionJobKey);
 
     void getIngestionsToBeManaged(
         vector<tuple<int64_t,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
@@ -1053,10 +1059,10 @@ Json::Value getTagsList (
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel);
 
-    tuple<MMSEngineDBFacade::ContentType,string,string,string> getMediaItemKeyDetails(
+    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> getMediaItemKeyDetailsByPhysicalPathKey(
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(

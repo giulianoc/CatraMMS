@@ -763,6 +763,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
+                "create index MMS_IngestionJob_idx on MMS_IngestionJob (processorMMS, ingestionType, status)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
                 "create table if not exists MMS_IngestionJobOutput ("
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "mediaItemKey			BIGINT UNSIGNED NOT NULL,"

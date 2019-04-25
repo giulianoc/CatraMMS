@@ -1,3 +1,16 @@
 
 #every hour
-0 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh
+0 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 0
+
+2 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 1
+4 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 2
+6 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 3
+8 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 4
+10 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 5
+12 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 6
+14 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 7
+16 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 8
+18 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 9
+20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 10
+22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
+

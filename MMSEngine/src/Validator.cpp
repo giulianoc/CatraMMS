@@ -3300,23 +3300,25 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 string title;
                 string userData;
                 string ingestionDate;
+				int64_t localIngestionJobKey;
                 
-                tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate = 
+                tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
                         _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
-                tie(referenceContentType, title, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
+                tie(referenceContentType, title, userData, ingestionDate, localIngestionJobKey) = contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referencePhysicalPathKey != -1)
             {
                 string title;
                 string userData;
                 string ingestionDate;
+				int64_t localIngestionJobKey;
 
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate = 
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, title, userData, ingestionDate)
-                        = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
+                tie(referenceMediaItemKey,referenceContentType, title, userData, ingestionDate, localIngestionJobKey)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referenceIngestionJobKey != -1)
             {

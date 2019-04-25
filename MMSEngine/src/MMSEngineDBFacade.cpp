@@ -645,7 +645,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							// mediaItemKeyValidated
 							{
 								lastSQLCommand = 
-									"update MMS_MediaItem set userData = JSON_INSERT(`userData`, '$.mmsData.validated', true) "
+									"update MMS_MediaItem set userData = JSON_SET(userData, '$.mmsData.validated', true) "
 									"where mediaItemKey = ?";
 								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
 										conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -664,7 +664,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							// mediaItemKeyNotValidated
 							{
 								lastSQLCommand = 
-									"update MMS_MediaItem set retentionInMinutes = 0, userData = JSON_INSERT(`userData`, '$.mmsData.validated', false) "
+									"update MMS_MediaItem set retentionInMinutes = 0, userData = JSON_SET(userData, '$.mmsData.validated', false) "
 									"where mediaItemKey = ?";
 								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 								int queryParameterIndex = 1;
@@ -716,7 +716,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 						{
 							lastSQLCommand = 
-								"update MMS_MediaItem set userData = JSON_INSERT(`userData`, '$.mmsData.validated', true) "
+								"update MMS_MediaItem set userData = JSON_SET(userData, '$.mmsData.validated', true) "
 								"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;

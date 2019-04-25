@@ -2335,7 +2335,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 			{
 				if (liveRecording->_running)
 				{
-					_logger->info(__FILEREF__ + "liveRecorderChunksIngestion ..."
+					_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles ..."
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 					);
@@ -2379,7 +2379,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveRecorderChunksIngestion failed")
+						string errorMessage = string ("liveRecorder_processLastGeneratedLiveRecorderFiles failed")
 							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -2389,7 +2389,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveRecorderChunksIngestion failed")
+						string errorMessage = string ("liveRecorder_processLastGeneratedLiveRecorderFiles failed")
 							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -2398,7 +2398,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 
-					_logger->info(__FILEREF__ + "liveRecorderChunksIngestion"
+					_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 						+ ", elapsed time: " + to_string(

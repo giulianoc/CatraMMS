@@ -217,7 +217,7 @@ void ActiveEncodingsManager::operator()()
                     {
                         chrono::system_clock::time_point        processingItemStart;
 
-                        _logger->info(__FILEREF__ + "processEncodingJob"
+                        _logger->info(__FILEREF__ + "processEncodingJob begin"
                                 + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -303,29 +303,33 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         {
             _logger->error(__FILEREF__ + "encodeContentImage: " + e.what());
 
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-                + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-            );
+			try
+			{
+				_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+					+ ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+				);
 
-            int64_t encodedPhysicalPathKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
             
-            // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+				// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+				int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey);
-
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-                + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-                + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-            );
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+					+ ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+				);
+			}
 
             encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 
@@ -348,29 +352,33 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             );
             FileIO::remove(stagingEncodedAssetPathName);
 
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-                + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-            );
+			try
+			{
+				_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+					+ ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+				);
 
-            encodedPhysicalPathKey = -1;
+				encodedPhysicalPathKey = -1;
             
-            // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+				// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+				int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey);
-
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
-                + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-                + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
-            );
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError FAILED"
+					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+					+ ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+				);
+			}
 
             encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 

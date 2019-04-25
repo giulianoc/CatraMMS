@@ -1,7 +1,7 @@
 
 #include "MMSEngineDBFacade.h"
 
-void MMSEngineDBFacade::getExpiredMediaItemKeys(
+void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
         int maxMediaItemKeysNumber)
@@ -56,6 +56,9 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
                 
                 // check if there is still an ingestion depending on the ingestionJobKey
                 bool ingestionDependingOnMediaItemKey = false;
+				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, ingestionJobKey) > 0)
+					ingestionDependingOnMediaItemKey = true;
+				/*
                 {
                     {
                         lastSQLCommand = 
@@ -83,7 +86,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
                         }
                     }
                 }
-                
+				*/
+
                 if (!ingestionDependingOnMediaItemKey)
                 {
                     shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
@@ -309,6 +313,159 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
 
         throw e;
     }    
+}
+
+int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+	int64_t ingestionJobKey
+)
+{
+    int			dependenciesNumber;
+    string      lastSQLCommand;
+    shared_ptr<MySQLConnection> conn = nullptr;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		dependenciesNumber = getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+			conn, ingestionJobKey);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+
+    return dependenciesNumber;
+}
+
+int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+	shared_ptr<MySQLConnection> conn,
+	int64_t ingestionJobKey
+)
+{
+    int			dependenciesNumber;
+    string      lastSQLCommand;
+
+    try
+    {
+		{
+			lastSQLCommand = 
+				"select count(*) from MMS_IngestionJobDependency ijd, MMS_IngestionJob ij where "
+				"ijd.ingestionJobKey = ij.ingestionJobKey "
+				"and ijd.dependOnIngestionJobKey = ? "
+				"and ij.status not like 'End_%'";
+			shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatementDependency->setInt(queryParameterIndex++, ingestionJobKey);
+
+			shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
+			if (resultSetDependency->next())
+			{
+				dependenciesNumber	= resultSetDependency->getInt(1);
+			}
+			else
+			{
+				string errorMessage ("select count(*) failed");
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+        
+        throw e;
+    }
+    
+    return dependenciesNumber;
 }
 
 Json::Value MMSEngineDBFacade::getMediaItemsList (
@@ -1320,15 +1477,15 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::getMediaItemKeyDetails(
+tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<MMSEngineDBFacade::ContentType,string,string,string>
-		contentTypeTitleUserDataAndIngestionDate;
+    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+		contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
     try
     {
@@ -1339,7 +1496,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::ge
 
         {
             lastSQLCommand = 
-                "select contentType, title, userData, "
+                "select contentType, title, userData, ingestionJobKey, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1363,7 +1520,9 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::ge
                 if (!resultSet->isNull("ingestionDate"))
                     ingestionDate = resultSet->getString("ingestionDate");
                 
-                contentTypeTitleUserDataAndIngestionDate = make_tuple(contentType, title, userData, ingestionDate);
+                int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
+                contentTypeTitleUserDataIngestionDateAndIngestionJobKey = make_tuple(contentType, title, userData, ingestionDate, ingestionJobKey);
             }
             else
             {
@@ -1386,7 +1545,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::ge
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return contentTypeTitleUserDataAndIngestionDate;
+        return contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
     }
     catch(sql::SQLException se)
     {
@@ -1472,15 +1631,15 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::ge
     }    
 }
 
-tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string>
-		mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+		mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
     try
     {
@@ -1491,7 +1650,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFa
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
+                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
                 "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
@@ -1517,8 +1676,10 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFa
                 if (!resultSet->isNull("ingestionDate"))
                     ingestionDate = resultSet->getString("ingestionDate");
 
-                mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
-					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate);                
+                int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
+                mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate, ingestionJobKey);                
             }
             else
             {
@@ -1541,7 +1702,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFa
         _connectionPool->unborrow(conn);
 		conn = nullptr;
         
-        return mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
+        return mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
     }
     catch(sql::SQLException se)
     {

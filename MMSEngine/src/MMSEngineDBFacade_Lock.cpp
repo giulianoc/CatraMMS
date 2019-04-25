@@ -204,7 +204,7 @@ void MMSEngineDBFacade::setLock(
 				+ ", type: " + sLockType
 				+ ", waitingTimeoutInSecondsIfLocked: " + to_string(waitingTimeoutInSecondsIfLocked)
 			;
-			_logger->error(errorMessage);
+			_logger->warn(errorMessage);
 
 			throw AlreadyLocked();
 		}
@@ -280,7 +280,7 @@ void MMSEngineDBFacade::setLock(
     }
     catch(AlreadyLocked e)
     {
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->warn(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
