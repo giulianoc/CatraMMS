@@ -3474,8 +3474,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     {
                         int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
 
+						bool warningIfMissing = false;
                         referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                                referenceMediaItemKey, encodingProfileKey);
+                                referenceMediaItemKey, encodingProfileKey, warningIfMissing);
                     }  
                     else
                     {
@@ -3484,8 +3485,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                         {
                             string encodingProfileLabel = referenceRoot.get(field, "0").asString();
 
-                            referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey, 
-                                    referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+							bool warningIfMissing = false;
+                            referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+									workspaceKey, referenceMediaItemKey, referenceContentType,
+									encodingProfileLabel, warningIfMissing);
                         }        
                     }
                 }

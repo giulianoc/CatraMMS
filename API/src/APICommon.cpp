@@ -738,7 +738,9 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
 
     string contentType;
     if (responseBody != "")
-        contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
+	{
+		contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
+	}
     
     string completeHttpResponse =
             httpStatus

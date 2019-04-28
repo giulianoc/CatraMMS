@@ -3125,18 +3125,16 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     return encodingProfilesSetKeys;
 }
 
-int MMSEngineDBFacade::addEncodingJob (
+int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
     shared_ptr<Workspace> workspace,
-    int64_t ingestionJobKey,
-    string destEncodingProfileLabel,
-    int64_t sourceMediaItemKey,
-    int64_t sourcePhysicalPathKey,
-    EncodingPriority encodingPriority
+    MMSEngineDBFacade::ContentType contentType,
+    string encodingProfileLabel
 )
 {
-    
+
+	int64_t		encodingProfileKey;
     string      lastSQLCommand;
-    
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
@@ -3146,52 +3144,26 @@ int MMSEngineDBFacade::addEncodingJob (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        string contentType;
-        {
-            lastSQLCommand = 
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                contentType = static_cast<string>(resultSet->getString("contentType"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "ContentType not found "
-                        + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-        int64_t destEncodingProfileKey;
         {
             lastSQLCommand = 
                 "select encodingProfileKey from MMS_EncodingProfile where (workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, contentType);
-            preparedStatement->setString(queryParameterIndex++, destEncodingProfileLabel);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+            preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                destEncodingProfileKey = resultSet->getInt64("encodingProfileKey");
+                encodingProfileKey = resultSet->getInt64("encodingProfileKey");
             }
             else
             {
                 string errorMessage = __FILEREF__ + "encodingProfileKey not found "
                         + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-                        + ", contentType: " + contentType
-                        + ", destEncodingProfileLabel: " + destEncodingProfileLabel
+                        + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                        + ", encodingProfileLabel: " + encodingProfileLabel
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -3199,14 +3171,6 @@ int MMSEngineDBFacade::addEncodingJob (
                 throw runtime_error(errorMessage);                    
             }
         }
-
-        addEncodingJob (
-            workspace,
-            ingestionJobKey,
-            destEncodingProfileKey,
-            sourceMediaItemKey,
-            sourcePhysicalPathKey,
-            encodingPriority);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -3272,6 +3236,8 @@ int MMSEngineDBFacade::addEncodingJob (
         
         throw e;
     }
+
+	return encodingProfileKey;
 }
 
 int MMSEngineDBFacade::addEncodingJob (

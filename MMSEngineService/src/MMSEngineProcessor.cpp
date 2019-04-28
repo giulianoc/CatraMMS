@@ -7602,34 +7602,6 @@ void MMSEngineProcessor::manageEncodeTask(
             throw runtime_error(errorMessage);
         }
 
-        // This task shall contain EncodingProfileKey or EncodingProfileLabel.
-        // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
-        //  having just EncodingProfileKey        
-        
-        string keyField = "EncodingProfileKey";
-        int64_t encodingProfileKey = -1;
-        string labelField = "EncodingProfileLabel";
-        string encodingProfileLabel;
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, keyField))
-        {
-            encodingProfileKey = parametersRoot.get(keyField, "XXX").asInt64();
-        }
-        else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, labelField))
-        {
-            encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
-        }
-        else
-        {
-            string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + keyField
-                    + ", Field: " + labelField
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -7650,17 +7622,16 @@ void MMSEngineProcessor::manageEncodeTask(
 		//		the status in case of more than one encoding?
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 		// 		keyAndDependencyType: dependencies)
+        MMSEngineDBFacade::ContentType referenceContentType;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
         {
             int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
             
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 				keyAndDependencyType	= dependencies[0];
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-            
-			int64_t sourceMediaItemKey;
-			int64_t sourcePhysicalPathKey;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
@@ -7686,16 +7657,85 @@ void MMSEngineProcessor::manageEncodeTask(
 				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 			}
-    
-			if (encodingProfileKey == -1)
-				_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
-					encodingProfileLabel, sourceMediaItemKey, sourcePhysicalPathKey,
-					encodingPriority);
-			else
-				_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
-					encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey,
-					encodingPriority);
 		}
+
+        // This task shall contain EncodingProfileKey or EncodingProfileLabel.
+        // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+        //  having just EncodingProfileKey        
+        
+        string keyField = "EncodingProfileKey";
+        int64_t encodingProfileKey = -1;
+        string labelField = "EncodingProfileLabel";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, keyField))
+        {
+            encodingProfileKey = parametersRoot.get(keyField, "XXX").asInt64();
+
+			// check if the profile is already present for the source content
+			{
+				try
+				{
+					bool warningIfMissing = true;
+					int64_t localPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						sourceMediaItemKey, encodingProfileKey, warningIfMissing);
+
+					string errorMessage = __FILEREF__ + "Content profile is already present"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch(MediaItemKeyNotFound e)
+				{
+				}
+			}
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, labelField))
+        {
+			string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
+
+			encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+				workspace, referenceContentType, encodingProfileLabel);
+
+			// check if the profile is already present for the source content
+			{
+				try
+				{
+					bool warningIfMissing = true;
+					int64_t localPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						sourceMediaItemKey, encodingProfileKey, warningIfMissing);
+
+					string errorMessage = __FILEREF__ + "Content profile is already present"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch(MediaItemKeyNotFound e)
+				{
+				}
+			}
+        }
+        else
+        {
+            string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", Field: " + keyField
+                    + ", Field: " + labelField
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
+			encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey,
+			encodingPriority);
     }
     catch(runtime_error e)
     {

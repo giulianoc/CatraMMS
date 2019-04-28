@@ -700,7 +700,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             else
             {
-                string errorMessage ("select count(*) failed");
+                string errorMessage (__FILEREF__ + "select count(*) failed");
 
                 _logger->error(errorMessage);
 
@@ -804,8 +804,19 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 field = "mediaItemKey";
                 mediaItemRoot[field] = localMediaItemKey;
 
-                field = "title";
-                mediaItemRoot[field] = static_cast<string>(resultSet->getString("title"));
+				{
+					string localTitle = static_cast<string>(resultSet->getString("title"));
+
+					// a printf is used to pring into the output, so % has to be changed to %%
+					for (int titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
+					{
+						if (localTitle[titleIndex] == '%')
+							localTitle.replace(titleIndex, 1, "%%");
+					}
+
+					field = "title";
+					mediaItemRoot[field] = localTitle;
+				}
 
                 field = "deliveryFileName";
                 if (resultSet->isNull("deliveryFileName"))
@@ -1191,7 +1202,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
-    int64_t referenceMediaItemKey, int64_t encodingProfileKey)
+    int64_t referenceMediaItemKey, int64_t encodingProfileKey,
+	bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -1226,9 +1238,12 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
                     + ", encodingProfileKey: " + to_string(encodingProfileKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 
@@ -1261,10 +1276,16 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     }
     catch(MediaItemKeyNotFound e)
     {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+        else
+            _logger->error(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
 
         if (conn != nullptr)
         {
@@ -1321,7 +1342,8 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         int64_t workspaceKey, 
         int64_t mediaItemKey, ContentType contentType,
-        string encodingProfileLabel)
+        string encodingProfileLabel,
+		bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -1385,9 +1407,12 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
                     + ", encodingProfileKey: " + to_string(encodingProfileKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 
@@ -1420,10 +1445,16 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     }
     catch(MediaItemKeyNotFound e)
     {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+        else
+            _logger->error(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
 
         if (conn != nullptr)
         {
@@ -1535,8 +1566,8 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFa
                 else
                     _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }             
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }
         }
                         
         _logger->debug(__FILEREF__ + "DB connection unborrow"

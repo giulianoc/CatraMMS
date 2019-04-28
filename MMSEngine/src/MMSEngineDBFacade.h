@@ -1052,12 +1052,12 @@ Json::Value getTagsList (
         bool contentTypePresent, ContentType contentType);
 
     int64_t getPhysicalPathDetails(
-        int64_t referenceMediaItemKey, int64_t encodingProfileKey);
+        int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing);
    
     int64_t getPhysicalPathDetails(
         int64_t workspaceKey, 
         int64_t mediaItemKey, ContentType contentType,
-        string encodingProfileLabel);
+        string encodingProfileLabel, bool warningIfMissing);
 
     tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
@@ -1120,13 +1120,10 @@ Json::Value getTagsList (
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems,
 		int maxEncodingsNumber);
     
-    int addEncodingJob (
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        string destEncodingProfileLabel,
-        int64_t sourceMediaItemKey,
-        int64_t sourcePhysicalPathKey,
-        EncodingPriority encodingPriority);
+	int64_t getEncodingProfileKeyByLabel (
+		shared_ptr<Workspace> workspace,
+		MMSEngineDBFacade::ContentType contentType,
+		string encodingProfileLabel);
 
     int addEncodingJob (
         shared_ptr<Workspace> workspace,
