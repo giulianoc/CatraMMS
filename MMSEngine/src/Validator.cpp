@@ -2836,7 +2836,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel"
+                + "VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace"
                 + ")"
                 + ", Field: " + field
                 + ", Output: " + faceRecognitionOutput
@@ -3660,7 +3660,8 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
 {
     vector<string> validOutputs = {
         "VideoWithHighlightedFaces",
-        "ImagesToBeUsedInDeepLearnedModel"
+        "ImagesToBeUsedInDeepLearnedModel",
+        "FrameContainingFace"
     };
 
     for (string validOutput: validOutputs)

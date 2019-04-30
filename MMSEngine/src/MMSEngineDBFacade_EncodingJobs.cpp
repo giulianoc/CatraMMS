@@ -4872,6 +4872,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
 int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
+	int64_t sourceMediaItemKey,
 	string sourcePhysicalPath,
 	string faceRecognitionCascadeName,
 	string faceRecognitionOutput,
@@ -4905,7 +4906,8 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
         
         string parameters = string()
                 + "{ "
-                + "\"sourcePhysicalPath\": \"" + sourcePhysicalPath + "\""
+                + "\"sourceMediaItemKey\": " + to_string(sourceMediaItemKey)
+                + ", \"sourcePhysicalPath\": \"" + sourcePhysicalPath + "\""
                 + ", \"faceRecognitionCascadeName\": \"" + faceRecognitionCascadeName + "\""
                 + ", \"faceRecognitionOutput\": \"" + faceRecognitionOutput + "\""
                 + "} "

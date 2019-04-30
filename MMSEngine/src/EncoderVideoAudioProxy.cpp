@@ -2423,7 +2423,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, _encodingItem->_overlayImageOnVideoData->_overlayParametersRoot);
+            fileFormat, 0, _encodingItem->_overlayImageOnVideoData->_overlayParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -3280,7 +3280,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, _encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot);
+            fileFormat, 0, _encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -4627,7 +4627,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, _encodingItem->_slideShowData->_slideShowParametersRoot);
+            fileFormat, 0, _encodingItem->_slideShowData->_slideShowParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -4693,18 +4693,21 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 		*_status = EncodingJobStatus::Running;
 	}
-
+	int64_t sourceMediaItemKey;
 	string faceRecognitionCascadeName;
 	string sourcePhysicalPath;
 	string faceRecognitionOutput;
 	{
-		string field = "faceRecognitionCascadeName";
+		string field = "sourceMediaItemKey";
+		sourceMediaItemKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+		field = "faceRecognitionCascadeName";
 		faceRecognitionCascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
 
 		field = "sourcePhysicalPath";
 		sourcePhysicalPath = _encodingItem->_parametersRoot.get(field, 0).asString();
 
-		// VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
+		// VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace
 		field = "faceRecognitionOutput";
 		faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
 	}
@@ -4738,7 +4741,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 	{
 		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
 			_encodingItem->_workspace);
-		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
+		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel"
+				|| faceRecognitionOutput == "FrameContainingFace")
 		{
 			fileFormat = "jpg";
 
@@ -4807,6 +4811,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	string lastImageSourceFileName;
 
 	long currentFrameIndex = 0;
+	long framesContainingFaces = 0;
 	while(true)
 	{
 		capture >> bgrFrame;
@@ -4875,111 +4880,170 @@ string EncoderVideoAudioProxy::faceRecognition()
 				));
 		}
 
-		for (size_t i = 0; i < faces.size(); i++)
+		if (faceRecognitionOutput == "VideoWithHighlightedFaces"
+			|| faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
 		{
-			cv::Rect roiRectScaled = faces[i];
-			// cv::Mat smallROI;
+			if (faces.size() > 0)
+				framesContainingFaces++;
 
-			if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+			for (size_t i = 0; i < faces.size(); i++)
 			{
-				cv::Scalar color = cv::Scalar(255,0,0);
-				double aspectRatio = (double) roiRectScaled.width / roiRectScaled.height;
-				int thickness = 3;
-				int lineType = 8;
-				int shift = 0;
-				if (0.75 < aspectRatio && aspectRatio < 1.3)
-				{
-					cv::Point center;
-					int radius;
+				cv::Rect roiRectScaled = faces[i];
+				// cv::Mat smallROI;
 
-					center.x = cvRound((roiRectScaled.x + roiRectScaled.width*0.5)*_computerVisionDefaultScale);
-					center.y = cvRound((roiRectScaled.y + roiRectScaled.height*0.5)*_computerVisionDefaultScale);
-					radius = cvRound((roiRectScaled.width + roiRectScaled.height)*0.25*_computerVisionDefaultScale);
-					cv::circle(bgrFrame, center, radius, color, thickness, lineType, shift);
+				if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+				{
+					cv::Scalar color = cv::Scalar(255,0,0);
+					double aspectRatio = (double) roiRectScaled.width / roiRectScaled.height;
+					int thickness = 3;
+					int lineType = 8;
+					int shift = 0;
+					if (0.75 < aspectRatio && aspectRatio < 1.3)
+					{
+						cv::Point center;
+						int radius;
+
+						center.x = cvRound((roiRectScaled.x + roiRectScaled.width*0.5)*_computerVisionDefaultScale);
+						center.y = cvRound((roiRectScaled.y + roiRectScaled.height*0.5)*_computerVisionDefaultScale);
+						radius = cvRound((roiRectScaled.width + roiRectScaled.height)*0.25*_computerVisionDefaultScale);
+						cv::circle(bgrFrame, center, radius, color, thickness, lineType, shift);
+					}
+					else
+					{
+						cv::rectangle(bgrFrame,
+							cv::Point(cvRound(roiRectScaled.x*_computerVisionDefaultScale),
+								cvRound(roiRectScaled.y*_computerVisionDefaultScale)),
+							cv::Point(cvRound((roiRectScaled.x + roiRectScaled.width-1)*_computerVisionDefaultScale),
+								cvRound((roiRectScaled.y + roiRectScaled.height-1)*_computerVisionDefaultScale)),
+							color, thickness, lineType, shift);
+					}
 				}
 				else
 				{
-					cv::rectangle(bgrFrame,
-						cv::Point(cvRound(roiRectScaled.x*_computerVisionDefaultScale),
-							cvRound(roiRectScaled.y*_computerVisionDefaultScale)),
-						cv::Point(cvRound((roiRectScaled.x + roiRectScaled.width-1)*_computerVisionDefaultScale),
-							cvRound((roiRectScaled.y + roiRectScaled.height-1)*_computerVisionDefaultScale)),
-						color, thickness, lineType, shift);
-				}
-			}
-			else
-			{
-				// Crop the full image to that image contained by the rectangle myROI
-				// Note that this doesn't copy the data
-				cv::Rect roiRect(
+					// Crop the full image to that image contained by the rectangle myROI
+					// Note that this doesn't copy the data
+					cv::Rect roiRect(
 						roiRectScaled.x * _computerVisionDefaultScale,
 						roiRectScaled.y * _computerVisionDefaultScale,
 						roiRectScaled.width * _computerVisionDefaultScale,
 						roiRectScaled.height * _computerVisionDefaultScale
-				);
-				cv::Mat grayFrameCropped(grayFrame, roiRect);
+					);
+					cv::Mat grayFrameCropped(grayFrame, roiRect);
 
-				/*
-				cv::Mat cropped;
-				// Copy the data into new matrix
-				grayFrameCropped.copyTo(cropped);
-				*/
+					/*
+					cv::Mat cropped;
+					// Copy the data into new matrix
+					grayFrameCropped.copyTo(cropped);
+					*/
 
+					string sourceFileName = to_string(_encodingItem->_ingestionJobKey)
+						+ "_"
+						+ to_string(currentFrameIndex)
+						+ "." + fileFormat
+					;
+
+					string faceRecognitionImagePathName = faceRecognitionMediaPathName + sourceFileName;
+
+					cv::imwrite(faceRecognitionImagePathName, grayFrameCropped);
+					// cv::imwrite(faceRecognitionImagePathName, cropped);
+
+					if (lastImageSourceFileName == "")
+						lastImageSourceFileName = sourceFileName;
+					else
+					{
+						// ingest the face
+						string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+							fileFormat, sourceMediaItemKey,
+							_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+    
+						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+							->getFreeEvent<LocalAssetIngestionEvent>(
+								MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+						localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+						localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+						localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
+						localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
+						localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+						localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+						localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+						// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+
+						localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+						shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+						_multiEventsSet->addEvent(event);
+
+						_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", sourceFileName: " + lastImageSourceFileName
+							+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+							+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+
+						lastImageSourceFileName = sourceFileName;
+					}
+				}
+			}
+
+			if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+			{
+				writer << bgrFrame;
+			}
+		}
+		else // if (faceRecognitionOutput == "FrameContainingFace")
+		{
+			if (faces.size() > 0)
+			{
+				framesContainingFaces++;
+
+				// ingest the frame
 				string sourceFileName = to_string(_encodingItem->_ingestionJobKey)
-					+ "_"
-					+ to_string(currentFrameIndex)
+					+ "_frameContainingFace"
 					+ "." + fileFormat
 				;
 
 				string faceRecognitionImagePathName = faceRecognitionMediaPathName + sourceFileName;
 
-				cv::imwrite(faceRecognitionImagePathName, grayFrameCropped);
-				// cv::imwrite(faceRecognitionImagePathName, cropped);
+				cv::imwrite(faceRecognitionImagePathName, bgrFrame);
 
-				if (lastImageSourceFileName == "")
-					lastImageSourceFileName = sourceFileName;
-				else
-				{
-					// ingest the face
-					string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-						fileFormat, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
-    
-					shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-						->getFreeEvent<LocalAssetIngestionEvent>(
-								MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+				string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+					fileFormat, sourceMediaItemKey,
+					_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+  
+				shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+					->getFreeEvent<LocalAssetIngestionEvent>(
+						MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-					localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
-					localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-					localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+				localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+				localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+				localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-					localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-					localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
-					localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
-					localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
-					localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-					localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
-					// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+				localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+				localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
+				localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
+				localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+				localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+				localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+				// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
 
-					localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
-					shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-					_multiEventsSet->addEvent(event);
+				shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+				_multiEventsSet->addEvent(event);
 
-					_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", sourceFileName: " + lastImageSourceFileName
-						+ ", getEventKey().first: " + to_string(event->getEventKey().first)
-						+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+				_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT) - FrameContainingFace"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", sourceFileName: " + sourceFileName
+					+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+					+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 
-					lastImageSourceFileName = sourceFileName;
-				}
+				break;
 			}
-		}
-
-		if (faceRecognitionOutput == "VideoWithHighlightedFaces")
-		{
-			writer << bgrFrame;
 		}
 	}
 
@@ -4989,7 +5053,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 		{
 			// ingest the face
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-				fileFormat, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+				fileFormat, sourceMediaItemKey,
+				_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
   
 			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
 				->getFreeEvent<LocalAssetIngestionEvent>(
@@ -5047,6 +5112,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+            + ", currentFrameIndex: " + to_string(currentFrameIndex)
+            + ", framesContainingFaces: " + to_string(framesContainingFaces)
 	);
 
 
@@ -5064,8 +5131,9 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 			string field = "faceRecognitionOutput";
 			faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
 		}
-    
-		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
+
+		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel"
+			|| faceRecognitionOutput == "FrameContainingFace")
 		{
 			// nothing to do, all the faces (images) were already ingested
 
@@ -5101,7 +5169,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+            fileFormat, 0, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(
@@ -5636,7 +5704,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
 
 
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, _encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot);
+            fileFormat, 0, _encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
 			_multiEventsSet->getEventsFactory() ->getFreeEvent<LocalAssetIngestionEvent>(
@@ -7735,6 +7803,7 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,
+		int64_t videoMediaItemKey,
         Json::Value parametersRoot
 )
 {
@@ -7760,6 +7829,12 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         parametersRoot[field] = fileFormat;
     }
     
+	if (videoMediaItemKey > 0)
+	{
+		field = "ImageOfVideoMediaItemKey";
+        parametersRoot[field] = videoMediaItemKey;
+	}
+
     string mediaMetadata;
     {
         Json::StreamWriterBuilder wbuilder;

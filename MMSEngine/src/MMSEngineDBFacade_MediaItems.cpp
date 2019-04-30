@@ -919,6 +919,30 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     mediaItemRoot[field] = mediaItemTagsRoot;
                 }
 
+				// CrossReferences
+				{
+					if (contentType == ContentType::Video)
+					{
+						Json::Value mediaItemReferencesRoot(Json::arrayValue);
+                    
+						lastSQLCommand = 
+							"select sourceMediaItemKey from MMS_CrossReference "
+							"where type = 'imageOfVideo' and targetMediaItemKey = ?";
+
+						shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
+						shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
+						while (resultSetTags->next())
+						{
+							mediaItemReferencesRoot.append(resultSetTags->getInt64("sourceMediaItemKey"));
+						}
+                    
+						field = "imagesReferences";
+						mediaItemRoot[field] = mediaItemReferencesRoot;
+					}
+				}
+
                 {
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
@@ -2831,27 +2855,27 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         
         int64_t mediaItemKey = getLastInsertId(conn);
 
-	// tags
+		// tags
         {
-		string field = "Tags";
-		if (isMetadataPresent(parametersRoot, field))
-		{
-			for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
+			string field = "Tags";
+			if (isMetadataPresent(parametersRoot, field))
 			{
-				string tag = parametersRoot[field][tagIndex].asString();
+				for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
+				{
+					string tag = parametersRoot[field][tagIndex].asString();
 
-               			lastSQLCommand = 
-                    			"insert into MMS_Tag (mediaItemKey, name) values ("
-                    			"?, ?)";
+           			lastSQLCommand = 
+               			"insert into MMS_Tag (mediaItemKey, name) values ("
+               			"?, ?)";
 
-               			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-               			int queryParameterIndex = 1;
-               			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-               			preparedStatement->setString(queryParameterIndex++, tag);
+           			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+           			int queryParameterIndex = 1;
+           			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+           			preparedStatement->setString(queryParameterIndex++, tag);
 
-               			preparedStatement->executeUpdate();
+           			preparedStatement->executeUpdate();
+				}
 			}
-		}
         }
 
         {
@@ -2875,6 +2899,36 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
         }
         
+		// cross references
+		{
+			if (contentType == ContentType::Image)
+			{
+				string field = "ImageOfVideoMediaItemKey";
+				if (isMetadataPresent(parametersRoot, field))
+				{
+					string sImageOfVideoMediaItemKey = parametersRoot.get(field, "").asString();
+
+					if (sImageOfVideoMediaItemKey != "")
+					{
+						int64_t imageOfVideoMediaItemKey = stoll(sImageOfVideoMediaItemKey);
+						string type = "imageOfVideo";
+
+						lastSQLCommand = 
+							"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
+							"?, ?, ?)";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+						preparedStatement->setString(queryParameterIndex++, type);
+						preparedStatement->setInt64(queryParameterIndex++, imageOfVideoMediaItemKey);
+
+						preparedStatement->executeUpdate();
+					}
+				}
+			}
+		}
+
         /*
         // territories
         {

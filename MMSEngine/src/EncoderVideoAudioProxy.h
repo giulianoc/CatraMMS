@@ -214,6 +214,7 @@ private:
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,
+		int64_t videoMediaItemKey,
         Json::Value parametersRoot);
 };
 

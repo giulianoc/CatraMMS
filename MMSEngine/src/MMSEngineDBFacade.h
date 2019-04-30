@@ -1180,6 +1180,7 @@ Json::Value getTagsList (
     int addEncoding_FaceRecognitionJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
+		int64_t sourceMediaItemKey,
         string sourcePhysicalPath,
         string faceRecognitionCascadeName,
 		string faceRecognitionOutput,

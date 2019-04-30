@@ -25,7 +25,8 @@
 		//		haarcascade_frontalface_alt_tree or haarcascade_frontalface_default
 		"CascadeName": "haarcascade_frontalface_alt",
 
-		// mandatory. It could be VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
+		// mandatory. It could be VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel
+		//	or FrameContainingFace
 		"Output": "VideoWithHighlightedFaces",
 
 		// optional: it might contain any kind of user data (json format).

@@ -12,6 +12,10 @@
 		// mandatory: extension of the file
 		"FileFormat": "mp4",
 
+		// optional: in case you are ingesting an image, this parameter allow you to create a cross reference
+		//	of type 'isImageOfVideo" between this image and a video
+		"ImageOfVideoMediaItemKey": 1234,
+
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.

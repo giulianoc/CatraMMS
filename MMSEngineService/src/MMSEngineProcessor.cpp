@@ -4520,6 +4520,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             string deliveryFileName;
             MMSEngineDBFacade::ContentType contentType;
             string title;
+			int64_t sourceMediaItemKey;
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -4531,6 +4532,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				sourceMediaItemKey = key;
+
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -4575,12 +4578,11 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    int64_t mediaItemKey;
                     string localTitle;
                     string userData;
 					string ingestionDate;
 					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(sourceMediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
@@ -4598,7 +4600,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 fileName);
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
-                mmsAssetPathName, faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority);
+                sourceMediaItemKey, mmsAssetPathName,
+				faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority);
         }
     }
     catch(runtime_error e)

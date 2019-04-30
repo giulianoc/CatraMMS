@@ -1130,6 +1130,34 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
+                "create table if not exists MMS_CrossReference ("
+                    "sourceMediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "type						VARCHAR (128) NOT NULL,"
+                    "targetMediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_CrossReference_PK PRIMARY KEY (sourceMediaItemKey, targetMediaItemKey), "
+                    "constraint MMS_CrossReference_FK1 foreign key (sourceMediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade, "
+                    "constraint MMS_CrossReference_FK2 foreign key (targetMediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
                 "create table if not exists MMS_VideoItemProfile ("
                     "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
                     "durationInMilliSeconds		BIGINT NULL,"
@@ -1834,24 +1862,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             IngestedRelativePath		VARCHAR (256) NULL, 
             constraint MMS_MediaItemsRemoved_PK PRIMARY KEY (MediaItemRemovedKey)) 
             ENGINE=InnoDB;
-
-    # create table MMS_CrossReferences
-    # This table will be used to set cross references between MidiaItems
-    # Type could be:
-    #	0: <not specified>
-    #	1: IsScreenshotOfVideo
-    #	2: IsImageOfAlbum
-    create table if not exists MMS_CrossReferences (
-            SourceMediaItemKey		BIGINT UNSIGNED NOT NULL,
-            Type					TINYINT NOT NULL,
-            TargetMediaItemKey		BIGINT UNSIGNED NOT NULL,
-            constraint MMS_CrossReferences_PK PRIMARY KEY (SourceMediaItemKey, TargetMediaItemKey), 
-            constraint MMS_CrossReferences_FK1 foreign key (SourceMediaItemKey) 
-                    references MMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint MMS_CrossReferences_FK2 foreign key (TargetMediaItemKey) 
-                    references MMS_MediaItems (MediaItemKey) on delete cascade) 
-            ENGINE=InnoDB;
-    create index MMS_CrossReferences_idx on MMS_CrossReferences (SourceMediaItemKey, TargetMediaItemKey);
 
     # create table MMS_3SWESubscriptions
     # This table will be used to set cross references between MidiaItems
