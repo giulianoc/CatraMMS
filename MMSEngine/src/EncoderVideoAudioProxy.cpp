@@ -4790,7 +4790,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 		}
 	}
 
-	_logger->info(__FILEREF__ + "generating Face Recognition"
+	_logger->info(__FILEREF__ + "generating Face Recognition start"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -4818,20 +4818,6 @@ string EncoderVideoAudioProxy::faceRecognition()
 		if (bgrFrame.empty())
 			break;
 
-		if (currentFrameIndex % 100 == 0)
-		{
-			_logger->info(__FILEREF__ + "generating Face Recognition"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", cascadeName: " + faceRecognitionCascadeName
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath
-				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
-				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
-				+ ", totalFramesNumber: " + to_string(totalFramesNumber)
-			);
-		}
-
 		{
 			/*
 			double progress = (currentFrameIndex / totalFramesNumber) * 100;
@@ -4840,6 +4826,22 @@ string EncoderVideoAudioProxy::faceRecognition()
 			*/
 			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
 		}
+
+		if (currentFrameIndex % 100 == 0)
+		{
+			_logger->info(__FILEREF__ + "generating Face Recognition progress"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", cascadeName: " + faceRecognitionCascadeName
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
+				+ ", totalFramesNumber: " + to_string(totalFramesNumber)
+				+ ", _localEncodingProgress: " + to_string(_localEncodingProgress)
+			);
+		}
+
 		currentFrameIndex++;
 
 		cv::cvtColor(bgrFrame, grayFrame, cv::COLOR_BGR2GRAY);
@@ -5003,6 +5005,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				// ingest the frame
 				string sourceFileName = to_string(_encodingItem->_ingestionJobKey)
 					+ "_frameContainingFace"
+					+ "_" + to_string(currentFrameIndex)
 					+ "." + fileFormat
 				;
 
