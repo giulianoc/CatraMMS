@@ -215,7 +215,8 @@ public:
         Processing              = 1,
         End_Success				= 2,
         End_Failed              = 3,
-        End_KilledByUser		= 4
+        End_KilledByUser		= 4,
+        End_CanceledByUser		= 5
     };
     static const char* toString(const EncodingStatus& encodingStatus)
     {
@@ -231,15 +232,19 @@ public:
                 return "End_Failed";
             case EncodingStatus::End_KilledByUser:
                 return "End_KilledByUser";
+            case EncodingStatus::End_CanceledByUser:
+                return "End_CanceledByUser";
             default:
-            throw runtime_error(string("Wrong EncodingStatus: ") + to_string(static_cast<int>(encodingStatus)));
+            throw runtime_error(
+					string("Wrong EncodingStatus: ") + to_string(static_cast<int>(encodingStatus)));
         }
     }
     static EncodingStatus toEncodingStatus(const string& encodingStatus)
     {
         string lowerCase;
         lowerCase.resize(encodingStatus.size());
-        transform(encodingStatus.begin(), encodingStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+        transform(encodingStatus.begin(), encodingStatus.end(), lowerCase.begin(),
+				[](unsigned char c){return tolower(c); } );
 
         if (lowerCase == "tobeprocessed")
             return EncodingStatus::ToBeProcessed;
@@ -251,6 +256,8 @@ public:
             return EncodingStatus::End_Failed;
         else if (lowerCase == "end_killedbyuser")
             return EncodingStatus::End_KilledByUser;
+        else if (lowerCase == "end_canceledbyuser")
+            return EncodingStatus::End_CanceledByUser;
         else
             throw runtime_error(string("Wrong EncodingStatus")
                     + ", encodingStatus: " + encodingStatus
@@ -329,7 +336,8 @@ public:
         PunctualError,
         MaxCapacityReached,
         ErrorBeforeEncoding,
-		KilledByUser
+		KilledByUser,
+		CanceledByUser
     };
     
     enum class EncodingTechnology {
@@ -1090,7 +1098,7 @@ Json::Value getTagsList (
         int64_t workspaceKey,
         string label);
     
-    tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> getStorageDetails(
+    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> getStorageDetails(
         int64_t physicalPathKey);
 
     tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> getStorageDetails(
@@ -1184,7 +1192,9 @@ Json::Value getTagsList (
         string sourcePhysicalPath,
         string faceRecognitionCascadeName,
 		string faceRecognitionOutput,
-        EncodingPriority encodingPriority);
+        EncodingPriority encodingPriority,
+		long initialFramesNumberToBeSkipped,
+		bool oneFramePerSecond);
 
     int addEncoding_FaceIdentificationJob (
         shared_ptr<Workspace> workspace,
@@ -1236,7 +1246,8 @@ Json::Value getTagsList (
         int64_t encodingJobKey,
         string transcoder);
 
-	tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngineDBFacade::EncodingStatus,int64_t>
+	tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
+		string, MMSEngineDBFacade::EncodingStatus, int64_t>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
     void checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);

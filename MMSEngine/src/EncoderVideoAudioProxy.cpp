@@ -4697,6 +4697,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 	string faceRecognitionCascadeName;
 	string sourcePhysicalPath;
 	string faceRecognitionOutput;
+	long initialFramesNumberToBeSkipped;
+	bool oneFramePerSecond;
 	{
 		string field = "sourceMediaItemKey";
 		sourceMediaItemKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
@@ -4710,6 +4712,12 @@ string EncoderVideoAudioProxy::faceRecognition()
 		// VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace
 		field = "faceRecognitionOutput";
 		faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
+
+		field = "initialFramesNumberToBeSkipped";
+		initialFramesNumberToBeSkipped = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+		field = "oneFramePerSecond";
+		oneFramePerSecond = _encodingItem->_parametersRoot.get(field, 0).asBool();
 	}
     
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
@@ -4775,9 +4783,10 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	cv::VideoWriter writer;
 	long totalFramesNumber;
+	double fps;
 	{
 		totalFramesNumber = (long) capture.get(cv::CAP_PROP_FRAME_COUNT);
-		double fps = capture.get(cv::CAP_PROP_FPS);
+		fps = capture.get(cv::CAP_PROP_FPS);
 		cv::Size size(
 			(int) capture.get(cv::CAP_PROP_FRAME_WIDTH),
 			(int) capture.get(cv::CAP_PROP_FRAME_HEIGHT)
@@ -4798,6 +4807,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+            + ", totalFramesNumber: " + to_string(totalFramesNumber)
+            + ", fps: " + to_string(fps)
 	);
 
 	cv::Mat bgrFrame;
@@ -4812,11 +4823,54 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	long currentFrameIndex = 0;
 	long framesContainingFaces = 0;
-	while(true)
+
+	bool bgrFrameEmpty = false;
+	if (faceRecognitionOutput == "FrameContainingFace")
 	{
+		long initialFrameIndex = 0;
+		while (initialFrameIndex++ < initialFramesNumberToBeSkipped)
+		{
+			capture >> bgrFrame;
+			currentFrameIndex++;
+			if (bgrFrame.empty())
+			{
+				bgrFrameEmpty = true;
+
+				break;
+			}
+		}
+	}
+
+	bool frameContainingFaceFound = false;
+	while(!bgrFrameEmpty)
+	{
+		if (faceRecognitionOutput == "FrameContainingFace"
+			&& oneFramePerSecond)
+		{
+			int frameIndex = fps - 1;
+			while(--frameIndex >= 0)
+			{
+				capture >> bgrFrame;
+				currentFrameIndex++;
+				if (bgrFrame.empty())
+				{
+					bgrFrameEmpty = true;
+
+					break;
+				}
+			}
+
+			if (bgrFrameEmpty)
+				continue;
+		}
+
 		capture >> bgrFrame;
 		if (bgrFrame.empty())
-			break;
+		{
+			bgrFrameEmpty = true;
+
+			continue;
+		}
 
 		{
 			/*
@@ -5038,6 +5092,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 				shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 				_multiEventsSet->addEvent(event);
 
+				frameContainingFaceFound = true;
+
 				_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT) - FrameContainingFace"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -5090,9 +5146,28 @@ string EncoderVideoAudioProxy::faceRecognition()
 		else
 		{
 			// no faces were met, let's update ingestion status
-			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;                        
+			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_IngestionFailure;                        
 
-			string errorMessage;
+			string errorMessage = "No faces recognized";
+			string processorMMS;
+			_logger->info(__FILEREF__ + "Update IngestionJob"                                             
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)                                      
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);                                                                                            
+			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
+					newIngestionStatus, errorMessage);
+		}
+	}
+	else if (faceRecognitionOutput == "FrameContainingFace")
+	{
+		// in case the frame containing a face was not found
+		if (!frameContainingFaceFound)
+		{
+			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_IngestionFailure;                        
+
+			string errorMessage = "No face recognized";
 			string processorMMS;
 			_logger->info(__FILEREF__ + "Update IngestionJob"                                             
 				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)                                      
@@ -6210,7 +6285,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             int encodingStatusFailures = 0;
 			// string lastRecordedAssetFileName;
 
-            while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
+			// see the comment few lines below (2019-05-03)
+            // while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
+            while(!encodingFinished)
             {
                 this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
 
@@ -6236,6 +6313,14 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
 
+					/*
+					 2019-05-03: commented because we saw the following scenario:
+						1. getEncodingStatus fails because of HTTP call failure (502 Bad Gateway)
+							Really the live recording is still working into the encoder process
+						2. EncoderVideoAudioProxy reached maxEncodingStatusFailures
+						3. since the recording is not finished yet, this code/method activate a new live recording session
+						Result: we have 2 live recording process into the encoder creating problems
+						To avoid that we will exit from this loop ONLY when we are sure the recoridng is finished
             		if(encodingStatusFailures >= maxEncodingStatusFailures)
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
@@ -6250,6 +6335,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                         // throw runtime_error(errorMessage);
 					}
+					*/
                 }
             }
             

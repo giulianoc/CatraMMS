@@ -3494,13 +3494,13 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 string title;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -3676,13 +3676,13 @@ void MMSEngineProcessor::postOnFacebookTask(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 string title;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
                 
@@ -3901,12 +3901,12 @@ void MMSEngineProcessor::postOnYouTubeTask(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
                 
@@ -4388,13 +4388,13 @@ void MMSEngineProcessor::localCopyContentTask(
             {
 				physicalPathKey = key;
 
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 string title;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -4481,6 +4481,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
         string faceRecognitionCascadeName;
         string faceRecognitionOutput;
+		long initialFramesNumberToBeSkipped;
+		bool oneFramePerSecond;
         {
             string field = "CascadeName";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4505,6 +4507,19 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 throw runtime_error(errorMessage);
             }
             faceRecognitionOutput = parametersRoot.get(field, "XXX").asString();
+
+			initialFramesNumberToBeSkipped = 0;
+			oneFramePerSecond = true;
+			if (faceRecognitionOutput == "FrameContainingFace")
+			{
+				field = "InitialFramesNumberToBeSkipped";
+				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					initialFramesNumberToBeSkipped = parametersRoot.get(field, 0).asInt();
+
+				field = "OneFramePerSecond";
+				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					oneFramePerSecond = parametersRoot.get(field, 0).asBool();
+			}
         }
         
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -4562,12 +4577,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
                 
@@ -4601,7 +4616,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
                 sourceMediaItemKey, mmsAssetPathName,
-				faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority);
+				faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority,
+				initialFramesNumberToBeSkipped, oneFramePerSecond);
         }
     }
     catch(runtime_error e)
@@ -4746,12 +4762,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t, int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
                 
@@ -5132,14 +5148,14 @@ void MMSEngineProcessor::changeFileFormatThread(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 string deliveryFileName;
                 string title;
                 int64_t sizeInBytes;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -5521,14 +5537,14 @@ void MMSEngineProcessor::extractTracksContentThread(
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 string deliveryFileName;
                 string title;
                 int64_t sizeInBytes;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }

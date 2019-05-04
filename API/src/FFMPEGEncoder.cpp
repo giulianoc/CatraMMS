@@ -1129,6 +1129,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
+		_logger->info(__FILEREF__ + "Received killEncodingJob"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				);
+
 		pid_t			pidToBeKilled;
 		bool			encodingFound = false;
 

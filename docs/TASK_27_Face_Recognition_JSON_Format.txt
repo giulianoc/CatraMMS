@@ -29,6 +29,14 @@
 		//	or FrameContainingFace
 		"Output": "VideoWithHighlightedFaces",
 
+		// Used only in case of FrameContainingFace, it specifies the number of initial frames of the video
+		// where the face is not looked for (frames to be skipped)
+		"InitialFramesNumberToBeSkipped": 0,
+
+		// Used only in case of FrameContainingFace, it specifies if the algorithm has to consider
+		// just one frame per seconds
+		"OneFramePerSecond": true,
+
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.

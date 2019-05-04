@@ -78,7 +78,7 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/([0-9]*)/?$ /api?version=$1&method=killEncodingJob&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/([0-9]*)/?$ /api?version=$1&method=killOrCancelEncodingJob&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
@@ -127,6 +127,7 @@ server {
 
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
 		}
 
 		if ($request_method = POST) {

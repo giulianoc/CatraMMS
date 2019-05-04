@@ -175,7 +175,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void killEncodingJob(
+    void killOrCancelEncodingJob(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,

@@ -232,6 +232,28 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
     try
     {
+		/*
+		  2019-05-04: Found some contents expired but not removed.
+		 	Investigating I find out that the reason the contents were not removed is because they depend on
+		 	ingestion jobs not finished.
+		 	Still investigating those ingestion jobs were in the EncodingQueue status but I find out the
+		 		relative encoding jobs were already finished.
+		 		So for some reasons we have a scenario where ingestion job was not finished but the encoding job was finished.
+		 		Processor fields were null.
+		   So next select and update retrieves and "solve" this scenario:
+		 
+		   select ij.startProcessing, ij.ingestionJobKey, ij.ingestionRootKey, ij.ingestionType, ij.processorMMS,
+		 	ij.status, ej.encodingJobKey, ej.type, ej.status, ej.encodingJobEnd
+		 	from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej
+		 	where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey
+		 	and ij.status not like 'End_%' and ej.status like 'End_%';
+		 
+		 	update MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej
+		 	 set ir.lastUpdate = NOW(), ir.status = 'CompletedWithFailures', ij.status = 'End_IngestionFailure',
+		 	 ij.errorMessage = 'Found Encoding finished but Ingestion not finished'
+		 	 where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey
+		 	 and ij.status not like 'End_%' and ej.status like 'End_%';
+		 */
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1040,7 +1062,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     return relativePathToBeUsed;
 }
 
-tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMSEngineDBFacade::getStorageDetails(
+tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMSEngineDBFacade::getStorageDetails(
         int64_t physicalPathKey
 )
 {
@@ -1105,7 +1127,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMSEngineDB
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes);
+        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes);
     }
     catch(sql::SQLException se)
     {

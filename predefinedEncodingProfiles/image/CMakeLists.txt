@@ -21,7 +21,10 @@
 # with the authors.
 
 SET (PROFILEs
-	MMS_JPG_40_50.json
+	MMS_JPG_40.json
+	MMS_JPG_60.json
+	MMS_JPG_120.json
+	MMS_JPG_240.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/image)

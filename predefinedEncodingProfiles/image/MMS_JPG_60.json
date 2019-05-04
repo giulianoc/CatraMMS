@@ -1,0 +1,12 @@
+{
+	"Label": "Logo",
+	"FileFormat": "JPG",
+	"Image": {
+		"Width": 60,
+		"Height": 0,
+		// if ulAspect is false, it means the aspect is preserved,
+		// the width is fixed and the height will be calculated
+		"AspectRatio": false,
+		"InterlaceType": "NoInterlace"
+	}
+}

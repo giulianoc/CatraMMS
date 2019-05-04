@@ -491,7 +491,7 @@ void API::manageRequestAndResponse(
         sendSuccess(request, 200, responseBody);
     }
     else if (method == "deliveryAuthorization")
-    {        
+    {
         // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
         try
         {
@@ -650,9 +650,9 @@ void API::manageRequestAndResponse(
     {
         encodingJobPriority(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "killEncodingJob")
+    else if (method == "killOrCancelEncodingJob")
     {
-        killEncodingJob(request, workspace, queryParameters, requestBody);
+        killOrCancelEncodingJob(request, workspace, queryParameters, requestBody);
     }
     else if (method == "mediaItemsList")
     {
@@ -2976,18 +2976,36 @@ void API::createDeliveryAuthorization(
 
     try
     {
-        int64_t physicalPathKey;
+        int64_t physicalPathKey = -1;
         auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-        if (physicalPathKeyIt == queryParameters.end())
+        if (physicalPathKeyIt != queryParameters.end())
         {
-            string errorMessage = string("The 'physicalPathKey' parameter is not found");
+			physicalPathKey = stoll(physicalPathKeyIt->second);
+        }
+
+        int64_t mediaItemKey = -1;
+        auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+        if (mediaItemKeyIt != queryParameters.end())
+        {
+			mediaItemKey = stoll(mediaItemKeyIt->second);
+        }
+
+        int64_t encodingProfileKey = -1;
+        auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
+        if (encodingProfileKeyIt != queryParameters.end())
+        {
+			encodingProfileKey = stoll(encodingProfileKeyIt->second);
+        }
+
+		if (physicalPathKey == -1 && (mediaItemKey == -1 || encodingProfileKey == -1))
+		{
+            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey parameters have to be present");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
-        }
-        physicalPathKey = stoll(physicalPathKeyIt->second);
+		}
 
         int ttlInSeconds = _defaultTTLInSeconds;
         auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
@@ -3025,8 +3043,12 @@ void API::createDeliveryAuthorization(
 
         try
         {
-            tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
-                _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+            tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails;
+
+			if (physicalPathKey != -1)
+                storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+			else
+                storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
             int mmsPartitionNumber;
             shared_ptr<Workspace> contentWorkspace;
@@ -3035,7 +3057,11 @@ void API::createDeliveryAuthorization(
             string deliveryFileName;
             string title;
             int64_t sizeInBytes;
-            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
+			if (physicalPathKey != -1)
+				tie(ignore, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
+                    deliveryFileName, title, sizeInBytes) = storageDetails;
+			else
+				tie(physicalPathKey, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
                     deliveryFileName, title, sizeInBytes) = storageDetails;
 
             if (save)
@@ -3676,13 +3702,13 @@ void API::encodingJobPriority(
     }
 }
 
-void API::killEncodingJob(
+void API::killOrCancelEncodingJob(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "encodingJobKill";
+    string api = "killOrCancelEncodingJob";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -3698,9 +3724,11 @@ void API::killEncodingJob(
         }
 
         {
-			tuple<string,string,MMSEngineDBFacade::EncodingStatus,bool,bool,string,MMSEngineDBFacade::EncodingStatus,int64_t> encodingJobDetails =
+			tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
+				string, MMSEngineDBFacade::EncodingStatus, int64_t> encodingJobDetails =
 				_mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
 
+			int64_t ingestionJobKey;
 			string type;
 			string transcoder;
 			MMSEngineDBFacade::EncodingStatus status;
@@ -3710,10 +3738,11 @@ void API::killEncodingJob(
 			string theOtherTranscoder;
 			MMSEngineDBFacade::EncodingStatus theOtherStatus;
 
-			tie(type, transcoder, status, highAvailability, main, theOtherTranscoder, theOtherStatus, theOtherEncodingJobKey) =
-				encodingJobDetails;
+			tie(ingestionJobKey, type, transcoder, status, highAvailability, main, theOtherTranscoder,
+					theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
 
 			_logger->info(__FILEREF__ + "getEncodingJobDetails"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", type: " + type
 				+ ", transcoder: " + transcoder
@@ -3793,6 +3822,16 @@ void API::killEncodingJob(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					);
 					killEncodingJob(transcoder, encodingJobKey);
+				}
+				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
+				{
+					MMSEngineDBFacade::EncodingError encodingError
+						= MMSEngineDBFacade::EncodingError::CanceledByUser;
+					int64_t mediaItemKey = 0;
+					int64_t encodedPhysicalPathKey = 0;
+					_mmsEngineDBFacade->updateEncodingJob(
+							encodingJobKey, encodingError, mediaItemKey, encodedPhysicalPathKey,
+							ingestionJobKey);
 				}
 			}
 
