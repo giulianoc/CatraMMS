@@ -214,24 +214,24 @@ private:
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskRoot, 
-            vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
-            vector<int64_t> dependOnIngestionJobKeysReferences,
+            vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+            vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
         
     vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value groupOfTasksRoot, 
-            vector <int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
-            vector<int64_t> dependOnIngestionJobKeysReferences,
+            vector <int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+            vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskOrGroupOfTasksRoot, 
-            vector<int64_t> dependOnIngestionJobKeysExecution, 
-            vector<int64_t> dependOnIngestionJobKeysReferences,
+            vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+            vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 

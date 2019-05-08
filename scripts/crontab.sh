@@ -54,11 +54,13 @@ else
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 10 ]
 	then
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/* -empty -mmin +720 -type d -delete"
+		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/* -empty -mmin +360 -type d -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 11 ]
 	then
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/* -empty -mmin +720 -type d -delete"
+		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/* -empty -mmin +360 -type d -delete"
 		timeoutValue="1h"
 	else
 		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log

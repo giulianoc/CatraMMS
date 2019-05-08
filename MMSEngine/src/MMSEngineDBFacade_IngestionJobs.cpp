@@ -2,7 +2,8 @@
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t, shared_ptr<Workspace>, string, IngestionType,
+		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
 )
@@ -15,7 +16,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     try
     {
         chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-        if (startPoint - _lastConnectionStatsReport >= chrono::seconds(_dbConnectionPoolStatsReportPeriodInSeconds))
+        if (startPoint - _lastConnectionStatsReport >=
+				chrono::seconds(_dbConnectionPoolStatsReportPeriodInSeconds))
         {
             _lastConnectionStatsReport = chrono::system_clock::now();
             
@@ -33,7 +35,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         );
 
         // We have the Transaction because previously there was a select for update and then the update.
-        // Now we have first the update and than the select. Probable the Transaction does not need, anyway I left it
+        // Now we have first the update and than the select. Probable the Transaction does not need,
+		// anyway I left it
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -50,12 +53,17 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				"select ingestionJobKey from MMS_IngestionJob "
 				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
 				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW()";
-			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+			preparedStatement->setString(queryParameterIndex++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+			preparedStatement->setString(queryParameterIndex++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+			preparedStatement->setString(queryParameterIndex++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+			preparedStatement->setString(queryParameterIndex++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
 			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInDays);
 
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -130,19 +138,30 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"and ij.ingestionType != 'Live-Recorder' "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
                         "limit ? offset ? for update";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndexIngestionJob = 1;
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
 
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
 
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
@@ -160,8 +179,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
                     int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
                     string metaDataContent      = resultSet->getString("metaDataContent");
-                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
-                    IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
+                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
+							resultSet->getString("status"));
+                    IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
+							resultSet->getString("ingestionType"));
 
 //                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
 //                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -172,14 +193,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
                     lastSQLCommand = 
                         "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
-                    shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementDependency (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndexDependency = 1;
                     preparedStatementDependency->setInt64(queryParameterIndexDependency++, ingestionJobKey);
 
                     int64_t dependOnIngestionJobKey = -1;
                     int dependOnSuccess = -1;
                     IngestionStatus ingestionStatusDependency;
-                    shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
+                    shared_ptr<sql::ResultSet> resultSetDependency (
+							preparedStatementDependency->executeQuery());
                     while (resultSetDependency->next())
                     {
                         if (!atLeastOneDependencyRowFound)
@@ -1265,6 +1288,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
     try
     {
+        _logger->error(__FILEREF__ + "manageIngestionJobStatusUpdate"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", newIngestionStatus: " + toString(newIngestionStatus)
+            + ", updateIngestionRootStatus: " + to_string(updateIngestionRootStatus)
+        );
+
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
             int dependOnSuccess;
@@ -1286,19 +1315,39 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             string hierarchicalIngestionJobKeysDependencies;
             string ingestionJobKeysToFindDependencies = to_string(ingestionJobKey);
             {
-                // all dependencies from ingestionJobKey and
-                // all dependencies from the keys dependent from ingestionJobKey
+                // all dependencies from ingestionJobKey (using dependOnSuccess) and
+                // all dependencies from the keys dependent from ingestionJobKey (without dependOnSuccess check)
                 // and so on recursively
                 int maxHierarchicalLevelsManaged = 50;
                 for (int hierarchicalLevelIndex = 0; hierarchicalLevelIndex < maxHierarchicalLevelsManaged; hierarchicalLevelIndex++)
                 {
-                    lastSQLCommand = 
+					// in the first select we have to found the dependencies according dependOnSuccess,
+					// so in case the parent task was successful, we have to set End_NotToBeExecuted for
+					// all the tasks depending on it in case of failure
+					// Starting from the second select, we have to set End_NotToBeExecuted for all the other
+					// tasks, because we have that the father is End_NotToBeExecuted, so all the subtree
+					// has to be set as End_NotToBeExecuted
+					_logger->error(__FILEREF__ + "select"
+						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+					);
+					if (hierarchicalLevelIndex == 0)
+					{
+						lastSQLCommand = 
                             "select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
                             + ") and dependOnSuccess = ?";
+					}
+					else
+					{
+						lastSQLCommand = 
+                            "select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey in ("
+                            + ingestionJobKeysToFindDependencies
+                            + ")";
+					}
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+					if (hierarchicalLevelIndex == 0)
+						preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                     bool dependenciesFound = false;
@@ -1318,6 +1367,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
                     }
                     
+					_logger->error(__FILEREF__ + "select"
+						+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+					);
+
                     if (!dependenciesFound)
                     {
                         _logger->info(__FILEREF__ + "Finished to find dependencies"
