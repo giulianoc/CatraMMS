@@ -942,7 +942,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
     #endif
 
     // stagingEncodedAssetPathName preparation
-    {        
+    {
         mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
             _encodingItem->_encodeData->_mmsPartitionNumber,
             _encodingItem->_workspace->_directoryName,
@@ -1475,6 +1475,32 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 ;
             _logger->warn(__FILEREF__ + errorMessage);
 
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
+
             throw e;
         }
         catch (curlpp::LogicError & e) 
@@ -1487,6 +1513,32 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 + ", response.str(): " + response.str()
             );
             
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
+
             throw e;
         }
         catch (curlpp::RuntimeError & e) 
@@ -1498,6 +1550,32 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
             );
+
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
 
             throw e;
         }
@@ -1511,6 +1589,32 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 + ", response.str(): " + response.str()
             );
 
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
+
             throw e;
         }
         catch (exception e)
@@ -1522,6 +1626,32 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
             );
+
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
 
             throw e;
         }
@@ -1584,6 +1714,32 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", e.what(): " + e.what()
         );
 
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
         throw e;
     }
     catch(exception e)
@@ -1598,10 +1754,35 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
         );
 
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
         throw e;
-    }        
-    
-    
+    }
+
     int64_t encodedPhysicalPathKey;
     string encodedFileName;
     string mmsAssetPathName;
@@ -1615,6 +1796,32 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
+
+			if (stagingEncodedAssetPathName != "")
+			{
+				string directoryPathName;
+				try
+				{
+					size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+					if (endOfDirectoryIndex != string::npos)
+					{
+						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", directoryPathName: " + directoryPathName
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", directoryPathName: " + directoryPathName
+						+ ", exception: " + e.what()
+					);
+				}
+			}
 
             throw runtime_error(errorMessage);
         }
@@ -1672,6 +1879,32 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", e.what(): " + e.what()
         );
 
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
         throw e;
     }
     catch(exception e)
@@ -1685,6 +1918,32 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
         );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
 
         throw e;
     }
@@ -1796,9 +2055,63 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             }
         }
 
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
         throw e;
     }
     
+	if (stagingEncodedAssetPathName != "")
+	{
+		string directoryPathName;
+		try
+		{
+			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex != string::npos)
+			{
+				directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", directoryPathName: " + directoryPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+			}
+		}
+		catch(runtime_error e)
+		{
+			// 2019-05-12: using warn because sometimes we still we have a file like .nfs00000001061ec25c000382e1
+			//	where his deletion give us the Errno: 16 (EBUSY) because it wass not aready removed by nfs daemon
+			_logger->warn(__FILEREF__ + "removeDirectory failed"
+				+ ", directoryPathName: " + directoryPathName
+				+ ", exception: " + e.what()
+			);
+		}
+	}
+
     return encodedPhysicalPathKey;
 }
 
@@ -2476,7 +2789,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
-        throw e;
+       throw e;
     }
     
     /*
