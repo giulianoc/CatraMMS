@@ -261,21 +261,6 @@ void API::registerUser(
 
         try
         {
-            string workspaceDirectoryName;
-
-            workspaceDirectoryName.resize(workspaceName.size());
-
-            transform(
-                workspaceName.begin(), 
-                workspaceName.end(), 
-                workspaceDirectoryName.begin(), 
-                [](unsigned char c){
-                    if (isalnum(c)) 
-                        return c; 
-                    else 
-                        return (unsigned char) '_'; } 
-            );
-
             _logger->info(__FILEREF__ + "Registering User"
                 + ", workspaceName: " + workspaceName
                 + ", email: " + email
@@ -288,7 +273,6 @@ void API::registerUser(
                     password,
                     country, 
                     workspaceName,
-                    workspaceDirectoryName,
                     MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                     "",                             // string deliveryURL,
                     encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
@@ -479,30 +463,14 @@ void API::createWorkspace(
 
         try
         {
-            string workspaceDirectoryName;
-
-            workspaceDirectoryName.resize(workspaceName.size());
-
-            transform(
-                workspaceName.begin(), 
-                workspaceName.end(), 
-                workspaceDirectoryName.begin(), 
-                [](unsigned char c){
-                    if (isalnum(c)) 
-                        return c; 
-                    else 
-                        return (unsigned char) '_'; } 
-            );
-
             _logger->info(__FILEREF__ + "Creating Workspace"
                 + ", workspaceName: " + workspaceName
             );
-            
+
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                     _mmsEngineDBFacade->createWorkspace(
                         userKey,
                         workspaceName,
-                        workspaceDirectoryName,
                         MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                         "",     // string deliveryURL,
                         encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
@@ -610,18 +578,26 @@ void API::shareWorkspace_(
 
     try
     {
+		// In case of ActiveDirectory, userAlreadyPresent is always true
         bool userAlreadyPresent;
-        auto userAlreadyPresentIt = queryParameters.find("userAlreadyPresent");
-        if (userAlreadyPresentIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'userAlreadyPresent' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
+		if(_ldapEnabled)
+		{
+			userAlreadyPresent = true;
+		}
+		else
+		{
+			auto userAlreadyPresentIt = queryParameters.find("userAlreadyPresent");
+			if (userAlreadyPresentIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'userAlreadyPresent' parameter is not found");
+				_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+				sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
+				throw runtime_error(errorMessage);
+			}
+			userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
+		}
 
         bool ingestWorkflow;
         auto ingestWorkflowIt = queryParameters.find("ingestWorkflow");
@@ -814,6 +790,7 @@ void API::shareWorkspace_(
             
             tuple<int64_t,string> userKeyAndConfirmationCode = 
                 _mmsEngineDBFacade->registerUserAndShareWorkspace(
+						_ldapEnabled,
                     userAlreadyPresent,
                     name, 
                     email, 
@@ -1067,32 +1044,11 @@ void API::login(
             throw runtime_error(errorMessage);
         }
 
-        string sLoginType;
-		MMSEngineDBFacade::LoginType loginType;
 		Json::Value loginDetailsRoot;
 		int64_t userKey;
 
         {
-            vector<string> mandatoryFields = {
-                "LoginType"
-            };
-            for (string field: mandatoryFields)
-            {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
-
-                    sendError(request, 400, errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            sLoginType = metadataRoot.get("LoginType", "XXX").asString();
-			loginType = MMSEngineDBFacade::toLoginType(sLoginType);
-
-			if (loginType == MMSEngineDBFacade::LoginType::MMS)
+			if (!_ldapEnabled)
 			{
 				vector<string> mandatoryFields = {
 					"EMail",
@@ -1122,12 +1078,14 @@ void API::login(
 					);
                         
 					loginDetailsRoot = _mmsEngineDBFacade->login(
-							loginType,
 							email, 
 							password
 					);
 
-					string field = "userKey";
+					string field = "ldapEnabled";
+					loginDetailsRoot[field] = _ldapEnabled;
+
+					field = "userKey";
 					userKey = loginDetailsRoot.get(field, 0).asInt64();
             
 					_logger->info(__FILEREF__ + "Login User"
@@ -1175,7 +1133,7 @@ void API::login(
 					throw runtime_error(errorMessage);
 				}
 			}
-			else // if (loginType == MMSEngineDBFacade::LoginType::ActiveDirectory)
+			else // if (_ldapEnabled)
 			{
 				vector<string> mandatoryFields = {
 					"Name",
@@ -1232,12 +1190,14 @@ void API::login(
 						);
 
 						loginDetailsRoot = _mmsEngineDBFacade->login(
-							loginType,
 							email,
 							string("")		// password in case of ActiveDirectory is empty
 						);
 
-						string field = "userKey";
+						string field = "ldapEnabled";
+						loginDetailsRoot[field] = _ldapEnabled;
+
+						field = "userKey";
 						userKey = loginDetailsRoot.get(field, 0).asInt64();
             
 						_logger->info(__FILEREF__ + "Login User"
@@ -1299,7 +1259,7 @@ void API::login(
 							string(""),	// userCountry,
 							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding,
-							_ldapDefaultWorkspaceKey,  
+							_ldapDefaultWorkspaceKey,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
 						);
@@ -1314,12 +1274,14 @@ void API::login(
 						);
 
 						loginDetailsRoot = _mmsEngineDBFacade->login(
-							loginType,
 							email,
 							string("")		// password in case of ActiveDirectory is empty
 						);
 
-						string field = "userKey";
+						string field = "ldapEnabled";
+						loginDetailsRoot[field] = _ldapEnabled;
+
+						field = "userKey";
 						userKey = loginDetailsRoot.get(field, 0).asInt64();
             
 						_logger->info(__FILEREF__ + "Login User"
@@ -1456,8 +1418,10 @@ void API::updateUser(
     {
         string name;
         string email;
-        string password;
         string country;
+		bool passwordChanged = false;
+        string newPassword;
+        string oldPassword;
 
         Json::Value metadataRoot;
         try
@@ -1496,11 +1460,11 @@ void API::updateUser(
             throw runtime_error(errorMessage);
         }
 
+		if(!_ldapEnabled)
         {
             vector<string> mandatoryFields = {
                 "Name",
                 "EMail",
-                "Password",
                 "Country"
             };
             for (string field: mandatoryFields)
@@ -1519,7 +1483,35 @@ void API::updateUser(
 
             name = metadataRoot.get("Name", "XXX").asString();
             email = metadataRoot.get("EMail", "XXX").asString();
-            password = metadataRoot.get("Password", "XXX").asString();
+            country = metadataRoot.get("Country", "XXX").asString();
+
+			if (_mmsEngineDBFacade->isMetadataPresent(metadataRoot, "NewPassword")
+					&& _mmsEngineDBFacade->isMetadataPresent(metadataRoot, "OldPassword"))
+			{
+				passwordChanged = true;
+				newPassword = metadataRoot.get("NewPassword", "").asString();
+				oldPassword = metadataRoot.get("OldPassword", "").asString();
+			}
+        }
+		else
+        {
+            vector<string> mandatoryFields = {
+                "Country"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
             country = metadataRoot.get("Country", "XXX").asString();
         }
 
@@ -1530,13 +1522,16 @@ void API::updateUser(
                 + ", name: " + name
                 + ", email: " + email
             );
-            
+
             Json::Value loginDetailsRoot = _mmsEngineDBFacade->updateUser(
+					_ldapEnabled,
                     userKey,
                     name, 
                     email, 
-                    password,
-                    country);
+                    country,
+					passwordChanged,
+					newPassword,
+					oldPassword);
 
             _logger->info(__FILEREF__ + "User updated"
                 + ", userKey: " + to_string(userKey)
@@ -1618,6 +1613,7 @@ void API::updateWorkspace(
     try
     {
         bool newEnabled;
+        string newName;
         string newMaxEncodingPriority;
         string newEncodingPeriod;
         int64_t newMaxIngestionsNumber;
@@ -1671,6 +1667,7 @@ void API::updateWorkspace(
         {
             vector<string> mandatoryFields = {
                 "Enabled",
+                "Name",
                 "MaxEncodingPriority",
                 "EncodingPeriod",
                 "MaxIngestionsNumber",
@@ -1699,6 +1696,7 @@ void API::updateWorkspace(
             }
 
             newEnabled = metadataRoot.get("Enabled", "XXX").asBool();
+            newName = metadataRoot.get("Name", "XXX").asString();
             newMaxEncodingPriority = metadataRoot.get("MaxEncodingPriority", "XXX").asString();
             newEncodingPeriod = metadataRoot.get("EncodingPeriod", "XXX").asString();
             newMaxIngestionsNumber = metadataRoot.get("MaxIngestionsNumber", "XXX").asInt64();
@@ -1723,7 +1721,7 @@ void API::updateWorkspace(
             Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
                     userKey,
                     workspace->_workspaceKey,
-                    newEnabled, newMaxEncodingPriority,
+                    newEnabled, newName, newMaxEncodingPriority,
                     newEncodingPeriod, newMaxIngestionsNumber,
                     newMaxStorageInMB, newLanguageCode,
                     newIngestWorkflow, newCreateProfiles,
@@ -1782,6 +1780,139 @@ void API::updateWorkspace(
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::deleteWorkspace(
+        FCGX_Request& request,
+		int64_t userKey,
+        shared_ptr<Workspace> workspace)
+{
+    string api = "deleteWorkspace";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", userKey: " + to_string(userKey)
+		+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        try
+        {
+            _logger->info(__FILEREF__ + "Delete Workspace from DB"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            _mmsEngineDBFacade->deleteWorkspace(
+                    userKey, workspace->_workspaceKey);
+
+            _logger->info(__FILEREF__ + "Workspace from DB deleted"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            string responseBody;
+            
+            sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Delete Workspace from Storage"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            _mmsStorage->deleteWorkspace( workspace);
+
+            _logger->info(__FILEREF__ + "Workspace from Storage deleted"
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            string responseBody;
+            
+            sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+			+ ", userKey: " + to_string(userKey)
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+			+ ", userKey: " + to_string(userKey)
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
             + ", e.what(): " + e.what()
         );
 

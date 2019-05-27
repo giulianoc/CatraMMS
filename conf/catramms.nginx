@@ -67,6 +67,9 @@ server {
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
 		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
+		}
 
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/ingestionRoots/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;

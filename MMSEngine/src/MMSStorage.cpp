@@ -416,7 +416,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
 {
     string workspaceIngestionDirectory = getIngestionRootRepository();
-    workspaceIngestionDirectory.append(workspace->_name);
+    workspaceIngestionDirectory.append(workspace->_directoryName);
     
     if (!FileIO::directoryExisting(workspaceIngestionDirectory)) 
     {
@@ -435,6 +435,51 @@ string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspa
     return workspaceIngestionDirectory;
 }
 
+void MMSStorage::deleteWorkspace(
+		shared_ptr<Workspace> workspace)
+{
+	{
+		string workspaceIngestionDirectory = getIngestionRootRepository();
+		workspaceIngestionDirectory.append(workspace->_directoryName);
+
+        if (FileIO::directoryExisting(workspaceIngestionDirectory))
+        {
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(workspaceIngestionDirectory, removeRecursively);
+        }
+	}
+
+	{
+		char pMMSPartitionName [64];
+
+
+		lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+		for (unsigned long ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
+            ulMMSPartitionIndex++) 
+		{
+			string mmsPartitionRepository(_mmsRootRepository);
+
+			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
+
+			mmsPartitionRepository.append(pMMSPartitionName);
+
+			if (FileIO::directoryExisting(mmsPartitionRepository))
+			{
+				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", mmsPartitionRepository: " + mmsPartitionRepository
+				);
+				bool removeRecursively = true;
+				FileIO::removeDirectory(mmsPartitionRepository, removeRecursively);
+			}
+		}
+	}
+}
+
 string MMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
 }
@@ -444,7 +489,7 @@ void MMSStorage::moveContentInRepository(
         RepositoryType rtRepositoryType,
         string workspaceDirectoryName,
         bool addDateTimeToFileName)
- {
+{
 
     contentInRepository(
         1,
@@ -459,7 +504,7 @@ void MMSStorage::copyFileInRepository(
         RepositoryType rtRepositoryType,
         string workspaceDirectoryName,
         bool addDateTimeToFileName)
- {
+{
 
     contentInRepository(
         0,
@@ -509,7 +554,7 @@ void MMSStorage::contentInRepository(
         RepositoryType rtRepositoryType,
         string workspaceDirectoryName,
         bool addDateTimeToFileName)
- {
+{
 
     tm tmDateTime;
     unsigned long ulMilliSecs;
@@ -651,7 +696,7 @@ string MMSStorage::moveAssetInMMSRepository(
         bool deliveryRepositoriesToo,
         Workspace::TerritoriesHashMap& phmTerritories
         )
- {
+{
     FileIO::DirectoryEntryType_t detSourceFileType;
 
     if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
@@ -830,7 +875,7 @@ string MMSStorage::getMMSAssetPathName(
         string workspaceDirectoryName,
         string relativePath, // using '/'
         string fileName)
- {
+{
     char pMMSPartitionName [64];
 
 

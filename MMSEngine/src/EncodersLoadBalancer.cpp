@@ -56,7 +56,7 @@ string EncodersLoadBalancer::getEncoderHost(shared_ptr<Workspace> workspace)
 {
     string defaultEncodersPool = "common";
     
-    map<string, EncodersPoolDetails>::iterator it = _encodersPools.find(workspace->_name);
+    map<string, EncodersPoolDetails>::iterator it = _encodersPools.find(workspace->_directoryName);
     if (it == _encodersPools.end())
         it = _encodersPools.find(defaultEncodersPool);
 

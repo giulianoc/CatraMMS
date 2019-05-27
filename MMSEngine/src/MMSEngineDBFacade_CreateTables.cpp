@@ -179,7 +179,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_User ("
                     "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "loginType				VARCHAR (128) NOT NULL,"
                     "name					VARCHAR (128) NULL,"
                     "eMailAddress			VARCHAR (128) NULL,"
                     "password				VARCHAR (128) NOT NULL,"
@@ -188,7 +187,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "expirationDate			DATETIME NOT NULL,"
                     "lastSuccessfulLogin	DATETIME NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
-                    "UNIQUE KEY loginTypeAndEmailAddress (loginType, eMailAddress))"
+                    "UNIQUE KEY emailAddress (eMailAddress))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -889,7 +888,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
-                        "references MMS_ContentProvider (contentProviderKey)) "
+                        "references MMS_ContentProvider (contentProviderKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -1003,7 +1002,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_ExternalUniqueName_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_ExternalUniqueName_FK2 foreign key (mediaItemKey) "
-                        "references MMS_MediaItem (mediaItemKey)) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

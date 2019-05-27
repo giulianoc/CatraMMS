@@ -4,6 +4,36 @@
 #include "MMSEngineDBFacade.h"
 
 
+string ltrim(string s)
+{
+	auto it = find_if(s.begin(), s.end(),
+		[](char c)
+		{
+			return !isspace<char>(c, locale::classic());
+		});
+	s.erase(s.begin(), it);
+
+	return s;
+}
+
+string rtrim(string s)                                                                                        
+{
+	auto it = find_if(s.rbegin(), s.rend(),                                                                   
+		[](char c)                                                                                            
+		{                                                                                                     
+			return !isspace<char>(c, locale::classic());                                                      
+		});                                                                                                   
+	s.erase(it.base(), s.end());                                                                              
+                                                                                                              
+	return s;                                                                                                 
+}                                                                                                             
+
+string trim(string s)                                                                                         
+{
+	return ltrim(rtrim(s));                                                                                   
+}
+
+
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -114,7 +144,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     string userPassword,
     string userCountry,
     string workspaceName,
-    string workspaceDirectoryName,
     WorkspaceType workspaceType,
     string deliveryURL,
     EncodingPriority maxEncodingPriority,
@@ -137,6 +166,26 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
     try
     {
+		if (trim(workspaceName) == "")
+		{
+			string errorMessage = string("WorkspaceName is not well formed.")                             
+				+ ", workspaceName: " + workspaceName                                                     
+			;                                                                                             
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (trim(userName) == "")
+		{
+			string errorMessage = string("userName is not well formed.")                             
+				+ ", userName: " + userName                                                     
+			;                                                                                             
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -153,15 +202,14 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
         }
         
         {
-			// This method is called only in case of MMS user, so loginType has to be MMS
+			// This method is called only in case of MMS user (no ldapEnabled)
             lastSQLCommand = 
-                "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
+                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
                 "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, toString(LoginType::MMS));
             preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
@@ -212,7 +260,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 					editConfiguration,
 					killEncoding,
                     workspaceName,
-                    workspaceDirectoryName,
                     workspaceType,
                     deliveryURL,
                     maxEncodingPriority,
@@ -548,7 +595,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     int64_t userKey,
     string workspaceName,
-    string workspaceDirectoryName,
     WorkspaceType workspaceType,
     string deliveryURL,
     EncodingPriority maxEncodingPriority,
@@ -570,6 +616,16 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 
     try
     {
+		if (trim(workspaceName) == "")
+		{
+			string errorMessage = string("WorkspaceName is not well formed.")                             
+				+ ", workspaceName: " + workspaceName                                                     
+			;                                                                                             
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -608,7 +664,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 					editConfiguration,
 					killEncoding,
                     workspaceName,
-                    workspaceDirectoryName,
                     workspaceType,
                     deliveryURL,
                     maxEncodingPriority,
@@ -812,6 +867,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 }
 
 pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
+		bool ldapEnabled,
     bool userAlreadyPresent,
     string userName,
     string userEmailAddress,
@@ -834,6 +890,16 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
     try
     {
+		if (trim(userName) == "")
+		{
+			string errorMessage = string("userName is not well formed.")                             
+				+ ", userName: " + userName                                                     
+			;                                                                                             
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -851,7 +917,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         
 		// In case of ActiveDirectory, this method is called always with userAlreadyPresent true
 		// In case of MMS, userAlreadyPresent could be both true or false
-        if (userAlreadyPresent)
+        if (ldapEnabled || userAlreadyPresent)
         {
             lastSQLCommand = 
                 "select userKey from MMS_User where eMailAddress = ?";
@@ -880,12 +946,11 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         else
         {
             lastSQLCommand = 
-                "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
+                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
                 "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, toString(LoginType::MMS));
             preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
@@ -1188,7 +1253,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
-    int64_t defaultWorkspaceKey,
+	int64_t defaultWorkspaceKey,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -1220,13 +1285,12 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 			string userPassword = "";
 
             lastSQLCommand = 
-                "insert into MMS_User (userKey, loginType, name, eMailAddress, password, country, "
+                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
                 "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, toString(LoginType::ActiveDirectory));
             preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
@@ -1254,6 +1318,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
             userKey = getLastInsertId(conn);
         }
         
+		// create the API of the user for each existing Workspace
         {
             string flags;
             {
@@ -1317,45 +1382,46 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
             }
 
             unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-            default_random_engine e(seed);
+			default_random_engine e(seed);
 
-            string sourceApiKey = userEmailAddress + "__SEP__" + to_string(e());
-            apiKey = Encrypt::encrypt(sourceApiKey);
+			string sourceApiKey = userEmailAddress + "__SEP__" + to_string(e());
+			apiKey = Encrypt::encrypt(sourceApiKey);
 
-            bool isOwner = false;
-            
-            lastSQLCommand = 
-                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, flags, creationDate, expirationDate) values ("
-                "?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, apiKey);
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-            preparedStatement->setInt64(queryParameterIndex++, defaultWorkspaceKey);
-            preparedStatement->setInt(queryParameterIndex++, isOwner);
-            preparedStatement->setString(queryParameterIndex++, flags);
-            {
-                chrono::system_clock::time_point apiKeyExpirationDate =
-                        chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
+			bool isOwner = false;
+          
+			lastSQLCommand = 
+				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, flags, creationDate, expirationDate) values ("
+				"?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatementAPIKey->setString(queryParameterIndex++, apiKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, userKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, defaultWorkspaceKey);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
+			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			{
+				chrono::system_clock::time_point apiKeyExpirationDate =
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
 
-                tm          tmDateTime;
-                char        strExpirationDate [64];
-                time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
+				tm          tmDateTime;
+				char        strExpirationDate [64];
+				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
 
-                localtime_r (&utcTime, &tmDateTime);
+				localtime_r (&utcTime, &tmDateTime);
 
-                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
-                        tmDateTime. tm_year + 1900,
-                        tmDateTime. tm_mon + 1,
-                        tmDateTime. tm_mday,
-                        tmDateTime. tm_hour,
-                        tmDateTime. tm_min,
-                        tmDateTime. tm_sec);
+				sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
 
-                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
-            }
+				preparedStatementAPIKey->setString(queryParameterIndex++, strExpirationDate);
+			}
 
-            preparedStatement->executeUpdate();
+			preparedStatementAPIKey->executeUpdate();
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -1552,7 +1618,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         bool shareWorkspace, bool editMedia,
         bool editConfiguration, bool killEncoding,
         string workspaceName,
-        string workspaceDirectoryName,
         WorkspaceType workspaceType,
         string deliveryURL,
         EncodingPriority maxEncodingPriority,
@@ -1573,6 +1638,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
     {
         {
             bool enabled = false;
+			string workspaceDirectoryName = "tempName";
             
             lastSQLCommand = 
                     "insert into MMS_Workspace ("
@@ -1599,6 +1665,28 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         }
 
         workspaceKey = getLastInsertId(conn);
+
+		{
+			lastSQLCommand = 
+				"update MMS_Workspace set directoryName = ? where workspaceKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, to_string(workspaceKey));
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+			int rowsUpdated = preparedStatement->executeUpdate();
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+			}
+		}
 
         unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
         default_random_engine e(seed);
@@ -2114,6 +2202,262 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
     }    
 }
 
+void MMSEngineDBFacade::deleteWorkspace(
+		int64_t userKey,
+		int64_t workspaceKey)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        
+        // check if ADMIN flag is already present
+        bool admin = false;
+		bool isOwner = false;
+        {
+            lastSQLCommand = 
+                "select isOwner, flags from MMS_APIKey where workspaceKey = ? and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                string flags = resultSet->getString("flags");
+                
+                admin = flags.find("ADMIN") == string::npos ? false : true;
+                isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
+            }
+        }
+
+		if (!isOwner)
+		{
+			string errorMessage = __FILEREF__ + "The user requesting the deletion does not have the ownership rights and the delete cannot be done"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        {
+			// in all the tables depending from Workspace we have 'on delete cascade'
+			// So all should be removed automatically from DB
+            lastSQLCommand = 
+                "delete from MMS_Workspace where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            
+            preparedStatement->executeUpdate();
+        }
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw e;
+    }
+    
+    // return workspaceKeyUserKeyAndConfirmationCode;
+}
+
 tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
 	MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
@@ -2261,7 +2605,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
 }
 
 Json::Value MMSEngineDBFacade::login (
-        LoginType loginType, string eMailAddress, string password)
+        string eMailAddress, string password)
 {
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
@@ -2276,18 +2620,17 @@ Json::Value MMSEngineDBFacade::login (
         );
 
         {
-            lastSQLCommand = 
-                "select userKey, name, country, "
-                "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
-                "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
-                "from MMS_User where eMailAddress = ? and password = ? and loginType = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, eMailAddress);
-            preparedStatement->setString(queryParameterIndex++, password);
-            preparedStatement->setString(queryParameterIndex++, toString(loginType));
+			lastSQLCommand = 
+				"select userKey, name, country, "
+				"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
+				"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
+				"from MMS_User where eMailAddress = ? and password = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, eMailAddress);
+			preparedStatement->setString(queryParameterIndex++, password);
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
 				int64_t userKey = resultSet->getInt64("userKey");
@@ -2602,7 +2945,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t userKey,
         int64_t workspaceKey,
-        bool newEnabled, string newMaxEncodingPriority,
+        bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newIngestWorkflow, bool newCreateProfiles,
@@ -2623,9 +2966,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
         // check if ADMIN flag is already present
         bool admin = false;
+		bool isOwner = false;
         {
             lastSQLCommand = 
-                "select flags from MMS_APIKey where workspaceKey = ? and userKey = ?";
+                "select isOwner, flags from MMS_APIKey where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -2637,17 +2981,31 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 string flags = resultSet->getString("flags");
                 
                 admin = flags.find("ADMIN") == string::npos ? false : true;
+                isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
         }
 
+		if (!admin && !isOwner)
+		{
+			string errorMessage = __FILEREF__ + "The user requesting the update does not have neither the admin nor the ownership rights and the update cannot be done"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// some fields (isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB) can be update only by an Administrator
+		if (admin)
         {
             lastSQLCommand = 
-                "update MMS_Workspace set isEnabled = ?, maxEncodingPriority = ?, encodingPeriod = ?, maxIngestionsNumber = ?, "
+                "update MMS_Workspace set isEnabled = ?, name = ?, maxEncodingPriority = ?, encodingPeriod = ?, maxIngestionsNumber = ?, "
                 "maxStorageInMB = ?, languageCode = ? "
                 "where workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, newEnabled);
+            preparedStatement->setString(queryParameterIndex++, newName);
             preparedStatement->setString(queryParameterIndex++, newMaxEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, newEncodingPeriod);
             preparedStatement->setInt64(queryParameterIndex++, newMaxIngestionsNumber);
@@ -2661,10 +3019,37 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", newEnabled: " + to_string(newEnabled)
+                        + ", newName: " + newName
                         + ", newMaxEncodingPriority: " + newMaxEncodingPriority
                         + ", newEncodingPeriod: " + newEncodingPeriod
                         + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
                         + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
+                        + ", newLanguageCode: " + newLanguageCode
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+		else if (isOwner)
+        {
+            lastSQLCommand = 
+                "update MMS_Workspace set name = ?, languageCode = ? "
+                "where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, newName);
+            preparedStatement->setString(queryParameterIndex++, newLanguageCode);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", newName: " + newName
                         + ", newLanguageCode: " + newLanguageCode
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -2753,6 +3138,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         field = "isEnabled";
         workspaceDetailRoot[field] = (newEnabled ? "true" : "false");
 
+        field = "workspaceName";
+        workspaceDetailRoot[field] = newName;
+
         field = "maxEncodingPriority";
         workspaceDetailRoot[field] = newMaxEncodingPriority;
 
@@ -2805,8 +3193,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+				/*
                 field = "workspaceName";
                 workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("name"));
+				*/
 
                 field = "creationDate";
                 workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
@@ -3104,11 +3494,14 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 }
 
 Json::Value MMSEngineDBFacade::updateUser (
+		bool ldapEnabled,
         int64_t userKey,
         string name, 
         string email, 
-        string password,
-        string country)
+        string country,
+		bool passwordChanged,
+		string newPassword,
+		string oldPassword)
 {
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
@@ -3122,10 +3515,10 @@ Json::Value MMSEngineDBFacade::updateUser (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		string sLoginType;
+		string savedPassword;
         {
             lastSQLCommand = 
-                "select loginType from MMS_User where userKey = ?";
+                "select password from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -3133,7 +3526,7 @@ Json::Value MMSEngineDBFacade::updateUser (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-				sLoginType = resultSet->getString("loginType");
+				savedPassword = resultSet->getString("password");
             }
             else
             {
@@ -3147,38 +3540,73 @@ Json::Value MMSEngineDBFacade::updateUser (
             }
         }
 
-		LoginType loginType = toLoginType(sLoginType);
-
         {
-			if (loginType == LoginType::MMS)
+			int rowsUpdated;
+
+			if (!ldapEnabled)
 			{
-				lastSQLCommand = 
-					"update MMS_User set country = ?, "
-					// "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone), "
-					"name = ?, eMailAddress = ?, password = ? "
-					"where userKey = ?";
+				if (passwordChanged)
+				{
+					if (savedPassword != oldPassword
+							|| newPassword == "")
+					{
+						string errorMessage = __FILEREF__ + "old password is wrong or newPassword is not valid"
+							+ ", userKey: " + to_string(userKey)
+						;
+						_logger->warn(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					lastSQLCommand = 
+						"update MMS_User set country = ?, "
+						// "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone), "
+						"name = ?, eMailAddress = ?, password = ? "
+						"where userKey = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setString(queryParameterIndex++, country);
+					// preparedStatement->setString(queryParameterIndex++, expirationDate);
+					preparedStatement->setString(queryParameterIndex++, name);
+					preparedStatement->setString(queryParameterIndex++, email);
+					preparedStatement->setString(queryParameterIndex++, newPassword);
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+					rowsUpdated = preparedStatement->executeUpdate();
+				}
+				else
+				{
+					lastSQLCommand = 
+						"update MMS_User set country = ?, "
+						// "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone), "
+						"name = ?, eMailAddress = ? "
+						"where userKey = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setString(queryParameterIndex++, country);
+					// preparedStatement->setString(queryParameterIndex++, expirationDate);
+					preparedStatement->setString(queryParameterIndex++, name);
+					preparedStatement->setString(queryParameterIndex++, email);
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+					rowsUpdated = preparedStatement->executeUpdate();
+				}
 			}
-			else // if (loginType == LoginType::ActiveDirectory)
+			else // if (ldapEnabled)
 			{
 				lastSQLCommand = 
 					"update MMS_User set country = ? "
 					// "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone) "
 					"where userKey = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, country);
+				// preparedStatement->setString(queryParameterIndex++, expirationDate);
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+				rowsUpdated = preparedStatement->executeUpdate();
 			}
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, country);
-            // preparedStatement->setString(queryParameterIndex++, expirationDate);
-			if (loginType == LoginType::MMS)
-			{
-				preparedStatement->setString(queryParameterIndex++, name);
-				preparedStatement->setString(queryParameterIndex++, email);
-				preparedStatement->setString(queryParameterIndex++, password);
-			}
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"

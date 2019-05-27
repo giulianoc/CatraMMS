@@ -101,11 +101,13 @@ private:
     string              _deliveryProtocol;
     string              _deliveryHost;
     
+	bool				_ldapEnabled;
     string				_ldapURL;
     string				_ldapManagerUserName;
     string				_ldapManagerPassword;
     string				_ldapBaseDn;
-    int64_t				_ldapDefaultWorkspaceKey;
+	int64_t				_ldapDefaultWorkspaceKey;
+
 
     FileUploadProgressData*     _fileUploadProgressData;
     
@@ -130,6 +132,11 @@ private:
         int64_t userKey,
         unordered_map<string, string> queryParameters,
         string requestBody);
+
+    void deleteWorkspace(
+        FCGX_Request& request,
+		int64_t userKey,
+        shared_ptr<Workspace> workspace);
 
     void shareWorkspace_(
         FCGX_Request& request,

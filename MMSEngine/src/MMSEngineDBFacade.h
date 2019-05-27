@@ -100,38 +100,6 @@ public:
                     );
     }
 
-    enum class LoginType {
-		MMS					= 0,
-		ActiveDirectory		= 1
-    };
-    static const char* toString(const LoginType& loginType)
-    {
-        switch (loginType)
-        {
-            case LoginType::MMS:
-                return "MMS";
-            case LoginType::ActiveDirectory:
-                return "ActiveDirectory";
-            default:
-                throw runtime_error(string("Wrong LoginType"));
-        }
-    }
-    static LoginType toLoginType(const string& loginType)
-    {
-        string lowerCase;
-        lowerCase.resize(loginType.size());
-        transform(loginType.begin(), loginType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
-
-        if (lowerCase == "mms")
-            return LoginType::MMS;
-        else if (lowerCase == "activedirectory")
-            return LoginType::ActiveDirectory;
-        else
-            throw runtime_error(string("Wrong LoginType")
-                    + ", current loginType: " + loginType
-                    );
-    }
-
     enum class ContentType {
 		Video		= 0,
 		Audio		= 1,
@@ -810,7 +778,6 @@ public:
         string userPassword,
         string userCountry,
         string workspaceName,
-        string workspaceDirectoryName,
         WorkspaceType workspaceType,
         string deliveryURL,
         EncodingPriority maxEncodingPriority,
@@ -823,7 +790,6 @@ public:
     pair<int64_t,string> createWorkspace(
         int64_t userKey,
         string workspaceName,
-        string workspaceDirectoryName,
         WorkspaceType workspaceType,
         string deliveryURL,
         EncodingPriority maxEncodingPriority,
@@ -833,7 +799,10 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 
+	void deleteWorkspace(int64_t userKey, int64_t workspaceKey);
+
     pair<int64_t,string> registerUserAndShareWorkspace(
+			bool ldapEnabled,
         bool userAlreadyPresent,
         string userName,
         string userEmailAddress,
@@ -863,14 +832,14 @@ public:
     tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
 		checkAPIKey (string apiKey);
 
-    Json::Value login (LoginType loginType, string eMailAddress, string password);
+    Json::Value login (string eMailAddress, string password);
 
     Json::Value getWorkspaceDetails (int64_t userKey);
 
     Json::Value updateWorkspaceDetails (
         int64_t userKey,
         int64_t workspaceKey,
-        bool newEnabled, string newMaxEncodingPriority,
+        bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newIngestWorkflow, bool newCreateProfiles,
@@ -878,11 +847,14 @@ public:
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding);
 
     Json::Value updateUser (
+		bool ldapEnabled,
         int64_t userKey,
         string name, 
         string email, 
-        string password,
-        string country);
+        string country,
+		bool passwordChanged,                                                                                 
+        string newPassword,                                                                                   
+        string oldPassword);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -1474,7 +1446,6 @@ private:
 		bool editConfiguration,
 		bool killEncoding,
         string workspaceName,
-        string workspaceDirectoryName,
         WorkspaceType workspaceType,
         string deliveryURL,
         EncodingPriority maxEncodingPriority,

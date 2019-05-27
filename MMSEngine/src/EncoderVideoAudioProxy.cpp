@@ -1310,6 +1310,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 if (Validator::isMetadataPresent(encodeContentResponse, field))
                 {
                     // remove the staging directory created just for this encoding
+					/* 2019-05-24: Commented because the remove is already done in the exception generated
+					 * by this error
                     {
                         size_t directoryEndIndex = stagingEncodedAssetPathName.find_last_of("/");
                         if (directoryEndIndex == string::npos)
@@ -1346,6 +1348,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                             }
                         }
                     }
+					*/
                     
                     string error = encodeContentResponse.get(field, "XXX").asString();
                     
@@ -1797,6 +1800,9 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
+			/*
+			 * 2019-05-24: commented because the remove directory is already done into the exception
+			 *
 			if (stagingEncodedAssetPathName != "")
 			{
 				string directoryPathName;
@@ -1822,6 +1828,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 					);
 				}
 			}
+			*/
 
             throw runtime_error(errorMessage);
         }

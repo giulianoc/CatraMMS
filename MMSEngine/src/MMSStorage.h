@@ -133,7 +133,10 @@ public:
         long long llEncodingProfileKey);
 
     unsigned long getWorkspaceStorageUsage (
-	string workspaceDirectoryName);
+		string workspaceDirectoryName);
+
+	void deleteWorkspace(
+		shared_ptr<Workspace> workspace);
 
 private:
     shared_ptr<spdlog::logger>  _logger;

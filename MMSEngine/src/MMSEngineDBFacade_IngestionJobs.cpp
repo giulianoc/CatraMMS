@@ -1288,7 +1288,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
     try
     {
-        _logger->error(__FILEREF__ + "manageIngestionJobStatusUpdate"
+        _logger->info(__FILEREF__ + "manageIngestionJobStatusUpdate"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", newIngestionStatus: " + toString(newIngestionStatus)
             + ", updateIngestionRootStatus: " + to_string(updateIngestionRootStatus)
@@ -1327,9 +1327,9 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// Starting from the second select, we have to set End_NotToBeExecuted for all the other
 					// tasks, because we have that the father is End_NotToBeExecuted, so all the subtree
 					// has to be set as End_NotToBeExecuted
-					_logger->error(__FILEREF__ + "select"
-						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
-					);
+					// _logger->error(__FILEREF__ + "select"
+					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+					// );
 					if (hierarchicalLevelIndex == 0)
 					{
 						lastSQLCommand = 
@@ -1367,10 +1367,10 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
                     }
                     
-					_logger->error(__FILEREF__ + "select"
-						+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
-						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
-					);
+					// _logger->error(__FILEREF__ + "select"
+					// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+					// );
 
                     if (!dependenciesFound)
                     {
