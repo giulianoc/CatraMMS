@@ -60,6 +60,17 @@ then
 	#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
 	commandToBeEecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/* -empty -mmin +360 -type d -delete"
 	timeoutValue="1h"
+elif [ $commandIndex -eq 12 ]
+then
+	DATE=$(date +%Y-%m-%d)
+	mkdir /var/catramms/logs/nginx/$DATE
+	mv /var/catramms/logs/nginx/*.log /var/catramms/logs/nginx/$DATE
+
+	#BE CAREFULL SUDO MAY ASK PASSWORD 
+	sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+
+	commandToBeEecuted="find /var/catramms/logs/nginx -mmin +4320 -type d -delete"
+	timeoutValue="1h"
 else
 	echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
 

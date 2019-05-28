@@ -222,6 +222,7 @@ private:
         int64_t ingestionJobKey,
         string fileFormat,
         string title,
+		int64_t imageOfVideoMediaItemKey,
         Json::Value parametersRoot);
 
     void manageEncodeTask(
@@ -256,7 +257,7 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void fillGenerateFramesParameters(
+    int64_t fillGenerateFramesParameters(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionType ingestionType,

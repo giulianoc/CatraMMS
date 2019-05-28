@@ -14,3 +14,6 @@
 20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 10
 22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
 
+#retention for nginx logs
+#commented because it requires a kill -USR1 and it asks/prompts password
+#0 4 * * * /opt/catramms/CatraMMS/scripts/crontab.rsi.sh 12

@@ -5203,10 +5203,12 @@ void MMSEngineProcessor::changeFileFormatThread(
                 );
 
                 string title;
+				int64_t imageOfVideoMediaItemKey = -1;
                 string mediaMetaDataContent = generateMediaMetadataToIngest(
                         ingestionJobKey,
                         outputFileFormat,
                         title,
+						imageOfVideoMediaItemKey,
                         parametersRoot
                 );
 
@@ -5592,10 +5594,12 @@ void MMSEngineProcessor::extractTracksContentThread(
                 );
 
                 string title;
+				int64_t imageOfVideoMediaItemKey = -1;
                 string mediaMetaDataContent = generateMediaMetadataToIngest(
                         ingestionJobKey,
                         outputFileFormat,
                         title,
+						imageOfVideoMediaItemKey,
                         parametersRoot
                 );
 
@@ -5816,11 +5820,13 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                             + ")"
                             );
                 }
+				int64_t imageOfVideoMediaItemKey = -1;
                 string imageMetaDataContent = generateMediaMetadataToIngest(
                         multiLocalAssetIngestionEvent->getIngestionJobKey(),
                         // mjpeg,
                         fileFormat,
                         title,
+						imageOfVideoMediaItemKey,
                         multiLocalAssetIngestionEvent->getParametersRoot()
                 );
 
@@ -6026,7 +6032,7 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
         int64_t durationInMilliSeconds;
-        fillGenerateFramesParameters(
+        int64_t sourceVideoMediaItemKey = fillGenerateFramesParameters(
                 workspace,
                 ingestionJobKey,
                 ingestionType,
@@ -6375,10 +6381,12 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
                     );
 
                     string title;
+					int64_t imageOfVideoMediaItemKey = sourceVideoMediaItemKey;
                     string imageMetaDataContent = generateMediaMetadataToIngest(
                             ingestionJobKey,
                             fileFormat,
                             title,
+							imageOfVideoMediaItemKey,
                             parametersRoot
                     );
 
@@ -6562,7 +6570,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
     }
 }
 
-void MMSEngineProcessor::fillGenerateFramesParameters(
+int64_t MMSEngineProcessor::fillGenerateFramesParameters(
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     MMSEngineDBFacade::IngestionType ingestionType,
@@ -6576,6 +6584,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
     int64_t& durationInMilliSeconds
 )
 {
+	int64_t		sourceMediaItemKey;
+
     try
     {
         string field;
@@ -6678,7 +6688,6 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             height = parametersRoot.get(field, "XXX").asInt();
         }
 
-        int64_t sourceMediaItemKey;
         // int64_t sourcePhysicalPathKey;
         // string sourcePhysicalPath;
         tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
@@ -6835,6 +6844,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
         
         throw e;
     }
+
+	return sourceMediaItemKey;
 }
 
 void MMSEngineProcessor::manageSlideShowTask(
@@ -7210,11 +7221,13 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
         );
                 
         string title;
+		int64_t imageOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 fileFormat,
                 title,
+				imageOfVideoMediaItemKey,
                 parametersRoot
         );
 
@@ -7537,10 +7550,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
         );
         
         string title;
+		int64_t imageOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 fileFormat,
                 title,
+				imageOfVideoMediaItemKey,
                 parametersRoot
         );
 
@@ -8388,6 +8403,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,
         string title,
+		int64_t imageOfVideoMediaItemKey,
         Json::Value parametersRoot
 )
 {    
@@ -8413,6 +8429,12 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         parametersRoot[field] = fileFormat;
     }
     
+	if (imageOfVideoMediaItemKey != -1)
+	{
+		field = "ImageOfVideoMediaItemKey";
+		parametersRoot[field] = imageOfVideoMediaItemKey;
+	}
+
     field = "Title";
     if (title != "")
         parametersRoot[field] = title;
