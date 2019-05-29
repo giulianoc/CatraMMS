@@ -3131,7 +3131,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
     return ingestionJobRoot;
 }
 
-void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
+void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
     int64_t workspaceKey
 )
 {
@@ -3196,6 +3196,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             {
                 string errorMessage = __FILEREF__ + "Reached the max storage dedicated for your Workspace"
                     + ", maxStorageInMB: " + to_string(maxStorageInMB)
+                    + ", totalSizeInMB: " + to_string(totalSizeInMB)
                     + ". It is needed to increase Workspace capacity."
                 ;
                 _logger->error(errorMessage);

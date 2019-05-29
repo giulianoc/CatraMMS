@@ -510,13 +510,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 {
 					if (ingestionType != MMSEngineDBFacade::IngestionType::RemoveContent)
 					{
-						_mmsEngineDBFacade->checkWorkspaceMaxIngestionNumber (
+						_mmsEngineDBFacade->checkWorkspaceStorageAndMaxIngestionNumber (
                             workspace->_workspaceKey);
 					}
                 }
                 catch(runtime_error e)
                 {
-                    _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
+                    _logger->error(__FILEREF__ + "checkWorkspaceStorageAndMaxIngestionNumber failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", exception: " + e.what()
@@ -526,11 +526,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     _logger->info(__FILEREF__ + "Update IngestionJob"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
+                        + ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
                         + ", errorMessage: " + e.what()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
                     );
 
@@ -538,7 +538,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 catch(exception e)
                 {
-                    _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
+                    _logger->error(__FILEREF__ + "checkWorkspaceStorageAndMaxIngestionNumber failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", exception: " + e.what()
@@ -548,11 +548,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     _logger->info(__FILEREF__ + "Update IngestionJob"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
+                        + ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
                         + ", errorMessage: " + e.what()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
                     );
 

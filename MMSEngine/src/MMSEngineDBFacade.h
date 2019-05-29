@@ -624,7 +624,7 @@ public:
 
         End_ValidationMediaSourceFailed,   
 
-        End_WorkspaceReachedHisMaxIngestionNumber,
+        End_WorkspaceReachedMaxStorageOrIngestionNumber,
         
         End_IngestionFailure,                    // nothing done
         
@@ -654,8 +654,8 @@ public:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
                 return "End_ValidationMediaSourceFailed";
-            case IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber:
-                return "End_WorkspaceReachedHisMaxIngestionNumber";
+            case IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber:
+                return "End_WorkspaceReachedMaxStorageOrIngestionNumber";
             case IngestionStatus::End_IngestionFailure:
                 return "End_IngestionFailure";
             case IngestionStatus::End_NotToBeExecuted:
@@ -690,8 +690,8 @@ public:
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
             return IngestionStatus::End_ValidationMediaSourceFailed;
-        else if (lowerCase == "end_workspacereachedhismaxingestionnumber")
-            return IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber;
+        else if (lowerCase == "end_workspacereachedmaxstorageoringestionnumber")
+            return IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber;
         else if (lowerCase == "end_ingestionfailure")
             return IngestionStatus::End_IngestionFailure;
         else if (lowerCase == "end_nottobeexecuted")
@@ -1222,7 +1222,7 @@ Json::Value getTagsList (
 		string, MMSEngineDBFacade::EncodingStatus, int64_t>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
-    void checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
+    void checkWorkspaceStorageAndMaxIngestionNumber (int64_t workspaceKey);
     
     string nextRelativePathToBeUsed (int64_t workspaceKey);
 

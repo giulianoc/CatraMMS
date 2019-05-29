@@ -785,7 +785,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
-                    "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey)) "
+                    "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
+                    "constraint MMS_IngestionJobOutput_FK foreign key (physicalPathKey) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
