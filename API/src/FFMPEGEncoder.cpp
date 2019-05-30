@@ -947,6 +947,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ "\"encodingJobKey\": " + to_string(selectedEncodingCompleted->_encodingJobKey)
 					+ ", \"pid\": 0 "
 					+ ", \"killedByUser\": " + (selectedEncodingCompleted->_killedByUser ? "true" : "false")
+					+ ", \"completedWithError\": " + (selectedEncodingCompleted->_completedWithError ? "true" : "false")
 					+ ", \"encodingFinished\": true "
 					+ "}";
 			else if (encodingFound)
@@ -2189,6 +2190,10 @@ void FFMPEGEncoder::liveRecorder(
 			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 					exceptionInCaseOfError);
 		}
+
+		// since the first chunk is discarded, we will start recording before the period of the chunk
+		// In case of autorenew, when it is renewed, we will lose the first chunk
+		utcRecordingPeriodStart -= segmentDurationInSeconds;
 
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,

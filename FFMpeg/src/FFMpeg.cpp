@@ -2810,9 +2810,9 @@ vector<string> FFMpeg::generateFramesToIngest(
     else if (videoFilter == "All-I-Frames")
     {
         if (mjpeg)
-            videoFilterParameters = "-vf \"select='eq(pict_type,PICT_TYPE_I)'\" ";
+            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' ";
         else
-            videoFilterParameters = "-vf \"select='eq(pict_type,PICT_TYPE_I)'\" -vsync vfr ";
+            videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -vsync vfr ";
     }
     
     /*
@@ -3634,15 +3634,23 @@ void FFMpeg::liveRecorder(
 
 		if (utcNow < utcRecordingPeriodStart)
 		{
-			time_t sleepTime = utcRecordingPeriodStart - utcNow;
+			while (utcNow < utcRecordingPeriodStart)
+			{
+				time_t sleepTime = utcRecordingPeriodStart - utcNow;
 
-			_logger->info(__FILEREF__ + "Too early to start the LiveRecorder, just sleep "
+				_logger->info(__FILEREF__ + "Too early to start the LiveRecorder, just sleep "
 					+ to_string(sleepTime) + " seconds"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					);
 
-			this_thread::sleep_for(chrono::seconds(sleepTime));
+				this_thread::sleep_for(chrono::seconds(sleepTime));
+
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+			}
 		}
 		else if (utcRecordingPeriodEnd <= utcNow)
         {
@@ -3667,6 +3675,11 @@ void FFMpeg::liveRecorder(
     
 		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S_%s." + outputFileFormat;
+
+	{
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		utcNow = chrono::system_clock::to_time_t(now);
+	}
 
 	#ifdef __EXECUTE__
 		ffmpegExecuteCommand = 

@@ -1434,7 +1434,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -2613,7 +2613,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -3453,7 +3453,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 {                    
                     encodingStatusFailures++;
                     
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -4295,7 +4295,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -4812,7 +4812,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -6166,6 +6166,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
+	int segmentDurationInSeconds;
 	bool autoRenew;
 	{
         string field = "autoRenew";
@@ -6173,6 +6174,12 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 
         field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "segmentDurationInSeconds";
+        segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+		// since the first chunk is discarded, we will start recording before the period of the chunk
+		utcRecordingPeriodStart -= segmentDurationInSeconds;
 
         field = "utcRecordingPeriodEnd";
         utcRecordingPeriodEnd = _encodingItem->_parametersRoot.get(field, 0).asInt64();
@@ -6627,7 +6634,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -7996,6 +8003,7 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;
+	bool completedWithError;
     
     string ffmpegEncoderURL;
     ostringstream response;
@@ -8141,6 +8149,12 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
                 throw runtime_error(errorMessage);
             }
 
+			string field = "completedWithError";
+			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
+				completedWithError = encodeStatusResponse.get(field, false).asBool();
+			else
+				completedWithError = false;
+
             encodingFinished = encodeStatusResponse.get("encodingFinished", "XXX").asBool();
             killedByUser = encodeStatusResponse.get("killedByUser", "XXX").asBool();
         }
@@ -8154,6 +8168,18 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 
             throw runtime_error(errorMessage);
         }
+
+		if (completedWithError)
+		{
+            string errorMessage = string("getEncodingStatus. Encoding is finished with error")
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", completedWithError: " + to_string(completedWithError)
+                    + ", sResponse: " + sResponse
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
     }
     catch (curlpp::LogicError & e) 
     {
