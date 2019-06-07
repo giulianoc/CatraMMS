@@ -12,13 +12,13 @@
  */
 
 /*
-#include <regex>
 #include "catralibraries/Convert.h"
 #include "catralibraries/LdapWrapper.h"
 #include "EMailSender.h"
 */
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -1951,6 +1951,24 @@ void API::ingestionRootsStatus(
         if (labelIt != queryParameters.end() && labelIt->second != "")
         {
             label = labelIt->second;
+
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						label.c_str(), label.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					label = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
         }
 
         string status = "all";
@@ -2117,6 +2135,31 @@ void API::ingestionJobsStatus(
             rows = stoll(rowsIt->second);
         }
         
+        string label;
+        auto labelIt = queryParameters.find("label");
+        if (labelIt != queryParameters.end() && labelIt->second != "")
+        {
+            label = labelIt->second;
+
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						label.c_str(), label.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					label = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
+        }
+
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -2157,7 +2200,7 @@ void API::ingestionJobsStatus(
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
                     workspace, ingestionJobKey,
-                    start, rows,
+                    start, rows, label,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     ingestionType, asc, status
                     );

@@ -1000,7 +1000,7 @@ public:
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-        int start, int rows,
+        int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
 		string ingestionType,
         bool asc, string status);

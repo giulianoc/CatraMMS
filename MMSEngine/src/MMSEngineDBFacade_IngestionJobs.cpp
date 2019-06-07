@@ -2637,7 +2637,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
 Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-        int start, int rows,
+        int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
 		string ingestionType,
         bool asc, string status
@@ -2672,6 +2672,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 requestParametersRoot[field] = ingestionJobKey;
             }
             
+            field = "label";
+            requestParametersRoot[field] = label;
+            
+            field = "status";
+            requestParametersRoot[field] = status;
+
             if (startAndEndIngestionDatePresent)
             {
                 field = "startIngestionDate";
@@ -2695,6 +2701,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         sqlWhere += ("and ir.workspaceKey = ? ");
         if (ingestionJobKey != -1)
             sqlWhere += ("and ij.ingestionJobKey = ? ");
+        if (label != "")
+            sqlWhere += ("and ij.label like ? ");
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (ingestionType != "")
@@ -2715,6 +2723,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (startAndEndIngestionDatePresent)
             {
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
@@ -2756,6 +2766,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (startAndEndIngestionDatePresent)
             {
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);

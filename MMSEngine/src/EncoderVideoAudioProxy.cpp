@@ -157,6 +157,11 @@ void EncoderVideoAudioProxy::init(
         + ", computerVision->defaultTryFlip: " + to_string(_computerVisionDefaultTryFlip)
     );
 
+	_timeBeforeToPrepareResourcesInMinutes		= configuration["mms"].get("liveRecording_timeBeforeToPrepareResourcesInMinutes", 2).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
+	);
+
 	/*
     _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -1419,6 +1424,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -1427,14 +1433,23 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
                 }
                 catch(...)
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -2598,6 +2613,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -2606,14 +2622,23 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
                 }
                 catch(...)
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -3438,6 +3463,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -3446,14 +3472,23 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
                 }
                 catch(...)
                 {                    
                     encodingStatusFailures++;
                     
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -4280,6 +4315,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -4288,14 +4324,23 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
                 }
                 catch(...)
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -4797,6 +4842,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -4805,14 +4851,23 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
                 }
                 catch(...)
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -6192,13 +6247,16 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 	}
 
 	// MMS allocates a thread just 5 minutes before the beginning of the recording
-	int timeBeforeToPrepareResourceInMinutes = 5;
 	if (utcNow < utcRecordingPeriodStart)
 	{
-	   	if (utcRecordingPeriodStart - utcNow >= timeBeforeToPrepareResourceInMinutes * 60)
+	   	if (utcRecordingPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)
 		{
 			_logger->info(__FILEREF__ + "Too early to allocate a thread for recording"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+				+ ", utcRecordingPeriodStart - utcNow: " + to_string(utcRecordingPeriodStart - utcNow)
+				+ ", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
 			);
 
 			// it is simulated a MaxConcurrentJobsReached to avoid to increase the error counter
@@ -6608,6 +6666,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
+			bool completedWithError = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
 			// string lastRecordedAssetFileName;
@@ -6620,8 +6679,17 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                 try
                 {
-                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser) = encodingStatus;
+                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
 
 					/*
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
@@ -6634,7 +6702,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed or encoding completed With Error"
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -7999,7 +8067,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
     return encodingProgress;
 }
 
-pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
+tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;
@@ -8168,18 +8236,6 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 
             throw runtime_error(errorMessage);
         }
-
-		if (completedWithError)
-		{
-            string errorMessage = string("getEncodingStatus. Encoding is finished with error")
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", completedWithError: " + to_string(completedWithError)
-                    + ", sResponse: " + sResponse
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-		}
     }
     catch (curlpp::LogicError & e) 
     {
@@ -8232,7 +8288,7 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
         throw e;
     }
 
-    return make_pair(encodingFinished, killedByUser);
+    return make_tuple(encodingFinished, killedByUser, completedWithError);
 }
 
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(

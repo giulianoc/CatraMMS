@@ -1186,6 +1186,24 @@ void API::mediaItemsList(
         if (titleIt != queryParameters.end() && titleIt->second != "")
         {
             title = titleIt->second;
+
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						title.c_str(), title.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					title = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
         }
 
 		vector<string> tags;

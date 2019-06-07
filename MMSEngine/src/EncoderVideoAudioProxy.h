@@ -139,6 +139,8 @@ private:
     string                              _ffmpegGenerateFramesURI;
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
+
+	int									_timeBeforeToPrepareResourcesInMinutes;
     
 	/*
     string								_mmsAPIProtocol;
@@ -209,7 +211,7 @@ private:
 		Json::Value liveRecorderParametersRoot);
 	*/
 
-    pair<bool, bool> getEncodingStatus();
+    tuple<bool, bool, bool> getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
