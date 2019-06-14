@@ -1,6 +1,35 @@
 
 #include "MMSEngineDBFacade.h"
 
+string& ltrim(string& s)
+{
+    auto it = find_if(s.begin(), s.end(),
+        [](char c)
+        {
+            return !isspace<char>(c, locale::classic());
+        });
+    s.erase(s.begin(), it);
+
+    return s;
+}
+
+string& rtrim(string& s)                                                                                      
+{                                                                                                             
+    auto it = find_if(s.rbegin(), s.rend(),                                                                   
+        [](char c)                                                                                            
+        {                                                                                                     
+            return !isspace<char>(c, locale::classic());                                                      
+        });                                                                                                   
+    s.erase(it.base(), s.end());                                                                              
+                                                                                                              
+    return s;                                                                                                 
+}                                                                                                             
+                                                                                                              
+string& trim(string& s)                                                                                       
+{                                                                                                             
+    return ltrim(rtrim(s));                                                                                   
+}
+
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
@@ -501,6 +530,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
             + ", title: " + title
+            + ", tags.size(): " + to_string(tags.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", jsonCondition: " + jsonCondition
             + ", ingestionDateOrder: " + ingestionDateOrder
@@ -689,7 +719,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				{
 					string tag = tags[tagIndex];
 
-                			preparedStatement->setString(queryParameterIndex++, tag);
+                	preparedStatement->setString(queryParameterIndex++, tag);
 				}
 			}
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -2863,6 +2893,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 				for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
 				{
 					string tag = parametersRoot[field][tagIndex].asString();
+					trim(tag);
+
+					if (tag == "")
+						continue;
 
            			lastSQLCommand = 
                			"insert into MMS_Tag (mediaItemKey, name) values ("

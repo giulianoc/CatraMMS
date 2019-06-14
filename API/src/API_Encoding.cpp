@@ -88,12 +88,19 @@ void API::encodingJobsStatus(
             status = statusIt->second;
         }
 
+        string type = "";
+        auto typeIt = queryParameters.find("type");
+        if (typeIt != queryParameters.end() && typeIt->second != "")
+        {
+            type = typeIt->second;
+        }
+
         {
             Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
                     workspace, encodingJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    asc, status
+                    asc, status, type
                     );
 
             Json::StreamWriterBuilder wbuilder;

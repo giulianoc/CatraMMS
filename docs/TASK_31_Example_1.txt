@@ -1,0 +1,20 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "my label",
+		"Type": "Video-Speed",
+		"Parameters": {
+			"References": [
+				{ "ReferenceMediaItemKey": 11 }
+			],
+			"SpeedType": "SlowDown",
+			"SpeedSize": 3,
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}

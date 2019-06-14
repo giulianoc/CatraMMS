@@ -42,6 +42,8 @@ public:
     
     bool isColorValid(string fontColor);
 
+	bool isVideoSpeedTypeValid(string speed);
+
     bool isFaceRecognitionCascadeNameValid(string faceRecognitionCascadeName);
 
     bool isFaceRecognitionOutputValid(string faceRecognitionOutput);
@@ -143,6 +145,10 @@ public:
 	void validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
 		Json::Value parametersRoot, 
 		bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
+	void validateVideoSpeedMetadata(int64_t workspaceKey, string label,
+		Json::Value parametersRoot, bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 

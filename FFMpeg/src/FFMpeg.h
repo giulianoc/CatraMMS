@@ -110,6 +110,19 @@ public:
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
+	void videoSpeed(
+        string mmsSourceVideoAssetPathName,
+        int64_t videoDurationInMilliSeconds,
+
+        string videoSpeedType,
+        int videoSpeedSize,
+
+        // string encodedFileName,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
     int getEncodingProgress();
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);

@@ -139,6 +139,7 @@ private:
     string                              _ffmpegGenerateFramesURI;
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
+    string                              _ffmpegVideoSpeedURI;
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
@@ -210,6 +211,10 @@ private:
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
 	*/
+
+    pair<string, bool> videoSpeed();
+    pair<string, bool> videoSpeed_through_ffmpeg();
+    void processVideoSpeed(string stagingEncodedAssetPathName, bool killedByUser);    
 
     tuple<bool, bool, bool> getEncodingStatus();
 

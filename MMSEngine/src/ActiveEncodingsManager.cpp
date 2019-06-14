@@ -272,6 +272,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
+            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
             )
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(

@@ -1150,6 +1150,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Video-Speed")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1282,6 +1303,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
     {
         validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::VideoSpeed)
+    {
+        validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -3205,6 +3231,123 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
     }    
 }
 
+void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+	/*
+    vector<string> mandatoryFields = {
+        "Speed"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+	*/
+
+    string field = "SpeedType";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		string speedType = parametersRoot.get(field, "XXX").asString();
+		if (!isVideoSpeedTypeValid(speedType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "SlowDown, or SpeedUp"
+                + ")"
+                + ", Field: " + field
+                + ", speed:Type " + speedType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    field = "SpeedSize";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		int speedSize = parametersRoot.get(field, 3).asInt();
+		if (speedSize < 1 || speedSize > 10)
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be between 1 and 10)"
+                + ", Field: " + field
+                + ", speedSize: " + to_string(speedSize)
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    if (validateDependenciesToo)
+    {
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() != 1)
+            {
+                string errorMessage = __FILEREF__ + "No correct number of References"
+                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+
+            // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+					keyAndDependencyType	=  dependencies[0];
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                        + ", referenceMediaItemKey: " + to_string(key)
+                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }    
+    }    
+}
+
+
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
@@ -3682,6 +3825,25 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
     for (string outputFormat: outputFormats)
     {
         if (liveRecorderOutputFormat == outputFormat) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isVideoSpeedTypeValid(string speedType)
+{
+    vector<string> suffixes = {
+        "SlowDown",
+        "SpeedUp"
+    };
+
+    string lowerCaseFileFormat;
+    lowerCaseFileFormat.resize(speedType.size());
+    transform(speedType.begin(), speedType.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
+    for (string suffix: suffixes)
+    {
+        if (lowerCaseFileFormat == suffix) 
             return true;
     }
     

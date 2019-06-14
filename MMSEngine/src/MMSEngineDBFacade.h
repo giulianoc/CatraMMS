@@ -241,7 +241,8 @@ public:
         SlideShow           = 5,
         FaceRecognition		= 6,
         FaceIdentification	= 7,
-		LiveRecorder		= 8
+		LiveRecorder		= 8,
+		VideoSpeed			= 9
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -265,6 +266,8 @@ public:
                 return "FaceIdentification";
             case EncodingType::LiveRecorder:
                 return "LiveRecorder";
+            case EncodingType::VideoSpeed:
+                return "VideoSpeed";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -293,6 +296,8 @@ public:
             return EncodingType::FaceIdentification;
         else if (lowerCase == "liverecorder")
             return EncodingType::LiveRecorder;
+        else if (lowerCase == "videospeed")
+            return EncodingType::VideoSpeed;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -356,6 +361,38 @@ public:
         else
             throw runtime_error(string("Wrong EncodingPeriod")
                     + ", encodingPeriod: " + encodingPeriod
+                    );
+    }
+
+    enum class VideoSpeedType {
+        SlowDown			= 0,
+        SpeedUp				= 1
+    };
+    static const char* toString(const VideoSpeedType& videoSpeedType)
+    {
+        switch (videoSpeedType)
+        {
+            case VideoSpeedType::SlowDown:
+                return "SlowDown";
+            case VideoSpeedType::SpeedUp:
+                return "SpeedUp";
+            default:
+            throw runtime_error(string("Wrong VideoSpeedType"));
+        }
+    }
+    static VideoSpeedType toVideoSpeedType(const string& videoSpeedType)
+    {
+        string lowerCase;
+        lowerCase.resize(videoSpeedType.size());
+        transform(videoSpeedType.begin(), videoSpeedType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "slowdown")
+            return VideoSpeedType::SlowDown;
+		else if (lowerCase == "speedup")
+            return VideoSpeedType::SpeedUp;
+        else
+            throw runtime_error(string("Wrong VideoSpeedType")
+                    + ", videoSpeedType: " + videoSpeedType
                     );
     }
 
@@ -436,6 +473,16 @@ public:
 			Json::Value								_liveRecorderParametersRoot;
 		};
 
+        struct VideoSpeedData {
+            unsigned long                           _mmsVideoPartitionNumber;
+            string                                  _videoFileName;
+            string                                  _videoRelativePath;
+            int64_t                                 _videoDurationInMilliSeconds;
+
+            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+            Json::Value                             _videoSpeedParametersRoot;
+        };
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
@@ -444,6 +491,7 @@ public:
         shared_ptr<FaceRecognitionData>				_faceRecognitionData;
         shared_ptr<FaceIdentificationData>			_faceIdentificationData;
 		shared_ptr<LiveRecorderData>				_liveRecorderData;
+		shared_ptr<VideoSpeedData>					_videoSpeedData;
     } ;
 
     enum class WorkspaceType {
@@ -477,6 +525,7 @@ public:
         FaceIdentification		= 21,
         LiveRecorder			= 22,
         ChangeFileFormat		= 23,
+        VideoSpeed				= 24,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -533,6 +582,8 @@ public:
 				return "Live-Recorder";
 			case IngestionType::ChangeFileFormat:
 				return "Change-File-Format";
+			case IngestionType::VideoSpeed:
+				return "Video-Speed";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -596,6 +647,8 @@ public:
             return IngestionType::LiveRecorder;
         else if (lowerCase == "change-file-format")
             return IngestionType::ChangeFileFormat;
+        else if (lowerCase == "video-speed")
+            return IngestionType::VideoSpeed;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1009,7 +1062,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool asc, string status);
+        bool asc, string status, string type);
 
     Json::Value getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
@@ -1188,6 +1241,13 @@ Json::Value getTagsList (
 		int segmentDurationInSeconds,
 		string outputFileFormat,
 		EncodingPriority encodingPriority);
+
+    int addEncoding_VideoSpeed (
+        shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey,
+        int64_t mediaItemKey, int64_t physicalPathKey,
+        VideoSpeedType videoSpeedType, int videoSpeedSize,
+        EncodingPriority encodingPriority);
 
 	void updateEncodingLiveRecordingPeriod (
 		int64_t encodingJobKey,

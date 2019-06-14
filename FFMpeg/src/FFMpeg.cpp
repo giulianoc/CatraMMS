@@ -1956,6 +1956,486 @@ void FFMpeg::overlayTextOnVideo(
     }
 }
 
+void FFMpeg::videoSpeed(
+        string mmsSourceVideoAssetPathName,
+        int64_t videoDurationInMilliSeconds,
+
+        string videoSpeedType,
+        int videoSpeedSize,
+
+        // string encodedFileName,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid)
+{
+	int iReturnedStatus = 0;
+
+    try
+    {
+        _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+        _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
+        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        _currentIngestionJobKey             = ingestionJobKey;
+        _currentEncodingJobKey              = encodingJobKey;
+        
+
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + ".ffmpegoutput";
+
+        {
+			string videoPTS;
+			string audioTempo;
+
+			if (videoSpeedType == "SlowDown")
+			{
+				switch(videoSpeedSize)
+				{
+					case 1:
+						videoPTS = "1.1";
+						audioTempo = "(1/1.1)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds / 100);
+
+						break;
+					case 2:
+						videoPTS = "1.2";
+						audioTempo = "(1/1.2)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 20 / 100);
+
+						break;
+					case 3:
+						videoPTS = "1.3";
+						audioTempo = "(1/1.3)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 30 / 100);
+
+						break;
+					case 4:
+						videoPTS = "1.4";
+						audioTempo = "(1/1.4)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 40 / 100);
+
+						break;
+					case 5:
+						videoPTS = "1.5";
+						audioTempo = "(1/1.5)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 50 / 100);
+
+						break;
+					case 6:
+						videoPTS = "1.6";
+						audioTempo = "(1/1.6)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 60 / 100);
+
+						break;
+					case 7:
+						videoPTS = "1.7";
+						audioTempo = "(1/1.7)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 70 / 100);
+
+						break;
+					case 8:
+						videoPTS = "1.8";
+						audioTempo = "(1/1.8)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 80 / 100);
+
+						break;
+					case 9:
+						videoPTS = "1.9";
+						audioTempo = "(1/1.9)";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 90 / 100);
+
+						break;
+					case 10:
+						videoPTS = "2";
+						audioTempo = "0.5";
+						_currentDurationInMilliSeconds      += (videoDurationInMilliSeconds * 100 / 100);
+
+						break;
+					default:
+						videoPTS = "1.3";
+						audioTempo = "(1/1.3)";
+
+						break;
+				}
+			}
+			else // if (videoSpeedType == "SpeedUp")
+			{
+				switch(videoSpeedSize)
+				{
+					case 1:
+						videoPTS = "(1/1.1)";
+						audioTempo = "1.1";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 10 / 100);
+
+						break;
+					case 2:
+						videoPTS = "(1/1.2)";
+						audioTempo = "1.2";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 20 / 100);
+
+						break;
+					case 3:
+						videoPTS = "(1/1.3)";
+						audioTempo = "1.3";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 30 / 100);
+
+						break;
+					case 4:
+						videoPTS = "(1/1.4)";
+						audioTempo = "1.4";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 40 / 100);
+
+						break;
+					case 5:
+						videoPTS = "(1/1.5)";
+						audioTempo = "1.5";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 50 / 100);
+
+						break;
+					case 6:
+						videoPTS = "(1/1.6)";
+						audioTempo = "1.6";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 60 / 100);
+
+						break;
+					case 7:
+						videoPTS = "(1/1.7)";
+						audioTempo = "1.7";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 70 / 100);
+
+						break;
+					case 8:
+						videoPTS = "(1/1.8)";
+						audioTempo = "1.8";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 80 / 100);
+
+						break;
+					case 9:
+						videoPTS = "(1/1.9)";
+						audioTempo = "1.9";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 90 / 100);
+
+						break;
+					case 10:
+						videoPTS = "0.5";
+						audioTempo = "2";
+						_currentDurationInMilliSeconds      -= (videoDurationInMilliSeconds * 100 / 100);
+
+						break;
+					default:
+						videoPTS = "(1/1.3)";
+						audioTempo = "1.3";
+
+						break;
+				}
+			}
+
+			string complexFilter = "-filter_complex [0:v]setpts=" + videoPTS + "*PTS[v];[0:a]atempo=" + audioTempo + "[a]";
+			string videoMap = "-map [v]";
+			string audioMap = "-map [a]";
+		#ifdef __EXECUTE__
+            string ffmpegExecuteCommand;
+		#else
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+		#endif
+            {
+			#ifdef __EXECUTE__
+			#else
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
+				// output options
+				addToArguments(complexFilter, ffmpegArgumentList);
+				addToArguments(videoMap, ffmpegArgumentList);
+				addToArguments(audioMap, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+			#endif
+
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+				#ifdef __EXECUTE__
+                    _logger->info(__FILEREF__ + "videoSpeed: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+                    if (executeCommandStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "videoSpeed: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        ;            
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+				#else
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "videoSpeed: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "videoSpeed: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;            
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+				#endif
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+				#ifdef __EXECUTE__
+                    _logger->info(__FILEREF__ + "videoSpeed: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
+				#else
+                    _logger->info(__FILEREF__ + "videoSpeed: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
+				#endif
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+				#ifdef __EXECUTE__
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                            + ", e.what(): " + e.what()
+                    ;
+				#else
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+				#endif
+                    _logger->error(errorMessage);
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    bool exceptionInCaseOfError = false;
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                bool exceptionInCaseOfError = false;
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+            }
+
+            _logger->info(__FILEREF__ + "VideoSpeed file generated"
+                + ", encodingJobKey: " + to_string(encodingJobKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            bool inCaseOfLinkHasItToBeRead = false;
+            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+
+            if (ulFileSize == 0)
+            {
+			#ifdef __EXECUTE__
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                ;
+			#else
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                ;
+			#endif
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+}
+
 void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
 {
     try

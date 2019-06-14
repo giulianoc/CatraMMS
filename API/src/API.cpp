@@ -1210,9 +1210,29 @@ void API::mediaItemsList(
         auto tagsIt = queryParameters.find("tags");
         if (tagsIt != queryParameters.end() && tagsIt->second != "")
 		{
+			string sTags = tagsIt->second;
+
 			char delim = ',';
 
-			stringstream ssTags (tagsIt->second);
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						sTags.c_str(), sTags.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					sTags = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
+
+			stringstream ssTags (sTags);
 			string item;
 
 			while (getline (ssTags, item, delim))

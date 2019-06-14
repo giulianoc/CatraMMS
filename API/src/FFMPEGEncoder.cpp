@@ -842,6 +842,105 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+    else if (method == "videoSpeed")
+    {
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+        
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (!encoding->_running)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+				+ ", " + NoEncodingAvailable().what();
+            
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            // throw runtime_error(noEncodingAvailableMessage);
+            return;
+        }
+        
+        try
+        {            
+            selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
+
+            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+            );
+            thread videoSpeedThread(&FFMPEGEncoder::videoSpeed, this, selectedEncoding, encodingJobKey, requestBody);
+            videoSpeedThread.detach();
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
+            
+            _logger->error(__FILEREF__ + "videoSpeedThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "videoSpeedThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
     else if (method == "encodingStatus")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -3282,6 +3381,172 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
 
 	return utcCurrentRecordedFileLastModificationTime;
+}
+
+void FFMPEGEncoder::videoSpeed(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody)
+{
+    string api = "videoSpeed";
+
+    _logger->info(__FILEREF__ + "Received " + api
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value videoSpeedMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &videoSpeedMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string mmsSourceVideoAssetPathName = videoSpeedMetadata.get("mmsSourceVideoAssetPathName", "XXX").asString();
+        int64_t videoDurationInMilliSeconds = videoSpeedMetadata.get("videoDurationInMilliSeconds", -1).asInt64();
+
+        string videoSpeedType = videoSpeedMetadata.get("videoSpeedType", "XXX").asString();
+        int videoSpeedSize = videoSpeedMetadata.get("videoSpeedSize", 3).asInt();
+        
+        string stagingEncodedAssetPathName = videoSpeedMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
+        int64_t encodingJobKey = videoSpeedMetadata.get("encodingJobKey", -1).asInt64();
+        int64_t ingestionJobKey = videoSpeedMetadata.get("ingestionJobKey", -1).asInt64();
+
+		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+        encoding->_ffmpeg->videoSpeed(
+                mmsSourceVideoAssetPathName,
+                videoDurationInMilliSeconds,
+
+                videoSpeedType,
+                videoSpeedSize,
+
+                // encodedFileName,
+                stagingEncodedAssetPathName,
+                encodingJobKey,
+                ingestionJobKey,
+				&(encoding->_childPid));
+		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+//        string responseBody = string("{ ")
+//                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+//                + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+//                + "}";
+
+        // sendSuccess(request, 200, responseBody);
+        
+        encoding->_running = false;
+        encoding->_childPid = 0;
+        
+        _logger->info(__FILEREF__ + "Encode content finished"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
+    }
+    catch(runtime_error e)
+    {
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
 }
 
 void FFMPEGEncoder::addEncodingCompleted(

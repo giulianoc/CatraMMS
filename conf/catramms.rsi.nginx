@@ -207,7 +207,7 @@ server {
 	location /api {
 		internal;
 
-		fastcgi_pass   localhost:8010;
+		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }
@@ -241,6 +241,9 @@ server {
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&encodingJobKey=$2 last;
 		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&encodingJobKey=$2 last;
+		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
 		}
@@ -255,7 +258,7 @@ server {
 	location /encoder {
 		internal;
 
-		fastcgi_pass   localhost:8020;
+		fastcgi_pass   127.0.0.1:8020;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }
@@ -322,7 +325,7 @@ server {
 	location /api {
 		internal;
 
-		fastcgi_pass   localhost:8010;
+		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 
@@ -336,7 +339,7 @@ server {
 	listen 80;
 	listen 443;
 
-	server_name mms-binary.rsi.ch localhost;
+	server_name mms-binary.rsi.ch 127.0.0.1;
 
 	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
@@ -380,7 +383,7 @@ server {
 		proxy_http_version 1.1;
 		#It is called when nginx completed to upload the binary,
 		#all the URL parameters are inherit from the 'toBeAuthorized' redirect
-		proxy_pass http://localhost/catramms/uploadedBinary;
+		proxy_pass http://127.0.0.1/catramms/uploadedBinary;
 
 		## Track uploads for this location on the zone defined
 		## up to 30 seconds after they have been finished
@@ -394,7 +397,7 @@ server {
 	location = /catramms/binary/checkAuthorization {
 		internal;
 
-		proxy_pass http://localhost/catramms/binary/authorization;
+		proxy_pass http://127.0.0.1/catramms/binary/authorization;
 		proxy_pass_request_body off;
 		proxy_set_header Content-Length "";
 		#proxy_set_header X-Original-METHOD $request_method;
@@ -420,7 +423,7 @@ server {
 	location /api {
 		internal;
 
-		fastcgi_pass   localhost:8010;
+		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }

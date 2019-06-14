@@ -1504,6 +1504,65 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::VideoSpeed)
+                        {
+                            try
+                            {
+                                manageVideoSpeedTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
                                 || ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
@@ -7787,6 +7846,133 @@ void MMSEngineProcessor::manageEncodeTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageEncodeTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageVideoSpeedTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+			dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong media number to be encoded"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::VideoSpeedType videoSpeedType;
+        string field = "SpeedType";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            videoSpeedType = MMSEngineDBFacade::VideoSpeedType::SlowDown;
+        }
+        else
+        {
+            videoSpeedType = MMSEngineDBFacade::toVideoSpeedType(
+					parametersRoot.get(field, "SlowDown").asString());
+        }
+
+		int videoSpeedSize = 3;
+        field = "SpeedSize";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            videoSpeedSize = parametersRoot.get(field, "SpeedSize").asInt();
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
+				workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority = MMSEngineDBFacade::toEncodingPriority(
+					parametersRoot.get(field, "XXX").asString());
+        }
+
+		// Since it was a copy anc past, next commant has to be checked.
+		// It is not possible to manage more than one encode because:
+		// 1. inside _mmsEngineDBFacade->addEncodingJob, the ingestionJob is updated to encodingQueue
+		//		and the second call will fail (because the update of the ingestion was already done
+		//	2. The ingestionJob mantains the status of the encoding, how would be managed
+		//		the status in case of more than one encoding?
+        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+		// 		keyAndDependencyType: dependencies)
+        MMSEngineDBFacade::ContentType referenceContentType;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+        {
+            int64_t key;
+            Validator::DependencyType dependencyType;
+            
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType	= dependencies[0];
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+				sourceMediaItemKey = key;
+
+				sourcePhysicalPathKey = -1;
+			}
+			else
+			{
+				sourcePhysicalPathKey = key;
+            
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					sourcePhysicalPathKey, warningIfMissing);
+
+				MMSEngineDBFacade::ContentType localContentType;
+				string localTitle;
+				string userData;
+                string ingestionDate;
+				int64_t localIngestionJobKey;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+			}
+		}
+
+		_mmsEngineDBFacade->addEncoding_VideoSpeed (workspace, ingestionJobKey,
+			sourceMediaItemKey, sourcePhysicalPathKey,
+			videoSpeedType, videoSpeedSize, encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
