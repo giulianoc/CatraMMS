@@ -1,0 +1,24 @@
+"Task": {
+	// optional
+	Label="...",
+
+	// mandatory
+	"Type": "Media-Cross-Reference",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. Two References have to be present
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference items using the key
+			// of the video by which this video depend on.
+			// As references can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
+
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 }
+		],
+
+		// mandatory. Possible values: imageOfVideo, imageOfAudio.
+		"Type": "imageOfVideo"
+	}
+}

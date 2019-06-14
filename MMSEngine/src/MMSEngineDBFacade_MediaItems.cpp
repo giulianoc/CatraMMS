@@ -971,6 +971,26 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						field = "imagesReferences";
 						mediaItemRoot[field] = mediaItemReferencesRoot;
 					}
+					else if (contentType == ContentType::Audio)
+					{
+						Json::Value mediaItemReferencesRoot(Json::arrayValue);
+                    
+						lastSQLCommand = 
+							"select sourceMediaItemKey from MMS_CrossReference "
+							"where type = 'imageOfAudio' and targetMediaItemKey = ?";
+
+						shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
+						shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
+						while (resultSetTags->next())
+						{
+							mediaItemReferencesRoot.append(resultSetTags->getInt64("sourceMediaItemKey"));
+						}
+                    
+						field = "imagesReferences";
+						mediaItemRoot[field] = mediaItemReferencesRoot;
+					}
 				}
 
                 {
@@ -2940,11 +2960,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 				string field = "ImageOfVideoMediaItemKey";
 				if (isMetadataPresent(parametersRoot, field))
 				{
-					string sImageOfVideoMediaItemKey = parametersRoot.get(field, "").asString();
+					// string sImageOfVideoMediaItemKey = parametersRoot.get(field, "").asString();
 
-					if (sImageOfVideoMediaItemKey != "")
+					// if (sImageOfVideoMediaItemKey != "")
 					{
-						int64_t imageOfVideoMediaItemKey = stoll(sImageOfVideoMediaItemKey);
+						// int64_t imageOfVideoMediaItemKey = stoll(sImageOfVideoMediaItemKey);
+						int64_t imageOfVideoMediaItemKey = parametersRoot.get(field, -1).asInt64();
 						string type = "imageOfVideo";
 
 						lastSQLCommand = 
@@ -2956,6 +2977,31 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 						preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 						preparedStatement->setString(queryParameterIndex++, type);
 						preparedStatement->setInt64(queryParameterIndex++, imageOfVideoMediaItemKey);
+
+						preparedStatement->executeUpdate();
+					}
+				}
+
+				field = "ImageOfAudioMediaItemKey";
+				if (isMetadataPresent(parametersRoot, field))
+				{
+					// string sImageOfAudioMediaItemKey = parametersRoot.get(field, "").asString();
+
+					// if (sImageOfAudioMediaItemKey != "")
+					{
+						// int64_t imageOfAudioMediaItemKey = stoll(sImageOfAudioMediaItemKey);
+						int64_t imageOfAudioMediaItemKey = parametersRoot.get(field, -1).asInt64();
+						string type = "imageOfAudio";
+
+						lastSQLCommand = 
+							"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
+							"?, ?, ?)";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+						preparedStatement->setString(queryParameterIndex++, type);
+						preparedStatement->setInt64(queryParameterIndex++, imageOfAudioMediaItemKey);
 
 						preparedStatement->executeUpdate();
 					}
@@ -3978,6 +4024,101 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     }
     
     return physicalPathKey;
+}
+
+void MMSEngineDBFacade::addCrossReference (
+	int64_t sourceMediaItemKey, string type, int64_t targetMediaItemKey)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+			lastSQLCommand = 
+				"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
+				"?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
+			preparedStatement->setString(queryParameterIndex++, type);
+			preparedStatement->setInt64(queryParameterIndex++, targetMediaItemKey);
+
+			preparedStatement->executeUpdate();
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::removePhysicalPath (

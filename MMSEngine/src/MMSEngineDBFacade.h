@@ -527,6 +527,7 @@ public:
         ChangeFileFormat		= 23,
         VideoSpeed				= 24,
         EmailNotification       = 30,
+        MediaCrossReference		= 31,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -587,6 +588,8 @@ public:
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
+            case IngestionType::MediaCrossReference:
+                return "Media-Cross-Reference";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -652,6 +655,8 @@ public:
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
+        else if (lowerCase == "media-cross-reference")
+            return IngestionType::MediaCrossReference;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
@@ -1348,6 +1353,9 @@ Json::Value getTagsList (
         int imageQuality
     );
     
+	void addCrossReference (
+		int64_t sourceMediaItemKey, string type, int64_t targetMediaItemKey);
+
     void removePhysicalPath (
         int64_t physicalPathKey);
 

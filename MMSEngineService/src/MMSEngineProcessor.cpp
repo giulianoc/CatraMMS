@@ -2092,6 +2092,66 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                manageMediaCrossReferenceTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnFacebook)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
@@ -8576,6 +8636,232 @@ void MMSEngineProcessor::manageEmailNotificationTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "sendEmail failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageMediaCrossReferenceTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 2)
+        {
+            string errorMessage = __FILEREF__ + "No configured Two Media in order to create the Cross Reference"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string type = parametersRoot.get(field, "XXX").asString();
+
+        MMSEngineDBFacade::ContentType firstContentType;
+		int64_t firstMediaItemKey;
+        {
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType = dependencies[0];
+
+            int64_t key;
+            Validator::DependencyType dependencyType;
+
+            tie(key, firstContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                firstMediaItemKey = key;
+            }
+            else
+            {
+                int64_t physicalPathKey = key;
+
+                bool warningIfMissing = false;
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        physicalPathKey, warningIfMissing);
+
+                tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            }
+		}
+
+        MMSEngineDBFacade::ContentType secondContentType;
+		int64_t secondMediaItemKey;
+        {
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType = dependencies[1];
+
+            int64_t key;
+            Validator::DependencyType dependencyType;
+
+            tie(key, secondContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                secondMediaItemKey = key;
+            }
+            else
+            {
+                int64_t physicalPathKey = key;
+
+                bool warningIfMissing = false;
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        physicalPathKey, warningIfMissing);
+
+                tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            }
+		}
+
+		if (type == "imageOfVideo")
+		{
+			if (firstContentType == MMSEngineDBFacade::ContentType::Video
+				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
+			{
+				_logger->info(__FILEREF__ + "Add Cross Reference"
+					+ ", sourceMediaItemKey: " + to_string(secondMediaItemKey)
+					+ ", type: " + type
+					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
+				);
+				_mmsEngineDBFacade->addCrossReference(
+                        secondMediaItemKey, type, firstMediaItemKey);
+			}
+			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
+				&& secondContentType == MMSEngineDBFacade::ContentType::Video)
+			{
+				_logger->info(__FILEREF__ + "Add Cross Reference"
+					+ ", sourceMediaItemKey: " + to_string(firstMediaItemKey)
+					+ ", type: " + type
+					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
+				);
+				_mmsEngineDBFacade->addCrossReference(
+					firstMediaItemKey, type, secondMediaItemKey);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong content type"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", type: " + type
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		else if (type == "imageOfAudio")
+		{
+			if (firstContentType == MMSEngineDBFacade::ContentType::Audio
+				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
+			{
+				_logger->info(__FILEREF__ + "Add Cross Reference"
+					+ ", sourceMediaItemKey: " + to_string(secondMediaItemKey)
+					+ ", type: " + type
+					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
+				);
+				_mmsEngineDBFacade->addCrossReference(
+                        secondMediaItemKey, type, firstMediaItemKey);
+			}
+			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
+				&& secondContentType == MMSEngineDBFacade::ContentType::Audio)
+			{
+				_logger->info(__FILEREF__ + "Add Cross Reference"
+					+ ", sourceMediaItemKey: " + to_string(firstMediaItemKey)
+					+ ", type: " + type
+					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
+				);
+				_mmsEngineDBFacade->addCrossReference(
+					firstMediaItemKey, type, secondMediaItemKey);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong content type"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", type: " + type
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			string errorMessage = __FILEREF__ + "Wrong type"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", dependencies.size: " + to_string(dependencies.size())
+                + ", type: " + type
+                + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

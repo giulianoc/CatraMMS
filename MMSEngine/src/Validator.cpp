@@ -940,6 +940,28 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot,
 				validateDependenciesToo, dependencies);        
     }
+    else if (type == "Media-Cross-Reference")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::MediaCrossReference;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot,
+				validateDependenciesToo, dependencies);        
+    }
     else if (type == "FTP-Delivery")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::FTPDelivery;
@@ -1253,6 +1275,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
     {
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
+    {
+        validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
@@ -2270,6 +2297,62 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 }
             }
 			*/
+        } 
+    }
+}
+
+void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "Type"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    if (validateDependenciesToo)
+    {
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() != 2)
+            {
+                string errorMessage = __FILEREF__ + "Field is present but it does not have right number of elements"
+                        + ", Field: " + field
+                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
         } 
     }
 }

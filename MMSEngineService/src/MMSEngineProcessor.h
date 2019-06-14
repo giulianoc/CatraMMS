@@ -308,6 +308,12 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+    void manageMediaCrossReferenceTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
