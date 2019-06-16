@@ -73,6 +73,7 @@ private:
     shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
     shared_ptr<MMSStorage>                      _mmsStorage;
     shared_ptr<EncodersLoadBalancer>            _encodersLoadBalancer;
+	string										_hostName;
     
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;

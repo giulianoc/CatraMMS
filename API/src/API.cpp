@@ -21,7 +21,6 @@
 #include <curlpp/Infos.hpp>
 #include "catralibraries/Convert.h"
 #include "catralibraries/LdapWrapper.h"
-#include "PersistenceLock.h"
 #include "Validator.h"
 #include "EMailSender.h"
 #include "API.h"
@@ -89,15 +88,19 @@ int main(int argc, char** argv)
     // spdlog::register_logger(logger);
      */
 
+    size_t dbPoolSize = configuration["database"].get("apiPoolSize", 5).asInt();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", database->poolSize: " + to_string(dbPoolSize)
+    );
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, logger);
+            configuration, dbPoolSize, logger);
 
-    logger->info(__FILEREF__ + "Creating MMSStorage"
-            );
-    shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-            configuration, mmsEngineDBFacade, logger);
+	logger->info(__FILEREF__ + "Creating MMSStorage"
+		);
+	shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
+		configuration, mmsEngineDBFacade, logger);
 
     FCGX_Init();
 
@@ -116,7 +119,7 @@ int main(int argc, char** argv)
     {
         shared_ptr<API> api = make_shared<API>(configuration, 
                 mmsEngineDBFacade,
-                mmsStorage,
+				mmsStorage,
                 &fcgiAcceptMutex,
                 &fileUploadProgressData,
                 logger
@@ -145,13 +148,12 @@ int main(int argc, char** argv)
 
 API::API(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
+			shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
             FileUploadProgressData* fileUploadProgressData,
             shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
             mmsEngineDBFacade,
-            mmsStorage,
             fcgiAcceptMutex,
             logger) 
 {

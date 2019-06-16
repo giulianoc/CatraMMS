@@ -77,9 +77,38 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-			LockType lockType = LockType::Ingestion;
-			int maxDurationInMinutes = 5;
 			{
+				LockType lockType = LockType::Ingestion;
+				int maxDurationInMinutes = 5;
+
+				lastSQLCommand = 
+					"select count(*) from MMS_Lock where type = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				if (resultSet->next())
+				{
+					if (resultSet->getInt64(1) == 0)
+					{
+						lastSQLCommand = 
+							"insert into MMS_Lock (type, start, end, active, lastUpdate, lastDurationInMilliSecs, owner, maxDurationInMinutes, data) "
+							"values (?, NOW(), NOW(), 0, NOW(), 0, NULL, ?, NULL)";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setString(queryParameterIndex++, toString(lockType));
+						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
+
+						preparedStatement->executeUpdate();
+					}
+				}
+            }
+
+			{
+				LockType lockType = LockType::EncodingJobs;
+				int maxDurationInMinutes = 5;
+
 				lastSQLCommand = 
 					"select count(*) from MMS_Lock where type = ?";
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));

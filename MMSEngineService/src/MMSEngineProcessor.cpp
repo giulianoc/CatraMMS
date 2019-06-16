@@ -6007,7 +6007,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         /*
         if (generatedFrameIngestionFailed)
         {
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "updater->updateEncodingJob PunctualError"
                 + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
                 + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
             );
@@ -6015,13 +6015,13 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             int64_t mediaItemKey = -1;
             int64_t encodedPhysicalPathKey = -1;
             // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+            int encodingFailureNumber = updater->updateEncodingJob (
                     multiLocalAssetIngestionEvent->getEncodingJobKey(), 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     mediaItemKey, encodedPhysicalPathKey,
                     multiLocalAssetIngestionEvent->getIngestionJobKey());
 
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "updater->updateEncodingJob PunctualError"
                 + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
                 + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -6029,14 +6029,14 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         }
         else
         {
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
+            _logger->info(__FILEREF__ + "updater->updateEncodingJob NoError"
                 + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
                 + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
             );
 
             int64_t mediaItemKey = -1;
             int64_t encodedPhysicalPathKey = -1;
-            _mmsEngineDBFacade->updateEncodingJob (
+            updater->updateEncodingJob (
                 multiLocalAssetIngestionEvent->getEncodingJobKey(), 
                 MMSEngineDBFacade::EncodingError::NoError,
                 mediaItemKey, encodedPhysicalPathKey,
@@ -8937,13 +8937,51 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
 void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
-	int maxEncodingsNumber = 20;
+	try
+	{
+		int waitingTimeoutInSecondsIfLocked = 0;
 
-    vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
+		PersistenceLock persistenceLock(_mmsEngineDBFacade,
+			MMSEngineDBFacade::LockType::EncodingJobs,
+			waitingTimeoutInSecondsIfLocked,
+			_processorMMS);
+
+		int maxEncodingsNumber = 20;
+
+		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
-    _mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, maxEncodingsNumber);
+		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, maxEncodingsNumber);
 
-    _pActiveEncodingsManager->addEncodingItems(encodingItems);
+		_pActiveEncodingsManager->addEncodingItems(encodingItems);
+	}
+	catch(AlreadyLocked e)
+	{
+		_logger->warn(__FILEREF__ + "getEncodingJobs was not done"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+		);
+
+		return;
+		// throw e;
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "getEncodingJobs failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "getEncodingJobs failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+		);
+
+		throw e;
+	}
 }
 
 void MMSEngineProcessor::handleContentRetentionEventThread (

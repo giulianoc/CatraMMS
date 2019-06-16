@@ -115,10 +115,14 @@ int main (int iArgc, char *pArgv [])
     signal(SIGABRT, signalHandler);
     // signal(SIGBUS, signalHandler);
 
+    size_t dbPoolSize = configuration["database"].get("enginePoolSize", 5).asInt();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", database->poolSize: " + to_string(dbPoolSize)
+    );
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, logger);
+            configuration, dbPoolSize, logger);
     
     logger->info(__FILEREF__ + "Creating MMSStorage"
             );

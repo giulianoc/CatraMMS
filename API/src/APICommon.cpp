@@ -25,13 +25,11 @@ extern char** environ;
 
 APICommon::APICommon(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger)
 {
     _configuration      = configuration;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
-    _mmsStorage         = mmsStorage;
     _fcgiAcceptMutex    = fcgiAcceptMutex;
     _logger             = logger;
 

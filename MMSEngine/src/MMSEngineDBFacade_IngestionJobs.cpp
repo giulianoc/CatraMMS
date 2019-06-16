@@ -1022,6 +1022,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1031,6 +1032,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -1040,6 +1042,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1079,6 +1082,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1098,6 +1102,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1117,6 +1122,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -1251,6 +1257,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1260,6 +1267,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -1269,6 +1277,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1518,6 +1527,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1527,6 +1537,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -1536,6 +1547,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1608,6 +1620,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1663,6 +1676,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1718,6 +1732,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -1851,6 +1866,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1870,6 +1886,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1889,6 +1906,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -1988,6 +2006,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2007,6 +2026,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2026,6 +2046,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -2097,6 +2118,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2116,6 +2138,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2135,6 +2158,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
@@ -2318,6 +2342,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2337,6 +2362,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2356,6 +2382,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );

@@ -121,6 +121,7 @@ private:
     shared_ptr<MMSStorage>              _mmsStorage;
     shared_ptr<EncodersLoadBalancer>    _encodersLoadBalancer;
     shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
+	string								_hostName;
     
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;

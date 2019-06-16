@@ -74,7 +74,8 @@ class MMSEngineDBFacade {
 
 public:
     enum class LockType {
-		Ingestion		= 0
+		Ingestion		= 0,
+		EncodingJobs	= 1
     };
     static const char* toString(const LockType& lockType)
     {
@@ -82,6 +83,8 @@ public:
         {
             case LockType::Ingestion:
                 return "Ingestion";
+            case LockType::EncodingJobs:
+                return "EncodingJobs";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -94,6 +97,8 @@ public:
 
         if (lowerCase == "ingestion")
             return LockType::Ingestion;
+		else if (lowerCase == "encodingjobs")
+            return LockType::EncodingJobs;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -817,6 +822,7 @@ public:
 public:
     MMSEngineDBFacade(
         Json::Value configuration,
+		size_t dbPoolSize,
         shared_ptr<spdlog::logger> logger
             );
 

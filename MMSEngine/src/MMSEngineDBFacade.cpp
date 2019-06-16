@@ -34,6 +34,7 @@
 
 MMSEngineDBFacade::MMSEngineDBFacade(
         Json::Value configuration,
+		size_t dbPoolSize,
         shared_ptr<spdlog::logger> logger) 
 {
     _logger     = logger;
@@ -44,10 +45,12 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _defaultContentProviderName     = "default";
     // _defaultTerritoryName           = "default";
 
+	/*
     size_t dbPoolSize = configuration["database"].get("poolSize", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->poolSize: " + to_string(dbPoolSize)
     );
+	*/
     string dbServer = configuration["database"].get("server", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->server: " + dbServer
@@ -489,6 +492,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							);
 
 						int64_t mediaItemKeyChunk_1;
+						ContentType contentType;
 						bool mainChunk_1;
 						int64_t durationInMilliSecondsChunk_1;
 						int64_t mediaItemKeyChunk_2;
@@ -496,7 +500,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 						int64_t durationInMilliSecondsChunk_2;
 
 						lastSQLCommand =
-							string("select mediaItemKey, "
+							string("select mediaItemKey, contentType, "
 									"CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main from MMS_MediaItem "
 								"where JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 								"and JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
@@ -514,9 +518,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 						{
 							mediaItemKeyChunk_1 =
 								resultSetMediaItemDetails->getInt64("mediaItemKey");
+							contentType = MMSEngineDBFacade::toContentType(resultSetMediaItemDetails->getString("contentType"));
 							mainChunk_1 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
+							if (contentType == ContentType::Video)
 							{
 								int videoWidth;
 								int videoHeight;
@@ -541,6 +547,21 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
 										= videoDetails;
 							}
+							else // if (contentType == ContentType::Audio)
+							{
+								string audioCodecName;
+								long audioSampleRate;
+								int audioChannels;
+								long audioBitRate;
+
+								int64_t physicalPathKey = -1;
+								tuple<int64_t,string,long,long,int> audioDetails =
+									getAudioDetails(mediaItemKeyChunk_1, physicalPathKey);
+
+								tie(durationInMilliSecondsChunk_1, 
+									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
+										= audioDetails;
+							}
 						}
 						else
 						{
@@ -560,6 +581,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							mainChunk_2 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
+							if (contentType == ContentType::Video)
 							{
 								int videoWidth;
 								int videoHeight;
@@ -583,6 +605,21 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 										videoAvgFrameRate, videoBitRate,
 									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
 										= videoDetails;
+							}
+							else // if (contentType == ContentType::Audio)
+							{
+								string audioCodecName;
+								long audioSampleRate;
+								int audioChannels;
+								long audioBitRate;
+
+								int64_t physicalPathKey = -1;
+								tuple<int64_t,string,long,long,int> audioDetails =
+									getAudioDetails(mediaItemKeyChunk_2, physicalPathKey);
+
+								tie(durationInMilliSecondsChunk_2, 
+									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
+										= audioDetails;
 							}
 						}
 						else

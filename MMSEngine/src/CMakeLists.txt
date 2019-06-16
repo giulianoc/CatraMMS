@@ -27,10 +27,12 @@ SET (SOURCES
 	MMSEngineDBFacade_Configuration.cpp
 	MMSEngineDBFacade_CreateTables.cpp
 	MMSEngineDBFacade_EncodingJobs.cpp
+	MMSEngineDBFacade_EncodingProfiles.cpp
 	MMSEngineDBFacade_IngestionJobs.cpp
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
+	UpdaterEncoderJob.cpp
 	PersistenceLock.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
@@ -42,6 +44,7 @@ SET (HEADERS
 	Workspace.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
+	UpdaterEncoderJob.h
 	PersistenceLock.h
 	Validator.h
 	ActiveEncodingsManager.h

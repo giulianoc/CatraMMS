@@ -105,7 +105,6 @@ UploadBinary::UploadBinary(Json::Value configuration,
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
         mmsEngineDBFacade,
-        mmsStorage,
         fcgiAcceptMutex,
         logger) 
 {

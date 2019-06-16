@@ -25,7 +25,7 @@ int main (int iArgc, char *pArgv [])
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, logger);
+            configuration, 3, logger);
 
     /*
     logger->info(__FILEREF__ + "Creating MMSEngine"

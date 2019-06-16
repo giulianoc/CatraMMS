@@ -2275,6 +2275,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey is not found"
                     + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -2292,6 +2293,27 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         return make_tuple(durationInMilliSeconds, bitRate,
             videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
             audioCodecName, audioSampleRate, audioChannels, audioBitRate);
+    }
+    catch(MediaItemKeyNotFound mnf)
+    {
+        string exceptionMessage(mnf.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw mnf;
     }
     catch(sql::SQLException se)
     {
@@ -4409,6 +4431,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
         	lastSQLCommand = 
            		string("select distinct t.name from MMS_MediaItem mi, MMS_Tag t ")
             	+ sqlWhere
+				+ "order by t.name "
        			+ "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));

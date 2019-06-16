@@ -17,8 +17,9 @@
 #include <stdlib.h>
 #include "fcgi_stdio.h"
 #include <unordered_map>
-#include "MMSStorage.h"
 #include "spdlog/spdlog.h"
+#include "json/json.h"
+#include "MMSEngineDBFacade.h"
 #include "fcgi_config.h"
 
 struct WrongBasicAuthentication: public exception {    
@@ -32,7 +33,6 @@ class APICommon {
 public:
     APICommon(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger);
     
@@ -73,7 +73,6 @@ protected:
     shared_ptr<spdlog::logger>      _logger;
     mutex*                          _fcgiAcceptMutex;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
-    shared_ptr<MMSStorage>          _mmsStorage;
 
     unsigned long long   _maxBinaryContentLength;
 

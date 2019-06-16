@@ -16,6 +16,7 @@
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
 #include "catralibraries/Convert.h"
+#include "catralibraries/FileIO.h"
 #include "FFMPEGEncoder.h"
 
 #include <curlpp/cURLpp.hpp>
@@ -89,23 +90,21 @@ int main(int argc, char** argv)
     // spdlog::register_logger(logger);
      */
 
+    size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", database->poolSize: " + to_string(dbPoolSize)
+    );
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, logger);
+            configuration, dbPoolSize, logger);
 
-    logger->info(__FILEREF__ + "Creating MMSStorage"
-            );
-    shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-            configuration, mmsEngineDBFacade, logger);
-    
     FCGX_Init();
 
     mutex fcgiAcceptMutex;
 
     FFMPEGEncoder ffmpegEncoder(configuration, 
             mmsEngineDBFacade,
-            mmsStorage,
             &fcgiAcceptMutex,
             logger);
 
@@ -114,12 +113,10 @@ int main(int argc, char** argv)
 
 FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration, 
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-        shared_ptr<MMSStorage> mmsStorage,
         mutex* fcgiAcceptMutex,
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
         mmsEngineDBFacade,
-        mmsStorage,
         fcgiAcceptMutex,
         logger) 
 {
