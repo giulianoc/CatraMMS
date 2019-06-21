@@ -447,7 +447,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::Ingestion,
 				waitingTimeoutInSecondsIfLocked,
-				_processorMMS);
+				_processorMMS, _logger);
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
@@ -529,10 +529,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         + ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
                         + ", errorMessage: " + e.what()
                     );                            
-                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
-                    );
+						);
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
+							+ ", errorMessage: " + re.what()
+						);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
+							+ ", errorMessage: " + ex.what()
+						);
+					}
 
                     throw e;
                 }
@@ -551,10 +572,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         + ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
                         + ", errorMessage: " + e.what()
                     );                            
-                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
-                    );
+						);
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
+							+ ", errorMessage: " + re.what()
+						);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber"
+							+ ", errorMessage: " + ex.what()
+						);
+					}
 
                     throw e;
                 }
@@ -638,10 +680,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             + ", errorMessage: " + errorMessage
                             + ", processorMMS: " + ""
                         );
-                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
-                        );
+							);
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + re.what()
+							);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + ex.what()
+							);
+						}
 
                         throw runtime_error(errorMessage);
                     }
@@ -911,10 +974,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             + ", errorMessage: " + errorMessage
                             + ", processorMMS: " + ""
                         );
-                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
-                        );
+							);
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + re.what()
+							);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + ex.what()
+							);
+						}
 
                         throw runtime_error(errorMessage);
                     }
@@ -935,10 +1019,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             + ", errorMessage: " + errorMessage
                             + ", processorMMS: " + ""
                         );
-                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
-                        );
+							);
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + re.what()
+							);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+								+ ", errorMessage: " + ex.what()
+							);
+						}
 
                         throw runtime_error(errorMessage);
                     }
@@ -980,10 +1085,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1004,10 +1130,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1222,10 +1369,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1246,10 +1414,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1282,10 +1471,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1306,10 +1516,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1353,10 +1584,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1377,10 +1629,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1413,10 +1686,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1437,10 +1731,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1472,10 +1787,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1496,10 +1832,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1531,10 +1888,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1555,10 +1933,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1612,10 +2011,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1636,10 +2056,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1672,10 +2113,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1696,10 +2158,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1732,10 +2215,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1756,10 +2260,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1792,10 +2317,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1816,10 +2362,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1880,10 +2447,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1904,10 +2492,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1940,10 +2549,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -1964,10 +2594,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2000,10 +2651,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2024,10 +2696,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2060,10 +2753,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2084,10 +2798,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2120,10 +2855,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2144,10 +2900,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2180,10 +2957,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2204,10 +3002,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2240,10 +3059,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2264,10 +3104,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2301,10 +3162,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2325,10 +3207,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2362,10 +3265,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2386,10 +3310,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2421,10 +3366,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2445,10 +3411,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2509,10 +3496,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2533,10 +3541,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
 
                                 throw runtime_error(errorMessage);
                             }
@@ -2556,10 +3585,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + ""
                             );                            
-                            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+							try
+							{
+								_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                     MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage
                                     );
+							}
+							catch(runtime_error& re)
+							{
+								_logger->info(__FILEREF__ + "Update IngestionJob failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+									+ ", errorMessage: " + re.what()
+								);
+							}
+							catch(exception ex)
+							{
+								_logger->info(__FILEREF__ + "Update IngestionJob failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+									+ ", errorMessage: " + ex.what()
+								);
+							}
 
                             throw runtime_error(errorMessage);
                         }
@@ -2659,10 +3709,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2689,10 +3760,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				 e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2737,10 +3829,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2767,10 +3880,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2805,10 +3939,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2835,10 +3990,31 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2890,10 +4066,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
-        );
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2916,10 +4111,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
-        );
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
         _logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2997,10 +4211,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw e;
         }
@@ -3024,10 +4257,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw e;
         }        
@@ -3078,10 +4330,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw runtime_error(e.what());
         }
@@ -3106,10 +4377,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw runtime_error(e.what());
         }
@@ -3134,10 +4424,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw runtime_error(e.what());
         }
@@ -3162,10 +4471,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw runtime_error(e.what());
         }
@@ -3189,10 +4517,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
-            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
-            );
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
 
             throw e;
         }
@@ -3220,10 +4567,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + errorMessage
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 errorMessage
-        );
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         throw runtime_error(errorMessage);
     }
@@ -3326,10 +4692,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
-        );
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         throw e;
     }
@@ -3353,10 +4738,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
-        );
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         throw e;
     }    
@@ -5381,9 +6785,28 @@ void MMSEngineProcessor::changeFileFormatThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
         return;
     }
@@ -5401,9 +6824,28 @@ void MMSEngineProcessor::changeFileFormatThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -5508,9 +6950,28 @@ void MMSEngineProcessor::copyContentThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
         return;
     }
@@ -5531,9 +6992,28 @@ void MMSEngineProcessor::copyContentThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -5772,9 +7252,28 @@ void MMSEngineProcessor::extractTracksContentThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
         return;
     }
@@ -5792,9 +7291,28 @@ void MMSEngineProcessor::extractTracksContentThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -6058,10 +7576,29 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         bool exceptionInCaseOfError = false;
         
@@ -6093,10 +7630,29 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-            e.what()
-        );
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         bool exceptionInCaseOfError = false;
         
@@ -8944,7 +10500,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
 			waitingTimeoutInSecondsIfLocked,
-			_processorMMS);
+			_processorMMS, _logger);
 
 		int maxEncodingsNumber = 20;
 
@@ -9014,7 +10570,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             }
             catch(runtime_error e)
             {
-                _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                _logger->error(__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                 );
@@ -9025,7 +10581,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             }
             catch(exception e)
             {
-                _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                _logger->error(__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                 );
@@ -9039,7 +10595,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             {
                 _logger->info(__FILEREF__ + "Removing because of Retention"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                    + ", workspace->_workspaceKey: "
+						+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
                     + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
                     + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
                 );
@@ -9052,15 +10609,41 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                        + ", workspace->_workspaceKey: "
+							+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
                         + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
                         + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
                         + ", exception: " + e.what()
                     );
 
-                    moreRemoveToBeDone = false;
+					try
+					{
+						string processorMMSForRetention = "";
+						_mmsEngineDBFacade->updateMediaItem(workspaceAndMediaItemKey.second,
+							processorMMSForRetention);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateMediaItem failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", exception: " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateMediaItem failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", exception: " + e.what()
+						);
+					}
 
-                    break;
+					// one remove failed, procedure has to go ahead to try all the other removes
+                    // moreRemoveToBeDone = false;
+                    // break;
+
+					continue;
                     // no throw since it is running in a detached thread
                     // throw e;
                 }
@@ -9068,14 +10651,40 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                        + ", workspace->_workspaceKey: "
+							+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
                         + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
                         + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
                     );
 
-                    moreRemoveToBeDone = false;
+					try
+					{
+						string processorMMSForRetention = "";
+						_mmsEngineDBFacade->updateMediaItem(workspaceAndMediaItemKey.second,
+							processorMMSForRetention);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateMediaItem failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", exception: " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateMediaItem failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", exception: " + e.what()
+						);
+					}
 
-                    break;
+					// one remove failed, procedure has to go ahead to try all the other removes
+                    // moreRemoveToBeDone = false;
+                    // break;
+
+					continue;
                     // no throw since it is running in a detached thread
                     // throw e;
                 }
@@ -9239,8 +10848,25 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 
 		try
 		{
+			int waitingTimeoutInSecondsIfLocked = 0;
+
+			PersistenceLock persistenceLock(_mmsEngineDBFacade,
+				MMSEngineDBFacade::LockType::MainAndBackupLiveRecordingHA,
+				waitingTimeoutInSecondsIfLocked,
+				_processorMMS, _logger);
+
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();
 		}
+        catch(AlreadyLocked e)
+        {
+            _logger->warn(__FILEREF__ + "manageMainAndBackupOfRunnungLiveRecordingHA failed"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", exception: " + e.what()
+            );
+
+			// no throw since it is running in a detached thread
+            // throw e;
+        }
 		catch(runtime_error e)
 		{
 			_logger->error(__FILEREF__ + "manageMainAndBackupOfRunnungLiveRecordingHA failed"
@@ -9819,9 +11445,28 @@ RESUMING FILE TRANSFERS
                         + ", IngestionStatus: " + "End_IngestionFailure"
                         + ", errorMessage: " + e.what()
                     );                            
-                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + re.what()
+							);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + ex.what()
+							);
+					}
 
                     return;
                 }
@@ -9866,9 +11511,28 @@ RESUMING FILE TRANSFERS
                         + ", IngestionStatus: " + "End_IngestionFailure"
                         + ", errorMessage: " + e.what()
                     );                            
-                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + re.what()
+							);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + ex.what()
+							);
+					}
 
                     return;
                 }
@@ -9913,9 +11577,28 @@ RESUMING FILE TRANSFERS
                         + ", IngestionStatus: " + "End_IngestionFailure"
                         + ", errorMessage: " + e.what()
                     );                            
-                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + re.what()
+							);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + ex.what()
+							);
+					}
                     
                     return;
                 }
@@ -10076,9 +11759,28 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -10097,9 +11799,28 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -10118,9 +11839,28 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -10969,9 +12709,28 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -10989,9 +12748,28 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11008,9 +12786,28 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11027,9 +12824,28 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11716,9 +13532,28 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11737,9 +13572,28 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11756,9 +13610,28 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -11775,9 +13648,28 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -12179,9 +14071,28 @@ void MMSEngineProcessor::userHttpCallbackThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -12199,9 +14110,28 @@ void MMSEngineProcessor::userHttpCallbackThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -12219,9 +14149,28 @@ void MMSEngineProcessor::userHttpCallbackThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -12239,9 +14188,28 @@ void MMSEngineProcessor::userHttpCallbackThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
         return;
     }
@@ -12313,9 +14281,30 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + re.what()
+			);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + ex.what()
+			);
+		}
         
         return;
     }
@@ -12334,9 +14323,30 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + re.what()
+			);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + ex.what()
+			);
+		}
 
         return;
     }
@@ -12408,9 +14418,30 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + re.what()
+			);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + ex.what()
+			);
+		}
         
         return;
     }
@@ -12429,9 +14460,30 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + re.what()
+			);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + ex.what()
+			);
+		}
 
         return;
     }

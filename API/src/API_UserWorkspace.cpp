@@ -1925,3 +1925,63 @@ void API::deleteWorkspace(
     }
 }
 
+
+void API::workspaceUsage (
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace)
+{
+    Json::Value workspaceUsageRoot;
+    
+    try
+    {
+        string field;
+        
+        {
+            Json::Value requestParametersRoot;
+            
+            field = "requestParameters";
+            workspaceUsageRoot[field] = requestParametersRoot;
+        }
+        
+        Json::Value responseRoot;
+		{
+			int64_t workSpaceUsageInBytes;
+
+			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB =
+				_mmsEngineDBFacade->getWorkspaceUsage(workspace->_workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
+                                                                                                            
+			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
+
+			field = "usageInMB";
+			responseRoot[field] = workSpaceUsageInMB;
+		}
+        
+        field = "response";
+        workspaceUsageRoot[field] = responseRoot;
+
+		Json::StreamWriterBuilder wbuilder;
+		string responseBody = Json::writeString(wbuilder, workspaceUsageRoot);
+            
+		sendSuccess(request, 200, responseBody);            
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
+            + ", e.what(): " + e.what()
+        );
+
+		sendError(request, 500, e.what());
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
+        );
+
+		sendError(request, 500, e.what());
+
+        throw e;
+    } 
+}

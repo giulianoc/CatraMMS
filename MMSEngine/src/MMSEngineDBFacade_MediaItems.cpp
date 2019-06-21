@@ -67,7 +67,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMSForRetention is null "
                 "limit ? offset ? for update";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, maxMediaItemKeysNumber);
             preparedStatement->setInt(queryParameterIndex++, start);
@@ -85,7 +86,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 
                 // check if there is still an ingestion depending on the ingestionJobKey
                 bool ingestionDependingOnMediaItemKey = false;
-				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, ingestionJobKey) > 0)
+				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, ingestionJobKey)
+						> 0)
 					ingestionDependingOnMediaItemKey = true;
 				/*
                 {
@@ -128,8 +130,10 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 
                     {
                         lastSQLCommand = 
-                            "update MMS_MediaItem set processorMMSForRetention = ? where mediaItemKey = ? and processorMMSForRetention is null";
-                        shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            "update MMS_MediaItem set processorMMSForRetention = ? "
+							"where mediaItemKey = ? and processorMMSForRetention is null";
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
                         preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, mediaItemKey);
@@ -503,7 +507,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
-		vector<string>& tags,
+		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		string jsonOrderBy,
 		bool admin
@@ -530,7 +534,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
             + ", title: " + title
-            + ", tags.size(): " + to_string(tags.size())
+            + ", tagsIn.size(): " + to_string(tagsIn.size())
+            + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", jsonCondition: " + jsonCondition
             + ", ingestionDateOrder: " + ingestionDateOrder
@@ -583,6 +588,28 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 field = "title";
                 requestParametersRoot[field] = title;
             }
+
+            if (tagsIn.size() > 0)
+			{
+				Json::Value tagsRoot(Json::arrayValue);
+
+				for (int tagIndex = 0; tagIndex < tagsIn.size(); tagIndex++)
+					tagsRoot.append(tagsIn[tagIndex]);
+
+                field = "tagsIn";
+                requestParametersRoot[field] = tagsRoot;
+			}
+
+            if (tagsNotIn.size() > 0)
+			{
+				Json::Value tagsRoot(Json::arrayValue);
+
+				for (int tagIndex = 0; tagIndex < tagsNotIn.size(); tagIndex++)
+					tagsRoot.append(tagsNotIn[tagIndex]);
+
+                field = "tagsNotIn";
+                requestParametersRoot[field] = tagsRoot;
+			}
 
             if (liveRecordingChunk != -1)
             {
@@ -638,193 +665,46 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
         }
 
-        string sqlWhere;
-		if (tags.size() > 0)
-			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
+		pair<shared_ptr<sql::ResultSet>, int64_t>	resultSetAndNumFound;
+		if (tagsIn.size() > 0 || tagsNotIn.size() > 0)
+		{
+			resultSetAndNumFound = getMediaItemsList_withTagsCheck (
+					conn, workspaceKey, newMediaItemKey, start, rows,
+					contentTypePresent, contentType,
+					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					title, liveRecordingChunk, jsonCondition,
+					tagsIn, tagsNotIn,
+					ingestionDateOrder,   // "" or "asc" or "desc"
+					jsonOrderBy,
+					admin
+				);
+		}
 		else
-			sqlWhere = string ("where mi.workspaceKey = ? ");
-        if (newMediaItemKey != -1)
-            sqlWhere += ("and mi.mediaItemKey = ? ");
-        if (contentTypePresent)
-            sqlWhere += ("and mi.contentType = ? ");
-        if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
-        if (title != "")
-            sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
-		/*
-		 * liveRecordingChunk:
-		 * -1: no condition in select
-		 *  0: look for NO liveRecordingChunk
-		 *  1: look for liveRecordingChunk
-		 */
-        if (liveRecordingChunk != -1)
 		{
-			if (liveRecordingChunk == 0)
-			{
-				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
-				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
-			}
-			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+			resultSetAndNumFound = getMediaItemsList_withoutTagsCheck (
+					conn, workspaceKey, newMediaItemKey, start, rows,
+					contentTypePresent, contentType,
+					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					title, liveRecordingChunk, jsonCondition,
+					ingestionDateOrder,   // "" or "asc" or "desc"
+					jsonOrderBy,
+					admin
+				);
 		}
-        if (jsonCondition != "")
-            sqlWhere += ("and " + jsonCondition);
-		if (tags.size() > 0)
-		{
-			string tagsCondition;
 
-			for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
-			{
-				if (tagsCondition == "")
-					tagsCondition = ("?");
-				else
-					tagsCondition.append(", ?");
-			}
+		shared_ptr<sql::ResultSet> resultSet;
+		int64_t	numFound;
 
-            sqlWhere += ("and t.name in (" + tagsCondition + ") ");
-		}
+		tie(resultSet, numFound) = resultSetAndNumFound;
         
         Json::Value responseRoot;
         {
-			if (tags.size() > 0)
-			{
-				lastSQLCommand = 
-					string("select count(*) from MMS_MediaItem mi, MMS_Tag t ")
-					+ sqlWhere;
-			}
-			else
-			{
-				lastSQLCommand = 
-					string("select count(*) from MMS_MediaItem mi ")
-					+ sqlWhere;
-			}
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (newMediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, newMediaItemKey);
-            if (contentTypePresent)
-                preparedStatement->setString(queryParameterIndex++, toString(contentType));
-            if (startAndEndIngestionDatePresent)
-            {
-                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
-                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
-            }
-            if (title != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
-			if (tags.size() > 0)
-			{
-				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
-				{
-					string tag = tags[tagIndex];
-
-                	preparedStatement->setString(queryParameterIndex++, tag);
-				}
-			}
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                field = "numFound";
-                responseRoot[field] = resultSet->getInt64(1);
-            }
-            else
-            {
-                string errorMessage (__FILEREF__ + "select count(*) failed");
-
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        
-        {
-            int64_t workSpaceUsageInBytes;
-            int64_t maxStorageInMB;
-
-            pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
-            tie(workSpaceUsageInBytes, maxStorageInMB) = workSpaceUsageInBytesAndMaxStorageInMB;
-            
-            int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
-            
-            field = "workSpaceUsageInMB";
-            responseRoot[field] = workSpaceUsageInMB;
-
-            field = "maxStorageInMB";
-            responseRoot[field] = maxStorageInMB;
+			field = "numFound";
+			responseRoot[field] = numFound;
         }
 
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
-			string orderByCondition;
-			if (ingestionDateOrder == "" && jsonOrderBy == "")
-			{
-				orderByCondition = " ";
-			}
-			else if (ingestionDateOrder == "" && jsonOrderBy != "")
-			{
-				orderByCondition = "order by " + jsonOrderBy + " ";
-			}
-			else if (ingestionDateOrder != "" && jsonOrderBy == "")
-			{
-				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
-			}
-			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
-			{
-				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
-			}
-
-			if (tags.size() > 0)
-			{
-            		lastSQLCommand = 
-                		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
-                    			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
-                    			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
-                    			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-                    			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, MMS_Tag t ")
-                    			+ sqlWhere
-                    			+ orderByCondition
-                    			+ "limit ? offset ?";
-			}
-			else
-			{
-            		lastSQLCommand = 
-                		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
-                    			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
-                    			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
-                    			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-                    			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
-                    			+ sqlWhere
-                    			+ orderByCondition
-                    			+ "limit ? offset ?";
-			}
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (newMediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, newMediaItemKey);
-            if (contentTypePresent)
-                preparedStatement->setString(queryParameterIndex++, toString(contentType));
-            if (startAndEndIngestionDatePresent)
-            {
-                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
-                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
-            }
-            if (title != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
-			if (tags.size() > 0)
-			{
-				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
-				{
-					string tag = tags[tagIndex];
-
-					preparedStatement->setString(queryParameterIndex++, tag);
-				}
-			}
-            preparedStatement->setInt(queryParameterIndex++, rows);
-            preparedStatement->setInt(queryParameterIndex++, start);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
                 Json::Value mediaItemRoot;
@@ -959,13 +839,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							"select sourceMediaItemKey from MMS_CrossReference "
 							"where type = 'imageOfVideo' and targetMediaItemKey = ?";
 
-						shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 						int queryParameterIndex = 1;
-						preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
-						shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
-						while (resultSetTags->next())
+						preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
+						shared_ptr<sql::ResultSet> resultSetCrossReferences (preparedStatementCrossReferences->executeQuery());
+						while (resultSetCrossReferences->next())
 						{
-							mediaItemReferencesRoot.append(resultSetTags->getInt64("sourceMediaItemKey"));
+							mediaItemReferencesRoot.append(resultSetCrossReferences->getInt64("sourceMediaItemKey"));
 						}
                     
 						field = "imagesReferences";
@@ -979,13 +860,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							"select sourceMediaItemKey from MMS_CrossReference "
 							"where type = 'imageOfAudio' and targetMediaItemKey = ?";
 
-						shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 						int queryParameterIndex = 1;
-						preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
-						shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
-						while (resultSetTags->next())
+						preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
+						shared_ptr<sql::ResultSet> resultSetCrossReferences (preparedStatementCrossReferences->executeQuery());
+						while (resultSetCrossReferences->next())
 						{
-							mediaItemReferencesRoot.append(resultSetTags->getInt64("sourceMediaItemKey"));
+							mediaItemReferencesRoot.append(resultSetCrossReferences->getInt64("sourceMediaItemKey"));
 						}
                     
 						field = "imagesReferences";
@@ -1273,6 +1155,375 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
     } 
     
     return mediaItemsListRoot;
+}
+
+pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_withoutTagsCheck (
+		shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey, int64_t mediaItemKey,
+        int start, int rows,
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title, int liveRecordingChunk, string jsonCondition,
+        string ingestionDateOrder,   // "" or "asc" or "desc"
+		string jsonOrderBy,
+		bool admin
+)
+{
+    string						lastSQLCommand;
+    
+    try
+    {
+        string sqlWhere;
+		sqlWhere = string ("where mi.workspaceKey = ? ");
+        if (mediaItemKey != -1)
+            sqlWhere += ("and mi.mediaItemKey = ? ");
+        if (contentTypePresent)
+            sqlWhere += ("and mi.contentType = ? ");
+        if (startAndEndIngestionDatePresent)
+            sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (title != "")
+            sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
+		/*
+		 * liveRecordingChunk:
+		 * -1: no condition in select
+		 *  0: look for NO liveRecordingChunk
+		 *  1: look for liveRecordingChunk
+		 */
+        if (liveRecordingChunk != -1)
+		{
+			if (liveRecordingChunk == 0)
+			{
+				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
+				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
+			}
+			else if (liveRecordingChunk == 1)
+				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+		}
+        if (jsonCondition != "")
+            sqlWhere += ("and " + jsonCondition);
+        
+		int64_t numFound;
+        {
+			lastSQLCommand = 
+				string("select count(*) from MMS_MediaItem mi ")
+				+ sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (mediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            if (title != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                numFound = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage (__FILEREF__ + "select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        {
+			string orderByCondition;
+			if (ingestionDateOrder == "" && jsonOrderBy == "")
+			{
+				orderByCondition = " ";
+			}
+			else if (ingestionDateOrder == "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + " ";
+			}
+			else if (ingestionDateOrder != "" && jsonOrderBy == "")
+			{
+				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+
+          	lastSQLCommand = 
+           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+           			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+           			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
+           			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
+           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
+           			+ sqlWhere
+           			+ orderByCondition
+           			+ "limit ? offset ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (mediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            if (title != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            shared_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+
+
+			return make_pair(resultSet, numFound);
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    } 
+}
+
+pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_withTagsCheck (
+		shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey, int64_t mediaItemKey,
+        int start, int rows,
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title, int liveRecordingChunk, string jsonCondition,
+		vector<string>& tagsIn, vector<string>& tagsNotIn,
+        string ingestionDateOrder,   // "" or "asc" or "desc"
+		string jsonOrderBy,
+		bool admin
+)
+{
+    string      lastSQLCommand;
+    
+
+    try
+    {
+		string tagSeparator = "__SEP__";
+
+		string tagsGroupCondition;
+        {
+			if (tagsIn.size() > 0)
+			{
+				for (string tag: tagsIn)
+				{
+					tag = tagSeparator + tag + tagSeparator;
+
+					if (tagsGroupCondition == "")
+						tagsGroupCondition = "f.tagsGroup like '%" + tag + "%' ";
+					else
+						tagsGroupCondition += ("and f.tagsGroup like '%" + tag + "%' ");
+				}
+			}
+			if (tagsNotIn.size() > 0)
+			{
+				for (string tag: tagsNotIn)
+				{
+					tag = tagSeparator + tag + tagSeparator;
+
+					if (tagsGroupCondition == "")
+						tagsGroupCondition = "f.tagsGroup not like '%" + tag + "%' ";
+					else
+						tagsGroupCondition += ("and f.tagsGroup not like '%" + tag + "%' ");
+				}
+			}
+		}
+
+		// create temporary table
+
+		{
+			string sqlWhere;
+			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
+			if (mediaItemKey != -1)
+				sqlWhere += ("and mi.mediaItemKey = ? ");
+			if (contentTypePresent)
+				sqlWhere += ("and mi.contentType = ? ");
+			if (startAndEndIngestionDatePresent)
+				sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+			if (title != "")
+				sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
+			/*
+			* liveRecordingChunk:
+			* -1: no condition in select
+			*  0: look for NO liveRecordingChunk
+			*  1: look for liveRecordingChunk
+			*/
+			if (liveRecordingChunk != -1)
+			{
+				if (liveRecordingChunk == 0)
+				{
+					sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
+					sqlWhere += ("OR JSON_EXTRACT(mi.userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
+				}
+				else if (liveRecordingChunk == 1)
+					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+			}
+			if (jsonCondition != "")
+				sqlWhere += ("and " + jsonCondition);
+        
+			lastSQLCommand = 
+				string("create temporary table MMS_MediaItemFilter select "
+					"t.mediaItemKey, CONCAT('" + tagSeparator +
+						"', GROUP_CONCAT(t.name SEPARATOR '" + tagSeparator + "'), '" +
+						tagSeparator + "') tagsGroup "
+					"from MMS_MediaItem mi, MMS_Tag t ")
+				+ sqlWhere
+				+ "group by t.mediaItemKey "
+				;
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (mediaItemKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			if (contentTypePresent)
+				preparedStatement->setString(queryParameterIndex++, toString(contentType));
+			if (startAndEndIngestionDatePresent)
+			{
+				preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+				preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+			}
+			if (title != "")
+				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			preparedStatement->executeUpdate();
+		}
+
+		int64_t numFound;
+		{
+			lastSQLCommand = 
+				string("select count(*) from MediaItemFilter f where ")
+				+ tagsGroupCondition;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                numFound = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage (__FILEREF__ + "select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        {
+			string sqlWhere = string ("where mi.mediaItemKey = f.mediaItemKey and ")
+				+ tagsGroupCondition
+				;
+
+			string orderByCondition;
+			if (ingestionDateOrder == "" && jsonOrderBy == "")
+			{
+				orderByCondition = " ";
+			}
+			else if (ingestionDateOrder == "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + " ";
+			}
+			else if (ingestionDateOrder != "" && jsonOrderBy == "")
+			{
+				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+
+          	lastSQLCommand = 
+           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+           			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+           			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
+           			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
+           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, MMS_MediaItemFilter f ")
+           			+ sqlWhere
+           			+ orderByCondition
+           			+ "limit ? offset ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+
+			return make_pair(resultSet, numFound);
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    } 
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
@@ -4520,5 +4771,121 @@ Json::Value MMSEngineDBFacade::getTagsList (
     } 
     
     return tagsListRoot;
+}
+
+void MMSEngineDBFacade::updateMediaItem(
+		int64_t mediaItemKey,
+        string processorMMSForRetention
+        )
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	_logger->info(__FILEREF__ + "updateMediaItem"
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", processorMMSForRetention: " + processorMMSForRetention
+			);
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_MediaItem set processorMMSForRetention = ? "
+				"where mediaItemKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			if (processorMMSForRetention == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, processorMMSForRetention);
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done"
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", processorMMSForRetention: " + processorMMSForRetention
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+        }
+                        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
 }
 

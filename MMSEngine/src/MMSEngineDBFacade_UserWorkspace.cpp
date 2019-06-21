@@ -2811,8 +2811,10 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
             {
                 Json::Value workspaceDetailRoot;
 
+				int64_t workspaceKey = resultSet->getInt64("workspaceKey");
+
                 string field = "workspaceKey";
-                workspaceDetailRoot[field] = resultSet->getInt64("workspaceKey");
+                workspaceDetailRoot[field] = workspaceKey;
                 
                 field = "isEnabled";
                 workspaceDetailRoot[field] = resultSet->getInt("isEnabled") == 1 ? "true" : "false";
@@ -2831,6 +2833,18 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 
                 field = "maxStorageInMB";
                 workspaceDetailRoot[field] = resultSet->getInt("maxStorageInMB");
+
+				{
+					int64_t workSpaceUsageInBytes;
+
+					pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
+					tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
+                                                                                                              
+					int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
+
+					field = "workSpaceUsageInMB";
+					workspaceDetailRoot[field] = workSpaceUsageInMB;
+				}
 
                 field = "languageCode";
                 workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("languageCode"));
@@ -3153,6 +3167,18 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         field = "maxStorageInMB";
         workspaceDetailRoot[field] = newMaxStorageInMB;
 
+		{
+			int64_t workSpaceUsageInBytes;
+
+			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
+                                                                                                            
+			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
+
+			field = "workSpaceUsageInMB";
+			workspaceDetailRoot[field] = workSpaceUsageInMB;
+		}
+
         field = "languageCode";
         workspaceDetailRoot[field] = newLanguageCode;
 
@@ -3275,6 +3301,142 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
     }
     
     return workspaceDetailRoot;
+}
+
+pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
+        int64_t workspaceKey)
+{
+	pair<int64_t,int64_t>	workspaceUsage;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		workspaceUsage = getWorkspaceUsage(conn, workspaceKey);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }
+    
+    return workspaceUsage;
 }
 
 pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(

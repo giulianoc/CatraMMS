@@ -234,6 +234,10 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
+	_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded"
+			+ ", processorMMS: " + processorMMS
+			);
+
     try
     {
 		/*
@@ -264,6 +268,9 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         );
 
         {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed"
+					+ ", processorMMS: " + processorMMS
+					);
             lastSQLCommand = 
                 "update MMS_IngestionJob set status = ? where processorMMS = ? and "
                 "status in (?, ?, ?) and sourceBinaryTransferred = 0";
@@ -287,6 +294,9 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         }
 
         {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. IngestionJobs assigned without final state"
+					+ ", processorMMS: " + processorMMS
+					);
             lastSQLCommand = 
                 "update MMS_IngestionJob set processorMMS = NULL where processorMMS = ? and status not like 'End_%'";
 
@@ -305,6 +315,9 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         }
                         
         {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing"
+					+ ", processorMMS: " + processorMMS
+					);
             lastSQLCommand = 
                 "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -324,6 +337,9 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         }
 
         {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. MediaItems retention assigned"
+					+ ", processorMMS: " + processorMMS
+					);
             lastSQLCommand = 
                 "update MMS_MediaItem set processorMMSForRetention = NULL where processorMMSForRetention = ?";
 

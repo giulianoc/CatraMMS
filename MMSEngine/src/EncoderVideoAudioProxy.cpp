@@ -6390,6 +6390,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 		int idImageCounter = 0;
 		unordered_map<string, int> tagIdMap;
+		vector<string> tagsNotIn;
 
 		while(!imagesFinished)
 		{
@@ -6397,7 +6398,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 					_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
 					start, rows, contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition, deepLearnedModelTags,
+					title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
 					ingestionDateOrder, jsonOrderBy, admin);
 
 			field = "response";

@@ -140,6 +140,10 @@ private:
 		int64_t userKey,
         shared_ptr<Workspace> workspace);
 
+	void workspaceUsage (
+			FCGX_Request& request,
+			shared_ptr<Workspace> workspace);
+
     void shareWorkspace_(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

@@ -576,6 +576,10 @@ void API::manageRequestAndResponse(
     {
         deleteWorkspace(request, userKey, workspace);
     }
+    else if (method == "workspaceUsage")
+    {
+        workspaceUsage(request, workspace);
+    }
     else if (method == "shareWorkspace")
     {
         if (!shareWorkspace)
@@ -1208,40 +1212,66 @@ void API::mediaItemsList(
 			}
         }
 
-		vector<string> tags;
-        auto tagsIt = queryParameters.find("tags");
-        if (tagsIt != queryParameters.end() && tagsIt->second != "")
+		vector<string> tagsIn;
+		vector<string> tagsNotIn;
 		{
-			string sTags = tagsIt->second;
-
-			char delim = ',';
-
-			CURL *curl = curl_easy_init();
-			if(curl)
+			Json::Value tagsRoot;
+			try
 			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						sTags.c_str(), sTags.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
 
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					sTags = regex_replace(sDecoded, regex(plus), plusDecoded);
+				bool parsingSuccessful = reader->parse(requestBody.c_str(),
+						requestBody.c_str() + requestBody.size(), 
+						&tagsRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = string("Json tags failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 400, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("Json tags failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string field = "tagsIn";
+            if (_mmsEngineDBFacade->isMetadataPresent(tagsRoot, field))
+            {
+				Json::Value tagsInRoot = tagsRoot[field];
+
+				for (int tagIndex = 0; tagIndex < tagsInRoot.size(); ++tagIndex)
+				{
+					tagsIn.push_back (tagsInRoot[tagIndex].asString());
 				}
 			}
 
-			stringstream ssTags (sTags);
-			string item;
+			field = "tagsNotIn";
+            if (_mmsEngineDBFacade->isMetadataPresent(tagsRoot, field))
+            {
+				Json::Value tagsNotInRoot = tagsRoot[field];
 
-			while (getline (ssTags, item, delim))
-			{
-				tags.push_back (item);
+				for (int tagIndex = 0; tagIndex < tagsNotInRoot.size(); ++tagIndex)
+				{
+					tagsNotIn.push_back (tagsNotInRoot[tagIndex].asString());
+				}
 			}
-        }
+		}
 
         string jsonCondition;
         auto jsonConditionIt = queryParameters.find("jsonCondition");
@@ -1310,7 +1340,8 @@ void API::mediaItemsList(
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, liveRecordingChunk, jsonCondition, tags, ingestionDateOrder, jsonOrderBy, admin);
+                    title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
+					ingestionDateOrder, jsonOrderBy, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

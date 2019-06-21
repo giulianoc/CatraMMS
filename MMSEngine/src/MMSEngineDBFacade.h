@@ -74,8 +74,9 @@ class MMSEngineDBFacade {
 
 public:
     enum class LockType {
-		Ingestion		= 0,
-		EncodingJobs	= 1
+		Ingestion						= 0,
+		EncodingJobs					= 1,
+		MainAndBackupLiveRecordingHA	= 2
     };
     static const char* toString(const LockType& lockType)
     {
@@ -85,6 +86,8 @@ public:
                 return "Ingestion";
             case LockType::EncodingJobs:
                 return "EncodingJobs";
+            case LockType::MainAndBackupLiveRecordingHA:
+                return "MainAndBackupLiveRecordingHA";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -99,6 +102,8 @@ public:
             return LockType::Ingestion;
 		else if (lowerCase == "encodingjobs")
             return LockType::EncodingJobs;
+		else if (lowerCase == "mainandbackupliverecordingha")
+            return LockType::MainAndBackupLiveRecordingHA;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -900,6 +905,9 @@ public:
 
     Json::Value getWorkspaceDetails (int64_t userKey);
 
+    pair<int64_t,int64_t> getWorkspaceUsage(
+        int64_t workspaceKey);
+
     Json::Value updateWorkspaceDetails (
         int64_t userKey,
         int64_t workspaceKey,
@@ -1080,12 +1088,18 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk, string jsonCondition, vector<string>& tags,
+        string title, int liveRecordingChunk, string jsonCondition,
+		vector<string>& tagsIn, vector<string>& tagsNotIn,
 		string ingestionDateAndTitleOrder, string jsonOrderBy, bool admin);
 
-Json::Value getTagsList (
+	Json::Value getTagsList (
         int64_t workspaceKey, int start, int rows,
         bool contentTypePresent, ContentType contentType);
+
+	void updateMediaItem(
+		int64_t mediaItemKey,
+        string processorMMSForRetention
+        );
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
@@ -1507,6 +1521,29 @@ private:
     string          _predefinedVideoProfilesDirectoryPath;
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
+
+	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
+		shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey, int64_t mediaItemKey,
+        int start, int rows,
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title, int liveRecordingChunk, string jsonCondition,
+        string ingestionDateOrder,   // "" or "asc" or "desc"
+		string jsonOrderBy,
+		bool admin);
+
+	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withTagsCheck (
+		shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey, int64_t mediaItemKey,
+        int start, int rows,
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title, int liveRecordingChunk, string jsonCondition,
+		vector<string>& tagsIn, vector<string>& tagsNotIn,
+        string ingestionDateOrder,   // "" or "asc" or "desc"
+		string jsonOrderBy,
+		bool admin);
 
     pair<int64_t,string> addWorkspace(
         shared_ptr<MySQLConnection> conn,

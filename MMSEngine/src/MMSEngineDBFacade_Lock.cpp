@@ -124,7 +124,8 @@ void MMSEngineDBFacade::setLock(
 
 				if (utcNow - utcStart <= maxDurationInMinutes * 60)
 				{
-					string errorMessage = __FILEREF__ + "Already locked by " + previousOwner
+					string errorMessage = __FILEREF__ + "setLock " + toString(lockType)
+						+ ", already locked by " + previousOwner
 						;
 					_logger->warn(errorMessage);
 
@@ -185,7 +186,7 @@ void MMSEngineDBFacade::setLock(
 
 			if (alreadyLocked)
 			{
-				int milliSecondsToSleepWaitingLock = 300;
+				int milliSecondsToSleepWaitingLock = 500;
 
 			    this_thread::sleep_for(chrono::milliseconds(milliSecondsToSleepWaitingLock));
 			}

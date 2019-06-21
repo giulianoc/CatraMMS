@@ -332,12 +332,6 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
         vector<tuple<int,string,string,string>> allStorageDetails;
         _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-        _logger->info(__FILEREF__ + "removeMediaItem ..."
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-        );
-
-        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
-        
         for (tuple<int,string,string,string>& storageDetails: allStorageDetails)
         {
             int mmsPartitionNumber;
@@ -361,44 +355,116 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 
             {
                 FileIO::DirectoryEntryType_t detSourceFileType;
+				bool fileExist = true;
 
-                detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+				try
+				{
+					detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+				}
+				catch(FileNotExisting fne)
+				{
+					string errorMessage = string("file/directory not present")
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					;
+       
+					_logger->warn(__FILEREF__ + errorMessage);
 
-                if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-                {
-                    _logger->info(__FILEREF__ + "Remove directory"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                    );
-                    bool removeRecursively = true;
-                    FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
-                } 
-                else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-                {
-                    _logger->info(__FILEREF__ + "Remove file"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                    );
-                    FileIO::remove(mmsAssetPathName);
-                } 
-                else 
-                {
-                    string errorMessage = string("Unexpected directory entry")
+					fileExist = false;
+				}
+				catch(runtime_error e)
+				{
+					throw e;
+				}
+				catch(exception e)
+				{
+					throw e;
+				}
+
+				if (fileExist)
+				{
+					if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "Remove directory"
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							);
+							bool removeRecursively = true;
+							FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+						}
+						catch(DirectoryNotExisting dne)
+						{
+							string errorMessage = string("directory not present")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+        
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							throw e;
+						}
+						catch(exception e)
+						{
+							throw e;
+						}
+					} 
+					else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "Remove file"
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							);
+							FileIO::remove(mmsAssetPathName);
+						}
+						catch(FileNotExisting fne)
+						{
+							string errorMessage = string("file not present")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+        
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							throw e;
+							}
+						catch(exception e)
+						{
+							throw e;
+						}
+					} 
+					else 
+					{
+						string errorMessage = string("Unexpected directory entry")
                             + ", detSourceFileType: " + to_string(detSourceFileType);
 
-                    _logger->error(__FILEREF__ + errorMessage);
+						_logger->error(__FILEREF__ + errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }
+						throw runtime_error(errorMessage);
+					}
+				}
             }
         }
+
+        _logger->info(__FILEREF__ + "removeMediaItem ..."
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
     }
     catch(runtime_error e)
     {
         string errorMessage = string("removeMediaItem failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", exception: " + e.what()
         ;
         
         _logger->info(__FILEREF__ + errorMessage);
-        
+
         throw runtime_error(errorMessage);
     }
     catch(exception e)
@@ -406,11 +472,11 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
         string errorMessage = string("removeMediaItem failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
         ;
-        
+
         _logger->info(__FILEREF__ + errorMessage);
         
         throw runtime_error(errorMessage);
-    }    
+    }
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
