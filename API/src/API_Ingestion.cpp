@@ -1952,6 +1952,8 @@ void API::ingestionRootsStatus(
         {
             label = labelIt->second;
 
+			label = curlpp::unescape(label);
+			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
 			{
@@ -1969,6 +1971,7 @@ void API::ingestionRootsStatus(
 					label = regex_replace(sDecoded, regex(plus), plusDecoded);
 				}
 			}
+			*/
         }
 
         string status = "all";
@@ -2141,6 +2144,8 @@ void API::ingestionJobsStatus(
         {
             label = labelIt->second;
 
+			label = curlpp::unescape(label);
+			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
 			{
@@ -2158,6 +2163,7 @@ void API::ingestionJobsStatus(
 					label = regex_replace(sDecoded, regex(plus), plusDecoded);
 				}
 			}
+			*/
         }
 
         bool startAndEndIngestionDatePresent = false;

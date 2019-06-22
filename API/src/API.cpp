@@ -1193,6 +1193,8 @@ void API::mediaItemsList(
         {
             title = titleIt->second;
 
+			title = curlpp::unescape(title);
+			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
 			{
@@ -1210,6 +1212,7 @@ void API::mediaItemsList(
 					title = regex_replace(sDecoded, regex(plus), plusDecoded);
 				}
 			}
+			*/
         }
 
 		vector<string> tagsIn;
@@ -1279,6 +1282,8 @@ void API::mediaItemsList(
         {
             jsonCondition = jsonConditionIt->second;
 
+			jsonCondition = curlpp::unescape(jsonCondition);
+			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
 			{
@@ -1296,6 +1301,7 @@ void API::mediaItemsList(
 					jsonCondition = regex_replace(sDecoded, regex(plus), plusDecoded);
 				}
 			}
+			*/
         }
 
         string ingestionDateOrder;
@@ -1315,6 +1321,8 @@ void API::mediaItemsList(
         {
             jsonOrderBy = jsonOrderByIt->second;
 
+			jsonOrderBy = curlpp::unescape(jsonOrderBy);
+			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
 			{
@@ -1332,6 +1340,7 @@ void API::mediaItemsList(
 					jsonOrderBy = regex_replace(sDecoded, regex(plus), plusDecoded);
 				}
 			}
+			*/
         }
 
         {

@@ -29,6 +29,7 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
