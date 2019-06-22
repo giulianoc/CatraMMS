@@ -27,10 +27,20 @@ SET (SOURCES
 SET (HEADERS
 )
 
+find_program(LSB_RELEASE_EXEC lsb_release)
+execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")
+message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	include_directories ("/usr/include/mysql-cppconn/jdbc")
+endif()
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()
