@@ -27,6 +27,12 @@ SET (SOURCES
 SET (HEADERS
 )
 
+find_program(LSB_RELEASE_EXEC lsb_release)
+execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
@@ -45,8 +51,14 @@ else()
 endif()
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.1.3/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
+elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
+endif()
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
+endif()
 
 add_executable(sendEmail ${SOURCES} ${HEADERS})
 
@@ -55,7 +67,11 @@ target_link_libraries (sendEmail FFMpeg)
 target_link_libraries (sendEmail curl)
 target_link_libraries (sendEmail curlpp)
 target_link_libraries (sendEmail mysqlcppconn)
-target_link_libraries (sendEmail jsoncpp)
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	target_link_libraries (sendEmail jsoncpp)
+elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
+	target_link_libraries (sendEmail "${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib/libjsoncpp.a")
+endif()
 if (APPLE) 
 else()  
         target_link_libraries (sendEmail Magick++-7.Q16HDRI)
