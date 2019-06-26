@@ -36,6 +36,8 @@ SET (SCRIPTs
 	setupALL.rsi.sh
 	statusALL.sh
 	statusALL.rsi.sh
+	startALL.sh
+	startALL.rsi.sh
 	stopALL.sh
 	stopALL.rsi.sh
 	tailALL.sh
