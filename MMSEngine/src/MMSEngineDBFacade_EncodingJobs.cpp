@@ -5936,7 +5936,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int64_t ingestionJobKey,
 	bool highAvailability,
 	bool main,
-	string liveURL,
+	string configurationLabel, string liveURL,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
 	bool autoRenew,
@@ -5957,6 +5957,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", highAvailability: " + to_string(highAvailability)
             + ", main: " + to_string(main)
+            + ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
             + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -5987,6 +5988,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + "{ "
                 + "\"highAvailability\": " + to_string(highAvailability) + ""
                 + ", \"main\": " + to_string(main) + ""
+                + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
                 + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""

@@ -6555,7 +6555,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		bool main = true;
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+			highAvailability, main, configurationLabel, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 
 		if (highAvailability)
@@ -6563,7 +6563,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			main = false;
 
 			_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-				highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+				highAvailability, main, configurationLabel, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
 				autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 		}
 	}

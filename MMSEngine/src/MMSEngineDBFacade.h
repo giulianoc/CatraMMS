@@ -1259,7 +1259,7 @@ public:
 		int64_t ingestionJobKey,
 		bool highAvailability,
 		bool main,
-		string liveURL,
+		string configurationLabel, string liveURL,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
 		bool autoRenew,
