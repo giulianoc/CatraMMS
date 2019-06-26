@@ -53,7 +53,6 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
@@ -73,11 +72,10 @@ if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-49/lib")
-	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 endif()
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.1.3/lib")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
 #API

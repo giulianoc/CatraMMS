@@ -27,6 +27,16 @@ SET (HEADERS
 	FFMpeg.h
 )
 
+find_program(LSB_RELEASE_EXEC lsb_release)
+execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	include_directories ("/usr/include/mysql-cppconn/jdbc")
+endif()
+
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")

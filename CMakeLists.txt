@@ -30,6 +30,9 @@ project(
 
 SET(CMAKE_CXX_FLAGS "-std=c++14")
 
+#this is to generate a compilation database (for the YCM vim plugin)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #ADD_DEFINITIONS(-D__LOCALENCODER__)
 
 

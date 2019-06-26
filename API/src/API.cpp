@@ -28,120 +28,150 @@
 int main(int argc, char** argv) 
 {
 
-    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
-    if (configurationPathName == nullptr)
-    {
-        cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
+	try
+	{
+		const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+		if (configurationPathName == nullptr)
+		{
+			cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
         
-        return 1;
-    }
+			return 1;
+		}
     
-    Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
+		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
-    string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"]["api"].get("stdout", "XXX").asBool();
+		string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
+		bool stdout =  configuration["log"]["api"].get("stdout", "XXX").asBool();
     
-    std::vector<spdlog::sink_ptr> sinks;
-    auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
-    sinks.push_back(dailySink);
-    if (stdout)
-    {
-        auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
-        sinks.push_back(stdoutSink);
-    }
-    auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
-    // shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
-    // shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+		std::vector<spdlog::sink_ptr> sinks;
+		auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
+		sinks.push_back(dailySink);
+		if (stdout)
+		{
+			auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+			sinks.push_back(stdoutSink);
+		}
+		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
+		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
+		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
     
-    // trigger flush if the log severity is error or higher
-    logger->flush_on(spdlog::level::trace);
+		// trigger flush if the log severity is error or higher
+		logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"]["api"].get("level", "XXX").asString();
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", log->level: " + logLevel
-    );
-    if (logLevel == "debug")
-        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "info")
-        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "err")
-        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  configuration["log"]["api"].get("pattern", "XXX").asString();
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", log->pattern: " + pattern
-    );
-    spdlog::set_pattern(pattern);
+		string logLevel =  configuration["log"]["api"].get("level", "XXX").asString();
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", log->level: " + logLevel
+		);
+		if (logLevel == "debug")
+			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "info")
+			spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "err")
+			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+		string pattern =  configuration["log"]["api"].get("pattern", "XXX").asString();
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", log->pattern: " + pattern
+		);
+		spdlog::set_pattern(pattern);
 
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
+		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+		// spdlog::register_logger(logger);
 
-    /*
-    // the log is written in the apache error log (stderr)
-    _logger = spdlog::stderr_logger_mt("API");
+		/*
+		// the log is written in the apache error log (stderr)
+		_logger = spdlog::stderr_logger_mt("API");
 
-    // make sure only responses are written to the standard output
-    spdlog::set_level(spdlog::level::trace);
+		// make sure only responses are written to the standard output
+		spdlog::set_level(spdlog::level::trace);
     
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
+		spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
     
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
-     */
+		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+		// spdlog::register_logger(logger);
+		*/
 
-    size_t dbPoolSize = configuration["database"].get("apiPoolSize", 5).asInt();
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", database->poolSize: " + to_string(dbPoolSize)
-    );
-    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
+		size_t dbPoolSize = configuration["database"].get("apiPoolSize", 5).asInt();
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->poolSize: " + to_string(dbPoolSize)
+		);
+		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
-    shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, dbPoolSize, logger);
 
-	logger->info(__FILEREF__ + "Creating MMSStorage"
+		logger->info(__FILEREF__ + "Creating MMSStorage"
+			);
+		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
+			configuration, mmsEngineDBFacade, logger);
+
+		FCGX_Init();
+
+		int threadsNumber = configuration["api"].get("threadsNumber", 1).asInt();
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", api->threadsNumber: " + to_string(threadsNumber)
 		);
-	shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-		configuration, mmsEngineDBFacade, logger);
 
-    FCGX_Init();
-
-    int threadsNumber = configuration["api"].get("threadsNumber", 1).asInt();
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", api->threadsNumber: " + to_string(threadsNumber)
-    );
-
-    mutex fcgiAcceptMutex;
-    API::FileUploadProgressData fileUploadProgressData;
+		mutex fcgiAcceptMutex;
+		API::FileUploadProgressData fileUploadProgressData;
     
-    vector<shared_ptr<API>> apis;
-    vector<thread> apiThreads;
+		vector<shared_ptr<API>> apis;
+		vector<thread> apiThreads;
     
-    for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
-    {
-        shared_ptr<API> api = make_shared<API>(configuration, 
+		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
+		{
+			shared_ptr<API> api = make_shared<API>(configuration, 
                 mmsEngineDBFacade,
 				mmsStorage,
                 &fcgiAcceptMutex,
                 &fileUploadProgressData,
                 logger
-            );
+				);
 
-        apis.push_back(api);
-        apiThreads.push_back(thread(&API::operator(), api));
-    }
+			apis.push_back(api);
+			apiThreads.push_back(thread(&API::operator(), api));
+		}
 
-    // shutdown should be managed in some way:
-    // - mod_fcgid send just one shutdown, so only one thread will go down
-    // - mod_fastcgi ???
-    if (threadsNumber > 0)
+		// shutdown should be managed in some way:
+		// - mod_fcgid send just one shutdown, so only one thread will go down
+		// - mod_fastcgi ???
+		if (threadsNumber > 0)
+		{
+			thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
+        
+			apiThreads[0].join();
+        
+			apis[0]->stopUploadFileProgressThread();
+		}
+
+		logger->info(__FILEREF__ + "API shutdown");
+	}
+    catch(sql::SQLException se)
     {
-        thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
-        
-        apiThreads[0].join();
-        
-        apis[0]->stopUploadFileProgressThread();
-    }
+        cerr << __FILEREF__ + "main failed. SQL exception"
+            + ", se.what(): " + se.what()
+        ;
 
-    logger->info(__FILEREF__ + "API shutdown");
+        // throw se;
+		return 1;
+    }
+    catch(runtime_error e)
+    {
+        cerr << __FILEREF__ + "main failed"
+            + ", e.what(): " + e.what()
+        ;
+
+        // throw e;
+		return 1;
+    }
+    catch(exception e)
+    {
+        cerr << __FILEREF__ + "main failed"
+            + ", e.what(): " + e.what()
+        ;
+
+        // throw runtime_error(errorMessage);
+		return 1;
+    }
 
     return 0;
 }
