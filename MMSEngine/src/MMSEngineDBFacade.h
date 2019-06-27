@@ -322,6 +322,50 @@ public:
 		KilledByUser,
 		CanceledByUser
     };
+    static const char* toString(const EncodingError& encodingError)
+    {
+        switch (encodingError)
+        {
+            case EncodingError::NoError:
+                return "NoError";
+            case EncodingError::PunctualError:
+                return "PunctualError";
+            case EncodingError::MaxCapacityReached:
+                return "MaxCapacityReached";
+            case EncodingError::ErrorBeforeEncoding:
+                return "ErrorBeforeEncoding";
+            case EncodingError::KilledByUser:
+                return "KilledByUser";
+            case EncodingError::CanceledByUser:
+                return "CanceledByUser";
+            default:
+            throw runtime_error(string("Wrong EncodingError"));
+        }
+    }
+    static EncodingError toEncodingError(const string& encodingError)
+    {
+        string lowerCase;
+        lowerCase.resize(encodingError.size());
+        transform(encodingError.begin(), encodingError.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "noerror")
+            return EncodingError::NoError;
+        else if (lowerCase == "punctualerror")
+            return EncodingError::PunctualError;
+        else if (lowerCase == "maxcapacityreached")
+            return EncodingError::MaxCapacityReached;
+        else if (lowerCase == "errorbeforeencoding")
+            return EncodingError::ErrorBeforeEncoding;
+        else if (lowerCase == "killedbyuser")
+            return EncodingError::KilledByUser;
+        else if (lowerCase == "canceledbyuser")
+            return EncodingError::CanceledByUser;
+        else
+            throw runtime_error(string("Wrong EncodingError")
+                    + ", encodingError: " + encodingError
+                    );
+    }
+
     
     enum class EncodingTechnology {
         Image      = 0,    // (Download),

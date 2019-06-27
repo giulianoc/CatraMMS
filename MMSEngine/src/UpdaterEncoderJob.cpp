@@ -32,9 +32,20 @@ int UpdaterEncoderJob::updateEncodingJob (
 			waitingTimeoutInSecondsIfLocked,
 			processorMMS, _logger);
 
-		return _mmsEngineDBFacade->updateEncodingJob (
+		int updateEncodingJobReturn = _mmsEngineDBFacade->updateEncodingJob (
 				encodingJobKey, encodingError, mediaItemKey,
 				encodedPhysicalPathKey, ingestionJobKey);
+
+		_logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob"
+                + ", encodingJobKey: " + to_string(encodingJobKey)
+                + ", encodingError: " + MMSEngineDBFacade::toString(encodingError)
+                + ", mediaItemKey: " + to_string(mediaItemKey)
+                + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", updateEncodingJobReturn: " + to_string(updateEncodingJobReturn)
+		);
+
+		return updateEncodingJobReturn;
 	}
 	catch(AlreadyLocked e)
 	{
