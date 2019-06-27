@@ -1239,6 +1239,7 @@ public:
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
 		int64_t sourceMediaItemKey,
+		int64_t sourceVideoPhysicalPathKey,
         string sourcePhysicalPath,
         string faceRecognitionCascadeName,
 		string faceRecognitionOutput,

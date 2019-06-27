@@ -6059,6 +6059,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             MMSEngineDBFacade::ContentType contentType;
             string title;
 			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -6076,10 +6077,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
-                int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(sourcePhysicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
 
@@ -6100,6 +6100,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             }
             else
             {
+				sourcePhysicalPathKey = key;
+
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -6138,7 +6140,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 fileName);
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
-                sourceMediaItemKey, mmsAssetPathName,
+                sourceMediaItemKey, sourcePhysicalPathKey, mmsAssetPathName,
 				faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority,
 				initialFramesNumberToBeSkipped, oneFramePerSecond);
         }
