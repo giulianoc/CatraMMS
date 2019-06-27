@@ -5759,6 +5759,15 @@ string EncoderVideoAudioProxy::faceRecognition()
     
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
 
+	_logger->info(__FILEREF__ + "faceRecognition"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			+ ", cascadeName: " + faceRecognitionCascadeName
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+	);
+
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
 	{
