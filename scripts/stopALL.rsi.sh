@@ -14,6 +14,6 @@ echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh stop
 
 echo "nginx"
-/opt/catramms/CatraMMS/scripts/nginx.sh start
+/opt/catramms/CatraMMS/scripts/nginx.sh stop
 
 date
