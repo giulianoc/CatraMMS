@@ -4123,6 +4123,12 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         {
             int drm = 0;
 
+			_logger->info(__FILEREF__ + "insert into MMS_PhysicalPath"
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", relativePath: " + relativePath
+					+ ", encodedFileName: " + encodedFileName
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					);
             lastSQLCommand = 
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
