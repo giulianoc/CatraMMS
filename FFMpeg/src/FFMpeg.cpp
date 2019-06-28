@@ -4107,6 +4107,31 @@ void FFMpeg::liveRecorder(
 		}
 		segmentListPath = segmentListPathName.substr(0, segmentListPathIndex);
 
+		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+		// I saw just once that the directory was not created and the liveencoder remains in the loop
+		// where:
+		//	1. the encoder returns an error becaise of the missing directory
+		//	2. EncoderVideoAudioProxy calls again the encoder
+		// So, for this reason, the below check is done
+		if (!FileIO::directoryExisting(segmentListPath))
+		{
+			_logger->warn(__FILEREF__ + "segmentListPath does not exist!!! It will be created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", segmentListPath: " + segmentListPath
+					);
+
+			_logger->info(__FILEREF__ + "Create directory"
+                + ", segmentListPath: " + segmentListPath
+            );
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(segmentListPath,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP |
+				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		}
+
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			utcNow = chrono::system_clock::to_time_t(now);
