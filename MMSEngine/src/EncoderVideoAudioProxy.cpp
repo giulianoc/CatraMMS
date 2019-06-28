@@ -221,10 +221,10 @@ void EncoderVideoAudioProxy::operator()()
     
     _logger->info(__FILEREF__ + "Running EncoderVideoAudioProxy..."
         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-        + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-        + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+        + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+        + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+        + ", _encodingParameters: " + _encodingItem->_encodingParameters
     );
 
     string stagingEncodedAssetPathName;
@@ -277,7 +277,9 @@ void EncoderVideoAudioProxy::operator()()
         else
         {
             string errorMessage = string("Wrong EncodingType")
-                    + ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
                     ;
             
             _logger->error(__FILEREF__ + errorMessage);
@@ -295,11 +297,11 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob MaxCapacityReached"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", main: " + to_string(main)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -318,11 +320,11 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob MaxCapacityReached FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", main: " + to_string(main)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
 			);
 		}
@@ -330,11 +332,11 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob MaxCapacityReached FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", main: " + to_string(main)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
 			);
 		}
@@ -342,10 +344,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob MaxCapacityReached FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -357,10 +359,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -370,16 +372,18 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
 		try
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -398,10 +402,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -413,10 +417,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -426,16 +430,18 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
 		try
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob KilledByUser"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -454,10 +460,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob KilledByUser FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -469,10 +475,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -482,16 +488,18 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
 		try
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -512,10 +520,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -527,10 +535,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -540,16 +548,18 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
 		try
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -570,10 +580,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -585,10 +595,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -679,8 +689,10 @@ void EncoderVideoAudioProxy::operator()()
         else
         {
             string errorMessage = string("Wrong EncodingType")
-                    + ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-                    ;
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+                ;
             
             _logger->error(__FILEREF__ + errorMessage);
             
@@ -691,6 +703,8 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName) || 
@@ -700,6 +714,8 @@ void EncoderVideoAudioProxy::operator()()
 
             _logger->error(__FILEREF__ + "Remove"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -725,10 +741,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -749,10 +765,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -764,10 +780,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -777,6 +793,8 @@ void EncoderVideoAudioProxy::operator()()
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		);
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName)
@@ -786,6 +804,8 @@ void EncoderVideoAudioProxy::operator()()
 
             _logger->error(__FILEREF__ + "Remove"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -811,10 +831,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -835,10 +855,10 @@ void EncoderVideoAudioProxy::operator()()
 		{
 			_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-				+ ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
 		}
 
@@ -850,10 +870,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -864,10 +884,10 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob NoError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
 		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -885,6 +905,8 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob failed: " + e.what()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
         );
 
         {
@@ -895,10 +917,10 @@ void EncoderVideoAudioProxy::operator()()
 
         _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
         );
 
         // throw e;
@@ -913,10 +935,10 @@ void EncoderVideoAudioProxy::operator()()
     
     _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-        + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-        + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+        + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+        + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+        + ", _encodingParameters: " + _encodingItem->_encodingParameters
     );
         
 }
@@ -927,7 +949,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 
 	_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
 		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-		+ ", _encodingItem->_encodeData->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+		+ ", _encodeData->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
 		+ ", _mp4Encoder: " + _mp4Encoder
 	);
 
@@ -946,8 +968,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 		{
 			string errorMessage = __FILEREF__ + "Encoding killed by the User"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
                 ;
 			_logger->error(errorMessage);
         
@@ -958,6 +980,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
     {
         string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -967,6 +991,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
     {
         string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -1020,8 +1046,9 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName;
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodeData->_fileName: " + _encodingItem->_encodeData->_fileName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1044,6 +1071,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             string errorMessage = __FILEREF__ + "Unknown technology"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     ;
             _logger->error(errorMessage);
 
@@ -1109,14 +1138,14 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_details: " + _encodingItem->_details
-                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
-                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _details: " + _encodingItem->_details
+                + ", _contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             );
             
             (*_pRunningEncodingsNumber)++;
@@ -1127,14 +1156,14 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_details: " + _encodingItem->_details
-                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
-                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _details: " + _encodingItem->_details
+                + ", _contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             );
             
             (*_pRunningEncodingsNumber)++;
@@ -1184,9 +1213,10 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
                                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                     + ", errors: " + errors
-                                    + ", _encodingItem->_encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
+                                    + ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
                                     ;
                             _logger->error(errorMessage);
 
@@ -1197,8 +1227,9 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     {
                         string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                                + ", _encodingItem->_encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                                + ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
@@ -1311,7 +1342,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
             _logger->info(__FILEREF__ + "Encoding media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -1338,7 +1369,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -1351,7 +1383,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -1363,7 +1396,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -1384,7 +1418,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                         {
                             string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
                                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                             _logger->error(errorMessage);
 
@@ -1406,7 +1441,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                             {
                                 _logger->warn(__FILEREF__ + "FileIO::removeDirectory failed (runtime_error)"
                                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                     + ", stagingDirectory: " + stagingDirectory
                                     + ", exception: " + e.what()
                                     + ", response.str(): " + response.str()
@@ -1422,7 +1457,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -1433,7 +1468,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -1451,7 +1487,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -1459,7 +1495,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -1500,7 +1537,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -1511,7 +1549,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     encodingStatusFailures++;
 
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -1520,7 +1559,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -1536,7 +1576,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             
             _logger->info(__FILEREF__ + "Encoded media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -1548,7 +1588,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -1574,6 +1614,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1586,7 +1628,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -1612,6 +1655,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1624,7 +1669,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -1650,6 +1696,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1662,7 +1710,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -1688,6 +1737,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1700,7 +1751,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -1726,6 +1778,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1784,12 +1838,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     {
         _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
             + ", e.what(): " + e.what()
         );
 
@@ -1813,6 +1867,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", directoryPathName: " + directoryPathName
 					+ ", exception: " + e.what()
 				);
@@ -1825,12 +1881,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     {
         _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
         );
 
 		if (stagingEncodedAssetPathName != "")
@@ -1853,6 +1909,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", directoryPathName: " + directoryPathName
 					+ ", exception: " + e.what()
 				);
@@ -1873,6 +1931,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -1899,6 +1959,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 				catch(runtime_error e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", directoryPathName: " + directoryPathName
 						+ ", exception: " + e.what()
 					);
@@ -1926,6 +1988,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
         {
             string errorMessage = __FILEREF__ + "Unknown technology"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     ;
             _logger->error(errorMessage);
 
@@ -1953,12 +2017,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
             + ", e.what(): " + e.what()
         );
 
@@ -1982,6 +2046,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", directoryPathName: " + directoryPathName
 					+ ", exception: " + e.what()
 				);
@@ -1994,12 +2060,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodeData->_relativePath: " + _encodingItem->_encodeData->_relativePath
         );
 
 		if (stagingEncodedAssetPathName != "")
@@ -2022,6 +2088,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", directoryPathName: " + directoryPathName
 					+ ", exception: " + e.what()
 				);
@@ -2044,6 +2112,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             {
                 string errorMessage = __FILEREF__ + "Wrong directory entry type"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", mmsAssetPathName: " + mmsAssetPathName
                         ;
 
@@ -2094,9 +2164,9 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
         );
     }
@@ -2104,9 +2174,9 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
@@ -2158,6 +2228,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			catch(runtime_error e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", directoryPathName: " + directoryPathName
 					+ ", exception: " + e.what()
 				);
@@ -2205,7 +2277,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
+        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
         + ", _mp4Encoder: " + _mp4Encoder
     );
 
@@ -2225,8 +2297,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
 		{
 			string errorMessage = __FILEREF__ + "Encoding killed by the User"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
                 ;
 			_logger->error(errorMessage);
         
@@ -2238,6 +2310,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
     {
         string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -2247,6 +2321,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
     {
         string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -2317,8 +2393,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_overlayImageOnVideoData->_videoFileName: " + _encodingItem->_overlayImageOnVideoData->_videoFileName;
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _overlayImageOnVideoData->_videoFileName: " + _encodingItem->_overlayImageOnVideoData->_videoFileName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -2378,14 +2455,14 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_details: " + _encodingItem->_details
-                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
-                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _details: " + _encodingItem->_details
+                + ", _contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             );
             
             (*_pRunningEncodingsNumber)++;
@@ -2396,14 +2473,14 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_details: " + _encodingItem->_details
-                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
-                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _details: " + _encodingItem->_details
+                + ", _contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             );
             
             (*_pRunningEncodingsNumber)++;
@@ -2541,7 +2618,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "Overlaying media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -2568,7 +2645,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -2581,7 +2659,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -2593,7 +2672,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -2611,7 +2691,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -2622,7 +2702,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -2640,7 +2721,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -2648,7 +2729,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -2689,7 +2771,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -2700,7 +2783,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                     encodingStatusFailures++;
 
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -2709,7 +2793,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -2725,7 +2810,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             
             _logger->info(__FILEREF__ + "Overlayed media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -2737,7 +2822,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -2749,7 +2834,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -2761,7 +2847,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -2773,7 +2860,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -2785,7 +2873,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -2808,6 +2897,8 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -2820,6 +2911,8 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -2861,11 +2954,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -2875,11 +2968,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
        throw e;
@@ -2899,6 +2992,8 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -2926,11 +3021,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -2940,11 +3035,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -2985,11 +3080,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -2999,11 +3094,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -3084,11 +3179,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -3098,11 +3193,11 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -3122,8 +3217,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo()
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             ;
 		_logger->error(errorMessage);
        
@@ -3214,8 +3309,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_overlayTextOnVideoData->_videoFileName: " + _encodingItem->_overlayTextOnVideoData->_videoFileName;
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _overlayTextOnVideoData->_videoFileName: " + _encodingItem->_overlayTextOnVideoData->_videoFileName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -3391,7 +3487,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "OverlayText media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -3418,7 +3514,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -3431,7 +3528,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -3443,7 +3541,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -3461,7 +3560,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -3472,7 +3571,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -3490,7 +3590,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -3498,7 +3598,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -3539,7 +3640,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -3550,7 +3652,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     encodingStatusFailures++;
                     
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -3559,7 +3662,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -3579,7 +3683,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             {
                 string errorMessage = string("Encoded file was not generated!!!")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                         ;
@@ -3592,7 +3697,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             
             _logger->info(__FILEREF__ + "OverlayedText media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -3604,7 +3709,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -3616,7 +3721,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -3628,7 +3734,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -3640,7 +3747,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -3652,7 +3760,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -3675,6 +3784,8 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -3687,6 +3798,8 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -3728,11 +3841,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -3742,11 +3855,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -3765,6 +3878,8 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
             {
                 string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                 _logger->error(errorMessage);
 
@@ -3792,11 +3907,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
                 + ", e.what(): " + e.what()
             );
 
@@ -3806,11 +3921,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             );
 
             throw e;
@@ -3851,11 +3966,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
                 + ", e.what(): " + e.what()
             );
 
@@ -3865,11 +3980,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             );
 
             throw e;
@@ -3950,11 +4065,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
                 + ", e.what(): " + e.what()
             );
 
@@ -3964,11 +4079,11 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingParameters: " + _encodingItem->_encodingParameters
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+                + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             );
 
             throw e;
@@ -3988,8 +4103,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed()
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             ;
 		_logger->error(errorMessage);
        
@@ -4048,8 +4163,9 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_videoSpeedData->_videoFileName: " + _encodingItem->_videoSpeedData->_videoFileName;
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _videoSpeedData->_videoFileName: " + _encodingItem->_videoSpeedData->_videoFileName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -4217,7 +4333,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "VideoSpeed media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -4244,7 +4360,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
@@ -4258,7 +4375,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -4270,7 +4388,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -4288,7 +4407,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -4299,7 +4418,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -4317,7 +4437,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -4325,7 +4445,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -4366,7 +4487,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -4377,7 +4499,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                     encodingStatusFailures++;
                     
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -4386,7 +4509,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -4406,7 +4530,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             {
                 string errorMessage = string("Encoded file was not generated!!!")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                         ;
@@ -4419,7 +4544,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             
             _logger->info(__FILEREF__ + "VidepoSpeed media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -4431,7 +4556,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -4443,7 +4568,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -4455,7 +4581,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -4467,7 +4594,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -4479,7 +4607,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -4502,6 +4631,8 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -4514,6 +4645,8 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -4555,11 +4688,11 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -4569,11 +4702,11 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -4585,7 +4718,7 @@ bool EncoderVideoAudioProxy::generateFrames()
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
+        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
         + ", _mp4Encoder: " + _mp4Encoder
     );
 
@@ -4605,8 +4738,8 @@ bool EncoderVideoAudioProxy::generateFrames()
 		{
 			string errorMessage = __FILEREF__ + "Encoding killed by the User"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
                 ;
 			_logger->error(errorMessage);
         
@@ -4620,6 +4753,8 @@ bool EncoderVideoAudioProxy::generateFrames()
     {
         string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -4629,6 +4764,8 @@ bool EncoderVideoAudioProxy::generateFrames()
     {
         string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -4844,7 +4981,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "Generating Frames"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -4871,7 +5008,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -4884,7 +5022,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -4896,7 +5035,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -4914,7 +5054,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -4925,7 +5065,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -4943,7 +5084,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -4951,7 +5092,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -4992,7 +5134,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -5003,7 +5146,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     encodingStatusFailures++;
 
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -5012,7 +5156,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -5028,7 +5173,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             
             _logger->info(__FILEREF__ + "Generated Frames"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -5040,7 +5185,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -5052,7 +5197,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5064,7 +5210,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5076,7 +5223,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5088,7 +5236,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5136,7 +5285,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
+        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
         + ", _mp4Encoder: " + _mp4Encoder
     );
 
@@ -5156,8 +5305,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
 		{
 			string errorMessage = __FILEREF__ + "Encoding killed by the User"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
                 ;
 			_logger->error(errorMessage);
         
@@ -5169,6 +5318,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
     {
         string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -5178,6 +5329,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
     {
         string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 ;
         _logger->error(errorMessage);
         
@@ -5371,7 +5524,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "SlideShow media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -5398,7 +5551,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -5411,7 +5565,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -5423,7 +5578,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -5441,7 +5597,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -5452,7 +5608,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -5470,7 +5627,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
                     }
@@ -5478,7 +5635,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -5519,7 +5677,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -5530,7 +5689,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                     encodingStatusFailures++;
 
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -5539,7 +5699,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -5555,7 +5716,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             
             _logger->info(__FILEREF__ + "SlideShow media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
@@ -5567,7 +5728,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         {
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -5579,7 +5740,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5591,7 +5753,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5603,7 +5766,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5615,7 +5779,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -5642,6 +5807,8 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -5654,6 +5821,8 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -5697,11 +5866,11 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -5711,11 +5880,11 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -5761,9 +5930,9 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	_logger->info(__FILEREF__ + "faceRecognition"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
 	);
@@ -5773,6 +5942,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 	{
 		string errorMessage = __FILEREF__ + "CascadeName could not be loaded"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", cascadePathName: " + cascadePathName;
 		_logger->error(errorMessage);
 
@@ -5782,12 +5953,28 @@ string EncoderVideoAudioProxy::faceRecognition()
 	cv::VideoCapture capture(sourcePhysicalPath);
 	if (!capture.isOpened())
 	{
-		string errorMessage = __FILEREF__ + "Capture could not be opened"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		if (FileIO::fileExisting(sourcePhysicalPath))
+		{
+			string errorMessage = __FILEREF__ + "Capture could not be opened"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+			_logger->error(errorMessage);
 
-		throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		else
+		{
+			string errorMessage = __FILEREF__ + "Capture could not be opened because the file does not exist"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 	}
 
 	string faceRecognitionMediaPathName;
@@ -5819,9 +6006,9 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	_logger->info(__FILEREF__ + "faceRecognition started"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -5847,9 +6034,9 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	_logger->info(__FILEREF__ + "generating Face Recognition start"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -5931,8 +6118,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 		{
 			_logger->info(__FILEREF__ + "generating Face Recognition progress"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", cascadeName: " + faceRecognitionCascadeName
 				+ ", sourcePhysicalPath: " + sourcePhysicalPath
 				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -6230,9 +6417,9 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 	_logger->info(__FILEREF__ + "faceRecognition media done"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
@@ -6271,6 +6458,8 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -6283,6 +6472,8 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -6327,11 +6518,11 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
     {
         _logger->error(__FILEREF__ + "processFaceRecognition failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -6341,11 +6532,11 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
     {
         _logger->error(__FILEREF__ + "processFaceRecognition failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -6428,8 +6619,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 			_logger->info(__FILEREF__ + "Called getMediaItemsList"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", mediaItemsArrayRoot.size(): " + to_string(mediaItemsArrayRoot.size())
 			);
 
@@ -6503,6 +6694,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string errorMessage = __FILEREF__
 			+ "The Deep Learned Model is empty, no deepLearnedModelTags found"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 		;
 		_logger->error(errorMessage);
 
@@ -6527,6 +6720,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 	{
 		string errorMessage = __FILEREF__ + "CascadeName could not be loaded"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", cascadePathName: " + cascadePathName;
 		_logger->error(errorMessage);
 
@@ -6561,12 +6756,28 @@ string EncoderVideoAudioProxy::faceIdentification()
 	cv::VideoCapture capture(sourcePhysicalPath);
 	if (!capture.isOpened())
 	{
-		string errorMessage = __FILEREF__ + "Capture could not be opened"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		if (FileIO::fileExisting(sourcePhysicalPath))
+		{
+			string errorMessage = __FILEREF__ + "Capture could not be opened"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+			_logger->error(errorMessage);
 
-		throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		else
+		{
+			string errorMessage = __FILEREF__ + "Capture could not be opened because the file does not exist"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 	}
 
 	string faceIdentificationMediaPathName;
@@ -6589,9 +6800,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 	_logger->info(__FILEREF__ + "faceIdentification started"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -6615,9 +6826,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 	_logger->info(__FILEREF__ + "generating Face Identification"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -6787,9 +6998,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 	_logger->info(__FILEREF__ + "faceIdentification media done"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
 			+ ", cascadeName: " + faceIdentificationCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
@@ -6807,8 +7018,10 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
         if (extensionIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No extention find in the asset file name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -6819,8 +7032,10 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
         if (fileNameIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -6863,9 +7078,9 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
     {
         _logger->error(__FILEREF__ + "processFaceIdentification failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
@@ -6877,9 +7092,9 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
     {
         _logger->error(__FILEREF__ + "processFaceIdentification failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
@@ -6925,8 +7140,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 		{
 			_logger->info(__FILEREF__ + "Too early to allocate a thread for recording"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 				+ ", utcRecordingPeriodStart - utcNow: " + to_string(utcRecordingPeriodStart - utcNow)
 				+ ", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
 			);
@@ -6942,6 +7157,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 		{
 			string errorMessage = __FILEREF__ + "Too late to activate the recording"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 				+ ", utcNow: " + to_string(utcNow)
 				;
@@ -6956,8 +7173,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             ;
 		_logger->warn(errorMessage);
         
@@ -7039,7 +7256,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			{
 				string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
 				_logger->error(errorMessage);
 
@@ -7065,7 +7283,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			{
 				string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
 				_logger->error(errorMessage);
 
@@ -7232,7 +7451,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
             _logger->info(__FILEREF__ + "LiveRecorder media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
@@ -7259,7 +7478,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -7272,7 +7492,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -7284,7 +7505,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             {
                 string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -7302,7 +7524,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->warn(__FILEREF__ + errorMessage);
@@ -7313,7 +7535,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     {
                         string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -7357,7 +7580,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					if (completedWithError)
 					{
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
-							+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey);
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -7375,7 +7599,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     encodingStatusFailures++;
 
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
-                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
@@ -7392,8 +7617,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: "
-									+ to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -7414,7 +7639,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			{
 				_logger->error(__FILEREF__ + "LiveRecorder media file completed unexpected"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNow)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
@@ -7431,7 +7657,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			{
 				_logger->info(__FILEREF__ + "LiveRecorder media file completed"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", autoRenew: " + to_string(autoRenew) 
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
@@ -7478,7 +7704,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		{
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
@@ -7492,7 +7718,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -7513,7 +7740,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -7534,7 +7762,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -7555,7 +7784,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
                 + ", response.str(): " + response.str()
@@ -7590,8 +7820,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     try
     {
 		_logger->info(__FILEREF__ + "processLastGeneratedLiveRecorderFiles"
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", highAvailability: " + to_string(highAvailability)
 			+ ", main: " + to_string(main)
 			+ ", segmentListPathName: " + segmentListPathName
@@ -7651,7 +7881,9 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				// it could be the scenario where mmsEngineService is restarted,
 				// the segments list file still contains obsolete filenames
 				_logger->error(__FILEREF__ + "file not existing"
-						", currentRecordedAssetPathName: " + currentRecordedAssetPathName
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 				);
 
 				continue;
@@ -7772,8 +8004,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			if (lastRecordedAssetFileName == "")
 			{
 				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
-					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 					+ ", title: " + newTitle
 				);
@@ -7790,8 +8022,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				try
 				{
 					_logger->info(__FILEREF__ + "ingest Recorded media"
-						+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 						+ ", title: " + newTitle
 					);
@@ -7804,8 +8036,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				{
 					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 						+ ", newTitle: " + newTitle
 						+ ", outputFileFormat: " + outputFileFormat
@@ -7818,8 +8050,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				{
 					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 						+ ", newTitle: " + newTitle
 						+ ", outputFileFormat: " + outputFileFormat
@@ -7845,11 +8077,11 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     {
         _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", segmentListPathName: " + segmentListPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
                 
@@ -7859,11 +8091,11 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     {
         _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", segmentListPathName: " + segmentListPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -7960,7 +8192,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
    		}
 
 		_logger->info(__FILEREF__ + "Recorded Workflow metadata generated"
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 			+ ", workflowMetadata: " + workflowMetadata
 		);
 
@@ -8011,7 +8243,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 
 		_logger->info(__FILEREF__ + "Ingesting recorded media file"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 		);
@@ -8025,7 +8257,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 				+ ", sResponse: " + sResponse
 				;
 			_logger->info(message);
@@ -8036,7 +8268,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				;
@@ -8046,7 +8278,8 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				+ ", responseCode: " + to_string(responseCode)
@@ -8060,7 +8293,8 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -8073,7 +8307,8 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -8086,7 +8321,8 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -8099,7 +8335,8 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 	{
 		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
@@ -8249,8 +8486,8 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	if (seconds != 0)
 	{
 		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(seconds)
 				);
@@ -8277,8 +8514,8 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderEndTime(
 	if (tmDateTime.tm_sec != 0)
 	{
 		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(tmDateTime.tm_sec)
 				);
@@ -8334,10 +8571,10 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
     {
         _logger->error(__FILEREF__ + "processLiveRecorder failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
 
@@ -8347,10 +8584,10 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
     {
         _logger->error(__FILEREF__ + "processLiveRecorder failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
         throw e;
@@ -8390,8 +8627,8 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 		{
 			_logger->info(__FILEREF__ + "encodingProgress"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", encodingProgress: " + to_string(_localEncodingProgress)
 			);
 
@@ -8425,8 +8662,8 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 			_logger->info(__FILEREF__ + "encodingProgress"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", encodingProgress: " + to_string(encodingProgress)
 			);
 		}
@@ -8594,7 +8831,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 						{
 							string errorMessage = string(FFMpegEncodingStatusNotAvailable().what())
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->warn(__FILEREF__ + errorMessage);
@@ -8605,7 +8842,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 						{
 							string errorMessage = string("FFMPEGEncoder error")
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->error(__FILEREF__ + errorMessage);
@@ -8622,7 +8859,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
                         
 							_logger->info(__FILEREF__ + "Retrieving encodingProgress"
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 								+ ", encodingProgress: " + to_string(encodingProgress)
                                 );                                        
 						}
@@ -8630,7 +8867,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 						{
 							string errorMessage = string("Unexpected FFMPEGEncoder response")
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->error(__FILEREF__ + errorMessage);
