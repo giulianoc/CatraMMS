@@ -352,12 +352,17 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "processEncodedImage: " + e.what());
+            _logger->error(__FILEREF__ + "processEncodedImage: " + e.what()
+					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+				);
 
+			bool exceptionInCaseOfError = false;
             _logger->error(__FILEREF__ + "Remove"
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
-            FileIO::remove(stagingEncodedAssetPathName);
+            FileIO::remove(stagingEncodedAssetPathName, exceptionInCaseOfError);
 
 			try
 			{
@@ -829,10 +834,11 @@ int64_t ActiveEncodingsManager::processEncodedImage(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
+		bool exceptionInCaseOfErr = false;
         _logger->info(__FILEREF__ + "Remove"
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
-        FileIO::remove(mmsAssetPathName);
+        FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
 
         throw e;
     }

@@ -37,6 +37,7 @@ CatraMMS_PATH=/opt/catramms
 
 #used by ImageMagick to look for the configuration files
 export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick-7.0.8-49/etc/ImageMagick-7
+export MAGICK_HOME=$CatraMMS_PATH/ImageMagick-7.0.8-49
 
 #When Image Magick read a png file we had the error 'error bad parameters to zlib'
 #This is probable because of more than one libz available or it is related
