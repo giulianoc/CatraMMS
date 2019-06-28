@@ -3,6 +3,7 @@
 #include <fstream>
 #include <csignal>
 
+#include "catralibraries/System.h"
 #include "catralibraries/Service.h"
 #include "catralibraries/Scheduler2.h"
 
@@ -34,7 +35,7 @@ int main (int iArgc, char *pArgv [])
     {
         cerr << "Usage: " 
                 << pArgv[0] 
-                << " --nodaemon | --pidfile <pid path file name>" 
+                << " --nodaemon | --resetdata | --pidfile <pid path file name>" 
                 << "config-path-name" 
                 << endl;
         
@@ -42,26 +43,32 @@ int main (int iArgc, char *pArgv [])
     }
     
     bool noDaemon = false;
+    bool resetdata = false;
     string pidFilePathName;
     string configPathName;
     
     if (iArgc == 2)
     {
+		// only cfg file
         pidFilePathName = "/tmp/cmsEngine.pid";
     
         configPathName = pArgv[1];
     }
     else if (iArgc == 3)
     {
+		// nodaemon and cfg file
         pidFilePathName = "/tmp/cmsEngine.pid";
 
         if (!strcmp (pArgv[1], "--nodaemon"))
             noDaemon = true;
+		else if (!strcmp (pArgv[1], "--resetdata"))
+            resetdata = true;
 
         configPathName = pArgv[2];
     }
     else if (iArgc == 4)
     {
+		// pidfile (2 params) and cfg file
         if (!strcmp (pArgv[1], "--pidfile"))
             pidFilePathName = pArgv[2];
         else
@@ -124,6 +131,35 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, dbPoolSize, logger);
     
+	if (resetdata)
+	{
+		string processorMMS                   = System::getHostName();
+
+        try
+        {
+            mmsEngineDBFacade->resetProcessingJobsIfNeeded(processorMMS);
+        }
+        catch(runtime_error e)
+        {
+            logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
+                    + ", exception: " + e.what()
+            );
+
+            // throw e;
+			return 1;
+        }
+        catch(exception e)
+        {
+            logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
+            );
+
+            // throw e;
+			return 1;
+        }
+
+		return 0;
+	}
+
     logger->info(__FILEREF__ + "Creating MMSStorage"
             );
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
