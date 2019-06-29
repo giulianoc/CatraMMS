@@ -476,9 +476,11 @@ void MMSEngineDBFacade::releaseLock(
         
 		bool active;
 		string owner;
+		int lockDuration;
 		{
 			lastSQLCommand = 
-				"select owner, active from MMS_Lock where type = ? for update";
+				"select owner, active, IF(start is null, 0, TIME_TO_SEC(TIMEDIFF(NOW(), start))) as lockDuration"
+				"from MMS_Lock where type = ? for update";
 			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndexIngestionJob = 1;
 			preparedStatement->setString(queryParameterIndexIngestionJob++, sLockType);
@@ -497,6 +499,7 @@ void MMSEngineDBFacade::releaseLock(
 
 			active = resultSet->getInt("active") == 1 ? true : false;
 			owner = resultSet->getString("owner");
+			lockDuration = resultSet->getInt("lockDuration");
 		}
 
 		if (!active)
@@ -508,6 +511,15 @@ void MMSEngineDBFacade::releaseLock(
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
+		}
+
+		{
+			string lockStatisticMessage = __FILEREF__ + "MMS_Lock duration"
+				+ ", type: @" + sLockType + "@"
+				+ ", owner: @" + owner + "@"
+				+ ", lockDuration: @" + to_string(lockDuration) + "@"
+			;
+			_logger->info(lockStatisticMessage);
 		}
 
 		{
