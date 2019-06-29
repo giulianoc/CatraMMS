@@ -184,7 +184,7 @@ void MMSEngineDBFacade::setLock(
 			}
 			autoCommit = true;
 
-			if (alreadyLocked)
+			if (alreadyLocked && waitingTimeoutInSecondsIfLocked > 0)
 			{
 				int milliSecondsToSleepWaitingLock = 500;
 

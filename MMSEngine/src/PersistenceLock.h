@@ -19,4 +19,5 @@ class PersistenceLock {
 		MMSEngineDBFacade::LockType			_lockType;
 		string								_data;
 		bool								_dataInitialized;
+		bool								_lockDone;
 };

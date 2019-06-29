@@ -10,18 +10,24 @@ PersistenceLock::PersistenceLock(
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 	_lockType = lockType;
 	_dataInitialized = false;
+	_lockDone = false;
 
 	_mmsEngineDBFacade->setLock(lockType, waitingTimeoutInSecondsIfLocked, owner);
+	// no exception means lock is done
+	_lockDone = true;
 }
 
 PersistenceLock::~PersistenceLock()
 {
 	try
 	{
-		if (_dataInitialized)
-			_mmsEngineDBFacade->releaseLock(_lockType, _data);
-		else
-			_mmsEngineDBFacade->releaseLock(_lockType);
+		if (_lockDone)
+		{
+			if (_dataInitialized)
+				_mmsEngineDBFacade->releaseLock(_lockType, _data);
+			else
+				_mmsEngineDBFacade->releaseLock(_lockType);
+		}
 	}
 	catch(runtime_error e)
 	{
