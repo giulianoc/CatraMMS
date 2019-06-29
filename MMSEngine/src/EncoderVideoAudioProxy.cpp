@@ -5954,30 +5954,64 @@ string EncoderVideoAudioProxy::faceRecognition()
 		throw runtime_error(errorMessage);
 	}
 
-	cv::VideoCapture capture(sourcePhysicalPath);
-	if (!capture.isOpened())
+	cv::VideoCapture capture;
+	// sometimes the file was created by another MMSEngine and it is not found
+	// just because of nfs delay. For this reason we implemented a retry mechanism
+	int attemptIndex = 0;
+	int attemptNumber = 4;
+	bool captureFinished = false;
+	while (!captureFinished)
 	{
-		if (FileIO::fileExisting(sourcePhysicalPath))
+		capture.open(sourcePhysicalPath);
+		if (!capture.isOpened())
 		{
-			string errorMessage = __FILEREF__ + "Capture could not be opened"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(errorMessage);
+			if (FileIO::fileExisting(sourcePhysicalPath))
+			{
+				string errorMessage = __FILEREF__ + "Capture could not be opened"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+				_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				if (attemptIndex < attemptNumber)
+				{
+					attemptIndex++;
+
+					int sleepTime = 2;
+
+					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", sleepTime: " + to_string(sleepTime)
+							;
+					_logger->warn(errorMessage);
+
+					this_thread::sleep_for(chrono::seconds(sleepTime));
+				}
+				else
+				{
+					string errorMessage = __FILEREF__
+						+ "Capture could not be opened because the file does not exist"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
 		}
 		else
 		{
-			string errorMessage = __FILEREF__ + "Capture could not be opened because the file does not exist"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
+			captureFinished = true;
 		}
 	}
 
@@ -6757,30 +6791,64 @@ string EncoderVideoAudioProxy::faceIdentification()
 	cv::Ptr<cv::face::LBPHFaceRecognizer> recognizerModel = cv::face::LBPHFaceRecognizer::create();
 	recognizerModel->train(images, idImages);
 
-	cv::VideoCapture capture(sourcePhysicalPath);
-	if (!capture.isOpened())
+	cv::VideoCapture capture;
+	// sometimes the file was created by another MMSEngine and it is not found
+	// just because of nfs delay. For this reason we implemented a retry mechanism
+	int attemptIndex = 0;
+	int attemptNumber = 4;
+	bool captureFinished = false;
+	while (!captureFinished)
 	{
-		if (FileIO::fileExisting(sourcePhysicalPath))
+		capture.open(sourcePhysicalPath);
+		if (!capture.isOpened())
 		{
-			string errorMessage = __FILEREF__ + "Capture could not be opened"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(errorMessage);
+			if (FileIO::fileExisting(sourcePhysicalPath))
+			{
+				string errorMessage = __FILEREF__ + "Capture could not be opened"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+				_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				if (attemptIndex < attemptNumber)
+				{
+					attemptIndex++;
+
+					int sleepTime = 2;
+
+					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", sleepTime: " + to_string(sleepTime)
+							;
+					_logger->warn(errorMessage);
+
+					this_thread::sleep_for(chrono::seconds(sleepTime));
+				}
+				else
+				{
+					string errorMessage = __FILEREF__
+						+ "Capture could not be opened because the file does not exist"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
 		}
 		else
 		{
-			string errorMessage = __FILEREF__ + "Capture could not be opened because the file does not exist"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
+			captureFinished = true;
 		}
 	}
 
