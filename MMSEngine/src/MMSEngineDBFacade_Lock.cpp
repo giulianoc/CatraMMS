@@ -128,7 +128,7 @@ void MMSEngineDBFacade::setLock(
 						+ ", label: " + label
 						+ ", already locked by " + previousOwner
 						;
-					_logger->warn(errorMessage);
+					_logger->debug(errorMessage);
 
 					alreadyLocked = true;
 				}
