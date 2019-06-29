@@ -463,6 +463,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
             );
+
+            _logger->info(__FILEREF__ + "getIngestionsToBeManaged result"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionsToBeManaged.size: " + to_string(ingestionsToBeManaged.size())
+            );
         }
         catch(AlreadyLocked e)
         {
@@ -10520,6 +10525,11 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, maxEncodingsNumber);
 
 		_pActiveEncodingsManager->addEncodingItems(encodingItems);
+
+		_logger->info(__FILEREF__ + "getEncodingJobs result"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", encodingItems.size: " + to_string(encodingItems.size())
+		);
 	}
 	catch(AlreadyLocked e)
 	{
