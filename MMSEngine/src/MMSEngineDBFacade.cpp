@@ -484,7 +484,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							"JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 							"and retentionInMinutes != 0 "
 							"group by JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') "
-								"having count(*) = 2 for update"
+								"having count(*) = 2"
+								// "having count(*) = 2 for update"
 						);
 					// This select returns all the chunks (media item utcChunkStartTime)
 					// that are present two times (because of HA live recording)
@@ -773,7 +774,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							"and JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 							"and JSON_EXTRACT(userData, '$.mmsData.validated') is null "
 							"and NOW() > DATE_ADD(ingestionDate, INTERVAL ? SECOND) "
-							"and retentionInMinutes != 0 for update"
+							"and retentionInMinutes != 0"
+							// "and retentionInMinutes != 0 for update"
 						);
 
 					shared_ptr<sql::PreparedStatement> preparedStatementMediaItemKey (conn->_sqlConnection->prepareStatement(lastSQLCommand));

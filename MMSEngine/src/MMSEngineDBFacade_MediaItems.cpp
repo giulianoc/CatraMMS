@@ -66,7 +66,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 "select workspaceKey, mediaItemKey, ingestionJobKey from MMS_MediaItem where "
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMSForRetention is null "
-                "limit ? offset ? for update";
+                "limit ? offset ?";
+                // "limit ? offset ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;

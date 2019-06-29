@@ -56,7 +56,9 @@ void MMSEngineDBFacade::getEncodingJobs(
             lastSQLCommand = 
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
-                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc limit ? for update";
+                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
+				"limit ?";
+				// "limit ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -1790,7 +1792,9 @@ int MMSEngineDBFacade::updateEncodingJob (
         {
             {
                 lastSQLCommand = 
-                    "select failuresNumber from MMS_EncodingJob where encodingJobKey = ? for update";
+                    "select failuresNumber from MMS_EncodingJob "
+					"where encodingJobKey = ?";
+					// "where encodingJobKey = ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -2466,7 +2470,9 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         EncodingPriority currentEncodingPriority;
         {
             lastSQLCommand = 
-                "select status, encodingPriority from MMS_EncodingJob where encodingJobKey = ? for update";
+                "select status, encodingPriority from MMS_EncodingJob "
+				"where encodingJobKey = ?";
+				// "where encodingJobKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -2776,7 +2782,9 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 		int64_t ingestionJobKey;
         {
             lastSQLCommand = 
-                "select status, ingestionJobKey from MMS_EncodingJob where encodingJobKey = ? for update";
+                "select status, ingestionJobKey from MMS_EncodingJob "
+				"where encodingJobKey = ?";
+				// "where encodingJobKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);

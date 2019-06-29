@@ -137,7 +137,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType != 'Live-Recorder' "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-                        "limit ? offset ? for update";
+                        "limit ? offset ?";
+                        // "limit ? offset ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndexIngestionJob = 1;
