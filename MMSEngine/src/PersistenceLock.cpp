@@ -12,12 +12,19 @@ PersistenceLock::PersistenceLock(
 	_dataInitialized = false;
 
 	_mmsEngineDBFacade->setLock(lockType, waitingTimeoutInSecondsIfLocked, owner);
+
+		_logger->error(__FILEREF__ + "Constr PersistenceLock"
+				+ ", _dataInitialized: " + to_string(_dataInitialized)
+				);
 }
 
 PersistenceLock::~PersistenceLock()
 {
 	try
 	{
+		_logger->error(__FILEREF__ + "Destruct PersistenceLock"
+				+ ", _dataInitialized: " + to_string(_dataInitialized)
+				);
 		if (_dataInitialized)
 			_mmsEngineDBFacade->releaseLock(_lockType, _data);
 		else
