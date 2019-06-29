@@ -1228,7 +1228,12 @@ void API::mediaItemsList(
         {
             title = titleIt->second;
 
-			title = curlpp::unescape(title);
+			string titleDecoded = curlpp::unescape(title);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			title = regex_replace(titleDecoded, regex(plus), plusDecoded);
+
 			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
@@ -1317,7 +1322,11 @@ void API::mediaItemsList(
         {
             jsonCondition = jsonConditionIt->second;
 
-			jsonCondition = curlpp::unescape(jsonCondition);
+			string jsonConditionDecoded = curlpp::unescape(jsonCondition);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			jsonCondition = regex_replace(jsonConditionDecoded, regex(plus), plusDecoded);
 			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
@@ -1356,7 +1365,11 @@ void API::mediaItemsList(
         {
             jsonOrderBy = jsonOrderByIt->second;
 
-			jsonOrderBy = curlpp::unescape(jsonOrderBy);
+			string jsonOrderByDecoded = curlpp::unescape(jsonOrderBy);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			jsonOrderBy = regex_replace(jsonOrderByDecoded, regex(plus), plusDecoded);
 			/*
 			CURL *curl = curl_easy_init();
 			if(curl)

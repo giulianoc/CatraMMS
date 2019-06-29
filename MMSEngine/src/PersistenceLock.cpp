@@ -13,7 +13,7 @@ PersistenceLock::PersistenceLock(
 	_dataInitialized = false;
 	_lockDone = false;
 
-	_mmsEngineDBFacade->setLock(lockType, waitingTimeoutInSecondsIfLocked, owner);
+	_mmsEngineDBFacade->setLock(lockType, waitingTimeoutInSecondsIfLocked, owner, label);
 	// no exception means lock is done
 	_lockDone = true;
 }

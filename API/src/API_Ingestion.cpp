@@ -308,6 +308,21 @@ void API::ingestion(
 
         sendSuccess(request, 201, responseBody);
     }
+	catch(AlreadyLocked e)
+	{
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "API failed"
@@ -1952,7 +1967,12 @@ void API::ingestionRootsStatus(
         {
             label = labelIt->second;
 
-			label = curlpp::unescape(label);
+			string labelDecoded = curlpp::unescape(label);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
+
 			/*
 			CURL *curl = curl_easy_init();
 			if(curl)
@@ -2144,7 +2164,11 @@ void API::ingestionJobsStatus(
         {
             label = labelIt->second;
 
-			label = curlpp::unescape(label);
+			string labelDecoded = curlpp::unescape(label);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
 			/*
 			CURL *curl = curl_easy_init();
 			if(curl)

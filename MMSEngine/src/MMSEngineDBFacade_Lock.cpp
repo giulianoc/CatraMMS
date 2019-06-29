@@ -4,7 +4,7 @@
 
 void MMSEngineDBFacade::setLock(
     LockType lockType, int waitingTimeoutInSecondsIfLocked,
-	string owner, string data
+	string owner, string label, string data
 	)
 {
     
@@ -125,6 +125,7 @@ void MMSEngineDBFacade::setLock(
 				if (utcNow - utcStart <= maxDurationInMinutes * 60)
 				{
 					string errorMessage = __FILEREF__ + "setLock " + toString(lockType)
+						+ ", label: " + label
 						+ ", already locked by " + previousOwner
 						;
 					_logger->warn(errorMessage);
@@ -135,6 +136,7 @@ void MMSEngineDBFacade::setLock(
 				{
 					_logger->warn(__FILEREF__ + "Already locked since too much time. Reset it"
 						+ ", type: " + sLockType
+						+ ", label: " + label
 						+ ", previousOwner: " + previousOwner
 					);
 				}
@@ -203,6 +205,7 @@ void MMSEngineDBFacade::setLock(
 		{
 			string errorMessage = __FILEREF__ + "Ingestion already Locked"
 				+ ", type: " + sLockType
+				+ ", label: " + label
 				+ ", waitingTimeoutInSecondsIfLocked: " + to_string(waitingTimeoutInSecondsIfLocked)
 			;
 			_logger->warn(errorMessage);
@@ -217,6 +220,7 @@ void MMSEngineDBFacade::setLock(
 			{
 				_logger->warn(__FILEREF__ + "Ingestion Lock"
 					+ ", type: " + sLockType
+					+ ", label: " + label
 					+ ", time to lock (secs): " + to_string(timeToLock)
 				);
 			}
@@ -230,6 +234,7 @@ void MMSEngineDBFacade::setLock(
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -285,6 +290,7 @@ void MMSEngineDBFacade::setLock(
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -340,6 +346,7 @@ void MMSEngineDBFacade::setLock(
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -394,6 +401,7 @@ void MMSEngineDBFacade::setLock(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -506,6 +514,7 @@ void MMSEngineDBFacade::releaseLock(
 		{
 			string errorMessage = __FILEREF__ + "Lock already not locked"
 				+ ", type: " + sLockType
+				+ ", label: " + label
 				+ ", owner: " + owner
 				;
 			_logger->error(errorMessage);
@@ -548,6 +557,7 @@ void MMSEngineDBFacade::releaseLock(
 			{
 				string errorMessage = __FILEREF__ + "MMS_Lock, no update was done"
 					+ ", type: " + sLockType
+					+ ", label: " + label
 					+ ", owner: " + owner
 				;
 				_logger->warn(errorMessage);
@@ -580,6 +590,7 @@ void MMSEngineDBFacade::releaseLock(
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -635,6 +646,7 @@ void MMSEngineDBFacade::releaseLock(
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
@@ -689,6 +701,7 @@ void MMSEngineDBFacade::releaseLock(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			+ ", label: " + label
         );
 
         if (conn != nullptr)
