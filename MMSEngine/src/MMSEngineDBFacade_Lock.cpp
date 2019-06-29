@@ -479,7 +479,7 @@ void MMSEngineDBFacade::releaseLock(
 		int lockDuration;
 		{
 			lastSQLCommand = 
-				"select owner, active, IF(start is null, 0, TIME_TO_SEC(TIMEDIFF(NOW(), start))) as lockDuration"
+				"select owner, active, IF(start is null, 0, TIME_TO_SEC(TIMEDIFF(NOW(), start))) as lockDuration "
 				"from MMS_Lock where type = ? for update";
 			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndexIngestionJob = 1;
