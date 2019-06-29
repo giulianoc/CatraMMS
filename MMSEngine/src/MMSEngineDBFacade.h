@@ -1547,7 +1547,7 @@ public:
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string data = "no data");
 
-	void releaseLock(LockType lockType, string data = "no data");
+	void releaseLock(LockType lockType, string label, string data = "no data");
 
 private:
     shared_ptr<spdlog::logger>                          _logger;

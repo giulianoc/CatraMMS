@@ -447,7 +447,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::Ingestion,
 				waitingTimeoutInSecondsIfLocked,
-				_processorMMS, _logger);
+				_processorMMS, "CheckIngestion", _logger);
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
@@ -10502,7 +10502,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
 			waitingTimeoutInSecondsIfLocked,
-			_processorMMS, _logger);
+			_processorMMS, "CheckEncoding", _logger);
 
 		int maxEncodingsNumber = 20;
 
@@ -10855,7 +10855,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::MainAndBackupLiveRecordingHA,
 				waitingTimeoutInSecondsIfLocked,
-				_processorMMS, _logger);
+				_processorMMS, "MainAndBackupLiveRecording", _logger);
 
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();
 		}

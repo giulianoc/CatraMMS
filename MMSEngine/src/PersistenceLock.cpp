@@ -4,10 +4,11 @@
 PersistenceLock::PersistenceLock(
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 	MMSEngineDBFacade::LockType lockType, int waitingTimeoutInSecondsIfLocked,
-	string owner, shared_ptr<spdlog::logger> logger)
+	string owner, string label, shared_ptr<spdlog::logger> logger)
 {
 	_logger = logger;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
+	_label = label;
 	_lockType = lockType;
 	_dataInitialized = false;
 	_lockDone = false;
@@ -24,9 +25,9 @@ PersistenceLock::~PersistenceLock()
 		if (_lockDone)
 		{
 			if (_dataInitialized)
-				_mmsEngineDBFacade->releaseLock(_lockType, _data);
+				_mmsEngineDBFacade->releaseLock(_lockType, _label, _data);
 			else
-				_mmsEngineDBFacade->releaseLock(_lockType);
+				_mmsEngineDBFacade->releaseLock(_lockType, _label);
 		}
 	}
 	catch(runtime_error e)

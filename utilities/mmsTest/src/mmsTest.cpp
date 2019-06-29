@@ -33,7 +33,7 @@ int main (int iArgc, char *pArgv [])
 	PersistenceLock persistenceLock(mmsEngineDBFacade,
 		MMSEngineDBFacade::LockType::Ingestion,
 		waitingTimeoutInSecondsIfLocked,
-		"test", logger);
+		"test", "Test", logger);
   
 	this_thread::sleep_for(chrono::seconds(30));
 

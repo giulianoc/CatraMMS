@@ -446,7 +446,7 @@ void MMSEngineDBFacade::setLock(
 }
 
 void MMSEngineDBFacade::releaseLock(
-    LockType lockType, string data
+    LockType lockType, string label, string data
 	)
 {
     
@@ -517,6 +517,7 @@ void MMSEngineDBFacade::releaseLock(
 			string lockStatisticMessage = __FILEREF__ + "MMS_Lock duration"
 				+ ", type: @" + sLockType + "@"
 				+ ", owner: @" + owner + "@"
+				+ ", label: @" + label + "@"
 				+ ", lockDuration: @" + to_string(lockDuration) + "@"
 			;
 			_logger->info(lockStatisticMessage);
