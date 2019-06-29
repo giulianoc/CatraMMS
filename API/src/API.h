@@ -97,6 +97,8 @@ private:
     string				_ffmpegEncoderPassword;
     string				_ffmpegEncoderKillEncodingURI;
 
+	int					_maxSecondsToWaitAPIIngestionLock;
+
     int                 _defaultTTLInSeconds;
     int                 _defaultMaxRetries;
     bool                _defaultRedirect;

@@ -32,6 +32,11 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 	_hostName				= System::getHostName();
 
+	_maxSecondsToWaitUpdateEncodingJobLock  = _configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 0).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
+	);
+
     #ifdef __LOCALENCODER__
         _runningEncodingsNumber = 0;
     #endif
@@ -326,7 +331,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey,
-					_hostName);
+					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 			}
 			catch(...)
 			{
@@ -382,7 +387,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey,
-					_hostName);
+					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 			}
 			catch(...)
 			{
@@ -415,7 +420,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                 MMSEngineDBFacade::EncodingError::NoError, 
                 encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
                 encodingJob->_encodingItem->_ingestionJobKey,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
         }
         catch(exception e)
         {
@@ -940,7 +945,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                     MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                     mediaItemKey, encodedPhysicalPathKey,
                     encodingItem->_ingestionJobKey,
-					_hostName);
+					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
         }
         catch(exception e)
         {
@@ -959,7 +964,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             updaterEncoderJob.updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
                 mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
         }
 
 		encodingItemIndex++;

@@ -342,6 +342,11 @@ API::API(Json::Value configuration,
         + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
     );
 
+	_maxSecondsToWaitAPIIngestionLock  = _configuration["mms"]["locks"].get("maxSecondsToWaitAPIIngestionLock", 0).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->locks->maxSecondsToWaitAPIIngestionLock: " + to_string(_maxSecondsToWaitAPIIngestionLock)
+	);
+
     _fileUploadProgressData     = fileUploadProgressData;
     _fileUploadProgressThreadShutdown       = false;
 }

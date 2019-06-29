@@ -123,6 +123,8 @@ private:
     shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
 	string								_hostName;
     
+	int									_maxSecondsToWaitUpdateEncodingJobLock;
+
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;

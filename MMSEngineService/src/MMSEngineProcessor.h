@@ -84,6 +84,10 @@ private:
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
     
+	int						_maxSecondsToWaitCheckIngestionLock;
+	int						_maxSecondsToWaitCheckEncodingJobLock;
+	int						_maxSecondsToWaitMainAndBackupLiveChunkLock;
+
     // int                     _stagingRetentionInDays;
 
     int                     _maxIngestionJobsPerEvent;

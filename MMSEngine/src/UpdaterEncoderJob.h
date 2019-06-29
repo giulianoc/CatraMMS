@@ -18,7 +18,8 @@ class UpdaterEncoderJob {
 			int64_t mediaItemKey,
 			int64_t encodedPhysicalPathKey,
 			int64_t ingestionJobKey,
-			string processorMMS);
+			string processorMMS,
+			int maxSecondsToWaitUpdateEncodingJobLock);
 
 	private:
 		shared_ptr<MMSEngineDBFacade>		_mmsEngineDBFacade;

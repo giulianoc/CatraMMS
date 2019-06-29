@@ -78,6 +78,19 @@ MMSEngineProcessor::MMSEngineProcessor(
     );
 	*/
 
+	_maxSecondsToWaitCheckIngestionLock  = configuration["mms"]["locks"].get("maxSecondsToWaitCheckIngestionLock", 0).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->locks->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
+	);
+	_maxSecondsToWaitCheckEncodingJobLock  = configuration["mms"]["locks"].get("maxSecondsToWaitCheckEncodingJobLock", 0).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->locks->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
+	);
+	_maxSecondsToWaitMainAndBackupLiveChunkLock  = configuration["mms"]["locks"].get("maxSecondsToWaitMainAndBackupLiveChunkLock", 0).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->locks->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
+	);
+
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
@@ -442,11 +455,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         
         try
         {
-			int waitingTimeoutInSecondsIfLocked = 0;
-
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::Ingestion,
-				waitingTimeoutInSecondsIfLocked,
+				_maxSecondsToWaitCheckIngestionLock,
 				_processorMMS, "CheckIngestion", _logger);
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
@@ -10497,11 +10508,9 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
 	try
 	{
-		int waitingTimeoutInSecondsIfLocked = 0;
-
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
-			waitingTimeoutInSecondsIfLocked,
+			_maxSecondsToWaitCheckEncodingJobLock,
 			_processorMMS, "CheckEncoding", _logger);
 
 		int maxEncodingsNumber = 20;
@@ -10850,11 +10859,9 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 
 		try
 		{
-			int waitingTimeoutInSecondsIfLocked = 0;
-
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::MainAndBackupLiveRecordingHA,
-				waitingTimeoutInSecondsIfLocked,
+				_maxSecondsToWaitMainAndBackupLiveChunkLock,
 				_processorMMS, "MainAndBackupLiveRecording", _logger);
 
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();

@@ -75,6 +75,8 @@ private:
     shared_ptr<EncodersLoadBalancer>            _encodersLoadBalancer;
 	string										_hostName;
     
+	int											_maxSecondsToWaitUpdateEncodingJobLock;
+
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;
     

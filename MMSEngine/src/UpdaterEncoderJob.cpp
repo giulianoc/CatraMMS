@@ -20,16 +20,17 @@ int UpdaterEncoderJob::updateEncodingJob (
 	int64_t mediaItemKey,
 	int64_t encodedPhysicalPathKey,
 	int64_t ingestionJobKey,
-	string processorMMS)
+	string processorMMS,
+	int maxSecondsToWaitUpdateEncodingJobLock)
 {
 
 	try
 	{
-		int waitingTimeoutInSecondsIfLocked = 30;
+		// int waitingTimeoutInSecondsIfLocked = 30;
 
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
-			waitingTimeoutInSecondsIfLocked,
+			maxSecondsToWaitUpdateEncodingJobLock,
 			processorMMS, "UpdateEncodingJob", _logger);
 
 		int updateEncodingJobReturn = _mmsEngineDBFacade->updateEncodingJob (

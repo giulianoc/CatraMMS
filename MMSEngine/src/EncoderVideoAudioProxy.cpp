@@ -92,6 +92,10 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->secondsToWaitNFSBuffers: " + to_string(_secondsToWaitNFSBuffers)
     );        
 	*/
+    _maxSecondsToWaitUpdateEncodingJobLock         = _configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 30).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
+    );        
     
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -314,7 +318,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(runtime_error e)
 		{
@@ -396,7 +400,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -454,7 +458,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::KilledByUser, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -514,7 +518,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -574,7 +578,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -759,7 +763,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -849,7 +853,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				_hostName);
+				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
 		}
 		catch(...)
 		{
@@ -899,7 +903,7 @@ void EncoderVideoAudioProxy::operator()()
             MMSEngineDBFacade::EncodingError::NoError,
             mediaItemKey, encodedPhysicalPathKey,
            main ? _encodingItem->_ingestionJobKey : -1,
-		   _hostName);
+		   _hostName, _maxSecondsToWaitUpdateEncodingJobLock);
     }
     catch(exception e)
     {
