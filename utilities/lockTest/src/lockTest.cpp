@@ -35,12 +35,13 @@ int main (int iArgc, char *pArgv [])
 
 	try
 	{
+		int milliSecondsToSleepWaitingLock = 500;
 
 		cout << endl << endl << "First PersistenceLock" << endl << endl ;
 		PersistenceLock persistenceLock(mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::Ingestion,
 			waitingTimeoutInSecondsIfLocked,
-			"test", "Test", logger);
+			"test", "Test", milliSecondsToSleepWaitingLock, logger);
 
 		this_thread::sleep_for(chrono::seconds(30));
 	}
@@ -52,11 +53,13 @@ int main (int iArgc, char *pArgv [])
 
 	try
 	{
+		int milliSecondsToSleepWaitingLock = 500;
+
 		cout << endl << endl << "Second PersistenceLock" << endl << endl ;
 		PersistenceLock persistenceLock(mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::Ingestion,
 			waitingTimeoutInSecondsIfLocked,
-			"test", "Test", logger);
+			"test", "Test", milliSecondsToSleepWaitingLock, logger);
 	}
 	catch (exception e)
 	{
