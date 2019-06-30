@@ -47,6 +47,8 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", mms->maxFaceRecognitionNumber: " + to_string(maxFaceRecognitionNumber)
 		);
+		maxFaceRecognitionNumber +=
+			(MAXHIGHENCODINGSTOBEMANAGED + MAXMEDIUMENCODINGSTOBEMANAGED + MAXLOWENCODINGSTOBEMANAGED);
         
         int lastProxyIdentifier = 0;
 
