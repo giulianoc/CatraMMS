@@ -42,14 +42,21 @@ ActiveEncodingsManager::ActiveEncodingsManager(
     #endif
 
     {
-        int lastProxyIdentifier = 0;
+		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
+		int maxFaceRecognitionNumber = _configuration["mms"].get("maxFaceRecognitionNumber", 0).asInt();
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", mms->maxFaceRecognitionNumber: " + to_string(maxFaceRecognitionNumber)
+		);
         
+        int lastProxyIdentifier = 0;
+
         for (EncodingJob& encodingJob: _lowPriorityEncodingJobs)
         {
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
+					faceRecognitionNumber, maxFaceRecognitionNumber,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif
@@ -62,6 +69,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
+					faceRecognitionNumber, maxFaceRecognitionNumber,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif
@@ -74,6 +82,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
+					faceRecognitionNumber, maxFaceRecognitionNumber,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif

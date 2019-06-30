@@ -95,6 +95,8 @@ public:
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
+		shared_ptr<long> faceRecognitionNumber,
+		int maxFaceRecognitionNumber,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #else
@@ -123,6 +125,9 @@ private:
     shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
 	string								_hostName;
     
+	shared_ptr<long>					_faceRecognitionNumber;
+	int									_maxFaceRecognitionNumber;
+
 	int									_maxSecondsToWaitUpdateEncodingJobLock;
 
     string                              _mp4Encoder;
@@ -191,7 +196,7 @@ private:
     pair<string, bool> slideShow_through_ffmpeg();
     void processSlideShow(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    string faceRecognition();
+    string faceRecognition(shared_ptr<long> faceRecognitionNumber);
     void processFaceRecognition(string stagingEncodedAssetPathName);    
 
     string faceIdentification();

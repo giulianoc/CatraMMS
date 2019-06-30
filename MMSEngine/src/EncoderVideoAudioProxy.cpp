@@ -53,6 +53,8 @@ void EncoderVideoAudioProxy::init(
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
+		shared_ptr<long> faceRecognitionNumber,
+		int maxFaceRecognitionNumber,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #endif
@@ -71,6 +73,9 @@ void EncoderVideoAudioProxy::init(
     _mmsStorage             = mmsStorage;
     _encodersLoadBalancer   = encodersLoadBalancer;
     
+	_faceRecognitionNumber	= faceRecognitionNumber;
+	_maxFaceRecognitionNumber	= maxFaceRecognitionNumber;
+
 	_hostName				= System::getHostName();
 
     _mp4Encoder             = _configuration["encoding"].get("mp4Encoder", "").asString();
@@ -262,7 +267,7 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
-            stagingEncodedAssetPathName = faceRecognition();
+            stagingEncodedAssetPathName = faceRecognition(_faceRecognitionNumber);
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
         {
@@ -5895,7 +5900,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     }
 }
 
-string EncoderVideoAudioProxy::faceRecognition()
+string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionNumber)
 {
     
 	{
@@ -5903,6 +5908,22 @@ string EncoderVideoAudioProxy::faceRecognition()
 
 		*_status = EncodingJobStatus::Running;
 	}
+
+	if (faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
+	{
+		string errorMessage = string("MaxConcurrentJobsReached")
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", faceRecognitionNumber.use_count: " + to_string(faceRecognitionNumber.use_count())
+            + ", _maxFaceRecognitionNumber: " + to_string(_maxFaceRecognitionNumber)
+		;
+		_logger->warn(__FILEREF__ + errorMessage);
+
+		throw MaxConcurrentJobsReached();
+	}
+
 	int64_t sourceMediaItemKey;
 	string faceRecognitionCascadeName;
 	string sourcePhysicalPath;
