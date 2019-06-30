@@ -1184,7 +1184,9 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -2502,7 +2504,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -3362,7 +3366,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -4216,7 +4222,9 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -4863,7 +4871,9 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -5412,7 +5422,9 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         ostringstream response;
         try
         {
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSkip;
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -7436,7 +7448,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		ostringstream response;
 		try
 		{
-			_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+			string encoderToSKip;
+			_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+					encoderToSKip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -7572,7 +7586,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
             Json::Value liveRecorderContentResponse;
             try
-            {                
+            {
                 Json::CharReaderBuilder builder;
                 Json::CharReader* reader = builder.newCharReader();
                 string errors;
@@ -7670,7 +7684,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
-            int maxEncodingStatusFailures = 1;
+            int maxEncodingStatusFailures = 10;
             int encodingStatusFailures = 0;
 			// string lastRecordedAssetFileName;
 
@@ -7721,6 +7735,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						3. since the recording is not finished yet, this code/method activate a new live recording session
 						Result: we have 2 live recording process into the encoder creating problems
 						To avoid that we will exit from this loop ONLY when we are sure the recoridng is finished
+					 2019-07-02: in case the encoder was shutdown or crashed, the Engine has to activate another
+						Encoder, so we increased maxEncodingStatusFailures to be sure the encoder is not working anymore
+						and, in this case we do a break in order to activate another encoder.
+					*/
             		if(encodingStatusFailures >= maxEncodingStatusFailures)
 					{
                         string errorMessage = string("getEncodingStatus too many failures")
@@ -7733,9 +7751,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
+						break;
                         // throw runtime_error(errorMessage);
 					}
-					*/
                 }
             }
             
