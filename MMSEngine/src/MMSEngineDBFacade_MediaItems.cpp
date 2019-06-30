@@ -1371,7 +1371,6 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		}
 
 		// create temporary table
-
 		{
 			string sqlWhere;
 			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
@@ -1431,7 +1430,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		int64_t numFound;
 		{
 			lastSQLCommand = 
-				string("select count(*) from MediaItemFilter f where ")
+				string("select count(*) from MMS_MediaItemFilter f where ")
 				+ tagsGroupCondition;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
