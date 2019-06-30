@@ -671,7 +671,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		if (tagsIn.size() > 0 || tagsNotIn.size() > 0)
 		{
 			{
-				temporaryTableName = "MMS_MediaItemFilter_" + to_string(conn->getConnectionId());
+				temporaryTableName = "MMS_MediaItemFilter";
 
 				_logger->info(__FILEREF__ + "getMediaItemsList temporary table name"
 					+ ", workspaceKey: " + to_string(workspaceKey)
