@@ -91,6 +91,7 @@ private:
     // int                     _stagingRetentionInDays;
 
     int                     _maxIngestionJobsPerEvent;
+    int                     _maxEncodingJobsPerEvent;
     int                     _dependencyExpirationInHours;
     size_t                  _downloadChunkSizeInMegaBytes;
     

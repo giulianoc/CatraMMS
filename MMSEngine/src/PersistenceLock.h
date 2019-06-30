@@ -7,7 +7,8 @@ class PersistenceLock {
 		PersistenceLock(
 			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType lockType, int waitingTimeoutInSecondsIfLocked,
-			string owner, string label, shared_ptr<spdlog::logger> logger);
+			string owner, string label, int milliSecondsToSleepWaitingLock,
+			shared_ptr<spdlog::logger> logger);
 
 		~PersistenceLock();
 

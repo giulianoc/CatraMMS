@@ -21,7 +21,6 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/Convert.h"
-#include "PersistenceLock.h"
 #include "Validator.h"
 */
 #include "catralibraries/LdapWrapper.h"

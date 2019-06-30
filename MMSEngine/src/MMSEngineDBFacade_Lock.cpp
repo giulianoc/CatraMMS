@@ -4,7 +4,9 @@
 
 void MMSEngineDBFacade::setLock(
     LockType lockType, int waitingTimeoutInSecondsIfLocked,
-	string owner, string label, string data
+	string owner, string label,
+	int milliSecondsToSleepWaitingLock,
+	string data
 	)
 {
     
@@ -188,8 +190,6 @@ void MMSEngineDBFacade::setLock(
 
 			if (alreadyLocked && waitingTimeoutInSecondsIfLocked > 0)
 			{
-				int milliSecondsToSleepWaitingLock = 500;
-
 			    this_thread::sleep_for(chrono::milliseconds(milliSecondsToSleepWaitingLock));
 			}
 		}

@@ -65,7 +65,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent)
     );
-    // _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
+    _maxEncodingJobsPerEvent       = configuration["mms"].get("maxEncodingJobsPerEvent", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
+    );
 
     _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -455,10 +458,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         
         try
         {
+			int milliSecondsToSleepWaitingLock = 500;
+
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::Ingestion,
 				_maxSecondsToWaitCheckIngestionLock,
-				_processorMMS, "CheckIngestion", _logger);
+				_processorMMS, "CheckIngestion",
+				milliSecondsToSleepWaitingLock, _logger);
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
@@ -10513,16 +10519,17 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
 	try
 	{
+		int milliSecondsToSleepWaitingLock = 500;
+
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
 			_maxSecondsToWaitCheckEncodingJobLock,
-			_processorMMS, "CheckEncoding", _logger);
-
-		int maxEncodingsNumber = 20;
+			_processorMMS, "CheckEncoding",
+			milliSecondsToSleepWaitingLock, _logger);
 
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
-		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, maxEncodingsNumber);
+		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, _maxEncodingJobsPerEvent);
 
 		_pActiveEncodingsManager->addEncodingItems(encodingItems);
 
@@ -10869,10 +10876,13 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 
 		try
 		{
+			int milliSecondsToSleepWaitingLock = 500;
+
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
 				MMSEngineDBFacade::LockType::MainAndBackupLiveRecordingHA,
 				_maxSecondsToWaitMainAndBackupLiveChunkLock,
-				_processorMMS, "MainAndBackupLiveRecording", _logger);
+				_processorMMS, "MainAndBackupLiveRecording",
+				milliSecondsToSleepWaitingLock, _logger);
 
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();
 		}

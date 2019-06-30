@@ -26,12 +26,13 @@ int UpdaterEncoderJob::updateEncodingJob (
 
 	try
 	{
-		// int waitingTimeoutInSecondsIfLocked = 30;
+		int milliSecondsToSleepWaitingLock = 500;
 
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType::EncodingJobs,
 			maxSecondsToWaitUpdateEncodingJobLock,
-			processorMMS, "UpdateEncodingJob", _logger);
+			processorMMS, "UpdateEncodingJob",
+			milliSecondsToSleepWaitingLock, _logger);
 
 		int updateEncodingJobReturn = _mmsEngineDBFacade->updateEncodingJob (
 				encodingJobKey, encodingError, mediaItemKey,

@@ -1546,7 +1546,9 @@ public:
         int64_t workspaceKey, string liveURLConfigurationLabel);
     
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
-			string owner, string label, string data = "no data");
+			string owner, string label,
+			int milliSecondsToSleepWaitingLock = 500,
+			string data = "no data");
 
 	void releaseLock(LockType lockType, string label, string data = "no data");
 

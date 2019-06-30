@@ -1,5 +1,4 @@
 
-#include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getEncodingJobs(
