@@ -9,7 +9,7 @@ fi
 
 command=$1
 
-if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" -a "$command" != "resetdata"]
+if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" -a "$command" != "resetdata" ]
 then
 	echo "Usage $0 start | stop | status | resetdata [nodaemon]"
 
