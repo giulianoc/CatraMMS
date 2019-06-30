@@ -515,6 +515,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 )
 {
     string      lastSQLCommand;
+	string		temporaryTableName;
     Json::Value mediaItemsListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -669,8 +670,18 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		pair<shared_ptr<sql::ResultSet>, int64_t>	resultSetAndNumFound;
 		if (tagsIn.size() > 0 || tagsNotIn.size() > 0)
 		{
+			{
+				temporaryTableName = "MMS_MediaItemFilter_" + to_string(conn->getConnectionId());
+
+				_logger->info(__FILEREF__ + "getMediaItemsList temporary table name"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", temporaryTableName: " + temporaryTableName
+				);
+			}
+        
+			// getMediaItemsList_withTagsCheck creates a temporary table
 			resultSetAndNumFound = getMediaItemsList_withTagsCheck (
-					conn, workspaceKey, newMediaItemKey, start, rows,
+					conn, workspaceKey, temporaryTableName, newMediaItemKey, start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
@@ -1090,6 +1101,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         field = "response";
         mediaItemsListRoot[field] = responseRoot;
 
+		if (tagsIn.size() > 0 || tagsNotIn.size() > 0)
+		{
+			lastSQLCommand = 
+				string("drop temporary table ") + temporaryTableName;
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->executeUpdate();
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -1108,11 +1128,49 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         if (conn != nullptr)
         {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
+            try
+            {
+				if ((tagsIn.size() > 0 || tagsNotIn.size() > 0) && temporaryTableName != "")
+				{
+					lastSQLCommand = 
+						string("drop temporary table IF EXISTS ") + temporaryTableName;
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->executeUpdate();
+				}
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
         }
 
         throw se;
@@ -1127,11 +1185,49 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         if (conn != nullptr)
         {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
+            try
+            {
+				if ((tagsIn.size() > 0 || tagsNotIn.size() > 0) && temporaryTableName != "")
+				{
+					lastSQLCommand = 
+						string("drop temporary table IF EXISTS ") + temporaryTableName;
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->executeUpdate();
+				}
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
         }
 
         throw e;
@@ -1145,11 +1241,49 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         if (conn != nullptr)
         {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
+            try
+            {
+				if ((tagsIn.size() > 0 || tagsNotIn.size() > 0) && temporaryTableName != "")
+				{
+					lastSQLCommand = 
+						string("drop temporary table IF EXISTS ") + temporaryTableName;
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->executeUpdate();
+				}
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
         }
 
         throw e;
@@ -1324,7 +1458,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 
 pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_withTagsCheck (
 		shared_ptr<MySQLConnection> conn,
-        int64_t workspaceKey, int64_t mediaItemKey,
+        int64_t workspaceKey, string temporaryTableName,
+		int64_t mediaItemKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -1371,6 +1506,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		}
 
 		// create temporary table
+		bool createdTemporaryTable = false;
 		{
 			string sqlWhere;
 			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
@@ -1402,11 +1538,11 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				sqlWhere += ("and " + jsonCondition);
         
 			lastSQLCommand = 
-				string("create temporary table MMS_MediaItemFilter select "
-					"t.mediaItemKey, CONCAT('" + tagSeparator +
-						"', GROUP_CONCAT(t.name SEPARATOR '" + tagSeparator + "'), '" +
-						tagSeparator + "') tagsGroup "
-					"from MMS_MediaItem mi, MMS_Tag t ")
+				string("create temporary table ") + temporaryTableName + " select "
+					+ "t.mediaItemKey, CONCAT('" + tagSeparator
+						+ "', GROUP_CONCAT(t.name SEPARATOR '" + tagSeparator + "'), '"
+						+ tagSeparator + "') tagsGroup "
+					+ "from MMS_MediaItem mi, MMS_Tag t "
 				+ sqlWhere
 				+ "group by t.mediaItemKey "
 				;
@@ -1425,12 +1561,14 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			if (title != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
 			preparedStatement->executeUpdate();
+
+			createdTemporaryTable = true;
 		}
 
 		int64_t numFound;
 		{
 			lastSQLCommand = 
-				string("select count(*) from MMS_MediaItemFilter f where ")
+				string("select count(*) from ") + temporaryTableName + " f where "
 				+ tagsGroupCondition;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1478,7 +1616,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, MMS_MediaItemFilter f ")
+           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, " + temporaryTableName + " f ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
