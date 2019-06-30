@@ -9,12 +9,15 @@ int main (int iArgc, char *pArgv [])
 
     if (iArgc != 2)
     {
-        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
+        cerr << "Usage: " << pArgv[0] << " seconds-to-wait config-path-name" << endl;
         
         return 1;
     }
+
+	int secondsToWait = atol(pArgv[1]);
+	string configFileName = pArgv[2];
     
-    Json::Value configuration = loadConfigurationFile(pArgv[1]);
+    Json::Value configuration = loadConfigurationFile(configFileName);
 
     auto logger = spdlog::stdout_logger_mt("encodingEngine");
     spdlog::set_level(spdlog::level::trace);
@@ -26,7 +29,7 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, 3, logger);
 
-	this_thread::sleep_for(chrono::seconds(30));
+	this_thread::sleep_for(chrono::seconds(secondsToWait));
 
 	int waitingTimeoutInSecondsIfLocked = 10;
 

@@ -2,16 +2,16 @@
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
-	echo "Usage $0 start | stop | status [nodaemon]"
+	echo "Usage $0 start | stop | status | resetdata [nodaemon]"
 
 	exit
 fi
 
 command=$1
 
-if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" ]
+if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" -a "$command" != "resetdata"]
 then
-	echo "Usage $0 start | stop | status [nodaemon]"
+	echo "Usage $0 start | stop | status | resetdata [nodaemon]"
 
 	exit
 fi
@@ -54,6 +54,9 @@ then
 	#3. waiting the core
 	#ulimit -c unlimited
 	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS $CatraMMS_PATH/CatraMMS/conf/mms.rsi.cfg
+elif [ "$command" == "resetdata" ]
+then
+	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService --resetdata $CatraMMS_PATH/CatraMMS/conf/mms.rsi.cfg
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status

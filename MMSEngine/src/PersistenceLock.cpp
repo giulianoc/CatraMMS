@@ -11,8 +11,8 @@ PersistenceLock::PersistenceLock(
 	_label = label;
 	_lockType = lockType;
 	_dataInitialized = false;
-	_lockDone = false;
 
+	_lockDone = false;
 	_mmsEngineDBFacade->setLock(lockType, waitingTimeoutInSecondsIfLocked, owner, label);
 	// no exception means lock is done
 	_lockDone = true;
@@ -28,6 +28,12 @@ PersistenceLock::~PersistenceLock()
 				_mmsEngineDBFacade->releaseLock(_lockType, _label, _data);
 			else
 				_mmsEngineDBFacade->releaseLock(_lockType, _label);
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "Destructor PersistenceLock, no releaseLock"
+				+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)
+			);
 		}
 	}
 	catch(runtime_error e)
