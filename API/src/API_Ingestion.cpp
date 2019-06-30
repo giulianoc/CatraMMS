@@ -43,6 +43,8 @@ void API::ingestion(
 
     try
     {
+		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
         Json::Value requestBodyRoot;
         try
         {
@@ -307,6 +309,11 @@ void API::ingestion(
         }
 
         sendSuccess(request, 201, responseBody);
+
+		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+        _logger->info(__FILEREF__ + "Ingestion statistics"
+            + ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+        );
     }
 	catch(AlreadyLocked e)
 	{
