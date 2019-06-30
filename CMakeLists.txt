@@ -65,7 +65,7 @@ add_subdirectory(predefinedEncodingProfiles/audio)
 add_subdirectory(predefinedEncodingProfiles/image)
 
 add_subdirectory(utilities/registerAdministratorCustomer/src)
-add_subdirectory(utilities/registerCustomer/src)
+add_subdirectory(utilities/cvCaptureTest/src)
 add_subdirectory(utilities/lockTest/src)
 add_subdirectory(utilities/sendEmail/src)
 

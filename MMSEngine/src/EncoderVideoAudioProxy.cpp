@@ -5983,7 +5983,7 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 	bool captureFinished = false;
 	while (!captureFinished)
 	{
-		capture.open(sourcePhysicalPath);
+		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
 		if (!capture.isOpened())
 		{
 			if (FileIO::fileExisting(sourcePhysicalPath))
@@ -6470,6 +6470,21 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
 					newIngestionStatus, errorMessage);
 		}
+		else
+		{
+			_logger->info(__FILEREF__ + "faceRecognition media done"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", cascadeName: " + faceRecognitionCascadeName
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
+				+ ", framesContainingFaces: " + to_string(framesContainingFaces)
+				+ ", frameContainingFaceFound: " + to_string(frameContainingFaceFound)
+			);
+		}
 	}
 
 	capture.release();
@@ -6820,7 +6835,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 	bool captureFinished = false;
 	while (!captureFinished)
 	{
-		capture.open(sourcePhysicalPath);
+		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
 		if (!capture.isOpened())
 		{
 			if (FileIO::fileExisting(sourcePhysicalPath))
