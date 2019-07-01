@@ -170,6 +170,7 @@ void API::ingestion(
 
         try
         {
+			/*
 			int milliSecondsToSleepWaitingLock = 200;
 
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
@@ -177,6 +178,7 @@ void API::ingestion(
 				_maxSecondsToWaitAPIIngestionLock,
 				_hostName, "APIIngestion", milliSecondsToSleepWaitingLock,
 				_logger);
+			*/
 
             // used to save <label of the task> ---> vector of ingestionJobKey. A vector is used in case the same label is used more times
             // It is used when ReferenceLabel is used.
