@@ -132,8 +132,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 							"and ij.ingestionType = 'Live-Recorder' "
-							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-							"for update ";
+							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) ";
+							// "for update ";
 							// "limit ? offset ?";
 							// "limit ? offset ? for update";
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -212,8 +212,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"and ij.ingestionType != 'Live-Recorder' "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"order by ir.ingestionDate asc "
-							// "limit ? offset ?";
-							"limit ? offset ? for update";
+							"limit ? offset ?";
+							// "limit ? offset ? for update";
 					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndexIngestionJob = 1;
@@ -781,9 +781,9 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 
 shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
     shared_ptr<MySQLConnection> conn, bool commit)
-{    
+{
     string      lastSQLCommand;
-    
+
     bool autoCommit = true;
 
     try

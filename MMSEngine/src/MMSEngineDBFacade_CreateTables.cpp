@@ -78,7 +78,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
 			{
-				LockType lockType = LockType::Ingestion;
+				LockType lockType = LockType::IngestionAndEncoding;
 				int maxDurationInMinutes = 5;
 
 				lastSQLCommand = 
@@ -105,6 +105,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				}
             }
 
+			/*
 			{
 				LockType lockType = LockType::EncodingJobs;
 				int maxDurationInMinutes = 5;
@@ -132,6 +133,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					}
 				}
             }
+			*/
 
 			{
 				LockType lockType = LockType::MainAndBackupLiveRecordingHA;
