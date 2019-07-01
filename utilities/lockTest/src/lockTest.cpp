@@ -7,14 +7,14 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 2)
+    if (iArgc != 3)
     {
-        cerr << "Usage: " << pArgv[0] << " seconds-to-wait config-path-name" << endl;
+        cerr << "Usage: " << pArgv[0] << " seconds-to-wait-lock config-path-name" << endl;
         
         return 1;
     }
 
-	int secondsToWait = atol(pArgv[1]);
+	int secondsToWaitLock = atol(pArgv[1]);
 	string configFileName = pArgv[2];
     
     Json::Value configuration = loadConfigurationFile(configFileName.c_str());
@@ -29,16 +29,39 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, 3, logger);
 
-	this_thread::sleep_for(chrono::seconds(secondsToWait));
+	// this_thread::sleep_for(chrono::seconds(secondsToWait));
 
-	int waitingTimeoutInSecondsIfLocked = 10;
+	int waitingTimeoutInSecondsIfLocked = secondsToWaitLock;
 
-	PersistenceLock persistenceLock(mmsEngineDBFacade,
-		MMSEngineDBFacade::LockType::Ingestion,
-		waitingTimeoutInSecondsIfLocked,
-		"test", "Test", logger);
+	try
+	{
+
+		cout << endl << endl << "First PersistenceLock" << endl << endl ;
+		PersistenceLock persistenceLock(mmsEngineDBFacade,
+			MMSEngineDBFacade::LockType::Ingestion,
+			waitingTimeoutInSecondsIfLocked,
+			"test", "Test", logger);
+
+		this_thread::sleep_for(chrono::seconds(30));
+	}
+	catch (exception e)
+	{
+		cout << endl << endl << "First. Exception: " << e.what() << endl << endl ;
+	}
   
-	this_thread::sleep_for(chrono::seconds(30));
+
+	try
+	{
+		cout << endl << endl << "Second PersistenceLock" << endl << endl ;
+		PersistenceLock persistenceLock(mmsEngineDBFacade,
+			MMSEngineDBFacade::LockType::Ingestion,
+			waitingTimeoutInSecondsIfLocked,
+			"test", "Test", logger);
+	}
+	catch (exception e)
+	{
+		cout << endl << endl << "Second. Exception: " << e.what() << endl << endl ;
+	}
 
     logger->info(__FILEREF__ + "Shutdown done"
             );

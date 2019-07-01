@@ -22,19 +22,30 @@ PersistenceLock::~PersistenceLock()
 {
 	try
 	{
-		if (_lockDone)
+		// 2019-07-01: check on _lockDone is useless because when the PersistenceLock constructor
+		//	raise an exception, the PersistenceLock destructor is not called
+		// if (_lockDone)
 		{
 			if (_dataInitialized)
 				_mmsEngineDBFacade->releaseLock(_lockType, _label, _data);
 			else
 				_mmsEngineDBFacade->releaseLock(_lockType, _label);
 		}
+		/*
 		else
 		{
 			_logger->info(__FILEREF__ + "Destructor PersistenceLock, no releaseLock"
 				+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)
 			);
 		}
+		*/
+	}
+    catch(sql::SQLException se)
+    {
+		_logger->error(__FILEREF__ + "releaseLock failed"
+			+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)
+			+ ", exception: " + se.what()
+		);
 	}
 	catch(runtime_error e)
 	{

@@ -523,16 +523,6 @@ void MMSEngineDBFacade::releaseLock(
 		}
 
 		{
-			string lockStatisticMessage = __FILEREF__ + "MMS_Lock duration"
-				+ ", type: @" + sLockType + "@"
-				+ ", owner: @" + owner + "@"
-				+ ", label: @" + label + "@"
-				+ ", lockDuration: @" + to_string(lockDuration) + "@"
-			;
-			_logger->info(lockStatisticMessage);
-		}
-
-		{
 			lastSQLCommand =
 				"update MMS_Lock set end = NOW(), active = 0, lastUpdate = NOW(), "
 				"lastDurationInMilliSecs = TIMESTAMPDIFF(microsecond, start, NOW()) / 1000, owner = NULL";
@@ -581,6 +571,16 @@ void MMSEngineDBFacade::releaseLock(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		{
+			string lockStatisticMessage = __FILEREF__ + "MMS_Lock duration"
+				+ ", type: @" + sLockType + "@"
+				+ ", owner: @" + owner + "@"
+				+ ", label: @" + label + "@"
+				+ ", lockDuration: @" + to_string(lockDuration) + "@"
+			;
+			_logger->info(lockStatisticMessage);
+		}
     }
     catch(sql::SQLException se)
     {
