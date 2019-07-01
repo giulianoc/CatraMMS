@@ -53,7 +53,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				"select ingestionJobKey from MMS_IngestionJob "
 				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
 				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW() "
-				"for update "
 				;
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
