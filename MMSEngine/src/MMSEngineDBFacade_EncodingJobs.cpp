@@ -21,16 +21,6 @@ void MMSEngineDBFacade::getEncodingJobs(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
-        {
-            lastSQLCommand = 
-                "START TRANSACTION";
-
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        
         {
             int retentionDaysToReset = 7;
             
@@ -49,6 +39,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                 _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were expired"
                     + ", rowsExpired: " + to_string(rowsExpired)
                 );
+        }
+        
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
         }
         
         {
@@ -2471,8 +2471,8 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         {
             lastSQLCommand = 
                 "select status, encodingPriority from MMS_EncodingJob "
-				"where encodingJobKey = ?";
-				// "where encodingJobKey = ? for update";
+				// "where encodingJobKey = ?";
+				"where encodingJobKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -2783,8 +2783,8 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         {
             lastSQLCommand = 
                 "select status, ingestionJobKey from MMS_EncodingJob "
-				"where encodingJobKey = ?";
-				// "where encodingJobKey = ? for update";
+				// "where encodingJobKey = ?";
+				"where encodingJobKey = ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);

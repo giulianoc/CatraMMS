@@ -29,7 +29,7 @@ int UpdaterEncoderJob::updateEncodingJob (
 		int milliSecondsToSleepWaitingLock = 500;
 
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
-			MMSEngineDBFacade::LockType::IngestionAndEncoding,
+			MMSEngineDBFacade::LockType::Encoding,
 			maxSecondsToWaitUpdateEncodingJobLock,
 			processorMMS, "UpdateEncodingJob",
 			milliSecondsToSleepWaitingLock, _logger);

@@ -1,4 +1,5 @@
 
+#include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
@@ -47,6 +48,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             statement->execute(lastSQLCommand);
         }
 
+		/* moved into the reset... method
 		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
 		{
 			lastSQLCommand = 
@@ -98,7 +100,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         				);
     				}    
     				catch(runtime_error e)
-    				{        
+    				{
         				_logger->error(__FILEREF__ + "SQL exception"
             				+ ", e.what(): " + e.what()
             				+ ", lastSQLCommand: " + lastSQLCommand
@@ -115,6 +117,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				}
 			}
 		}
+		*/
 
         // ingested jobs that do not have to wait a dependency
         {
@@ -1548,11 +1551,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+                preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
 
                 int rowsUpdated = preparedStatement->executeUpdate();
             }
-        }            
+        }
 
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {

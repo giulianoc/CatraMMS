@@ -17,6 +17,7 @@
 #include "RetentionTimes.h"
 #include "PersistenceLock.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
+#include "UpdaterIngestionJob.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
 #include "Magick++.h"
@@ -461,7 +462,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			int milliSecondsToSleepWaitingLock = 500;
 
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
-				MMSEngineDBFacade::LockType::IngestionAndEncoding,
+				MMSEngineDBFacade::LockType::Ingestion,
 				_maxSecondsToWaitCheckIngestionLock,
 				_processorMMS, "CheckIngestion",
 				milliSecondsToSleepWaitingLock, _logger);
@@ -553,10 +554,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
 					try
 					{
+						UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+						updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
+                            e.what());
+
+						/*
 						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
 						);
+						*/
 					}
 					catch(runtime_error& re)
 					{
@@ -596,10 +604,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
 					try
 					{
+						UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+						updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
+                            e.what());
+						/*
 						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber,
                             e.what()
 						);
+						*/
 					}
 					catch(runtime_error& re)
 					{
@@ -704,10 +718,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
 						try
 						{
+							UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+							updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+								MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+								errorMessage);
+							/*
 							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
 							);
+							*/
 						}
 						catch(runtime_error& re)
 						{
@@ -963,12 +983,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 															+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
 															+ ", errorMessage: " + errorMessage
 															+ ", processorMMS: " + processorMMS
-														);                            
+														);
+														UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+														updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+															ingestionStatus,
+															errorMessage,
+															processorMMS);
+
+														/*
 														_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
 															ingestionStatus, 
 															errorMessage,
 															processorMMS
 															);
+														*/
 
 														continue;
 													}
@@ -998,10 +1026,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
 						try
 						{
+							UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+							updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+								MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+								errorMessage);
+							/*
 							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
 							);
+							*/
 						}
 						catch(runtime_error& re)
 						{
@@ -1043,10 +1077,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
 						try
 						{
+							UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+							updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+								MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+								errorMessage);
+							/*
 							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage
 							);
+							*/
 						}
 						catch(runtime_error& re)
 						{
@@ -1109,10 +1149,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1154,10 +1200,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1203,12 +1255,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
-                                        );                            
+                                        );
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											ingestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
                                     }
                                     else
                                     {
@@ -1222,11 +1281,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
                                         );                            
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											nextIngestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
 
                                         thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
                                             _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
@@ -1253,12 +1319,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
-                                        );                            
+                                        );
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											ingestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
                                     }
                                     else
                                     {
@@ -1271,12 +1344,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
-                                        );                            
+                                        );
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											nextIngestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
                                         
                                         thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
                                             _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
@@ -1304,11 +1384,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
                                         );                            
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											ingestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus, 
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
                                     }
                                     else
                                     {
@@ -1321,12 +1408,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                             + ", errorMessage: " + errorMessage
                                             + ", processorMMS: " + processorMMS
-                                        );                            
+                                        );
+										UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+										updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+											nextIngestionStatus,
+											errorMessage,
+											processorMMS);
+										/*
                                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus, 
                                                 errorMessage,
                                                 processorMMS
                                                 );
+										*/
 
                                         thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
                                             _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
@@ -1345,11 +1439,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										nextIngestionStatus,
+										errorMessage,
+										processorMMS);
+									/*
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
                                             );
+									*/
                                 }
                             }
                             catch(exception e)
@@ -1393,10 +1494,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1438,10 +1545,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1495,10 +1608,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1540,10 +1659,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1608,10 +1733,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1653,10 +1784,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1710,10 +1847,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1755,10 +1898,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1811,10 +1960,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1856,10 +2011,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1912,10 +2073,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -1957,10 +2124,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2035,10 +2208,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2080,10 +2259,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2137,10 +2322,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2182,10 +2373,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2239,10 +2436,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2284,10 +2487,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2341,10 +2550,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2386,10 +2601,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2436,11 +2657,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										ingestionStatus,
+										errorMessage,
+										processorMMS);
+									/*
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                             ingestionStatus, 
                                             errorMessage,
                                             processorMMS
                                             );
+									*/
                                 }
                                 else
                                 {
@@ -2471,10 +2699,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2516,10 +2750,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2573,10 +2813,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2618,10 +2864,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2675,10 +2927,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2720,10 +2978,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2777,10 +3041,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2822,10 +3092,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2879,10 +3155,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2924,10 +3206,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -2981,10 +3269,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3026,10 +3320,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3083,10 +3383,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3128,10 +3434,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3186,10 +3498,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3231,10 +3549,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3289,10 +3613,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3334,10 +3664,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3390,10 +3726,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3435,10 +3777,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3485,12 +3833,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										ingestionStatus,
+										errorMessage,
+										processorMMS);
+									/*
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                             ingestionStatus, 
                                             errorMessage,
                                             processorMMS
                                             );
-                                }
+									*/
+                               }
                                 else
                                 {
                                     thread changeFileFormatThread(&MMSEngineProcessor::changeFileFormatThread, this, 
@@ -3520,10 +3875,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3565,10 +3926,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
 								try
 								{
+									UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+									updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+										errorMessage);
+									/*
 									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage
                                         );
+									*/
 								}
 								catch(runtime_error& re)
 								{
@@ -3609,10 +3976,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             );                            
 							try
 							{
+								UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+								updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+									MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+									errorMessage);
+								/*
 								_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                     MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage
                                     );
+								*/
 							}
 							catch(runtime_error& re)
 							{
@@ -3733,10 +4106,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -3784,10 +4163,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				 e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -3853,10 +4238,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -3904,10 +4295,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -3963,10 +4360,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4014,10 +4417,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4090,10 +4499,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4135,10 +4550,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4235,10 +4656,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4281,10 +4708,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4354,10 +4787,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4401,10 +4840,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4448,10 +4893,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4495,10 +4946,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4541,10 +4998,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
 			try
 			{
+				UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+				updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+					e.what());
+				/*
 				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
+				*/
 			}
 			catch(runtime_error& re)
 			{
@@ -4591,10 +5054,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				errorMessage);
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 errorMessage
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4716,10 +5185,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4762,10 +5237,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -4902,10 +5383,16 @@ void MMSEngineProcessor::removeContentTask(
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
         );                            
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch(runtime_error e)
     {
@@ -4972,11 +5459,18 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				ingestionStatus,
+				errorMessage,
+				processorMMS);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                     ingestionStatus, 
                     errorMessage,
                     processorMMS
                     );
+			*/
             
             return;
         }
@@ -5135,11 +5629,18 @@ void MMSEngineProcessor::postOnFacebookTask(
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				ingestionStatus,
+				errorMessage,
+				processorMMS);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                     ingestionStatus, 
                     errorMessage,
                     processorMMS
                     );
+			*/
             
             return;
         }
@@ -5346,11 +5847,18 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				ingestionStatus,
+				errorMessage,
+				processorMMS);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                     ingestionStatus, 
                     errorMessage,
                     processorMMS
                     );
+			*/
             
             return;
         }
@@ -5565,11 +6073,18 @@ void MMSEngineProcessor::httpCallbackTask(
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				ingestionStatus,
+				errorMessage,
+				processorMMS);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                     ingestionStatus, 
                     errorMessage,
                     processorMMS
                     );
+			*/
             
             return;
         }
@@ -5866,11 +6381,18 @@ void MMSEngineProcessor::localCopyContentTask(
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				ingestionStatus,
+				errorMessage,
+				processorMMS);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                     ingestionStatus, 
                     errorMessage,
                     processorMMS
                     );
+			*/
             
             return;
         }
@@ -6811,9 +7333,15 @@ void MMSEngineProcessor::changeFileFormatThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -6850,9 +7378,15 @@ void MMSEngineProcessor::changeFileFormatThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -6952,10 +7486,16 @@ void MMSEngineProcessor::copyContentThread(
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
         );                            
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch (runtime_error& e) 
     {
@@ -6976,9 +7516,15 @@ void MMSEngineProcessor::copyContentThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -7018,9 +7564,15 @@ void MMSEngineProcessor::copyContentThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -7278,9 +7830,15 @@ void MMSEngineProcessor::extractTracksContentThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -7317,9 +7875,15 @@ void MMSEngineProcessor::extractTracksContentThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -7602,10 +8166,16 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -7656,10 +8226,16 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
 				e.what()
 			);
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -8005,10 +8581,16 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
                 + ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
-            );                            
+            );
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				newIngestionStatus,
+				errorMessage);
+			/*
             _mmsEngineDBFacade->updateIngestionJob (
                 ingestionJobKey, 
                 newIngestionStatus, errorMessage);
+			*/
         }
         else
         {
@@ -10195,11 +10777,17 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
-        );                            
+        );
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch(runtime_error e)
     {
@@ -10422,10 +11010,16 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
         );                            
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch(runtime_error e)
     {
@@ -10522,7 +11116,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		int milliSecondsToSleepWaitingLock = 500;
 
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
-			MMSEngineDBFacade::LockType::IngestionAndEncoding,
+			MMSEngineDBFacade::LockType::Encoding,
 			_maxSecondsToWaitCheckEncodingJobLock,
 			_processorMMS, "CheckEncoding",
 			milliSecondsToSleepWaitingLock, _logger);
@@ -11476,9 +12070,15 @@ RESUMING FILE TRANSFERS
                     );                            
 					try
 					{
+						UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+						updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+							MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+							e.what());
+						/*
 						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+						*/
 					}
 					catch(runtime_error& re)
 					{
@@ -11542,9 +12142,15 @@ RESUMING FILE TRANSFERS
                     );                            
 					try
 					{
+						UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+						updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+							MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+							e.what());
+						/*
 						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+						*/
 					}
 					catch(runtime_error& re)
 					{
@@ -11608,9 +12214,15 @@ RESUMING FILE TRANSFERS
                     );                            
 					try
 					{
+						UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+						updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+							MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+							e.what());
+						/*
 						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                             e.what());
+						*/
 					}
 					catch(runtime_error& re)
 					{
@@ -11767,11 +12379,17 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
-        );                            
+        );
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch (curlpp::LogicError & e) 
     {
@@ -11790,9 +12408,15 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -11830,9 +12454,15 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -11870,9 +12500,15 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -12718,10 +13354,16 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 + ", IngestionStatus: " + "End_TaskSuccess"
                 + ", errorMessage: " + ""
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+				"");
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                     MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                     "" // errorMessage
             );
+			*/
         }
     }
     catch (curlpp::LogicError & e) 
@@ -12740,9 +13382,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -12779,9 +13427,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -12817,9 +13471,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -12855,9 +13515,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -13540,10 +14206,16 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 + ", IngestionStatus: " + "End_TaskSuccess"
                 + ", errorMessage: " + ""
             );                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+				"");
+			/*
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                     MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                     "" // errorMessage
             );
+			*/
         }
     }
     catch (curlpp::LogicError & e) 
@@ -13563,9 +14235,15 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -13603,9 +14281,15 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -13641,9 +14325,15 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -13679,9 +14369,15 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14081,10 +14777,16 @@ void MMSEngineProcessor::userHttpCallbackThread(
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
         );                            
+		UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+		updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
+			"");
+		/*
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
         );
+		*/
     }
     catch (curlpp::LogicError & e) 
     {
@@ -14102,9 +14804,15 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14141,9 +14849,15 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14180,9 +14894,15 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14219,9 +14939,15 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14312,9 +15038,15 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14354,9 +15086,15 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14449,9 +15187,15 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{
@@ -14491,9 +15235,15 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );                            
 		try
 		{
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (ingestionJobKey,
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what());
+			*/
 		}
 		catch(runtime_error& re)
 		{

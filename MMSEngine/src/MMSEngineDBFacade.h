@@ -74,20 +74,18 @@ class MMSEngineDBFacade {
 
 public:
     enum class LockType {
-		IngestionAndEncoding			= 0,
-		// EncodingJobs					= 1,
+		Ingestion						= 0,
+		Encoding						= 1,
 		MainAndBackupLiveRecordingHA	= 2
     };
     static const char* toString(const LockType& lockType)
     {
         switch (lockType)
         {
-            case LockType::IngestionAndEncoding:
-                return "IngestionAndEncoding";
-				/*
-            case LockType::EncodingJobs:
-                return "EncodingJobs";
-				*/
+            case LockType::Ingestion:
+                return "Ingestion";
+            case LockType::Encoding:
+                return "Encoding";
             case LockType::MainAndBackupLiveRecordingHA:
                 return "MainAndBackupLiveRecordingHA";
             default:
@@ -100,12 +98,10 @@ public:
         lowerCase.resize(lockType.size());
         transform(lockType.begin(), lockType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "ingestionandencoding")
-            return LockType::IngestionAndEncoding;
-		/*
-		else if (lowerCase == "encodingjobs")
-            return LockType::EncodingJobs;
-			*/
+        if (lowerCase == "ingestion")
+            return LockType::Ingestion;
+		else if (lowerCase == "encoding")
+            return LockType::Encoding;
 		else if (lowerCase == "mainandbackupliverecordingha")
             return LockType::MainAndBackupLiveRecordingHA;
         else

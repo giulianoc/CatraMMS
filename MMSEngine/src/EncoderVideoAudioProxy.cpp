@@ -26,6 +26,7 @@
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
 #include "catralibraries/Convert.h"
+#include "UpdaterIngestionJob.h"
 #include "UpdaterEncoderJob.h"
 #include "Validator.h"
 #include "FFMpeg.h"
@@ -6460,8 +6461,13 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 				+ ", errorMessage: " + errorMessage
 				+ ", processorMMS: " + processorMMS
 			);                                                                                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (_encodingItem->_ingestionJobKey,
+				newIngestionStatus, errorMessage);
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
 					newIngestionStatus, errorMessage);
+			*/
 		}
 	}
 	else if (faceRecognitionOutput == "FrameContainingFace")
@@ -6479,8 +6485,13 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 				+ ", errorMessage: " + errorMessage
 				+ ", processorMMS: " + processorMMS
 			);                                                                                            
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (_encodingItem->_ingestionJobKey,
+				newIngestionStatus, errorMessage);
+			/*
 			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
 					newIngestionStatus, errorMessage);
+			*/
 		}
 		else
 		{
@@ -8683,8 +8694,13 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 				+ ", errorMessage: " + errorMessage
 				+ ", processorMMS: " + processorMMS
 			);
+			UpdaterIngestionJob updaterIngestionJob(_mmsEngineDBFacade, _logger);
+			updaterIngestionJob.updateIngestionJob (_encodingItem->_ingestionJobKey,
+				newIngestionStatus, errorMessage);
+			/*
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
 				errorMessage);
+			*/
 		}
 		else
 		{
