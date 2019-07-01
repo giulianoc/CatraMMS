@@ -125,197 +125,171 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// 2019-03-31: scenario: we have a long link of encodings to be done (113 encodings) and among these we have 2 live recordings.
 				//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
 				//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
-                lastSQLCommand = 
-                    "select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
-                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-                        "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType = 'Live-Recorder' "
-                        "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"union "
-                    "select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
-                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-                        "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-						"and ij.ingestionType != 'Live-Recorder' "
-                        "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"order by ir.ingestionDate desc "
-                        "limit ? offset ?";
-                        // "limit ? offset ? for update";
-                shared_ptr<sql::PreparedStatement> preparedStatement (
+				{
+					lastSQLCommand = 
+						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+							"and ij.ingestionType = 'Live-Recorder' "
+							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) ";
+							// "limit ? offset ?";
+							// "limit ? offset ? for update";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndexIngestionJob = 1;
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					int queryParameterIndexIngestionJob = 1;
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
 
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-                preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+					// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
+					// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
-                preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-                preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-
-                if (resultSet->rowsCount() < mysqlRowCount)
-                    moreRows = false;
-                else
-                    moreRows = true;
-                mysqlOffset += maxIngestionJobs;
-                
-                while (resultSet->next())
-                {
-                    int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-                    int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
-                    string metaDataContent      = resultSet->getString("metaDataContent");
-                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
+					while (resultSet->next())
+					{
+						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+						int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
+						string metaDataContent      = resultSet->getString("metaDataContent");
+						IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
 							resultSet->getString("status"));
-                    IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
+						IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 							resultSet->getString("ingestionType"));
 
-//                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
-//                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-//                    );
-                    
-                    bool ingestionJobToBeManaged = true;
-                    bool atLeastOneDependencyRowFound = false;
+						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
+							ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
 
-                    lastSQLCommand = 
-                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
-                    shared_ptr<sql::PreparedStatement> preparedStatementDependency (
-							conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndexDependency = 1;
-                    preparedStatementDependency->setInt64(queryParameterIndexDependency++, ingestionJobKey);
+						bool ingestionJobToBeManaged;
+						int64_t dependOnIngestionJobKey;
+						int dependOnSuccess;
+						IngestionStatus ingestionStatusDependency;
 
-                    int64_t dependOnIngestionJobKey = -1;
-                    int dependOnSuccess = -1;
-                    IngestionStatus ingestionStatusDependency;
-                    shared_ptr<sql::ResultSet> resultSetDependency (
-							preparedStatementDependency->executeQuery());
-                    while (resultSetDependency->next())
-                    {
-                        if (!atLeastOneDependencyRowFound)
-                            atLeastOneDependencyRowFound = true;
+						tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
+							= ingestionJobToBeManagedInfo;
 
-                        if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
-                        {
-                            dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
-                            dependOnSuccess                 = resultSetDependency->getInt("dependOnSuccess");
-
-                            lastSQLCommand = 
-                                "select status from MMS_IngestionJob where ingestionJobKey = ?";
-                            shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                            int queryParameterIndexStatus = 1;
-                            preparedStatementIngestionJob->setInt64(queryParameterIndexStatus++, dependOnIngestionJobKey);
-
-                            shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
-                            if (resultSetIngestionJob->next())
-                            {
-                                string sStatus = resultSetIngestionJob->getString("status");
-
-//                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
-//                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-//                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-//                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
-//                                    + ", status (dependOnIngestionJobKey): " + sStatus
-//                                );
-
-                                ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
-
-                                if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
-                                {
-                                    if (dependOnSuccess == 1 && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
-                                    {
-                                        ingestionJobToBeManaged = false;
-
-                                        break;
-                                    }
-                                    else if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
-                                    {
-                                        ingestionJobToBeManaged = false;
-
-                                        break;
-                                    }
-                                    // else if (dependOnSuccess == -1)
-                                    //      It means OnComplete and we have to do it since it's a final state
-                                }
-                                else
-                                {
-                                    ingestionJobToBeManaged = false;
-
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
-                                    + ", status: " + "no row"
-                                );
-                            }
-                        }
-                        else
-                        {
-                            _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", dependOnIngestionJobKey: " + "null"
-                            );
-                        }
-                    }
-                    
-                    if (!atLeastOneDependencyRowFound)
-                    {
-						// this is not possible, even an ingestionJob without dependency has a row
-						// (with dependOnIngestionJobKey NULL)
-
-                        _logger->error(__FILEREF__ + "No dependency Row for the IngestionJob"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", workspaceKey: " + to_string(workspaceKey)
-                            + ", ingestionStatus: " + to_string(static_cast<int>(ingestionStatus))
-                            + ", ingestionType: " + to_string(static_cast<int>(ingestionType))
-                        );
-                    	ingestionJobToBeManaged = false;
-                    }
-
-                    if (ingestionJobToBeManaged)
-                    {
-                        _logger->info(__FILEREF__ + "Adding jobs to be processed"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ingestionStatus: " + toString(ingestionStatus)
-                        );
+						if (ingestionJobToBeManaged)
+						{
+							_logger->info(__FILEREF__ + "Adding jobs to be processed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionStatus: " + toString(ingestionStatus)
+							);
                         
-                        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-                        tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+							tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
                                 = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
 
-                        ingestionsToBeManaged.push_back(ingestionToBeManaged);
-                    }
-                    else
-                    {
-                        _logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ingestionStatus: " + toString(ingestionStatus)
-                            + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-                            + ", dependOnSuccess: " + to_string(dependOnSuccess)
-                            + ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
-                        );
-                    }
+							ingestionsToBeManaged.push_back(ingestionToBeManaged);
+						}
+						else
+						{
+							_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionStatus: " + toString(ingestionStatus)
+								+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+								+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+								+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+							);
+						}
+					}
+                }
+
+				{
+					lastSQLCommand = 
+						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+							"and ij.ingestionType != 'Live-Recorder' "
+							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+							"order by ir.ingestionDate desc "
+							"limit ? offset ?";
+							// "limit ? offset ? for update";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndexIngestionJob = 1;
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+					preparedStatement->setString(queryParameterIndexIngestionJob++,
+					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+
+					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
+					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
+
+					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+					if (resultSet->rowsCount() < mysqlRowCount)
+						moreRows = false;
+					else
+						moreRows = true;
+					mysqlOffset += maxIngestionJobs;
+                
+					while (resultSet->next())
+					{
+						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+						int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
+						string metaDataContent      = resultSet->getString("metaDataContent");
+						IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
+							resultSet->getString("status"));
+						IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
+							resultSet->getString("ingestionType"));
+
+						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
+							ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
+
+						bool ingestionJobToBeManaged;
+						int64_t dependOnIngestionJobKey;
+						int dependOnSuccess;
+						IngestionStatus ingestionStatusDependency;
+
+						tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
+							= ingestionJobToBeManagedInfo;
+
+						if (ingestionJobToBeManaged)
+						{
+							_logger->info(__FILEREF__ + "Adding jobs to be processed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionStatus: " + toString(ingestionStatus)
+							);
+                        
+							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+							tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
+
+							ingestionsToBeManaged.push_back(ingestionToBeManaged);
+						}
+						else
+						{
+							_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionStatus: " + toString(ingestionStatus)
+								+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+								+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+								+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+							);
+						}
+					}
+
+					if (resultSet->rowsCount() < mysqlRowCount)
+						moreRows = false;
+					else
+						moreRows = true;
+					mysqlOffset += maxIngestionJobs;
                 }
             }
         }
@@ -560,6 +534,164 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         throw e;
     }        
 }
+
+tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+	MMSEngineDBFacade::isIngestionJobToBeManaged(
+		int64_t ingestionJobKey,
+		int64_t workspaceKey,
+		string metaDataContent,
+		IngestionStatus ingestionStatus,
+		IngestionType ingestionType,
+		shared_ptr<MySQLConnection> conn
+		)
+{
+
+    bool ingestionJobToBeManaged = true;
+	int64_t dependOnIngestionJobKey = -1;
+	int dependOnSuccess = -1;
+	IngestionStatus ingestionStatusDependency;
+    string      lastSQLCommand;
+
+    try
+    {
+//                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
+//                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                    );
+                    
+                    bool atLeastOneDependencyRowFound = false;
+
+                    lastSQLCommand = 
+                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? rder by orderNumber asc";
+                    shared_ptr<sql::PreparedStatement> preparedStatementDependency (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndexDependency = 1;
+                    preparedStatementDependency->setInt64(queryParameterIndexDependency++, ingestionJobKey);
+
+                    shared_ptr<sql::ResultSet> resultSetDependency (
+							preparedStatementDependency->executeQuery());
+                    while (resultSetDependency->next())
+                    {
+                        if (!atLeastOneDependencyRowFound)
+                            atLeastOneDependencyRowFound = true;
+
+                        if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
+                        {
+                            dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
+                            dependOnSuccess                 = resultSetDependency->getInt("dependOnSuccess");
+
+                            lastSQLCommand = 
+                                "select status from MMS_IngestionJob where ingestionJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndexStatus = 1;
+                            preparedStatementIngestionJob->setInt64(queryParameterIndexStatus++, dependOnIngestionJobKey);
+
+                            shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
+                            if (resultSetIngestionJob->next())
+                            {
+                                string sStatus = resultSetIngestionJob->getString("status");
+
+//                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+//                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+//                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
+//                                    + ", status (dependOnIngestionJobKey): " + sStatus
+//                                );
+
+                                ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
+
+                                if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
+                                {
+                                    if (dependOnSuccess == 1 && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+                                    {
+                                        ingestionJobToBeManaged = false;
+
+                                        break;
+                                    }
+                                    else if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+                                    {
+                                        ingestionJobToBeManaged = false;
+
+                                        break;
+                                    }
+                                    // else if (dependOnSuccess == -1)
+                                    //      It means OnComplete and we have to do it since it's a final state
+                                }
+                                else
+                                {
+                                    ingestionJobToBeManaged = false;
+
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                                    + ", status: " + "no row"
+                                );
+                            }
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", dependOnIngestionJobKey: " + "null"
+                            );
+                        }
+                    }
+                    
+                    if (!atLeastOneDependencyRowFound)
+                    {
+						// this is not possible, even an ingestionJob without dependency has a row
+						// (with dependOnIngestionJobKey NULL)
+
+                        _logger->error(__FILEREF__ + "No dependency Row for the IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", workspaceKey: " + to_string(workspaceKey)
+                            + ", ingestionStatus: " + to_string(static_cast<int>(ingestionStatus))
+                            + ", ingestionType: " + to_string(static_cast<int>(ingestionType))
+                        );
+                    	ingestionJobToBeManaged = false;
+                    }
+
+					return make_tuple(ingestionJobToBeManaged, dependOnIngestionJobKey,
+							dependOnSuccess, ingestionStatusDependency);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }        
+}
+
 
 shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 {
