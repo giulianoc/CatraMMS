@@ -458,6 +458,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         
         try
         {
+			/*
 			int milliSecondsToSleepWaitingLock = 500;
 
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
@@ -465,6 +466,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				_maxSecondsToWaitCheckIngestionLock,
 				_processorMMS, "CheckIngestion",
 				milliSecondsToSleepWaitingLock, _logger);
+			*/
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
@@ -10519,6 +10521,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
 	try
 	{
+		/*
 		int milliSecondsToSleepWaitingLock = 500;
 
 		PersistenceLock persistenceLock(_mmsEngineDBFacade,
@@ -10526,6 +10529,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 			_maxSecondsToWaitCheckEncodingJobLock,
 			_processorMMS, "CheckEncoding",
 			milliSecondsToSleepWaitingLock, _logger);
+		*/
 
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
@@ -10876,6 +10880,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 
 		try
 		{
+			/*
 			int milliSecondsToSleepWaitingLock = 500;
 
 			PersistenceLock persistenceLock(_mmsEngineDBFacade,
@@ -10883,6 +10888,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 				_maxSecondsToWaitMainAndBackupLiveChunkLock,
 				_processorMMS, "MainAndBackupLiveRecording",
 				milliSecondsToSleepWaitingLock, _logger);
+			*/
 
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();
 		}

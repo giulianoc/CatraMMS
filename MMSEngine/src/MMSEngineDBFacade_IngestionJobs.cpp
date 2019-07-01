@@ -52,7 +52,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			lastSQLCommand = 
 				"select ingestionJobKey from MMS_IngestionJob "
 				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
-				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW()";
+				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW() "
+				"for update "
+				;
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -131,7 +133,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 							"and ij.ingestionType = 'Live-Recorder' "
-							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) ";
+							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+							"for update ";
 							// "limit ? offset ?";
 							// "limit ? offset ? for update";
 					shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -210,8 +213,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"and ij.ingestionType != 'Live-Recorder' "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"order by ir.ingestionDate asc "
-							"limit ? offset ?";
-							// "limit ? offset ? for update";
+							// "limit ? offset ?";
+							"limit ? offset ? for update";
 					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndexIngestionJob = 1;
@@ -425,7 +428,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
