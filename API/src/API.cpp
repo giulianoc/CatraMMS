@@ -447,7 +447,32 @@ void API::manageRequestAndResponse(
         );
     }
 
-    if (method == "binaryAuthorization")
+    if (method == "status")
+    {
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"status\": \"API server up and running\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "status failed"
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else if (method == "binaryAuthorization")
     {
         // since we are here, for sure user is authorized
         

@@ -46,6 +46,9 @@ server {
 
 	location /catramms {
 		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/status/?$ /api?version=$1&method=status last;
+		}
+		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/testEmail/?$ /api?version=$1&method=testEmail last;
 		}
 
@@ -226,6 +229,9 @@ server {
 	error_log    /var/catramms/logs/nginx/mms-encoder.error.log notice;
 
 	location /catramms {
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?version=$1&method=status last;
+		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
 		}

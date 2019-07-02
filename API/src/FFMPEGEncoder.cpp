@@ -245,7 +245,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     string method = methodIt->second;
 
-    if (method == "encodeContent")
+    if (method == "status")
+    {
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"status\": \"Encoder up and running\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "status failed"
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else if (method == "encodeContent")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
