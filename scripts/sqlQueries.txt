@@ -1,0 +1,10 @@
+
+#getIngestionJobs
+
+select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType from MMS_IngestionRoot ir, MMS_IngestionJob ij 
+where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null
+and ij.ingestionType = 'Live-Recorder'
+and (ij.status = 'Start_TaskQueued' or (ij.status in ('SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', 'SourceUploadingInProgress')
+and ij.sourceBinaryTransferred = 1)) 
+for update;
+
