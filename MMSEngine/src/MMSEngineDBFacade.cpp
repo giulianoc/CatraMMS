@@ -25,6 +25,7 @@
     // #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
 #endif
 
+#include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 #include <fstream>
 #include <sstream>
@@ -97,6 +98,31 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
     );
     
+    _maxSecondsToWaitUpdateIngestionJobLock    = configuration["mms"]["locks"].get("maxSecondsToWaitUpdateIngestionJobLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitUpdateIngestionJobLock: " + to_string(_maxSecondsToWaitUpdateIngestionJobLock)
+    );
+    _maxSecondsToWaitUpdateEncodingJobLock    = configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
+    );
+    _maxSecondsToWaitCheckIngestionLock    = configuration["mms"]["locks"].get("maxSecondsToWaitCheckIngestionLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
+    );
+    _maxSecondsToWaitCheckEncodingJobLock    = configuration["mms"]["locks"].get("maxSecondsToWaitCheckEncodingJobLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
+    );
+    _maxSecondsToWaitMainAndBackupLiveChunkLock    = configuration["mms"]["locks"].get("maxSecondsToWaitMainAndBackupLiveChunkLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
+    );
+    _maxSecondsToWaitSetNotToBeExecutedLock    = configuration["mms"]["locks"].get("maxSecondsToWaitSetNotToBeExecutedLock", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
+    );
+
     _predefinedVideoProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("videoDir", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath
@@ -357,6 +383,29 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
             }
         }
 
+        {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Old EncodingJobs retention Processing"
+					+ ", processorMMS: " + processorMMS
+					);
+            int retentionDaysToReset = 7;
+
+            lastSQLCommand = 
+                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ? "
+                "and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
+            preparedStatement->setInt(queryParameterIndex++, retentionDaysToReset);
+
+            int rowsExpired = preparedStatement->executeUpdate();            
+            if (rowsExpired > 0)
+                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were expired"
+                    + ", rowsExpired: " + to_string(rowsExpired)
+                );
+        }
+
 		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
 		// Really it does not depend by the processorMMS but I do not know where to place it
 		{
@@ -495,7 +544,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
     }    
 }
 
-void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
+void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS)
 
 {
     string      lastSQLCommand;
@@ -505,6 +554,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
     try
     {
+		int milliSecondsToSleepWaitingLock = 500;
+
+		PersistenceLock persistenceLock(this,
+			MMSEngineDBFacade::LockType::MainAndBackupLiveRecordingHA,
+			_maxSecondsToWaitMainAndBackupLiveChunkLock,
+			processorMMS, "MainAndBackupLiveRecording",
+			milliSecondsToSleepWaitingLock, _logger);
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -724,7 +781,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 						if (resultSetMediaItemDetails->next())
 						{
-							_logger->error(__FILEREF__ + "It should never happen"
+							// _logger->error(__FILEREF__ + "It should never happen"
+							_logger->warn(__FILEREF__ + "It should never happen"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
@@ -955,6 +1013,61 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
         }
 
         throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw e;
     }
     catch(runtime_error e)
     {

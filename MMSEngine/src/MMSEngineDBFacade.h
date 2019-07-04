@@ -1025,9 +1025,9 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
-	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey);
+	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey, string processorMMS);
 
-	void manageMainAndBackupOfRunnungLiveRecordingHA();
+	void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     
@@ -1058,13 +1058,6 @@ public:
     */
     
     void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionStatus newIngestionStatus,
-        string errorMessage,
-        string processorMMS = "noToBeUpdated");
-
-    void updateIngestionJob (
-        shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
@@ -1562,6 +1555,13 @@ private:
     int                             _confirmationCodeRetentionInDays;
     int                             _contentRetentionInMinutesDefaultValue;
 	int								_contentNotTransferredRetentionInDays;
+
+	int								_maxSecondsToWaitUpdateIngestionJobLock;
+	int								_maxSecondsToWaitUpdateEncodingJobLock;
+	int								_maxSecondsToWaitCheckIngestionLock;
+	int								_maxSecondsToWaitCheckEncodingJobLock;
+	int								_maxSecondsToWaitMainAndBackupLiveChunkLock;
+	int								_maxSecondsToWaitSetNotToBeExecutedLock;
     
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
@@ -1602,6 +1602,13 @@ private:
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		string jsonOrderBy,
 		bool admin);
+
+    void updateIngestionJob (
+        shared_ptr<MySQLConnection> conn,
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage,
+        string processorMMS = "noToBeUpdated");
 
     pair<int64_t,string> addWorkspace(
         shared_ptr<MySQLConnection> conn,

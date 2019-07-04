@@ -173,7 +173,7 @@ void API::ingestion(
 			/*
 			int milliSecondsToSleepWaitingLock = 200;
 
-			PersistenceLock persistenceLock(_mmsEngineDBFacade,
+			PersistenceLock persistenceLock(_mmsEngineDBFacade.get(),
 				MMSEngineDBFacade::LockType::Ingestion,
 				_maxSecondsToWaitAPIIngestionLock,
 				_hostName, "APIIngestion", milliSecondsToSleepWaitingLock,

@@ -1,4 +1,5 @@
 
+#include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getEncodingJobs(
@@ -8,12 +9,20 @@ void MMSEngineDBFacade::getEncodingJobs(
 )
 {
     string      lastSQLCommand;
-        
+
     shared_ptr<MySQLConnection> conn = nullptr;
     bool autoCommit = true;
 
     try
     {
+		int milliSecondsToSleepWaitingLock = 500;
+
+        PersistenceLock persistenceLock(this,
+            MMSEngineDBFacade::LockType::Encoding,
+            _maxSecondsToWaitCheckEncodingJobLock,
+            processorMMS, "CheckEncoding",
+            milliSecondsToSleepWaitingLock, _logger);
+
         chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
         conn = _connectionPool->borrow();	
@@ -21,26 +30,6 @@ void MMSEngineDBFacade::getEncodingJobs(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        {
-            int retentionDaysToReset = 7;
-            
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ? "
-                "and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
-            preparedStatement->setString(queryParameterIndex++, processorMMS);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
-            preparedStatement->setInt(queryParameterIndex++, retentionDaysToReset);
-
-            int rowsExpired = preparedStatement->executeUpdate();            
-            if (rowsExpired > 0)
-                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were expired"
-                    + ", rowsExpired: " + to_string(rowsExpired)
-                );
-        }
-        
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -50,14 +39,15 @@ void MMSEngineDBFacade::getEncodingJobs(
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
-        
+
         {
             lastSQLCommand = 
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
                 "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
-				"limit ?";
-				// "limit ? for update";
+				"limit ?"
+				// "limit ? for update"
+				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -1643,6 +1633,61 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         throw se;
     }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1771,6 +1816,16 @@ int MMSEngineDBFacade::updateEncodingJob (
 
     try
     {
+		/*
+		int milliSecondsToSleepWaitingLock = 500;
+
+        PersistenceLock persistenceLock(this,
+            MMSEngineDBFacade::LockType::Encoding,
+            maxSecondsToWaitUpdateEncodingJobLock,
+            processorMMS, "UpdateEncodingJob",
+            milliSecondsToSleepWaitingLock, _logger);
+		*/
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2201,6 +2256,62 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
 
         throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
     }
     catch(runtime_error e)
     {

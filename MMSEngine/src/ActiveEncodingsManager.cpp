@@ -12,7 +12,6 @@
  */
 
 #include "ActiveEncodingsManager.h"
-#include "UpdaterEncoderJob.h"
 #include "catralibraries/System.h"
 #include "FFMpeg.h"
 
@@ -326,7 +325,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 
 			try
 			{
-				_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
+				_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
@@ -336,17 +335,15 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 				int64_t encodedPhysicalPathKey = -1;
             
 				// PunctualError is used because, in case it always happens, the encoding will never reach a final state
-				UpdaterEncoderJob updaterEncoderJob(_mmsEngineDBFacade, _logger);
-				int encodingFailureNumber = updaterEncoderJob.updateEncodingJob (
-                    encodingJob->_encodingItem->_encodingJobKey, 
+				int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+                    encodingJob->_encodingItem->_encodingJobKey,
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
-                    encodingJob->_encodingItem->_ingestionJobKey,
-					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
+                    encodingJob->_encodingItem->_ingestionJobKey);
 			}
 			catch(...)
 			{
-				_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
+				_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
 					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
@@ -382,7 +379,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 
 			try
 			{
-				_logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError"
+				_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
@@ -392,17 +389,15 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 				encodedPhysicalPathKey = -1;
             
 				// PunctualError is used because, in case it always happens, the encoding will never reach a final state
-				UpdaterEncoderJob updaterEncoderJob(_mmsEngineDBFacade, _logger);
-				int encodingFailureNumber = updaterEncoderJob.updateEncodingJob (
+				int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
-                    encodingJob->_encodingItem->_ingestionJobKey,
-					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
+                    encodingJob->_encodingItem->_ingestionJobKey);
 			}
 			catch(...)
 			{
-				_logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob PunctualError FAILED"
+				_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
 					+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
 					+ ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 					+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
@@ -418,24 +413,22 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 
         try
         {
-            _logger->info(__FILEREF__ + "updaterEncoderJob.updateEncodingJob NoError"
+            _logger->info(__FILEREF__ + "updateEncodingJob NoError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                 + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
                 + ", encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
             );
 
-			UpdaterEncoderJob updaterEncoderJob(_mmsEngineDBFacade, _logger);
-            updaterEncoderJob.updateEncodingJob (
+            _mmsEngineDBFacade->updateEncodingJob (
                 encodingJob->_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::NoError, 
                 encodingJob->_encodingItem->_encodeData->_mediaItemKey, encodedPhysicalPathKey,
-                encodingJob->_encodingItem->_ingestionJobKey,
-				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
+                encodingJob->_encodingItem->_ingestionJobKey);
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "updaterEncoderJob.updateEncodingJob failed: " + e.what());
+            _logger->error(__FILEREF__ + "updateEncodingJob failed: " + e.what());
 
             encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
 
@@ -951,12 +944,10 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             
             int64_t mediaItemKey = -1;
             int64_t encodedPhysicalPathKey = -1;
-			UpdaterEncoderJob updaterEncoderJob(_mmsEngineDBFacade, _logger);
-            updaterEncoderJob.updateEncodingJob (encodingItem->_encodingJobKey,
+            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey,
                     MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                     mediaItemKey, encodedPhysicalPathKey,
-                    encodingItem->_ingestionJobKey,
-					_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
+                    encodingItem->_ingestionJobKey);
         }
         catch(exception e)
         {
@@ -971,11 +962,9 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             );
             int64_t mediaItemKey = -1;
             int64_t encodedPhysicalPathKey = -1;
-			UpdaterEncoderJob updaterEncoderJob(_mmsEngineDBFacade, _logger);
-            updaterEncoderJob.updateEncodingJob (encodingItem->_encodingJobKey, 
+            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
-                mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey,
-				_hostName, _maxSecondsToWaitUpdateEncodingJobLock);
+                mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey);
         }
 
 		encodingItemIndex++;

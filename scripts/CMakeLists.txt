@@ -43,6 +43,7 @@ SET (SCRIPTs
 	tailALL.sh
 	crontab.sh
 	crontab.rsi.sh
+	sqlQueries.txt
 )
 
 install (

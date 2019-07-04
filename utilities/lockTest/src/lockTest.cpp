@@ -38,7 +38,7 @@ int main (int iArgc, char *pArgv [])
 		int milliSecondsToSleepWaitingLock = 500;
 
 		cout << endl << endl << "First PersistenceLock" << endl << endl ;
-		PersistenceLock persistenceLock(mmsEngineDBFacade,
+		PersistenceLock persistenceLock(mmsEngineDBFacade.get(),
 			MMSEngineDBFacade::LockType::Ingestion,
 			waitingTimeoutInSecondsIfLocked,
 			"test", "Test", milliSecondsToSleepWaitingLock, logger);
@@ -56,7 +56,7 @@ int main (int iArgc, char *pArgv [])
 		int milliSecondsToSleepWaitingLock = 500;
 
 		cout << endl << endl << "Second PersistenceLock" << endl << endl ;
-		PersistenceLock persistenceLock(mmsEngineDBFacade,
+		PersistenceLock persistenceLock(mmsEngineDBFacade.get(),
 			MMSEngineDBFacade::LockType::Ingestion,
 			waitingTimeoutInSecondsIfLocked,
 			"test", "Test", milliSecondsToSleepWaitingLock, logger);

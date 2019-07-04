@@ -16,6 +16,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
     try
     {
+		int milliSecondsToSleepWaitingLock = 500;
+
+		PersistenceLock persistenceLock(this,
+			MMSEngineDBFacade::LockType::Ingestion,
+			_maxSecondsToWaitCheckIngestionLock,
+			processorMMS, "CheckIngestion",
+			milliSecondsToSleepWaitingLock, _logger);
+
         chrono::system_clock::time_point startPoint = chrono::system_clock::now();
         if (startPoint - _lastConnectionStatsReport >=
 				chrono::seconds(_dbConnectionPoolStatsReportPeriodInSeconds))
@@ -48,165 +56,100 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             statement->execute(lastSQLCommand);
         }
 
-		/* moved into the reset... method
-		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
-		{
-			lastSQLCommand = 
-				"select ingestionJobKey from MMS_IngestionJob "
-				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
-				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW() "
-				;
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-			preparedStatement->setString(queryParameterIndex++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInDays);
-
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-
-			while (resultSet->next())
-			{
-				int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-				{     
-           			IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
-
-					string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
-					string processorMMS;
-					_logger->info(__FILEREF__ + "Update IngestionJob"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", IngestionStatus: " + toString(newIngestionStatus)
-						+ ", errorMessage: " + errorMessage
-						+ ", processorMMS: " + processorMMS
-					);                            
-    				try
-    				{
-						updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-					}
-    				catch(sql::SQLException se)
-    				{
-        				string exceptionMessage(se.what());
-        
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", exceptionMessage: " + exceptionMessage
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}    
-    				catch(runtime_error e)
-    				{
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", e.what(): " + e.what()
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}        
-    				catch(exception e)
-    				{        
-        				_logger->error(__FILEREF__ + "SQL exception"
-            				+ ", lastSQLCommand: " + lastSQLCommand
-            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        				);
-    				}        
-				}
-			}
-		}
-		*/
+		chrono::system_clock::time_point pointAfterLive;
+		chrono::system_clock::time_point pointAfterNotLive;
 
         // ingested jobs that do not have to wait a dependency
         {
+			// 2019-03-31: scenario: we have a long link of encodings to be done (113 encodings) and among these we have 2 live recordings.
+			//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
+			//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
+			{
+				lastSQLCommand = 
+					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+						"and ij.ingestionType = 'Live-Recorder' "
+						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						// "for update "
+						;
+						// "limit ? offset ?"
+						// "limit ? offset ? for update"
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndexIngestionJob = 1;
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
+
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+				while (resultSet->next())
+				{
+					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
+					string metaDataContent      = resultSet->getString("metaDataContent");
+					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
+						resultSet->getString("status"));
+					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
+						resultSet->getString("ingestionType"));
+
+					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
+						ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
+
+					bool ingestionJobToBeManaged;
+					int64_t dependOnIngestionJobKey;
+					int dependOnSuccess;
+					IngestionStatus ingestionStatusDependency;
+
+					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
+						= ingestionJobToBeManagedInfo;
+
+					if (ingestionJobToBeManaged)
+					{
+						_logger->info(__FILEREF__ + "Adding jobs to be processed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ingestionStatus: " + toString(ingestionStatus)
+						);
+                       
+						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+						tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                               = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
+
+						ingestionsToBeManaged.push_back(ingestionToBeManaged);
+					}
+					else
+					{
+						_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ingestionStatus: " + toString(ingestionStatus)
+							+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+							+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+							+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+						);
+					}
+				}
+            }
+
+			pointAfterLive = chrono::system_clock::now();
+
             int mysqlOffset = 0;
             int mysqlRowCount = maxIngestionJobs;
             bool moreRows = true;
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
-				// 2019-03-31: scenario: we have a long link of encodings to be done (113 encodings) and among these we have 2 live recordings.
-				//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
-				//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
-				{
-					lastSQLCommand = 
-						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
-							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-							"and ij.ingestionType = 'Live-Recorder' "
-							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) ";
-							// "for update ";
-							// "limit ? offset ?";
-							// "limit ? offset ? for update";
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndexIngestionJob = 1;
-					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-					preparedStatement->setString(queryParameterIndexIngestionJob++,
-					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-
-					// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
-					// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
-
-					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-
-					while (resultSet->next())
-					{
-						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-						int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
-						string metaDataContent      = resultSet->getString("metaDataContent");
-						IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
-							resultSet->getString("status"));
-						IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
-							resultSet->getString("ingestionType"));
-
-						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
-							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-							ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
-
-						bool ingestionJobToBeManaged;
-						int64_t dependOnIngestionJobKey;
-						int dependOnSuccess;
-						IngestionStatus ingestionStatusDependency;
-
-						tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
-							= ingestionJobToBeManagedInfo;
-
-						if (ingestionJobToBeManaged)
-						{
-							_logger->info(__FILEREF__ + "Adding jobs to be processed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionStatus: " + toString(ingestionStatus)
-							);
-                        
-							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-
-							tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
-
-							ingestionsToBeManaged.push_back(ingestionToBeManaged);
-						}
-						else
-						{
-							_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionStatus: " + toString(ingestionStatus)
-								+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-								+ ", dependOnSuccess: " + to_string(dependOnSuccess)
-								+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
-							);
-						}
-					}
-                }
-
 				{
 					lastSQLCommand = 
 						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
@@ -215,8 +158,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"and ij.ingestionType != 'Live-Recorder' "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"order by ir.ingestionDate asc "
-							"limit ? offset ?";
-							// "limit ? offset ? for update";
+							"limit ? offset ?"
+							// "limit ? offset ? for update"
+							;
 					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndexIngestionJob = 1;
@@ -241,7 +185,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					else
 						moreRows = true;
 					mysqlOffset += maxIngestionJobs;
-                
+
 					while (resultSet->next())
 					{
 						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
@@ -297,6 +241,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					mysqlOffset += maxIngestionJobs;
                 }
             }
+
+			pointAfterNotLive = chrono::system_clock::now();
         }
 
         for (tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
@@ -369,7 +315,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "getIngestionsToBeManaged statistics"
-			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			+ ", total elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			+ ", select live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterLive - startPoint).count())
+			+ ", select not live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterNotLive - pointAfterLive).count())
+			+ ", processing entries elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - pointAfterNotLive).count())
+			+ ", ingestionsToBeManaged.size: " + to_string(ingestionsToBeManaged.size())
         );
     }
     catch(sql::SQLException se)
@@ -428,7 +378,64 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
 
         throw se;
-    }    
+    }
+    catch(AlreadyLocked e)
+    {
+        string exceptionMessage(e.what());
+        
+        _logger->warn(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw e;
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1202,6 +1209,16 @@ void MMSEngineDBFacade::updateIngestionJob (
 
     try
     {
+		/*
+		int milliSecondsToSleepWaitingLock = 500;
+
+		PersistenceLock persistenceLock(this,
+			MMSEngineDBFacade::LockType::Ingestion,
+			_maxSecondsToWaitUpdateIngestionJobLock,
+			processorMMS, "UpdateIngestionJob",
+			milliSecondsToSleepWaitingLock, _logger);
+		*/
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1237,6 +1254,26 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
 
         throw se;
+    }    
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
     }    
     catch(runtime_error e)
     {        
@@ -1695,7 +1732,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
     }    
 }
 
-void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
+void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
+		string processorMMS)
 {
 
     string      lastSQLCommand;
@@ -1705,6 +1743,18 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
 
     try
     {
+		/*
+		int milliSecondsToSleepWaitingLock = 500;
+
+		PersistenceLock persistenceLock(this,
+			MMSEngineDBFacade::LockType::Ingestion,
+			_maxSecondsToWaitSetNotToBeExecutedLock,
+			processorMMS, "setNotToBeExecutedStartingFrom",
+			milliSecondsToSleepWaitingLock, _logger);
+		*/
+
+        chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1754,6 +1804,11 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+        chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "setNotToBeExecutedStartingFrom statistics"
+			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+        );
     }
     catch(sql::SQLException se)
     {
@@ -1812,6 +1867,62 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
         }
 
         throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw e;
     }
     catch(runtime_error e)
     {

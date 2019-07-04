@@ -5,7 +5,7 @@ class PersistenceLock {
 
 	public:
 		PersistenceLock(
-			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+			MMSEngineDBFacade* mmsEngineDBFacade,
 			MMSEngineDBFacade::LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string label, int milliSecondsToSleepWaitingLock,
 			shared_ptr<spdlog::logger> logger);
@@ -16,7 +16,7 @@ class PersistenceLock {
 
 	private:
 		shared_ptr<spdlog::logger>			_logger;
-		shared_ptr<MMSEngineDBFacade>		_mmsEngineDBFacade;
+		MMSEngineDBFacade*					_mmsEngineDBFacade;
 		MMSEngineDBFacade::LockType			_lockType;
 		string								_data;
 		string								_label;

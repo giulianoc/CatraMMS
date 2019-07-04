@@ -32,8 +32,6 @@ SET (SOURCES
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
-	UpdaterEncoderJob.cpp
-	UpdaterIngestionJob.cpp
 	PersistenceLock.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
@@ -45,8 +43,6 @@ SET (HEADERS
 	Workspace.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
-	UpdaterEncoderJob.h
-	UpdaterIngestionJob.h
 	PersistenceLock.h
 	Validator.h
 	ActiveEncodingsManager.h
