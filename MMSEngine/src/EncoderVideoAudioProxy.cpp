@@ -1781,12 +1781,6 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     int imageQuality = -1;
     try
     {
-		// 09:08:52.608 mms2 finished the encoding
-		// 09:08:52.608 mms1 below the next statement ffmpeg.getMediaInfo fails
-		// just wait to be sure the file is completed (because of nfs) in mms1
-		int waitingInSecondsFileIsCompleted = 10;
-		this_thread::sleep_for(chrono::seconds(waitingInSecondsFileIsCompleted));
-
         FFMpeg ffmpeg (_configuration, _logger);
         tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
             ffmpeg.getMediaInfo(stagingEncodedAssetPathName);
