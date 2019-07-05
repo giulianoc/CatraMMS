@@ -24,11 +24,13 @@ SET (SCRIPTs
 	mmsApi.sh
 	mmsApi.rsi.lab.sh
 	mmsApi.rsi.mms2.sh
-	encoder.sh
-	encoder.rsi.sh
+	mmsEncoder.sh
+	mmsEncoder.rsi.lab.sh
+	mmsEncoder.rsi.mms2.sh
 	mmsEnv.sh
 	mmsEngineService.sh
-	mmsEngineService.rsi.sh
+	mmsEngineService.rsi.lab.sh
+	mmsEngineService.rsi.mms2.sh
 	ffmpegHelper.sh
 	imageMagickHelper.sh
 	nginx.sh
@@ -36,11 +38,14 @@ SET (SCRIPTs
 	setupALL.sh
 	setupALL.rsi.sh
 	statusALL.sh
-	statusALL.rsi.sh
+	statusALL.rsi.lab.sh
+	statusALL.rsi.mms2.sh
 	startALL.sh
-	startALL.rsi.sh
+	startALL.rsi.lab.sh
+	startALL.rsi.mms2.sh
 	stopALL.sh
-	stopALL.rsi.sh
+	stopALL.rsi.lab.sh
+	stopALL.rsi.mms2.sh
 	tailALL.sh
 	crontab.sh
 	crontab.rsi.sh
