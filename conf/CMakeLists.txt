@@ -23,9 +23,11 @@
 SET (CONFs
 	nginx.conf
 	catramms.nginx
-	catramms.rsi.nginx
+	catramms.rsi.lab.nginx
+	catramms.rsi.mms2.nginx
 	mms.cfg
-	mms.rsi.cfg
+	mms.rsi.lab.cfg
+	mms.rsi.mms2.cfg
 	crontab.txt
 	crontab.rsi.txt
 )

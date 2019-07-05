@@ -21,8 +21,9 @@
 # with the authors.
 
 SET (SCRIPTs
-	api.sh
-	api.rsi.sh
+	mmsApi.sh
+	mmsApi.rsi.lab.sh
+	mmsApi.rsi.mms2.sh
 	encoder.sh
 	encoder.rsi.sh
 	mmsEnv.sh

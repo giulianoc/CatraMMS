@@ -6,14 +6,14 @@ echo "nginx"
 
 #encoder before mmsEngineService otherwise mmsEngineService starts to send commands
 #to the encoder that it is still down
-echo "encoder"
-/opt/catramms/CatraMMS/scripts/encoder.rsi.sh start
+echo "mmsEncoder"
+/opt/catramms/CatraMMS/scripts/mmsEncoder.rsi.mms2.sh start
 
 echo "mmsEngineService"
-/opt/catramms/CatraMMS/scripts/mmsEngineService.rsi.sh start
+/opt/catramms/CatraMMS/scripts/mmsEngineService.rsi.mms2.sh start
 
-echo "api"
-/opt/catramms/CatraMMS/scripts/api.rsi.sh start
+echo "mmsEpi"
+/opt/catramms/CatraMMS/scripts/mmsEpi.rsi.mms2.sh start
 
 echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh start

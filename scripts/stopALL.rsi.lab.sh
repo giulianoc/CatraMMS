@@ -2,13 +2,13 @@
 
 
 echo "mmsApi"
-/opt/catramms/CatraMMS/scripts/mmsApi.sh stop
+/opt/catramms/CatraMMS/scripts/mmsApi.rsi.lab.sh stop
 
 echo "mmsEncoder"
-/opt/catramms/CatraMMS/scripts/mmsEncoder.sh stop
+/opt/catramms/CatraMMS/scripts/mmsEncoder.rsi.lab.sh stop
 
 echo "mmsEngineService"
-/opt/catramms/CatraMMS/scripts/mmsEngineService.sh stop
+/opt/catramms/CatraMMS/scripts/mmsEngineService.rsi.lab.sh stop
 
 echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh stop
