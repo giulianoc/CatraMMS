@@ -12,8 +12,8 @@ echo "mmsEncoder"
 echo "mmsEngineService"
 /opt/catramms/CatraMMS/scripts/mmsEngineService.rsi.mms2.sh start
 
-echo "mmsEpi"
-/opt/catramms/CatraMMS/scripts/mmsEpi.rsi.mms2.sh start
+echo "mmsApi"
+/opt/catramms/CatraMMS/scripts/mmsApi.rsi.mms2.sh start
 
 echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh start

@@ -13,7 +13,7 @@ echo "mmsEngineService"
 /opt/catramms/CatraMMS/scripts/mmsEngineService.rsi.lab.sh start
 
 echo "mmsApi"
-/opt/catramms/CatraMMS/scripts/mmsEpi.rsi.lab.sh start
+/opt/catramms/CatraMMS/scripts/mmsApi.rsi.lab.sh start
 
 echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh start
