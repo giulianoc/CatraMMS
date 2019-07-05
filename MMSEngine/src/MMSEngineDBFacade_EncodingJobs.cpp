@@ -42,7 +42,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         {
             lastSQLCommand = 
-                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority from MMS_EncodingJob " 
+                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, transcoder "
+				"from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
                 "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
 				"limit ?"
@@ -64,6 +65,10 @@ void MMSEngineDBFacade::getEncodingJobs(
                 encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
                 encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
                 encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("encodingPriority"));
+				if (encodingResultSet->isNull("transcoder"))
+					encodingItem->_transcoder = "";
+				else
+					encodingItem->_transcoder = encodingResultSet->getString("transcoder");
                 
                 if (encodingItem->_encodingParameters == "")
                 {

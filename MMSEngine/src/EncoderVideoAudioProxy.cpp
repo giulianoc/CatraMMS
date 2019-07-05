@@ -7329,164 +7329,139 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 	bool killedByUser = false;
 
-    #ifdef __LOCALENCODER__
-        if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
-        {
-            _logger->info("Max ffmpeg encoder capacity is reached"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-
-            throw MaxConcurrentJobsReached();
-        }
-    #endif
-
-	string transcoderStagingContentsPath;
-	string stagingContentsPath;
-	string segmentListFileName;
-	string recordedFileNamePrefix;
-	{
-		{
-			bool removeLinuxPathIfExist = false;
-			bool neededForTranscoder = true;
-			string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
-				neededForTranscoder,
-				_encodingItem->_workspace->_directoryName,
-				to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
-				"/",    // _encodingItem->_relativePath,
-				to_string(_encodingItem->_ingestionJobKey),
-				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-				removeLinuxPathIfExist);
-			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
-			if (directoryEndIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-				_logger->error(errorMessage);
-
-				// throw runtime_error(errorMessage);
-			}
-			transcoderStagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
-		}
-
-		{
-			bool removeLinuxPathIfExist = false;
-			bool neededForTranscoder = false;
-			string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
-				neededForTranscoder,
-				_encodingItem->_workspace->_directoryName,
-				to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
-				"/",    // _encodingItem->_relativePath,
-				to_string(_encodingItem->_ingestionJobKey),
-				-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-				-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-				removeLinuxPathIfExist);
-			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
-			if (directoryEndIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-				_logger->error(errorMessage);
-
-				// throw runtime_error(errorMessage);
-			}
-			stagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
-		}
-
-		segmentListFileName = to_string(_encodingItem->_ingestionJobKey)
-			+ "_" + to_string(_encodingItem->_encodingJobKey)
-			+ ".liveRecorder.list"
-		;
-
-		recordedFileNamePrefix = string("liveRecorder_")
-			+ to_string(_encodingItem->_ingestionJobKey)
-			+ "_" + to_string(_encodingItem->_encodingJobKey)
-			;
-    }
-
 	time_t utcNow = 0;
 	while (!killedByUser && utcNow < utcRecordingPeriodEnd)
 	{
-		// In case we are coming from a restart or ffmpef recorder is finished unexpectely,
-		// we will clean the segment files list
-		/*
-		if (FileIO::fileExisting(transcoderStagingContentsPath + segmentListFileName))
-		{
-			_logger->info(__FILEREF__ + "Remove"
-				+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
-				+ ", segmentListFileName: " + segmentListFileName
-				);
-			bool exceptionInCaseOfError = false;
-			FileIO::remove(transcoderStagingContentsPath + segmentListFileName, exceptionInCaseOfError);
-		}
-		*/
-
-    #ifdef __LOCALENCODER__
-		(*_pRunningEncodingsNumber)++;
-    #else
 		string ffmpegEncoderURL;
 		ostringstream response;
 		try
 		{
-			string encoderToSKip;
-			_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+			if (_encodingItem->_transcoder == "")
+			{
+				string encoderToSKip;
+				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
 					encoderToSKip);
-            _logger->info(__FILEREF__ + "Configuration item"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-            );
-            ffmpegEncoderURL = 
+				_logger->info(__FILEREF__ + "Configuration item"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+				);
+				ffmpegEncoderURL = 
                     _ffmpegEncoderProtocol
                     + "://"
                     + _currentUsedFFMpegEncoderHost + ":"
                     + to_string(_ffmpegEncoderPort)
                     + _ffmpegLiveRecorderURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
-            ;
-            string body;
-            {
-                Json::Value liveRecorderMedatada;
+				;
+
+				string body;
+				{
+					string transcoderStagingContentsPath;
+					string stagingContentsPath;
+					string segmentListFileName;
+					string recordedFileNamePrefix;
+					{
+						{
+							bool removeLinuxPathIfExist = false;
+							bool neededForTranscoder = true;
+							string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
+								neededForTranscoder,
+								_encodingItem->_workspace->_directoryName,
+								to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
+								"/",    // _encodingItem->_relativePath,
+								to_string(_encodingItem->_ingestionJobKey),
+								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+								removeLinuxPathIfExist);
+							size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
+							if (directoryEndIndex == string::npos)
+							{
+								string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
+								_logger->error(errorMessage);
+
+								// throw runtime_error(errorMessage);
+							}
+							transcoderStagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
+						}
+
+						{
+							bool removeLinuxPathIfExist = false;
+							bool neededForTranscoder = false;
+							string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
+								neededForTranscoder,
+								_encodingItem->_workspace->_directoryName,
+								to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
+								"/",    // _encodingItem->_relativePath,
+								to_string(_encodingItem->_ingestionJobKey),
+								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+								removeLinuxPathIfExist);
+							size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
+							if (directoryEndIndex == string::npos)
+							{
+								string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
+								_logger->error(errorMessage);
+
+								// throw runtime_error(errorMessage);
+							}
+							stagingContentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex + 1);
+						}
+
+						segmentListFileName = to_string(_encodingItem->_ingestionJobKey)
+							+ "_" + to_string(_encodingItem->_encodingJobKey)
+							+ ".liveRecorder.list"
+						;
+
+						recordedFileNamePrefix = string("liveRecorder_")
+							+ to_string(_encodingItem->_ingestionJobKey)
+							+ "_" + to_string(_encodingItem->_encodingJobKey)
+							;
+					}
+
+					Json::Value liveRecorderMedatada;
                 
-                liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-                liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
-                liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
-                liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
-                liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
-                liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_parametersRoot;
-                liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot;
+					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
+					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
+					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
+					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
+					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_parametersRoot;
+					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot;
 
-                {
-                    Json::StreamWriterBuilder wbuilder;
+					{
+						Json::StreamWriterBuilder wbuilder;
                     
-                    body = Json::writeString(wbuilder, liveRecorderMedatada);
-                }
-            }
+						body = Json::writeString(wbuilder, liveRecorderMedatada);
+					}
+				}
             
-            list<string> header;
+				list<string> header;
 
-            header.push_back("Content-Type: application/json");
-            {
-                string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
-                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+				header.push_back("Content-Type: application/json");
+				{
+					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
-                header.push_back(basicAuthorization);
-            }
+					header.push_back(basicAuthorization);
+				}
             
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
+				curlpp::Cleanup cleaner;
+				curlpp::Easy request;
 
-            // Setting the URL to retrive.
-            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+				// Setting the URL to retrive.
+				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
-            {
-                /*
+				if (_ffmpegEncoderProtocol == "https")
+				{
+					/*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
@@ -7500,159 +7475,183 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
                     typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-                 */
+					*/
                                                                                                   
                 
-                /*
-                // cert is stored PEM coded in file... 
-                // since PEM is default, we needn't set it for PEM 
-                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                equest.setOpt(sslCertType);
+					/*
+					// cert is stored PEM coded in file... 
+					// since PEM is default, we needn't set it for PEM 
+					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+					curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+					equest.setOpt(sslCertType);
 
-                // set the cert for client authentication
-                // "testcert.pem"
-                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                request.setOpt(sslCert);
-                 */
+					// set the cert for client authentication
+					// "testcert.pem"
+					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+					curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+					request.setOpt(sslCert);
+					*/
 
-                /*
-                // sorry, for engine we must set the passphrase
-                //   (if the key has one...)
-                // const char *pPassphrase = NULL;
-                if(pPassphrase)
-                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+					/*
+					// sorry, for engine we must set the passphrase
+					//   (if the key has one...)
+					// const char *pPassphrase = NULL;
+					if(pPassphrase)
+						curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
 
-                // if we use a key stored in a crypto engine,
-                //   we must set the key type to "ENG"
-                // pKeyType  = "PEM";
-                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+					// if we use a key stored in a crypto engine,
+					//   we must set the key type to "ENG"
+					// pKeyType  = "PEM";
+					curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
 
-                // set the private key (file or ID in engine)
-                // pKeyName  = "testkey.pem";
-                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+					// set the private key (file or ID in engine)
+					// pKeyName  = "testkey.pem";
+					curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
 
-                // set the file with the certs vaildating the server
-                // *pCACertFile = "cacert.pem";
-                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-                */
+					// set the file with the certs vaildating the server
+					// *pCACertFile = "cacert.pem";
+					curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+					*/
                 
-                // disconnect if we can't validate server's cert
-                bool bSslVerifyPeer = false;
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                request.setOpt(sslVerifyPeer);
+					// disconnect if we can't validate server's cert
+					bool bSslVerifyPeer = false;
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+					request.setOpt(sslVerifyPeer);
                 
-                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                request.setOpt(sslVerifyHost);
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+					request.setOpt(sslVerifyHost);
                 
-                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+					// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+				}
+				request.setOpt(new curlpp::options::HttpHeader(header));
+				request.setOpt(new curlpp::options::PostFields(body));
+				request.setOpt(new curlpp::options::PostFieldSize(body.length()));
 
-            }
-            request.setOpt(new curlpp::options::HttpHeader(header));
-            request.setOpt(new curlpp::options::PostFields(body));
-            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+				request.setOpt(new curlpp::options::WriteStream(&response));
 
-            request.setOpt(new curlpp::options::WriteStream(&response));
-
-            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-            _logger->info(__FILEREF__ + "LiveRecorder media file"
+				_logger->info(__FILEREF__ + "LiveRecorder media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
-            );
-            request.perform();
+				);
+				request.perform();
 
-            string sResponse = response.str();
-            // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
-                sResponse.pop_back();
+				string sResponse = response.str();
+				// LF and CR create problems to the json parser...
+				while (sResponse.back() == 10 || sResponse.back() == 13)
+					sResponse.pop_back();
 
-            Json::Value liveRecorderContentResponse;
-            try
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
+				Json::Value liveRecorderContentResponse;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
 
-                bool parsingSuccessful = reader->parse(sResponse.c_str(),
+					bool parsingSuccessful = reader->parse(sResponse.c_str(),
                         sResponse.c_str() + sResponse.size(), 
                         &liveRecorderContentResponse, &errors);
-                delete reader;
+					delete reader;
 
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the response body"
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
-                    _logger->error(errorMessage);
+						_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
-                }               
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = string("response Body json is not well format")
+						throw runtime_error(errorMessage);
+					}               
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
-                _logger->error(__FILEREF__ + errorMessage);
+					_logger->error(__FILEREF__ + errorMessage);
 
-                throw e;
-            }
-            catch(...)
-            {
-                string errorMessage = string("response Body json is not well format")
+					throw e;
+				}
+				catch(...)
+				{
+					string errorMessage = string("response Body json is not well format")
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                         + ", sResponse: " + sResponse
                         ;
-                _logger->error(__FILEREF__ + errorMessage);
+					_logger->error(__FILEREF__ + errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+					throw runtime_error(errorMessage);
+				}
 
-            {
-                string field = "error";
-                if (Validator::isMetadataPresent(liveRecorderContentResponse, field))
-                {
-                    string error = liveRecorderContentResponse.get(field, "XXX").asString();
+				{
+					string field = "error";
+					if (Validator::isMetadataPresent(liveRecorderContentResponse, field))
+					{
+						string error = liveRecorderContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(NoEncodingAvailable().what()) != string::npos)
-                    {
-                        string errorMessage = string("No Encodings available")
+						if (error.find(NoEncodingAvailable().what()) != string::npos)
+						{
+							string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
-                        _logger->warn(__FILEREF__ + errorMessage);
+							_logger->warn(__FILEREF__ + errorMessage);
 
-                        throw MaxConcurrentJobsReached();
-                    }
-                    else
-                    {
-                        string errorMessage = string("FFMPEGEncoder error")
+							throw MaxConcurrentJobsReached();
+						}
+						else
+						{
+							string errorMessage = string("FFMPEGEncoder error")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                                 + ", sResponse: " + sResponse
                                 ;
-                        _logger->error(__FILEREF__ + errorMessage);
+							_logger->error(__FILEREF__ + errorMessage);
 
-                        throw runtime_error(errorMessage);
-                    }                        
-                }
-            }
+							throw runtime_error(errorMessage);
+						}                        
+					}
+				}
+			}
+			else
+			{
+				_logger->info(__FILEREF__ + "The transcoder is already saved, may be the encoding is already running"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", transcoder: " + _encodingItem->_transcoder
+				);
+
+				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+
+				// we have to reset _encodingItem->_transcoder because in case we will come back
+				// in the above 'while' loop, we have to select another encoder
+				_encodingItem->_transcoder	= "";
+
+				ffmpegEncoderURL = 
+                    _ffmpegEncoderProtocol
+                    + "://"
+                    + _currentUsedFFMpegEncoderHost + ":"
+                    + to_string(_ffmpegEncoderPort)
+                    + _ffmpegLiveRecorderURI
+                    + "/" + to_string(_encodingItem->_encodingJobKey)
+				;
+			}
+
+			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
 			{
 				lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -7759,8 +7758,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", body: " + body
-                    + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
@@ -7774,8 +7771,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", body: " + body
-                    + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
@@ -7914,7 +7909,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
             // throw e;
         }
-    #endif
 	}
 
     return make_tuple(killedByUser, main);

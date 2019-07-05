@@ -457,6 +457,7 @@ public:
         EncodingPriority                        _encodingPriority;
         EncodingType                            _encodingType;
         string                                  _encodingParameters;
+		string									_transcoder;
         // MMS_EncodingJob -> parameters
         Json::Value                             _parametersRoot;
 
