@@ -1619,6 +1619,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "status           			VARCHAR (64) NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
                     "transcoder					VARCHAR (128) NULL,"
+                    "stagingEncodedAssetPathName VARCHAR (256) NULL,"
                     "failuresNumber           	INT NOT NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
                     "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "

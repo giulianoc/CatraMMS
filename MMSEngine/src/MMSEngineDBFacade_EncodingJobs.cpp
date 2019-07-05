@@ -42,7 +42,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         {
             lastSQLCommand = 
-                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, transcoder "
+                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, transcoder, stagingEncodedAssetPathName "
 				"from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
                 "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
@@ -69,7 +69,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 					encodingItem->_transcoder = "";
 				else
 					encodingItem->_transcoder = encodingResultSet->getString("transcoder");
-                
+				if (encodingResultSet->isNull("stagingEncodedAssetPathName"))
+					encodingItem->_stagingEncodedAssetPathName = "";
+				else
+					encodingItem->_stagingEncodedAssetPathName = encodingResultSet->getString("stagingEncodedAssetPathName");
+
                 if (encodingItem->_encodingParameters == "")
                 {
                     string errorMessage = __FILEREF__ + "encodingItem->_encodingParameters is empty"
@@ -3297,10 +3301,11 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
 }
 
 void MMSEngineDBFacade::updateEncodingJobTranscoder (
-        int64_t encodingJobKey,
-        string transcoder)
+	int64_t encodingJobKey,
+	string transcoder,
+	string stagingEncodedAssetPathName)
 {
-    
+
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -3318,10 +3323,11 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
 				+ ", transcoder: " + transcoder
 				);
             lastSQLCommand = 
-                "update MMS_EncodingJob set transcoder = ? where encodingJobKey = ?";
+				"update MMS_EncodingJob set transcoder = ?, stagingEncodedAssetPathName = ? where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, transcoder);
+            preparedStatement->setString(queryParameterIndex++, stagingEncodedAssetPathName);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();

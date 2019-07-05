@@ -458,6 +458,7 @@ public:
         EncodingType                            _encodingType;
         string                                  _encodingParameters;
 		string									_transcoder;
+		string									_stagingEncodedAssetPathName;
         // MMS_EncodingJob -> parameters
         Json::Value                             _parametersRoot;
 
@@ -1340,8 +1341,9 @@ public:
         int encodingPercentage);
 
     void updateEncodingJobTranscoder (
-        int64_t encodingJobKey,
-        string transcoder);
+		int64_t encodingJobKey,
+		string transcoder,
+		string stagingEncodedAssetPathName);
 
 	tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 		string, MMSEngineDBFacade::EncodingStatus, int64_t>
