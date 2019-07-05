@@ -344,8 +344,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing"
 					+ ", processorMMS: " + processorMMS
 					);
+			// transcoder does not have to be reset because the Engine, in case of restart,
+			// is still able to attach to it (encoder)
+            // lastSQLCommand = 
+            //   "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -390,7 +394,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
             int retentionDaysToReset = 7;
 
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ? "
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ? "
                 "and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
