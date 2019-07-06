@@ -2718,6 +2718,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
+				/*
 				if (FileIO::fileExisting(mmsAssetPathName))
 				{
 					string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
@@ -2730,6 +2731,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 					throw runtime_error(errorMessage);
 				}
 				else
+				*/
 				{
 					if (attemptIndex < attemptNumber)
 					{
