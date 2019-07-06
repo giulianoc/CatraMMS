@@ -2708,17 +2708,60 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-        int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            ;
+		// sometimes the file was created by another MMSEngine and it is not found
+		// just because of nfs delay. For this reason we implemented a retry mechanism
+		int attemptIndex = 0;
+		int attemptNumber = 4;
+		bool executeDone = false;
+		while (!executeDone)
+		{
+			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				if (FileIO::fileExisting(mmsAssetPathName))
+				{
+					string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
+						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+					;
 
-            _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
+					throw runtime_error(errorMessage);
+				}
+				else
+				{
+					if (attemptIndex < attemptNumber)
+					{
+						attemptIndex++;
+
+						int sleepTime = 2;
+
+						string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
+							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+						;
+
+						_logger->warn(errorMessage);
+
+						this_thread::sleep_for(chrono::seconds(sleepTime));
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed because the file does not exist"
+							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+			else
+			{
+				executeDone = true;
+			}
         }
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
