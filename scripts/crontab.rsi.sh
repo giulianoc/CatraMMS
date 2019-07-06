@@ -1,7 +1,9 @@
 #!/bin/bash
 
+export CatraMMS_PATH=/opt/catramms
+
 #update certificate
-#sudo /usr/bin/certbot --quiet renew --pre-hook "/opt/catramms/CatraMMS/scripts/nginx.sh stop" --post-hook "/opt/catramms/CatraMMS/scripts/nginx.sh start"
+#sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
 
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
 

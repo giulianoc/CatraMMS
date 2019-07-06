@@ -2,18 +2,18 @@
 
 
 echo "mmsApi"
-/opt/catramms/CatraMMS/scripts/mmsApi.sh stop
+~/mmsApi.sh stop
 
 echo "mmsEncoder"
-/opt/catramms/CatraMMS/scripts/mmsEncoder.sh stop
+~/mmsEncoder.sh stop
 
 echo "mmsEngineService"
-/opt/catramms/CatraMMS/scripts/mmsEngineService.sh stop
+~/mmsEngineService.sh stop
 
 echo "tomcat"
-/opt/catramms/CatraMMS/scripts/tomcat.sh stop
+~/tomcat.sh stop
 
 echo "nginx"
-/opt/catramms/CatraMMS/scripts/nginx.sh stop
+~/nginx.sh stop
 
 date

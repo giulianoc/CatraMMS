@@ -16,15 +16,17 @@ then
 	exit
 fi
 
+export CatraMMS_PATH=/opt/catramms
+
 if [ "$command" == "start" ]
 then
-	sudo /opt/catramms/nginx/sbin/nginx -p /opt/catramms/nginx
+	sudo $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep nginx | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
-	PIDFILE=$(cat /opt/catramms/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
+	PIDFILE=$(cat $CatraMMS_PATH/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
 	#echo $PIDFILE
 	#sudo start-stop-daemon --stop --quiet  --retry=TERM/30/KILL/5 --pidfile $PID --name nginx
 	sudo kill -QUIT $( cat $PIDFILE )

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export CatraMMS_PATH=/opt/catramms
+
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
 
 if [ $# -ne 1 ]
@@ -14,7 +16,7 @@ commandIndex=$1
 if [ $commandIndex -eq 0 ]
 then
 	#update certificate
-	sudo /usr/bin/certbot --quiet renew --pre-hook "/opt/catramms/CatraMMS/scripts/nginx.sh stop" --post-hook "/opt/catramms/CatraMMS/scripts/nginx.sh start"
+	sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
 else
 	if [ $commandIndex -eq 1 ]
 	then

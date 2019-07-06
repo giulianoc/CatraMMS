@@ -9,6 +9,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ImageMagick-7.0.8-49/lib
 export PATH=$PATH:$CatraMMS_PATH/ImageMagick-7.0.8-49/bin
 
 
-#/opt/catramms/ImageMagick-7.0.8-49/bin/convert LogoRSI.png LogoRSI.jpg
+#$CatraMMS_PATH/ImageMagick-7.0.8-49/bin/convert LogoRSI.png LogoRSI.jpg
 
 

@@ -36,17 +36,11 @@ SET (SCRIPTs
 	nginx.sh
 	tomcat.sh
 	setupALL.sh
-	setupALL.rsi.sh
 	statusALL.sh
-	statusALL.rsi.lab.sh
-	statusALL.rsi.mms2.sh
 	startALL.sh
-	startALL.rsi.lab.sh
-	startALL.rsi.mms2.sh
 	stopALL.sh
-	stopALL.rsi.lab.sh
-	stopALL.rsi.mms2.sh
-	tailALL.sh
+	mmsTail.sh
+	printLogFileName.sh
 	crontab.sh
 	crontab.rsi.sh
 	sqlQueries.txt

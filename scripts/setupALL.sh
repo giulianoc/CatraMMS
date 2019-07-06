@@ -1,10 +1,12 @@
 #!/bin/bash
 
+export CatraMMS_PATH=/opt/catramms
+
 #echo "chmod .sh"
-#chmod u+x /opt/catramms/CatraMMS/scripts/*.sh
+#chmod u+x $CatraMMS_PATH/CatraMMS/scripts/*.sh
 
 echo "crontab"
-crontab -u mms /opt/catramms/CatraMMS/conf/crontab.txt
+crontab -u mms $CatraMMS_PATH/CatraMMS/conf/crontab.txt
 
 date
 
