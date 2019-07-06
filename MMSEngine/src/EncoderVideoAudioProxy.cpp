@@ -5971,6 +5971,7 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", attemptIndex: " + to_string(attemptIndex)
 						+ ", sleepTime: " + to_string(sleepTime)
 							;
 					_logger->warn(errorMessage);
@@ -5984,7 +5985,9 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath
+						+ ", attemptIndex: " + to_string(attemptIndex)
+						;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -6823,6 +6826,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", attemptIndex: " + to_string(attemptIndex)
 						+ ", sleepTime: " + to_string(sleepTime)
 							;
 					_logger->warn(errorMessage);
@@ -6836,7 +6840,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+						+ ", sourcePhysicalPath: " + sourcePhysicalPath
+						+ ", attemptIndex: " + to_string(attemptIndex)
+						;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);

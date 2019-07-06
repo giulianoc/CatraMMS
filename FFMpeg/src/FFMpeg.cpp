@@ -2739,6 +2739,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
 						string errorMessage = __FILEREF__ + "getMediaInfo: The file does not exist, waiting because of nfs delay"
 							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+							+ ", attemptIndex: " + to_string(attemptIndex)
 							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
 						;
 
@@ -2750,6 +2751,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 					{
 						string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed because the file does not exist"
 							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+							+ ", attemptIndex: " + to_string(attemptIndex)
 							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
 						;
 						_logger->error(errorMessage);
