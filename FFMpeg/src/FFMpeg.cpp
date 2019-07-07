@@ -2720,7 +2720,6 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 			{
 				if (FileIO::fileExisting(mmsAssetPathName))
 				{
-					FileIO::copyFile(detailsPathFileName, string("/var/catramms/storage/MMSWorkingAreaRepository/"));    
 					string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
 						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
