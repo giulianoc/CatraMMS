@@ -2708,10 +2708,11 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-		// sometimes the file was created by another MMSEngine and it is not found
-		// just because of nfs delay. For this reason we implemented a retry mechanism
+		// The check/retries below was done to manage the scenario where the file was created
+		// by another MMSEngine and it is not found just because of nfs delay.
+		// Really, looking the log, we saw the file is just missing and it is not an nfs delay
 		int attemptIndex = 0;
-		int attemptNumber = 4;
+		int attemptNumber = 2;
 		bool executeDone = false;
 		while (!executeDone)
 		{
@@ -2720,9 +2721,6 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 			{
 				if (FileIO::fileExisting(mmsAssetPathName))
 				{
-					if (FileIO::fileExisting(detailsPathFileName))
-						FileIO::copyFile(detailsPathFileName, "/var/catramms/storage/MMSWorkingAreaRepository");    
-
 					string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
 						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
@@ -2738,7 +2736,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 					{
 						attemptIndex++;
 
-						int sleepTime = 2;
+						int sleepTime = 1;
 
 						string errorMessage = __FILEREF__ + "getMediaInfo: The file does not exist, waiting because of nfs delay"
 							+ ", executeCommandStatus: " + to_string(executeCommandStatus)

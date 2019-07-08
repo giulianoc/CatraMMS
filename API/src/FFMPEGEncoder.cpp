@@ -1208,10 +1208,35 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			sendSuccess(request, 200, responseBody);
 		}
-		else // if (encodingCompleted)
+		else if (encodingCompleted)
 		{
-			string errorMessage = string(FFMpegEncodingStatusNotAvailable().what())
+			/*
+			string errorMessage = method + ": " + FFMpegEncodingStatusNotAvailable().what()
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingCompleted: " + to_string(encodingCompleted)
+					;
+			_logger->info(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			// throw e;
+			return;
+			*/
+			int encodingProgress = 100;
+        
+			string responseBody = string("{ ")
+				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+				+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+				+ ", \"encodingProgress\": " + to_string(encodingProgress) + " "
+				+ "}";
+
+			sendSuccess(request, 200, responseBody);
+		}
+		else // if (!encodingCompleted)
+		{
+			string errorMessage = method + ": " + FFMpegEncodingStatusNotAvailable().what()
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingCompleted: " + to_string(encodingCompleted)
 					;
 			_logger->info(__FILEREF__ + errorMessage);
 

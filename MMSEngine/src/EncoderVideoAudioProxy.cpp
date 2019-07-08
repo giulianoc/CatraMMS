@@ -1018,8 +1018,10 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			string encoderToSkip;
             _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
 					encoderToSkip);
-            _logger->info(__FILEREF__ + "Configuration item"
+            _logger->info(__FILEREF__ + "getEncoderHost"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
             ffmpegEncoderURL = 
@@ -1103,6 +1105,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 						{
 							_logger->info(__FILEREF__ + "Create directory"
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 								+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 							);
 
@@ -1267,7 +1271,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
             _logger->info(__FILEREF__ + "Encoding media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
