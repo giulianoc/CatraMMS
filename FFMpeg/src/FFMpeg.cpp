@@ -941,11 +941,19 @@ void FFMpeg::encodeContent(
 				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+					long long ulFileSize = -1;
+					if (FileIO::fileExisting(stagingEncodedAssetPathName))
+					{
+						bool inCaseOfLinkHasItToBeRead = false;
+						ulFileSize = FileIO::getFileSizeInBytes (
+							stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+					}
 
 				#ifdef __EXECUTE__
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ulFileSize: " + to_string(ulFileSize)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
@@ -953,6 +961,7 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ulFileSize: " + to_string(ulFileSize)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
