@@ -1011,7 +1011,7 @@ void FFMpeg::encodeContent(
             }
 
 			long long llFileSize = -1;
-			if (FileIO::fileExisting(stagingEncodedAssetPathName))
+			// if (FileIO::fileExisting(stagingEncodedAssetPathName))
 			{
 				bool inCaseOfLinkHasItToBeRead = false;
 				llFileSize = FileIO::getFileSizeInBytes (
@@ -1046,7 +1046,7 @@ void FFMpeg::encodeContent(
 
                 throw runtime_error(errorMessage);
             }
-        }        
+        }
     }
     catch(FFMpegEncodingKilledByUser e)
     {
