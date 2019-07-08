@@ -1226,7 +1226,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
 			string responseBody = string("{ ")
 				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
-				+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
 				+ ", \"encodingProgress\": " + to_string(encodingProgress) + " "
 				+ "}";
 
