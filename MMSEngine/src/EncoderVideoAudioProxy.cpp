@@ -1753,7 +1753,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 	}
 }
 
-int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName,
+int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
+		string stagingEncodedAssetPathName,
 		bool killedByUser)
 {
     int64_t sourcePhysicalPathKey;
