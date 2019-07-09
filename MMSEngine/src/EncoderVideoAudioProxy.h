@@ -133,7 +133,6 @@ private:
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;
-	// int									_secondsToWaitNFSBuffers;
     
     string                              _ffmpegEncoderProtocol;
     int                                 _ffmpegEncoderPort;
@@ -151,6 +150,9 @@ private:
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
+    int									_waitingNFSSync_attemptNumber;
+    int									_waitingNFSSync_sleepTimeInSeconds;
+
 	/*
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;

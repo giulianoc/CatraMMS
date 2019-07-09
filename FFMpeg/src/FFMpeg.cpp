@@ -27,6 +27,23 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
     _ffmpegTtfFontDir = configuration["ffmpeg"].get("ttfFontDir", "").asString();
 
+    _waitingNFSSync_attemptNumber = configuration["storage"].
+		get("waitingNFSSync_attemptNumber", 1).asInt();
+	/*
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", storage->waitingNFSSync_attemptNumber: "
+		+ to_string(_waitingNFSSync_attemptNumber)
+    );
+	*/
+    _waitingNFSSync_sleepTimeInSeconds = configuration["storage"].
+		get("waitingNFSSync_sleepTimeInSeconds", 3).asInt();
+	/*
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", storage->waitingNFSSync_sleepTimeInSeconds: "
+		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
+    );
+	*/
+
     _charsToBeReadFromFfmpegErrorOutput     = 1024;
     
     _twoPasses = false;
@@ -2722,7 +2739,6 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 		// by another MMSEngine and it is not found just because of nfs delay.
 		// Really, looking the log, we saw the file is just missing and it is not an nfs delay
 		int attemptIndex = 0;
-		int attemptNumber = 5;
 		bool executeDone = false;
 		while (!executeDone)
 		{
@@ -2743,11 +2759,9 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 				}
 				else
 				{
-					if (attemptIndex < attemptNumber)
+					if (attemptIndex < _waitingNFSSync_attemptNumber)
 					{
 						attemptIndex++;
-
-						int sleepTime = 3;
 
 						string errorMessage = __FILEREF__
 							+ "getMediaInfo: The file does not exist, waiting because of nfs delay"
@@ -2758,7 +2772,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
 						_logger->warn(errorMessage);
 
-						this_thread::sleep_for(chrono::seconds(sleepTime));
+						this_thread::sleep_for(
+								chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
 					}
 					else
 					{
@@ -2784,7 +2799,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
         _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            + ", ffmpegCommandDuration (secs): "
+            + ", duration (secs): "
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );
     }

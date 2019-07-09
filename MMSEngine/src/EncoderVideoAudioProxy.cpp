@@ -90,12 +90,6 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
     );        
-	/*
-    _secondsToWaitNFSBuffers						= _configuration["encoding"].get("secondsToWaitNFSBuffers", "").asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", encoding->secondsToWaitNFSBuffers: " + to_string(_secondsToWaitNFSBuffers)
-    );        
-	*/
     _maxSecondsToWaitUpdateEncodingJobLock         = _configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 30).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
@@ -177,6 +171,18 @@ void EncoderVideoAudioProxy::init(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
 	);
+
+    _waitingNFSSync_attemptNumber = configuration["storage"].
+		get("waitingNFSSync_attemptNumber", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", storage->waitingNFSSync_attemptNumber: " + to_string(_waitingNFSSync_attemptNumber)
+    );
+    _waitingNFSSync_sleepTimeInSeconds = configuration["storage"].
+		get("waitingNFSSync_sleepTimeInSeconds", 3).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", storage->waitingNFSSync_sleepTimeInSeconds: "
+			+ to_string(_waitingNFSSync_sleepTimeInSeconds)
+    );
 
 	/*
     _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
@@ -5979,8 +5985,8 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
 	int attemptIndex = 0;
-	int attemptNumber = 4;
 	bool captureFinished = false;
+	chrono::system_clock::time_point startCapture = chrono::system_clock::now();
 	while (!captureFinished)
 	{
 		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
@@ -5999,11 +6005,9 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 			}
 			else
 			{
-				if (attemptIndex < attemptNumber)
+				if (attemptIndex < _waitingNFSSync_attemptNumber)
 				{
 					attemptIndex++;
-
-					int sleepTime = 2;
 
 					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6011,11 +6015,11 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
 						+ ", attemptIndex: " + to_string(attemptIndex)
-						+ ", sleepTime: " + to_string(sleepTime)
+						+ ", sleepTime: " + to_string(_waitingNFSSync_sleepTimeInSeconds)
 							;
 					_logger->warn(errorMessage);
 
-					this_thread::sleep_for(chrono::seconds(sleepTime));
+					this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
 				}
 				else
 				{
@@ -6038,6 +6042,13 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 			captureFinished = true;
 		}
 	}
+
+	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
+	_logger->info(__FILEREF__ + "capture.open"
+		+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		+ ", duration (secs): "
+			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
+	);
 
 	string faceRecognitionMediaPathName;
 	string fileFormat;
@@ -6834,8 +6845,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
 	int attemptIndex = 0;
-	int attemptNumber = 4;
 	bool captureFinished = false;
+	chrono::system_clock::time_point startCapture = chrono::system_clock::now();
 	while (!captureFinished)
 	{
 		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
@@ -6854,11 +6865,9 @@ string EncoderVideoAudioProxy::faceIdentification()
 			}
 			else
 			{
-				if (attemptIndex < attemptNumber)
+				if (attemptIndex < _waitingNFSSync_attemptNumber)
 				{
 					attemptIndex++;
-
-					int sleepTime = 2;
 
 					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6866,11 +6875,11 @@ string EncoderVideoAudioProxy::faceIdentification()
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
 						+ ", attemptIndex: " + to_string(attemptIndex)
-						+ ", sleepTime: " + to_string(sleepTime)
+						+ ", sleepTime: " + to_string(_waitingNFSSync_sleepTimeInSeconds)
 							;
 					_logger->warn(errorMessage);
 
-					this_thread::sleep_for(chrono::seconds(sleepTime));
+					this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
 				}
 				else
 				{
@@ -6893,6 +6902,13 @@ string EncoderVideoAudioProxy::faceIdentification()
 			captureFinished = true;
 		}
 	}
+
+	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
+	_logger->info(__FILEREF__ + "capture.open"
+		+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		+ ", duration (secs): "
+			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
+	);
 
 	string faceIdentificationMediaPathName;
 	string fileFormat;
@@ -7921,726 +7937,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
     return make_tuple(killedByUser, main);
 }
-
-/*
-string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
-	bool highAvailability, bool main, int segmentDurationInSeconds, string segmentListPathName, string recordedFileNamePrefix,
-	string contentsPath, string lastRecordedAssetFileName)
-{
-
-	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
-	// the same lastRecordedAssetFileName has to be returned
-	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
-    try
-    {
-		_logger->info(__FILEREF__ + "processLastGeneratedLiveRecorderFiles"
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", highAvailability: " + to_string(highAvailability)
-			+ ", main: " + to_string(main)
-			+ ", segmentListPathName: " + segmentListPathName
-			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-			);
-
-		ifstream segmentList(segmentListPathName);
-		if (!segmentList)
-        {
-            string errorMessage = __FILEREF__ + "No segment list file found yet"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", segmentListPathName: " + segmentListPathName;
-                    + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
-            _logger->warn(errorMessage);
-
-			return lastRecordedAssetFileName;
-            // throw runtime_error(errorMessage);
-        }
-
-		string outputFileFormat;
-		{
-        	string field = "outputFileFormat";
-        	outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
-		}
-
-		bool reachedNextFileToProcess = false;
-		string currentRecordedAssetFileName;
-		while(getline(segmentList, currentRecordedAssetFileName))
-		{
-			if (!reachedNextFileToProcess)
-			{
-				if (lastRecordedAssetFileName == "")
-				{
-					reachedNextFileToProcess = true;
-				}
-				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
-				{
-					reachedNextFileToProcess = true;
-
-					continue;
-				}
-				else
-				{
-					continue;
-				}
-			}
-
-			_logger->info(__FILEREF__ + "processing LiveRecorder file"
-				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
-
-			time_t utcCurrentRecordedFileCreationTime = getMediaLiveRecorderStartTime(
-				currentRecordedAssetFileName);
-
-			string currentRecordedAssetPathName = contentsPath + "/" + currentRecordedAssetFileName;
-			if (!FileIO::fileExisting(currentRecordedAssetPathName))
-			{
-				// it could be the scenario where mmsEngineService is restarted,
-				// the segments list file still contains obsolete filenames
-				_logger->error(__FILEREF__ + "file not existing"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-				);
-
-				continue;
-			}
-			time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			if (utcNow - utcCurrentRecordedFileCreationTime < _secondsToWaitNFSBuffers)
-			{
-				long secondsToWait = _secondsToWaitNFSBuffers
-					- (utcNow - utcCurrentRecordedFileCreationTime);
-
-				_logger->info(__FILEREF__ + "processing LiveRecorder file too young"
-					+ ", secondsToWait: " + to_string(secondsToWait));
-				this_thread::sleep_for(chrono::seconds(secondsToWait));
-			}
-
-			bool ingestionRowToBeUpdatedAsSuccess = isLastLiveRecorderFile(
-					utcCurrentRecordedFileCreationTime, contentsPath, recordedFileNamePrefix);
-			_logger->info(__FILEREF__ + "isLastLiveRecorderFile"
-					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-					+ ", ingestionRowToBeUpdatedAsSuccess: "
-					+ to_string(ingestionRowToBeUpdatedAsSuccess));
-
-			newLastRecordedAssetFileName = currentRecordedAssetFileName;
-
-			time_t utcCurrentRecordedFileLastModificationTime =
-				utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
-			// time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
-			// 	currentRecordedAssetPathName);
-
-			// UserData
-			Json::Value userDataRoot;
-			{
-				string userDataField = "UserData";
-				string mmsDataField = "mmsData";
-				string mmsDataTypeField = "dataType";
-				string mmsValidatedField = "validated";
-				string mmsMainField = "main";
-				string mmsIngestionJobKeyField = "ingestionJobKey";
-				string utcChunkStartTime = "utcChunkStartTime";
-				string utcChunkEndTime = "utcChunkEndTime";
-
-				if (_mmsEngineDBFacade->isMetadataPresent(
-							_encodingItem->_liveRecorderData->_liveRecorderParametersRoot,
-							userDataField))
-				{
-					userDataRoot = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField];
-				}
-
-				Json::Value mmsDataRoot;
-				mmsDataRoot[mmsDataTypeField] = "liveRecordingChunk";
-				mmsDataRoot[mmsMainField] = main;
-				if (!highAvailability)
-				{
-					bool validated = true;
-					mmsDataRoot[mmsValidatedField] = validated;
-				}
-				mmsDataRoot[mmsIngestionJobKeyField] = (int64_t) (_encodingItem->_ingestionJobKey);
-				mmsDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
-				mmsDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
-
-				userDataRoot[mmsDataField] = mmsDataRoot;
-			}
-
-			// Title
-			string newTitle;
-			{
-				// ConfigurationLabel is the label associated to the live URL
-				string configurationLabelField = "ConfigurationLabel";
-				newTitle = _encodingItem->_liveRecorderData
-					->_liveRecorderParametersRoot.get(configurationLabelField, "XXX").asString();
-
-				newTitle += " - ";
-
-				{
-					tm		tmDateTime;
-					char	strCurrentRecordedFileTime [64];
-
-					// from utc to local time
-					localtime_r (&utcCurrentRecordedFileCreationTime, &tmDateTime);
-
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-
-					newTitle += strCurrentRecordedFileTime;	// local time
-				}
-
-				newTitle += " - ";
-
-				{
-					tm		tmDateTime;
-					char	strCurrentRecordedFileTime [64];
-
-					// from utc to local time
-					localtime_r (&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
-
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-
-					newTitle += strCurrentRecordedFileTime;	// local time
-				}
-
-				if (!main)
-					newTitle += " (BCK)";
-			}
-
-			if (lastRecordedAssetFileName == "")
-			{
-				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-					+ ", title: " + newTitle
-				);
-
-				_logger->info(__FILEREF__ + "Remove"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-				);
-
-                FileIO::remove(currentRecordedAssetPathName);
-			}
-			else
-			{
-				try
-				{
-					_logger->info(__FILEREF__ + "ingest Recorded media"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-						+ ", title: " + newTitle
-					);
-
-					ingestRecordedMedia(currentRecordedAssetPathName,
-						newTitle, userDataRoot, outputFileFormat,
-						_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-						+ ", newTitle: " + newTitle
-						+ ", outputFileFormat: " + outputFileFormat
-						+ ", e.what(): " + e.what()
-					);
-
-					// throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-						+ ", newTitle: " + newTitle
-						+ ", outputFileFormat: " + outputFileFormat
-					);
-                
-					// throw e;
-				}
-			}
-		}
-
-		if (reachedNextFileToProcess == false)
-		{
-			// this scenario should never happens, we have only one option when mmEngineService
-			// is restarted, the new LiveRecorder is not started and the segments list file
-			// contains still old files. So newLastRecordedAssetFileName is initialized
-			// with the old file that will never be found once LiveRecorder starts and reset
-			// the segment list file
-			// In this scenario, we will reset newLastRecordedAssetFileName
-			newLastRecordedAssetFileName	= "";
-		}
-	}
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", segmentListPathName: " + segmentListPathName
-            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", e.what(): " + e.what()
-        );
-                
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", segmentListPathName: " + segmentListPathName
-            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-        );
-                
-        throw e;
-    }
-
-	return newLastRecordedAssetFileName;
-}
-
-void EncoderVideoAudioProxy::ingestRecordedMedia(
-	string currentRecordedAssetPathName,
-	string title,
-	Json::Value userDataRoot,
-	string fileFormat,
-	Json::Value liveRecorderParametersRoot)
-{
-	string mmsAPIURL;
-	ostringstream response;
-	string workflowMetadata;
-	try
-	{
-		Json::Value addContentRoot;
-
-		string field = "Label";
-		addContentRoot[field] = title;
-
-		field = "Type";
-		addContentRoot[field] = "Add-Content";
-
-		bool internalMMSRootPresent = false;
-		{
-			field = "InternalMMS";
-    		if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			{
-				internalMMSRootPresent = true;
-
-				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
-
-				field = "OnSuccess";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
-
-				field = "OnError";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
-
-				field = "OnComplete";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
-					addContentRoot[field] = internalMMSRoot[field];
-			}
-		}
-
-		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
-		if (internalMMSRootPresent)
-		{
-			Json::Value removed;
-			field = "InternalMMS";
-			addContentParametersRoot.removeMember(field, &removed);
-		}
-
-		field = "FileFormat";
-		addContentParametersRoot[field] = fileFormat;
-
-		string sourceURL = string("move") + "://" + currentRecordedAssetPathName;
-		field = "SourceURL";
-		addContentParametersRoot[field] = sourceURL;
-
-		field = "Ingester";
-		addContentParametersRoot[field] = "Live Recorder Task";
-
-		field = "Title";
-		addContentParametersRoot[field] = title;
-
-		field = "UserData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		field = "Parameters";
-		addContentRoot[field] = addContentParametersRoot;
-
-
-		Json::Value workflowRoot;
-
-		field = "Label";
-		workflowRoot[field] = title;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
-		field = "Task";
-		workflowRoot[field] = addContentRoot;
-
-   		{
-       		Json::StreamWriterBuilder wbuilder;
-       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
-   		}
-
-		_logger->info(__FILEREF__ + "Recorded Workflow metadata generated"
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-
-		mmsAPIURL =
-			_mmsAPIProtocol
-			+ "://"
-			+ _mmsAPIHostname + ":"
-			+ to_string(_mmsAPIPort)
-			+ _mmsAPIIngestionURI
-            ;
-
-		list<string> header;
-
-		header.push_back("Content-Type: application/json");
-		{
-			string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-			header.push_back(basicAuthorization);
-		}
-
-		curlpp::Cleanup cleaner;
-		curlpp::Easy request;
-
-		// Setting the URL to retrive.
-		request.setOpt(new curlpp::options::Url(mmsAPIURL));
-
-		if (_mmsAPIProtocol == "https")
-		{
-			// disconnect if we can't validate server's cert
-			bool bSslVerifyPeer = false;
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-			request.setOpt(sslVerifyPeer);
-               
-			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-			request.setOpt(sslVerifyHost);
-               
-			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
-		}
-
-		request.setOpt(new curlpp::options::HttpHeader(header));
-		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
-		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
-
-		request.setOpt(new curlpp::options::WriteStream(&response));
-
-		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-		_logger->info(__FILEREF__ + "Ingesting recorded media file"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-		);
-		request.perform();
-
-		string sResponse = response.str();
-		// LF and CR create problems to the json parser...
-		while (sResponse.back() == 10 || sResponse.back() == 13)
-			sResponse.pop_back();
-
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-				+ ", sResponse: " + sResponse
-				;
-			_logger->info(message);
-		}
-
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode == 201)
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				;
-			_logger->info(message);
-		}
-		else
-		{
-			string message = __FILEREF__ + "Ingested recorded response"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", workflowMetadata: " + workflowMetadata
-				+ ", sResponse: " + sResponse
-				+ ", responseCode: " + to_string(responseCode)
-				;
-			_logger->error(message);
-
-           	throw runtime_error(message);
-		}
-	}
-	catch (curlpp::LogicError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-            
-		throw e;
-	}
-	catch (curlpp::RuntimeError & e) 
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
-	}
-	catch (runtime_error e)
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", mmsAPIURL: " + mmsAPIURL
-			+ ", workflowMetadata: " + workflowMetadata
-			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
-		);
-
-		throw e;
-	}
-}
-
-bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
-	time_t utcCurrentRecordedFileCreationTime, string contentsPath,
-	string recordedFileNamePrefix)
-{
-	bool isLastLiveRecorderFile = true;
-
-    try
-    {
-		_logger->info(__FILEREF__ + "isLastLiveRecorderFile"
-			+ ", contentsPath: " + contentsPath
-			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
-		);
-
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (contentsPath + "/");
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
-        {
-            string directoryEntry;
-            try
-            {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-				_logger->info(__FILEREF__ + "FileIO::readDirectory"
-					+ ", directoryEntry: " + directoryEntry
-					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
-				);
-
-				// next statement is endWith and .lck is used during the move of a file
-				string suffix(".lck");
-				if (directoryEntry.size() >= suffix.size()
-					&& 0 == directoryEntry.compare(directoryEntry.size()-suffix.size(),
-						suffix.size(), suffix))
-					continue;
-
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    continue;
-
-                if (directoryEntry.size() >= recordedFileNamePrefix.size()
-						&& directoryEntry.compare(0, recordedFileNamePrefix.size(),
-							recordedFileNamePrefix) == 0)
-                {
-					time_t utcFileCreationTime = getMediaLiveRecorderStartTime(directoryEntry);
-
-					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
-					{
-						isLastLiveRecorderFile = false;
-
-						break;
-					}
-				}
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-        }
-
-        FileIO::closeDirectory (directory);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "isLastLiveRecorderFile failed"
-            + ", e.what(): " + e.what()
-        );
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "isLastLiveRecorderFile failed");
-    }
-
-	return isLastLiveRecorderFile;
-}
-
-time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
-	string mediaLiveRecorderFileName)
-{
-	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
-	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
-
-	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
-		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-	);
-
-	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
-	if (mediaLiveRecorderFileName.length() < 20 ||
-		   endIndex == string::npos)
-	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format"
-			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-			;
-			_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	size_t beginUTCIndex = mediaLiveRecorderFileName.find_last_of("_");
-	if (mediaLiveRecorderFileName.length() < 20 ||
-		   beginUTCIndex == string::npos)
-	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format"
-			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-			;
-			_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	time_t utcMediaLiveRecorderStartTime = stol(mediaLiveRecorderFileName.substr(beginUTCIndex + 1,
-				endIndex - beginUTCIndex + 1));
-
-	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-	// For this reason, utcMediaLiveRecorderStartTime is fixed.
-	// From the other side the first generated file is the only one where we can have seconds
-	// different from 0, anyway here this is not possible because we discard the first chunk
-	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
-	if (seconds != 0)
-	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(seconds)
-				);
-		utcMediaLiveRecorderStartTime -= seconds;
-	}
-
-	return utcMediaLiveRecorderStartTime;
-}
-
-time_t EncoderVideoAudioProxy::getMediaLiveRecorderEndTime(
-	string mediaLiveRecorderFileName)
-{
-	tm                      tmDateTime;
-
-	time_t utcCurrentRecordedFileLastModificationTime;
-
-	FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
-		&utcCurrentRecordedFileLastModificationTime);
-
-	localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
-
-	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-	// For this reason, 0 is set
-	if (tmDateTime.tm_sec != 0)
-	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(tmDateTime.tm_sec)
-				);
-		tmDateTime.tm_sec = 0;
-	}
-
-	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
-
-	return utcCurrentRecordedFileLastModificationTime;
-}
-*/
 
 void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 {

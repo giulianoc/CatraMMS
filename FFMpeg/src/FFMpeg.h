@@ -218,6 +218,9 @@ private:
     int64_t         _currentIngestionJobKey;
     int64_t         _currentEncodingJobKey;
 
+    int				_waitingNFSSync_attemptNumber;
+    int				_waitingNFSSync_sleepTimeInSeconds;
+
     void settingFfmpegParameters(
         string stagingEncodedAssetPathName,
         
