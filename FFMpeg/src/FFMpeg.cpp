@@ -2667,6 +2667,8 @@ int FFMpeg::getEncodingProgress()
 
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
+int aaa = 0;
+_logger->error(__FILEREF__ + to_string(aaa++));
     size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
     {
@@ -2705,6 +2707,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
+_logger->error(__FILEREF__ + to_string(aaa++));
     try
     {
         _logger->info(__FILEREF__ + "getMediaInfo: Executing ffprobe command"
@@ -2721,9 +2724,11 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 		bool executeDone = false;
 		while (!executeDone)
 		{
+_logger->error(__FILEREF__ + to_string(aaa++));
 			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
+_logger->error(__FILEREF__ + to_string(aaa++));
 				if (FileIO::fileExisting(mmsAssetPathName))
 				{
 					string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
@@ -2737,6 +2742,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 				}
 				else
 				{
+_logger->error(__FILEREF__ + to_string(aaa++));
 					if (attemptIndex < attemptNumber)
 					{
 						attemptIndex++;
@@ -2768,6 +2774,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 			}
 			else
 			{
+_logger->error(__FILEREF__ + to_string(aaa++));
 				executeDone = true;
 			}
         }
