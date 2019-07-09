@@ -1786,6 +1786,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     int imageQuality = -1;
     try
     {
+        _logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
         FFMpeg ffmpeg (_configuration, _logger);
         tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
             ffmpeg.getMediaInfo(stagingEncodedAssetPathName);

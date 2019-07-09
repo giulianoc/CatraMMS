@@ -2665,7 +2665,8 @@ int FFMpeg::getEncodingProgress()
     return encodingPercentage;
 }
 
-tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpeg::getMediaInfo(string mmsAssetPathName)
+tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+	FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
 int aaa = 0;
 _logger->error(__FILEREF__ + to_string(aaa++));
@@ -2720,7 +2721,7 @@ _logger->error(__FILEREF__ + to_string(aaa++));
 		// by another MMSEngine and it is not found just because of nfs delay.
 		// Really, looking the log, we saw the file is just missing and it is not an nfs delay
 		int attemptIndex = 0;
-		int attemptNumber = 2;
+		int attemptNumber = 5;
 		bool executeDone = false;
 		while (!executeDone)
 		{
@@ -2747,7 +2748,7 @@ _logger->error(__FILEREF__ + to_string(aaa++));
 					{
 						attemptIndex++;
 
-						int sleepTime = 1;
+						int sleepTime = 3;
 
 						string errorMessage = __FILEREF__ + "getMediaInfo: The file does not exist, waiting because of nfs delay"
 							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
