@@ -1812,6 +1812,20 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 			string directoryPathName;
 			try
 			{
+				long long llFileSize = -1;
+            if (FileIO::fileExisting(stagingEncodedAssetPathName))
+            {
+                bool inCaseOfLinkHasItToBeRead = false;
+                llFileSize = FileIO::getFileSizeInBytes (
+                    stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+            }
+					_logger->error(__FILEREF__ + "endOfDirectoryIndex != string::npos???"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+					+ ", llFileSize: " + to_string(llFileSize)
+					);
+
 				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
@@ -1823,6 +1837,13 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 					Boolean_t bRemoveRecursively = true;
 					// FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 				}
+				else
+					_logger->error(__FILEREF__ + "endOfDirectoryIndex != string::npos???"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+					+ ", endOfDirectoryIndex: " + to_string(endOfDirectoryIndex)
+					);
 			}
 			catch(runtime_error e)
 			{
@@ -1834,6 +1855,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 				);
 			}
 		}
+		else
+				_logger->error(__FILEREF__ + "stagingEncodedAssetPathName is empty???"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
 
         throw e;
     }
