@@ -1817,11 +1817,11 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
 				{
 					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "removeDirectory"
+					_logger->info(__FILEREF__ + "NOTTTTTTT removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
 					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					// FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 				}
 			}
 			catch(runtime_error e)
