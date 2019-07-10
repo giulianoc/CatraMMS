@@ -303,18 +303,78 @@ void API::killOrCancelEncodingJob(
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
 								+ ", transcoder: " + transcoder
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
-							killEncodingJob(transcoder, encodingJobKey);
+
+							try
+							{
+								killEncodingJob(transcoder, encodingJobKey);
+							}
+							catch (...)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+									+ ", transcoder: " + transcoder
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+										+ ", main: " + to_string(main)                                                                
+									);
+									// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+									// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+									// 'no update is done'
+									int64_t mediaItemKey = -1;
+									int64_t encodedPhysicalPathKey = -1;
+									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										mediaItemKey, encodedPhysicalPathKey,
+										main ? ingestionJobKey : -1);
+								}
+							}
 						}
 
 						if (theOtherStatus == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
 								+ ", transcoder: " + theOtherTranscoder
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 							);
-							killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+
+							try
+							{
+								killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+							}
+							catch (...)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+									+ ", transcoder: " + transcoder
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)                           
+										+ ", main: " + to_string(main)
+									);
+									// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+									// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+									// 'no update is done'
+									int64_t mediaItemKey = -1;
+									int64_t encodedPhysicalPathKey = -1;
+									_mmsEngineDBFacade->updateEncodingJob (theOtherEncodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										mediaItemKey, encodedPhysicalPathKey,
+										main ? ingestionJobKey : -1);
+								}
+							}
 						}
 					}
 					else
@@ -323,18 +383,78 @@ void API::killOrCancelEncodingJob(
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
 								+ ", transcoder: " + theOtherTranscoder
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 							);
-							killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+
+							try
+							{
+								killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+							}
+							catch (...)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+									+ ", transcoder: " + theOtherTranscoder
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)                           
+										+ ", main: " + to_string(main)
+									);
+									// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+									// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+									// 'no update is done'
+									int64_t mediaItemKey = -1;
+									int64_t encodedPhysicalPathKey = -1;
+									_mmsEngineDBFacade->updateEncodingJob (theOtherEncodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										mediaItemKey, encodedPhysicalPathKey,
+										main ? ingestionJobKey : -1);
+								}
+							}
 						}
 
 						if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
 								+ ", transcoder: " + transcoder
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
-							killEncodingJob(transcoder, encodingJobKey);
+
+							try
+							{
+								killEncodingJob(transcoder, encodingJobKey);
+							}
+							catch (...)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+									+ ", transcoder: " + transcoder
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+										+ ", main: " + to_string(main)
+									);
+									// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+									// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+									// 'no update is done'
+									int64_t mediaItemKey = -1;
+									int64_t encodedPhysicalPathKey = -1;
+									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										mediaItemKey, encodedPhysicalPathKey,
+										main ? ingestionJobKey : -1);
+								}
+							}
 						}
 					}
 				}
@@ -346,7 +466,33 @@ void API::killOrCancelEncodingJob(
 							+ ", transcoder: " + transcoder
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
-						killEncodingJob(transcoder, encodingJobKey);
+
+						try
+						{
+							killEncodingJob(transcoder, encodingJobKey);
+						}
+						catch (...)
+						{
+							_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
+								+ ", transcoder: " + transcoder
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+							);
+
+							{
+								_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+									+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+								);
+
+								int64_t mediaItemKey = -1;
+								int64_t encodedPhysicalPathKey = -1;
+								_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+									MMSEngineDBFacade::EncodingError::KilledByUser,
+									mediaItemKey, encodedPhysicalPathKey,
+									ingestionJobKey);
+							}
+						}
 					}
 				}
 			}
