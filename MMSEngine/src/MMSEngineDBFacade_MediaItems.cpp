@@ -1478,30 +1478,41 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 
 		string tagsGroupCondition;
         {
+			string tagsInGroupCondition;
 			if (tagsIn.size() > 0)
 			{
 				for (string tag: tagsIn)
 				{
 					tag = tagSeparator + tag + tagSeparator;
 
-					if (tagsGroupCondition == "")
-						tagsGroupCondition = "f.tagsGroup like '%" + tag + "%' ";
+					if (tagsInGroupCondition == "")
+						tagsInGroupCondition = "f.tagsGroup like '%" + tag + "%' ";
 					else
-						tagsGroupCondition += ("and f.tagsGroup like '%" + tag + "%' ");
+						tagsInGroupCondition += ("or f.tagsGroup like '%" + tag + "%' ");
 				}
 			}
+
+			string tagsNotInGroupCondition;
 			if (tagsNotIn.size() > 0)
 			{
 				for (string tag: tagsNotIn)
 				{
 					tag = tagSeparator + tag + tagSeparator;
 
-					if (tagsGroupCondition == "")
-						tagsGroupCondition = "f.tagsGroup not like '%" + tag + "%' ";
+					if (tagsNotInGroupCondition == "")
+						tagsNotInGroupCondition = "f.tagsGroup not like '%" + tag + "%' ";
 					else
-						tagsGroupCondition += ("and f.tagsGroup not like '%" + tag + "%' ");
+						tagsNotInGroupCondition += ("and f.tagsGroup not like '%" + tag + "%' ");
 				}
 			}
+			if (tagsInGroupCondition == "" && tagsNotInGroupCondition == "")
+				;
+			else if (tagsInGroupCondition == "" && tagsNotInGroupCondition != "")
+				tagsGroupCondition = string("(") + tagsNotInGroupCondition + ") ";
+			else if (tagsInGroupCondition != "" && tagsNotInGroupCondition == "")
+				tagsGroupCondition = string("(") + tagsInGroupCondition + ") ";
+			else
+				tagsGroupCondition = string("(") + tagsInGroupCondition + ") and (" + tagsNotInGroupCondition + ") ";
 		}
 
 		// create temporary table
