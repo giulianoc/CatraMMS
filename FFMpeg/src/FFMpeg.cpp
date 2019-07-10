@@ -2799,7 +2799,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
         _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            + ", duration (secs): "
+            + ", statistics duration (secs): "
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );
     }

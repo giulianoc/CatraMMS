@@ -52,7 +52,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(
 EncodersLoadBalancer::~EncodersLoadBalancer() {
 }
 
-string EncodersLoadBalancer::getEncoderHost(shared_ptr<Workspace> workspace, string encoderToSkip) 
+string EncodersLoadBalancer::getEncoderHost(shared_ptr<Workspace> workspace, string transcoderToSkip) 
 {
     string defaultEncodersPool = "common";
 
@@ -69,7 +69,7 @@ string EncodersLoadBalancer::getEncoderHost(shared_ptr<Workspace> workspace, str
     }
     
     it->second._lastEncoderUsed     = (it->second._lastEncoderUsed + 1) % it->second._encoders.size();
-	if (encoderToSkip != "" && encoderToSkip == it->second._encoders[it->second._lastEncoderUsed])
+	if (transcoderToSkip != "" && transcoderToSkip == it->second._encoders[it->second._lastEncoderUsed])
 		it->second._lastEncoderUsed     = (it->second._lastEncoderUsed + 1) % it->second._encoders.size();        
 
     return it->second._encoders[it->second._lastEncoderUsed];

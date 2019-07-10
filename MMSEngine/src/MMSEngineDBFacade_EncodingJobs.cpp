@@ -3415,6 +3415,166 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
     }
 }
 
+string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
+	bool isEncodingJobKeyMain, int64_t encodingJobKey)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		int64_t otherEncodingJobKey;
+        {
+			if (isEncodingJobKeyMain)
+				lastSQLCommand = 
+					"select JSON_EXTRACT(parameters, '$.backupEncodingJobKey') as otherEncodingJobKey "
+					"from MMS_EncodingJob where encodingJobKey = ?";
+			else
+				lastSQLCommand = 
+					"select JSON_EXTRACT(parameters, '$.mainEncodingJobKey') as otherEncodingJobKey "
+					"from MMS_EncodingJob where encodingJobKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			if (resultSet->next())
+			{
+				if (resultSet->isNull("otherEncodingJobKey"))
+				{
+					string errorMessage = __FILEREF__ + "otherEncodingJobKey is null"
+                       + ", EncodingJobKey: " + to_string(encodingJobKey)
+                       + ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+
+				otherEncodingJobKey = resultSet->getInt64("otherEncodingJobKey");
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "EncodingJob not found"
+                       + ", EncodingJobKey: " + to_string(encodingJobKey)
+                       + ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+			}
+		}
+
+		string otherTranscoder;
+        {
+			lastSQLCommand = 
+				"select transcoder "
+				"from MMS_EncodingJob where encodingJobKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, otherEncodingJobKey);
+
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			if (resultSet->next())
+			{
+				if (!resultSet->isNull("transcoder"))
+				{
+					otherTranscoder = resultSet->getString("transcoder");
+				}
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "EncodingJob not found"
+                       + ", EncodingJobKey: " + to_string(encodingJobKey)
+                       + ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+			}
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return otherTranscoder;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+}
+
+
 tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 	string, MMSEngineDBFacade::EncodingStatus, int64_t>
 	MMSEngineDBFacade::getEncodingJobDetails (int64_t encodingJobKey)
@@ -6073,7 +6233,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	bool highAvailability,
-	bool main,
 	string configurationLabel, string liveURL,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
@@ -6094,7 +6253,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", highAvailability: " + to_string(highAvailability)
-            + ", main: " + to_string(main)
             + ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
@@ -6120,9 +6278,13 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             statement->execute(lastSQLCommand);
         }
 
-        EncodingType encodingType = EncodingType::LiveRecorder;
+		int64_t mainEncodingJobKey = -1;
+		{
+			bool main = true;
+
+			EncodingType encodingType = EncodingType::LiveRecorder;
         
-        string parameters = string()
+			string parameters = string()
                 + "{ "
                 + "\"highAvailability\": " + to_string(highAvailability) + ""
                 + ", \"main\": " + to_string(main) + ""
@@ -6136,55 +6298,186 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + "} "
                 ;
 
-        _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
-            + ", parameters.length: " + to_string(parameters.length()));
+			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+				+ ", parameters.length: " + to_string(parameters.length()));
         
-        {
-			/*
-            int savedEncodingPriority = static_cast<int>(encodingPriority);
-            if (savedEncodingPriority > workspace->_maxEncodingPriority)
-            {
-                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
-                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
-                    + ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
-                );
+			{
+				/*
+				int savedEncodingPriority = static_cast<int>(encodingPriority);
+				if (savedEncodingPriority > workspace->_maxEncodingPriority)
+				{
+					_logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+						+ ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+						+ ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+					);
 
-                savedEncodingPriority = workspace->_maxEncodingPriority;
-            }
-			*/
-			// 2019-04-23: we will force the encoding priority to high to be sure this EncodingJob
-			//	will be managed as soon as possible
-			int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
+					savedEncodingPriority = workspace->_maxEncodingPriority;
+				}
+				*/
+				// 2019-04-23: we will force the encoding priority to high to be sure this EncodingJob
+				//	will be managed as soon as possible
+				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
-            lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
+				lastSQLCommand = 
+					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+												"NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatement->setString(queryParameterIndex++, toString(encodingType));
-            preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+				preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+				preparedStatement->setString(queryParameterIndex++, parameters);
+				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
-            preparedStatement->executeUpdate();
-        }
+				preparedStatement->executeUpdate();
+			}
+
+			mainEncodingJobKey = getLastInsertId(conn);
         
-		if (main)
-        {
-            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+			if (main)
+			{
+				IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
 
-            string errorMessage;
-            string processorMMS;
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(newIngestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-        }
+				string errorMessage;
+				string processorMMS;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+			}
+		}
+
+		int64_t backupEncodingJobKey = -1;
+
+		if (highAvailability)
+		{
+			bool main = false;
+
+			EncodingType encodingType = EncodingType::LiveRecorder;
+        
+			string parameters = string()
+                + "{ "
+                + "\"highAvailability\": " + to_string(highAvailability) + ""
+                + ", \"main\": " + to_string(main) + ""
+                + ", \"configurationLabel\": \"" + configurationLabel + "\""
+                + ", \"liveURL\": \"" + liveURL + "\""
+                + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
+                + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
+                + ", \"autoRenew\": " + to_string(autoRenew) + ""
+                + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds) + ""
+                + ", \"outputFileFormat\": \"" + outputFileFormat + "\""
+                + "} "
+                ;
+
+			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+				+ ", parameters.length: " + to_string(parameters.length()));
+        
+			{
+				/*
+				int savedEncodingPriority = static_cast<int>(encodingPriority);
+				if (savedEncodingPriority > workspace->_maxEncodingPriority)
+				{
+					_logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+						+ ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+						+ ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+					);
+
+					savedEncodingPriority = workspace->_maxEncodingPriority;
+				}
+				*/
+				// 2019-04-23: we will force the encoding priority to high to be sure this EncodingJob
+				//	will be managed as soon as possible
+				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
+
+				lastSQLCommand = 
+					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+												"NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+				preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+				preparedStatement->setString(queryParameterIndex++, parameters);
+				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+				preparedStatement->executeUpdate();
+			}
+
+			backupEncodingJobKey = getLastInsertId(conn);
+        
+			if (main)
+			{
+				IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
+				string errorMessage;
+				string processorMMS;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+			}
+		}
+
+		if (mainEncodingJobKey != -1 && backupEncodingJobKey != -1)
+		{
+			{
+				lastSQLCommand = 
+					"update MMS_EncodingJob set parameters = JSON_SET(parameters, '$.backupEncodingJobKey', ?) "
+					"where encodingJobKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, backupEncodingJobKey);
+				preparedStatement->setInt64(queryParameterIndex++, mainEncodingJobKey);
+
+				int rowsUpdated = preparedStatement->executeUpdate();
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "it should never happen"
+                        + ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
+                        + ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+
+			{
+				lastSQLCommand = 
+					"update MMS_EncodingJob set parameters = JSON_SET(parameters, '$.mainEncodingJobKey', ?) "
+					"where encodingJobKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, mainEncodingJobKey);
+				preparedStatement->setInt64(queryParameterIndex++, backupEncodingJobKey);
+
+				int rowsUpdated = preparedStatement->executeUpdate();
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "it should never happen"
+                        + ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
+                        + ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+		}
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
@@ -6367,7 +6660,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         }
         
         throw e;
-    }        
+    }
 }
 
 int MMSEngineDBFacade::addEncoding_VideoSpeed (

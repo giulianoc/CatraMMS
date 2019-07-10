@@ -1448,7 +1448,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "Encode content. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -1825,38 +1825,18 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 			string directoryPathName;
 			try
 			{
-				long long llFileSize = -1;
-            if (FileIO::fileExisting(stagingEncodedAssetPathName))
-            {
-                bool inCaseOfLinkHasItToBeRead = false;
-                llFileSize = FileIO::getFileSizeInBytes (
-                    stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
-            }
-					_logger->error(__FILEREF__ + "endOfDirectoryIndex != string::npos???"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-					+ ", llFileSize: " + to_string(llFileSize)
-					);
-
 				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "NOTTTTTTT removeDirectory"
+					_logger->info(__FILEREF__ + "removeDirectory"
 						+ ", directoryPathName: " + directoryPathName
 					);
 					Boolean_t bRemoveRecursively = true;
-					// FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
 				}
-				else
-					_logger->error(__FILEREF__ + "endOfDirectoryIndex != string::npos???"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-					+ ", endOfDirectoryIndex: " + to_string(endOfDirectoryIndex)
-					);
 			}
 			catch(runtime_error e)
 			{
@@ -1868,12 +1848,6 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 				);
 			}
 		}
-		else
-				_logger->error(__FILEREF__ + "stagingEncodedAssetPathName is empty???"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-				);
 
         throw e;
     }
@@ -2677,7 +2651,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "overlayImageOnVideo. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -3559,7 +3533,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "overlayTextOnVideo. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -4419,7 +4393,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "videoSpeed. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -5080,7 +5054,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "generateFrames. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -5636,7 +5610,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+			_logger->info(__FILEREF__ + "slideShow. The transcoder is already saved, the encoding should be already running"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -6046,7 +6020,7 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", duration (secs): "
+		+ ", statistics duration (secs): "
 			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
 	);
 
@@ -6906,7 +6880,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", duration (secs): "
+		+ ", statistics duration (secs): "
 			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
 	);
 
@@ -7362,13 +7336,146 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		{
 			if (_encodingItem->_transcoder == "")
 			{
-				string encoderToSKip;
-				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
-					encoderToSKip);
-				_logger->info(__FILEREF__ + "Configuration item"
+				// In case of HighAvailability, main and backup should run on different server
+				// case Main:
+				//		1. look for the transcoder of the backup
+				//		2. if it is no defined
+				//			a "random" transcoder is used
+				//		   else
+				//			a transcoder different by the backupTranscoder (if exist) is used
+				// case Backup:
+				//		1. look for the mainTransocder
+				//		2. if present
+				//			a transcoder different by the mainTranscoder (if exist) is used
+				//		   else
+				//		    sleep and come back to 1. The loop 1. and 2. is executed up to 60 secs
+				if (highAvailability)
+				{
+					if (main)
+					{
+						string backupTranscoder = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+							main, _encodingItem->_encodingJobKey);
+
+						if (backupTranscoder == "")
+						{
+							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). BackupTranscoder is not selected yet. Just get a transcoder"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", highAvailability: " + to_string(highAvailability)
+									+ ", main: " + to_string(main)
+								);
+
+							string transcoderToSKip;
+							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+								transcoderToSKip);
+						}
+						else
+						{
+							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). BackupTranscoder is already selected. Just get another transcoder"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", highAvailability: " + to_string(highAvailability)
+									+ ", main: " + to_string(main)
+									+ ", backupTranscoder: " + backupTranscoder
+								);
+
+							string transcoderToSKip = backupTranscoder;
+							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+								transcoderToSKip);
+						}
+					}
+					else
+					{
+						// backup live recorder
+
+						int intervalInSecondsToWaitLiveRecorderMainTranscoder = 5;
+						int maxWaitInSecondsForLiveRecorderMainTranscoder = 60;
+
+						chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+						chrono::system_clock::time_point intermediatePoint;
+						bool transcoderFound = false;
+
+						while (!transcoderFound)
+						{
+							string mainTranscoder = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+								main, _encodingItem->_encodingJobKey);
+
+							if (mainTranscoder == "")
+							{
+								if (chrono::duration_cast<chrono::seconds>(
+									(chrono::system_clock::now() + chrono::seconds (intervalInSecondsToWaitLiveRecorderMainTranscoder)) - startPoint).count() >
+										maxWaitInSecondsForLiveRecorderMainTranscoder)
+								{
+									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is not selected and time expired, Just get a transcoder"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", highAvailability: " + to_string(highAvailability)
+										+ ", main: " + to_string(main)
+									);
+
+									string transcoderToSKip;
+									_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+										_encodingItem->_workspace, transcoderToSKip);
+
+									transcoderFound = true;
+								}
+								else
+								{
+									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is not selected. Just wait a bit"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", highAvailability: " + to_string(highAvailability)
+										+ ", main: " + to_string(main)
+									);
+
+									this_thread::sleep_for(chrono::seconds(
+										intervalInSecondsToWaitLiveRecorderMainTranscoder));
+
+									intermediatePoint = chrono::system_clock::now();
+								}
+							}
+							else
+							{
+								_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is already selected. Just get another transcoder"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", highAvailability: " + to_string(highAvailability)
+									+ ", main: " + to_string(main)
+									+ ", mainTranscoder: " + mainTranscoder
+								);
+
+								string transcoderToSKip = mainTranscoder;
+								_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+									_encodingItem->_workspace, transcoderToSKip);
+
+								transcoderFound = true;
+							}
+						}
+					}
+				}
+				else
+				{
+					// no high availability
+
+					_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder. No high availability, just get a transcoder"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", highAvailability: " + to_string(highAvailability)
+						);
+
+					string encoderToSKip;
+					_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+						encoderToSKip);
+				}
+
+				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 				);
+
 				ffmpegEncoderURL = 
                     _ffmpegEncoderProtocol
                     + "://"
@@ -7652,7 +7759,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			}
 			else
 			{
-				_logger->info(__FILEREF__ + "The transcoder is already saved, the encoding should be already running"
+				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder. The transcoder is already saved (DB), the encoding should be already running"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

@@ -1299,7 +1299,6 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		bool highAvailability,
-		bool main,
 		string configurationLabel, string liveURL,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
@@ -1344,6 +1343,9 @@ public:
 		int64_t encodingJobKey,
 		string transcoder,
 		string stagingEncodedAssetPathName);
+
+	string getLiveRecorderOtherTranscoder (
+		bool isEncodingJobKeyMain, int64_t encodingJobKey);
 
 	tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 		string, MMSEngineDBFacade::EncodingStatus, int64_t>

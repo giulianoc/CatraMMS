@@ -36,9 +36,9 @@ SET (SCRIPTs
 	nginx.sh
 	tomcat.sh
 	setupALL.sh
-	statusALL.sh
-	startALL.sh
-	stopALL.sh
+	mmsStatusALL.sh
+	mmsStartALL.sh
+	mmsStopALL.sh
 	mmsTail.sh
 	printLogFileName.sh
 	crontab.sh
