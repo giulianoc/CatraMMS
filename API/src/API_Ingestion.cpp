@@ -1944,6 +1944,13 @@ void API::ingestionRootsStatus(
             ingestionRootKey = stoll(ingestionRootKeyIt->second);
         }
 
+        int64_t mediaItemKey = -1;
+        auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+        if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
+        {
+            mediaItemKey = stoll(mediaItemKeyIt->second);
+        }
+
         int start = 0;
         auto startIt = queryParameters.find("start");
         if (startIt != queryParameters.end() && startIt->second != "")
@@ -2023,7 +2030,7 @@ void API::ingestionRootsStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
-                    workspace, ingestionRootKey,
+                    workspace, ingestionRootKey, mediaItemKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     label, status, asc

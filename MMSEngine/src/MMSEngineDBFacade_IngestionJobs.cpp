@@ -2654,7 +2654,8 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace,
+		int64_t ingestionRootKey, int64_t mediaItemKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string label, string status, bool asc
@@ -2688,7 +2689,13 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 field = "ingestionRootKey";
                 requestParametersRoot[field] = ingestionRootKey;
             }
-            
+
+            if (mediaItemKey != -1)
+            {
+                field = "mediaItemKey";
+                requestParametersRoot[field] = mediaItemKey;
+            }
+
             if (startAndEndIngestionDatePresent)
             {
                 field = "startIngestionDate";
@@ -2707,10 +2714,50 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             field = "requestParameters";
             statusListRoot[field] = requestParametersRoot;
         }
-        
+
+		vector<int64_t> ingestionTookKeysByMediaItemKey;
+		if (mediaItemKey != -1)
+		{
+            lastSQLCommand = "select distinct ingestionRootKey "
+					"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_IngestionJobOutput ijo "
+					"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ijo.ingestionJobKey "
+					"and ir.workspaceKey = ? and ijo.mediaItemKey = ? ";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+				ingestionTookKeysByMediaItemKey.push_back(resultSet->getInt64("ingestionRootKey"));
+            }
+        }
+
         string sqlWhere = string ("where workspaceKey = ? ");
-        if (ingestionRootKey != -1)
-            sqlWhere += ("and ingestionRootKey = ? ");
+        if (ingestionRootKey != -1 || ingestionTookKeysByMediaItemKey.size() > 0)
+		{
+			string ingestionRootKeysWhere;
+			int ingestionRookKeysNumber = 0;
+
+			if (ingestionRootKey != -1)
+				ingestionRookKeysNumber++;
+			ingestionRookKeysNumber += ingestionTookKeysByMediaItemKey.size();
+
+			for (int ingestionRookKeyIndex = 0; ingestionRookKeyIndex < ingestionRookKeysNumber; ingestionRookKeyIndex++)
+			{
+				if (ingestionRootKeysWhere == "")
+					ingestionRootKeysWhere = "?";
+				else
+					ingestionRootKeysWhere += ", ?";
+			}
+
+			if (ingestionRookKeysNumber > 1)
+				sqlWhere += ("and ingestionRootKey in (" + ingestionRootKeysWhere + ") ");
+			else
+				sqlWhere += ("and ingestionRootKey = " + ingestionRootKeysWhere + " ");
+		}
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (label != "")
@@ -2737,8 +2784,16 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            if (ingestionRootKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+			if (ingestionRootKey != -1 || ingestionTookKeysByMediaItemKey.size() > 0)
+			{
+				if (ingestionRootKey != -1)
+					preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+				for (int ingestionRookKeyIndex = 0;
+						ingestionRookKeyIndex < ingestionTookKeysByMediaItemKey.size();
+						ingestionRookKeyIndex++)
+					preparedStatement->setInt64(queryParameterIndex++,
+							ingestionTookKeysByMediaItemKey[ingestionRookKeyIndex]);
+			}
             if (startAndEndIngestionDatePresent)
             {
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
@@ -2776,8 +2831,16 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            if (ingestionRootKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+			if (ingestionRootKey != -1 || ingestionTookKeysByMediaItemKey.size() > 0)
+			{
+				if (ingestionRootKey != -1)
+					preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+				for (int ingestionRookKeyIndex = 0;
+						ingestionRookKeyIndex < ingestionTookKeysByMediaItemKey.size();
+						ingestionRookKeyIndex++)
+					preparedStatement->setInt64(queryParameterIndex++,
+							ingestionTookKeysByMediaItemKey[ingestionRookKeyIndex]);
+			}
             if (startAndEndIngestionDatePresent)
             {
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);

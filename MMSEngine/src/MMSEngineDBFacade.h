@@ -1103,7 +1103,8 @@ public:
 		int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace,
+		int64_t ingestionRootKey, int64_t mediaItemKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
