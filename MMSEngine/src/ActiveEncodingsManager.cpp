@@ -126,6 +126,8 @@ void ActiveEncodingsManager::operator()()
             }
              */
 
+			_logger->info(__FILEREF__ + "Checking encodingJobs");
+
             for (MMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
             {
                 EncodingJob*    encodingJobs;

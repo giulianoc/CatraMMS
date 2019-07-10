@@ -198,7 +198,7 @@ private:
     pair<string, bool> slideShow_through_ffmpeg();
     void processSlideShow(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    string faceRecognition(shared_ptr<long> faceRecognitionNumber);
+    string faceRecognition();
     void processFaceRecognition(string stagingEncodedAssetPathName);    
 
     string faceIdentification();

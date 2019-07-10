@@ -272,7 +272,7 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
-            stagingEncodedAssetPathName = faceRecognition(_faceRecognitionNumber);
+            stagingEncodedAssetPathName = faceRecognition();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
         {
@@ -5880,7 +5880,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     }
 }
 
-string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionNumber)
+string EncoderVideoAudioProxy::faceRecognition()
 {
     
 	{
@@ -5889,14 +5889,14 @@ string EncoderVideoAudioProxy::faceRecognition(shared_ptr<long> faceRecognitionN
 		*_status = EncodingJobStatus::Running;
 	}
 
-	if (faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
+	if (_faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
 	{
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
-            + ", faceRecognitionNumber.use_count: " + to_string(faceRecognitionNumber.use_count())
+            + ", _faceRecognitionNumber.use_count: " + to_string(_faceRecognitionNumber.use_count())
             + ", _maxFaceRecognitionNumber: " + to_string(_maxFaceRecognitionNumber)
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
