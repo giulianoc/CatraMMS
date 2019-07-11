@@ -321,7 +321,7 @@ void MMSEngineProcessor::operator ()()
                     {
                         // content retention is a periodical event, we will wait the next one
                         
-                        _logger->info(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
                             + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
@@ -395,7 +395,7 @@ void MMSEngineProcessor::operator ()()
                     {
                         // main and backup running HA live recording is a periodical event, we will wait the next one
                         
-                        _logger->info(__FILEREF__ + "Not enough available threads to manage handleMainAndBackupOfRunnungLiveRecordingHA, activity is postponed"
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleMainAndBackupOfRunnungLiveRecordingHA, activity is postponed"
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
                             + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
@@ -1169,7 +1169,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 {
                                     if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                     {
-                                        _logger->info(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
+                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
                                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -1219,7 +1219,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 {
                                     if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                     {
-                                        _logger->info(__FILEREF__ + "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
+                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
                                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -1269,7 +1269,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 {
                                     if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                     {
-                                        _logger->info(__FILEREF__ + "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
+                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
                                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -2401,7 +2401,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
-                                    _logger->info(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -3450,7 +3450,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
-                                    _logger->info(__FILEREF__ + "Not enough available threads to manage changeFileFormatThread, activity is postponed"
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage changeFileFormatThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -4937,7 +4937,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
         if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->info(__FILEREF__ + "Not enough available threads to manage ftpUploadMediaSourceThread, activity is postponed"
+            _logger->warn(__FILEREF__ + "Not enough available threads to manage ftpUploadMediaSourceThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -5100,7 +5100,7 @@ void MMSEngineProcessor::postOnFacebookTask(
 
         if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->info(__FILEREF__ + "Not enough available threads to manage postOnFacebookTask, activity is postponed"
+            _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnFacebookTask, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -5311,7 +5311,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
         if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->info(__FILEREF__ + "Not enough available threads to manage postOnYouTubeTask, activity is postponed"
+            _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnYouTubeTask, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -5530,7 +5530,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
         if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->info(__FILEREF__ + "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
+            _logger->warn(__FILEREF__ + "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -5831,7 +5831,7 @@ void MMSEngineProcessor::localCopyContentTask(
 
         if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->info(__FILEREF__ + "Not enough available threads to manage copyContentThread, activity is postponed"
+            _logger->warn(__FILEREF__ + "Not enough available threads to manage copyContentThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
