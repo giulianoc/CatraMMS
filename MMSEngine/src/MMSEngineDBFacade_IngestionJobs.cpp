@@ -2781,7 +2781,8 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 string("select count(*) from MMS_IngestionRoot ")
                     + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 			if (ingestionRootKey != -1 || ingestionTookKeysByMediaItemKey.size() > 0)
@@ -2809,7 +2810,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             }
             else
             {
-                string errorMessage ("select count(*) failed");
+                string errorMessage (__FILEREF__ + "select count(*) failed");
 
                 _logger->error(errorMessage);
 
