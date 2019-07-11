@@ -151,6 +151,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
 				{
+					_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
+						+ ", mysqlOffset: " + to_string(mysqlOffset)
+						+ ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size())
+					);
+
 					lastSQLCommand = 
 						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
