@@ -2718,7 +2718,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 		vector<int64_t> ingestionTookKeysByMediaItemKey;
 		if (mediaItemKey != -1)
 		{
-            lastSQLCommand = "select distinct ingestionRootKey "
+            lastSQLCommand = "select distinct ir.ingestionRootKey "
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_IngestionJobOutput ijo "
 					"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ijo.ingestionJobKey "
 					"and ir.workspaceKey = ? and ijo.mediaItemKey = ? ";
