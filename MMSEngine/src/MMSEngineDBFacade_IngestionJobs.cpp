@@ -229,7 +229,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						}
 						else
 						{
-							_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
+							_logger->info(__FILEREF__ + "Ingestion job cannot be processed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", ingestionStatus: " + toString(ingestionStatus)
 								+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
@@ -1429,7 +1429,8 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
             
 		bool updateIngestionRootStatus = true;
-		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus, conn);
+		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus,
+				IngestionStatus::End_NotToBeExecuted, conn);
 
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
@@ -1474,6 +1475,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
 		bool updateIngestionRootStatus,
+		IngestionStatus notToBeExecuted_ToBeUsed,
         shared_ptr<MySQLConnection> conn
 )
 {
@@ -1598,7 +1600,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+						MMSEngineDBFacade::toString(notToBeExecuted_ToBeUsed));
 
                 int rowsUpdated = preparedStatement->executeUpdate();
             }
@@ -1742,7 +1744,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 }
 
 void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
-		string processorMMS)
+		string processorMMS, IngestionStatus notToBeExecuted_ToBeUsed)
 {
 
     string      lastSQLCommand;
@@ -1781,12 +1783,12 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
         
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", IngestionStatus: " + "End_NotToBeExecuted"
+			+ ", IngestionStatus: " + toString(notToBeExecuted_ToBeUsed)
 			+ ", errorMessage: " + ""
 			+ ", processorMMS: " + ""
 		);
 		updateIngestionJob (conn, ingestionJobKey,
-			IngestionStatus::End_NotToBeExecuted,
+			notToBeExecuted_ToBeUsed,
 			"",	// errorMessage,
 			"" // processorMMS
 		);
@@ -1796,7 +1798,8 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
 		// for the onSuccess tasks                                        
 
 		bool updateIngestionRootStatus = false;
-		manageIngestionJobStatusUpdate (ingestionJobKey, IngestionStatus::End_IngestionFailure, updateIngestionRootStatus, conn);
+		manageIngestionJobStatusUpdate (ingestionJobKey, IngestionStatus::End_IngestionFailure, updateIngestionRootStatus,
+				notToBeExecuted_ToBeUsed, conn);
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {

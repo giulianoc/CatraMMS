@@ -743,6 +743,7 @@ public:
         End_IngestionFailure,                    // nothing done
         
         End_NotToBeExecuted,    // because of dependencies    
+        End_NotToBeExecuted_ChunkNotSelected,    // because of dependencies    
         
         End_TaskSuccess
     };
@@ -774,6 +775,8 @@ public:
                 return "End_IngestionFailure";
             case IngestionStatus::End_NotToBeExecuted:
                 return "End_NotToBeExecuted";
+            case IngestionStatus::End_NotToBeExecuted_ChunkNotSelected:
+                return "End_NotToBeExecuted_ChunkNotSelected";
             case IngestionStatus::End_TaskSuccess:
                 return "End_TaskSuccess";
             default:
@@ -810,6 +813,8 @@ public:
             return IngestionStatus::End_IngestionFailure;
         else if (lowerCase == "end_nottobeexecuted")
             return IngestionStatus::End_NotToBeExecuted;
+        else if (lowerCase == "end_nottobeexecuted_chunknotselected")
+            return IngestionStatus::End_NotToBeExecuted_ChunkNotSelected;
         else if (lowerCase == "end_tasksuccess")
             return IngestionStatus::End_TaskSuccess;
         else
@@ -826,7 +831,9 @@ public:
     }
     static bool isIngestionStatusSuccess(const IngestionStatus& ingestionStatus)
     {
-        return (ingestionStatus == IngestionStatus::End_TaskSuccess || ingestionStatus == IngestionStatus::End_NotToBeExecuted);
+        return (ingestionStatus == IngestionStatus::End_TaskSuccess
+				|| ingestionStatus == IngestionStatus::End_NotToBeExecuted
+				|| ingestionStatus == IngestionStatus::End_NotToBeExecuted_ChunkNotSelected);
     }
     static bool isIngestionStatusFailed(const IngestionStatus& ingestionStatus)
     {
@@ -1027,7 +1034,8 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
-	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey, string processorMMS);
+	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey, string processorMMS,
+			IngestionStatus notToBeExecuted_ToBeUsed);
 
 	void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
 
@@ -1678,6 +1686,7 @@ private:
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
 		bool updateIngestionRootStatus,
+		IngestionStatus notToBeExecuted_ToBeUsed,
         shared_ptr<MySQLConnection> conn);
 
     pair<int64_t,int64_t> getWorkspaceUsage(

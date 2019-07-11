@@ -844,7 +844,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 													);
 
 													_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(
-															ingestionJobKey, _processorMMS);
+															ingestionJobKey, _processorMMS,
+															MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected);
 
 													continue;
 												}
@@ -922,7 +923,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 														);
 
 														_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(
-																ingestionJobKey, _processorMMS);
+															ingestionJobKey, _processorMMS,
+															MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected);
 
 														continue;
 													}
