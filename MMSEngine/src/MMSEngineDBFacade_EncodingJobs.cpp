@@ -44,7 +44,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 		int startRow = 0;
 		while(encodingItems.size() < maxEncodingsNumber && stillRows)
         {
-			_logger->info(__FILEREF__ + "getEncoodingJobs"
+			_logger->info(__FILEREF__ + "getEncodingJobs"
 				+ ", startRow: " + to_string(startRow)
 			);
             lastSQLCommand = 

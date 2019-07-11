@@ -566,6 +566,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 			processorMMS, "MainAndBackupLiveRecording",
 			milliSecondsToSleepWaitingLock, _logger);
 
+        _logger->info(__FILEREF__ + "Live Recording HA just started");
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

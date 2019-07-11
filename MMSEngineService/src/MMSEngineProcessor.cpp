@@ -10842,7 +10842,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
     {
-        _logger->info(__FILEREF__ + "Live Recording HA started"
+        _logger->info(__FILEREF__ + "Received MainAndBackupOfRunnungLiveRecordingHA event"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
         );
