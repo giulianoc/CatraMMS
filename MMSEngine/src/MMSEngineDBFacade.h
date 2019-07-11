@@ -1034,8 +1034,8 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
-	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey, string processorMMS,
-			IngestionStatus notToBeExecuted_ToBeUsed);
+	void setNotToBeExecutedStartingFromBecauseChunkNotSelected (
+			int64_t ingestionJobKey, string processorMMS);
 
 	void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
 
@@ -1686,7 +1686,6 @@ private:
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
 		bool updateIngestionRootStatus,
-		IngestionStatus notToBeExecuted_ToBeUsed,
         shared_ptr<MySQLConnection> conn);
 
     pair<int64_t,int64_t> getWorkspaceUsage(

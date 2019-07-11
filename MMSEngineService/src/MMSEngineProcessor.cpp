@@ -838,14 +838,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												if (!validated)
 												{
 													_logger->info(__FILEREF__ + "This task and all his dependencies will not be executed "
-														"because caused by a liveRecordingChunk that was not validated. setNotToBeExecutedStartingFrom will be called"
+														"because caused by a liveRecordingChunk that was not validated. setNotToBeExecutedStartingFromBecauseChunkNotSelected will be called"
 														+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 														+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 													);
 
-													_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(
-															ingestionJobKey, _processorMMS,
-															MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected);
+													_mmsEngineDBFacade->setNotToBeExecutedStartingFromBecauseChunkNotSelected(
+															ingestionJobKey, _processorMMS);
 
 													continue;
 												}
@@ -915,16 +914,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 													if (utcNow - utcIngestionDate >= waitingTimeoutToValidateInSeconds)
 													{
 														_logger->info(__FILEREF__ + "This task is caused by a liveRecordingChunk and we do not know yet "
-															"if it will be validated or not. The waiting timeout expired, so setNotToBeExecutedStartingFrom will be called"
+															"if it will be validated or not. The waiting timeout expired, so setNotToBeExecutedStartingFromBecauseChunkNotSelected will be called"
 															+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 															+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 															+ ", mediaItemKey ingestionDate: " + ingestionDate
 															+ ", waitingTimeoutToValidateInSeconds: " + to_string(waitingTimeoutToValidateInSeconds)
 														);
 
-														_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(
-															ingestionJobKey, _processorMMS,
-															MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected);
+														_mmsEngineDBFacade->setNotToBeExecutedStartingFromBecauseChunkNotSelected(
+															ingestionJobKey, _processorMMS);
 
 														continue;
 													}

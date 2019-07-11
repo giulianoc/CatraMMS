@@ -1430,7 +1430,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             
 		bool updateIngestionRootStatus = true;
 		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus,
-				IngestionStatus::End_NotToBeExecuted, conn);
+				conn);
 
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
@@ -1475,7 +1475,6 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
 		bool updateIngestionRootStatus,
-		IngestionStatus notToBeExecuted_ToBeUsed,
         shared_ptr<MySQLConnection> conn
 )
 {
@@ -1600,7 +1599,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(notToBeExecuted_ToBeUsed));
+						MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted));
 
                 int rowsUpdated = preparedStatement->executeUpdate();
             }
@@ -1743,8 +1742,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
     }    
 }
 
-void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
-		string processorMMS, IngestionStatus notToBeExecuted_ToBeUsed)
+void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
+		int64_t ingestionJobKey, string processorMMS)
 {
 
     string      lastSQLCommand;
@@ -1783,12 +1782,12 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
         
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", IngestionStatus: " + toString(notToBeExecuted_ToBeUsed)
+			+ ", IngestionStatus: " + toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected)
 			+ ", errorMessage: " + ""
 			+ ", processorMMS: " + ""
 		);
 		updateIngestionJob (conn, ingestionJobKey,
-			notToBeExecuted_ToBeUsed,
+			MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected,
 			"",	// errorMessage,
 			"" // processorMMS
 		);
@@ -1798,8 +1797,8 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey,
 		// for the onSuccess tasks                                        
 
 		bool updateIngestionRootStatus = false;
-		manageIngestionJobStatusUpdate (ingestionJobKey, IngestionStatus::End_IngestionFailure, updateIngestionRootStatus,
-				notToBeExecuted_ToBeUsed, conn);
+		manageIngestionJobStatusUpdate (ingestionJobKey, IngestionStatus::End_IngestionFailure,
+				updateIngestionRootStatus, conn);
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
