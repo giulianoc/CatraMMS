@@ -44,6 +44,9 @@ void MMSEngineDBFacade::getEncodingJobs(
 		int startRow = 0;
 		while(encodingItems.size() < maxEncodingsNumber && stillRows)
         {
+			_logger->info(__FILEREF__ + "getEncoodingJobs"
+				+ ", startRow: " + to_string(startRow)
+			);
             lastSQLCommand = 
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
 				"transcoder, stagingEncodedAssetPathName from MMS_EncodingJob " 
@@ -63,7 +66,9 @@ void MMSEngineDBFacade::getEncodingJobs(
 			startRow += maxEncodingsNumber;
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
-			stillRows = false;
+			if (encodingResultSet->rowsCount() != maxEncodingsNumber)
+				stillRows = false;
+
             while (encodingResultSet->next())
             {
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
@@ -1565,7 +1570,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
                 
                 encodingItems.push_back(encodingItem);
-				stillRows = true;
 
                 {
 					_logger->info(__FILEREF__ + "EncodingJob update"
