@@ -41,6 +41,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         }
 
 		bool stillRows = true;
+		int startRow = 0;
 		while(encodingItems.size() < maxEncodingsNumber && stillRows)
         {
             lastSQLCommand = 
@@ -48,7 +49,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"transcoder, stagingEncodedAssetPathName from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
                 "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
-				"limit ?"
+				"limit ? offset ?"
 				// "limit ? for update"
 				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
@@ -57,6 +58,9 @@ void MMSEngineDBFacade::getEncodingJobs(
             preparedStatementEncoding->setString(queryParameterIndex++,
 				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
             preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
+            preparedStatementEncoding->setInt(queryParameterIndex++, startRow);
+
+			startRow += maxEncodingsNumber;
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
 			stillRows = false;
