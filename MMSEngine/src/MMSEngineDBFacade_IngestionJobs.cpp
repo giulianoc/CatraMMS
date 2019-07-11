@@ -3272,6 +3272,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 				field = "dependOnIngestionJobKey";
 				ingestionJobRoot[field] = dependOnIngestionJobKey;
 
+				field = "dependOnSuccess";
+				ingestionJobRoot[field] = dependOnSuccess;
+
 				field = "dependencyIngestionStatus";
 				ingestionJobRoot[field] = toString(ingestionStatusDependency);
 			}
