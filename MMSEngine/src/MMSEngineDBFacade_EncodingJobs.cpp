@@ -2501,7 +2501,7 @@ void MMSEngineDBFacade::updateEncodingLiveRecordingPeriod (
 				+ ", JSON_SET....utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 				);
             lastSQLCommand = 
-                "update MMS_EncodingJob set "
+                "update MMS_EncodingJob set encodingJobStart = NOW(), "
 				"parameters = JSON_SET(parameters, '$.utcRecordingPeriodStart', ?)"
 				", parameters = JSON_SET(parameters, '$.utcRecordingPeriodEnd', ?) "
 				"where encodingJobKey = ?";
@@ -3638,11 +3638,15 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 		EncodingStatus	status = EncodingStatus::ToBeProcessed;
 		bool		highAvailability = false;
 		bool		main = false;
+		int64_t		theOtherEncodingJobKey = 0;
         {
             lastSQLCommand = 
                 "select ingestionJobKey, type, transcoder, status, "
 				"JSON_EXTRACT(parameters, '$.highAvailability') as highAvailability, "
-				"JSON_EXTRACT(parameters, '$.main') as main from MMS_EncodingJob "
+				"JSON_EXTRACT(parameters, '$.main') as main, "
+				"JSON_EXTRACT(parameters, '$.mainEncodingJobKey') as mainEncodingJobKey, "
+				"JSON_EXTRACT(parameters, '$.backupEncodingJobKey') as backupEncodingJobKey "
+				"from MMS_EncodingJob "
 				"where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3663,6 +3667,20 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 				{
 					if (!resultSet->isNull("main"))
 						main = resultSet->getInt("main") == 1 ? true : false;
+
+					if (type == "LiveRecorder")
+					{
+						if (main)
+						{
+							if (!resultSet->isNull("backupEncodingJobKey"))
+								theOtherEncodingJobKey = resultSet->getInt64("backupEncodingJobKey");
+						}
+						else
+						{
+							if (!resultSet->isNull("mainEncodingJobKey"))
+								theOtherEncodingJobKey = resultSet->getInt64("mainEncodingJobKey");
+						}
+					}
 				}
             }
             else
@@ -3677,7 +3695,6 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
             }
         }
 
-		int64_t theOtherEncodingJobKey = 0;
 		string theOtherTranscoder;
 		// default initialization, important in case the calling methid calls the tie function
 		EncodingStatus theOtherStatus = EncodingStatus::ToBeProcessed;
@@ -3685,19 +3702,28 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
         {
 			// select to get the other encodingJobKey
 
+			if (theOtherEncodingJobKey == 0)
+            {
+                string errorMessage = __FILEREF__ + "theOtherEncodingJobKey had to be initialized!!!"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+
             lastSQLCommand = 
-                "select encodingJobKey, transcoder, status from MMS_EncodingJob "
-				"where ingestionJobKey = ? and encodingJobKey != ?";
+                "select transcoder, status from MMS_EncodingJob "
+				"where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, theOtherEncodingJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                theOtherEncodingJobKey = resultSet->getInt64("encodingJobKey");
                 theOtherTranscoder = resultSet->getString("transcoder");
                 theOtherStatus = toEncodingStatus(resultSet->getString("status"));
             }
