@@ -1579,7 +1579,6 @@ private:
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,
 		int64_t workspaceKey,
-		string metaDataContent,
 		IngestionStatus ingestionStatus,
 		IngestionType ingestionType,
 		shared_ptr<MySQLConnection> conn

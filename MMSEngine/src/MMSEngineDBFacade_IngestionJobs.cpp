@@ -106,7 +106,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-						ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
+						ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
 
 					bool ingestionJobToBeManaged;
 					int64_t dependOnIngestionJobKey;
@@ -203,7 +203,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
-							ingestionJobKey, workspaceKey, metaDataContent, ingestionStatus, ingestionType, conn);
+							ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
 
 						bool ingestionJobToBeManaged;
 						int64_t dependOnIngestionJobKey;
@@ -556,7 +556,6 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 	MMSEngineDBFacade::isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,
 		int64_t workspaceKey,
-		string metaDataContent,
 		IngestionStatus ingestionStatus,
 		IngestionType ingestionType,
 		shared_ptr<MySQLConnection> conn
@@ -578,7 +577,9 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		bool atLeastOneDependencyRowFound = false;
 
 		lastSQLCommand = 
-			"select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
+			"select dependOnIngestionJobKey, dependOnSuccess "
+			"from MMS_IngestionJobDependency "
+			"where ingestionJobKey = ? order by orderNumber asc";
 		shared_ptr<sql::PreparedStatement> preparedStatementDependency (
 		conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		int queryParameterIndexDependency = 1;
@@ -598,7 +599,8 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
 				lastSQLCommand = 
 					"select status from MMS_IngestionJob where ingestionJobKey = ?";
-				shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndexStatus = 1;
 				preparedStatementIngestionJob->setInt64(queryParameterIndexStatus++, dependOnIngestionJobKey);
 
@@ -618,13 +620,15 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
 					if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
 					{
-						if (dependOnSuccess == 1 && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+						if (dependOnSuccess == 1
+								&& MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
 						{
 							ingestionJobToBeManaged = false;
 
 							break;
 						}
-						else if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+						else if (dependOnSuccess == 0
+								&& MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
 						{
 							ingestionJobToBeManaged = false;
 
@@ -3230,6 +3234,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         field = "ingestionJobKey";
         ingestionJobRoot[field] = ingestionJobKey;
 
+        field = "status";
+        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("status"));
+        IngestionStatus ingestionStatus = toIngestionStatus(resultSet->getString("status"));
+
         field = "metaDataContent";
         ingestionJobRoot[field] = static_cast<string>(resultSet->getString("metaDataContent"));
 
@@ -3245,12 +3253,35 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         else
             ingestionJobRoot[field] = static_cast<string>(resultSet->getString("label"));
 
+		{
+			tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+				ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
+				ingestionJobKey, workspace->_workspaceKey, ingestionStatus,
+				ingestionType, conn);
+
+			bool ingestionJobToBeManaged;
+			int64_t dependOnIngestionJobKey;
+			int dependOnSuccess;
+			IngestionStatus ingestionStatusDependency;
+
+			tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
+				= ingestionJobToBeManagedInfo;
+
+			field = "dependOnIngestionJobKey";
+			ingestionJobRoot[field] = dependOnIngestionJobKey;
+
+			field = "dependencyIngestionStatus";
+			ingestionJobRoot[field] = toString(ingestionStatusDependency);
+		}
+
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput "
+				"where ingestionJobKey = ? order by mediaItemKey";
 
-            shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementMediaItems->setInt64(queryParameterIndex++, ingestionJobKey);
             shared_ptr<sql::ResultSet> resultSetMediaItems (preparedStatementMediaItems->executeQuery());
@@ -3304,9 +3335,6 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         field = "ingestionRootKey";
         ingestionJobRoot[field] = ingestionRootKey;
-
-        field = "status";
-        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("status"));
 
         field = "errorMessage";
         if (resultSet->isNull("errorMessage"))
