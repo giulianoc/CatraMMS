@@ -40,6 +40,8 @@ void MMSEngineDBFacade::getEncodingJobs(
             statement->execute(lastSQLCommand);
         }
 
+		bool stillRows = true;
+		while(encodingItems.size() < maxEncodingsNumber && stillRows)
         {
             lastSQLCommand = 
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
@@ -57,6 +59,7 @@ void MMSEngineDBFacade::getEncodingJobs(
             preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+			stillRows = false;
             while (encodingResultSet->next())
             {
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
@@ -1558,7 +1561,8 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
                 
                 encodingItems.push_back(encodingItem);
-                
+				stillRows = true;
+
                 {
 					_logger->info(__FILEREF__ + "EncodingJob update"
 						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
