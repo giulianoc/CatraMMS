@@ -3267,11 +3267,14 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
 				= ingestionJobToBeManagedInfo;
 
-			field = "dependOnIngestionJobKey";
-			ingestionJobRoot[field] = dependOnIngestionJobKey;
+			if (dependOnIngestionJobKey != -1)
+			{
+				field = "dependOnIngestionJobKey";
+				ingestionJobRoot[field] = dependOnIngestionJobKey;
 
-			field = "dependencyIngestionStatus";
-			ingestionJobRoot[field] = toString(ingestionStatusDependency);
+				field = "dependencyIngestionStatus";
+				ingestionJobRoot[field] = toString(ingestionStatusDependency);
+			}
 		}
 
         Json::Value mediaItemsRoot(Json::arrayValue);
