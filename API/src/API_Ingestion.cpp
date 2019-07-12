@@ -708,6 +708,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         */
     }
 
+    _logger->info(__FILEREF__ + "add to referencesRoot all the inherited references?"
+        + ", taskLabel: " + taskLabel
+        + ", IngestionType: " + type
+        + ", dependOnIngestionJobKeysOverallInput.size(): " + to_string(dependOnIngestionJobKeysOverallInput.size())
+    );
+
 	// add to referencesRoot all the inherited references
     if ((!referencesSectionPresent || dependenciesToBeAddedToReferences)
 			&& dependOnIngestionJobKeysOverallInput.size() > 0)
