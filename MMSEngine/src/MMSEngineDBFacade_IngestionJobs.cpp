@@ -238,12 +238,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							);
 						}
 					}
-
-					if (resultSet->rowsCount() < mysqlRowCount)
-						moreRows = false;
-					else
-						moreRows = true;
-					mysqlOffset += maxIngestionJobs;
                 }
             }
 
