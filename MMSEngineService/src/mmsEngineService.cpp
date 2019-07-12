@@ -10,7 +10,8 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
-#include "RetentionTimes.h"
+#include "ContentRetentionTimes.h"
+#include "IngestionDataRetentionTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
@@ -241,13 +242,23 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(checkEncodingTimes);
 
     string           contentRetentionTimesSchedule = configuration["scheduler"].get("contentRetentionTimesSchedule", "").asString();
-    logger->info(__FILEREF__ + "Creating and Starting RetentionTimes"
+    logger->info(__FILEREF__ + "Creating and Starting ContentRetentionTimes"
         + ", contentRetentionTimesSchedule: " + contentRetentionTimesSchedule
             );
-    shared_ptr<RetentionTimes>     retentionTimes =
-            make_shared<RetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
-    retentionTimes->start();
-    scheduler.activeTimes(retentionTimes);
+    shared_ptr<ContentRetentionTimes>     contentRetentionTimes =
+            make_shared<ContentRetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
+    contentRetentionTimes->start();
+    scheduler.activeTimes(contentRetentionTimes);
+
+    string           ingestionDataRetentionTimesSchedule =
+		configuration["scheduler"].get("ingestionDataRetentionTimesSchedule", "").asString();
+    logger->info(__FILEREF__ + "Creating and Starting IngestionDataRetentionTimes"
+        + ", ingestionDataRetentionTimesSchedule: " + ingestionDataRetentionTimesSchedule
+            );
+    shared_ptr<IngestionDataRetentionTimes>     ingestionDataRetentionTimes =
+            make_shared<IngestionDataRetentionTimes>(ingestionDataRetentionTimesSchedule, multiEventsSet, logger);
+    ingestionDataRetentionTimes->start();
+    scheduler.activeTimes(ingestionDataRetentionTimes);
 
     string           mainAndBackupRunningHALiveRecordingTimesSchedule = configuration["scheduler"].get("mainAndBackupRunningHALiveRecordingTimesSchedule", "").asString();
     logger->info(__FILEREF__ + "Creating and Starting MainAndBackupRunningHALiveRecordingEvent"

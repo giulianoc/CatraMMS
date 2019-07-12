@@ -133,6 +133,8 @@ private:
 
     void handleContentRetentionEventThread (shared_ptr<long> processorsThreadsNumber);
 
+    void handleIngestionDataRetentionEventThread ();
+
 	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(

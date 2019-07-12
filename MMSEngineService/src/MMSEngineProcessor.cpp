@@ -14,7 +14,8 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
-#include "RetentionTimes.h"
+#include "ContentRetentionTimes.h"
+#include "IngestionDataRetentionTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
@@ -73,12 +74,6 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
     );
-	/*
-    _stagingRetentionInDays             = configuration["mms"].get("stagingRetentionInDays", 5).asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
-    );
-	*/
 
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -311,7 +306,7 @@ void MMSEngineProcessor::operator ()()
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT:	// 4
             {
-                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_RETENTIONEVENT"
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
 
@@ -344,7 +339,7 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_RETENTIONEVENT"
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -419,6 +414,47 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT:	// 7
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                try
+                {
+					/* 2019-07-10: this check was removed since this event happens once a day
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // content retention is a periodical event, we will wait the next one
+                        
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+					*/
+                    {
+                        thread ingestionDataRetention(&MMSEngineProcessor::handleIngestionDataRetentionEventThread, this);
+                        ingestionDataRetention.detach();
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleIngestionDataRetentionEventThread failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -10594,7 +10630,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
             for (pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey: mediaItemKeyToBeRemoved)
             {
-                _logger->info(__FILEREF__ + "Removing because of Retention"
+                _logger->info(__FILEREF__ + "Removing because of ContentRetention"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", workspace->_workspaceKey: "
 						+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
@@ -10833,6 +10869,26 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
     }
 	*/
 
+}
+
+void MMSEngineProcessor::handleIngestionDataRetentionEventThread ()
+{
+
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
+    {
+        _logger->info(__FILEREF__ + "Ingestion Data Retention started"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        );
+
+		_mmsEngineDBFacade->retentionOfIngestionData();
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+		);
+    }
 }
 
 void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (

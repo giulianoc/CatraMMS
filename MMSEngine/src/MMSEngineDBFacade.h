@@ -1222,6 +1222,8 @@ public:
 
     void resetProcessingJobsIfNeeded(string processorMMS);
 
+	void retentionOfIngestionData();
+
     void getEncodingJobs(
         string processorMMS,
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems,
@@ -1577,6 +1579,8 @@ private:
 	int								_maxSecondsToWaitMainAndBackupLiveChunkLock;
 	int								_maxSecondsToWaitSetNotToBeExecutedLock;
     
+	int								_ingestionWorkflowRetentionInDays;
+
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
 

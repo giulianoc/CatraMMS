@@ -1,14 +1,14 @@
 
-#ifndef RetentionTimes_h
-#define RetentionTimes_h
+#ifndef ContentRetentionTimes_h
+#define ContentRetentionTimes_h
 
 #include <memory>
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
 #include "catralibraries/Times2.h"
 
-#define MMSENGINE_RETENTIONTIMES_CLASSNAME      "RetentionTimes"
-#define MMSENGINE_RETENTIONTIMES_SOURCE		"RetentionTimes"
+#define MMSENGINE_CONTENTRETENTIONTIMES_CLASSNAME      "ContentRetentionTimes"
+#define MMSENGINE_CONTENTRETENTIONTIMES_SOURCE		"ContentRetentionTimes"
 
 #define MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT	4
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
@@ -22,18 +22,18 @@
     #endif
 #endif
 
-class RetentionTimes: public Times2
+class ContentRetentionTimes: public Times2
 {
 protected:
     shared_ptr<MultiEventsSet>              _multiEventsSet;
     shared_ptr<spdlog::logger>              _logger;
 
 public:
-    RetentionTimes (string contentRetentionTimesSchedule,
+    ContentRetentionTimes (string contentRetentionTimesSchedule,
         shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<spdlog::logger> logger);
 
-    virtual ~RetentionTimes (void);
+    virtual ~ContentRetentionTimes (void);
 
     virtual void handleTimeOut (void);
 
