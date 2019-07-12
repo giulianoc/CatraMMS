@@ -10881,7 +10881,30 @@ void MMSEngineProcessor::handleIngestionDataRetentionEventThread ()
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
         );
 
-		_mmsEngineDBFacade->retentionOfIngestionData();
+		try
+		{
+			_mmsEngineDBFacade->retentionOfIngestionData();
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "retentionOfIngestionData failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "retentionOfIngestionData failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
