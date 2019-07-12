@@ -187,6 +187,8 @@ API::API(Json::Value configuration,
             fcgiAcceptMutex,
             logger) 
 {
+	_mmsStorage = mmsStorage;
+
     string encodingPriority =  _configuration["api"].get("encodingPriorityWorkspaceDefaultValue", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
