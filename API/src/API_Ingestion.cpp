@@ -1113,7 +1113,7 @@ void API::uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
+		shared_ptr<Workspace> workspace,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )
@@ -1186,7 +1186,6 @@ void API::uploadedBinary(
             + ", contentRangeSize: " + to_string(contentRangeSize)
         );
 
-        shared_ptr<Workspace> workspace = get<1>(userKeyWorkspaceAndFlags);
         string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         workspaceIngestionBinaryPathName
                 .append("/")

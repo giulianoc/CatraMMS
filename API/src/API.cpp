@@ -733,7 +733,7 @@ void API::manageRequestAndResponse(
     else if (method == "uploadedBinary")
     {
         uploadedBinary(request, requestMethod,
-            queryParameters, userKeyWorkspaceAndFlags, // contentLength,
+            queryParameters, workspace, // contentLength,
                 requestDetails);
     }
     else if (method == "addEncodingProfilesSet")

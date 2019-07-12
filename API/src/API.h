@@ -254,7 +254,7 @@ private:
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
+		shared_ptr<Workspace> workspace,
         // unsigned long contentLength,
             unordered_map<string, string>& requestDetails
     );
