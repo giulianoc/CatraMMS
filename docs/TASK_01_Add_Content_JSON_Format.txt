@@ -12,13 +12,21 @@
 		// mandatory: extension of the file
 		"FileFormat": "mp4",
 
-		// optional: in case you are ingesting an image, this parameter allow you to create a cross reference
-		//	of type 'imageOfVideo" between this image and a video
-		"ImageOfVideoMediaItemKey": 1234,
+		// optional: only in case you have to add a CrossReference. For example, if you are ingesting an image,
+		//	it is possible to specify this image is for a specific Video
+		"CrossReference": {
+			// mandatory. Possible values: ImageOfVideo, ImageOfAudio, FaceOfVideo, CutOfVideo, CutOfAudio
+			"Type": "ImageOfVideo",
 
-		// optional: in case you are ingesting an image, this parameter allow you to create a cross reference
-		//	of type 'imageOfAudio" between this image and an audio
-		"ImageOfAudioMediaItemKey": 1234,
+			// mandatory
+			"MediaItemKey": 222,
+
+			// mandatory only for CutOfVideo and CutOfAudio
+			"Parameters": {
+				"StartTimeInSeconds": 12.123345,
+				"EndTimeInSeconds": 12.123345
+			}
+		}
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 

@@ -878,17 +878,26 @@ public:
     }
     
     enum class CrossReferenceType {
-        imageOfVideo,
-        imageOfAudio
+        ImageOfVideo,
+        ImageOfAudio,
+        FaceOfVideo,
+        CutOfVideo,
+        CutOfAudio
     };
     static const char* toString(const CrossReferenceType& crossReferenceType)
     {
         switch (crossReferenceType)
         {
-            case CrossReferenceType::imageOfVideo:
-                return "imageOfVideo";
-            case CrossReferenceType::imageOfAudio:
-                return "imageOfAudio";
+            case CrossReferenceType::ImageOfVideo:
+                return "ImageOfVideo";
+            case CrossReferenceType::ImageOfAudio:
+                return "ImageOfAudio";
+            case CrossReferenceType::FaceOfVideo:
+                return "FaceOfVideo";
+            case CrossReferenceType::CutOfVideo:
+                return "CutOfVideo";
+            case CrossReferenceType::CutOfAudio:
+                return "CutOfAudio";
             default:
             throw runtime_error(string("Wrong CrossReferenceType"));
         }
@@ -897,12 +906,19 @@ public:
     {
         string lowerCase;
         lowerCase.resize(crossReferenceType.size());
-        transform(crossReferenceType.begin(), crossReferenceType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+        transform(crossReferenceType.begin(), crossReferenceType.end(), lowerCase.begin(),
+				[](unsigned char c){return tolower(c); } );
 
         if (lowerCase == "imageofvideo")
-            return CrossReferenceType::imageOfVideo;
+            return CrossReferenceType::ImageOfVideo;
 		else if (lowerCase == "imageofaudio")
-            return CrossReferenceType::imageOfAudio;
+            return CrossReferenceType::ImageOfAudio;
+		else if (lowerCase == "faceofvideo")
+            return CrossReferenceType::FaceOfVideo;
+		else if (lowerCase == "cutofvideo")
+            return CrossReferenceType::CutOfVideo;
+		else if (lowerCase == "cutofaudio")
+            return CrossReferenceType::CutOfAudio;
         else
             throw runtime_error(string("Wrong CrossReferenceType")
                     + ", crossReferenceType: " + crossReferenceType
@@ -1461,7 +1477,8 @@ public:
     );
     
 	void addCrossReference (
-		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey);
+		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
+		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
 
     void removePhysicalPath (
         int64_t physicalPathKey);
@@ -1714,7 +1731,8 @@ private:
     
 	void addCrossReference (
         shared_ptr<MySQLConnection> conn,
-		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey);
+		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
+		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
 
     Json::Value getIngestionJobRoot(
         shared_ptr<Workspace> workspace,

@@ -1389,6 +1389,16 @@ void Validator::validateAddContentMetadata(
         throw runtime_error(errorMessage);
     }
 
+    field = "CrossReference";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+		Json::Value crossReferenceRoot = parametersRoot[field];
+
+		// in AddContent MediaItemKey has to be present
+		bool mediaItemKeyMandatory = true;
+		validateCrossReference(label, crossReferenceRoot, mediaItemKeyMandatory);
+	}
+
     /*
     // Territories
     {
@@ -1401,6 +1411,7 @@ void Validator::validateAddContentMetadata(
             {
                 Json::Value territory = territories[territoryIndex];
             }
+        }
         
     }
     */            
@@ -2306,28 +2317,11 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
-        
-    vector<string> mandatoryFields = {
-        "Type"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    
+	// in MediaCrossReference, MediaItemKey may not be present because inherit from parent Task
+	bool mediaItemKeyMandatory = false;
+	validateCrossReference(label, parametersRoot, mediaItemKeyMandatory);
+
     if (validateDependenciesToo)
     {
         // References is optional because in case of dependency managed automatically
@@ -3931,5 +3925,122 @@ bool Validator::isVideoSpeedTypeValid(string speedType)
     }
     
     return false;
+}
+
+void Validator::validateCrossReference(
+    string label, Json::Value crossReferenceRoot,
+	bool mediaItemKeyMandatory)
+{
+	if (mediaItemKeyMandatory)
+	{
+		vector<string> crossReferenceMandatoryFields = {
+			"Type",
+			"MediaItemKey"
+		};
+		for (string mandatoryField: crossReferenceMandatoryFields)
+		{
+			if (!isMetadataPresent(crossReferenceRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                   + ", Field: " + mandatoryField
+                   + ", sCrossReferenceRoot: " + sCrossReferenceRoot
+                   + ", label: " + label
+                   ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else
+	{
+		vector<string> crossReferenceMandatoryFields = {
+			"Type",
+		};
+		for (string mandatoryField: crossReferenceMandatoryFields)
+		{
+			if (!isMetadataPresent(crossReferenceRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                   + ", Field: " + mandatoryField
+                   + ", sCrossReferenceRoot: " + sCrossReferenceRoot
+                   + ", label: " + label
+                   ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+
+	string field = "Type";
+	string sCrossReferenceType = crossReferenceRoot.get(field, "XXX").asString();
+	MMSEngineDBFacade::CrossReferenceType crossReferenceType;
+	try
+	{
+		crossReferenceType = MMSEngineDBFacade::toCrossReferenceType(sCrossReferenceType);
+	}
+	catch(exception e)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+           
+		string errorMessage = __FILEREF__ + "Field 'CrossReferenceType' is wrong"
+			+ ", CrossReferenceType: " + sCrossReferenceType
+			+ ", label: " + label
+			+ ", sCrossReferenceRoot: " + sCrossReferenceRoot
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfVideo
+		|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfAudio)
+	{
+		field = "Parameters";
+		if (!_mmsEngineDBFacade->isMetadataPresent(crossReferenceRoot, field))
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+           
+			string errorMessage = __FILEREF__ + "Field 'CrossReference->Parameters' is missing"
+				+ ", label: " + label
+				+ ", sCrossReferenceRoot: " + sCrossReferenceRoot
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value crossReferenceParameters = crossReferenceRoot[field];
+
+		vector<string> crossReferenceCutMandatoryFields = {
+			"StartTimeInSeconds",
+			"EndTimeInSeconds"
+		};
+		for (string mandatoryField: crossReferenceCutMandatoryFields)
+		{
+			if (!isMetadataPresent(crossReferenceParameters, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
+           
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sCrossReferenceRoot: " + sCrossReferenceRoot
+					+ ", label: " + label
+                   ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
 }
 

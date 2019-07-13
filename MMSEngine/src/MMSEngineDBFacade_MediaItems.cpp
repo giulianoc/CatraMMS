@@ -848,7 +848,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     
 						{
 							lastSQLCommand = 
-								"select sourceMediaItemKey, type from MMS_CrossReference "
+								"select sourceMediaItemKey, type, parameters from MMS_CrossReference "
 								"where targetMediaItemKey = ?";
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
 
@@ -867,13 +867,68 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								field = "type";
 								crossReferenceRoot[field] = static_cast<string>(resultSetCrossReferences->getString("type"));
 
+								if (!resultSetCrossReferences->isNull("parameters"))
+								{
+									string crossReferenceParameters =
+										resultSetCrossReferences->getString("parameters");
+									if (crossReferenceParameters != "")
+									{
+										Json::Value crossReferenceParametersRoot;
+										try
+										{
+											Json::CharReaderBuilder builder;
+											Json::CharReader* reader = builder.newCharReader();
+											string errors;
+
+											bool parsingSuccessful = reader->parse(
+												crossReferenceParameters.c_str(),
+												crossReferenceParameters.c_str() + crossReferenceParameters.size(), 
+												&crossReferenceParametersRoot, &errors);
+											delete reader;
+
+											if (!parsingSuccessful)
+											{
+												string errorMessage = __FILEREF__ + "failed to parse the crossReferenceParameters"
+													+ ", errors: " + errors
+													+ ", crossReferenceParameters: " + crossReferenceParameters
+												;
+												_logger->error(errorMessage);
+
+												throw runtime_error(errors);
+											}
+										}
+										catch(runtime_error e)
+										{
+											string errorMessage = string("crossReferenceParameters json is not well format")
+												+ ", crossReferenceParameters: " + crossReferenceParameters
+												+ ", e.what(): " + e.what()
+											;
+											_logger->error(__FILEREF__ + errorMessage);
+
+											throw runtime_error(errorMessage);
+										}
+										catch(exception e)
+										{
+											string errorMessage = string("crossReferenceParameters json is not well format")
+												+ ", crossReferenceParameters: " + crossReferenceParameters
+											;
+											_logger->error(__FILEREF__ + errorMessage);
+
+											throw runtime_error(errorMessage);
+										}
+
+										field = "parameters";
+										crossReferenceRoot[field] = crossReferenceParametersRoot;
+									}
+								}
+
 								mediaItemReferencesRoot.append(crossReferenceRoot);
 							}
 						}
                     
 						{
 							lastSQLCommand = 
-								"select type, targetMediaItemKey from MMS_CrossReference "
+								"select type, targetMediaItemKey, parameters from MMS_CrossReference "
 								"where sourceMediaItemKey = ?";
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
 
@@ -891,6 +946,61 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 								field = "targetMediaItemKey";
 								crossReferenceRoot[field] = resultSetCrossReferences->getInt64("targetMediaItemKey");
+
+								if (!resultSetCrossReferences->isNull("parameters"))
+								{
+									string crossReferenceParameters =
+										resultSetCrossReferences->getString("parameters");
+									if (crossReferenceParameters != "")
+									{
+										Json::Value crossReferenceParametersRoot;
+										try
+										{
+											Json::CharReaderBuilder builder;
+											Json::CharReader* reader = builder.newCharReader();
+											string errors;
+
+											bool parsingSuccessful = reader->parse(
+												crossReferenceParameters.c_str(),
+												crossReferenceParameters.c_str() + crossReferenceParameters.size(), 
+												&crossReferenceParametersRoot, &errors);
+											delete reader;
+
+											if (!parsingSuccessful)
+											{
+												string errorMessage = __FILEREF__ + "failed to parse the crossReferenceParameters"
+													+ ", errors: " + errors
+													+ ", crossReferenceParameters: " + crossReferenceParameters
+												;
+												_logger->error(errorMessage);
+
+												throw runtime_error(errors);
+											}
+										}
+										catch(runtime_error e)
+										{
+											string errorMessage = string("crossReferenceParameters json is not well format")
+												+ ", crossReferenceParameters: " + crossReferenceParameters
+												+ ", e.what(): " + e.what()
+											;
+											_logger->error(__FILEREF__ + errorMessage);
+
+											throw runtime_error(errorMessage);
+										}
+										catch(exception e)
+										{
+											string errorMessage = string("crossReferenceParameters json is not well format")
+												+ ", crossReferenceParameters: " + crossReferenceParameters
+											;
+											_logger->error(__FILEREF__ + errorMessage);
+
+											throw runtime_error(errorMessage);
+										}
+
+										field = "parameters";
+										crossReferenceRoot[field] = crossReferenceParametersRoot;
+									}
+								}
 
 								mediaItemReferencesRoot.append(crossReferenceRoot);
 							}
@@ -3414,37 +3524,27 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         
 		// cross references
 		{
-			if (contentType == ContentType::Image)
+			string field = "CrossReference";
+			if (isMetadataPresent(parametersRoot, field))
 			{
-				string field = "ImageOfVideoMediaItemKey";
-				if (isMetadataPresent(parametersRoot, field))
+                Json::Value crossReferenceRoot = parametersRoot[field];
+
+				field = "Type";
+				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
+					MMSEngineDBFacade::toCrossReferenceType(crossReferenceRoot.get(field, "").asString());
+
+				field = "MediaItemKey";
+				int64_t targetMediaItemKey = crossReferenceRoot.get(field, "").asInt64();
+
+                Json::Value crossReferenceParametersRoot;
+				field = "Parameters";
+				if (isMetadataPresent(crossReferenceRoot, field))
 				{
-					// string sImageOfVideoMediaItemKey = parametersRoot.get(field, "").asString();
-
-					// if (sImageOfVideoMediaItemKey != "")
-					{
-						// int64_t imageOfVideoMediaItemKey = stoll(sImageOfVideoMediaItemKey);
-						int64_t imageOfVideoMediaItemKey = parametersRoot.get(field, -1).asInt64();
-						CrossReferenceType crossReferenceType = CrossReferenceType::imageOfVideo;
-
-						addCrossReference (conn, mediaItemKey, crossReferenceType, imageOfVideoMediaItemKey);
-					}
+					crossReferenceParametersRoot = crossReferenceRoot[field];
 				}
 
-				field = "ImageOfAudioMediaItemKey";
-				if (isMetadataPresent(parametersRoot, field))
-				{
-					// string sImageOfAudioMediaItemKey = parametersRoot.get(field, "").asString();
-
-					// if (sImageOfAudioMediaItemKey != "")
-					{
-						// int64_t imageOfAudioMediaItemKey = stoll(sImageOfAudioMediaItemKey);
-						int64_t imageOfAudioMediaItemKey = parametersRoot.get(field, -1).asInt64();
-						CrossReferenceType crossReferenceType = CrossReferenceType::imageOfAudio;
-
-						addCrossReference (conn, mediaItemKey, crossReferenceType, imageOfAudioMediaItemKey);
-					}
-				}
+				addCrossReference (conn, mediaItemKey, crossReferenceType, targetMediaItemKey,
+						crossReferenceParametersRoot);
 			}
 		}
 
@@ -4472,7 +4572,8 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 }
 
 void MMSEngineDBFacade::addCrossReference (
-	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey)
+	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
+	Json::Value crossReferenceParametersRoot)
 {
     
     string      lastSQLCommand;
@@ -4486,7 +4587,8 @@ void MMSEngineDBFacade::addCrossReference (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey);
+		addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
+				crossReferenceParametersRoot);
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4556,23 +4658,38 @@ void MMSEngineDBFacade::addCrossReference (
 
 void MMSEngineDBFacade::addCrossReference (
     shared_ptr<MySQLConnection> conn,
-	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey)
+	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
+	Json::Value crossReferenceParametersRoot)
 {
     
     string      lastSQLCommand;
     
     try
     {
-        {
-			lastSQLCommand = 
-				"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
-				"?, ?, ?)";
+		string crossReferenceParameters;
+		{
+			Json::StreamWriterBuilder wbuilder;
+            crossReferenceParameters = Json::writeString(wbuilder, crossReferenceParametersRoot);
+		}
 
-			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+        {
+			if (crossReferenceParameters != "")
+				lastSQLCommand = 
+					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
+					"values (?, ?, ?, ?)";
+			else
+				lastSQLCommand = 
+					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
+					"values (?, ?, ?, NULL)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 			preparedStatement->setString(queryParameterIndex++, toString(crossReferenceType));
 			preparedStatement->setInt64(queryParameterIndex++, targetMediaItemKey);
+			if (crossReferenceParameters != "")
+				preparedStatement->setString(queryParameterIndex++, crossReferenceParameters);
 
 			preparedStatement->executeUpdate();
         }

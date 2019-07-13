@@ -230,6 +230,7 @@ private:
         string fileFormat,
         string title,
 		int64_t imageOfVideoMediaItemKey,
+		int64_t cutOfVideoMediaItemKey, int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
         Json::Value parametersRoot);
 
     void manageEncodeTask(

@@ -18,7 +18,13 @@
 			{ "ReferenceMediaItemKey": 12 }
 		],
 
-		// mandatory. Possible values: imageOfVideo, imageOfAudio.
+		// mandatory. Possible values: ImageOfVideo, ImageOfAudio, FaceOfVideo, CutOfVideo, CutOfAudio
 		"Type": "imageOfVideo"
+
+		// mandatory only for CutOfVideo and CutOfAudio
+		"Parameters": {
+			"StartTimeInSeconds": 12.123345,
+			"EndTimeInSeconds": 12.123345
+		}
 	}
 }

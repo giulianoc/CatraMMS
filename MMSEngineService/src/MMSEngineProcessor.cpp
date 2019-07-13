@@ -6767,11 +6767,16 @@ void MMSEngineProcessor::changeFileFormatThread(
 
                 string title;
 				int64_t imageOfVideoMediaItemKey = -1;
+				int64_t cutOfVideoMediaItemKey = -1;
+				int64_t cutOfAudioMediaItemKey = -1;
+				double startTimeInSeconds = 0.0;
+				double endTimeInSeconds = 0.0;
                 string mediaMetaDataContent = generateMediaMetadataToIngest(
                         ingestionJobKey,
                         outputFileFormat,
                         title,
 						imageOfVideoMediaItemKey,
+						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
                         parametersRoot
                 );
 
@@ -7234,13 +7239,18 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                 string title;
 				int64_t imageOfVideoMediaItemKey = -1;
+				int64_t cutOfVideoMediaItemKey = -1;
+				int64_t cutOfAudioMediaItemKey = -1;
+				double startTimeInSeconds = 0.0;
+				double endTimeInSeconds = 0.0;
                 string mediaMetaDataContent = generateMediaMetadataToIngest(
-                        ingestionJobKey,
-                        outputFileFormat,
-                        title,
-						imageOfVideoMediaItemKey,
-                        parametersRoot
-                );
+					ingestionJobKey,
+					outputFileFormat,
+					title,
+					imageOfVideoMediaItemKey,
+					cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+					parametersRoot
+				);
 
                 {
                     shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -7498,12 +7508,17 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                             );
                 }
 				int64_t imageOfVideoMediaItemKey = -1;
+				int64_t cutOfVideoMediaItemKey = -1;
+				int64_t cutOfAudioMediaItemKey = -1;
+				double startTimeInSeconds = 0.0;
+				double endTimeInSeconds = 0.0;
                 string imageMetaDataContent = generateMediaMetadataToIngest(
                         multiLocalAssetIngestionEvent->getIngestionJobKey(),
                         // mjpeg,
                         fileFormat,
                         title,
 						imageOfVideoMediaItemKey,
+						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
                         multiLocalAssetIngestionEvent->getParametersRoot()
                 );
 
@@ -8098,12 +8113,17 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
 
                     string title;
 					int64_t imageOfVideoMediaItemKey = sourceVideoMediaItemKey;
+					int64_t cutOfVideoMediaItemKey = -1;
+					int64_t cutOfAudioMediaItemKey = -1;
+					double startTimeInSeconds = 0.0;
+					double endTimeInSeconds = 0.0;
                     string imageMetaDataContent = generateMediaMetadataToIngest(
-                            ingestionJobKey,
-                            fileFormat,
-                            title,
-							imageOfVideoMediaItemKey,
-                            parametersRoot
+                        ingestionJobKey,
+                        fileFormat,
+                        title,
+						imageOfVideoMediaItemKey,
+						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+                        parametersRoot
                     );
 
                     {
@@ -8938,13 +8958,18 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
                 
         string title;
 		int64_t imageOfVideoMediaItemKey = -1;
+		int64_t cutOfVideoMediaItemKey = -1;
+		int64_t cutOfAudioMediaItemKey = -1;
+		double startTimeInSeconds = 0.0;
+		double endTimeInSeconds = 0.0;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
-                ingestionJobKey,
-                // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                fileFormat,
-                title,
-				imageOfVideoMediaItemKey,
-                parametersRoot
+            ingestionJobKey,
+            // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+            fileFormat,
+            title,
+			imageOfVideoMediaItemKey,
+			cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+            parametersRoot
         );
 
         {
@@ -9267,12 +9292,19 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
         
         string title;
 		int64_t imageOfVideoMediaItemKey = -1;
+		int64_t cutOfVideoMediaItemKey = -1;
+		int64_t cutOfAudioMediaItemKey = -1;
+		if (contentType == MMSEngineDBFacade::ContentType::Video)
+			cutOfVideoMediaItemKey = sourceMediaItemKey;
+		else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+			cutOfAudioMediaItemKey = sourceMediaItemKey;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
-                ingestionJobKey,
-                fileFormat,
-                title,
-				imageOfVideoMediaItemKey,
-                parametersRoot
+			ingestionJobKey,
+			fileFormat,
+			title,
+			imageOfVideoMediaItemKey,
+			cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+			parametersRoot
         );
 
         {
@@ -9299,7 +9331,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
             _multiEventsSet->addEvent(event);
 
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", getEventKey().first: " + to_string(event->getEventKey().first)
@@ -10334,8 +10366,12 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             }
 		}
 
-		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::imageOfVideo)
+		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo
+				|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::FaceOfVideo
+				)
 		{
+			Json::Value crossReferenceParametersRoot;
+
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video
 				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
@@ -10345,7 +10381,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-                        secondMediaItemKey, crossReferenceType, firstMediaItemKey);
+                        secondMediaItemKey, crossReferenceType, firstMediaItemKey,
+						crossReferenceParametersRoot);
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
 				&& secondContentType == MMSEngineDBFacade::ContentType::Video)
@@ -10356,7 +10393,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-					firstMediaItemKey, crossReferenceType, secondMediaItemKey);
+					firstMediaItemKey, crossReferenceType, secondMediaItemKey,
+					crossReferenceParametersRoot);
 			}
 			else
 			{
@@ -10375,8 +10413,10 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				throw runtime_error(errorMessage);
 			}
 		}
-		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::imageOfAudio)
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfAudio)
 		{
+			Json::Value crossReferenceParametersRoot;
+
 			if (firstContentType == MMSEngineDBFacade::ContentType::Audio
 				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
@@ -10386,7 +10426,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-                        secondMediaItemKey, crossReferenceType, firstMediaItemKey);
+                        secondMediaItemKey, crossReferenceType, firstMediaItemKey,
+						crossReferenceParametersRoot);
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
 				&& secondContentType == MMSEngineDBFacade::ContentType::Audio)
@@ -10397,7 +10438,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-					firstMediaItemKey, crossReferenceType, secondMediaItemKey);
+					firstMediaItemKey, crossReferenceType, secondMediaItemKey,
+					crossReferenceParametersRoot);
 			}
 			else
 			{
@@ -10415,6 +10457,90 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 				throw runtime_error(errorMessage);
 			}
+		}
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfVideo)
+		{
+			if (firstContentType != MMSEngineDBFacade::ContentType::Video
+				|| secondContentType != MMSEngineDBFacade::ContentType::Video)
+			{
+				string errorMessage = __FILEREF__ + "Wrong content type"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			field = "Parameters";
+			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value crossReferenceParametersRoot = parametersRoot[field];
+
+			_mmsEngineDBFacade->addCrossReference(
+				firstMediaItemKey, crossReferenceType, secondMediaItemKey, crossReferenceParametersRoot);
+		}
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfAudio)
+		{
+			if (firstContentType != MMSEngineDBFacade::ContentType::Audio
+				|| secondContentType != MMSEngineDBFacade::ContentType::Audio)
+			{
+				string errorMessage = __FILEREF__ + "Wrong content type"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			field = "Parameters";
+			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
+                    + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
+                    + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
+                    + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
+                    + ", secondMediaItemKey: " + to_string(secondMediaItemKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value crossReferenceParametersRoot = parametersRoot[field];
+
+			_mmsEngineDBFacade->addCrossReference(
+				firstMediaItemKey, crossReferenceType, secondMediaItemKey, crossReferenceParametersRoot);
 		}
 		else
 		{
@@ -10474,6 +10600,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         string fileFormat,
         string title,
 		int64_t imageOfVideoMediaItemKey,
+		int64_t cutOfVideoMediaItemKey, int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
         Json::Value parametersRoot
 )
 {    
@@ -10501,8 +10628,78 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     
 	if (imageOfVideoMediaItemKey != -1)
 	{
-		field = "ImageOfVideoMediaItemKey";
-		parametersRoot[field] = imageOfVideoMediaItemKey;
+		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
+			MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+
+        Json::Value crossReferenceRoot;
+
+		field = "Type";
+		crossReferenceRoot[field] =
+			MMSEngineDBFacade::toString(crossReferenceType);
+
+		field = "MediaItemKey";
+		crossReferenceRoot[field] = imageOfVideoMediaItemKey;
+
+		field = "CrossReference";
+		parametersRoot[field] = crossReferenceRoot;
+	}
+	else if (cutOfVideoMediaItemKey != -1)
+	{
+		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
+			MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
+
+        Json::Value crossReferenceRoot;
+
+		field = "Type";
+		crossReferenceRoot[field] =
+			MMSEngineDBFacade::toString(crossReferenceType);
+
+		field = "MediaItemKey";
+		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
+
+        Json::Value crossReferenceParametersRoot;
+		{
+			field = "StartTimeInSeconds";
+			crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+			field = "EndTimeInSeconds";
+			crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+			field = "Parameters";
+			crossReferenceRoot[field] = crossReferenceParametersRoot;
+		}
+
+		field = "CrossReference";
+		parametersRoot[field] = crossReferenceRoot;
+	}
+	else if (cutOfAudioMediaItemKey != -1)
+	{
+		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
+			MMSEngineDBFacade::CrossReferenceType::CutOfAudio;
+
+        Json::Value crossReferenceRoot;
+
+		field = "Type";
+		crossReferenceRoot[field] =
+			MMSEngineDBFacade::toString(crossReferenceType);
+
+		field = "MediaItemKey";
+		crossReferenceRoot[field] = cutOfAudioMediaItemKey;
+
+        Json::Value crossReferenceParametersRoot;
+		{
+			field = "StartTimeInSeconds";
+			crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+			field = "EndTimeInSeconds";
+			crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+			field = "Parameters";
+			crossReferenceRoot[field] = crossReferenceParametersRoot;
+		}
+
+		field = "CrossReference";
+		parametersRoot[field] = crossReferenceRoot;
 	}
 
     field = "Title";

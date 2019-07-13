@@ -1192,6 +1192,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "sourceMediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "type						VARCHAR (128) NOT NULL,"
                     "targetMediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "parameters					VARCHAR (256) NULL,"
                     "constraint MMS_CrossReference_PK PRIMARY KEY (sourceMediaItemKey, targetMediaItemKey), "
                     "constraint MMS_CrossReference_FK1 foreign key (sourceMediaItemKey) "
                         "references MMS_MediaItem (mediaItemKey) on delete cascade, "

@@ -183,6 +183,8 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
         bool encodingProfileFieldsToBeManaged);
+
+	void validateCrossReference(string label, Json::Value crossReferenceRoot, bool mediaItemKeyMandatory);
 };
 
 #endif /* VALIDATOR_H */
