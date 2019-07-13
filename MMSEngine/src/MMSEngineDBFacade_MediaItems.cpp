@@ -842,27 +842,64 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 				// CrossReferences
 				{
-					if (contentType == ContentType::Video)
+					// if (contentType == ContentType::Video)
 					{
 						Json::Value mediaItemReferencesRoot(Json::arrayValue);
                     
-						lastSQLCommand = 
-							"select sourceMediaItemKey from MMS_CrossReference "
-							"where type = 'imageOfVideo' and targetMediaItemKey = ?";
-
-						shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-						int queryParameterIndex = 1;
-						preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
-						shared_ptr<sql::ResultSet> resultSetCrossReferences (preparedStatementCrossReferences->executeQuery());
-						while (resultSetCrossReferences->next())
 						{
-							mediaItemReferencesRoot.append(resultSetCrossReferences->getInt64("sourceMediaItemKey"));
+							lastSQLCommand = 
+								"select sourceMediaItemKey, type from MMS_CrossReference "
+								"where targetMediaItemKey = ?";
+								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
+
+							shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
+							shared_ptr<sql::ResultSet> resultSetCrossReferences (preparedStatementCrossReferences->executeQuery());
+							while (resultSetCrossReferences->next())
+							{
+								Json::Value crossReferenceRoot;
+
+								field = "sourceMediaItemKey";
+								crossReferenceRoot[field] = resultSetCrossReferences->getInt64("sourceMediaItemKey");
+
+								field = "type";
+								crossReferenceRoot[field] = static_cast<string>(resultSetCrossReferences->getString("type"));
+
+								mediaItemReferencesRoot.append(crossReferenceRoot);
+							}
 						}
                     
-						field = "imagesReferences";
+						{
+							lastSQLCommand = 
+								"select type, targetMediaItemKey from MMS_CrossReference "
+								"where sourceMediaItemKey = ?";
+								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
+
+							shared_ptr<sql::PreparedStatement> preparedStatementCrossReferences (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatementCrossReferences->setInt64(queryParameterIndex++, localMediaItemKey);
+							shared_ptr<sql::ResultSet> resultSetCrossReferences (preparedStatementCrossReferences->executeQuery());
+							while (resultSetCrossReferences->next())
+							{
+								Json::Value crossReferenceRoot;
+
+								field = "type";
+								crossReferenceRoot[field] = static_cast<string>(resultSetCrossReferences->getString("type"));
+
+								field = "targetMediaItemKey";
+								crossReferenceRoot[field] = resultSetCrossReferences->getInt64("targetMediaItemKey");
+
+								mediaItemReferencesRoot.append(crossReferenceRoot);
+							}
+						}
+
+						field = "crossReferences";
 						mediaItemRoot[field] = mediaItemReferencesRoot;
 					}
+					/*
 					else if (contentType == ContentType::Audio)
 					{
 						Json::Value mediaItemReferencesRoot(Json::arrayValue);
@@ -884,6 +921,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						field = "imagesReferences";
 						mediaItemRoot[field] = mediaItemReferencesRoot;
 					}
+					*/
 				}
 
                 {
@@ -3387,19 +3425,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 					{
 						// int64_t imageOfVideoMediaItemKey = stoll(sImageOfVideoMediaItemKey);
 						int64_t imageOfVideoMediaItemKey = parametersRoot.get(field, -1).asInt64();
-						string type = "imageOfVideo";
+						CrossReferenceType crossReferenceType = CrossReferenceType::imageOfVideo;
 
-						lastSQLCommand = 
-							"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
-							"?, ?, ?)";
-
-						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-						int queryParameterIndex = 1;
-						preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-						preparedStatement->setString(queryParameterIndex++, type);
-						preparedStatement->setInt64(queryParameterIndex++, imageOfVideoMediaItemKey);
-
-						preparedStatement->executeUpdate();
+						addCrossReference (conn, mediaItemKey, crossReferenceType, imageOfVideoMediaItemKey);
 					}
 				}
 
@@ -3412,19 +3440,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 					{
 						// int64_t imageOfAudioMediaItemKey = stoll(sImageOfAudioMediaItemKey);
 						int64_t imageOfAudioMediaItemKey = parametersRoot.get(field, -1).asInt64();
-						string type = "imageOfAudio";
+						CrossReferenceType crossReferenceType = CrossReferenceType::imageOfAudio;
 
-						lastSQLCommand = 
-							"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
-							"?, ?, ?)";
-
-						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-						int queryParameterIndex = 1;
-						preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-						preparedStatement->setString(queryParameterIndex++, type);
-						preparedStatement->setInt64(queryParameterIndex++, imageOfAudioMediaItemKey);
-
-						preparedStatement->executeUpdate();
+						addCrossReference (conn, mediaItemKey, crossReferenceType, imageOfAudioMediaItemKey);
 					}
 				}
 			}
@@ -4454,7 +4472,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 }
 
 void MMSEngineDBFacade::addCrossReference (
-	int64_t sourceMediaItemKey, string type, int64_t targetMediaItemKey)
+	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey)
 {
     
     string      lastSQLCommand;
@@ -4468,19 +4486,7 @@ void MMSEngineDBFacade::addCrossReference (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        {
-			lastSQLCommand = 
-				"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
-				"?, ?, ?)";
-
-			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
-			preparedStatement->setString(queryParameterIndex++, type);
-			preparedStatement->setInt64(queryParameterIndex++, targetMediaItemKey);
-
-			preparedStatement->executeUpdate();
-        }
+		addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey);
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4544,6 +4550,62 @@ void MMSEngineDBFacade::addCrossReference (
 			conn = nullptr;
         }
         
+        throw e;
+    }
+}
+
+void MMSEngineDBFacade::addCrossReference (
+    shared_ptr<MySQLConnection> conn,
+	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey)
+{
+    
+    string      lastSQLCommand;
+    
+    try
+    {
+        {
+			lastSQLCommand = 
+				"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey) values ("
+				"?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
+			preparedStatement->setString(queryParameterIndex++, toString(crossReferenceType));
+			preparedStatement->setInt64(queryParameterIndex++, targetMediaItemKey);
+
+			preparedStatement->executeUpdate();
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
         throw e;
     }
 }

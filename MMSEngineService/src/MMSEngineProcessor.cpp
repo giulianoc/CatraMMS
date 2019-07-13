@@ -10271,7 +10271,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
             throw runtime_error(errorMessage);
         }
-        string type = parametersRoot.get(field, "XXX").asString();
+        MMSEngineDBFacade::CrossReferenceType crossReferenceType =
+			MMSEngineDBFacade::toCrossReferenceType(parametersRoot.get(field, "XXX").asString());
 
         MMSEngineDBFacade::ContentType firstContentType;
 		int64_t firstMediaItemKey;
@@ -10333,29 +10334,29 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             }
 		}
 
-		if (type == "imageOfVideo")
+		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::imageOfVideo)
 		{
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video
 				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
 				_logger->info(__FILEREF__ + "Add Cross Reference"
 					+ ", sourceMediaItemKey: " + to_string(secondMediaItemKey)
-					+ ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
 					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-                        secondMediaItemKey, type, firstMediaItemKey);
+                        secondMediaItemKey, crossReferenceType, firstMediaItemKey);
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
 				&& secondContentType == MMSEngineDBFacade::ContentType::Video)
 			{
 				_logger->info(__FILEREF__ + "Add Cross Reference"
 					+ ", sourceMediaItemKey: " + to_string(firstMediaItemKey)
-					+ ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
 					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-					firstMediaItemKey, type, secondMediaItemKey);
+					firstMediaItemKey, crossReferenceType, secondMediaItemKey);
 			}
 			else
 			{
@@ -10363,7 +10364,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size())
-                    + ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
                     + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
                     + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
                     + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
@@ -10374,29 +10375,29 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				throw runtime_error(errorMessage);
 			}
 		}
-		else if (type == "imageOfAudio")
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::imageOfAudio)
 		{
 			if (firstContentType == MMSEngineDBFacade::ContentType::Audio
 				&& secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
 				_logger->info(__FILEREF__ + "Add Cross Reference"
 					+ ", sourceMediaItemKey: " + to_string(secondMediaItemKey)
-					+ ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
 					+ ", targetMediaItemKey: " + to_string(firstMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-                        secondMediaItemKey, type, firstMediaItemKey);
+                        secondMediaItemKey, crossReferenceType, firstMediaItemKey);
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image
 				&& secondContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
 				_logger->info(__FILEREF__ + "Add Cross Reference"
 					+ ", sourceMediaItemKey: " + to_string(firstMediaItemKey)
-					+ ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
 					+ ", targetMediaItemKey: " + to_string(secondMediaItemKey)
 				);
 				_mmsEngineDBFacade->addCrossReference(
-					firstMediaItemKey, type, secondMediaItemKey);
+					firstMediaItemKey, crossReferenceType, secondMediaItemKey);
 			}
 			else
 			{
@@ -10404,7 +10405,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size())
-                    + ", type: " + type
+                    + ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
                     + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
                     + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
                     + ", firstMediaItemKey: " + to_string(firstMediaItemKey)
@@ -10421,7 +10422,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", dependencies.size: " + to_string(dependencies.size())
-                + ", type: " + type
+				+ ", crossReferenceType: " + MMSEngineDBFacade::toString(crossReferenceType)
                 + ", firstContentType: " + MMSEngineDBFacade::toString(firstContentType)
                 + ", secondContentType: " + MMSEngineDBFacade::toString(secondContentType)
                 + ", firstMediaItemKey: " + to_string(firstMediaItemKey)

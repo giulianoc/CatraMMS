@@ -867,13 +867,45 @@ public:
 
         if (lowerCase == "notcompleted")
             return IngestionRootStatus::NotCompleted;
-        if (lowerCase == "completedsuccessful")
+		else if (lowerCase == "completedsuccessful")
             return IngestionRootStatus::CompletedSuccessful;
-        if (lowerCase == "completedwithfailures")
+		else if (lowerCase == "completedwithfailures")
             return IngestionRootStatus::CompletedWithFailures;
         else
             throw runtime_error(string("Wrong IngestionRootStatus")
                     + ", ingestionRootStatus: " + ingestionRootStatus
+                    );
+    }
+    
+    enum class CrossReferenceType {
+        imageOfVideo,
+        imageOfAudio
+    };
+    static const char* toString(const CrossReferenceType& crossReferenceType)
+    {
+        switch (crossReferenceType)
+        {
+            case CrossReferenceType::imageOfVideo:
+                return "imageOfVideo";
+            case CrossReferenceType::imageOfAudio:
+                return "imageOfAudio";
+            default:
+            throw runtime_error(string("Wrong CrossReferenceType"));
+        }
+    }
+    static CrossReferenceType toCrossReferenceType(const string& crossReferenceType)
+    {
+        string lowerCase;
+        lowerCase.resize(crossReferenceType.size());
+        transform(crossReferenceType.begin(), crossReferenceType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "imageofvideo")
+            return CrossReferenceType::imageOfVideo;
+		else if (lowerCase == "imageofaudio")
+            return CrossReferenceType::imageOfAudio;
+        else
+            throw runtime_error(string("Wrong CrossReferenceType")
+                    + ", crossReferenceType: " + crossReferenceType
                     );
     }
     
@@ -1429,7 +1461,7 @@ public:
     );
     
 	void addCrossReference (
-		int64_t sourceMediaItemKey, string type, int64_t targetMediaItemKey);
+		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey);
 
     void removePhysicalPath (
         int64_t physicalPathKey);
@@ -1680,6 +1712,10 @@ private:
         int imageQuality
     );
     
+	void addCrossReference (
+        shared_ptr<MySQLConnection> conn,
+		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey);
+
     Json::Value getIngestionJobRoot(
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
