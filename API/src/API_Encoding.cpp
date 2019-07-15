@@ -71,6 +71,19 @@ void API::encodingJobsStatus(
             startAndEndIngestionDatePresent = true;
         }
 
+        bool startAndEndEncodingDatePresent = false;
+        string startEncodingDate;
+        string endEncodingDate;
+        auto startEncodingDateIt = queryParameters.find("startEncodingDate");
+        auto endEncodingDateIt = queryParameters.find("endEncodingDate");
+        if (startEncodingDateIt != queryParameters.end() && endEncodingDateIt != queryParameters.end())
+        {
+            startEncodingDate = startEncodingDateIt->second;
+            endEncodingDate = endEncodingDateIt->second;
+            
+            startAndEndEncodingDatePresent = true;
+        }
+
         bool asc = true;
         auto ascIt = queryParameters.find("asc");
         if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -100,6 +113,7 @@ void API::encodingJobsStatus(
                     workspace, encodingJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    startAndEndEncodingDatePresent, startEncodingDate, endEncodingDate,
                     asc, status, type
                     );
 

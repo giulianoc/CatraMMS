@@ -1177,6 +1177,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
         bool asc, string status, string type);
 
     Json::Value getMediaItemsList (
