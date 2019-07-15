@@ -10603,7 +10603,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		int64_t cutOfVideoMediaItemKey, int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
         Json::Value parametersRoot
 )
-{    
+{
     string field = "FileFormat";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
