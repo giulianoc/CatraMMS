@@ -2885,9 +2885,6 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	string fileFormat,
 	Json::Value liveRecorderParametersRoot)
 {
-	string mmsAPIURL;
-	ostringstream response;
-	string workflowMetadata;
 	try
 	{
 		// moving chunk from transcoder staging path to shared staging path
@@ -2909,7 +2906,43 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				+ ", movingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
 			);
 		}
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Moving of the chink failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", exception: " + e.what()
+		);
 
+		_logger->info(__FILEREF__ + "remove"
+			+ ", generated chunk: " + transcoderStagingContentsPath + currentRecordedAssetFileName 
+		);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", exception: " + e.what()
+		);
+
+		_logger->info(__FILEREF__ + "remove"
+			+ ", generated chunk: " + transcoderStagingContentsPath + currentRecordedAssetFileName 
+		);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(transcoderStagingContentsPath + currentRecordedAssetFileName, exceptionInCaseOfError);
+
+		throw e;
+	}
+
+	string mmsAPIURL;
+	ostringstream response;
+	string workflowMetadata;
+	try
+	{
 		/*
 		{
         	"Label": "<workflow label>",
