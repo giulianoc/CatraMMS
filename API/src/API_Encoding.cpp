@@ -56,6 +56,8 @@ void API::encodingJobsStatus(
         if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
         }
         
         bool startAndEndIngestionDatePresent = false;

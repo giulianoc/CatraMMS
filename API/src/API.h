@@ -82,6 +82,8 @@ private:
     bool                _fileUploadProgressThreadShutdown;
     int                 _maxProgressCallFailures;
     string              _progressURI;
+
+    int                 _maxPageSize;
     
     string              _apiProtocol;
     string              _apiHostname;

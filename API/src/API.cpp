@@ -206,6 +206,11 @@ API::API(Json::Value configuration,
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     }
 
+	_maxPageSize = configuration["database"].get("maxPageSize", 5).asInt();
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", database->maxPageSize: " + to_string(_maxPageSize)
+	);
+
     string encodingPeriod =  _configuration["api"].get("encodingPeriodWorkspaceDefaultValue", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->encodingPeriodWorkspaceDefaultValue: " + encodingPeriod
@@ -1208,6 +1213,8 @@ void API::mediaItemsList(
         if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
         }
         
         bool contentTypePresent = false;
@@ -1491,6 +1498,8 @@ void API::tagsList(
         if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
         }
         
         bool contentTypePresent = false;

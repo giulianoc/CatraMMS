@@ -1971,6 +1971,8 @@ void API::ingestionRootsStatus(
         if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
         }
         
         bool startAndEndIngestionDatePresent = false;
@@ -2181,6 +2183,8 @@ void API::ingestionJobsStatus(
         if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
         }
         
         string label;
