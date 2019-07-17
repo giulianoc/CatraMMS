@@ -2909,10 +2909,17 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	}
 	catch (runtime_error e)
 	{
+		string errorMessage = e.what();
 		_logger->error(__FILEREF__ + "Moving of the chink failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", exception: " + e.what()
+			+ ", exception: " + errorMessage
 		);
+		if (errorMessage.find(string("errno: 28")) != string::npos)
+			_logger->error(__FILEREF__ + "No space left on storage"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", exception: " + errorMessage
+			);
+
 
 		_logger->info(__FILEREF__ + "remove"
 			+ ", generated chunk: " + transcoderStagingContentsPath + currentRecordedAssetFileName 
