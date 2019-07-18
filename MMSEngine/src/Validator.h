@@ -54,6 +54,9 @@ public:
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot, bool validateDependenciesToo);
 
+	void validateGroupOfTasksMetadata(int64_t workspaceKey, 
+		Json::Value parametersRoot);
+
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> validateSingleTaskMetadata(
             int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo);
 
@@ -163,7 +166,11 @@ public:
         Json::Value encodingProfileRoot);
 
     static bool isMetadataPresent(Json::Value root, string field);
-    
+
+	void fillReferencesOutput(
+		int64_t workspaceKey, Json::Value parametersRoot,
+		vector<pair<int64_t, int64_t>>& referencesOutput);
+
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;

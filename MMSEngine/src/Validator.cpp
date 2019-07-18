@@ -34,287 +34,8 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
-void Validator::validateEncodingProfilesSetRootMetadata(
-    MMSEngineDBFacade::ContentType contentType,
-    Json::Value encodingProfilesSetRoot)
-{
-    vector<string> mandatoryFields = {
-        "Label",
-        "Profiles"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sEncodingProfilesSetRoot = Json::writeString(wbuilder, encodingProfilesSetRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sEncodingProfilesSetRoot: " + sEncodingProfilesSetRoot
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    /*
-    string field = "Profiles";
-    if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
-    {
-        Json::Value profilesRoot = encodingProfilesSetRoot[field];
-
-        for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
-        {
-            Json::Value encodingProfileRoot = profilesRoot[profileIndex];
-
-            validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
-        }
-    }
-    */
-}
-
-void Validator::validateEncodingProfileRootMetadata(
-    MMSEngineDBFacade::ContentType contentType,
-    Json::Value encodingProfileRoot)
-{
-    if (contentType == MMSEngineDBFacade::ContentType::Video)
-        validateEncodingProfileRootVideoMetadata(encodingProfileRoot);
-    else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-        validateEncodingProfileRootAudioMetadata(encodingProfileRoot);
-    else // if (contentType == MMSEngineDBFacade::ContentType::Image)
-        validateEncodingProfileRootImageMetadata(encodingProfileRoot);
-}
-
-void Validator::validateEncodingProfileRootVideoMetadata(
-    Json::Value encodingProfileRoot)
-{
-    {
-        vector<string> mandatoryFields = {
-            "Label",
-            "FileFormat",
-            "Video",
-            "Audio"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-    
-    {
-        string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
-        string mmsPredefinedProfilePrefix ("MMS_");
-        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
-        {
-            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
-                    + ", Label: " + label;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    
-    {
-        string field = "Video";
-        Json::Value encodingProfileVideoRoot = encodingProfileRoot[field];
-
-        vector<string> mandatoryFields = {
-            "Codec",
-            "Width",
-            "Height",
-            "TwoPasses"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-
-    {
-        string field = "Audio";
-        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
-
-        vector<string> mandatoryFields = {
-            "Codec"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-}
-
-void Validator::validateEncodingProfileRootAudioMetadata(
-    Json::Value encodingProfileRoot)
-{
-    {
-        vector<string> mandatoryFields = {
-            "Label",
-            "FileFormat",
-            "Audio"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-    
-    {
-        string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
-        string mmsPredefinedProfilePrefix ("MMS_");
-        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
-        {
-            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
-                    + ", Label: " + label;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    
-    {
-        string field = "Audio";
-        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
-
-        vector<string> mandatoryFields = {
-            "Codec"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-}
-
-void Validator::validateEncodingProfileRootImageMetadata(
-    Json::Value encodingProfileRoot)
-{
-    {
-        vector<string> mandatoryFields = {
-            "Label",
-            "FileFormat",
-            "Image"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }    
-
-    {
-        string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
-        string mmsPredefinedProfilePrefix ("MMS_");
-        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
-        {
-            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
-                    + ", Label: " + label;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    
-    {
-        string field = "Image";
-        Json::Value encodingProfileImageRoot = encodingProfileRoot[field];
-
-        vector<string> mandatoryFields = {
-            "Width",
-            "Height",
-            "AspectRatio",
-            "InterlaceType"
-        };
-        for (string mandatoryField: mandatoryFields)
-        {
-            if (!isMetadataPresent(encodingProfileImageRoot, mandatoryField))
-            {
-                Json::StreamWriterBuilder wbuilder;
-                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
-                
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField
-                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-}
-
 void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root)
-{    
+{
     string field = "Type";
     if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
     {
@@ -380,11 +101,11 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     else
     {
         validateSingleTaskMetadata(workspaceKey, taskRoot, validateDependenciesToo);
-    }    
+    }
 }
 
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
-        Json::Value groupOfTasksRoot, bool validateDependenciesToo)
+	Json::Value groupOfTasksRoot, bool validateDependenciesToo)
 {
     string field = "Parameters";
     if (!isMetadataPresent(groupOfTasksRoot, field))
@@ -401,40 +122,17 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     }
     Json::Value parametersRoot = groupOfTasksRoot[field];
     
-    field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        Json::StreamWriterBuilder wbuilder;
-        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
-        
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field
-                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string executionType = parametersRoot.get(field, "XXX").asString();
-    if (executionType != "parallel" 
-            && executionType != "sequential")
-    {
-        string errorMessage = __FILEREF__ + "executionType field is wrong"
-                + ", executionType: " + executionType;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
+	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
     field = "Tasks";
     if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
-        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
         
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
-                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
+                + ", sParametersRoot: " + sParametersRoot;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -457,11 +155,11 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
-            string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
             
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field
-                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
+				+ ", Field: " + field
+                + ", sParametersRoot: " + sParametersRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -477,8 +175,37 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
             validateSingleTaskMetadata(workspaceKey, taskRoot, validateDependenciesToo);
         }        
     }
-    
+
     validateEvents(workspaceKey, groupOfTasksRoot, validateDependenciesToo);
+}
+
+void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
+	Json::Value parametersRoot)
+{
+    string field = "ExecutionType";
+    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        Json::StreamWriterBuilder wbuilder;
+        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+        
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field
+                + ", sParametersRoot: " + sParametersRoot;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    string executionType = parametersRoot.get(field, "XXX").asString();
+    if (executionType != "parallel" 
+            && executionType != "sequential")
+    {
+        string errorMessage = __FILEREF__ + "executionType field is wrong"
+                + ", executionType: " + executionType;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
 }
 
 void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot, bool validateDependenciesToo)
@@ -3741,6 +3468,217 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
     }
 }
 
+void Validator::fillReferencesOutput(
+	int64_t workspaceKey, Json::Value parametersRoot,
+	vector<pair<int64_t, int64_t>>& referencesOutput)
+{
+
+    string field = "ReferencesOutput";
+	if (!isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+		;
+		_logger->warn(errorMessage);
+
+		return;
+	}
+    Json::Value referencesOutputRoot = parametersRoot[field];
+
+    for (int referenceIndex = 0; referenceIndex < referencesOutputRoot.size(); referenceIndex++)
+    {
+        Json::Value referenceOutputRoot = referencesOutputRoot[referenceIndex];
+
+        int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
+        int64_t referenceIngestionJobKey = -1;
+        string referenceUniqueName = "";
+
+        field = "ReferenceMediaItemKey";
+        if (!isMetadataPresent(referenceOutputRoot, field))
+        {
+            field = "ReferencePhysicalPathKey";
+            if (!isMetadataPresent(referenceOutputRoot, field))
+            {
+                field = "ReferenceIngestionJobKey";
+                if (!isMetadataPresent(referenceOutputRoot, field))
+                {
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceOutputRoot, field))
+                    {
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", Field: " + "Reference..."
+							+ ", sParametersRoot: " + sParametersRoot
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+                    else
+                    {
+                        referenceUniqueName = referenceOutputRoot.get(field, "XXX").asString();
+                    }        
+                }
+                else
+                {
+                    referenceIngestionJobKey = referenceOutputRoot.get(field, "XXX").asInt64();
+                }
+            }
+            else
+            {
+                referencePhysicalPathKey = referenceOutputRoot.get(field, "XXX").asInt64();
+            }
+        }
+        else
+        {
+            referenceMediaItemKey = referenceOutputRoot.get(field, "XXX").asInt64();    
+        }
+
+        try
+        {
+            bool warningIfMissing = true;
+            if (referenceMediaItemKey != -1)
+            {
+				try
+				{
+					bool warningIfMissing = true;
+					int64_t localPhysicalPathKey =
+						_mmsEngineDBFacade->getPhysicalPathDetails(
+						referenceMediaItemKey, -1, warningIfMissing);
+
+					referencesOutput.push_back(make_pair(referenceMediaItemKey, localPhysicalPathKey));
+				}
+				catch(MediaItemKeyNotFound e)
+				{
+					_logger->warn(__FILEREF__
+						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+					);
+				}
+            }
+			else if (referencePhysicalPathKey != -1)
+            {
+				try
+				{
+					bool warningIfMissing = true;
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						referencePhysicalPathKey, warningIfMissing);  
+
+					int64_t localMediaItemKey;
+					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore) =
+						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+
+					referencesOutput.push_back(make_pair(localMediaItemKey, referencePhysicalPathKey));
+				}
+				catch(MediaItemKeyNotFound e)
+				{
+					_logger->warn(__FILEREF__
+						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+					);
+				}
+            }
+            else if (referenceIngestionJobKey != -1)
+            {
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
+
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+
+                if (mediaItemsDetails.size() == 0)
+                {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+                    string errorMessage = __FILEREF__ + "No media items found"
+                            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
+                    _logger->warn(errorMessage);
+                }
+                else
+                {
+					int64_t localMediaItemKey;
+					int64_t localPhysicalPathKey;
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+						tie(localMediaItemKey, localPhysicalPathKey, ignore)
+							= mediaItemKeyPhysicalPathKeyAndContentType;
+
+						referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
+                    }
+                }
+            }
+            else if (referenceUniqueName != "")
+            {
+				try
+				{
+					int64_t localMediaItemKey;
+					int64_t localPhysicalPathKey;
+
+					pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                        workspaceKey, referenceUniqueName, warningIfMissing);  
+
+					tie(localMediaItemKey, ignore) = mediaItemKeyAndContentType;
+
+					bool warningIfMissing = true;
+					localPhysicalPathKey =
+						_mmsEngineDBFacade->getPhysicalPathDetails(
+						localMediaItemKey, -1, warningIfMissing);
+
+					referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
+				}
+				catch(MediaItemKeyNotFound e)
+				{
+					_logger->warn(__FILEREF__
+						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", referenceUniqueName: " + referenceUniqueName
+					);
+				}
+            }
+        }
+        catch(runtime_error e)
+        {
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+            string errorMessage = __FILEREF__ + "fillReferencesOutput failed"
+                    + ", sParametersRoot: " + sParametersRoot
+					+ ", e.what(): " + e.what()
+                    ;
+            _logger->error(errorMessage);
+
+            throw e;
+        }
+        catch(exception e)
+        {
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+            string errorMessage = __FILEREF__ + "fillReferencesOutput failed"
+                    + ", sParametersRoot: " + sParametersRoot
+					+ ", e.what(): " + e.what()
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+}
+
 bool Validator::isVideoAudioFileFormat(string fileFormat)
 {
     // see https://en.wikipedia.org/wiki/Video_file_format
@@ -4042,5 +3980,284 @@ void Validator::validateCrossReference(
 			}
 		}
 	}
+}
+
+void Validator::validateEncodingProfilesSetRootMetadata(
+    MMSEngineDBFacade::ContentType contentType,
+    Json::Value encodingProfilesSetRoot)
+{
+    vector<string> mandatoryFields = {
+        "Label",
+        "Profiles"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sEncodingProfilesSetRoot = Json::writeString(wbuilder, encodingProfilesSetRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sEncodingProfilesSetRoot: " + sEncodingProfilesSetRoot
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    /*
+    string field = "Profiles";
+    if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+    {
+        Json::Value profilesRoot = encodingProfilesSetRoot[field];
+
+        for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
+        {
+            Json::Value encodingProfileRoot = profilesRoot[profileIndex];
+
+            validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
+        }
+    }
+    */
+}
+
+void Validator::validateEncodingProfileRootMetadata(
+    MMSEngineDBFacade::ContentType contentType,
+    Json::Value encodingProfileRoot)
+{
+    if (contentType == MMSEngineDBFacade::ContentType::Video)
+        validateEncodingProfileRootVideoMetadata(encodingProfileRoot);
+    else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+        validateEncodingProfileRootAudioMetadata(encodingProfileRoot);
+    else // if (contentType == MMSEngineDBFacade::ContentType::Image)
+        validateEncodingProfileRootImageMetadata(encodingProfileRoot);
+}
+
+void Validator::validateEncodingProfileRootVideoMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "Label",
+            "FileFormat",
+            "Video",
+            "Audio"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+    
+    {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    {
+        string field = "Video";
+        Json::Value encodingProfileVideoRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Codec",
+            "Width",
+            "Height",
+            "TwoPasses"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+
+    {
+        string field = "Audio";
+        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Codec"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+}
+
+void Validator::validateEncodingProfileRootAudioMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "Label",
+            "FileFormat",
+            "Audio"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+    
+    {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    {
+        string field = "Audio";
+        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Codec"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+}
+
+void Validator::validateEncodingProfileRootImageMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "Label",
+            "FileFormat",
+            "Image"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }    
+
+    {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    {
+        string field = "Image";
+        Json::Value encodingProfileImageRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Width",
+            "Height",
+            "AspectRatio",
+            "InterlaceType"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileImageRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
 }
 

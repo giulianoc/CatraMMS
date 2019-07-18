@@ -1840,12 +1840,18 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         );
 
         {
-            lastSQLCommand = 
-                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey = ?";
+			if (encodingProfileKey != -1)
+				lastSQLCommand = "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? "
+					"and encodingProfileKey = ?";
+			else
+				lastSQLCommand = 
+					"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? "
+					"and encodingProfileKey is NULL";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceMediaItemKey);
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+			if (encodingProfileKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())

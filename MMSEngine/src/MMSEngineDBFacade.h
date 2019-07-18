@@ -585,7 +585,8 @@ public:
         EmailNotification       = 30,
         MediaCrossReference		= 31,
         ContentUpdate           = 50,
-        ContentRemove           = 60
+        ContentRemove           = 60,
+        GroupOfTasks			= 70
     };
     static const char* toString(const IngestionType& ingestionType)
     {
@@ -650,6 +651,10 @@ public:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
                 return "ContentRemove";
+
+            case IngestionType::GroupOfTasks:
+                return "GroupOfTasks";
+
             default:
             throw runtime_error(string("Wrong IngestionType"));
         }
@@ -717,6 +722,10 @@ public:
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
             return IngestionType::ContentRemove;
+
+        else if (lowerCase == "groupoftasks")
+            return IngestionType::GroupOfTasks;
+
         else
             throw runtime_error(string("Wrong IngestionType")
                     + ", ingestionType: " + ingestionType
@@ -1028,6 +1037,12 @@ public:
 		bool passwordChanged,                                                                                 
         string newPassword,                                                                                   
         string oldPassword);
+
+	void addIngestionJobOutput(
+		int64_t ingestionJobKey,
+		int64_t mediaItemKey,
+		int64_t physicalPathKey
+	);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -1645,6 +1660,13 @@ private:
 		IngestionType ingestionType,
 		shared_ptr<MySQLConnection> conn
 		);
+
+	void addIngestionJobOutput(
+		shared_ptr<MySQLConnection> conn,
+		int64_t ingestionJobKey,
+		int64_t mediaItemKey,
+		int64_t physicalPathKey
+	);
 
 	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
 		shared_ptr<MySQLConnection> conn,

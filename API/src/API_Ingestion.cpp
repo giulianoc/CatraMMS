@@ -236,10 +236,10 @@ void API::ingestion(
             string taskType = taskRoot.get(field, "XXX").asString();
             
             if (taskType == "GroupOfTasks")
-            {                
+            {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
+                ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
                         mapLabelAndIngestionJobKey, responseBody); 
@@ -539,7 +539,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             newTasksGroupRoot[field] = taskRoot[field];
         }
         
-        return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
+        return ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 responseBody); 
@@ -1285,15 +1285,15 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
             + "\"label\": \"" + groupOfTaskLabel + "\" "
             + "}");
 
+    vector<int64_t> localDependOnIngestionJobKeysForStarting;
+    localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
+
     ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
-		newDependOnIngestionJobKeysOverallInput, newDependOnIngestionJobKeysOverallInput,
+		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
 		// in case of OnError, OverallInput has to be the same of the failed task
         dependOnIngestionJobKeysOverallInput,
 
 		mapLabelAndIngestionJobKey, responseBody);
-
-    vector<int64_t> localDependOnIngestionJobKeysForStarting;
-    localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
 
     return localDependOnIngestionJobKeysForStarting;
 }
@@ -1337,7 +1337,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 1;
-            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
@@ -1383,7 +1383,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 0;
-            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
@@ -1429,7 +1429,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = -1;
-            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,

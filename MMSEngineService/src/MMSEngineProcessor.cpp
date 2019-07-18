@@ -749,7 +749,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-                        dependencies = validator.validateSingleTaskMetadata(
+						if (ingestionType == MMSEngineDBFacade::IngestionType::GroupOfTasks)
+							validator.validateGroupOfTasksMetadata(
+                                workspace->_workspaceKey, parametersRoot);                        
+						else
+							dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);                        
 
 						// Scenario: Live-Recording using HighAvailability, both main and backup contents are ingested (Add-Content)
@@ -1087,7 +1091,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     }
 
                     {
-                        if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
+                        if (ingestionType == MMSEngineDBFacade::IngestionType::GroupOfTasks)
+                        {
+                            try
+                            {
+                                manageGroupOfTasks(
+									ingestionJobKey, 
+									workspace, 
+									parametersRoot);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+						else if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
                         {
                             MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
                             string mediaSourceURL;
@@ -4802,6 +4906,60 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         throw e;
     }    
+}
+
+void MMSEngineProcessor::manageGroupOfTasks(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot)
+{
+    try
+    {
+		vector<pair<int64_t, int64_t>>	referencesOutput;
+
+		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+		validator.fillReferencesOutput(workspace->_workspaceKey, parametersRoot,
+				referencesOutput);
+
+		for (pair<int64_t, int64_t>  referenceOutput: referencesOutput)
+		{
+			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
+				referenceOutput.first, referenceOutput.second);
+		}
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
 }
 
 void MMSEngineProcessor::removeContentTask(

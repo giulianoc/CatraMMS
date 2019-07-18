@@ -2658,6 +2658,166 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
     return make_tuple(label, ingestionType, errorMessage);
 }
 
+
+void MMSEngineDBFacade::addIngestionJobOutput(
+	int64_t ingestionJobKey,
+	int64_t mediaItemKey,
+	int64_t physicalPathKey
+)
+{
+	string      lastSQLCommand;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
+
+	try
+	{
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+
+		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey),
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+}
+
+
+void MMSEngineDBFacade::addIngestionJobOutput(
+	shared_ptr<MySQLConnection> conn,
+	int64_t ingestionJobKey,
+	int64_t mediaItemKey,
+	int64_t physicalPathKey
+)
+{
+	string      lastSQLCommand;
+
+	try
+	{
+		{
+			lastSQLCommand = 
+				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
+				"?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+			int rowsUpdated = preparedStatement->executeUpdate();
+
+			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+			);                            
+		}
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+}
+
+
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         shared_ptr<Workspace> workspace,
 		int64_t ingestionRootKey, int64_t mediaItemKey,

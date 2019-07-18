@@ -239,6 +239,11 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+	void manageGroupOfTasks(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot);
+
 	void manageVideoSpeedTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
