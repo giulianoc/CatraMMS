@@ -390,6 +390,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     {
         taskLabel = taskRoot.get(field, "XXX").asString();
     }
+
+	_logger->info(__FILEREF__ + "Processing SingleTask..."
+		+ ", type: " + type
+		+ ", taskLabel: " + taskLabel
+	);
     
     field = "Parameters";
     Json::Value parametersRoot;
@@ -998,6 +1003,10 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
 	{
 		groupOfTaskLabel = groupOfTasksRoot.get(field, "XXX").asString();
 	}
+
+	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
+		+ ", groupOfTaskLabel: " + groupOfTaskLabel
+	);
 
 	// initialize parametersRoot
     field = "Parameters";
