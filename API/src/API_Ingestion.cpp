@@ -392,6 +392,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     }
 
 	_logger->info(__FILEREF__ + "Processing SingleTask..."
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", type: " + type
 		+ ", taskLabel: " + taskLabel
 	);
@@ -722,6 +723,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     }
 
     _logger->info(__FILEREF__ + "add to referencesRoot all the inherited references?"
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
         + ", taskLabel: " + taskLabel
         + ", IngestionType: " + type
         + ", parametersSectionPresent: " + to_string(parametersSectionPresent)
@@ -781,6 +783,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     }
     
     _logger->info(__FILEREF__ + "add IngestionJob"
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
         + ", taskLabel: " + taskLabel
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
@@ -792,6 +795,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
             dependOnIngestionJobKeysForStarting, dependOnSuccess);
     
+	_logger->info(__FILEREF__ + "Save Label..."
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+		+ ", taskLabel: " + taskLabel
+		+ ", localDependOnIngestionJobKeyExecution: " + to_string(localDependOnIngestionJobKeyExecution)
+	);
     if (taskLabel != "")
         (mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
     
@@ -1005,6 +1013,7 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
 	}
 
 	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", groupOfTaskLabel: " + groupOfTaskLabel
 	);
 
@@ -1273,6 +1282,7 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
 	}
 
 	_logger->info(__FILEREF__ + "add IngestionJob"
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", groupOfTaskLabel: " + groupOfTaskLabel
 		+ ", taskMetadata: " + taskMetadata
 		+ ", IngestionType: " + type
@@ -1285,6 +1295,11 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
 		MMSEngineDBFacade::toIngestionType(type),
 		newDependOnIngestionJobKeysOverallInput, dependOnSuccess);
 
+	_logger->info(__FILEREF__ + "Save Label..."
+		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+		+ ", groupOfTaskLabel: " + groupOfTaskLabel
+		+ ", localDependOnIngestionJobKeyExecution: " + to_string(localDependOnIngestionJobKeyExecution)
+	);
 	if (groupOfTaskLabel != "")
 		(mapLabelAndIngestionJobKey[groupOfTaskLabel]).push_back(localDependOnIngestionJobKeyExecution);
 
