@@ -17,6 +17,9 @@
 #include "MMSStorage.h"
 #include "APICommon.h"
 
+// #define NO_DB_FOR_GROUP_OF_TASKS
+#define DB_FOR_GROUP_OF_TASKS
+
 class API: public APICommon {
 public:
     struct FileUploadProgressData {
@@ -236,15 +239,7 @@ private:
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
         
-    vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-            shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-            Json::Value groupOfTasksRoot, 
-            vector <int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-            vector<int64_t> dependOnIngestionJobKeysOverallInput,
-            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            string& responseBody);
-
-	vector<int64_t> ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
+	vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,

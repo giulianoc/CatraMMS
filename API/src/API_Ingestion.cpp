@@ -239,7 +239,7 @@ void API::ingestion(
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey, taskRoot, 
+                ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
                         mapLabelAndIngestionJobKey, responseBody); 
@@ -545,7 +545,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             newTasksGroupRoot[field] = taskRoot[field];
         }
         
-        return ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
+        return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 responseBody); 
@@ -828,6 +828,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     return localDependOnIngestionJobKeysForStarting;
 }
 
+#ifdef NO_DB_FOR_GROUP_OF_TASKS
 vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
@@ -993,8 +994,10 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     
     return newDependOnIngestionJobKeysForStarting;
 }
+#endif
 
-vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
+#ifdef DB_FOR_GROUP_OF_TASKS
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
 	Json::Value groupOfTasksRoot, 
 	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
@@ -1323,6 +1326,7 @@ vector<int64_t> API::ingestionGroupOfTasks_2(shared_ptr<MySQLConnection> conn,
 
     return localDependOnIngestionJobKeysForStarting;
 }
+#endif
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -1363,7 +1367,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 1;
-            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
@@ -1409,7 +1413,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 0;
-            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
@@ -1455,7 +1459,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = -1;
-            ingestionGroupOfTasks_2(conn, workspace, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
