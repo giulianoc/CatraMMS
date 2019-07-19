@@ -642,7 +642,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 if (referenceLabel == "")
                 {
                     string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
-                            + ", referenceLabel: " + referenceLabel;
+						+ ", processing label: " + taskLabel
+						+ ", referenceLabel: " + referenceLabel;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -653,7 +654,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 if (ingestionJobKeys.size() == 0)
                 {
                     string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
-                            + ", referenceLabel: " + referenceLabel;
+						+ ", processing label: " + taskLabel
+						+ ", referenceLabel: " + referenceLabel;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
