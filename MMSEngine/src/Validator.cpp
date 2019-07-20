@@ -1965,32 +1965,32 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
         }
     }
     
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-			/*
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
-                        + ", Field: " + field
-                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	string field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		/*
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+				+ ", Field: " + field
+				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-			*/
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+			throw runtime_error(errorMessage);
+		}
+		*/
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+        if (validateDependenciesToo)
+        {
 			/*
             for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
             {
@@ -2049,32 +2049,32 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 	bool mediaItemKeyMandatory = false;
 	validateCrossReference(label, parametersRoot, mediaItemKeyMandatory);
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() != 2)
-            {
-                string errorMessage = __FILEREF__ + "Field is present but it does not have right number of elements"
-                        + ", Field: " + field
-                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	string field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() != 2)
+		{
+			string errorMessage = __FILEREF__ + "Field is present but it does not have right number of elements"
+				+ ", Field: " + field
+				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
-        } 
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+		if (validateDependenciesToo)
+		{
+		}
     }
 }
 
@@ -2105,31 +2105,31 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
         }
     }
     
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
-                        + ", Field: " + field
-                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	string field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+				+ ", Field: " + field
+				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+		if (validateDependenciesToo)
+		{
         } 
     }
 }
@@ -2210,31 +2210,31 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
         }
     }   
         
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
-                        + ", Field: " + field
-                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+				+ ", Field: " + field
+				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+		if (validateDependenciesToo)
+		{
         } 
     }
 }
@@ -2280,31 +2280,31 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
-                        + ", Field: " + field
-                        + ", referencesRoot.size(): " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+				+ ", Field: " + field
+				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+		if (validateDependenciesToo)
+		{
         }  
     }
 }
@@ -2396,31 +2396,31 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
         throw runtime_error(errorMessage);
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() == 0)
-            {
-                string errorMessage = __FILEREF__ + "No References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() == 0)
+		{
+			string errorMessage = __FILEREF__ + "No References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
 
+		if (validateDependenciesToo)
+		{
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             {
                 int64_t key;
@@ -2473,31 +2473,31 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
         }
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	string field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
 
+		if (validateDependenciesToo)
+		{
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             {
                 int64_t key;
@@ -2567,31 +2567,31 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         }
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
 
+		if (validateDependenciesToo)
+		{
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             {
                 int64_t key;
@@ -2677,30 +2677,41 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
         throw runtime_error(errorMessage);
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() != 1)
-            {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() != 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+
+		if (validateDependenciesToo)
+		{
+			if (dependencies.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "No dependencies found"
+					+ ", dependencies.size: " + to_string(dependencies.size())
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
@@ -2786,30 +2797,41 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
         throw runtime_error(errorMessage);
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() != 1)
-            {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() != 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+
+		if (validateDependenciesToo)
+		{
+			if (dependencies.size() != 1)
+			{
+				string errorMessage = __FILEREF__ + "No Dependencies found"
+					+ ", dependencies.size: " + to_string(dependencies.size())
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
@@ -2965,73 +2987,71 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
         throw runtime_error(errorMessage);
     }
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() < 1)
-            {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                        + ", label: " + label
-                        ;
-                _logger->error(errorMessage);
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() < 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+			throw runtime_error(errorMessage);
+		}
 
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
-			if (validateDependenciesToo)
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+
+		if (validateDependenciesToo)
+		{
+			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
 			{
-				for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
+
+				tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+				if (isImage)
 				{
-					int64_t key;
-					MMSEngineDBFacade::ContentType referenceContentType;
-					Validator::DependencyType dependencyType;
-
-					tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-
-					if (isImage)
+					if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
 					{
-						if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
-						{
-							string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
-								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-								+ ", referenceMediaItemKey: " + to_string(key)
-								+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-								+ ", label: " + label
-							;
-							_logger->error(errorMessage);
+						string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
+							+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+							+ ", referenceMediaItemKey: " + to_string(key)
+							+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
 
-							throw runtime_error(errorMessage);
-						}
+						throw runtime_error(errorMessage);
 					}
-					else if (isVideoOrAudio)
+				}
+				else if (isVideoOrAudio)
+				{
+					if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 					{
-						if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
-						{
-							string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
-								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
-								+ ", referenceMediaItemKey: " + to_string(key)
-								+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-								+ ", label: " + label
-							;
-							_logger->error(errorMessage);
+						string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
+							+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+							+ ", referenceMediaItemKey: " + to_string(key)
+							+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+							+ ", label: " + label
+						;
+						_logger->error(errorMessage);
 
-							throw runtime_error(errorMessage);
-						}
+						throw runtime_error(errorMessage);
 					}
 				}
 			}
-        }    
+		}
     }    
 }
 
@@ -3099,30 +3119,41 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    if (validateDependenciesToo)
-    {
-        // References is optional because in case of dependency managed automatically
-        // by MMS (i.e.: onSuccess)
-        string field = "References";
-        if (isMetadataPresent(parametersRoot, field))
-        {
-            Json::Value referencesRoot = parametersRoot[field];
-            if (referencesRoot.size() != 1)
+	// References is optional because in case of dependency managed automatically
+	// by MMS (i.e.: onSuccess)
+	field = "References";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value referencesRoot = parametersRoot[field];
+		if (referencesRoot.size() != 1)
+		{
+			string errorMessage = __FILEREF__ + "No correct number of References"
+				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+		bool encodingProfileFieldsToBeManaged = false;
+		fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+
+		if (validateDependenciesToo)
+		{
+            if (dependencies.size() != 1)
             {
-                string errorMessage = __FILEREF__ + "No correct number of References"
-                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                string errorMessage = __FILEREF__ + "Dependencies were not found"
+                        + ", dependencies.size: " + to_string(dependencies.size())
                         + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
             }
-
-            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
-            bool encodingProfileFieldsToBeManaged = false;
-            fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                    encodingProfileFieldsToBeManaged);
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
             tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
@@ -3229,7 +3260,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
         }
 
-        MMSEngineDBFacade::ContentType      referenceContentType;
+        MMSEngineDBFacade::ContentType	referenceContentType;
         try
         {
 			_logger->debug(__FILEREF__ + "fillDependencies"
@@ -3244,27 +3275,17 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
-                string title;
-                string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-                
                 tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
                         _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
-                tie(referenceContentType, title, userData, ingestionDate, localIngestionJobKey) = contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(referenceContentType, ignore, ignore, ignore, ignore) = contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referencePhysicalPathKey != -1)
             {
-                string title;
-                string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, title, userData, ingestionDate, localIngestionJobKey)
+                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referenceIngestionJobKey != -1)
@@ -3301,13 +3322,11 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 						// the generated profile and not the source media item
 						bool isIngestionTaskGeneratingAProfile = false;
 						{
-							string localLabel;
 							MMSEngineDBFacade::IngestionType ingestionType;
-							string errorMessage;
 
 							tuple<string, MMSEngineDBFacade::IngestionType, string>                                                  labelIngestionTypeAndErrorMessage =
 								_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
-							tie(localLabel, ingestionType, errorMessage) = labelIngestionTypeAndErrorMessage;
+							tie(ignore, ingestionType, ignore) = labelIngestionTypeAndErrorMessage;
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
 								isIngestionTaskGeneratingAProfile = true;
