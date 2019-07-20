@@ -1080,6 +1080,19 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     // vector<int64_t> newDependOnIngestionJobKeysForStarting;
     vector<int64_t> newDependOnIngestionJobKeysOverallInput;
     vector<int64_t> lastDependOnIngestionJobKeysForStarting;
+
+	// dependOnSuccess for the Tasks 
+	// case 1: parent IngestionJob on success ---> GroupOfTasks
+	//		in this case the Group of Tasks has to be executed or not depending the status of the parent,
+	//		if success, the group of tasks is executed. Once the Group of Tasks is executed, the Tasks
+	//		will be executed without any dependency, it means dependOnSuccess = -1 (OnComplete)
+	// case 2: parent Group of Tasks on success ---> GroupOfTasks
+	//		same as before
+	// case 3: parent Taks of a Group of Tasks ---> GroupOfTasks (destination)
+	//		In this case, if the parent Group of Tasks is executed, also the GroupOfTasks (destination)
+	//		has to be executed
+	// So, in all the cases above, we have to use  dependOnSuccess = -1 (OnComplete)
+	int dependOnSuccessForTasks = -1;
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
         Json::Value taskRoot = tasksRoot[taskIndex];
@@ -1102,7 +1115,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             {
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                     conn, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                    dependOnIngestionJobKeysForStarting, dependOnSuccessForTasks, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     responseBody);
             }
@@ -1110,7 +1123,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             {
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                     conn, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                    dependOnIngestionJobKeysForStarting, dependOnSuccessForTasks, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     responseBody);
             }
@@ -1123,7 +1136,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 {
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                         conn, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                        dependOnIngestionJobKeysForStarting, dependOnSuccessForTasks, 
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
@@ -1131,7 +1144,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 {
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                         conn, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                        dependOnIngestionJobKeysForStarting, dependOnSuccessForTasks,
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
@@ -1284,7 +1297,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		taskMetadata = Json::writeString(wbuilder, parametersRoot);
 	}
 
-	_logger->info(__FILEREF__ + "add IngestionJob"
+	_logger->info(__FILEREF__ + "add IngestionJob (Group of Tasks)"
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", groupOfTaskLabel: " + groupOfTaskLabel
 		+ ", taskMetadata: " + taskMetadata
