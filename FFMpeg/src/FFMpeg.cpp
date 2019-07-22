@@ -2516,10 +2516,10 @@ void FFMpeg::pictureInPicture(
                     regex_replace(ffmpegOverlayPosition_Y_InPixel, regex("overlayVideo_height"), "overlay_h");
 
 			string ffmpegOverlay_Width_InPixel = 
-				regex_replace(ffmpegOverlay_Width_InPixel, regex("overlayVideo_width"), "iw");
+				regex_replace(overlay_Width_InPixel, regex("overlayVideo_width"), "iw");
 
 			string ffmpegOverlay_Height_InPixel = 
-				regex_replace(ffmpegOverlay_Height_InPixel, regex("overlayVideo_height"), "ih");
+				regex_replace(overlay_Height_InPixel, regex("overlayVideo_height"), "ih");
 
 			/*
             string ffmpegFilterComplex = string("-filter_complex 'overlay=")
