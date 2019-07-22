@@ -2529,21 +2529,21 @@ void FFMpeg::pictureInPicture(
 			*/
             string ffmpegFilterComplex = string("-filter_complex ");
 			if (soundOfMain)
-				ffmpegFilterComplex += "[1] scale=";
+				ffmpegFilterComplex += "[1]scale=";
 			else
-				ffmpegFilterComplex += "[0] scale=";
+				ffmpegFilterComplex += "[0]scale=";
 			ffmpegFilterComplex +=
 				(ffmpegOverlay_Width_InPixel + ":" + ffmpegOverlay_Height_InPixel)
 			;
-			ffmpegFilterComplex += " [pip]; ";
+			ffmpegFilterComplex += "[pip];";
 
 			if (soundOfMain)
 			{
-				ffmpegFilterComplex += "[0][pip] overlay=";
+				ffmpegFilterComplex += "[0][pip]overlay=";
 			}
 			else
 			{
-				ffmpegFilterComplex += "[pip][0] overlay=";
+				ffmpegFilterComplex += "[pip][0]overlay=";
 			}
 			ffmpegFilterComplex +=
 				(ffmpegOverlayPosition_X_InPixel + ":" + ffmpegOverlayPosition_Y_InPixel)
