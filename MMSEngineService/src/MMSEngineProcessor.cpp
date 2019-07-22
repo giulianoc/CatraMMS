@@ -10354,6 +10354,9 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 {
     try
     {
+		int aaa = 0;
+		_logger->info(__FILEREF__ + to_string(aaa++));
+
         if (dependencies.size() != 1)
         {
             string errorMessage = __FILEREF__ + "Wrong number of dependencies"
@@ -10365,6 +10368,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             throw runtime_error(errorMessage);
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10378,6 +10382,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         field = "Text";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
@@ -10390,6 +10395,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         }
         string text = parametersRoot.get(field, "XXX").asString();
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         string textPosition_X_InPixel;
         field = "TextPosition_X_InPixel";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10397,6 +10403,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             textPosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         string textPosition_Y_InPixel;
         field = "TextPosition_Y_InPixel";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10404,6 +10411,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             textPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         string fontType;
         field = "FontType";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10411,6 +10419,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             fontType = parametersRoot.get(field, "XXX").asString();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         int fontSize = -1;
         field = "FontSize";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10418,6 +10427,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             fontSize = parametersRoot.get(field, -1).asInt();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         string fontColor;
         field = "FontColor";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10425,6 +10435,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             fontColor = parametersRoot.get(field, "XXX").asString();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         int textPercentageOpacity = -1;
         field = "TextPercentageOpacity";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10432,6 +10443,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             textPercentageOpacity = parametersRoot.get(field, -1).asInt();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         bool boxEnable = false;
         field = "BoxEnable";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10439,6 +10451,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             boxEnable = parametersRoot.get(field, -1).asBool();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         string boxColor;
         field = "BoxColor";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10446,6 +10459,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             boxColor = parametersRoot.get(field, "XXX").asString();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         int boxPercentageOpacity = -1;
         field = "BoxPercentageOpacity";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -10453,6 +10467,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             boxPercentageOpacity = parametersRoot.get(field, -1).asInt();
         }
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
         tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
@@ -10463,6 +10478,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+		_logger->info(__FILEREF__ + to_string(aaa++));
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
             sourceMediaItemKey = key;
