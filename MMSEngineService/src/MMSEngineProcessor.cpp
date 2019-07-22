@@ -9999,6 +9999,24 @@ void MMSEngineProcessor::managePictureInPictureTask(
 		else
 			overlayPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
 
+        string overlay_Width_InPixel;
+        field = "Overlay_Width_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			overlay_Width_InPixel = "100";
+        }
+		else
+			overlay_Width_InPixel = parametersRoot.get(field, "XXX").asString();
+
+        string overlay_Height_InPixel;
+        field = "Overlay_Height_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			overlay_Height_InPixel = "100";
+        }
+		else
+			overlay_Height_InPixel = parametersRoot.get(field, "XXX").asString();
+
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
         tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
@@ -10108,11 +10126,12 @@ void MMSEngineProcessor::managePictureInPictureTask(
 				soundOfMain = true;
 		}
 
-        _mmsEngineDBFacade->addEncoding_PictureInPictureJob (workspace, ingestionJobKey,
-                mainMediaItemKey, mainPhysicalPathKey,
-                overlayMediaItemKey, overlayPhysicalPathKey,
-                overlayPosition_X_InPixel, overlayPosition_Y_InPixel,
-				soundOfMain, encodingPriority);
+		_mmsEngineDBFacade->addEncoding_PictureInPictureJob (workspace, ingestionJobKey,
+			mainMediaItemKey, mainPhysicalPathKey,
+			overlayMediaItemKey, overlayPhysicalPathKey,
+			overlayPosition_X_InPixel, overlayPosition_Y_InPixel,
+			overlay_Width_InPixel, overlay_Height_InPixel,
+			soundOfMain, encodingPriority);
     }
     catch(runtime_error e)
     {

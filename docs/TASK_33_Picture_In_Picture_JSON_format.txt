@@ -42,6 +42,16 @@
 		"OverlayPosition_X_InPixel": "mainVideo_width-overlayVideo_width-10",                                  
 		"OverlayPosition_Y_InPixel": "mainVideo_height-overlayVideo_height-10",                                
 
+		// mandatory: the below parameters specify the X and Y in pixel where the video
+		//    has to be overlayed on the other video.
+		//    It is possible to specify also a formula using the following variables:
+		//        mainVideo_width: width in pixel of the video
+		//        mainVideo_height: height in pixel of the video
+		//        overlayVideo_width: width in pixel of the image
+		//        overlayVideo_height: height in pixel of the image
+		"Overlay_Width_InPixel": "overlayVideo_width/5",                                  
+		"Overlay_Height_InPixel": "overlayVideo_height/5",                                
+
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.

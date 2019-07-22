@@ -14,6 +14,8 @@
 			],
 			"OverlayPosition_X_InPixel": "10",                                  
 			"OverlayPosition_Y_InPixel": "10",                                
+			"Overlay_Width_InPixel": "100",                                  
+			"Overlay_Height_InPixel": "100",                                
 			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}

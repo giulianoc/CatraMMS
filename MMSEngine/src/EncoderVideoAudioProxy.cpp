@@ -4771,6 +4771,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
     int64_t overlayVideoPhysicalPathKey;
     string overlayPosition_X_InPixel;
     string overlayPosition_Y_InPixel;
+    string overlay_Width_InPixel;
+    string overlay_Height_InPixel;
 	bool soundOfMain;
 
     // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
@@ -4786,6 +4788,12 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
         field = "overlayPosition_Y_InPixel";
         overlayPosition_Y_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "overlay_Width_InPixel";
+        overlay_Width_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "overlay_Height_InPixel";
+        overlay_Height_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "soundOfMain";
         soundOfMain = _encodingItem->_parametersRoot.get(field, true).asBool();
@@ -4893,6 +4901,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
                 pictureInPictureMedatada["overlayPosition_X_InPixel"] = overlayPosition_X_InPixel;
                 pictureInPictureMedatada["overlayPosition_Y_InPixel"] = overlayPosition_Y_InPixel;
+                pictureInPictureMedatada["overlay_Width_InPixel"] = overlay_Width_InPixel;
+                pictureInPictureMedatada["overlay_Height_InPixel"] = overlay_Height_InPixel;
 
                 pictureInPictureMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 pictureInPictureMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);

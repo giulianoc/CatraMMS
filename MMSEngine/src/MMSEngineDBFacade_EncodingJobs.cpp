@@ -7386,6 +7386,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 	int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,
 	int64_t overlayMediaItemKey, int64_t overlayPhysicalPathKey,
 	string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
+	string overlay_Width_InPixel, string overlay_Height_InPixel,
 	bool soundOfMain, EncodingPriority encodingPriority)
 {
 
@@ -7473,6 +7474,8 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 + ", \"overlayVideoPhysicalPathKey\": " + to_string(localOverlayPhysicalPathKey)
                 + ", \"overlayPosition_X_InPixel\": \"" + overlayPosition_X_InPixel + "\""
                 + ", \"overlayPosition_Y_InPixel\": \"" + overlayPosition_Y_InPixel + "\""
+                + ", \"overlay_Width_InPixel\": \"" + overlay_Width_InPixel + "\""
+                + ", \"overlay_Height_InPixel\": \"" + overlay_Height_InPixel + "\""
                 + ", \"soundOfMain\": " + to_string(soundOfMain)
                 + "} ";
         {

@@ -2466,6 +2466,8 @@ void FFMpeg::pictureInPicture(
         bool soundOfMain,
         string overlayPosition_X_InPixel,
         string overlayPosition_Y_InPixel,
+        string overlay_Width_InPixel,
+        string overlay_Height_InPixel,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -2513,6 +2515,12 @@ void FFMpeg::pictureInPicture(
             ffmpegOverlayPosition_Y_InPixel = 
                     regex_replace(ffmpegOverlayPosition_Y_InPixel, regex("overlayVideo_height"), "overlay_h");
 
+			string ffmpegOverlay_Width_InPixel = 
+				regex_replace(ffmpegOverlay_Width_InPixel, regex("overlayVideo_width"), "iw");
+
+			string ffmpegOverlay_Height_InPixel = 
+				regex_replace(ffmpegOverlay_Height_InPixel, regex("overlayVideo_height"), "ih");
+
 			/*
             string ffmpegFilterComplex = string("-filter_complex 'overlay=")
                     + ffmpegImagePosition_X_InPixel + ":"
@@ -2521,9 +2529,22 @@ void FFMpeg::pictureInPicture(
 			*/
             string ffmpegFilterComplex = string("-filter_complex ");
 			if (soundOfMain)
-				ffmpegFilterComplex += "[0][1] overlay=";
+				ffmpegFilterComplex += "[1] scale=";
 			else
-				ffmpegFilterComplex += "[1][0] overlay=";
+				ffmpegFilterComplex += "[0] scale=";
+			ffmpegFilterComplex +=
+				(ffmpegOverlay_Width_InPixel + ":" + ffmpegOverlay_Height_InPixel)
+			;
+			ffmpegFilterComplex += " [pip]; ";
+
+			if (soundOfMain)
+			{
+				ffmpegFilterComplex += "[0][pip] overlay=";
+			}
+			else
+			{
+				ffmpegFilterComplex += "[pip][0] overlay=";
+			}
 			ffmpegFilterComplex +=
 				(ffmpegOverlayPosition_X_InPixel + ":" + ffmpegOverlayPosition_Y_InPixel)
 			;

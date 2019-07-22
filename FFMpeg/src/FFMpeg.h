@@ -131,6 +131,8 @@ public:
         bool soundOfMain,
         string overlayPosition_X_InPixel,
         string overlayPosition_Y_InPixel,
+        string overlay_Width_InPixel,
+        string overlay_Height_InPixel,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,

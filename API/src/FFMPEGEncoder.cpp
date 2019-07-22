@@ -3797,6 +3797,8 @@ void FFMPEGEncoder::pictureInPicture(
 
         string overlayPosition_X_InPixel = pictureInPictureMetadata.get("overlayPosition_X_InPixel", "XXX").asString();
         string overlayPosition_Y_InPixel = pictureInPictureMetadata.get("overlayPosition_Y_InPixel", "XXX").asString();
+        string overlay_Width_InPixel = pictureInPictureMetadata.get("overlay_Width_InPixel", "XXX").asString();
+        string overlay_Height_InPixel = pictureInPictureMetadata.get("overlay_Height_InPixel", "XXX").asString();
         
         string stagingEncodedAssetPathName = pictureInPictureMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
         int64_t encodingJobKey = pictureInPictureMetadata.get("encodingJobKey", -1).asInt64();
@@ -3814,6 +3816,8 @@ void FFMPEGEncoder::pictureInPicture(
 
                 overlayPosition_X_InPixel,
                 overlayPosition_Y_InPixel,
+				overlay_Width_InPixel,
+				overlay_Height_InPixel,
 
                 // encodedFileName,
                 stagingEncodedAssetPathName,

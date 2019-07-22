@@ -1420,6 +1420,7 @@ public:
 		int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,
 		int64_t overlayMediaItemKey, int64_t overlayPhysicalPathKey,
         string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
+		string overlay_Width_InPixel, string overlay_Height_InPixel,
 		bool soundOfMain, EncodingPriority encodingPriority);
 
 	void updateEncodingLiveRecordingPeriod (
