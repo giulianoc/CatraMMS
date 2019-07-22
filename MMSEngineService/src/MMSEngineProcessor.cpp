@@ -2104,6 +2104,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
+                        {
+                            try
+                            {
+                                managePictureInPictureTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
                                 || ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
@@ -9819,6 +9920,215 @@ void MMSEngineProcessor::manageVideoSpeedTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::managePictureInPictureTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 2)
+        {
+            string errorMessage = __FILEREF__ + "Wrong number of dependencies"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
+
+        bool secondVideoOverlayedOnFirst;
+        field = "SecondVideoOverlayedOnFirst";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			secondVideoOverlayedOnFirst = true;
+        }
+		else
+			secondVideoOverlayedOnFirst = parametersRoot.get(field, "XXX").asBool();
+
+        bool soundOfFirstVideo;
+        field = "SoundOfFirstVideo";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			soundOfFirstVideo = true;
+        }
+		else
+			soundOfFirstVideo = parametersRoot.get(field, "XXX").asBool();
+
+        string overlayPosition_X_InPixel;
+        field = "OverlayPosition_X_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			overlayPosition_X_InPixel = "0";
+        }
+		else
+			overlayPosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
+
+        string overlayPosition_Y_InPixel;
+        field = "OverlayPosition_Y_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			overlayPosition_Y_InPixel = "0";
+        }
+		else
+			overlayPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
+
+        int64_t sourceMediaItemKey_1;
+        int64_t sourcePhysicalPathKey_1;
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
+
+        int64_t key_1;
+        MMSEngineDBFacade::ContentType referenceContentType_1;
+        Validator::DependencyType dependencyType_1;
+
+        tie(key_1, referenceContentType_1, dependencyType_1) = keyAndDependencyType_1;
+
+        if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey_1 = key_1;
+
+            sourcePhysicalPathKey_1 = -1;
+        }
+        else if (dependencyType_1 == Validator::DependencyType::PhysicalPathKey)
+        {
+            sourcePhysicalPathKey_1 = key_1;
+            
+            bool warningIfMissing = false;
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey_1, warningIfMissing);
+
+            tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore, ignore)
+				= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        }
+		else
+        {
+            string errorMessage = __FILEREF__ + "Wrong dependencyType"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1));
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t sourceMediaItemKey_2;
+        int64_t sourcePhysicalPathKey_2;
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
+
+        int64_t key_2;
+        MMSEngineDBFacade::ContentType referenceContentType_2;
+        Validator::DependencyType dependencyType_2;
+
+        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_2;
+
+        if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey_2 = key_2;
+
+            sourcePhysicalPathKey_2 = -1;
+        }
+        else if (dependencyType_2 == Validator::DependencyType::PhysicalPathKey)
+        {
+            sourcePhysicalPathKey_2 = key_2;
+            
+            bool warningIfMissing = false;
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey_2, warningIfMissing);
+
+            tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore, ignore)
+				= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        }
+		else
+        {
+            string errorMessage = __FILEREF__ + "Wrong dependencyType"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2));
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		int64_t mainMediaItemKey;
+		int64_t mainPhysicalPathKey;
+		int64_t overlayMediaItemKey;
+		int64_t overlayPhysicalPathKey;
+
+		bool soundOfMain;
+        if (secondVideoOverlayedOnFirst)
+		{
+			mainMediaItemKey			= sourceMediaItemKey_1;
+			mainPhysicalPathKey			= sourcePhysicalPathKey_1;
+			overlayMediaItemKey			= sourceMediaItemKey_2;
+			overlayPhysicalPathKey		= sourcePhysicalPathKey_2;
+
+			if (soundOfFirstVideo)
+				soundOfMain = true;
+			else
+				soundOfMain = false;
+		}
+		else
+		{
+			mainMediaItemKey			= sourceMediaItemKey_2;
+			mainPhysicalPathKey			= sourcePhysicalPathKey_2;
+			overlayMediaItemKey			= sourceMediaItemKey_1;
+			overlayPhysicalPathKey		= sourcePhysicalPathKey_1;
+
+			if (soundOfFirstVideo)
+				soundOfMain = false;
+			else
+				soundOfMain = true;
+		}
+
+        _mmsEngineDBFacade->addEncoding_PictureInPictureJob (workspace, ingestionJobKey,
+                mainMediaItemKey, mainPhysicalPathKey,
+                overlayMediaItemKey, overlayPhysicalPathKey,
+                overlayPosition_X_InPixel, overlayPosition_Y_InPixel,
+				soundOfMain, encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

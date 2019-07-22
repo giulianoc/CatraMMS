@@ -147,6 +147,7 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegVideoSpeedURI;
+    string                              _ffmpegPictureInPictureURI;
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
@@ -225,6 +226,10 @@ private:
     pair<string, bool> videoSpeed();
     pair<string, bool> videoSpeed_through_ffmpeg();
     void processVideoSpeed(string stagingEncodedAssetPathName, bool killedByUser);    
+
+    pair<string, bool> pictureInPicture();
+    pair<string, bool> pictureInPicture_through_ffmpeg();
+    void processPictureInPicture(string stagingEncodedAssetPathName, bool killedByUser);    
 
     tuple<bool, bool, bool> getEncodingStatus();
 

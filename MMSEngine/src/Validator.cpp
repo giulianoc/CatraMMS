@@ -346,8 +346,9 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     }    
 }
 
-vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> Validator::validateSingleTaskMetadata(
-        int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo)
+vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+	Validator::validateSingleTaskMetadata(
+	int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>           dependencies;
@@ -920,6 +921,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Picture-In-Picture")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -934,8 +956,9 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     return dependencies;
 }
 
-vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> Validator::validateSingleTaskMetadata(int64_t workspaceKey,
-        MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
+vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+	Validator::validateSingleTaskMetadata(int64_t workspaceKey,
+	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
 {
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>                     dependencies;
 
@@ -1062,6 +1085,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::VideoSpeed)
     {
         validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
+    {
+        validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -3182,6 +3210,74 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     }    
 }
 
+
+void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+		// before the check was
+		//	if (referencesRoot.size() != 2)
+		// This was changed to > 2 because it could be used
+		// the "DependOnIngestionJobKeysToBeAddedToReferences" thg
+        if (referencesRoot.size() > 2)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it has more than two elements"
+                    + ", Field: " + field
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+        if (validateDependenciesToo)
+        {
+            if (dependencies.size() == 2)
+            {
+                int64_t key_1;
+                MMSEngineDBFacade::ContentType referenceContentType_1;
+                Validator::DependencyType dependencyType_1;
+
+                tie(key_1, referenceContentType_1, dependencyType_1) = dependencies[0];
+
+                int64_t key_2;
+                MMSEngineDBFacade::ContentType referenceContentType_2;
+                Validator::DependencyType dependencyType_2;
+
+                tie(key_2, referenceContentType_2, dependencyType_2) = dependencies[1];
+
+                if (referenceContentType_1 != MMSEngineDBFacade::ContentType::Video
+                        || referenceContentType_2 != MMSEngineDBFacade::ContentType::Video)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer both a video content"
+                            + ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1))
+                        + ", referenceMediaItemKey_1: " + to_string(key_1)
+                        + ", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1)
+                            + ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2))
+                        + ", referenceMediaItemKey_2: " + to_string(key_2)
+                        + ", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+    }
+}
 
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {

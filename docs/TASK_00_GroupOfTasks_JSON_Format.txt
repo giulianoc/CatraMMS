@@ -1,4 +1,7 @@
 "Task": {
+	// optional
+	Label="...",
+
 	// mandatory
 	"Type": "GroupOfTasks",
 
@@ -10,6 +13,18 @@
 			<Task 2>,
 			<Task 3>,
 			...
+		],
+
+		// optional. GroupOfTasks by default forward the output (media) of the first level of Tasks
+		//	to the OnSuccess/OnError/OnComplete events Tasks.
+		//	In case we have to change this default behaviour, we have to add this ReferencesOutput tag
+		//	and specify which output this GroupOfTasks has to forward to his events Tasks
+		"ReferencesOutput": [
+			// optional. References to identify the videos the GroupOfTasks has to forward to the Tasks
+			// connected to the OnSuccess, OnError and OnComplete events
+			// As reference can be used "ReferenceLabel", "ReferenceMediaItemKey", "ReferenceUniqueName"
+
+			{ "ReferenceMediaItemKey": 11 }
 		]
 	}
 }

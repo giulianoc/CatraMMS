@@ -172,6 +172,12 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+	void pictureInPicture(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody);
+
 	void addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,
 		bool killedByUser);

@@ -123,6 +123,19 @@ public:
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
+	void pictureInPicture(
+        string mmsMainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+        string mmsOverlayVideoAssetPathName,
+        int64_t overlayVideoDurationInMilliSeconds,
+        bool soundOfMain,
+        string overlayPosition_X_InPixel,
+        string overlayPosition_Y_InPixel,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
     int getEncodingProgress();
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);

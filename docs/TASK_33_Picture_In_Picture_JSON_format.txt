@@ -1,0 +1,89 @@
+"Task": {
+	// optional
+	Label="Picture In Picture Label",
+
+	// mandatory
+	"Type": "Picture-In-Picture",
+
+	"Parameters": {
+		// Optional. This tag is used in the scenario where one Video is inherit from the parent Task
+		//	and the other Video is already inside MMS. In this case the References tag referes one Video
+		//	and the other is inherit from the parent Task.
+		//	In the above case, this tag has to be set to true
+		"DependenciesToBeAddedToReferences": false,
+
+		// mandatory
+		"References": [
+			// mandatory. Two References needed to identify the two Videos.
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the keys
+			// of the videos.
+			// As reference can be used "ReferenceLabel", "ReferenceMediaItemKey" or "ReferenceUniqueName"
+
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 }
+		],
+
+		// optional. By default the second video will be overlayed on the second (true)
+		//	In case the resulting it is needed the opposite, set this parameter to false
+		"SecondVideoOverlayedOnFirst": true,
+
+		// optional. By default the resulting video will use the sound of the first video (true)
+		//	In case the resulting video has to use the sound of the second video, set this parameter to false
+		"SoundOfFirstVideo": true,
+
+		// mandatory: the below parameters specify the X and Y in pixel where the video
+		//    has to be overlayed on the other video.
+		//    It is possible to specify also a formula using the following variables:
+		//        mainVideo_width: width in pixel of the video
+		//        mainVideo_height: height in pixel of the video
+		//        overlayVideo_width: width in pixel of the image
+		//        overlayVideo_height: height in pixel of the image
+		"OverlayPosition_X_InPixel": "mainVideo_width-overlayVideo_width-10",                                  
+		"OverlayPosition_Y_InPixel": "mainVideo_height-overlayVideo_height-10",                                
+
+		// optional: it might contain any kind of user data (json format).
+		// The platform stores them and returns this data to the Customer 
+		// every time is requested.
+		// The UserData are involved in searches as well
+		"UserData": { },
+
+		// optional: it specifies the retention of the content.
+		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
+		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
+		// By default it is 60m
+		"Retention": "60m",
+
+		// optional
+		"Title": "My title",
+
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
+		//   the MaxEncodingPriority of the Workspace will be used.
+		"EncodingPriority": "Low",
+
+		// optional
+		"Ingester": "my ingester",
+
+		// optional
+		"Tags": "my Tags",
+
+		// optional
+		"ContentProviderName": "default",
+
+		// optional: it specifies the filename without extension used by MMS when the content is delivered
+		"DeliveryFileName": "myFileName",
+
+		// optional: by default the content is published.
+		//    It specifies if and when the content is published.
+		//    In case the content is not published, the delivery of the content will fail
+		//    Possible values can be:
+		//       - NOW
+		//       - FOREVER
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		"Publishing": {
+			"StartPublishing": "NOW",
+			"EndPublishing": "FOREVER"
+		}
+	}
+}

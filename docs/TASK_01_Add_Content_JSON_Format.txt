@@ -26,7 +26,7 @@
 				"StartTimeInSeconds": 12.123345,
 				"EndTimeInSeconds": 12.123345
 			}
-		}
+		},
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 

@@ -252,7 +252,8 @@ public:
         FaceRecognition		= 6,
         FaceIdentification	= 7,
 		LiveRecorder		= 8,
-		VideoSpeed			= 9
+		VideoSpeed			= 9,
+		PictureInPicture	= 10
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -278,6 +279,8 @@ public:
                 return "LiveRecorder";
             case EncodingType::VideoSpeed:
                 return "VideoSpeed";
+            case EncodingType::PictureInPicture:
+                return "PictureInPicture";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -308,6 +311,8 @@ public:
             return EncodingType::LiveRecorder;
         else if (lowerCase == "videospeed")
             return EncodingType::VideoSpeed;
+        else if (lowerCase == "pictureinpicture")
+            return EncodingType::PictureInPicture;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -539,6 +544,20 @@ public:
             Json::Value                             _videoSpeedParametersRoot;
         };
 
+        struct PictureInPictureData {
+            unsigned long                           _mmsMainVideoPartitionNumber;
+            string                                  _mainVideoFileName;
+            string                                  _mainVideoRelativePath;
+            int64_t                                 _mainVideoDurationInMilliSeconds;
+
+            unsigned long                           _mmsOverlayVideoPartitionNumber;
+            string                                  _overlayVideoFileName;
+            string                                  _overlayVideoRelativePath;
+            int64_t                                 _overlayVideoDurationInMilliSeconds;
+
+            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+            Json::Value                             _parametersRoot;
+        };
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
@@ -548,6 +567,7 @@ public:
         shared_ptr<FaceIdentificationData>			_faceIdentificationData;
 		shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
+		shared_ptr<PictureInPictureData>			_pictureInPictureData;
     } ;
 
     enum class WorkspaceType {
@@ -582,6 +602,7 @@ public:
         LiveRecorder			= 22,
         ChangeFileFormat		= 23,
         VideoSpeed				= 24,
+        PictureInPicture		= 25,
         EmailNotification       = 30,
         MediaCrossReference		= 31,
         ContentUpdate           = 50,
@@ -642,6 +663,8 @@ public:
 				return "Change-File-Format";
 			case IngestionType::VideoSpeed:
 				return "Video-Speed";
+			case IngestionType::PictureInPicture:
+				return "Picture-In-Picture";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -713,6 +736,8 @@ public:
             return IngestionType::ChangeFileFormat;
         else if (lowerCase == "video-speed")
             return IngestionType::VideoSpeed;
+        else if (lowerCase == "picture-in-picture")
+            return IngestionType::PictureInPicture;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1388,6 +1413,14 @@ public:
         int64_t mediaItemKey, int64_t physicalPathKey,
         VideoSpeedType videoSpeedType, int videoSpeedSize,
         EncodingPriority encodingPriority);
+
+	int addEncoding_PictureInPictureJob (
+		shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey,
+		int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,
+		int64_t overlayMediaItemKey, int64_t overlayPhysicalPathKey,
+        string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
+		bool soundOfMain, EncodingPriority encodingPriority);
 
 	void updateEncodingLiveRecordingPeriod (
 		int64_t encodingJobKey,

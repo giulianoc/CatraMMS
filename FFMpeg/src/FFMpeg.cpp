@@ -2458,6 +2458,414 @@ void FFMpeg::videoSpeed(
     }
 }
 
+void FFMpeg::pictureInPicture(
+        string mmsMainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+        string mmsOverlayVideoAssetPathName,
+        int64_t overlayVideoDurationInMilliSeconds,
+        bool soundOfMain,
+        string overlayPosition_X_InPixel,
+        string overlayPosition_Y_InPixel,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid)
+{
+	int iReturnedStatus = 0;
+
+    try
+    {
+		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds)
+		{
+			string errorMessage = __FILEREF__ + "pictureInPicture: overlay video duration cannot be bigger than main video diration"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mainVideoDurationInMilliSeconds: " + to_string(mainVideoDurationInMilliSeconds)
+				+ ", overlayVideoDurationInMilliSeconds: " + to_string(overlayVideoDurationInMilliSeconds)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        _currentDurationInMilliSeconds      = mainVideoDurationInMilliSeconds;
+        _currentMMSSourceAssetPathName      = mmsMainVideoAssetPathName;
+        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        _currentIngestionJobKey             = ingestionJobKey;
+        _currentEncodingJobKey              = encodingJobKey;
+        
+
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + ".ffmpegoutput";
+
+        {
+            string ffmpegOverlayPosition_X_InPixel = 
+                    regex_replace(overlayPosition_X_InPixel, regex("mainVideo_width"), "main_w");
+            ffmpegOverlayPosition_X_InPixel = 
+                    regex_replace(ffmpegOverlayPosition_X_InPixel, regex("overlayVideo_width"), "overlay_w");
+            
+            string ffmpegOverlayPosition_Y_InPixel = 
+                    regex_replace(overlayPosition_Y_InPixel, regex("mainVideo_height"), "main_h");
+            ffmpegOverlayPosition_Y_InPixel = 
+                    regex_replace(ffmpegOverlayPosition_Y_InPixel, regex("overlayVideo_height"), "overlay_h");
+
+			/*
+            string ffmpegFilterComplex = string("-filter_complex 'overlay=")
+                    + ffmpegImagePosition_X_InPixel + ":"
+                    + ffmpegImagePosition_Y_InPixel + "'"
+                    ;
+			*/
+            string ffmpegFilterComplex = string("-filter_complex ");
+			if (soundOfMain)
+				ffmpegFilterComplex += "[0][1] overlay=";
+			else
+				ffmpegFilterComplex += "[1][0] overlay=";
+			ffmpegFilterComplex +=
+				(ffmpegOverlayPosition_X_InPixel + ":" + ffmpegOverlayPosition_Y_InPixel)
+			;
+		#ifdef __EXECUTE__
+            string ffmpegExecuteCommand;
+		#else
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+		#endif
+            {
+			#ifdef __EXECUTE__
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                string globalOptions = "-y ";
+                string inputOptions = "";
+                string outputOptions =
+                        ffmpegFilterComplex + " "
+                        ;
+                ffmpegExecuteCommand =
+                        _ffmpegPath + "/ffmpeg "
+                        + globalOptions
+                        + inputOptions;
+				if (soundOfMain)
+					ffmpegExecuteCommand +=
+                        ("-i " + mmsMainVideoAssetPathName + " " + "-i " + mmsOverlayVideoAssetPathName + " ");
+				else
+					ffmpegExecuteCommand +=
+                        ("-i " + mmsOverlayVideoAssetPathName + " " + "-i " + mmsMainVideoAssetPathName + " ");
+				ffmpegExecuteCommand +=
+					(outputOptions
+
+					+ stagingEncodedAssetPathName + " "
+					+ "> " + _outputFfmpegPathFileName 
+					+ " 2>&1")
+                ;
+
+                #ifdef __APPLE__
+                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+                #endif
+			#else
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				if (soundOfMain)
+				{
+					ffmpegArgumentList.push_back("-i");
+					ffmpegArgumentList.push_back(mmsMainVideoAssetPathName);
+					ffmpegArgumentList.push_back("-i");
+					ffmpegArgumentList.push_back(mmsOverlayVideoAssetPathName);
+				}
+				else
+				{
+					ffmpegArgumentList.push_back("-i");
+					ffmpegArgumentList.push_back(mmsOverlayVideoAssetPathName);
+					ffmpegArgumentList.push_back("-i");
+					ffmpegArgumentList.push_back(mmsMainVideoAssetPathName);
+				}
+				// output options
+				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+			#endif
+
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+				#ifdef __EXECUTE__
+                    _logger->info(__FILEREF__ + "pictureInPicture: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+                    if (executeCommandStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "pictureInPicture: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        ;            
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+				#else
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "pictureInPicture: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "pictureInPicture: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;            
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+				#endif
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+				#ifdef __EXECUTE__
+                    _logger->info(__FILEREF__ + "pictureInPicture: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
+				#else
+                    _logger->info(__FILEREF__ + "pictureInPicture: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
+				#endif
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+				#ifdef __EXECUTE__
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                            + ", e.what(): " + e.what()
+                    ;
+				#else
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+				#endif
+                    _logger->error(errorMessage);
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    bool exceptionInCaseOfError = false;
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                bool exceptionInCaseOfError = false;
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+            }
+
+            _logger->info(__FILEREF__ + "pictureInPicture file generated"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            bool inCaseOfLinkHasItToBeRead = false;
+            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+
+            if (ulFileSize == 0)
+            {
+			#ifdef __EXECUTE__
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                ;
+			#else
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                ;
+			#endif
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName
+            + ", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName
+            + ", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName
+            + ", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+}
+
 void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
 {
     try

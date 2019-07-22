@@ -294,6 +294,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
+            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture
             )
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(
@@ -315,7 +316,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         encodingJob->_status			= EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun;
     }
     else if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
-    {    
+    {
         string stagingEncodedAssetPathName;
         try
         {
