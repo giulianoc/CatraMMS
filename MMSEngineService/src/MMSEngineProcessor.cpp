@@ -10479,15 +10479,26 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-            string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
         }
 
+		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
+				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+				+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+				+ ", text: " + text
+				+ ", textPosition_X_InPixel: " + textPosition_X_InPixel
+				+ ", textPosition_Y_InPixel: " + textPosition_Y_InPixel
+				+ ", fontType: " + fontType
+				+ ", fontSize: " + to_string(fontSize)
+				+ ", fontColor: " + fontColor
+				+ ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+				+ ", boxEnable: " + to_string(boxEnable)
+				+ ", boxColor: " + boxColor
+				+ ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+			);
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
                 workspace, ingestionJobKey, encodingPriority,
                 
