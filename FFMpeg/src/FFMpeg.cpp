@@ -1622,16 +1622,16 @@ void FFMpeg::overlayTextOnVideo(
             string ffmpegDrawTextFilter = string("-vf drawtext=\"text='")
                     + text + "'";
             if (textPosition_X_InPixel != "")
-                ffmpegDrawTextFilter += (": x=" + ffmpegTextPosition_X_InPixel);
+                ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
             if (textPosition_Y_InPixel != "")
-                ffmpegDrawTextFilter += (": y=" + ffmpegTextPosition_Y_InPixel);               
+                ffmpegDrawTextFilter += (":y=" + ffmpegTextPosition_Y_InPixel);               
             if (fontType != "")
-                ffmpegDrawTextFilter += (": fontfile=" + _ffmpegTtfFontDir + "/" + fontType);
+                ffmpegDrawTextFilter += (":fontfile=" + _ffmpegTtfFontDir + "/" + fontType);
             if (fontSize != -1)
-                ffmpegDrawTextFilter += (": fontsize=" + to_string(fontSize));
+                ffmpegDrawTextFilter += (":fontsize=" + to_string(fontSize));
             if (fontColor != "")
             {
-                ffmpegDrawTextFilter += (": fontcolor=" + fontColor);                
+                ffmpegDrawTextFilter += (":fontcolor=" + fontColor);                
                 if (textPercentageOpacity != -1)
                 {
                     char opacity[64];
@@ -1643,11 +1643,11 @@ void FFMpeg::overlayTextOnVideo(
             }
             if (boxEnable)
             {
-                ffmpegDrawTextFilter += (": box=1");
+                ffmpegDrawTextFilter += (":box=1");
                 
                 if (boxColor != "")
                 {
-                    ffmpegDrawTextFilter += (": boxcolor=" + boxColor);                
+                    ffmpegDrawTextFilter += (":boxcolor=" + boxColor);                
                     if (boxPercentageOpacity != -1)
                     {
                         char opacity[64];
