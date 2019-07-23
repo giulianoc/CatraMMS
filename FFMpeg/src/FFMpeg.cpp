@@ -1619,7 +1619,7 @@ void FFMpeg::overlayTextOnVideo(
             ffmpegTextPosition_Y_InPixel = 
                     regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
-            string ffmpegDrawTextFilter = string("-vf drawtext=\"text='")
+            string ffmpegDrawTextFilter = string("-vf drawtext=text='")
                     + text + "'";
             if (textPosition_X_InPixel != "")
                 ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
@@ -1658,8 +1658,7 @@ void FFMpeg::overlayTextOnVideo(
                     }
                 }
             }
-            ffmpegDrawTextFilter += "\"";
-                
+
 		#ifdef __EXECUTE__
             string ffmpegExecuteCommand;
 		#else
