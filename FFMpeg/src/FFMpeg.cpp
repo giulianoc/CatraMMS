@@ -1619,7 +1619,7 @@ void FFMpeg::overlayTextOnVideo(
             ffmpegTextPosition_Y_InPixel = 
                     regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 
-            string ffmpegDrawTextFilter = string("-vf drawtext=text=") + text;
+            string ffmpegDrawTextFilter = string("drawtext=text=") + text;
             if (textPosition_X_InPixel != "")
                 ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
             if (textPosition_Y_InPixel != "")
@@ -1695,7 +1695,9 @@ void FFMpeg::overlayTextOnVideo(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
 				// output options
-				addToArguments(ffmpegDrawTextFilter, ffmpegArgumentList);
+				// addToArguments(ffmpegDrawTextFilter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-vf");
+				ffmpegArgumentList.push_back(ffmpegDrawTextFilter);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 			#endif
 
