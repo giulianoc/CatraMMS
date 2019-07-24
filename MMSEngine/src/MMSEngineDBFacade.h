@@ -1146,6 +1146,11 @@ public:
         int64_t ingestionJobKey,
         string metadataContent);
 
+	void updateIngestionJobParentGroupOfTasks(
+		shared_ptr<MySQLConnection> conn,
+		int64_t ingestionJobKey,
+		int64_t parentGroupOfTasksIngestionJobKey);
+
     shared_ptr<MySQLConnection> endIngestionJobs (
         shared_ptr<MySQLConnection> conn, bool commit);
 

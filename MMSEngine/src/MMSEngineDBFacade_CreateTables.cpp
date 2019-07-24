@@ -786,6 +786,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionJob ("
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL,"
+                    "parentGroupOfTasksIngestionJobKey	BIGINT UNSIGNED NULL,"
                     "label                      VARCHAR (256) NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
@@ -820,6 +821,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionJob_idx on MMS_IngestionJob (processorMMS, ingestionType, status)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx2 on MMS_IngestionJob (parentGroupOfTasksIngestionJobKey)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

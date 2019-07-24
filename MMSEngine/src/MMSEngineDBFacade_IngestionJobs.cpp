@@ -1199,6 +1199,78 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
     }    
 }
 
+void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
+        shared_ptr<MySQLConnection> conn,
+        int64_t ingestionJobKey,
+        int64_t parentGroupOfTasksIngestionJobKey
+)
+{    
+    string      lastSQLCommand;
+    
+    try
+    {
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJob set parentGroupOfTasksIngestionJobKey = ? where ingestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, parentGroupOfTasksIngestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "IngestionJob updated successful"
+            + ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+}
+
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,

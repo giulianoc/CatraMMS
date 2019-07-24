@@ -1160,6 +1160,17 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		MMSEngineDBFacade::toIngestionType(type),
 		newDependOnIngestionJobKeysOverallInput, dependOnSuccess);
 
+	// for each group of tasks child, the group of tasks (parent) IngestionJobKey is set
+	{
+		int64_t parentGroupOfTasksIngestionJobKey = localDependOnIngestionJobKeyExecution;
+		for (int64_t childIngestionJobKey: newDependOnIngestionJobKeysOverallInput)
+		{
+			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(
+					conn, childIngestionJobKey,
+					parentGroupOfTasksIngestionJobKey);
+		}
+	}
+
 	_logger->info(__FILEREF__ + "Save Label..."
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", groupOfTaskLabel: " + groupOfTaskLabel
