@@ -1118,10 +1118,17 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 				referencesOutputRoot.append(referenceOutputRoot);
 			}
 
-			field = "Parameters";
-			string arrayField = "ReferencesOutput";
-			parametersRoot[arrayField] = referencesOutputRoot;
+			_logger->info(__FILEREF__ + "Since ReferencesOutput is not present, set automatically the ReferencesOutput array tag using the ingestionJobKey of the Tasks"
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", groupOfTaskLabel: " + groupOfTaskLabel
+				+ ", newDependOnIngestionJobKeysOverallInput.size(): " + to_string(newDependOnIngestionJobKeysOverallInput.size())
+				+ ", referencesOutputRoot.size: " + to_string(referencesOutputRoot.size())
+			);
+
+			field = "ReferencesOutput";
+			parametersRoot[field] = referencesOutputRoot;
 			/*
+			field = "Parameters";
 			if (!parametersSectionPresent)
 			{
 				groupOfTaskRoot[field] = parametersRoot;
