@@ -238,7 +238,15 @@ void API::ingestion(
             if (taskType == "GroupOfTasks")
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
-                int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+                
+				// 2019-01-01: it is not important since dependOnIngestionJobKey is -1
+				// int localDependOnSuccess = 0;
+				// 2019-07-24: in case of a group of tasks, as it is, this is important
+				//	because, otherwise, in case of a group of tasks as first element of the workflow,
+				//	it will not work correctly. I saw this for example in the scenario where, using the player,
+				//	we do two cuts. The workflow generated than was: two cuts in parallel and then the concat.
+				//	This scenario works if localDependOnSuccess is 1
+				int localDependOnSuccess = 1;
                 ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
@@ -828,174 +836,6 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     return localDependOnIngestionJobKeysForStarting;
 }
 
-#ifdef NO_DB_FOR_GROUP_OF_TASKS
-vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-        Json::Value groupOfTasksRoot, 
-        vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-        vector<int64_t> dependOnIngestionJobKeysOverallInput,
-        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey, string& responseBody)
-{
-    
-	// initialize parametersRoot
-    string field = "Parameters";
-    Json::Value parametersRoot;
-    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    parametersRoot = groupOfTasksRoot[field];
-
-    bool parallelTasks;
-    
-    field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    string executionType = parametersRoot.get(field, "XXX").asString();
-    if (executionType == "parallel")
-        parallelTasks = true;
-    else if (executionType == "sequential")
-        parallelTasks = false;
-    else
-    {
-        string errorMessage = __FILEREF__ + "executionType field is wrong"
-                + ", executionType: " + executionType;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    field = "Tasks";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    Json::Value tasksRoot = parametersRoot[field];
-
-    if (tasksRoot.size() == 0)
-    {
-        string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    vector<int64_t> newDependOnIngestionJobKeysForStarting;
-    vector<int64_t> newDependOnIngestionJobKeysOverallInput;
-    vector<int64_t> lastDependOnIngestionJobKeysForStarting;
-    for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
-    {
-        Json::Value taskRoot = tasksRoot[taskIndex];
-
-        string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }    
-        string taskType = taskRoot.get(field, "XXX").asString();
-            
-        vector<int64_t> localIngestionTaskDependOnIngestionJobKeyExecution;
-        if (parallelTasks)
-        {
-            if (taskType == "GroupOfTasks")
-            {
-                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                    conn, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
-            }
-            else
-            {
-                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                    conn, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
-            }
-        }
-        else
-        {
-            if (taskIndex == 0)
-            {
-                if (taskType == "GroupOfTasks")
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                        conn, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-                else
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                        conn, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess,
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-            }
-            else
-            {
-                int localDependOnSuccess = -1;
-                
-                if (taskType == "GroupOfTasks")
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                        conn, workspace, ingestionRootKey, taskRoot, 
-                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-                else
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                        conn, workspace, ingestionRootKey, taskRoot, 
-                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-            }
-            
-            lastDependOnIngestionJobKeysForStarting = localIngestionTaskDependOnIngestionJobKeyExecution;
-        }
-
-        for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKeyExecution)
-        {
-            newDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKey);
-            newDependOnIngestionJobKeysOverallInput.push_back(localDependOnIngestionJobKey);
-        }
-    }
-
-    ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
-		newDependOnIngestionJobKeysForStarting, newDependOnIngestionJobKeysOverallInput,
-		// in case of OnError, OverallInput has to be the same of the failed task
-        dependOnIngestionJobKeysOverallInput,
-
-		mapLabelAndIngestionJobKey, responseBody);
-    
-    return newDependOnIngestionJobKeysForStarting;
-}
-#endif
-
 #ifdef DB_FOR_GROUP_OF_TASKS
 vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -1339,6 +1179,174 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		mapLabelAndIngestionJobKey, responseBody);
 
     return localDependOnIngestionJobKeysForStarting;
+}
+#endif
+
+#ifdef NO_DB_FOR_GROUP_OF_TASKS
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+        Json::Value groupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+        vector<int64_t> dependOnIngestionJobKeysOverallInput,
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey, string& responseBody)
+{
+    
+	// initialize parametersRoot
+    string field = "Parameters";
+    Json::Value parametersRoot;
+    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    parametersRoot = groupOfTasksRoot[field];
+
+    bool parallelTasks;
+    
+    field = "ExecutionType";
+    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string executionType = parametersRoot.get(field, "XXX").asString();
+    if (executionType == "parallel")
+        parallelTasks = true;
+    else if (executionType == "sequential")
+        parallelTasks = false;
+    else
+    {
+        string errorMessage = __FILEREF__ + "executionType field is wrong"
+                + ", executionType: " + executionType;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    field = "Tasks";
+    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    Json::Value tasksRoot = parametersRoot[field];
+
+    if (tasksRoot.size() == 0)
+    {
+        string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    vector<int64_t> newDependOnIngestionJobKeysForStarting;
+    vector<int64_t> newDependOnIngestionJobKeysOverallInput;
+    vector<int64_t> lastDependOnIngestionJobKeysForStarting;
+    for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
+    {
+        Json::Value taskRoot = tasksRoot[taskIndex];
+
+        string field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }    
+        string taskType = taskRoot.get(field, "XXX").asString();
+            
+        vector<int64_t> localIngestionTaskDependOnIngestionJobKeyExecution;
+        if (parallelTasks)
+        {
+            if (taskType == "GroupOfTasks")
+            {
+                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                    conn, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    responseBody);
+            }
+            else
+            {
+                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                    conn, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    responseBody);
+            }
+        }
+        else
+        {
+            if (taskIndex == 0)
+            {
+                if (taskType == "GroupOfTasks")
+                {
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        responseBody);
+                }
+                else
+                {
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        responseBody);
+                }
+            }
+            else
+            {
+                int localDependOnSuccess = -1;
+                
+                if (taskType == "GroupOfTasks")
+                {
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        responseBody);
+                }
+                else
+                {
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        responseBody);
+                }
+            }
+            
+            lastDependOnIngestionJobKeysForStarting = localIngestionTaskDependOnIngestionJobKeyExecution;
+        }
+
+        for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKeyExecution)
+        {
+            newDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKey);
+            newDependOnIngestionJobKeysOverallInput.push_back(localDependOnIngestionJobKey);
+        }
+    }
+
+    ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
+		newDependOnIngestionJobKeysForStarting, newDependOnIngestionJobKeysOverallInput,
+		// in case of OnError, OverallInput has to be the same of the failed task
+        dependOnIngestionJobKeysOverallInput,
+
+		mapLabelAndIngestionJobKey, responseBody);
+    
+    return newDependOnIngestionJobKeysForStarting;
 }
 #endif
 
