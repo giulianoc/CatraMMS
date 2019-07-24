@@ -1204,7 +1204,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
         int64_t ingestionJobKey,
         int64_t parentGroupOfTasksIngestionJobKey
 )
-{    
+{
     string      lastSQLCommand;
     
     try
@@ -1269,6 +1269,114 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 
         throw e;
     }    
+}
+ 
+void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
+	int64_t groupOfTasksIngestionJobKey,
+	vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+		groupOfTasksChildrenStatus.clear();
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		{            
+			lastSQLCommand = 
+				"select ingestionJobKey, status "
+                "from MMS_IngestionJob "
+				"where parentGroupOfTasksIngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, groupOfTasksIngestionJobKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(
+						resultSet->getString("status"));
+
+				pair<int64_t, MMSEngineDBFacade::IngestionStatus> groupOfTasksChildStatus =
+					make_pair(ingestionJobKey, ingestionStatus);
+
+                groupOfTasksChildrenStatus.push_back(groupOfTasksChildStatus);
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
 }
 
 void MMSEngineDBFacade::updateIngestionJob (

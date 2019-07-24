@@ -1151,6 +1151,10 @@ public:
 		int64_t ingestionJobKey,
 		int64_t parentGroupOfTasksIngestionJobKey);
 
+	void getGroupOfTasksChildrenStatus(
+		int64_t groupOfTasksIngestionJobKey,
+		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
+
     shared_ptr<MySQLConnection> endIngestionJobs (
         shared_ptr<MySQLConnection> conn, bool commit);
 

@@ -5032,14 +5032,57 @@ void MMSEngineProcessor::manageGroupOfTasks(
 				referenceOutput.first, referenceOutput.second);
 		}
 
+		// GroupOfTasks Ingestion Status is by default Failure;
+		// It will be Success if at least just one Status of the children is Success
+		MMSEngineDBFacade::IngestionStatus groupOfTasksIngestionStatus
+			= MMSEngineDBFacade::IngestionStatus::End_IngestionFailure;
+		{
+			vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>> groupOfTasksChildrenStatus;
+
+			_mmsEngineDBFacade->getGroupOfTasksChildrenStatus(ingestionJobKey, groupOfTasksChildrenStatus);
+
+			for (pair<int64_t, MMSEngineDBFacade::IngestionStatus> groupOfTasksChildStatus: groupOfTasksChildrenStatus)
+			{
+				int64_t childIngestionJobKey = groupOfTasksChildStatus.first;
+				MMSEngineDBFacade::IngestionStatus childStatus = groupOfTasksChildStatus.second;
+
+				_logger->info(__FILEREF__ + "manageGroupOfTasks, child status"
+						+ ", group of tasks ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", childIngestionJobKey: " + to_string(childIngestionJobKey)
+						+ ", IngestionStatus: " + MMSEngineDBFacade::toString(childStatus)
+				);
+
+				if (!MMSEngineDBFacade::isIngestionStatusFinalState(childStatus))
+				{
+					_logger->error(__FILEREF__ + "manageGroupOfTasks, child status is not a final status. It should never happens because when this GroupOfTasks is executed, all the children should be finished"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + MMSEngineDBFacade::toString(childStatus)
+					);
+
+					continue;
+				}
+
+				if (childStatus == MMSEngineDBFacade::IngestionStatus::End_TaskSuccess)
+				{
+					groupOfTasksIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+
+					break;
+				}
+			}
+		}
+
+		string errorMessage = "";
+		if (groupOfTasksIngestionStatus != MMSEngineDBFacade::IngestionStatus::End_TaskSuccess)
+			errorMessage = "Failed because there is no one child with Status Success";
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
+            + ", IngestionStatus: " + MMSEngineDBFacade::toString(groupOfTasksIngestionStatus)
+            + ", errorMessage: " + errorMessage
         );
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
+                groupOfTasksIngestionStatus,
+                errorMessage
         );
     }
     catch(runtime_error e)
