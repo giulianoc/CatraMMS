@@ -5019,6 +5019,10 @@ void MMSEngineProcessor::manageGroupOfTasks(
 		vector<pair<int64_t, int64_t>>	referencesOutput;
 
 		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+		// ReferencesOutput tag is always present:
+		// 1. because it is already set by the Workflow (by the user)
+		// 2. because it is automatically set by API_Ingestion.cpp using the list of Tasks.
+		//	This is when it was not found into the Workflow
 		validator.fillReferencesOutput(workspace->_workspaceKey, parametersRoot,
 				referencesOutput);
 
@@ -5032,7 +5036,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
             + ", errorMessage: " + ""
-        );                            
+        );
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage

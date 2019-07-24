@@ -1098,13 +1098,14 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		}
 
 		_logger->info(__FILEREF__ + "add to referencesOutputRoot all the inherited references?"
+			+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 			+ ", groupOfTaskLabel: " + groupOfTaskLabel
 			+ ", referencesOutputSectionPresent: " + to_string(referencesOutputSectionPresent)
 			+ ", newDependOnIngestionJobKeysOverallInput.size(): " + to_string(newDependOnIngestionJobKeysOverallInput.size())
 		);
 
 		// add to referencesRoot all the inherited references
-		if (!referencesOutputSectionPresent && dependOnIngestionJobKeysOverallInput.size() > 0)
+		if (!referencesOutputSectionPresent && newDependOnIngestionJobKeysOverallInput.size() > 0)
 		{
 			// Enter here if No ReferencesOutput tag is present (so we have to add the inherit input)
 			// OR we want to add dependOnReferences to the Raferences tag
