@@ -1241,8 +1241,9 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     return relativePathToBeUsed;
 }
 
-tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMSEngineDBFacade::getStorageDetails(
-        int64_t physicalPathKey
+tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+	MMSEngineDBFacade::getStorageDetails(
+		int64_t physicalPathKey
 )
 {
         
@@ -1258,6 +1259,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         );
 
         int64_t workspaceKey;
+        bool externalReadOnlyStorage;
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
@@ -1266,7 +1268,8 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         string title;
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
+                "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.externalReadOnlyStorage, "
+				"pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and pp.physicalPathKey = ? ";
 
@@ -1281,6 +1284,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
                 title = resultSet->getString("title");
                 if (!resultSet->isNull("deliveryFileName"))
                     deliveryFileName = resultSet->getString("deliveryFileName");
+                externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
@@ -1306,7 +1310,8 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes);
+        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
     catch(sql::SQLException se)
     {
@@ -1368,7 +1373,8 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
     }        
 }
 
-tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMSEngineDBFacade::getStorageDetails(
+tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+	MMSEngineDBFacade::getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
 )
@@ -1388,6 +1394,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         int64_t workspaceKey;
         int64_t physicalPathKey;
         int mmsPartitionNumber;
+        int externalReadOnlyStorage;
         string relativePath;
         string fileName;
         int64_t sizeInBytes;
@@ -1395,7 +1402,8 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         string title;
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.physicalPathKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
+                "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.externalReadOnlyStorage, "
+				"pp.physicalPathKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
                 "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
@@ -1413,6 +1421,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
                 title = resultSet->getString("title");
                 if (!resultSet->isNull("deliveryFileName"))
                     deliveryFileName = resultSet->getString("deliveryFileName");
+                externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
                 physicalPathKey = resultSet->getInt64("physicalPathKey");
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
@@ -1440,7 +1449,8 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes);
+        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
     catch(sql::SQLException se)
     {
@@ -1503,7 +1513,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> MMS
 }
 
 void MMSEngineDBFacade::getAllStorageDetails(
-        int64_t mediaItemKey, vector<tuple<int,string,string,string>>& allStorageDetails
+        int64_t mediaItemKey, vector<tuple<int, string, string, string, bool>>& allStorageDetails
 )
 {
         
@@ -1520,11 +1530,13 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
         int64_t workspaceKey;
         int mmsPartitionNumber;
+        int externalReadOnlyStorage;
         string relativePath;
         string fileName;
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "select mi.workspaceKey, pp.externalReadOnlyStorage, pp.partitionNumber, "
+				"pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? ";
 
@@ -1536,14 +1548,16 @@ void MMSEngineDBFacade::getAllStorageDetails(
             while (resultSet->next())
             {
                 workspaceKey = resultSet->getInt64("workspaceKey");
+                externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
 
                 shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
         
-                tuple<int,string,string,string> storageDetails =
-                    make_tuple(mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
+                tuple<int, string, string, string, bool> storageDetails =
+                    make_tuple(mmsPartitionNumber, workspace->_directoryName,
+							relativePath, fileName, externalReadOnlyStorage);
                 
                 allStorageDetails.push_back(storageDetails);
             }

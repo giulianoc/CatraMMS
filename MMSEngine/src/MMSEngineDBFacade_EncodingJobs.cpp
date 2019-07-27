@@ -238,7 +238,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         if (physicalPathResultSet->next())
                         {
                             encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(physicalPathResultSet->getString("contentType"));
-                            encodingItem->_encodeData->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_encodeData->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_encodeData->_mediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                             encodingItem->_encodeData->_fileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_encodeData->_relativePath = physicalPathResultSet->getString("relativePath");
@@ -428,7 +428,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_overlayImageOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_overlayImageOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_overlayImageOnVideoData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_overlayImageOnVideoData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
                             
@@ -517,7 +517,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_overlayImageOnVideoData->_mmsImagePartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_overlayImageOnVideoData->_mmsImagePartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_overlayImageOnVideoData->_imageFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_overlayImageOnVideoData->_imageRelativePath = physicalPathResultSet->getString("relativePath");                            
                         }
@@ -656,7 +656,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_overlayTextOnVideoData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_overlayTextOnVideoData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
                             
@@ -839,7 +839,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_generateFramesData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_generateFramesData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_generateFramesData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_generateFramesData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
                             
@@ -1381,7 +1381,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_videoSpeedData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            // encodingItem->_videoSpeedData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_videoSpeedData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_videoSpeedData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
                             
@@ -1572,8 +1572,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 									preparedStatementPhysicalPath->executeQuery());
 							if (physicalPathResultSet->next())
 							{
-								encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber
-									= physicalPathResultSet->getInt("partitionNumber");
+								// encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber
+								// 	= physicalPathResultSet->getInt("partitionNumber");
 								encodingItem->_pictureInPictureData->_mainVideoFileName
 									= physicalPathResultSet->getString("fileName");
 								encodingItem->_pictureInPictureData->_mainVideoRelativePath
@@ -1678,8 +1678,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 									preparedStatementPhysicalPath->executeQuery());
 							if (physicalPathResultSet->next())
 							{
-								encodingItem->_pictureInPictureData->_mmsOverlayVideoPartitionNumber
-									= physicalPathResultSet->getInt("partitionNumber");
+								// encodingItem->_pictureInPictureData->_mmsOverlayVideoPartitionNumber
+								// 	= physicalPathResultSet->getInt("partitionNumber");
 								encodingItem->_pictureInPictureData->_overlayVideoFileName
 									= physicalPathResultSet->getString("fileName");
 								encodingItem->_pictureInPictureData->_overlayVideoRelativePath

@@ -1144,6 +1144,34 @@ void Validator::validateAddContentMetadata(
         throw runtime_error(errorMessage);
     }
 
+	// in case of externalContent, it cannot be inside mms storage
+	{
+        field = "SourceURL";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+			string sourceURL = parametersRoot.get(field, "XXX").asString();
+
+			string externalStoragePrefix("externalStorage://");
+            if (sourceURL.size() >= externalStoragePrefix.size()
+                    && 0 == sourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
+            {
+				string externalStoragePathName = sourceURL.substr(externalStoragePrefix.length());
+				if (externalStoragePathName.size() >= _storagePath.size()
+						&& 0 == externalStoragePathName.compare(0, _storagePath.size(), _storagePath))
+				{
+					string errorMessage = __FILEREF__ + "'SourceURL' cannot be within the dedicated storage managed by MMS"
+						+ ", Field: " + field
+						+ ", sourceURL: " + sourceURL
+						+ ", label: " + label
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+	}
+
     field = "CrossReference";
     if (isMetadataPresent(parametersRoot, field))
     {

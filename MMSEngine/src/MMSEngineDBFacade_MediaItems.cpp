@@ -1038,11 +1038,13 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
                     lastSQLCommand = 
-                        "select physicalPathKey, fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, "
+                        "select physicalPathKey, externalReadOnlyStorage, fileName, relativePath, "
+						"partitionNumber, encodingProfileKey, sizeInBytes, "
                         "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = ?";
 
-                    shared_ptr<sql::PreparedStatement> preparedStatementProfiles (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementProfiles (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementProfiles->setInt64(queryParameterIndex++, localMediaItemKey);
                     shared_ptr<sql::ResultSet> resultSetProfiles (preparedStatementProfiles->executeQuery());
@@ -1076,6 +1078,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 							field = "fileName";
 							profileRoot[field] = fileName;
+
+							field = "externalReadOnlyStorage";
+							profileRoot[field] = (resultSetProfiles->getInt("externalReadOnlyStorage") == 0 ? false : true);
 						}
 
                         field = "encodingProfileKey";
@@ -4333,7 +4338,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 
 int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         shared_ptr<MySQLConnection> conn,
-        
+
         int64_t workspaceKey,
         int64_t mediaItemKey,
         string encodedFileName,

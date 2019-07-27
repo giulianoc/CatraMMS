@@ -470,9 +470,11 @@ public:
         shared_ptr<Workspace>                   _workspace;
 
         struct EncodeData {
-            unsigned long                           _mmsPartitionNumber;
             string                                  _fileName;
             string                                  _relativePath;
+			/*
+            unsigned long                           _mmsPartitionNumber;
+			*/
             long long                               _mediaItemKey;
             int64_t                                 _durationInMilliSeconds;
             ContentType                             _contentType;
@@ -481,12 +483,12 @@ public:
         };
 
         struct OverlayImageOnVideoData {
-            unsigned long                           _mmsVideoPartitionNumber;
+            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
 
-            unsigned long                           _mmsImagePartitionNumber;
+            // unsigned long                           _mmsImagePartitionNumber;
             string                                  _imageFileName;
             string                                  _imageRelativePath;
 
@@ -495,7 +497,7 @@ public:
         };
         
         struct OverlayTextOnVideoData {
-            unsigned long                           _mmsVideoPartitionNumber;
+            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
@@ -505,7 +507,7 @@ public:
         };
 
         struct GenerateFramesData {
-            unsigned long                           _mmsVideoPartitionNumber;
+            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
@@ -535,7 +537,7 @@ public:
 		};
 
         struct VideoSpeedData {
-            unsigned long                           _mmsVideoPartitionNumber;
+            // unsigned long                           _mmsVideoPartitionNumber;
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
@@ -545,12 +547,12 @@ public:
         };
 
         struct PictureInPictureData {
-            unsigned long                           _mmsMainVideoPartitionNumber;
+            // unsigned long                           _mmsMainVideoPartitionNumber;
             string                                  _mainVideoFileName;
             string                                  _mainVideoRelativePath;
             int64_t                                 _mainVideoDurationInMilliSeconds;
 
-            unsigned long                           _mmsOverlayVideoPartitionNumber;
+            // unsigned long                           _mmsOverlayVideoPartitionNumber;
             string                                  _overlayVideoFileName;
             string                                  _overlayVideoRelativePath;
             int64_t                                 _overlayVideoDurationInMilliSeconds;
@@ -1295,16 +1297,16 @@ public:
         int64_t workspaceKey,
         string label);
     
-    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> getStorageDetails(
+    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> getStorageDetails(
+    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
 
     void getAllStorageDetails(int64_t mediaItemKey,
-        vector<tuple<int,string,string,string>>& allStorageDetails);
+        vector<tuple<int, string, string, string, bool>>& allStorageDetails);
     
     int64_t createDeliveryAuthorization(
         int64_t userKey,

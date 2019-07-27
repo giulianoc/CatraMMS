@@ -1063,12 +1063,17 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
     
 				// stagingEncodedAssetPathName preparation
 				{
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+					tie(mmsSourceAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+					/*
 					mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_encodeData->_mmsPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_encodeData->_relativePath,
 						_encodingItem->_encodeData->_fileName);
-
+					*/
 					size_t extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
 					if (extensionIndex == string::npos)
 					{
@@ -2381,6 +2386,17 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
     
 				// stagingEncodedAssetPathName preparation
 				{        
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_video =
+						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName_video;
+
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_image =
+						_mmsStorage->getPhysicalPath(sourceImagePhysicalPathKey);
+					tie(mmsSourceImageAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName_image;
+
+					/*
 					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_overlayImageOnVideoData->_mmsVideoPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
@@ -2392,6 +2408,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_overlayImageOnVideoData->_imageRelativePath,
 						_encodingItem->_overlayImageOnVideoData->_imageFileName);
+					*/
 
 					size_t extensionIndex = _encodingItem->_overlayImageOnVideoData->_videoFileName.find_last_of(".");
 					if (extensionIndex == string::npos)
@@ -2885,6 +2902,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+        localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -3264,12 +3282,19 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
     
 				// stagingEncodedAssetPathName preparation
-				{        
+				{
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+					/*
 					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_overlayTextOnVideoData->_videoRelativePath,
 						_encodingItem->_overlayTextOnVideoData->_videoFileName);
+					*/
 
 					size_t extensionIndex = _encodingItem->_overlayTextOnVideoData->_videoFileName.find_last_of(".");
 					if (extensionIndex == string::npos)
@@ -3789,6 +3814,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+        localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -4135,12 +4161,19 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
     
 				// stagingEncodedAssetPathName preparation
-				{        
+				{
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+					/*
 					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_videoSpeedData->_mmsVideoPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_videoSpeedData->_videoRelativePath,
 						_encodingItem->_videoSpeedData->_videoFileName);
+					*/
 
 					size_t extensionIndex = _encodingItem->_videoSpeedData->_videoFileName.find_last_of(".");
 					if (extensionIndex == string::npos)
@@ -4653,6 +4686,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+        localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -4833,6 +4867,17 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
 				// stagingEncodedAssetPathName preparation
 				{
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_main =
+						_mmsStorage->getPhysicalPath(mainVideoPhysicalPathKey);
+					tie(mmsMainVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName_main;
+
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay =
+						_mmsStorage->getPhysicalPath(overlayVideoPhysicalPathKey);
+					tie(mmsOverlayVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay;
+
+					/*
 					mmsMainVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
@@ -4844,6 +4889,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_pictureInPictureData->_overlayVideoRelativePath,
 						_encodingItem->_pictureInPictureData->_overlayVideoFileName);
+					*/
 
 					size_t extensionIndex = _encodingItem->_pictureInPictureData->_mainVideoFileName.find_last_of(".");
 					if (extensionIndex == string::npos)
@@ -5345,6 +5391,7 @@ void EncoderVideoAudioProxy::processPictureInPicture(string stagingEncodedAssetP
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+        localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -5458,6 +5505,7 @@ bool EncoderVideoAudioProxy::generateFrames()
 bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 {
     
+	int64_t sourceVideoPhysicalPathKey;
     string imageDirectory;
     double startTimeInSeconds;
     int maxFramesNumber;  
@@ -5473,7 +5521,10 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
     // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
-        string field = "imageDirectory";
+        string field = "sourceVideoPhysicalPathKey";
+        sourceVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "imageDirectory";
         imageDirectory = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "startTimeInSeconds";
@@ -5531,12 +5582,19 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				string mmsSourceVideoAssetPathName;
 
 				// stagingEncodedAssetPathName preparation
-				{        
+				{
+					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+					/*
 					mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_generateFramesData->_mmsVideoPartitionNumber,
 						_encodingItem->_workspace->_directoryName,
 						_encodingItem->_generateFramesData->_videoRelativePath,
 						_encodingItem->_generateFramesData->_videoFileName);
+					*/
 				}
 
                 Json::Value generateFramesMedatada;
@@ -6554,6 +6612,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+        localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -7025,6 +7084,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
 						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
 						localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
 						localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
 						localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
@@ -7085,6 +7145,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
 				localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+				localAssetIngestionEvent->setExternalReadOnlyStorage(false);
 				localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
 				localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
 				localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -7130,6 +7191,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
 			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
 			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
 			localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
 			localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
@@ -7285,6 +7347,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+		localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
@@ -7386,11 +7449,11 @@ string EncoderVideoAudioProxy::faceIdentification()
 		while(!imagesFinished)
 		{
 			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
-					_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
-					start, rows, contentTypePresent, contentType,
-					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
-					ingestionDateOrder, jsonOrderBy, admin);
+				_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
+				start, rows, contentTypePresent, contentType,
+				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+				title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
+				ingestionDateOrder, jsonOrderBy, admin);
 
 			field = "response";
 			Json::Value responseRoot = mediaItemsListRoot[field];
@@ -7452,20 +7515,15 @@ string EncoderVideoAudioProxy::faceIdentification()
 				{
 					Json::Value physicalPathRoot = physicalPathsArrayRoot[0];
 
-					field = "partitionNumber";
-					int partitionNumber = physicalPathRoot.get(field, 0).asInt();
+					field = "physicalPathKey";
+					int64_t physicalPathKey = physicalPathRoot.get(field, 0).asInt64();
 
-					field = "relativePath";
-					string relativePath = physicalPathRoot.get(field, 0).asString();
-
-					field = "fileName";
-					string fileName = physicalPathRoot.get(field, 0).asString();
-
-					string mmsImagePathName = _mmsStorage->getMMSAssetPathName(
-						partitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						relativePath,
-						fileName);
+					tuple<string, string, int64_t, string>
+						physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(physicalPathKey);
+					string mmsImagePathName;
+					tie(mmsImagePathName, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 					images.push_back(cv::imread(mmsImagePathName, 0));
 					idImages.push_back(currentIdImage);
@@ -7889,6 +7947,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+		localAssetIngestionEvent->setExternalReadOnlyStorage(false);
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
         localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);

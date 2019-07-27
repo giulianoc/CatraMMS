@@ -333,10 +333,10 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
-        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value root);
+	tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
+		getMediaSourceDetails(
+			int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+			MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot);
 
     void validateMediaSourceFile (int64_t ingestionJobKey,
         string mediaSourcePathName,

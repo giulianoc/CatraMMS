@@ -51,10 +51,17 @@ public:
 
     string getDoneRootRepository (void);
 
-    pair<int64_t,string> getPhysicalPath(int64_t mediaItemKey,
-        int64_t encodingProfileKey);
+	tuple<int64_t,string, string, int64_t, string> getPhysicalPath(
+		int64_t mediaItemKey, int64_t encodingProfileKey);
     
-    string getPhysicalPath(int64_t physicalPathKey);
+	tuple<string, string, int64_t, string> getPhysicalPath(
+		int64_t physicalPathKey);
+
+	pair<string, string> getDeliveryURI(int64_t physicalPathKey, bool save,
+			shared_ptr<Workspace> requestWorkspace);
+
+	tuple<int64_t, string, string> getDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+			shared_ptr<Workspace> requestWorkspace);
 
     void removePhysicalPath(int64_t physicalPathKey);
     
@@ -88,10 +95,11 @@ public:
     );
 
     string getMMSAssetPathName (
-	unsigned long ulPartitionNumber,
-	string workspaceDirectoryName,
-	string relativePath,		// using '/'
-	string fileName);
+		bool externalReadOnlyStorage,
+		unsigned long ulPartitionNumber,
+		string workspaceDirectoryName,
+		string relativePath,		// using '/'
+		string fileName);
 
     string getDownloadLinkPathName (
 	unsigned long ulPartitionNumber,

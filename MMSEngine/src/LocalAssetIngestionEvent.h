@@ -34,16 +34,19 @@ using namespace std;
 
 
 class LocalAssetIngestionEvent: public Event2 {
-private:    
-    int64_t                 _ingestionJobKey;
-    shared_ptr<Workspace>    _workspace;
-    MMSEngineDBFacade::IngestionType _ingestionType;
+private:
+	int64_t                 _ingestionJobKey;
+	shared_ptr<Workspace>	_workspace;
+	MMSEngineDBFacade::IngestionType _ingestionType;
 
-    string                  _metadataContent;
-    string                  _ingestionSourceFileName;
-    string                  _mmsSourceFileName;
-    string                  _forcedAvgFrameRate;
-    bool                    _ingestionRowToBeUpdatedAsSuccess;
+	bool					_externalReadOnlyStorage;
+	string					_externalStorageMediaSourceURL;
+
+	string                  _metadataContent;
+	string                  _ingestionSourceFileName;
+	string                  _mmsSourceFileName;
+	string                  _forcedAvgFrameRate;
+	bool                    _ingestionRowToBeUpdatedAsSuccess;
 
 public:
     void setMMSSourceFileName(string mmsSourceFileName)
@@ -53,6 +56,15 @@ public:
     string getMMSSourceFileName()
     {
         return _mmsSourceFileName;
+    }
+
+    void setExternalStorageMediaSourceURL(string externalStorageMediaSourceURL)
+    {
+        _externalStorageMediaSourceURL   = externalStorageMediaSourceURL;
+    }
+    string getExternalStorageMediaSourceURL()
+    {
+        return _externalStorageMediaSourceURL;
     }
 
     void setIngestionType(MMSEngineDBFacade::IngestionType ingestionType)
@@ -89,6 +101,15 @@ public:
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
+    }
+
+    void setExternalReadOnlyStorage(int64_t externalReadOnlyStorage)
+    {
+        _externalReadOnlyStorage   = externalReadOnlyStorage;
+    }    
+    int64_t getExternalReadOnlyStorage()
+    {
+        return _externalReadOnlyStorage;
     }
 
     void setIngestionRowToBeUpdatedAsSuccess(bool ingestionRowToBeUpdatedAsSuccess)

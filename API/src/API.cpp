@@ -1020,6 +1020,7 @@ void API::createDeliveryAuthorization(
 
         try
         {
+			/*
             tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails;
 
 			if (physicalPathKey != -1)
@@ -1082,6 +1083,27 @@ void API::createDeliveryAuthorization(
                     + fileName
                 ;
             }
+			*/
+
+			string deliveryURI;
+			string deliveryFileName;
+
+			if (physicalPathKey != -1)
+			{
+				pair<string, string> deliveryFileNameAndDeliveryURI =
+					_mmsStorage->getDeliveryURI(physicalPathKey, save, requestWorkspace);
+
+				tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
+			}
+			else
+			{
+				tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
+					_mmsStorage->getDeliveryURI(mediaItemKey, encodingProfileKey, save,
+						requestWorkspace);
+				tie(physicalPathKey, deliveryFileName, deliveryURI) =
+					physicalPathKeyDeliveryFileNameAndDeliveryURI;
+			}
+
             int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
                 userKey,
                 clientIPAddress,
@@ -1097,6 +1119,7 @@ void API::createDeliveryAuthorization(
                     + deliveryURI
                     + "?token=" + to_string(authorizationKey)
             ;
+
             if (save && deliveryFileName != "")
                 deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
             

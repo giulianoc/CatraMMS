@@ -180,10 +180,10 @@ string MMSStorage::getIngestionRootRepository(void) {
     return _ingestionRootRepository;
 }
 
-pair<int64_t,string> MMSStorage::getPhysicalPath(int64_t mediaItemKey,
-        int64_t encodingProfileKey)
-{    
-    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
+tuple<int64_t, string, string, int64_t, string> MMSStorage::getPhysicalPath(
+	int64_t mediaItemKey, int64_t encodingProfileKey)
+{
+    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
     int64_t physicalPathKey;
@@ -194,21 +194,31 @@ pair<int64_t,string> MMSStorage::getPhysicalPath(int64_t mediaItemKey,
     int64_t sizeInBytes;
     string deliveryFileName;
     string title;
+	bool externalReadOnlyStorage;
     tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, 
-            fileName, deliveryFileName, title, sizeInBytes) = storageDetails;
+            fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
+	_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+		+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+		+ ", workspaceDirectoryName: " + workspace->_directoryName
+		+ ", relativePath: " + relativePath
+		+ ", fileName: " + fileName
+	);
     string physicalPath = getMMSAssetPathName(
+		externalReadOnlyStorage,
         mmsPartitionNumber,
         workspace->_directoryName,
         relativePath,
         fileName);
     
-    return make_pair(physicalPathKey, physicalPath);
+    return make_tuple(physicalPathKey, physicalPath, fileName,
+			sizeInBytes, deliveryFileName);
 }
 
-string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
+tuple<string, string, int64_t, string> MMSStorage::getPhysicalPath(
+	int64_t physicalPathKey)
 {    
-    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
+    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
     int mmsPartitionNumber;
@@ -218,14 +228,144 @@ string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
     string deliveryFileName;
     string title;
     int64_t sizeInBytes;
+	bool externalReadOnlyStorage;
     tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
-            deliveryFileName, title, sizeInBytes) = storageDetails;
+            deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
-    return getMMSAssetPathName(
+	_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+		+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+		+ ", workspaceDirectoryName: " + workspace->_directoryName
+		+ ", relativePath: " + relativePath
+		+ ", fileName: " + fileName
+	);
+    string physicalPath = getMMSAssetPathName(
+		externalReadOnlyStorage,
         mmsPartitionNumber,
         workspace->_directoryName,
         relativePath,
         fileName);
+
+    return make_tuple(physicalPath, fileName, sizeInBytes, deliveryFileName);
+}
+
+pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool save,
+		shared_ptr<Workspace> requestWorkspace)
+{
+    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+
+    int mmsPartitionNumber;
+    shared_ptr<Workspace> contentWorkspace;
+    string relativePath;
+    string fileName;
+    string deliveryFileName;
+    string title;
+	bool externalReadOnlyStorage;
+    tie(ignore, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
+            deliveryFileName, title, ignore, externalReadOnlyStorage) = storageDetails;
+
+	if (save)
+	{
+		if (deliveryFileName == "")
+			deliveryFileName = title;
+
+		if (deliveryFileName != "")
+		{
+			// use the extension of fileName
+			size_t extensionIndex = fileName.find_last_of(".");
+			if (extensionIndex != string::npos)
+				deliveryFileName.append(fileName.substr(extensionIndex));
+		}
+	}
+
+	if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
+	{
+		string errorMessage =
+			string ("Workspace of the content and Workspace of the requester is different")
+			+ ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey)
+			+ ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string deliveryURI;
+	{
+		char pMMSPartitionName [64];
+
+
+		sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
+
+		deliveryURI =
+			pMMSPartitionName
+			+ contentWorkspace->_directoryName
+			+ relativePath
+			+ fileName;
+	}
+
+	return make_pair(deliveryFileName, deliveryURI);
+}
+
+tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
+		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+		shared_ptr<Workspace> requestWorkspace)
+{
+    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+
+	int64_t physicalPathKey;
+    int mmsPartitionNumber;
+    shared_ptr<Workspace> contentWorkspace;
+    string relativePath;
+    string fileName;
+    string deliveryFileName;
+    string title;
+	bool externalReadOnlyStorage;
+	tie(physicalPathKey, mmsPartitionNumber, contentWorkspace, relativePath, fileName,
+                    deliveryFileName, title, ignore, externalReadOnlyStorage) = storageDetails;
+
+	if (save)
+	{
+		if (deliveryFileName == "")
+			deliveryFileName = title;
+
+		if (deliveryFileName != "")
+		{
+			// use the extension of fileName
+			size_t extensionIndex = fileName.find_last_of(".");
+			if (extensionIndex != string::npos)
+				deliveryFileName.append(fileName.substr(extensionIndex));
+		}
+	}
+
+	if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
+	{
+		string errorMessage =
+			string ("Workspace of the content and Workspace of the requester is different")
+			+ ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey)
+			+ ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string deliveryURI;
+	{
+		char pMMSPartitionName [64];
+
+
+		sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
+
+		deliveryURI =
+			pMMSPartitionName
+			+ contentWorkspace->_directoryName
+			+ relativePath
+			+ fileName;
+	}
+
+	return make_tuple(physicalPathKey, deliveryFileName, deliveryURI);
 }
 
 void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
@@ -237,7 +377,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
+        tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
             _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
         int mmsPartitionNumber;
@@ -247,8 +387,9 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         string deliveryFileName;
         string title;
         int64_t sizeInBytes;
+		bool externalReadOnlyStorage;
         tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
-                deliveryFileName, title, sizeInBytes) = storageDetails;
+                deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
         _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
             + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
@@ -257,6 +398,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", fileName: " + fileName
         );
         string mmsAssetPathName = getMMSAssetPathName(
+			externalReadOnlyStorage,
             mmsPartitionNumber,
             workspace->_directoryName,
             relativePath,
@@ -329,31 +471,35 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
         
-        vector<tuple<int,string,string,string>> allStorageDetails;
+        vector<tuple<int, string, string, string, bool>> allStorageDetails;
         _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-        for (tuple<int,string,string,string>& storageDetails: allStorageDetails)
+        for (tuple<int, string, string, string, bool>& storageDetails: allStorageDetails)
         {
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
-            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+			bool externalReadOnlyStorage;
+            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath,
+					fileName, externalReadOnlyStorage) = storageDetails;
 
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-
-
+			if (!externalReadOnlyStorage)
             {
+				_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+					+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+					+ ", workspaceDirectoryName: " + workspaceDirectoryName
+					+ ", relativePath: " + relativePath
+					+ ", fileName: " + fileName
+				);
+				string mmsAssetPathName = getMMSAssetPathName(
+					externalReadOnlyStorage,
+					mmsPartitionNumber,
+					workspaceDirectoryName,
+					relativePath,
+					fileName);
+
                 FileIO::DirectoryEntryType_t detSourceFileType;
 				bool fileExist = true;
 
@@ -937,23 +1083,31 @@ string MMSStorage::moveAssetInMMSRepository(
 }
 
 string MMSStorage::getMMSAssetPathName(
+		bool externalReadOnlyStorage,
         unsigned long ulPartitionNumber,
         string workspaceDirectoryName,
         string relativePath, // using '/'
         string fileName)
 {
-    char pMMSPartitionName [64];
+	string assetPathName;
 
+	if (externalReadOnlyStorage)
+	{
+		assetPathName = relativePath + fileName;
+	}
+	else
+	{
+		char pMMSPartitionName [64];
 
-    sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
+		sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
 
-    string assetPathName(_mmsRootRepository);
-    assetPathName
-        .append(pMMSPartitionName)
-        .append(workspaceDirectoryName)
-        .append(relativePath)
-        .append(fileName);
-
+		assetPathName = _mmsRootRepository;
+		assetPathName
+			.append(pMMSPartitionName)
+			.append(workspaceDirectoryName)
+			.append(relativePath)
+			.append(fileName);
+	}
 
     return assetPathName;
 }
@@ -965,7 +1119,7 @@ string MMSStorage::getDownloadLinkPathName(
         string relativePath,
         string fileName,
         bool downloadRepositoryToo)
- {
+{
 
     char pMMSPartitionName [64];
     string linkPathName;
@@ -1006,7 +1160,7 @@ string MMSStorage::getStreamingLinkPathName(
         string territoryName, // IN
         string relativePath, // IN
         string fileName) // IN
- {
+{
     char pMMSPartitionName [64];
     string linkPathName;
 
@@ -1042,7 +1196,7 @@ string MMSStorage::getStagingAssetPathName(
         long long llMediaItemKey,       // used only if fileName is ""
         long long llPhysicalPathKey,    // used only if fileName is ""
         bool removeLinuxPathIfExist)
- {
+{
     char pUniqueFileName [256];
     string localFileName;
     tm tmDateTime;
@@ -1174,7 +1328,7 @@ string MMSStorage::getStagingAssetPathName(
 string MMSStorage::getEncodingProfilePathName(
         long long llEncodingProfileKey,
         string profileFileNameExtension)
- {
+{
     string encodingProfilePathName(_profilesRootRepository);
 
     encodingProfilePathName
@@ -1187,7 +1341,7 @@ string MMSStorage::getEncodingProfilePathName(
 string MMSStorage::getFFMPEGEncodingProfilePathName(
         MMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey)
- {
+{
 
     if (contentType != MMSEngineDBFacade::ContentType::Video && 
             contentType != MMSEngineDBFacade::ContentType::Audio &&
@@ -1222,7 +1376,7 @@ string MMSStorage::getFFMPEGEncodingProfilePathName(
 
 unsigned long MMSStorage::getWorkspaceStorageUsage(
         string workspaceDirectoryName)
- {
+{
 
     unsigned long ulStorageUsageInMB;
 
@@ -1240,6 +1394,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
             ulMMSPartitionIndex++) 
     {
         string contentProviderPathName = getMMSAssetPathName(
+				false,	// externalReadOnlyStorage
                 ulMMSPartitionIndex, workspaceDirectoryName,
                 string(""), string(""));
 
@@ -1307,7 +1462,7 @@ string MMSStorage::creatingDirsUsingTerritories(
         string workspaceDirectoryName,
         bool deliveryRepositoriesToo,
         Workspace::TerritoriesHashMap& phmTerritories)
- {
+{
 
     char pMMSPartitionName [64];
 

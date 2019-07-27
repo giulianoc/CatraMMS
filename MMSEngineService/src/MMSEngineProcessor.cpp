@@ -654,6 +654,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
                         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
                         localAssetIngestionEvent->setMMSSourceFileName("");
@@ -1198,17 +1199,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             string mediaFileFormat;
                             string md5FileCheckSum;
                             int fileSizeInBytes;
+							bool externalReadOnlyStorage;
                             try
                             {
-                                tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
-
-                                mediaSourceDetails = getMediaSourceDetails(
+                                tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
+									mediaSourceDetails = getMediaSourceDetails(
                                         ingestionJobKey, workspace,
                                         ingestionType, parametersRoot);
 
-                                tie(nextIngestionStatus,
-                                        mediaSourceURL, mediaFileFormat, 
-                                        md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
+                                tie(nextIngestionStatus, mediaSourceURL, mediaFileFormat, 
+									md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) =
+									mediaSourceDetails;                        
                             }
                             catch(runtime_error e)
                             {
@@ -1303,174 +1304,219 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             try
                             {
-                                if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
-                                {
-                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
-                                    {
-                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-                                        );
+								if (externalReadOnlyStorage)
+								{
+									shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+										->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+									localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+									localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+									localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+									localAssetIngestionEvent->setExternalReadOnlyStorage(true);
+									localAssetIngestionEvent->setExternalStorageMediaSourceURL(mediaSourceURL);
+									localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+									// localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
+									// localAssetIngestionEvent->setMMSSourceFileName("");
+									localAssetIngestionEvent->setWorkspace(workspace);
+									localAssetIngestionEvent->setIngestionType(ingestionType);
+									localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+
+									localAssetIngestionEvent->setMetadataContent(metaDataContent);
+
+									shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+									_multiEventsSet->addEvent(event);
+
+									_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+										+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+								}
+								else
+								{
+									if (nextIngestionStatus ==
+										MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
+									{
+										if (_processorsThreadsNumber.use_count() >
+											_processorThreads + _maxAdditionalProcessorThreads)
+										{
+											_logger->warn(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+												+ ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+											);
+
+											string errorMessage = "";
+											string processorMMS = "";
+
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
-                                    }
-                                    else
-                                    {
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+										}
+										else
+										{
+											string errorMessage = "";
+											string processorMMS = "";
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );                            
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);                            
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
 
-                                        thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
-                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
-                                        downloadMediaSource.detach();
-                                    }                                    
-                                }
-                                else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
-                                {
-                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
-                                    {
-                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-                                        );
+											thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
+												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+											downloadMediaSource.detach();
+										}
+									}
+									else if (nextIngestionStatus ==
+										MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
+									{
+										if (_processorsThreadsNumber.use_count() >
+											_processorThreads + _maxAdditionalProcessorThreads)
+										{
+											_logger->warn(__FILEREF__
+												+ "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", _processorsThreadsNumber.use_count(): "
+												+ to_string(_processorsThreadsNumber.use_count())
+												+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+												+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+											);
 
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+											string errorMessage = "";
+											string processorMMS = "";
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
-                                    }
-                                    else
-                                    {
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+										}
+										else
+										{
+											string errorMessage = "";
+											string processorMMS = "";
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus,
                                                 errorMessage,
                                                 processorMMS
                                                 );
                                         
-                                        thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
-                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
-                                        moveMediaSource.detach();
-                                    }
-                                }
-                                else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
-                                {
-                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
-                                    {
-                                        _logger->warn(__FILEREF__ + "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-                                        );
+											thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
+												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+											moveMediaSource.detach();
+										}
+									}
+									else if (nextIngestionStatus ==
+										MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
+									{
+										if (_processorsThreadsNumber.use_count() >
+											_processorThreads + _maxAdditionalProcessorThreads)
+										{
+											_logger->warn(__FILEREF__
+												+ "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", _processorsThreadsNumber.use_count(): "
+												+ to_string(_processorsThreadsNumber.use_count())
+												+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+												+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+											);
 
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+											string errorMessage = "";
+											string processorMMS = "";
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );                            
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);                            
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 ingestionStatus, 
                                                 errorMessage,
                                                 processorMMS
                                                 );
-                                    }
-                                    else
-                                    {
-                                        string errorMessage = "";
-                                        string processorMMS = "";
+										}
+										else
+										{
+											string errorMessage = "";
+											string processorMMS = "";
 
-                                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                            + ", errorMessage: " + errorMessage
-                                            + ", processorMMS: " + processorMMS
-                                        );
-                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+											_logger->info(__FILEREF__ + "Update IngestionJob"
+												+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", IngestionStatus: "
+												+ MMSEngineDBFacade::toString(nextIngestionStatus)
+												+ ", errorMessage: " + errorMessage
+												+ ", processorMMS: " + processorMMS
+											);
+											_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                                 nextIngestionStatus, 
                                                 errorMessage,
                                                 processorMMS
                                                 );
 
-                                        thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
-                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
-                                        copyMediaSource.detach();
-                                    }
-                                }
-                                else // if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
-                                {
-                                    string errorMessage = "";
-                                    string processorMMS = "";
+											thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
+												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+											copyMediaSource.detach();
+										}
+									}
+									else // if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
+									{
+										string errorMessage = "";
+										string processorMMS = "";
 
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + processorMMS
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										_logger->info(__FILEREF__ + "Update IngestionJob"
+											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+											+ ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+											+ ", errorMessage: " + errorMessage
+											+ ", processorMMS: " + processorMMS
+										);                            
+										_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
                                             );
-                                }
+									}
+								}
                             }
                             catch(exception e)
                             {
@@ -3888,15 +3934,132 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
-    string workspaceIngestionBinaryPathName;
+	string binaryPathName;
+    try
+    {
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			string workspaceIngestionBinaryPathName;
 
-    workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
-            localAssetIngestionEvent->getWorkspace());
-    workspaceIngestionBinaryPathName
-            .append("/")
-            .append(localAssetIngestionEvent->getIngestionSourceFileName())
-            ;
-    
+			workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
+				localAssetIngestionEvent->getWorkspace());
+			workspaceIngestionBinaryPathName
+				.append("/")
+				.append(localAssetIngestionEvent->getIngestionSourceFileName())
+			;
+
+			binaryPathName = workspaceIngestionBinaryPathName;
+		}
+		else
+		{
+			string mediaSourceURL = localAssetIngestionEvent->getExternalStorageMediaSourceURL();
+
+			string externalStoragePrefix("externalStorage://");
+			if (!(mediaSourceURL.size() >= externalStoragePrefix.size()
+					&& 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix)))
+			{
+				string errorMessage = string("mediaSourceURL is not an externalStorage reference")
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mediaSourceURL: " + mediaSourceURL 
+				;
+
+				_logger->error(__FILEREF__ + errorMessage);
+            
+				throw runtime_error(errorMessage);
+			}
+			binaryPathName = mediaSourceURL.substr(externalStoragePrefix.length());
+		}
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "binaryPathName initialization failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", exception: " + e.what()
+        );
+
+        string errorMessage = e.what();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "binaryPathName initialization failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", exception: " + e.what()
+        );
+
+        string errorMessage = e.what();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				 e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        throw e;
+    }
+
     string      metadataFileContent;
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
     Json::Value parametersRoot;
@@ -3931,9 +4094,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw runtime_error(errorMessage);
         }
         
-        dependencies = validator.validateSingleTaskMetadata(
-                localAssetIngestionEvent->getWorkspace()->_workspaceKey,
-                localAssetIngestionEvent->getIngestionType(), parametersRoot);
+		dependencies = validator.validateSingleTaskMetadata(
+			localAssetIngestionEvent->getWorkspace()->_workspaceKey,
+			localAssetIngestionEvent->getIngestionType(), parametersRoot);
     }
     catch(runtime_error e)
     {
@@ -3978,13 +4141,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+
         throw e;
     }
     catch(exception e)
@@ -4029,12 +4196,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+			FileIO::remove(binaryPathName);
+		}
             
         throw e;
     }
@@ -4044,9 +4214,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     string mediaFileFormat;
     string md5FileCheckSum;
     int fileSizeInBytes;
+	bool externalReadOnlyStorage;
     try
     {
-        tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int>
+        tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getIngestionJobKey(),
                 localAssetIngestionEvent->getWorkspace(),
@@ -4054,7 +4225,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaFileFormat, 
-                md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
+                md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) = mediaSourceDetails;
     }
     catch(runtime_error e)
     {
@@ -4098,13 +4269,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+			FileIO::remove(binaryPathName);
+		}
+
         throw e;
     }
     catch(exception e)
@@ -4149,13 +4323,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+
         throw e;
     }
 
@@ -4163,7 +4341,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         validateMediaSourceFile(
                 localAssetIngestionEvent->getIngestionJobKey(),
-                workspaceIngestionBinaryPathName,
+                binaryPathName,
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -4208,13 +4386,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+
         throw e;
     }
     catch(exception e)
@@ -4259,61 +4441,92 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+
         throw e;
     }
 
-    string mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
-    if (mediaSourceFileName == "")
-    {
-        mediaSourceFileName = localAssetIngestionEvent->getIngestionSourceFileName() + "." + mediaFileFormat;
-    }
+	string mediaSourceFileName;
+	string mmsAssetPathName;
+	string relativePathToBeUsed;
+	long mmsPartitionUsed;
+	try
+	{
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
+			if (mediaSourceFileName == "")
+			{
+				mediaSourceFileName = localAssetIngestionEvent->getIngestionSourceFileName() + "." + mediaFileFormat;
+			}
 
-    string relativePathToBeUsed;
-    unsigned long mmsPartitionIndexUsed;
-    string mmsAssetPathName;
-    try
-    {
-        relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
+			relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
                 localAssetIngestionEvent->getWorkspace()->_workspaceKey);
         
-        bool partitionIndexToBeCalculated   = true;
-        bool deliveryRepositoriesToo        = true;
-        mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
-            workspaceIngestionBinaryPathName,
-            localAssetIngestionEvent->getWorkspace()->_directoryName,
-            mediaSourceFileName,
-            relativePathToBeUsed,
-            partitionIndexToBeCalculated,
-            &mmsPartitionIndexUsed,
-            deliveryRepositoriesToo,
-            localAssetIngestionEvent->getWorkspace()->_territories
+			unsigned long mmsPartitionIndexUsed;
+			bool partitionIndexToBeCalculated   = true;
+			bool deliveryRepositoriesToo        = true;
+			mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+				binaryPathName,
+				localAssetIngestionEvent->getWorkspace()->_directoryName,
+				mediaSourceFileName,
+				relativePathToBeUsed,
+				partitionIndexToBeCalculated,
+				&mmsPartitionIndexUsed,
+				deliveryRepositoriesToo,
+				localAssetIngestionEvent->getWorkspace()->_territories
             );
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", errorMessage: " + e.what()
-        );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_IngestionFailure"
+			mmsPartitionUsed = mmsPartitionIndexUsed;
+		}
+		else
+		{
+			mmsAssetPathName = binaryPathName;
+			mmsPartitionUsed = -1;
+
+			size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
+			if (fileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No fileName found in mmsAssetPathName"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			relativePathToBeUsed = mmsAssetPathName.substr(0, fileNameIndex + 1);
+			mediaSourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
+		}
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", errorMessage: " + e.what()
-        );                            
+		);
+       
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", IngestionStatus: " + "End_IngestionFailure"
+			+ ", errorMessage: " + e.what()
+		);                            
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what()
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+				e.what()
 			);
 		}
 		catch(runtime_error& re)
@@ -4322,7 +4535,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
-				);
+			);
 		}
 		catch(exception ex)
 		{
@@ -4330,35 +4543,40 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
-				);
+			);
 		}
-        
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
+       
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+
+		throw e;
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+		);
+       
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", IngestionStatus: " + "End_IngestionFailure"
+			+ ", errorMessage: " + e.what()
+		);                            
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what()
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+				e.what()
 			);
 		}
 		catch(runtime_error& re)
@@ -4367,7 +4585,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
-				);
+			);
 		}
 		catch(exception ex)
 		{
@@ -4375,18 +4593,22 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
-				);
+			);
 		}
-        
-        _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-        );
-        FileIO::remove(workspaceIngestionBinaryPathName);
-            
-        throw e;
-    }
+       
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", binaryPathName: " + binaryPathName
+			);
+
+			FileIO::remove(binaryPathName);
+		}
+           
+		throw e;
+	}
 
     MMSEngineDBFacade::ContentType contentType;
     
@@ -4418,7 +4640,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             tie(durationInMilliSeconds, bitRate, 
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
-            
+
             if (localAssetIngestionEvent->getForcedAvgFrameRate() != "")
             {
                 _logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent. Forced Avg Frame Rate"
@@ -4428,7 +4650,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 
                 videoAvgFrameRate = localAssetIngestionEvent->getForcedAvgFrameRate();
             }
-                
+
             if (videoCodecName == "")
                 contentType = MMSEngineDBFacade::ContentType::Audio;
             else
@@ -4789,16 +5011,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
     else
     {
-        string errorMessage = string("Unknown mediaSourceFileName extension")
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", mediaSourceFileName: " + mediaSourceFileName
+        string errorMessage = string("Unknown mediaFileFormat")
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", mmsAssetPathName: " + mmsAssetPathName
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
         
         _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
@@ -4845,12 +5067,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 inCaseOfLinkHasItToBeRead);   
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", contentType: " + MMSEngineDBFacade::toString(contentType)
             + ", relativePathToBeUsed: " + relativePathToBeUsed
             + ", mediaSourceFileName: " + mediaSourceFileName
-            + ", mmsPartitionIndexUsed: " + to_string(mmsPartitionIndexUsed)
+            + ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
             + ", sizeInBytes: " + to_string(sizeInBytes)
 
             + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
@@ -4881,7 +5103,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     parametersRoot,
                     relativePathToBeUsed,
                     mediaSourceFileName,
-                    mmsPartitionIndexUsed,
+                    mmsPartitionUsed,
                     sizeInBytes,
                 
                     // video-audio
@@ -5330,12 +5552,16 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
+			string mmsAssetPathName;
+			string fileName;
+			int64_t sizeInBytes;
+			string deliveryFileName;
+
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
-            string fileName;
-            int64_t sizeInBytes;
-            string deliveryFileName;
+			*/
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -5346,32 +5572,46 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 int64_t encodingProfileKey = -1;
-                
+               
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
-                int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
-                string title;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, ignore, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
-                string title;
                 
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, ignore, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -5383,14 +5623,15 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
             
             // check on thread availability was done at the beginning in this method
-            thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
-                _processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
-                    ftpServer, ftpPort, ftpUserName, ftpPassword,
-                    ftpRemoteDirectory, deliveryFileName);
-            ftpUploadMediaSource.detach();
-        }
+			thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
+				_processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes,
+				ingestionJobKey, workspace, ftpServer, ftpPort, ftpUserName, ftpPassword,
+				ftpRemoteDirectory, deliveryFileName);
+			ftpUploadMediaSource.detach();
+		}
     }
     catch(runtime_error e)
     {
@@ -5496,12 +5737,15 @@ void MMSEngineProcessor::postOnFacebookTask(
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
+			string mmsAssetPathName;
+            int64_t sizeInBytes;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
-            int64_t sizeInBytes;
             string deliveryFileName;
+			*/
             MMSEngineDBFacade::ContentType contentType;
             
             int64_t key;
@@ -5514,6 +5758,12 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, sizeInBytes, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -5525,6 +5775,7 @@ void MMSEngineProcessor::postOnFacebookTask(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
 
                 {
                     bool warningIfMissing = false;
@@ -5533,16 +5784,18 @@ void MMSEngineProcessor::postOnFacebookTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(contentType, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, sizeInBytes, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -5552,6 +5805,7 @@ void MMSEngineProcessor::postOnFacebookTask(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
                 
                 {
                     bool warningIfMissing = false;
@@ -5560,16 +5814,12 @@ void MMSEngineProcessor::postOnFacebookTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    int64_t mediaItemKey;
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -5581,6 +5831,7 @@ void MMSEngineProcessor::postOnFacebookTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
 
             // check on thread availability was done at the beginning in this method
             if (contentType == MMSEngineDBFacade::ContentType::Video)
@@ -5721,12 +5972,15 @@ void MMSEngineProcessor::postOnYouTubeTask(
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
+			string mmsAssetPathName;
+            int64_t sizeInBytes;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
-            int64_t sizeInBytes;
             string deliveryFileName;
+			*/
             MMSEngineDBFacade::ContentType contentType;
             string title;
             
@@ -5740,6 +5994,12 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, sizeInBytes, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -5750,6 +6010,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
 
                 {
                     bool warningIfMissing = false;
@@ -5758,16 +6019,18 @@ void MMSEngineProcessor::postOnYouTubeTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(contentType, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, sizeInBytes, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -5776,6 +6039,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
                 
                 {
                     bool warningIfMissing = false;
@@ -5784,12 +6048,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    int64_t mediaItemKey;
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
@@ -5797,6 +6056,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             if (youTubeTitle == "")
                 youTubeTitle = title;
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -5808,6 +6068,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
 
             // check on thread availability was done at the beginning in this method
             thread postOnYouTube(&MMSEngineProcessor::postVideoOnYouTubeThread, this,
@@ -6221,12 +6482,15 @@ void MMSEngineProcessor::localCopyContentTask(
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
+			string mmsAssetPathName;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             int64_t sizeInBytes;
             string deliveryFileName;
+			*/
 			string fileFormat;
             
             int64_t key;
@@ -6240,6 +6504,12 @@ void MMSEngineProcessor::localCopyContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -6250,11 +6520,18 @@ void MMSEngineProcessor::localCopyContentTask(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
             else
             {
 				physicalPathKey = key;
 
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -6264,8 +6541,10 @@ void MMSEngineProcessor::localCopyContentTask(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName to be copied"
                 + ", physicalPathKey: " + to_string(physicalPathKey)
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
@@ -6278,6 +6557,7 @@ void MMSEngineProcessor::localCopyContentTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
             
             // check on thread availability was done at the beginning in this method
             thread copyContentThread(&MMSEngineProcessor::copyContentThread, this, 
@@ -6394,12 +6674,15 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 				keyAndDependencyType	= dependencies[0];
 
+			string mmsAssetPathName;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             int64_t sizeInBytes;
             string deliveryFileName;
+			*/
             MMSEngineDBFacade::ContentType contentType;
             string title;
 			int64_t sourceMediaItemKey;
@@ -6415,8 +6698,15 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+
 				sourceMediaItemKey = key;
 
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -6426,6 +6716,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 tie(sourcePhysicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
 
                 {
                     bool warningIfMissing = false;
@@ -6434,18 +6725,21 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(contentType, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
 				sourcePhysicalPathKey = key;
 
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -6454,6 +6748,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
                 
                 {
                     bool warningIfMissing = false;
@@ -6462,15 +6757,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(sourceMediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -6482,6 +6774,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
                 sourceMediaItemKey, sourcePhysicalPathKey, mmsAssetPathName,
@@ -6584,12 +6877,15 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 				keyAndDependencyType	= dependencies[0];
 
+			string mmsAssetPathName;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             int64_t sizeInBytes;
             string deliveryFileName;
+			*/
             MMSEngineDBFacade::ContentType contentType;
             string title;
             
@@ -6603,6 +6899,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -6613,6 +6915,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
 
                 {
                     bool warningIfMissing = false;
@@ -6621,16 +6924,18 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(contentType, ignore, ignore, ignore, ignore)
 						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t, int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -6639,6 +6944,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
                 
                 {
                     bool warningIfMissing = false;
@@ -6647,16 +6953,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    int64_t mediaItemKey;
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
                 }
             }
             
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -6668,6 +6970,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
 
 			_mmsEngineDBFacade->addEncoding_FaceIdentificationJob(workspace, ingestionJobKey,
                 mmsAssetPathName, faceIdentificationCascadeName, jsonDeepLearnedModelTags, encodingPriority);
@@ -6991,17 +7294,25 @@ void MMSEngineProcessor::changeFileFormatThread(
 
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+			string mmsAssetPathName;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             shared_ptr<Workspace> workspace;
+			*/
             
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
-
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -7014,9 +7325,16 @@ void MMSEngineProcessor::changeFileFormatThread(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -7027,8 +7345,10 @@ void MMSEngineProcessor::changeFileFormatThread(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -7040,6 +7360,7 @@ void MMSEngineProcessor::changeFileFormatThread(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
             
             {
                 string localSourceFileName;
@@ -7094,6 +7415,7 @@ void MMSEngineProcessor::changeFileFormatThread(
                     localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
                     localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
                     localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                     localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
                     localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
@@ -7463,17 +7785,25 @@ void MMSEngineProcessor::extractTracksContentThread(
 
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+			string mmsAssetPathName;
+			/*
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             shared_ptr<Workspace> workspace;
+			*/
             
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
-
                 int64_t encodingProfileKey = -1;
                 
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
@@ -7486,9 +7816,16 @@ void MMSEngineProcessor::extractTracksContentThread(
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(mmsAssetPathName, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
@@ -7499,8 +7836,10 @@ void MMSEngineProcessor::extractTracksContentThread(
                 tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
+				*/
             }
 
+			/*
             _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
                 + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
                 + ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -7512,6 +7851,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                 workspaceDirectoryName,
                 relativePath,
                 fileName);
+			*/
             
             {
                 string localSourceFileName;
@@ -7566,6 +7906,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                     localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
                     localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
                     localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                     localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
                     localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
@@ -7838,6 +8179,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                     localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
                     localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
                     localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent->getIngestionJobKey());
                     localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
                     localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
@@ -8442,6 +8784,7 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
                         localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
                         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+						localAssetIngestionEvent->setExternalReadOnlyStorage(false);
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                         localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
                         // localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
@@ -8742,38 +9085,34 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = key;
-
-            sourcePhysicalPathKey = -1;
             int64_t encodingProfileKey = -1;
-            pair<int64_t,string> physicalPathKeyAndPhysicalPath 
-                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-            
-            /*
-            int64_t localPhysicalPathKey;
-            tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
-             */
-            tie(sourcePhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
+			tuple<int64_t, string, string, int64_t, string>
+				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore)
+				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+            sourceMediaItemKey = key;
         }
         else
         {
+			tuple<string, string, int64_t, string>
+				physicalPathFileNameSizeInBytesAndDeliveryFileName =
+				_mmsStorage->getPhysicalPath(key);
+			tie(sourcePhysicalPath, ignore, ignore, ignore)
+				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+
             sourcePhysicalPathKey = key;
             
+
             bool warningIfMissing = false;
             tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-    
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-			string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
-            
-            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
         
         /*
@@ -8944,18 +9283,23 @@ void MMSEngineProcessor::manageSlideShowTask(
         
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
+				int64_t encodingProfileKey = -1;
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+
                 sourceMediaItemKey = key;
-
-                sourcePhysicalPathKey = -1;
-                int64_t encodingProfileKey = -1;
-                pair<int64_t,string> physicalPathKeyAndPhysicalPath 
-                        = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-
-                int64_t localPhysicalPathKey;
-                tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(sourcePhysicalPath, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
@@ -8964,15 +9308,8 @@ void MMSEngineProcessor::manageSlideShowTask(
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                MMSEngineDBFacade::ContentType localContentType;
-                string localTitle;
-                string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-                tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
-
-                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
             
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
@@ -9103,16 +9440,23 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
             string sourcePhysicalPath;
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
-                sourceMediaItemKey = key;
+				int64_t encodingProfileKey = -1;
+				tuple<int64_t, string, string, int64_t, string>
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
-                sourcePhysicalPathKey = -1;
-                int64_t encodingProfileKey = -1;
-                pair<int64_t,string> physicalPathInfo = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-                
-                tie(sourcePhysicalPathKey,sourcePhysicalPath) = physicalPathInfo;
+                sourceMediaItemKey = key;
             }
             else
             {
+				tuple<string, string, int64_t, string>
+					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					_mmsStorage->getPhysicalPath(key);
+				tie(sourcePhysicalPath, ignore, ignore, ignore)
+					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
@@ -9121,15 +9465,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                MMSEngineDBFacade::ContentType localContentType;
-                string localTitle;
-                string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-                tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
-
-                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
@@ -9286,6 +9623,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
             localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
             localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
@@ -9369,33 +9707,32 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
 
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = key;
+			int64_t encodingProfileKey = -1;
+			tuple<int64_t, string, string, int64_t, string>
+				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
-            sourcePhysicalPathKey = -1;
-            int64_t encodingProfileKey = -1;
-            pair<int64_t,string> physicalPathKeyAndPhysicalPath
-                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-            tie(sourcePhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
+            sourceMediaItemKey = key;
         }
         else
         {
+			tuple<string, string, int64_t, string>
+				physicalPathFileNameSizeInBytesAndDeliveryFileName =
+				_mmsStorage->getPhysicalPath(key);
+			tie(sourcePhysicalPath, ignore, ignore, ignore)
+				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
             sourcePhysicalPathKey = key;
-            
+
             bool warningIfMissing = false;
             tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-            string ingestionDate;
-			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
-
-            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
 
         bool warningIfMissing = false;
@@ -9621,6 +9958,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
             localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
+			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
@@ -11713,16 +12051,31 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
     }
 }
 
-tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
-        int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value parametersRoot)        
+tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
+	MMSEngineProcessor::getMediaSourceDetails(
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+		MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)        
 {
-    MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
+	// only in case of externalReadOnlyStorage, nextIngestionStatus does not change and we do not need it
+	// So I set it just to a state
+    MMSEngineDBFacade::IngestionStatus nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::Start_TaskQueued;
     string mediaSourceURL;
     string mediaFileFormat;
+	bool externalReadOnlyStorage;
     
     string field;
-    if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
+    if (ingestionType != MMSEngineDBFacade::IngestionType::AddContent)
+    {
+        string errorMessage = __FILEREF__ + "ingestionType is wrong"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+	externalReadOnlyStorage = false;
     {
         field = "SourceURL";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -11737,36 +12090,38 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         string ftpsPrefix ("ftps://");
         string movePrefix("move://");   // move:///dir1/dir2/.../file
         string copyPrefix("copy://");
-        if ((mediaSourceURL.size() >= httpPrefix.size() && 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix))
-                || (mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix))
-                || (mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix))
-                || (mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix))
+        string externalStoragePrefix("externalStorage://");
+        if ((mediaSourceURL.size() >= httpPrefix.size()
+					&& 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix))
+                || (mediaSourceURL.size() >= httpsPrefix.size()
+					&& 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                || (mediaSourceURL.size() >= ftpPrefix.size()
+					&& 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix))
+                || (mediaSourceURL.size() >= ftpsPrefix.size()
+					&& 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix))
                 )
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
         }
-        else if (mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
+        else if (mediaSourceURL.size() >= movePrefix.size()
+				&& 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;            
         }
-        else if (mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
+        else if (mediaSourceURL.size() >= copyPrefix.size()
+				&& 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
+        }
+        else if (mediaSourceURL.size() >= externalStoragePrefix.size()
+				&& 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
+        {
+			externalReadOnlyStorage = true;
         }
         else
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress;
         }
-    }   
-    else
-    {
-        string errorMessage = __FILEREF__ + "ingestionType is wrong"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
     }
 
     string md5FileCheckSum;
@@ -11784,25 +12139,28 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         fileSizeInBytes = parametersRoot.get(field, 3).asInt();
 
+	/*
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
     get<0>(mediaSourceDetails) = nextIngestionStatus;
     get<1>(mediaSourceDetails) = mediaSourceURL;
     get<2>(mediaSourceDetails) = mediaFileFormat;
     get<3>(mediaSourceDetails) = md5FileCheckSum;
     get<4>(mediaSourceDetails) = fileSizeInBytes;
+	*/
 
     _logger->info(__FILEREF__ + "media source details"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(get<0>(mediaSourceDetails))
-        + ", mediaSourceURL: " + get<1>(mediaSourceDetails)
-        + ", mediaFileFormat: " + get<2>(mediaSourceDetails)
-        + ", md5FileCheckSum: " + get<3>(mediaSourceDetails)
-        + ", fileSizeInBytes: " + to_string(get<4>(mediaSourceDetails))
-    );
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", nextIngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+		+ ", mediaSourceURL: " + mediaSourceURL
+		+ ", mediaFileFormat: " + mediaFileFormat
+		+ ", md5FileCheckSum: " + md5FileCheckSum
+		+ ", fileSizeInBytes: " + to_string(fileSizeInBytes)
+		+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+	);
 
-    
-    return mediaSourceDetails;
+    return make_tuple(nextIngestionStatus, mediaSourceURL, mediaFileFormat,
+			md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage);
 }
 
 void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
@@ -12042,7 +12400,8 @@ RESUMING FILE TRANSFERS
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.size() >= httpsPrefix.size() && 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                if (sourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     // disconnect if we can't validate server's cert
                     bool bSslVerifyPeer = false;
@@ -12149,7 +12508,8 @@ RESUMING FILE TRANSFERS
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.size() >= httpsPrefix.size() && 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                if (sourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     _logger->info(__FILEREF__ + "Setting SslEngineDefault"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)

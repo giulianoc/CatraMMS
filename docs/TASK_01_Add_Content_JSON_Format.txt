@@ -6,7 +6,7 @@
 	"Type": "Add-Content",
 
 	"Parameters": {
-		// mandatory in case of a pull (http/https/ftp/ftps/move/copy)
+		// mandatory in case of a pull (http/https/ftp/ftps/move/copy/externalStorage)
 		"SourceURL": "http://myhost/example.mp4",
 
 		// mandatory: extension of the file
