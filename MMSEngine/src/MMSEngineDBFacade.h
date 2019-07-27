@@ -1481,6 +1481,7 @@ public:
         bool ingestionRowToBeUpdatedAsSuccess,
         MMSEngineDBFacade::ContentType contentType,
         Json::Value parametersRoot,
+		bool externalReadOnlyStorage,
         string relativePath,
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,
@@ -1510,6 +1511,7 @@ public:
     int64_t saveEncodedContentMetadata(
         int64_t workspaceKey,
         int64_t mediaItemKey,
+		bool externalReadOnlyStorage,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,
@@ -1770,6 +1772,7 @@ private:
         
         int64_t workspaceKey,
         int64_t mediaItemKey,
+		bool externalReadOnlyStorage,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,

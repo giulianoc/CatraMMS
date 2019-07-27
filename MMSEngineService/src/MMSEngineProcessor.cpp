@@ -5070,6 +5070,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+			+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
             + ", relativePathToBeUsed: " + relativePathToBeUsed
             + ", mediaSourceFileName: " + mediaSourceFileName
             + ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
@@ -5101,6 +5102,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     localAssetIngestionEvent->getIngestionRowToBeUpdatedAsSuccess(),
                     contentType,
                     parametersRoot,
+					localAssetIngestionEvent->getExternalReadOnlyStorage(),
                     relativePathToBeUsed,
                     mediaSourceFileName,
                     mmsPartitionUsed,

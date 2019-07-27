@@ -2133,6 +2133,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             _encodingItem->_workspace->_workspaceKey,
             _encodingItem->_encodeData->_mediaItemKey,
+			false,	// externalReadOnlyStorage
             encodedFileName,
             _encodingItem->_encodeData->_relativePath,
             mmsPartitionIndexUsed,

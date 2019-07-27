@@ -3233,6 +3233,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         bool ingestionRowToBeUpdatedAsSuccess,        
         MMSEngineDBFacade::ContentType contentType,
         Json::Value parametersRoot,
+		bool externalReadOnlyStorage,
         string relativePath,
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,
@@ -3662,6 +3663,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 
             workspace->_workspaceKey,
             mediaItemKey,
+			externalReadOnlyStorage,
             mediaSourceFileName,
             relativePath,
             mmsPartitionIndexUsed,
@@ -4068,6 +4070,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         int64_t workspaceKey,
         int64_t mediaItemKey,
+		bool externalReadOnlyStorage,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,
@@ -4123,6 +4126,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 
             workspaceKey,
             mediaItemKey,
+			externalReadOnlyStorage,
             encodedFileName,
             relativePath,
             mmsPartitionIndexUsed,
@@ -4341,6 +4345,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 
         int64_t workspaceKey,
         int64_t mediaItemKey,
+		bool externalReadOnlyStorage,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,
@@ -4407,13 +4412,14 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 					);
             lastSQLCommand = 
-                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             preparedStatement->setInt(queryParameterIndex++, drm);
+            preparedStatement->setInt(queryParameterIndex++, externalReadOnlyStorage ? 1 : 0);
             preparedStatement->setString(queryParameterIndex++, encodedFileName);
             preparedStatement->setString(queryParameterIndex++, relativePath);
             preparedStatement->setInt(queryParameterIndex++, mmsPartitionIndexUsed);

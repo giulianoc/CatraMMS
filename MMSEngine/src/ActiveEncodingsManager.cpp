@@ -812,6 +812,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
         encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             encodingItem->_workspace->_workspaceKey,
             encodingItem->_encodeData->_mediaItemKey,
+			false,	// externalReadOnlyStorage
             encodedFileName,
             encodingItem->_encodeData->_relativePath,
             mmsPartitionIndexUsed,
