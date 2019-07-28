@@ -1215,6 +1215,13 @@ void API::mediaItemsList(
                 mediaItemKey = -1;
         }
 
+        string uniqueName;
+        auto uniqueNameIt = queryParameters.find("uniqueName");
+        if (uniqueNameIt != queryParameters.end() && uniqueNameIt->second != "")
+        {
+            uniqueName = uniqueNameIt->second;
+        }
+
         int64_t physicalPathKey = -1;
         auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
         if (physicalPathKeyIt != queryParameters.end() && physicalPathKeyIt->second != "")
@@ -1450,7 +1457,7 @@ void API::mediaItemsList(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-                    workspace->_workspaceKey, mediaItemKey, physicalPathKey,
+                    workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,

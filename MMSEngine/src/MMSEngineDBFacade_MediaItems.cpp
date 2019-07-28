@@ -502,7 +502,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 }
 
 Json::Value MMSEngineDBFacade::getMediaItemsList (
-        int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
+        int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -526,6 +526,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         _logger->info(__FILEREF__ + "getMediaItemsList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", uniqueName: " + uniqueName
             + ", physicalPathKey: " + to_string(physicalPathKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
@@ -561,6 +562,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             {
                 field = "mediaItemKey";
                 requestParametersRoot[field] = mediaItemKey;
+            }
+            
+            if (uniqueName != "")
+            {
+                field = "uniqueName";
+                requestParametersRoot[field] = uniqueName;
             }
             
             if (physicalPathKey != -1)
@@ -641,29 +648,60 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         }
         
         int64_t newMediaItemKey = mediaItemKey;
-        if (mediaItemKey == -1 && physicalPathKey != -1)
+        if (mediaItemKey == -1)
         {
-            lastSQLCommand = 
-                string("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = ?");
+			if (physicalPathKey != -1)
+			{
+				lastSQLCommand = 
+					string("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = ?");
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                newMediaItemKey = resultSet->getInt64("mediaItemKey");
-            }
-            else
-            {
-                string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist"
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				if (resultSet->next())
+				{
+					newMediaItemKey = resultSet->getInt64("mediaItemKey");
+				}
+				else
+				{
+					string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist"
 						+ ", physicalPathKey: " + to_string(physicalPathKey)
 						);
-                _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-                // throw runtime_error(errorMessage);
-				newMediaItemKey = 0;	// let's force a MIK that does not exist
-            }
+					// throw runtime_error(errorMessage);
+					newMediaItemKey = 0;	// let's force a MIK that does not exist
+				}
+			}
+			else if (uniqueName != "")
+			{
+				lastSQLCommand = "select mediaItemKey from MMS_ExternalUniqueName "
+							"where workspaceKey = ? and uniqueName = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, uniqueName);
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				if (resultSet->next())
+				{
+					newMediaItemKey = resultSet->getInt64("mediaItemKey");
+				}
+				else
+				{
+					string errorMessage (__FILEREF__ + "getMediaItemsList: requested uniqueName does not exist"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", uniqueName: " + uniqueName
+						);
+					_logger->error(errorMessage);
+
+					// throw runtime_error(errorMessage);
+					newMediaItemKey = 0;	// let's force a MIK that does not exist
+				}
+			}
         }
 
 		pair<shared_ptr<sql::ResultSet>, int64_t>	resultSetAndNumFound;

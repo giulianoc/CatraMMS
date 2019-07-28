@@ -7425,6 +7425,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		}
 
 		int64_t mediaItemKey = -1;
+		string uniqueName;
 		int64_t physicalPathKey = -1;
 		bool contentTypePresent = true;
 		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Image;
@@ -7450,7 +7451,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		while(!imagesFinished)
 		{
 			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
-				_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
+				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 				start, rows, contentTypePresent, contentType,
 				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
