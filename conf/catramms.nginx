@@ -297,7 +297,7 @@ server {
 
 	root /var/catramms/storage/MMSRepository/;
 
-	location ~ /MMS {
+	location ~ ^/(MMS_|ExternalStorage_) {
 		if ($arg_token) {
 			set $token $arg_token;
 		}

@@ -294,9 +294,8 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
 	if (externalReadOnlyStorage)
 	{
 		deliveryURI =
-			string("/")
+			string("/ExternalStorage_")
 			+ contentWorkspace->_directoryName
-			+ "_externalStorage"
 			+ relativePath
 			+ fileName;
 	}
