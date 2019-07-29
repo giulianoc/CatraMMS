@@ -3935,6 +3935,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
 	string binaryPathName;
+	string externalStorageRelativePathName;
     try
     {
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
@@ -3968,7 +3969,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             
 				throw runtime_error(errorMessage);
 			}
-			binaryPathName = mediaSourceURL.substr(externalStoragePrefix.length());
+			externalStorageRelativePathName = mediaSourceURL.substr(externalStoragePrefix.length());
+			binaryPathName = _mmsStorage->getMMSRootRepository()
+				+ localAssetIngestionEvent->getWorkspace()->_directoryName + "_externalStorage"
+				+ externalStorageRelativePathName;
 		}
     }
     catch(runtime_error e)
@@ -4059,6 +4063,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         throw e;
     }
+
+	_logger->info(__FILEREF__ + "binaryPathName"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+		+ ", binaryPathName: " + binaryPathName);
 
     string      metadataFileContent;
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
@@ -4492,20 +4501,20 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			mmsAssetPathName = binaryPathName;
 			mmsPartitionUsed = -1;
 
-			size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
+			size_t fileNameIndex = externalStorageRelativePathName.find_last_of("/");
 			if (fileNameIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "No fileName found in mmsAssetPathName"
+				string errorMessage = __FILEREF__ + "No fileName found in externalStorageRelativePathName"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
+					+ ", externalStorageRelativePathName: " + externalStorageRelativePathName
 				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			relativePathToBeUsed = mmsAssetPathName.substr(0, fileNameIndex + 1);
-			mediaSourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
+			relativePathToBeUsed = externalStorageRelativePathName.substr(0, fileNameIndex + 1);
+			mediaSourceFileName = externalStorageRelativePathName.substr(fileNameIndex + 1);
 		}
 	}
 	catch(runtime_error e)
@@ -4663,12 +4672,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4709,12 +4721,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4782,12 +4797,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", e.what(): " + e.what()
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4829,12 +4847,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", e.what(): " + e.what()
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4876,12 +4897,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", e.what(): " + e.what()
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4923,12 +4947,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", e.what(): " + e.what()
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4969,12 +4996,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             );
 
-            _logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-            FileIO::remove(mmsAssetPathName);
+			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5019,12 +5049,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->error(__FILEREF__ + errorMessage);
         
-        _logger->info(__FILEREF__ + "Remove file"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-        FileIO::remove(mmsAssetPathName);
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			FileIO::remove(mmsAssetPathName);
+		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5146,12 +5179,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", e.what: " + e.what()
         );
 
-        _logger->info(__FILEREF__ + "Remove file"
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-        FileIO::remove(mmsAssetPathName);
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			FileIO::remove(mmsAssetPathName);
+		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5192,12 +5228,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
         );
 
-        _logger->info(__FILEREF__ + "Remove file"
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-        FileIO::remove(mmsAssetPathName);
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			FileIO::remove(mmsAssetPathName);
+		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
