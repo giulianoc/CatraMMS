@@ -8,7 +8,7 @@
 using namespace std;
 
 struct Workspace
-{   
+{
     using TerritoriesHashMap = unordered_map<long,string>;
 
     long long               _workspaceKey;

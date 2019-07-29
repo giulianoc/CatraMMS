@@ -42,7 +42,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     );
 
     string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
+        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
+		"from MMS_Workspace where workspaceKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -94,7 +95,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     );
 
     string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority from MMS_Workspace where name = ?";
+        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
+		"from MMS_Workspace where name = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setString(queryParameterIndex++, workspaceName);

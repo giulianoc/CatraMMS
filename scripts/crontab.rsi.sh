@@ -6,6 +6,10 @@ export CatraMMS_PATH=/opt/catramms
 #sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
 
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
+twelveHoursInMinutes=720
+oneDayInMinutes=1440
+twoDaysInMinutes=2880
+threeDaysInMinutes=4320
 
 if [ $# -ne 1 ]
 then
@@ -18,23 +22,23 @@ commandIndex=$1
 
 if [ $commandIndex -eq 1 ]
 then
-	commandToBeEecuted="find /var/catramms/logs -mmin +4320 -type f -delete"
+	commandToBeEecuted="find /var/catramms/logs -mmin +$twoDaysInMinutes -type f -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 2 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads -mmin +4320 -type f -delete"
+	commandToBeEecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads -mmin +$twoDaysInMinutes -type f -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 3 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/IngestionRepository/ -mmin +4320 -type f -delete"
+	commandToBeEecuted="find /var/catramms/storage/IngestionRepository/ -mmin +$twoDaysInMinutes -type f -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 4 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/MMSWorkingAreaRepository/ -mmin +720 -type f -delete"
+	commandToBeEecuted="find /var/catramms/storage/MMSWorkingAreaRepository/ -mmin +$twelveHoursInMinutes -type f -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 5 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg -mmin +4320 -type f -delete"
+	commandToBeEecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg -mmin +$twoDaysInMinutes -type f -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 6 ]
 then
@@ -42,15 +46,15 @@ then
 	timeoutValue="1h"
 elif [ $commandIndex -eq 7 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/DownloadRepository/* -empty -mmin +4320 -type d -delete"
+	commandToBeEecuted="find /var/catramms/storage/DownloadRepository/* -empty -mmin +$twoDaysInMinutes -type d -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 8 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/StreamingRepository/* -empty -mmin +4320 -type d -delete"
+	commandToBeEecuted="find /var/catramms/storage/StreamingRepository/* -empty -mmin +$twoDaysInMinutes -type d -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 9 ]
 then
-	commandToBeEecuted="find /var/catramms/storage/MMSRepository/MMS_????/*/* -empty -mmin +4320 -type d -delete"
+	commandToBeEecuted="find /var/catramms/storage/MMSRepository/MMS_????/*/* -empty -mmin +$twoDaysInMinutes -type d -delete"
 	timeoutValue="1h"
 elif [ $commandIndex -eq 10 ]
 then
@@ -71,7 +75,7 @@ then
 	#BE CAREFULL SUDO MAY ASK PASSWORD 
 	sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
 
-	commandToBeEecuted="find /var/catramms/logs/nginx -mmin +4320 -type d -delete"
+	commandToBeEecuted="find /var/catramms/logs/nginx -mmin +$twoDaysInMinutes -type d -delete"
 	timeoutValue="1h"
 else
 	echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
