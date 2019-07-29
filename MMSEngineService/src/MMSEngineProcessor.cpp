@@ -3971,7 +3971,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			}
 			externalStorageRelativePathName = mediaSourceURL.substr(externalStoragePrefix.length());
 			binaryPathName = _mmsStorage->getMMSRootRepository()
-				+ localAssetIngestionEvent->getWorkspace()->_directoryName + "_externalStorage"
+				+"ExternalStorage_" + localAssetIngestionEvent->getWorkspace()->_directoryName
 				+ externalStorageRelativePathName;
 		}
     }
