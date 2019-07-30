@@ -1119,6 +1119,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
+            bool jsonTypeSupported = isJsonTypeSupported(statement);
+
+            string deliveryInfoDefinition;
+            if (jsonTypeSupported)
+                deliveryInfoDefinition = "JSON";
+            else
+                deliveryInfoDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+
             // DRM. 0: NO DRM, 1: YES DRM
             // EncodedFileName and EncodedRelativePath are NULL only if the content is un-compressed.
             //  EncodedRelativePath MUST start always with '/' and ends always with '/'
@@ -1141,6 +1149,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "partitionNumber			INT NULL,"
                     "sizeInBytes				BIGINT UNSIGNED NOT NULL,"
                     "encodingProfileKey			BIGINT UNSIGNED NULL,"
+                    "deliveryInfo				" + deliveryInfoDefinition + ","
                     "isAlias					INT NOT NULL DEFAULT 0,"
                     "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "constraint MMS_PhysicalPath_PK PRIMARY KEY (physicalPathKey), "

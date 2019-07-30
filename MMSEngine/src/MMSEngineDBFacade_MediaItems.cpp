@@ -1076,8 +1076,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
                     lastSQLCommand = 
-                        "select physicalPathKey, externalReadOnlyStorage, fileName, relativePath, "
-						"partitionNumber, encodingProfileKey, sizeInBytes, "
+                        "select physicalPathKey, externalReadOnlyStorage, "
+						"JSON_EXTRACT(deliveryInfo, '$.externalDeliveryTechnology') as externalDeliveryTechnology, "
+						"JSON_EXTRACT(deliveryInfo, '$.externalDeliveryURL') as externalDeliveryURL, "
+						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, "
                         "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = ?";
 
@@ -1105,7 +1107,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         }
                         else
                             profileRoot[field] = fileName.substr(extensionIndex + 1);
-                        
+
 						if (admin)
 						{
 							field = "partitionNumber";
@@ -1116,10 +1118,22 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 							field = "fileName";
 							profileRoot[field] = fileName;
-
-							field = "externalReadOnlyStorage";
-							profileRoot[field] = (resultSetProfiles->getInt("externalReadOnlyStorage") == 0 ? false : true);
 						}
+
+						field = "externalReadOnlyStorage";
+						profileRoot[field] = (resultSetProfiles->getInt("externalReadOnlyStorage") == 0 ? false : true);
+
+						field = "externalDeliveryTechnology";
+                        if (resultSetProfiles->isNull("externalDeliveryTechnology"))
+                            profileRoot[field] = Json::nullValue;
+                        else
+                            profileRoot[field] = static_cast<string>(resultSetProfiles->getString("externalDeliveryTechnology"));
+
+						field = "externalDeliveryURL";
+                        if (resultSetProfiles->isNull("externalDeliveryURL"))
+                            profileRoot[field] = Json::nullValue;
+                        else
+                            profileRoot[field] = static_cast<string>(resultSetProfiles->getString("externalDeliveryURL"));
 
                         field = "encodingProfileKey";
                         if (resultSetProfiles->isNull("encodingProfileKey"))
@@ -3695,6 +3709,18 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         */
 
+		string externalDeliveryTechnology;
+		string externalDeliveryURL;
+		{
+            string field = "ExternalDeliveryTechnology";
+			if (isMetadataPresent(parametersRoot, field))
+				externalDeliveryTechnology = parametersRoot.get(field, "").asString();
+
+            field = "ExternalDeliveryURL";
+			if (isMetadataPresent(parametersRoot, field))
+				externalDeliveryURL = parametersRoot.get(field, "").asString();
+		}
+
         int64_t encodingProfileKey = -1;
         int64_t physicalPathKey = saveEncodedContentMetadata(
             conn,
@@ -3702,6 +3728,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             workspace->_workspaceKey,
             mediaItemKey,
 			externalReadOnlyStorage,
+			externalDeliveryTechnology,
+			externalDeliveryURL,
             mediaSourceFileName,
             relativePath,
             mmsPartitionIndexUsed,
@@ -4109,6 +4137,8 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         int64_t workspaceKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
+		string externalDeliveryTechnology,
+		string externalDeliveryURL,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,
@@ -4165,6 +4195,8 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             workspaceKey,
             mediaItemKey,
 			externalReadOnlyStorage,
+			externalDeliveryTechnology,
+			externalDeliveryURL,
             encodedFileName,
             relativePath,
             mmsPartitionIndexUsed,
@@ -4384,6 +4416,8 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         int64_t workspaceKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
+		string externalDeliveryTechnology,
+		string externalDeliveryURL,
         string encodedFileName,
         string relativePath,
         int mmsPartitionIndexUsed,
@@ -4439,7 +4473,24 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 throw runtime_error(errorMessage);                    
             }            
         }
-        
+
+		string deliveryInfo;
+		{
+			if (externalDeliveryTechnology != "" || externalDeliveryURL != "")
+			{
+				Json::Value deliveryInfoRoot;
+
+				string field = "externalDeliveryTechnology";
+				deliveryInfoRoot[field] = externalDeliveryTechnology;
+
+				field = "externalDeliveryURL";
+				deliveryInfoRoot[field] = externalDeliveryURL;
+
+                Json::StreamWriterBuilder wbuilder;
+                deliveryInfo = Json::writeString(wbuilder, deliveryInfoRoot);                        
+			}
+		}
+
         {
             int drm = 0;
 
@@ -4448,10 +4499,12 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 					+ ", relativePath: " + relativePath
 					+ ", encodedFileName: " + encodedFileName
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", deliveryInfo: " + deliveryInfo
 					);
             lastSQLCommand = 
-                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
+				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, deliveryInfo, creationDate) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4466,6 +4519,10 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
             else
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            if (deliveryInfo == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, deliveryInfo);
 
             preparedStatement->executeUpdate();
         }

@@ -809,10 +809,15 @@ int64_t ActiveEncodingsManager::processEncodedImage(
                     inCaseOfLinkHasItToBeRead);   
         }
 
+		bool externalReadOnlyStorage = false;
+		string externalDeliveryTechnology;
+		string externalDeliveryURL;
         encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             encodingItem->_workspace->_workspaceKey,
             encodingItem->_encodeData->_mediaItemKey,
-			false,	// externalReadOnlyStorage
+			externalReadOnlyStorage,
+			externalDeliveryTechnology,
+			externalDeliveryURL,
             encodedFileName,
             encodingItem->_encodeData->_relativePath,
             mmsPartitionIndexUsed,
