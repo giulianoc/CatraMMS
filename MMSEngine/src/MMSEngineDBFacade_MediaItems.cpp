@@ -1077,8 +1077,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     
                     lastSQLCommand = 
                         "select physicalPathKey, externalReadOnlyStorage, "
-						"JSON_EXTRACT(deliveryInfo, '$.externalDeliveryTechnology') as externalDeliveryTechnology, "
-						"JSON_EXTRACT(deliveryInfo, '$.externalDeliveryURL') as externalDeliveryURL, "
+						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryTechnology')) as externalDeliveryTechnology, "
+						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryURL')) as externalDeliveryURL, "
 						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, "
                         "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = ?";
