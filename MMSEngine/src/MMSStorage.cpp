@@ -1102,7 +1102,8 @@ string MMSStorage::getMMSAssetPathName(
 
 	if (externalReadOnlyStorage)
 	{
-		assetPathName = relativePath + fileName;
+		assetPathName = getMMSRootRepository() + "ExternalStorage_" + workspaceDirectoryName
+			+ relativePath + fileName;
 	}
 	else
 	{
