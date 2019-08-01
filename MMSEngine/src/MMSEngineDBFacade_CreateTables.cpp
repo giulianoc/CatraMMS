@@ -263,12 +263,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+			// isDefault: assume a User has access to two Workspaces, which one is the default for him?
+			//	default means the GUI APP starts with this (default) Workspace
             lastSQLCommand = 
                 "create table if not exists MMS_APIKey ("
                     "apiKey             VARCHAR (128) NOT NULL,"
                     "userKey            BIGINT UNSIGNED NOT NULL,"
                     "workspaceKey       BIGINT UNSIGNED NOT NULL,"
                     "isOwner            TINYINT (1) NOT NULL,"
+                    "isDefault			TINYINT (1) NOT NULL,"
                     // same in MMS_ConfirmationCode
                     "flags              SET('ADMIN', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA', 'EDIT_CONFIGURATION', 'KILL_ENCODING') NOT NULL,"
                     "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

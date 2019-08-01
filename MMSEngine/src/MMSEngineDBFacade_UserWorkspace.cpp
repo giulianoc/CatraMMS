@@ -1390,10 +1390,12 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 			apiKey = Encrypt::encrypt(sourceApiKey);
 
 			bool isOwner = false;
+			bool isDefault = false;
           
 			lastSQLCommand = 
-				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, flags, creationDate, expirationDate) values ("
-				"?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
+				"flags, creationDate, expirationDate) values ("
+				"?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
 			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -1401,6 +1403,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 			preparedStatementAPIKey->setInt64(queryParameterIndex++, userKey);
 			preparedStatementAPIKey->setInt64(queryParameterIndex++, defaultWorkspaceKey);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
 			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
@@ -1984,16 +1987,19 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             apiKey = Encrypt::encrypt(sourceApiKey);
 
             bool isOwner = isSharedWorkspace ? false : true;
+			bool isDefault = isOwner;
             
             lastSQLCommand = 
-                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, flags, creationDate, expirationDate) values ("
-                "?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
+				"flags, creationDate, expirationDate) values ("
+                "?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt(queryParameterIndex++, isOwner);
+            preparedStatement->setInt(queryParameterIndex++, isDefault);
             preparedStatement->setString(queryParameterIndex++, flags);
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
@@ -2799,7 +2805,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
             lastSQLCommand = 
                 "select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
 					"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
-					"a.apiKey, a.isOwner, a.flags, "
+					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey and userKey = ?";
@@ -2859,6 +2865,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 
                 field = "owner";
                 workspaceDetailRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
+
+                field = "default";
+                workspaceDetailRoot[field] = resultSet->getInt("isDefault") == 1 ? "true" : "false";
 
                 string flags = resultSet->getString("flags");
                 
