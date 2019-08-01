@@ -3455,8 +3455,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         {
             lastSQLCommand = 
                 "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ? "
+				"and externalReadOnlyStorage = 0";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
