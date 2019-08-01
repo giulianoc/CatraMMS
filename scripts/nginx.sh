@@ -18,6 +18,9 @@ fi
 
 export CatraMMS_PATH=/opt/catramms
 
+#I guess it could be used by nginx-vod-module
+export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg-4.1.3/lib:$CatraMMS_PATH/ffmpeg-4.1.3/lib64
+
 if [ "$command" == "start" ]
 then
 	sudo $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
