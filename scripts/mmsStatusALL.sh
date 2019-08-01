@@ -9,6 +9,6 @@ echo "MMS Encoder status"
 echo "MMS Engine status"
 ~/mmsEngineService.sh status
 
-#echo "Tomcat status"
-#~/tomcat.sh status
+echo "Tomcat status"
+~/tomcat.sh status
 
