@@ -115,7 +115,8 @@ private:
     string				_ldapManagerUserName;
     string				_ldapManagerPassword;
     string				_ldapBaseDn;
-	int64_t				_ldapDefaultWorkspaceKey;
+	int64_t				_ldapDefaultWorkspaceKey_1;
+	int64_t				_ldapDefaultWorkspaceKey_2;
 
 
     FileUploadProgressData*     _fileUploadProgressData;
@@ -134,6 +135,13 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         int64_t userKey,
+        string requestBody);
+
+    void setWorkspaceAsDefault(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
         string requestBody);
 
     void createWorkspace(

@@ -306,7 +306,7 @@ void API::registerUser(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
-            emailBody.push_back(string("<p>here follows the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
+            emailBody.push_back(string("<p>here follow the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
                 + "</b> and the confirmation code <b>" + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</b> to be used to confirm the registration</p>");
             // string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
             //         + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
@@ -499,7 +499,7 @@ void API::createWorkspace(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
-            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
+            emailBody.push_back(string("<p>here follow the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
             string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
                     + to_string(userKey) + "/" + get<1>(workspaceKeyAndConfirmationCode);
             emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
@@ -824,7 +824,7 @@ void API::shareWorkspace_(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
-            emailBody.push_back(string("<p>Here follows the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
+            emailBody.push_back(string("<p>Here follow the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
                 + "</b> and the confirmation code <b>" + get<1>(userKeyAndConfirmationCode) + "</b> to be used to confirm the sharing of the Workspace</p>");
             emailBody.push_back(
 					string("<p>Please click <a href=\"")
@@ -1247,7 +1247,7 @@ void API::login(
 						bool ingestWorkflow = true;
 						bool createProfiles = false;
 						bool deliveryAuthorization = true;
-						bool shareWorkspace = false;
+						bool shareWorkspace = true;
 						bool editMedia = true;
 						bool editConfiguration = false;
 						bool killEncoding = false;
@@ -1258,10 +1258,22 @@ void API::login(
 							string(""),	// userCountry,
 							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding,
-							_ldapDefaultWorkspaceKey,
+							_ldapDefaultWorkspaceKey_1,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
 						);
+
+						if (_ldapDefaultWorkspaceKey_2 != -1)
+							_mmsEngineDBFacade->registerActiveDirectoryUser(
+								userName,
+								email,
+								string(""),	// userCountry,
+								ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+								editMedia, editConfiguration, killEncoding,
+								_ldapDefaultWorkspaceKey_2,
+								chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+								// chrono::system_clock::time_point userExpirationDate
+							);
 
 						string apiKey;
 						tie(userKey, apiKey) = userKeyAndEmail;
@@ -1736,6 +1748,102 @@ void API::updateWorkspace(
             string responseBody = Json::writeString(wbuilder, workspaceDetailRoot);
             
             sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::setWorkspaceAsDefault(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "setWorkspaceAsDefault";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t workspaceKeyToBeSetAsDefault = -1;
+        auto workspaceKeyToBeSetAsDefaultIt = queryParameters.find("workspaceKeyToBeSetAsDefault");
+        if (workspaceKeyToBeSetAsDefaultIt == queryParameters.end() || workspaceKeyToBeSetAsDefaultIt->second == "")
+		{
+			string errorMessage = string("The 'workspaceKeyToBeSetAsDefault' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		workspaceKeyToBeSetAsDefault = stoll(workspaceKeyToBeSetAsDefaultIt->second);
+
+        try
+        {
+            _logger->info(__FILEREF__ + "setWorkspaceAsDefault"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            _mmsEngineDBFacade->setWorkspaceAsDefault (userKey, workspace->_workspaceKey,
+					workspaceKeyToBeSetAsDefault);
+
+            string responseBody;
+
+            sendSuccess(request, 200, responseBody);
         }
         catch(runtime_error e)
         {

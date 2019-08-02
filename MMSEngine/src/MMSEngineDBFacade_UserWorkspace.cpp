@@ -1987,7 +1987,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             apiKey = Encrypt::encrypt(sourceApiKey);
 
             bool isOwner = isSharedWorkspace ? false : true;
-			bool isDefault = isOwner;
+			bool isDefault = false;
             
             lastSQLCommand = 
                 "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
@@ -3008,6 +3008,17 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 admin = flags.find("ADMIN") == string::npos ? false : true;
                 isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
+            else
+            {
+                string errorMessage = __FILEREF__ + "user/workspace are not found"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", userKey: " + to_string(userKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
         }
 
 		if (!admin && !isOwner)
@@ -3244,6 +3255,143 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 field = "owner";
                 workspaceDetailRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    
+    return workspaceDetailRoot;
+}
+
+Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
+        int64_t userKey,
+        int64_t workspaceKey,
+		int64_t workspaceKeyToBeSetAsDefault)
+{
+    Json::Value workspaceDetailRoot;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string apiKey;
+        {
+            lastSQLCommand = 
+                "select apiKey from MMS_APIKey where workspaceKey = ? and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKeyToBeSetAsDefault);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                apiKey = resultSet->getString("apiKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "user/workspace are not found"
+                    + ", workspaceKey: " + to_string(workspaceKeyToBeSetAsDefault)
+                    + ", userKey: " + to_string(userKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_APIKey set isDefault = 0 "
+                "where userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_APIKey set isDefault = 1 "
+                "where apiKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, apiKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"

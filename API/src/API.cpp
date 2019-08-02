@@ -321,13 +321,17 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->baseDn: " + _ldapBaseDn
     );
-	_ldapDefaultWorkspaceKey  = api["activeDirectory"].get("defaultWorkspaceKey", 0).asInt64();
+	_ldapDefaultWorkspaceKey_1	= api["activeDirectory"].get("defaultWorkspaceKey_1", 0).asInt64();
 	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->activeDirectory->defaultWorkspaceKey: " + to_string(_ldapDefaultWorkspaceKey)
+		+ ", api->activeDirectory->defaultWorkspaceKey_1: " + to_string(_ldapDefaultWorkspaceKey_1)
+	);
+	_ldapDefaultWorkspaceKey_2  = api["activeDirectory"].get("defaultWorkspaceKey_2", 0).asInt64();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", api->activeDirectory->defaultWorkspaceKey_2: " + to_string(_ldapDefaultWorkspaceKey_2)
 	);
 
 
-        
+
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
@@ -634,6 +638,10 @@ void API::manageRequestAndResponse(
     else if (method == "updateWorkspace")
     {
         updateWorkspace(request, workspace, userKey, requestBody);
+    }
+    else if (method == "setWorkspaceAsDefault")
+    {
+        setWorkspaceAsDefault(request, workspace, userKey, queryParameters, requestBody);
     }
     else if (method == "createWorkspace")
     {

@@ -1055,6 +1055,11 @@ public:
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding);
 
+	Json::Value setWorkspaceAsDefault (
+		int64_t userKey,
+		int64_t workspaceKey,
+		int64_t workspaceKeyToBeSetAsDefault);
+
     Json::Value updateUser (
 		bool ldapEnabled,
         int64_t userKey,
