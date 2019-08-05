@@ -68,4 +68,5 @@ add_subdirectory(utilities/registerAdministratorCustomer/src)
 add_subdirectory(utilities/cvCaptureTest/src)
 add_subdirectory(utilities/lockTest/src)
 add_subdirectory(utilities/sendEmail/src)
+add_subdirectory(utilities/addWorkspaceToActiveDirectoryUser/src)
 

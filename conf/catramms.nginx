@@ -68,7 +68,7 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/workspace/share/?$ /api?version=$1&method=shareWorkspace last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/default/(v[0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/workspace/default/([0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;

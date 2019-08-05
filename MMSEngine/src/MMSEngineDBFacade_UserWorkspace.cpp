@@ -1322,111 +1322,14 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
         
 		// create the API of the user for each existing Workspace
         {
-            string flags;
-            {
-                bool admin = false;
-
-                if (admin)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("ADMIN");
-                }
-
-                if (ingestWorkflow)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("INGEST_WORKFLOW");
-                }
-
-                if (createProfiles)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATE_PROFILES");
-                }
-
-                if (deliveryAuthorization)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("DELIVERY_AUTHORIZATION");
-                }
-
-                if (shareWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("SHARE_WORKSPACE");
-                }
-
-                if (editMedia)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_MEDIA");
-                }
-
-                if (editConfiguration)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_CONFIGURATION");
-                }
-
-                if (killEncoding)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("KILL_ENCODING");
-                }
-            }
-
-            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-			default_random_engine e(seed);
-
-			string sourceApiKey = userEmailAddress + "__SEP__" + to_string(e());
-			apiKey = Encrypt::encrypt(sourceApiKey);
-
-			bool isOwner = false;
-			bool isDefault = false;
-          
-			lastSQLCommand = 
-				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
-				"flags, creationDate, expirationDate) values ("
-				"?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
-			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatementAPIKey->setString(queryParameterIndex++, apiKey);
-			preparedStatementAPIKey->setInt64(queryParameterIndex++, userKey);
-			preparedStatementAPIKey->setInt64(queryParameterIndex++, defaultWorkspaceKey);
-			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
-			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
-			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
-			{
-				chrono::system_clock::time_point apiKeyExpirationDate =
-					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
-
-				tm          tmDateTime;
-				char        strExpirationDate [64];
-				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
-
-				localtime_r (&utcTime, &tmDateTime);
-
-				sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1,
-					tmDateTime. tm_mday,
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-				preparedStatementAPIKey->setString(queryParameterIndex++, strExpirationDate);
-			}
-
-			preparedStatementAPIKey->executeUpdate();
+			apiKey = createAPIKeyForActiveDirectoryUser(
+				conn,
+				userKey,
+				userEmailAddress,
+				ingestWorkflow, createProfiles, deliveryAuthorization,
+				shareWorkspace, editMedia,
+				editConfiguration, killEncoding,
+				defaultWorkspaceKey);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -1614,6 +1517,284 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     
     
     return make_pair(userKey, apiKey);
+}
+
+string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
+    int64_t userKey,
+    string userEmailAddress,
+    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+	bool shareWorkspace, bool editMedia,
+	bool editConfiguration, bool killEncoding,
+	int64_t workspaceKey
+)
+{
+    shared_ptr<MySQLConnection> conn = nullptr;
+	string apiKey;
+    string  lastSQLCommand;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		apiKey = createAPIKeyForActiveDirectoryUser(
+			conn,
+			userKey,
+			userEmailAddress,
+			ingestWorkflow, createProfiles, deliveryAuthorization,
+			shareWorkspace, editMedia,
+			editConfiguration, killEncoding,
+			workspaceKey);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(APIKeyNotFoundOrExpired e)
+    {        
+        string exceptionMessage(e.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+	return apiKey;
+}
+
+string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
+	shared_ptr<MySQLConnection> conn,
+    int64_t userKey,
+    string userEmailAddress,
+    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+	bool shareWorkspace, bool editMedia,
+	bool editConfiguration, bool killEncoding,
+	int64_t workspaceKey
+)
+{
+	string apiKey;
+    string  lastSQLCommand;
+    
+    try
+    {
+		// create the API of the user for each existing Workspace
+        {
+            string flags;
+            {
+                bool admin = false;
+
+                if (admin)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("ADMIN");
+                }
+
+                if (ingestWorkflow)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("INGEST_WORKFLOW");
+                }
+
+                if (createProfiles)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CREATE_PROFILES");
+                }
+
+                if (deliveryAuthorization)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("DELIVERY_AUTHORIZATION");
+                }
+
+                if (shareWorkspace)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("SHARE_WORKSPACE");
+                }
+
+                if (editMedia)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_MEDIA");
+                }
+
+                if (editConfiguration)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_CONFIGURATION");
+                }
+
+                if (killEncoding)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("KILL_ENCODING");
+                }
+            }
+
+            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+			default_random_engine e(seed);
+
+			string sourceApiKey = userEmailAddress + "__SEP__" + to_string(e());
+			apiKey = Encrypt::encrypt(sourceApiKey);
+
+			bool isOwner = false;
+			bool isDefault = false;
+          
+			lastSQLCommand = 
+				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
+				"flags, creationDate, expirationDate) values ("
+				"?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatementAPIKey->setString(queryParameterIndex++, apiKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, userKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
+			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			{
+				chrono::system_clock::time_point apiKeyExpirationDate =
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+
+				tm          tmDateTime;
+				char        strExpirationDate [64];
+				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
+
+				localtime_r (&utcTime, &tmDateTime);
+
+				sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
+
+				preparedStatementAPIKey->setString(queryParameterIndex++, strExpirationDate);
+			}
+
+			preparedStatementAPIKey->executeUpdate();
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    
+    
+    return apiKey;
 }
 
 pair<int64_t,string> MMSEngineDBFacade::addWorkspace(

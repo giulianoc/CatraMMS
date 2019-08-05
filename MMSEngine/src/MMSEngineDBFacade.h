@@ -1033,6 +1033,14 @@ public:
 		chrono::system_clock::time_point userExpirationDate
 	);
 
+	string createAPIKeyForActiveDirectoryUser(
+		int64_t userKey,
+		string userEmailAddress,
+		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding,
+		int64_t workspaceKey);
+
     pair<string,string> getUserDetails(int64_t userKey);
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
@@ -1706,6 +1714,15 @@ private:
     string          _predefinedVideoProfilesDirectoryPath;
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
+
+	string createAPIKeyForActiveDirectoryUser(
+		shared_ptr<MySQLConnection> conn,
+		int64_t userKey,
+		string userEmailAddress,
+		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding,
+		int64_t workspaceKey);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,
