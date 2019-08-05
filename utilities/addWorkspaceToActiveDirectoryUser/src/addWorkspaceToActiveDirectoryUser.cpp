@@ -8,7 +8,7 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 4)
+    if (iArgc != 5)
     {
         cerr << "Usage: " << pArgv[0] << " config-path-name userKey userEmailAddress workspaceKey" << endl;
         
@@ -24,6 +24,12 @@ int main (int iArgc, char *pArgv [])
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
+
+    logger->info(__FILEREF__ + "addWorkspaceToActiveDirectoryUser"
+			+ ", userKey: " + to_string(userKey)
+			+ ", userEmailAddress: " + userEmailAddress
+			+ ", workspaceKey: " + to_string(workspaceKey)
+            );
 
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
