@@ -1258,22 +1258,10 @@ void API::login(
 							string(""),	// userCountry,
 							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding,
-							_ldapDefaultWorkspaceKey_1,
+							_ldapDefaultWorkspaceKey_1, _ldapDefaultWorkspaceKey_2,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
 						);
-
-						if (_ldapDefaultWorkspaceKey_2 != -1)
-							_mmsEngineDBFacade->registerActiveDirectoryUser(
-								userName,
-								email,
-								string(""),	// userCountry,
-								ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-								editMedia, editConfiguration, killEncoding,
-								_ldapDefaultWorkspaceKey_2,
-								chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
-								// chrono::system_clock::time_point userExpirationDate
-							);
 
 						string apiKey;
 						tie(userKey, apiKey) = userKeyAndEmail;

@@ -1255,7 +1255,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
-	int64_t defaultWorkspaceKey,
+	int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -1329,7 +1329,18 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 				ingestWorkflow, createProfiles, deliveryAuthorization,
 				shareWorkspace, editMedia,
 				editConfiguration, killEncoding,
-				defaultWorkspaceKey);
+				defaultWorkspaceKey_1);
+			if (defaultWorkspaceKey_2 != -1)
+			{
+				createAPIKeyForActiveDirectoryUser(
+					conn,
+					userKey,
+					userEmailAddress,
+					ingestWorkflow, createProfiles, deliveryAuthorization,
+					shareWorkspace, editMedia,
+					editConfiguration, killEncoding,
+					defaultWorkspaceKey_2);
+			}
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT

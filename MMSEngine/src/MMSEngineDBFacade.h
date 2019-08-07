@@ -1029,7 +1029,7 @@ public:
 		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding,
-		int64_t defaultWorkspaceKey,
+		int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2,
 		chrono::system_clock::time_point userExpirationDate
 	);
 
