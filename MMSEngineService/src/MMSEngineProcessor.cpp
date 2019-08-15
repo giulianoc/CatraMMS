@@ -5289,10 +5289,11 @@ void MMSEngineProcessor::manageGroupOfTasks(
 		validator.fillReferencesOutput(workspace->_workspaceKey, parametersRoot,
 				referencesOutput);
 
+		int64_t liveRecordingIngestionJobKey = -1;
 		for (pair<int64_t, int64_t>  referenceOutput: referencesOutput)
 		{
 			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
-				referenceOutput.first, referenceOutput.second);
+				referenceOutput.first, referenceOutput.second, liveRecordingIngestionJobKey);
 		}
 
 		// GroupOfTasks Ingestion Status is by default Failure;

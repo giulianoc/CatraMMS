@@ -812,8 +812,11 @@ int64_t ActiveEncodingsManager::processEncodedImage(
 		bool externalReadOnlyStorage = false;
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
+		int64_t liveRecordingIngestionJobKey = -1;
         encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             encodingItem->_workspace->_workspaceKey,
+			encodingItem->_ingestionJobKey,
+			liveRecordingIngestionJobKey,
             encodingItem->_encodeData->_mediaItemKey,
 			externalReadOnlyStorage,
 			externalDeliveryTechnology,

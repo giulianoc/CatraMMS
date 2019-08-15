@@ -2133,8 +2133,11 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 		bool externalReadOnlyStorage = false;
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
+		int64_t liveRecordingIngestionJobKey = -1;
         encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             _encodingItem->_workspace->_workspaceKey,
+			_encodingItem->_ingestionJobKey,
+			liveRecordingIngestionJobKey,
             _encodingItem->_encodeData->_mediaItemKey,
 			externalReadOnlyStorage,
 			externalDeliveryTechnology,

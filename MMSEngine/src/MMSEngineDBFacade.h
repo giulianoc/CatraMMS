@@ -1081,7 +1081,8 @@ public:
 	void addIngestionJobOutput(
 		int64_t ingestionJobKey,
 		int64_t mediaItemKey,
-		int64_t physicalPathKey
+		int64_t physicalPathKey,
+		int64_t liveRecordingIngestionJobKey
 	);
 
     int64_t addEncodingProfilesSet (
@@ -1523,6 +1524,8 @@ public:
 
     int64_t saveEncodedContentMetadata(
         int64_t workspaceKey,
+		int64_t ingestionJobKey,
+        int64_t liveRecordingIngestionJobKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
 		string externalDeliveryTechnology,
@@ -1736,7 +1739,8 @@ private:
 		shared_ptr<MySQLConnection> conn,
 		int64_t ingestionJobKey,
 		int64_t mediaItemKey,
-		int64_t physicalPathKey
+		int64_t physicalPathKey,
+		int64_t liveRecordingIngestionJobKey
 	);
 
 	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
@@ -1795,6 +1799,8 @@ private:
         shared_ptr<MySQLConnection> conn,
         
         int64_t workspaceKey,
+		int64_t ingestionJobKey,
+        int64_t liveRecordingIngestionJobKey,
         int64_t mediaItemKey,
 		bool externalReadOnlyStorage,
 		string externalDeliveryTechnology,

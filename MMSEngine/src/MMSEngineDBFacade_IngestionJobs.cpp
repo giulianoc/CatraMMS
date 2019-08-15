@@ -2842,7 +2842,8 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
 void MMSEngineDBFacade::addIngestionJobOutput(
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey,
-	int64_t physicalPathKey
+	int64_t physicalPathKey,
+	int64_t liveRecordingIngestionJobKey
 )
 {
 	string      lastSQLCommand;
@@ -2856,7 +2857,8 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
 
-		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey),
+		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey,
+				liveRecordingIngestionJobKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2932,7 +2934,8 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 	shared_ptr<MySQLConnection> conn,
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey,
-	int64_t physicalPathKey
+	int64_t physicalPathKey,
+	int64_t liveRecordingIngestionJobKey
 )
 {
 	string      lastSQLCommand;
@@ -2955,6 +2958,29 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
 			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+			);                            
+		}
+
+		if (liveRecordingIngestionJobKey != -1)
+		{
+			lastSQLCommand = 
+				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
+				"?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, liveRecordingIngestionJobKey);
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+			int rowsUpdated = preparedStatement->executeUpdate();
+
+			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
+				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)

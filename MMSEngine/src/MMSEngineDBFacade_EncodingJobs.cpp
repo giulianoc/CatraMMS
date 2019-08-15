@@ -2480,7 +2480,9 @@ int MMSEngineDBFacade::updateEncodingJob (
                     + ", processorMMS: " + processorMMS
                 );                            
                 updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-            
+
+				/*
+				 * commented because next insert is done in saveEncodedContentMetadata
                 lastSQLCommand = 
                     "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
                     "?, ?, ?)";
@@ -2493,6 +2495,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 preparedStatement->setInt64(queryParameterIndex++, encodedPhysicalPathKey);
 
                 preparedStatement->executeUpdate();
+				*/
             }
         }
         else if (newEncodingStatus == EncodingStatus::End_Failed && ingestionJobKey != -1)
