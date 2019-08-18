@@ -813,7 +813,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
 		int64_t liveRecordingIngestionJobKey = -1;
-        encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
+        encodedPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
             encodingItem->_workspace->_workspaceKey,
 			encodingItem->_ingestionJobKey,
 			liveRecordingIngestionJobKey,
@@ -855,7 +855,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters

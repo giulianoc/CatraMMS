@@ -2482,7 +2482,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
 
 				/*
-				 * commented because next insert is done in saveEncodedContentMetadata
+				 * commented because next insert is done in saveVariantContentMetadata
                 lastSQLCommand = 
                     "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
                     "?, ?, ?)";

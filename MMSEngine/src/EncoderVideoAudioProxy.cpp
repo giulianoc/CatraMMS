@@ -1034,6 +1034,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegEncodeURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
@@ -1061,6 +1062,19 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				string mmsSourceAssetPathName;
 
     
+				_logger->info(__FILEREF__ + "building encoder body"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+					+ ", _fileName: " + _encodingItem->_encodeData->_fileName
+					+ ", _encodingProfileTechnology: " + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+					+ ", _directoryName: " + _encodingItem->_workspace->_directoryName
+					+ ", _durationInMilliSeconds: " + to_string(_encodingItem->_encodeData->_durationInMilliSeconds)
+					+ ", _contentType: " + to_string(static_cast<int>(_encodingItem->_encodeData->_contentType))
+					+ ", _relativePath: " + _encodingItem->_encodeData->_relativePath
+				);
+
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
@@ -1304,6 +1318,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -1580,7 +1595,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -1623,7 +1638,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -1664,7 +1679,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -1705,7 +1720,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -1746,7 +1761,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		if (stagingEncodedAssetPathName != "")
@@ -2134,7 +2149,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
 		int64_t liveRecordingIngestionJobKey = -1;
-        encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
+        encodedPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
             _encodingItem->_workspace->_workspaceKey,
 			_encodingItem->_ingestionJobKey,
 			liveRecordingIngestionJobKey,
@@ -2177,7 +2192,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -3091,7 +3106,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
                 inCaseOfLinkHasItToBeRead);   
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata..."
             + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", contentType: " + MMSEngineDBFacade::toString(contentType)
             + ", relativePathToBeUsed: " + relativePathToBeUsed
@@ -3118,7 +3133,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
             + ", imageQuality: " + to_string(imageQuality)
         );
 
-        mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveIngestedContentMetadata (
+        mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveSourceContentMetadata (
                     _encodingItem->_workspace,
                     _encodingItem->_ingestionJobKey,
                     true, // ingestionRowToBeUpdatedAsSuccess
@@ -3158,7 +3173,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -3172,7 +3187,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -4002,7 +4017,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
             unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
                     inCaseOfLinkHasItToBeRead);   
 
-            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata..."
                 + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
                 + ", contentType: " + MMSEngineDBFacade::toString(contentType)
                 + ", relativePathToBeUsed: " + relativePathToBeUsed
@@ -4029,7 +4044,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
                 + ", imageQuality: " + to_string(imageQuality)
             );
 
-            mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveIngestedContentMetadata (
+            mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveSourceContentMetadata (
                         _encodingItem->_workspace,
                         _encodingItem->_ingestionJobKey,
                         true, // ingestionRowToBeUpdatedAsSuccess
@@ -4069,7 +4084,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
                 + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -4083,7 +4098,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
                 + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

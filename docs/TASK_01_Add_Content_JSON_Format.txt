@@ -12,6 +12,18 @@
 		// mandatory: extension of the file
 		"FileFormat": "mp4",
 
+		// optional: it has to be present ONLY if this content is a variant/profile of a content already
+		//	present into the MMS repository.
+		//	In this case it will appear as a new profile of the present Media Item Key
+		"VariantOfMediaItemKey": 1234,
+
+		// optional: Both the below parameters have to be specified in case this content has to be delivered using an external
+		//	delivery platform (i.e.: Wowza).
+		//	- ExternalDeliveryTechnology indicates the technology delivered by the external delivery platform
+		//	- ExternalDeliveryURL indicates the URL to be used for this delivery
+		"ExternalDeliveryTechnology": "hls",
+		"ExternalDeliveryURL": "https://rsi-wowza.media.int/soap/mp4:A00000293629__201812171545060373190__transcode.mov/playlist.m3u8",
+
 		// optional: only in case you have to add a CrossReference. For example, if you are ingesting an image,
 		//	it is possible to specify this image is for a specific Video
 		"CrossReference": {

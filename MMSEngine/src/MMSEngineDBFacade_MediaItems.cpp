@@ -3279,7 +3279,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
     }    
 }
 
-pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
+pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         bool ingestionRowToBeUpdatedAsSuccess,        
@@ -3782,7 +3782,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 			}
 
 			int64_t encodingProfileKey = -1;
-			physicalPathKey = saveEncodedContentMetadata(
+			physicalPathKey = saveVariantContentMetadata(
 				conn,
                 
 				workspace->_workspaceKey,
@@ -4198,7 +4198,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     return mediaItemKeyAndPhysicalPathKey;
 }
 
-int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
+int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t workspaceKey,
 		int64_t ingestionJobKey,
 		int64_t liveRecordingIngestionJobKey,
@@ -4256,7 +4256,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             statement->execute(lastSQLCommand);
         }
         
-        physicalPathKey = saveEncodedContentMetadata(
+        physicalPathKey = saveVariantContentMetadata(
             conn,
 
             workspaceKey,
@@ -4479,7 +4479,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     return physicalPathKey;
 }
 
-int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
+int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         shared_ptr<MySQLConnection> conn,
 
         int64_t workspaceKey,

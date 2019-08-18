@@ -4620,7 +4620,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 	}
 
     MMSEngineDBFacade::ContentType contentType;
-    
+
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -5092,44 +5092,50 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw runtime_error(errorMessage);
     }
 
-    int64_t mediaItemKey;
+    // int64_t mediaItemKey;
     try
     {
         bool inCaseOfLinkHasItToBeRead = false;
-        unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
-                inCaseOfLinkHasItToBeRead);   
+        unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
+		int64_t variantOfMediaItemKey = -1;
 
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-			+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
-            + ", relativePathToBeUsed: " + relativePathToBeUsed
-            + ", mediaSourceFileName: " + mediaSourceFileName
-            + ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
-            + ", sizeInBytes: " + to_string(sizeInBytes)
+		string field = "VariantOfMediaItemKey";
+		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			variantOfMediaItemKey = parametersRoot.get(field, -1).asInt64();
 
-            + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-            + ", bitRate: " + to_string(bitRate)
-            + ", videoCodecName: " + videoCodecName
-            + ", videoProfile: " + videoProfile
-            + ", videoWidth: " + to_string(videoWidth)
-            + ", videoHeight: " + to_string(videoHeight)
-            + ", videoAvgFrameRate: " + videoAvgFrameRate
-            + ", videoBitRate: " + to_string(videoBitRate)
-            + ", audioCodecName: " + audioCodecName
-            + ", audioSampleRate: " + to_string(audioSampleRate)
-            + ", audioChannels: " + to_string(audioChannels)
-            + ", audioBitRate: " + to_string(audioBitRate)
+		if (variantOfMediaItemKey == -1)
+		{
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
+				+ ", relativePathToBeUsed: " + relativePathToBeUsed
+				+ ", mediaSourceFileName: " + mediaSourceFileName
+				+ ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
+				+ ", sizeInBytes: " + to_string(sizeInBytes)
 
-            + ", imageWidth: " + to_string(imageWidth)
-            + ", imageHeight: " + to_string(imageHeight)
-            + ", imageFormat: " + imageFormat
-            + ", imageQuality: " + to_string(imageQuality)
-        );
+				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				+ ", bitRate: " + to_string(bitRate)
+				+ ", videoCodecName: " + videoCodecName
+				+ ", videoProfile: " + videoProfile
+				+ ", videoWidth: " + to_string(videoWidth)
+				+ ", videoHeight: " + to_string(videoHeight)
+				+ ", videoAvgFrameRate: " + videoAvgFrameRate
+				+ ", videoBitRate: " + to_string(videoBitRate)
+				+ ", audioCodecName: " + audioCodecName
+				+ ", audioSampleRate: " + to_string(audioSampleRate)
+				+ ", audioChannels: " + to_string(audioChannels)
+				+ ", audioBitRate: " + to_string(audioBitRate)
 
-        pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
-                _mmsEngineDBFacade->saveIngestedContentMetadata (
+				+ ", imageWidth: " + to_string(imageWidth)
+				+ ", imageHeight: " + to_string(imageHeight)
+				+ ", imageFormat: " + imageFormat
+				+ ", imageQuality: " + to_string(imageQuality)
+			);
+
+			pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
+                _mmsEngineDBFacade->saveSourceContentMetadata (
                     localAssetIngestionEvent->getWorkspace(),
                     localAssetIngestionEvent->getIngestionJobKey(),
                     localAssetIngestionEvent->getIngestionRowToBeUpdatedAsSuccess(),
@@ -5160,20 +5166,116 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     imageHeight,
                     imageFormat,
                     imageQuality
-        );
+			);
 
-        mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
+			int64_t mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
 
-        _logger->info(__FILEREF__ + "Added a new ingested content"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
-            + ", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
-        );
+			_logger->info(__FILEREF__ + "Added a new ingested content"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
+				+ ", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
+			);
+		}
+		else
+		{
+			int64_t liveRecordingIngestionJobKey = -1;
+			int64_t encodingProfileKey = -1;
+
+			string externalDeliveryTechnology;
+			string externalDeliveryURL;
+			{
+				field = "ExternalDeliveryTechnology";
+				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					externalDeliveryTechnology = parametersRoot.get(field, "").asString();
+
+				field = "ExternalDeliveryURL";
+				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					externalDeliveryURL = parametersRoot.get(field, "").asString();
+			}
+
+			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", workspaceKey: " + to_string(localAssetIngestionEvent->getWorkspace()->_workspaceKey)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
+				+ ", variantOfMediaItemKey: " + to_string(variantOfMediaItemKey)
+				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
+				+ ", externalDeliveryTechnology: " + externalDeliveryTechnology
+				+ ", externalDeliveryURL: " + externalDeliveryURL
+
+				+ ", mediaSourceFileName: " + mediaSourceFileName
+				+ ", relativePathToBeUsed: " + relativePathToBeUsed
+				+ ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
+				+ ", sizeInBytes: " + to_string(sizeInBytes)
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+
+				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				+ ", bitRate: " + to_string(bitRate)
+				+ ", videoCodecName: " + videoCodecName
+				+ ", videoProfile: " + videoProfile
+				+ ", videoWidth: " + to_string(videoWidth)
+				+ ", videoHeight: " + to_string(videoHeight)
+				+ ", videoAvgFrameRate: " + videoAvgFrameRate
+				+ ", videoBitRate: " + to_string(videoBitRate)
+				+ ", audioCodecName: " + audioCodecName
+				+ ", audioSampleRate: " + to_string(audioSampleRate)
+				+ ", audioChannels: " + to_string(audioChannels)
+				+ ", audioBitRate: " + to_string(audioBitRate)
+
+				+ ", imageWidth: " + to_string(imageWidth)
+				+ ", imageHeight: " + to_string(imageHeight)
+				+ ", imageFormat: " + imageFormat
+				+ ", imageQuality: " + to_string(imageQuality)
+			);
+
+			int64_t physicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata (
+                    localAssetIngestionEvent->getWorkspace()->_workspaceKey,
+                    localAssetIngestionEvent->getIngestionJobKey(),
+					liveRecordingIngestionJobKey,
+					variantOfMediaItemKey,
+					localAssetIngestionEvent->getExternalReadOnlyStorage(),
+					externalDeliveryTechnology,
+					externalDeliveryURL,
+
+                    mediaSourceFileName,
+                    relativePathToBeUsed,
+                    mmsPartitionUsed,
+                    sizeInBytes,
+					encodingProfileKey,
+                
+                    // video-audio
+                    durationInMilliSeconds,
+                    bitRate,
+                    videoCodecName,
+                    videoProfile,
+                    videoWidth,
+                    videoHeight,
+                    videoAvgFrameRate,
+                    videoBitRate,
+                    audioCodecName,
+                    audioSampleRate,
+                    audioChannels,
+                    audioBitRate,
+
+                    // image
+                    imageWidth,
+                    imageHeight,
+                    imageFormat,
+                    imageQuality
+			);
+
+			_logger->info(__FILEREF__ + "Added a new variant content"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", variantOfMediaItemKey,: " + to_string(variantOfMediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+			);
+		}
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", e.what: " + e.what()
@@ -5223,7 +5325,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
         );

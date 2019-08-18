@@ -1489,7 +1489,7 @@ public:
     
     string nextRelativePathToBeUsed (int64_t workspaceKey);
 
-    pair<int64_t,int64_t> saveIngestedContentMetadata(
+    pair<int64_t,int64_t> saveSourceContentMetadata(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         bool ingestionRowToBeUpdatedAsSuccess,
@@ -1522,7 +1522,7 @@ public:
         int imageQuality
     );
 
-    int64_t saveEncodedContentMetadata(
+    int64_t saveVariantContentMetadata(
         int64_t workspaceKey,
 		int64_t ingestionJobKey,
         int64_t liveRecordingIngestionJobKey,
@@ -1795,7 +1795,7 @@ private:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 
-    int64_t saveEncodedContentMetadata(
+    int64_t saveVariantContentMetadata(
         shared_ptr<MySQLConnection> conn,
         
         int64_t workspaceKey,
