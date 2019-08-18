@@ -2379,6 +2379,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegOverlayImageOnVideoURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		string stagingEncodedAssetPathName;
@@ -2589,6 +2590,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -2819,7 +2821,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -2834,7 +2836,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -2847,7 +2849,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -2860,7 +2862,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -2873,7 +2875,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -3278,6 +3280,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegOverlayTextOnVideoURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		string stagingEncodedAssetPathName;
@@ -3482,6 +3485,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -3731,7 +3735,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -3746,7 +3750,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -3759,7 +3763,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -3772,7 +3776,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -3785,7 +3789,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -4157,6 +4161,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegVideoSpeedURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		string stagingEncodedAssetPathName;
@@ -4352,6 +4357,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -4603,7 +4609,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -4618,7 +4624,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -4631,7 +4637,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -4644,7 +4650,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -4657,7 +4663,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -4860,6 +4866,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegPictureInPictureURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		string stagingEncodedAssetPathName;
@@ -5078,6 +5085,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -5308,7 +5316,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -5323,7 +5331,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -5336,7 +5344,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -5349,7 +5357,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -5362,7 +5370,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -5582,6 +5590,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegGenerateFramesURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		if (_encodingItem->_transcoder == "") // || _encodingItem->_stagingEncodedAssetPathName == "")
@@ -5735,6 +5744,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -5965,7 +5975,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -5980,7 +5990,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -5993,7 +6003,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6006,7 +6016,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6019,7 +6029,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6138,6 +6148,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 	string ffmpegEncoderURL;
 	string ffmpegURI = _ffmpegSlideShowURI;
 	ostringstream response;
+	bool responseInitialized = false;
 	try
 	{
 		string slideShowMediaPathName;
@@ -6292,6 +6303,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
+			responseInitialized = true;
             request.perform();
 
             string sResponse = response.str();
@@ -6524,7 +6536,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 			+ ", e.what(): " + e.what()
 		;
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -6539,7 +6551,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
             
 		throw e;
@@ -6552,7 +6564,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6565,7 +6577,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -6578,7 +6590,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 			+ ", exception: " + e.what()
-			+ ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
 		);
 
 		throw e;
@@ -8148,6 +8160,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveRecorderURI;
 		ostringstream response;
+		bool responseInitialized = false;
 		try
 		{
 			if (_encodingItem->_transcoder == "")
@@ -8482,6 +8495,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
 				);
+				responseInitialized = true;
 				request.perform();
 
 				string sResponse = response.str();
@@ -8759,7 +8773,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                + ", response.str(): " + response.str()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
                 + ", e.what(): " + e.what()
                 ;
             _logger->warn(__FILEREF__ + errorMessage);
@@ -8776,7 +8790,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
-                + ", response.str(): " + response.str()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
             
 			// sleep a bit and try again
@@ -8798,7 +8812,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
-                + ", response.str(): " + response.str()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
 			// sleep a bit and try again
@@ -8820,7 +8834,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
-                + ", response.str(): " + response.str()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
 			// sleep a bit and try again
@@ -8842,7 +8856,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
-                + ", response.str(): " + response.str()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
 			// sleep a bit and try again
@@ -9004,6 +9018,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 		{
 			string ffmpegEncoderURL;
 			ostringstream response;
+			bool responseInitialized = false;
 			try
 			{
 				if (_currentUsedFFMpegEncoderHost == "")
@@ -9116,6 +9131,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
 				);
+				responseInitialized = true;
 				request.perform();
 				chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "getEncodingProgress"
@@ -9248,7 +9264,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
             
 				throw e;
@@ -9260,7 +9276,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				;
             
 				_logger->error(__FILEREF__ + errorMessage);
@@ -9274,7 +9290,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				throw e;
@@ -9286,7 +9302,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				throw e;
@@ -9298,7 +9314,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
 					+ ", exception: " + e.what()
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				throw e;
@@ -9317,6 +9333,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
     
     string ffmpegEncoderURL;
     ostringstream response;
+	bool responseInitialized = false;
     try
     {
         ffmpegEncoderURL = 
@@ -9419,6 +9436,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
         );
+		responseInitialized = true;
         request.perform();
         chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
@@ -9486,7 +9504,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
-            + ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
         );
 
         throw e;
@@ -9498,7 +9516,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
-            + ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
@@ -9512,7 +9530,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
-            + ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
         );
 
         throw e;
@@ -9524,7 +9542,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
-            + ", response.str(): " + response.str()
+			+ ", response.str(): " + (responseInitialized ? response.str() : "")
         );
 
         throw e;
