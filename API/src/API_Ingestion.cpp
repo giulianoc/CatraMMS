@@ -415,153 +415,155 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         parametersSectionPresent = true;
     }
     
-    string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
-    string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
-    if (type == "Encode"
-            && parametersSectionPresent
-            && 
-            (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
-            || _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
-            )
-    )
+    if (type == "Encode")
     {
-        // to manage the encode of 'profiles set' we will replace the single Task with
-        // a GroupOfTasks where every task is just for one profile
-        
-        string encodingProfilesSetReference;
-        
-        vector<int64_t> encodingProfilesSetKeys;
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
-        {
-            int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
-        
-            encodingProfilesSetReference = to_string(encodingProfilesSetKey);
-            
-            encodingProfilesSetKeys = 
-                _mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
-                workspace->_workspaceKey, encodingProfilesSetKey);
-        }
-        else // if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
-        {
-            string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "XXX").asString();
-        
-            encodingProfilesSetReference = encodingProfilesSetLabel;
-            
-            encodingProfilesSetKeys = 
-                _mmsEngineDBFacade->getEncodingProfileKeysBySetLabel(
-                    workspace->_workspaceKey, encodingProfilesSetLabel);
-        }
-        
-        if (encodingProfilesSetKeys.size() == 0)
-        {
-            string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
-                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference;
-            _logger->error(errorMessage);
+		string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
+		string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
 
-            throw runtime_error(errorMessage);
-        }
+		if (parametersSectionPresent && 
+            (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+				|| _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
+            )
+		)
+		{
+			// to manage the encode of 'profiles set' we will replace the single Task with
+			// a GroupOfTasks where every task is just for one profile
         
-        string encodingPriority;
-        field = "EncodingPriority";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            encodingPriority = parametersRoot.get(field, "XXX").asString();
-            /*
-            string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
-            MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
+			string encodingProfilesSetReference;
+        
+			vector<int64_t> encodingProfilesSetKeys;
+			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+			{
+				int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
+        
+				encodingProfilesSetReference = to_string(encodingProfilesSetKey);
+            
+				encodingProfilesSetKeys = 
+					_mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
+					workspace->_workspaceKey, encodingProfilesSetKey);
+			}
+			else // if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
+			{
+				string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "XXX").asString();
+        
+				encodingProfilesSetReference = encodingProfilesSetLabel;
+            
+				encodingProfilesSetKeys = 
+					_mmsEngineDBFacade->getEncodingProfileKeysBySetLabel(
+						workspace->_workspaceKey, encodingProfilesSetLabel);
+			}
+        
+			if (encodingProfilesSetKeys.size() == 0)
+			{
+				string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
+                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+        
+			string encodingPriority;
+			field = "EncodingPriority";
+			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			{
+				encodingPriority = parametersRoot.get(field, "XXX").asString();
+				/*
+				string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
+				MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
                     MMSEngineDBFacade::toEncodingPriority(sRequestedEncodingPriority);
             
-            encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
-            */
-        }
-        /*
-        else
-        {
-            encodingPriority = MMSEngineDBFacade::toString(
+				encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
+				*/
+			}
+			/*
+			else
+			{
+				encodingPriority = MMSEngineDBFacade::toString(
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
-        }
-        */
+			}
+			*/
         
             
-        Json::Value newTasksRoot(Json::arrayValue);
+			Json::Value newTasksRoot(Json::arrayValue);
         
-        for (int64_t encodingProfileKey: encodingProfilesSetKeys)
-        {
-            Json::Value newTaskRoot;
-            string localLabel = taskLabel + " - EncodingProfileKey " + to_string(encodingProfileKey);
+			for (int64_t encodingProfileKey: encodingProfilesSetKeys)
+			{
+				Json::Value newTaskRoot;
+				string localLabel = taskLabel + " - EncodingProfileKey " + to_string(encodingProfileKey);
 
-            field = "Label";
-            newTaskRoot[field] = localLabel;
+				field = "Label";
+				newTaskRoot[field] = localLabel;
             
-            field = "Type";
-            newTaskRoot[field] = "Encode";
+				field = "Type";
+				newTaskRoot[field] = "Encode";
             
-            Json::Value newParametersRoot;
+				Json::Value newParametersRoot;
             
-            field = "References";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                newParametersRoot[field] = parametersRoot[field];
-            }
+				field = "References";
+				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				{
+					newParametersRoot[field] = parametersRoot[field];
+				}
             
-            field = "EncodingProfileKey";
-            newParametersRoot[field] = encodingProfileKey;
+				field = "EncodingProfileKey";
+				newParametersRoot[field] = encodingProfileKey;
             
-            if (encodingPriority != "")
-            {
-                field = "EncodingPriority";
-                newParametersRoot[field] = encodingPriority;
-            }
+				if (encodingPriority != "")
+				{
+					field = "EncodingPriority";
+					newParametersRoot[field] = encodingPriority;
+				}
             
-            field = "Parameters";
-            newTaskRoot[field] = newParametersRoot;
+				field = "Parameters";
+				newTaskRoot[field] = newParametersRoot;
             
-            newTasksRoot.append(newTaskRoot);
-        }
+				newTasksRoot.append(newTaskRoot);
+			}
         
-        Json::Value newParametersTasksGroupRoot;
+			Json::Value newParametersTasksGroupRoot;
 
-        field = "ExecutionType";
-        newParametersTasksGroupRoot[field] = "parallel";
+			field = "ExecutionType";
+			newParametersTasksGroupRoot[field] = "parallel";
 
-        field = "Tasks";
-        newParametersTasksGroupRoot[field] = newTasksRoot;
+			field = "Tasks";
+			newParametersTasksGroupRoot[field] = newTasksRoot;
         
-        Json::Value newTasksGroupRoot;
+			Json::Value newTasksGroupRoot;
 
-        field = "Type";
-        newTasksGroupRoot[field] = "GroupOfTasks";
+			field = "Type";
+			newTasksGroupRoot[field] = "GroupOfTasks";
 
-        field = "Parameters";
-        newTasksGroupRoot[field] = newParametersTasksGroupRoot;
+			field = "Parameters";
+			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
-        field = "OnSuccess";
-        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-        {
-            newTasksGroupRoot[field] = taskRoot[field];
-        }
+			field = "OnSuccess";
+			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			{
+				newTasksGroupRoot[field] = taskRoot[field];
+			}
 
-        field = "OnError";
-        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-        {
-            newTasksGroupRoot[field] = taskRoot[field];
-        }
+			field = "OnError";
+			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			{
+				newTasksGroupRoot[field] = taskRoot[field];
+			}
 
-        field = "OnComplete";
-        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-        {
-            newTasksGroupRoot[field] = taskRoot[field];
-        }
+			field = "OnComplete";
+			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			{
+				newTasksGroupRoot[field] = taskRoot[field];
+			}
         
-        return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
+			return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 responseBody); 
+		}
     }
     else if (type == "Live-Recorder")
     {
 		// Live-Recorder generates MediaItems as soon as the files/segments are generated by the Live-Recorder.
-		// For this reason, the events (onSuccess, onError, onComplete) has to be attached
+		// For this reason, the events (onSuccess, onError, onComplete) have to be attached
 		// to the workflow built to add these contents
 		// Here, we will remove the events (onSuccess, onError, onComplete) from LiveRecorder, if present,
 		// and we will add temporary inside the Parameters section. These events will be managed later
@@ -608,6 +610,56 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 
 			parametersRoot[internalMMSField] = internalMMSRoot;
+		}
+	}
+    else if (type == "Add-Content")
+    {
+		// The Add-Content Task can be used also to add just a variant/profile of a content
+		// that it is already present into the MMS Repository.
+		// This content that it is already present can be referenced using
+		// the apposite parameter (VariantOfMediaItemKey) or using the VariantOfReferencedLabel
+		// parameter.
+		// In this last case, we have to add the VariantOfIngestionJobKey parameter using VariantOfReferencedLabel
+
+		string field = "VariantOfReferencedLabel";
+    	if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    	{
+			string referenceLabel = parametersRoot.get(field, "").asString();
+
+			if (referenceLabel == "")
+			{
+				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
+					+ ", processing label: " + taskLabel
+					+ ", referenceLabel: " + referenceLabel;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
+                
+			if (ingestionJobKeys.size() == 0)
+			{
+				string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
+					+ ", processing label: " + taskLabel
+					+ ", referenceLabel: " + referenceLabel;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (ingestionJobKeys.size() > 1)
+			{
+				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+					+ ", referenceLabel: " + referenceLabel
+					+ ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			field = "VariantOfIngestionJobKey";
+			parametersRoot[field] = ingestionJobKeys.back();
 		}
 	}
 

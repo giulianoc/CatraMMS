@@ -1375,11 +1375,12 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
 tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
-        int64_t mediaItemKey,
-        int64_t encodingProfileKey
+		int64_t mediaItemKey,
+		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
+		int64_t encodingProfileKey
 )
 {
-        
+
     string      lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -1398,6 +1399,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
         string relativePath;
         string fileName;
         int64_t sizeInBytes;
+		int64_t maxSizeInBytes = -1;
         string deliveryFileName;
         string title;
         {
@@ -1415,8 +1417,18 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
+			// in case of encodingProfileKey == -1, we could have more then one row into result set
+			// (because we could have more then one profile ingested by the user, without encodingProfileKey,
+			// non only the source, may be alse a profile)
+			// In this case we will return the one having the bigger size that it is supposed to be the source
+			// This is the reason we have the below while
+            while (resultSet->next())
             {
+                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
+
+				if (maxSizeInBytes != -1 && localSizeInBytes <= maxSizeInBytes)
+					continue;
+
                 workspaceKey = resultSet->getInt64("workspaceKey");
                 title = resultSet->getString("title");
                 if (!resultSet->isNull("deliveryFileName"))
@@ -1426,9 +1438,13 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getInt64("sizeInBytes");
+
+                sizeInBytes = localSizeInBytes;
+
+				maxSizeInBytes = localSizeInBytes;
             }
-            else
+
+			if (maxSizeInBytes == -1)
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present"
                     + ", mediaItemKey: " + to_string(mediaItemKey)

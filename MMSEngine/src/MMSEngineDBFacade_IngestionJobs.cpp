@@ -3031,7 +3031,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string label, string status, bool asc
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value statusListRoot;
     

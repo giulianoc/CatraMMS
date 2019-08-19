@@ -1062,7 +1062,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				string mmsSourceAssetPathName;
 
     
-				_logger->info(__FILEREF__ + "building encoder body"
+				_logger->info(__FILEREF__ + "building body for encoder"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

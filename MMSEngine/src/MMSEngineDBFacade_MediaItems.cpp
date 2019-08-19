@@ -1880,7 +1880,9 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
-    int64_t referenceMediaItemKey, int64_t encodingProfileKey,
+    int64_t referenceMediaItemKey,
+	// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
+	int64_t encodingProfileKey,
 	bool warningIfMissing)
 {
     string      lastSQLCommand;
@@ -1897,25 +1899,31 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         );
 
         {
-			if (encodingProfileKey != -1)
-				lastSQLCommand = "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? "
-					"and encodingProfileKey = ?";
-			else
-				lastSQLCommand = 
-					"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? "
-					"and encodingProfileKey is NULL";
+			lastSQLCommand = string("") +
+				"select physicalPathKey, sizeInBytes from MMS_PhysicalPath where mediaItemKey = ? "
+				"and encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceMediaItemKey);
 			if (encodingProfileKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
+			int64_t maxSizeInBytes = -1;
+
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
+            while (resultSet->next())
             {
+                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
+
+				if (maxSizeInBytes != -1 && localSizeInBytes <= maxSizeInBytes)
+					continue;
+
                 physicalPathKey = resultSet->getInt64("physicalPathKey");
+
+				maxSizeInBytes = localSizeInBytes;
             }
-            else
+
+			if (maxSizeInBytes == -1)
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
                     + ", mediaItemKey: " + to_string(referenceMediaItemKey)
@@ -2559,7 +2567,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
                             _logger->error(errorMessage);
 
                         throw MediaItemKeyNotFound(errorMessage);                    
-                    }            
+                    }
                 }
 
                 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 

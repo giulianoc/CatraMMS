@@ -5097,11 +5097,41 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
-		int64_t variantOfMediaItemKey = -1;
 
-		string field = "VariantOfMediaItemKey";
-		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-			variantOfMediaItemKey = parametersRoot.get(field, -1).asInt64();
+		int64_t variantOfMediaItemKey = -1;
+		{
+			string variantOfMediaItemKeyField = "VariantOfMediaItemKey";
+			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
+			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
+			{
+				variantOfMediaItemKey = parametersRoot.get(variantOfMediaItemKeyField, -1).asInt64();
+			}
+			else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
+			{
+				int64_t variantOfIngestionJobKey = parametersRoot.get(variantOfIngestionJobKeyField, -1).asInt64();
+				vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
+				bool warningIfMissing = false;
+
+				_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(variantOfIngestionJobKey,
+					mediaItemsDetails, warningIfMissing);
+
+				if (mediaItemsDetails.size() != 1)
+				{
+					string errorMessage = string("IngestionJob does not refer the correct media Items number")
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", variantOfIngestionJobKey: " + to_string(variantOfIngestionJobKey)
+						+ ", mediaItemsDetails.size(): " + to_string(mediaItemsDetails.size())
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+        
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemsDetailsReturn
+					= mediaItemsDetails[0];
+				tie(variantOfMediaItemKey, ignore, ignore) = mediaItemsDetailsReturn;
+			}
+		}
 
 		if (variantOfMediaItemKey == -1)
 		{
@@ -5185,7 +5215,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			string externalDeliveryTechnology;
 			string externalDeliveryURL;
 			{
-				field = "ExternalDeliveryTechnology";
+				string field = "ExternalDeliveryTechnology";
 				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
 					externalDeliveryTechnology = parametersRoot.get(field, "").asString();
 
@@ -5273,6 +5303,56 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			);
 		}
     }
+    catch(MediaItemKeyNotFound e)	// getMediaItemDetailsByIngestionJobKey failure
+    {
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", e.what: " + e.what()
+        );
+
+		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		{
+			_logger->info(__FILEREF__ + "Remove file"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			FileIO::remove(mmsAssetPathName);
+		}
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", IngestionStatus: " + "End_IngestionFailure"
+			+ ", errorMessage: " + e.what()
+		);                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        throw e;
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
@@ -5326,7 +5406,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
         );
 
@@ -5496,7 +5576,8 @@ void MMSEngineProcessor::removeContentTask(
             throw runtime_error(errorMessage);
         }
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+				dependencies)
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -5641,7 +5722,8 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             throw runtime_error(errorMessage);
         }
 
-        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        if (_processorsThreadsNumber.use_count() + dependencies.size() >
+				_processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__ + "Not enough available threads to manage ftpUploadMediaSourceThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5694,7 +5776,8 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                 workspace->_workspaceKey, configurationLabel);            
         tie(ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory) = ftp;
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+				dependencies)
         {
 			string mmsAssetPathName;
 			string fileName;
@@ -5823,7 +5906,8 @@ void MMSEngineProcessor::postOnFacebookTask(
             throw runtime_error(errorMessage);
         }
 
-        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        if (_processorsThreadsNumber.use_count() + dependencies.size() >
+				_processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnFacebookTask, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5879,7 +5963,8 @@ void MMSEngineProcessor::postOnFacebookTask(
             facebookNodeId = parametersRoot.get(field, "XXX").asString();
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+				dependencies)
         {
 			string mmsAssetPathName;
             int64_t sizeInBytes;
@@ -6044,7 +6129,8 @@ void MMSEngineProcessor::postOnYouTubeTask(
             throw runtime_error(errorMessage);
         }
 
-        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        if (_processorsThreadsNumber.use_count() + dependencies.size() >
+				_processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__ + "Not enough available threads to manage postOnYouTubeTask, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6114,7 +6200,8 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 youTubePrivacy = "private";
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+				dependencies)
         {
 			string mmsAssetPathName;
             int64_t sizeInBytes;
@@ -6411,7 +6498,8 @@ void MMSEngineProcessor::httpCallbackTask(
 
         Json::Value callbackMedatada;
         {
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+					dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
@@ -6574,7 +6662,8 @@ void MMSEngineProcessor::localCopyContentTask(
             throw runtime_error(errorMessage);
         }
 
-        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        if (_processorsThreadsNumber.use_count() + dependencies.size() >
+				_processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__ + "Not enough available threads to manage copyContentThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6624,7 +6713,8 @@ void MMSEngineProcessor::localCopyContentTask(
             }
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+				dependencies)
         {
 			string mmsAssetPathName;
 			/*
