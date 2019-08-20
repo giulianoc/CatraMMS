@@ -5294,12 +5294,22 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     imageFormat,
                     imageQuality
 			);
-
 			_logger->info(__FILEREF__ + "Added a new variant content"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
 				+ ", variantOfMediaItemKey,: " + to_string(variantOfMediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
+			);
+
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+			);                            
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
 			);
 		}
     }
