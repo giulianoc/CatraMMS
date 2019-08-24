@@ -403,7 +403,7 @@ void API::manageRequestAndResponse(
     int64_t userKey;
     shared_ptr<Workspace> workspace;
     bool admin;
-    bool createDeleteWorkspace;
+    bool createRemoveWorkspace;
     bool ingestWorkflow;
     bool createProfiles;
     bool deliveryAuthorization;
@@ -414,7 +414,7 @@ void API::manageRequestAndResponse(
 
     if (basicAuthenticationPresent)
     {
-        tie(userKey, workspace, admin, createDeleteWorkspace, ingestWorkflow, createProfiles,
+        tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles,
 				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding) 
                 = userKeyWorkspaceAndFlags;
 
@@ -426,7 +426,7 @@ void API::manageRequestAndResponse(
             + ", workspace->_name: " + workspace->_name
             + ", requestBody: " + requestBody
             + ", admin: " + to_string(admin)
-            + ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
+            + ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
             + ", ingestWorkflow: " + to_string(ingestWorkflow)
             + ", createProfiles: " + to_string(createProfiles)
             + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
@@ -647,10 +647,10 @@ void API::manageRequestAndResponse(
     }
     else if (method == "createWorkspace")
     {
-        if (!createDeleteWorkspace)
+        if (!createRemoveWorkspace)
         {
             string errorMessage = string("APIKey does not have the permission"
-                    ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
+                    ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -663,10 +663,10 @@ void API::manageRequestAndResponse(
     }
     else if (method == "deleteWorkspace")
     {
-        if (!createDeleteWorkspace)
+        if (!createRemoveWorkspace)
         {
             string errorMessage = string("APIKey does not have the permission"
-                    ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
+                    ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 

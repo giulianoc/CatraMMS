@@ -2819,7 +2819,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bo
     
     return make_tuple(userKey, workspace,
         flags.find("ADMIN") == string::npos ? false : true,
-        flags.find("CREATEDELETE_WORKSPACE") == string::npos ? false : true,
+        flags.find("CREATEREMOVE_WORKSPACE") == string::npos ? false : true,
         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
         flags.find("CREATE_PROFILES") == string::npos ? false : true,
         flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
