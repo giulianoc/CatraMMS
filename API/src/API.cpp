@@ -392,7 +392,7 @@ void API::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>&
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bool>&
 			userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
@@ -403,6 +403,7 @@ void API::manageRequestAndResponse(
     int64_t userKey;
     shared_ptr<Workspace> workspace;
     bool admin;
+    bool createDeleteWorkspace;
     bool ingestWorkflow;
     bool createProfiles;
     bool deliveryAuthorization;
@@ -413,7 +414,7 @@ void API::manageRequestAndResponse(
 
     if (basicAuthenticationPresent)
     {
-        tie(userKey, workspace, admin, ingestWorkflow, createProfiles,
+        tie(userKey, workspace, admin, createDeleteWorkspace, ingestWorkflow, createProfiles,
 				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding) 
                 = userKeyWorkspaceAndFlags;
 
@@ -425,6 +426,7 @@ void API::manageRequestAndResponse(
             + ", workspace->_name: " + workspace->_name
             + ", requestBody: " + requestBody
             + ", admin: " + to_string(admin)
+            + ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
             + ", ingestWorkflow: " + to_string(ingestWorkflow)
             + ", createProfiles: " + to_string(createProfiles)
             + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
@@ -645,10 +647,34 @@ void API::manageRequestAndResponse(
     }
     else if (method == "createWorkspace")
     {
+        if (!createDeleteWorkspace)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         createWorkspace(request, userKey, queryParameters, requestBody);
     }
     else if (method == "deleteWorkspace")
     {
+        if (!createDeleteWorkspace)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", createDeleteWorkspace: " + to_string(createDeleteWorkspace)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         deleteWorkspace(request, userKey, workspace);
     }
     else if (method == "workspaceUsage")

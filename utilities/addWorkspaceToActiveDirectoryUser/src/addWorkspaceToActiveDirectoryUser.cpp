@@ -37,6 +37,7 @@ int main (int iArgc, char *pArgv [])
             configuration, 3, logger);
 
 	{
+		bool createRemoveWorkspace = false;
 		bool ingestWorkflow = true;
 		bool createProfiles = false;
 		bool deliveryAuthorization = true;
@@ -48,7 +49,7 @@ int main (int iArgc, char *pArgv [])
 		mmsEngineDBFacade->createAPIKeyForActiveDirectoryUser(
                 userKey,
                 userEmailAddress,
-                ingestWorkflow, createProfiles, deliveryAuthorization,
+                createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
                 shareWorkspace, editMedia,
                 editConfiguration, killEncoding,
                 workspaceKey);

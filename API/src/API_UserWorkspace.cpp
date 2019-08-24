@@ -306,7 +306,7 @@ void API::registerUser(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
-            emailBody.push_back(string("<p>here follow the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
+            emailBody.push_back(string("<p>here follows the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
                 + "</b> and the confirmation code <b>" + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</b> to be used to confirm the registration</p>");
             // string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
             //         + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
@@ -499,7 +499,7 @@ void API::createWorkspace(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
-            emailBody.push_back(string("<p>here follow the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
+            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
             string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
                     + to_string(userKey) + "/" + get<1>(workspaceKeyAndConfirmationCode);
             emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
@@ -597,6 +597,19 @@ void API::shareWorkspace_(
 			}
 			userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
 		}
+
+        bool createRemoveWorkspace;
+        auto createRemoveWorkspaceIt = queryParameters.find("createRemoveWorkspace");
+        if (createRemoveWorkspaceIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'createRemoveWorkspace' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        createRemoveWorkspace = (createRemoveWorkspaceIt->second == "true" ? true : false);
 
         bool ingestWorkflow;
         auto ingestWorkflowIt = queryParameters.find("ingestWorkflow");
@@ -795,7 +808,7 @@ void API::shareWorkspace_(
                     email, 
                     password,
                     country, 
-                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+                    createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 					editMedia, editConfiguration, killEncoding,
                     workspace->_workspaceKey,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
@@ -824,7 +837,7 @@ void API::shareWorkspace_(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
-            emailBody.push_back(string("<p>Here follow the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
+            emailBody.push_back(string("<p>Here follows the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
                 + "</b> and the confirmation code <b>" + get<1>(userKeyAndConfirmationCode) + "</b> to be used to confirm the sharing of the Workspace</p>");
             emailBody.push_back(
 					string("<p>Please click <a href=\"")
@@ -1244,6 +1257,7 @@ void API::login(
 						);
 
 						// flags set by default
+						bool createRemoveWorkspace = true;
 						bool ingestWorkflow = true;
 						bool createProfiles = false;
 						bool deliveryAuthorization = true;
@@ -1256,7 +1270,7 @@ void API::login(
 							userName,
 							email,
 							string(""),	// userCountry,
-							ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding,
 							_ldapDefaultWorkspaceKey_1, _ldapDefaultWorkspaceKey_2,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
@@ -1618,6 +1632,7 @@ void API::updateWorkspace(
         int64_t newMaxIngestionsNumber;
         int64_t newMaxStorageInMB;
         string newLanguageCode;
+        bool newCreateRemoveWorkspace;
         bool newIngestWorkflow;
         bool newCreateProfiles;
         bool newDeliveryAuthorization;
@@ -1672,6 +1687,7 @@ void API::updateWorkspace(
                 "MaxIngestionsNumber",
                 "MaxStorageInMB",
                 "LanguageCode",
+                "CreateRemoveWorkspace",
                 "IngestWorkflow",
                 "CreateProfiles",
                 "DeliveryAuthorization",
@@ -1701,6 +1717,7 @@ void API::updateWorkspace(
             newMaxIngestionsNumber = metadataRoot.get("MaxIngestionsNumber", "XXX").asInt64();
             newMaxStorageInMB = metadataRoot.get("MaxStorageInMB", "XXX").asInt64();
             newLanguageCode = metadataRoot.get("LanguageCode", "XXX").asString();
+            newCreateRemoveWorkspace = metadataRoot.get("CreateRemoveWorkspace", "XXX").asBool();
             newIngestWorkflow = metadataRoot.get("IngestWorkflow", "XXX").asBool();
             newCreateProfiles = metadataRoot.get("CreateProfiles", "XXX").asBool();
             newDeliveryAuthorization = metadataRoot.get("DeliveryAuthorization", "XXX").asBool();
@@ -1723,7 +1740,7 @@ void API::updateWorkspace(
                     newEnabled, newName, newMaxEncodingPriority,
                     newEncodingPeriod, newMaxIngestionsNumber,
                     newMaxStorageInMB, newLanguageCode,
-                    newIngestWorkflow, newCreateProfiles,
+                    newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles,
                     newDeliveryAuthorization, newShareWorkspace,
                     newEditMedia, newEditConfiguration, newKillEncoding);
 

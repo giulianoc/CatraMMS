@@ -241,6 +241,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
         {
             bool admin = false;
+            bool createRemoveWorkspace = true;
             bool ingestWorkflow = true;
             bool createProfiles = true;
             bool deliveryAuthorization = true;
@@ -254,6 +255,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     conn,
                     userKey,
                     admin,
+					createRemoveWorkspace,
                     ingestWorkflow,
                     createProfiles,
                     deliveryAuthorization,
@@ -645,6 +647,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
         
         {
             bool admin = false;
+            bool createRemoveWorkspace = true;
             bool ingestWorkflow = true;
             bool createProfiles = true;
             bool deliveryAuthorization = true;
@@ -658,6 +661,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     conn,
                     userKey,
                     admin,
+                    createRemoveWorkspace,
                     ingestWorkflow,
                     createProfiles,
                     deliveryAuthorization,
@@ -875,7 +879,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     string userEmailAddress,
     string userPassword,
     string userCountry,
-    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+    bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
     int64_t workspaceKeyToBeShared,
@@ -994,6 +998,13 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("ADMIN");
+                }
+
+                if (createRemoveWorkspace)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CREATEREMOVE_WORKSPACE");
                 }
 
                 if (ingestWorkflow)
@@ -1252,7 +1263,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     string userName,
     string userEmailAddress,
     string userCountry,
-    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+    bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
 	int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2,
@@ -1326,7 +1337,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 				conn,
 				userKey,
 				userEmailAddress,
-				ingestWorkflow, createProfiles, deliveryAuthorization,
+				createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 				shareWorkspace, editMedia,
 				editConfiguration, killEncoding,
 				defaultWorkspaceKey_1);
@@ -1336,7 +1347,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 					conn,
 					userKey,
 					userEmailAddress,
-					ingestWorkflow, createProfiles, deliveryAuthorization,
+					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 					shareWorkspace, editMedia,
 					editConfiguration, killEncoding,
 					defaultWorkspaceKey_2);
@@ -1533,7 +1544,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     int64_t userKey,
     string userEmailAddress,
-    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+    bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
 	int64_t workspaceKey
@@ -1554,7 +1565,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			conn,
 			userKey,
 			userEmailAddress,
-			ingestWorkflow, createProfiles, deliveryAuthorization,
+			createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding,
 			workspaceKey);
@@ -1652,7 +1663,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	shared_ptr<MySQLConnection> conn,
     int64_t userKey,
     string userEmailAddress,
-    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+    bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
 	int64_t workspaceKey
@@ -1674,6 +1685,13 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
                     if (flags != "")
                        flags.append(",");
                     flags.append("ADMIN");
+                }
+
+                if (createRemoveWorkspace)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CREATEREMOVE_WORKSPACE");
                 }
 
                 if (ingestWorkflow)
@@ -1811,7 +1829,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         shared_ptr<MySQLConnection> conn,
         int64_t userKey,
-        bool admin, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+        bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
         bool shareWorkspace, bool editMedia,
         bool editConfiguration, bool killEncoding,
         string workspaceName,
@@ -1896,6 +1914,13 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("ADMIN");
+                }
+
+                if (createRemoveWorkspace)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CREATEREMOVE_WORKSPACE");
                 }
 
                 if (ingestWorkflow)
@@ -2658,7 +2683,7 @@ void MMSEngineDBFacade::deleteWorkspace(
     // return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
+tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bool>
 	MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
@@ -2794,6 +2819,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
     
     return make_tuple(userKey, workspace,
         flags.find("ADMIN") == string::npos ? false : true,
+        flags.find("CREATEDELETE_WORKSPACE") == string::npos ? false : true,
         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
         flags.find("CREATE_PROFILES") == string::npos ? false : true,
         flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
@@ -3066,6 +3092,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
                 field = "admin";
                 workspaceDetailRoot[field] = flags.find("ADMIN") == string::npos ? false : true;
                 
+                field = "createRemoveWorkspace";
+                workspaceDetailRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos ? false : true;
+
                 field = "ingestWorkflow";
                 workspaceDetailRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos ? false : true;
 
@@ -3165,7 +3194,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
         int64_t newMaxStorageInMB, string newLanguageCode,
-        bool newIngestWorkflow, bool newCreateProfiles,
+        bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding)
 {
@@ -3292,6 +3321,12 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         {
             if (admin)
                 flags.append("ADMIN");
+            if (newCreateRemoveWorkspace)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("CREATEREMOVE_WORKSPACE");
+            }
             if (newIngestWorkflow)
             {
                 if (flags != "")
@@ -3398,6 +3433,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
         field = "admin";
         workspaceDetailRoot[field] = admin ? true : false;
+
+        field = "createRemoveWorkspace";
+        workspaceDetailRoot[field] = newCreateRemoveWorkspace ? true : false;
 
         field = "ingestWorkflow";
         workspaceDetailRoot[field] = newIngestWorkflow ? true : false;

@@ -1014,7 +1014,7 @@ public:
         string userEmailAddress,
         string userPassword,
         string userCountry,
-        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+        bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding,
         int64_t workspaceKeyToBeShared,
@@ -1026,7 +1026,7 @@ public:
 		string userName,
 		string userEmailAddress,
 		string userCountry,
-		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding,
 		int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2,
@@ -1036,14 +1036,14 @@ public:
 	string createAPIKeyForActiveDirectoryUser(
 		int64_t userKey,
 		string userEmailAddress,
-		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding,
 		int64_t workspaceKey);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool,bool,bool>
+    tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool,bool,bool,bool,bool,bool,bool>
 		checkAPIKey (string apiKey);
 
     Json::Value login (string eMailAddress, string password);
@@ -1059,7 +1059,7 @@ public:
         bool newEnabled, string newName, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
         int64_t newMaxStorageInMB, string newLanguageCode,
-        bool newIngestWorkflow, bool newCreateProfiles,
+        bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding);
 
@@ -1722,7 +1722,7 @@ private:
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
 		string userEmailAddress,
-		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding,
 		int64_t workspaceKey);
@@ -1778,6 +1778,7 @@ private:
         shared_ptr<MySQLConnection> conn,
         int64_t userKey,
         bool admin,
+		bool createRemoveWorkspace,
         bool ingestWorkflow,
         bool createProfiles,
         bool deliveryAuthorization,
