@@ -398,6 +398,7 @@ void API::manageRequestAndResponse(
         bool basicAuthenticationPresent,
         tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bool>&
 			userKeyWorkspaceAndFlags,
+		string apiKey,
         unsigned long contentLength,
         string requestBody,
         unordered_map<string, string>& requestDetails
@@ -741,7 +742,7 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        ingestion(request, workspace, queryParameters, requestBody);
+        ingestion(request, userKey, apiKey, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionRootsStatus")
     {

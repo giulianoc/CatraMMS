@@ -65,6 +65,7 @@ public:
             bool basicAuthenticationPresent,
             tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool, bool, bool,bool,bool,bool,bool>&
 				userKeyWorkspaceAndFlags,
+			string apiKey,
             unsigned long contentLength,
             string requestBody,
             unordered_map<string, string>& requestDetails
@@ -236,11 +237,13 @@ private:
 
     void ingestion(
         FCGX_Request& request,
+		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
+			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
@@ -249,6 +252,7 @@ private:
             string& responseBody);
         
 	vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+			int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
@@ -257,6 +261,7 @@ private:
 		string& responseBody);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
+			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,

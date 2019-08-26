@@ -43,6 +43,7 @@ public:
             unordered_map<string, string> queryParameters,
             bool basicAuthenticationPresent,
             tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool, bool, bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+			string apiKey,
             unsigned long contentLength,
             string requestBody,
             unordered_map<string, string>& requestDetails

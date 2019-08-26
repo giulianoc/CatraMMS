@@ -263,6 +263,7 @@ int APICommon::operator()()
         tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool, bool, bool, bool, bool, bool, bool>
 			userKeyWorkspaceAndFlags;
         bool basicAuthenticationPresent = basicAuthenticationRequired(requestURI, queryParameters);
+		string apiKey;
         if (basicAuthenticationPresent)
         {
             try
@@ -300,7 +301,7 @@ int APICommon::operator()()
                 }
 
                 string userKey = usernameAndPassword.substr(0, userNameSeparator);
-                string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
+                apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
                 // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
                 userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
@@ -402,7 +403,7 @@ int APICommon::operator()()
              */
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
-                    basicAuthenticationPresent, userKeyWorkspaceAndFlags, 
+                    basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
                     contentLength, requestBody, requestDetails);            
         }
         catch(AlreadyLocked e)

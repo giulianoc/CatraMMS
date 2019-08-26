@@ -128,6 +128,7 @@ void UploadBinary::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
+		string apiKey,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,

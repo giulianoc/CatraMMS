@@ -227,6 +227,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
         tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool, bool, bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+		string apiKey,
         unsigned long contentLength,
         string requestBody,
         unordered_map<string, string>& requestDetails
@@ -3072,14 +3073,22 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		bool internalMMSRootPresent = false;
+		// bool internalMMSRootPresent = false;
+		int64_t userKey;
+		string apiKey;
 		{
 			field = "InternalMMS";
     		if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
 			{
-				internalMMSRootPresent = true;
+				// internalMMSRootPresent = true;
 
 				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
+
+				field = "userKey";
+				userKey = internalMMSRoot.get(field, -1).asInt64();
+
+				field = "apiKey";
+				apiKey = internalMMSRoot.get(field, "").asString();
 
 				field = "OnSuccess";
     			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
@@ -3096,7 +3105,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		}
 
 		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
-		if (internalMMSRootPresent)
+		// if (internalMMSRootPresent)
 		{
 			Json::Value removed;
 			field = "InternalMMS";
@@ -3156,7 +3165,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		header.push_back("Content-Type: application/json");
 		{
-			string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
 			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 			header.push_back(basicAuthorization);
