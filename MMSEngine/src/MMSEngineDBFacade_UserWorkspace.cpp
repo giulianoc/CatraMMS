@@ -1266,7 +1266,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
-	int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2,
+	int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2, int64_t defaultWorkspaceKey_3,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -1351,6 +1351,17 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 					shareWorkspace, editMedia,
 					editConfiguration, killEncoding,
 					defaultWorkspaceKey_2);
+			}
+			if (defaultWorkspaceKey_3 != -1)
+			{
+				createAPIKeyForActiveDirectoryUser(
+					conn,
+					userKey,
+					userEmailAddress,
+					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
+					shareWorkspace, editMedia,
+					editConfiguration, killEncoding,
+					defaultWorkspaceKey_3);
 			}
         }
 
