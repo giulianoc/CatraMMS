@@ -1266,7 +1266,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding,
-	int64_t defaultWorkspaceKey_1, int64_t defaultWorkspaceKey_2, int64_t defaultWorkspaceKey_3,
+	string defaultWorkspaceKeys,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -1333,6 +1333,34 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
         
 		// create the API of the user for each existing Workspace
         {
+			_logger->info(__FILEREF__ + "Creating API for the default workspaces"
+				+ ", defaultWorkspaceKeys: " + defaultWorkspaceKeys
+			);
+			stringstream ssDefaultWorkspaceKeys(defaultWorkspaceKeys);                                                                                  
+			string defaultWorkspaceKey;
+			char separator = ',';
+			while (getline(ssDefaultWorkspaceKeys, defaultWorkspaceKey, separator))
+			{
+				if (!defaultWorkspaceKey.empty())
+				{
+					int64_t llDefaultWorkspaceKey = stoll(defaultWorkspaceKey);
+
+					_logger->info(__FILEREF__ + "Creating API for the default workspace"
+						+ ", llDefaultWorkspaceKey: " + to_string(llDefaultWorkspaceKey)
+					);
+					string localApiKey = createAPIKeyForActiveDirectoryUser(
+						conn,
+						userKey,
+						userEmailAddress,
+						createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
+						shareWorkspace, editMedia,
+						editConfiguration, killEncoding,
+						llDefaultWorkspaceKey);
+					if (apiKey.empty())
+						apiKey = localApiKey;
+				}
+			}
+			/*
 			apiKey = createAPIKeyForActiveDirectoryUser(
 				conn,
 				userKey,
@@ -1363,6 +1391,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 					editConfiguration, killEncoding,
 					defaultWorkspaceKey_3);
 			}
+			*/
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT

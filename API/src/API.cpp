@@ -321,17 +321,9 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->baseDn: " + _ldapBaseDn
     );
-	_ldapDefaultWorkspaceKey_1	= api["activeDirectory"].get("defaultWorkspaceKey_1", 0).asInt64();
+	_ldapDefaultWorkspaceKeys	= api["activeDirectory"].get("defaultWorkspaceKeys", 0).asString();
 	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->activeDirectory->defaultWorkspaceKey_1: " + to_string(_ldapDefaultWorkspaceKey_1)
-	);
-	_ldapDefaultWorkspaceKey_2  = api["activeDirectory"].get("defaultWorkspaceKey_2", 0).asInt64();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->activeDirectory->defaultWorkspaceKey_2: " + to_string(_ldapDefaultWorkspaceKey_2)
-	);
-	_ldapDefaultWorkspaceKey_3  = api["activeDirectory"].get("defaultWorkspaceKey_3", 0).asInt64();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->activeDirectory->defaultWorkspaceKey_3: " + to_string(_ldapDefaultWorkspaceKey_3)
+		+ ", api->activeDirectory->defaultWorkspaceKeys: " + _ldapDefaultWorkspaceKeys
 	);
 
 

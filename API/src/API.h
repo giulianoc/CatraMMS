@@ -116,9 +116,7 @@ private:
     string				_ldapManagerUserName;
     string				_ldapManagerPassword;
     string				_ldapBaseDn;
-	int64_t				_ldapDefaultWorkspaceKey_1;
-	int64_t				_ldapDefaultWorkspaceKey_2;
-	int64_t				_ldapDefaultWorkspaceKey_3;
+	string				_ldapDefaultWorkspaceKeys;
 
 
     FileUploadProgressData*     _fileUploadProgressData;

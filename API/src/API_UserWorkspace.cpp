@@ -1272,7 +1272,7 @@ void API::login(
 							string(""),	// userCountry,
 							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding,
-							_ldapDefaultWorkspaceKey_1, _ldapDefaultWorkspaceKey_2, _ldapDefaultWorkspaceKey_3,
+							_ldapDefaultWorkspaceKeys,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
 						);
