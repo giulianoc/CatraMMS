@@ -102,8 +102,8 @@ private:
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
     int									_mmsAPIPort;
-    string								_mmsAPIUser;
-    string								_mmsAPIPassword;
+    // string								_mmsAPIUser;
+    // string								_mmsAPIPassword;
     string								_mmsAPIIngestionURI;
 
     void encodeContent(

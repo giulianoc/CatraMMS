@@ -1,4 +1,5 @@
 
+#include <fstream>
 #include "MMSStorage.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
@@ -142,7 +143,7 @@ MMSStorage::MMSStorage(
             {
                 FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
                         &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-            }            
+            }
             catch (...) 
             {
                 break;
@@ -1455,6 +1456,34 @@ void MMSStorage::refreshPartitionsFreeSizes(void)
 
         FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
+
+		{
+			string partitionInfoPathName = pathNameToGetFileSystemInfo.append("/partitionInfo.json");
+			if (FileIO::fileExisting(partitionInfoPathName))
+			{
+				Json::Value partitionInfoJson;
+
+				try
+				{
+					ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+					partitionInfoFile >> partitionInfoJson;
+
+					int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
+					_logger->info(__FILEREF__ + "Partition info"
+						+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
+					);
+
+					if (maxStorageUsageInKB != -1)
+						ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+				}
+				catch(...)
+				{
+					_logger->error(__FILEREF__ + "wrong json partition info format"
+						+ ", partitionInfoPathName: " + partitionInfoPathName
+					);
+				}
+			}
+		}
 
         _mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex] =
                 ullAvailableInKB / 1024;

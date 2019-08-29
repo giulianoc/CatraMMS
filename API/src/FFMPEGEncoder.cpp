@@ -152,6 +152,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_mmsAPIPort)
     );
+	/*
     _mmsAPIUser = _configuration["api"].get("user", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->user: " + _mmsAPIUser
@@ -160,6 +161,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->password: " + "..."
     );
+	*/
     _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
@@ -2855,11 +2857,18 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 					// from utc to local time
 					localtime_r (&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
 
+					/*
 					sprintf (strCurrentRecordedFileTime,
 						"%04d-%02d-%02d %02d:%02d:%02d",
 						tmDateTime. tm_year + 1900,
 						tmDateTime. tm_mon + 1,
 						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+					*/
+					sprintf (strCurrentRecordedFileTime,
+						"%02d:%02d:%02d",
 						tmDateTime. tm_hour,
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
