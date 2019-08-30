@@ -1458,7 +1458,9 @@ void MMSStorage::refreshPartitionsFreeSizes(void)
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
 
 		{
-			string partitionInfoPathName = pathNameToGetFileSystemInfo.append("/partitionInfo.json");
+			string partitionInfoPathName = pathNameToGetFileSystemInfo;
+
+			partitionInfoPathName.append("/partitionInfo.json");
 			if (FileIO::fileExisting(partitionInfoPathName))
 			{
 				Json::Value partitionInfoJson;
