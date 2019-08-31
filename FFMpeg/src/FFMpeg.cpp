@@ -5558,7 +5558,9 @@ void FFMpeg::encodingVideoProfileValidation(
 {
     if (codec == "libx264")
     {
-        if (profile != "high" && profile != "baseline" && profile != "main")
+        if (profile != "high" && profile != "baseline" && profile != "main"
+				&& profile != "high422"	// used in case of mxf
+			)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
                     + ", codec: " + codec
