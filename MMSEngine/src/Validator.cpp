@@ -3871,7 +3871,8 @@ bool Validator::isImageFileFormat(string fileFormat)
         "tiff",
         "bmp",
         "gif",
-        "png"
+        "png",
+        "tga"
     };
 
     string lowerCaseFileFormat;
