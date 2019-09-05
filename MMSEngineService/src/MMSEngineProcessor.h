@@ -309,17 +309,17 @@ private:
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     */
-    void generateAndIngestConcatenationTask(
-        int64_t ingestionJobKey,
+    void generateAndIngestConcatenationThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
 
-    void generateAndIngestCutMediaTask(
-        int64_t ingestionJobKey,
+    void generateAndIngestCutMediaThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
 
     void manageEmailNotificationTask(
         int64_t ingestionJobKey,
