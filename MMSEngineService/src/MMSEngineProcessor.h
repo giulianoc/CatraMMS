@@ -92,6 +92,7 @@ private:
 
     int                     _maxIngestionJobsPerEvent;
     int                     _maxEncodingJobsPerEvent;
+    int						_maxEventManagementTimeInSeconds;
     int                     _dependencyExpirationInHours;
     size_t                  _downloadChunkSizeInMegaBytes;
     

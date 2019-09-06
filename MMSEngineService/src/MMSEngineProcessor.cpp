@@ -70,6 +70,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
     );
 
+    _maxEventManagementTimeInSeconds       = configuration["mms"].get("maxEventManagementTimeInSeconds", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds)
+    );
+
     _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
@@ -217,6 +222,8 @@ void MMSEngineProcessor::operator ()()
 
             continue;
         }
+
+		chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
         switch(event->getEventKey().first)
         {
@@ -463,6 +470,16 @@ void MMSEngineProcessor::operator ()()
                 throw runtime_error(string("Event type identifier not managed")
                         + to_string(event->getEventKey().first));
         }
+
+		chrono::system_clock::time_point endEvent = chrono::system_clock::now();
+		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
+
+		if (elapsedInSeconds > _maxEventManagementTimeInSeconds)
+			_logger->warn(__FILEREF__ + "MMSEngineProcessor. Event management took too time"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", event id: " + to_string(event->getEventKey().first)
+				+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+		);
     }
 
     _logger->info(__FILEREF__ + "MMSEngineProcessor thread terminated"
