@@ -1073,6 +1073,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					+ ", _durationInMilliSeconds: " + to_string(_encodingItem->_encodeData->_durationInMilliSeconds)
 					+ ", _contentType: " + to_string(static_cast<int>(_encodingItem->_encodeData->_contentType))
 					+ ", _relativePath: " + _encodingItem->_encodeData->_relativePath
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
 				);
 
 				// stagingEncodedAssetPathName preparation
