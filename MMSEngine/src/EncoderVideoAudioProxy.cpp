@@ -1062,7 +1062,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				string mmsSourceAssetPathName;
 
     
-				_logger->info(__FILEREF__ + "building body for encoder"
+				_logger->info(__FILEREF__ + "building body for encoder 1"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -1164,6 +1164,16 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 						}        
 					}
 				}
+
+				_logger->info(__FILEREF__ + "building body for encoder 2"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+					+ ", encodedFileName: " + encodedFileName
+
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
 
                 Json::Value encodingMedatada;
                 
