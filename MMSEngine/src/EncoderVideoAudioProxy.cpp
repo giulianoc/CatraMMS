@@ -1079,10 +1079,30 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
 				// stagingEncodedAssetPathName preparation
 				{
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", 1: "
+);
 					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
 					tie(mmsSourceAssetPathName, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", 2: "
+);
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
++ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
++ ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
+);
 					/*
 					mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
 						_encodingItem->_encodeData->_mmsPartitionNumber,
@@ -1090,6 +1110,20 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 						_encodingItem->_encodeData->_relativePath,
 						_encodingItem->_encodeData->_fileName);
 					*/
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", 3: "
+);
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
++ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
++ ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
+);
 					size_t extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
 					if (extensionIndex == string::npos)
 					{
@@ -1103,12 +1137,24 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 						throw runtime_error(errorMessage);
 					}
 
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", 4: "
+);
 					encodedFileName =
 						to_string(_encodingItem->_ingestionJobKey)
 						+ "_"
 						+ to_string(_encodingItem->_encodingJobKey)
 						+ "_" 
 						+ to_string(encodingProfileKey);
+_logger->info(__FILEREF__ + "building body for encoder 2"
++ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
++ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
++ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", 5: "
+);
 					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
 						encodedFileName.append(".mp4");
 					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
@@ -1127,6 +1173,16 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
 						throw runtime_error(errorMessage);
 					}
+				_logger->info(__FILEREF__ + "building body for encoder 3"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+					+ ", encodedFileName: " + encodedFileName
+
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
+
 
 					bool removeLinuxPathIfExist = true;
 					bool neededForTranscoder = false;
