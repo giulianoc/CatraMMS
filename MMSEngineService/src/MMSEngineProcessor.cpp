@@ -6810,6 +6810,8 @@ void MMSEngineProcessor::httpCallbackTask(
                     tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
 						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
+                    callbackMedatada["title"] = localTitle;
+
                     if (userData == "")
                         callbackMedatada["userData"] = Json::nullValue;
                     else
@@ -6860,6 +6862,7 @@ void MMSEngineProcessor::httpCallbackTask(
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
                     callbackMedatada["mediaItemKey"] = mediaItemKey;
+                    callbackMedatada["title"] = localTitle;
 
                     if (userData == "")
                         callbackMedatada["userData"] = Json::nullValue;
