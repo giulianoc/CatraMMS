@@ -1283,7 +1283,8 @@ public:
     tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetailsByPhysicalPathKey(
+    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
+		getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(

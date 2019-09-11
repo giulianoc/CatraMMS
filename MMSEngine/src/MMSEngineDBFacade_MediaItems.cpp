@@ -2200,7 +2200,8 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFacade::getMediaItemKeyDetails(
+tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+	MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
@@ -2245,7 +2246,8 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFa
                 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-                contentTypeTitleUserDataIngestionDateAndIngestionJobKey = make_tuple(contentType, title, userData, ingestionDate, ingestionJobKey);
+                contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					make_tuple(contentType, title, userData, ingestionDate, ingestionJobKey);
             }
             else
             {
@@ -2354,15 +2356,16 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFa
     }    
 }
 
-tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
+	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-		mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+		mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
     try
     {
@@ -2373,7 +2376,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEn
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, "
+                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, p.fileName, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
                 "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
@@ -2395,14 +2398,17 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEn
                 if (!resultSet->isNull("title"))
                     title = resultSet->getString("title");
 
+                string fileName = resultSet->getString("fileName");
+
                 string ingestionDate;
                 if (!resultSet->isNull("ingestionDate"))
                     ingestionDate = resultSet->getString("ingestionDate");
 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-                mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
-					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate, ingestionJobKey);                
+                mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate,
+						ingestionJobKey, fileName);                
             }
             else
             {
@@ -2425,7 +2431,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> MMSEn
         _connectionPool->unborrow(conn);
 		conn = nullptr;
         
-        return mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        return mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
     }
     catch(sql::SQLException se)
     {
@@ -2687,7 +2693,8 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
                 "where mi.mediaItemKey = eun.mediaItemKey "
                 "and eun.workspaceKey = ? and eun.uniqueName = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, referenceUniqueName);
@@ -2696,7 +2703,8 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             if (resultSet->next())
             {
                 mediaItemKeyAndContentType.first = resultSet->getInt64("mediaItemKey");
-                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(
+						resultSet->getString("contentType"));
             }
             else
             {

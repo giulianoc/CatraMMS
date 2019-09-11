@@ -3405,12 +3405,13 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             }
             else if (referencePhysicalPathKey != -1)
             {
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t> mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -3711,14 +3712,14 @@ void Validator::fillReferencesOutput(
 				try
 				{
 					bool warningIfMissing = true;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						referencePhysicalPathKey, warningIfMissing);  
 
 					int64_t localMediaItemKey;
-					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore) =
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore) =
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 					referencesOutput.push_back(make_pair(localMediaItemKey, referencePhysicalPathKey));
 				}

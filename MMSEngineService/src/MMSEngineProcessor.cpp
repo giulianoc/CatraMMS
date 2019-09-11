@@ -813,8 +813,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									else
 									{
 										bool warningIfMissing = false;
-										tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-											mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+										tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,
+											int64_t, string>
+											mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 											_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											key, warningIfMissing);
 
@@ -822,8 +823,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string localTitle;
 										string userData;
 										int64_t localIngestionJobKey;
-										tie(mediaItemKey, referenceContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-											= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+										tie(mediaItemKey, referenceContentType, localTitle, userData,
+												ingestionDate, localIngestionJobKey, ignore)
+											= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 									}
 								}
 								catch (exception e)
@@ -5904,8 +5906,8 @@ void MMSEngineProcessor::removeContentTask(
 				else
 				{
 					bool warningIfMissing = false;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 						key, warningIfMissing);
 
@@ -5915,8 +5917,9 @@ void MMSEngineProcessor::removeContentTask(
 					string localUserData;
 					string localIngestionDate;
 					int64_t localIngestionJobKey;
-					tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate, localIngestionJobKey)
-						= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+					tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate,
+							localIngestionJobKey, ignore)
+						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 					int ingestionDependenciesNumber = 
 						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(localIngestionJobKey);
@@ -6099,12 +6102,12 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
 				{
 					bool warningIfMissing = false;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 							physicalPathKey, warningIfMissing);            
-					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore) =
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore) =
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 				}
 
 				tuple<string, string, int64_t, string>
@@ -6307,13 +6310,13 @@ void MMSEngineProcessor::postOnFacebookTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
 
@@ -6543,13 +6546,13 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
             
@@ -6831,22 +6834,25 @@ void MMSEngineProcessor::httpCallbackTask(
                     callbackMedatada["physicalPathKey"] = key;
 
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
                     int64_t mediaItemKey;
                     MMSEngineDBFacade::ContentType contentType;
                     string localTitle;
+                    string fileName;
                     string userData;
 					string ingestionDate;
 					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate,
+							localIngestionJobKey, fileName)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
                     callbackMedatada["mediaItemKey"] = mediaItemKey;
                     callbackMedatada["title"] = localTitle;
+                    callbackMedatada["fileName"] = fileName;
 
                     if (userData == "")
                         callbackMedatada["userData"] = Json::nullValue;
@@ -7258,13 +7264,13 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
             
@@ -7454,13 +7460,13 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
-                    tie(ignore, contentType, ignore, ignore, ignore, ignore)
-                            = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore)
+                            = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
                 }
             }
             
@@ -9613,12 +9619,12 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
             
 
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
         
         /*
@@ -9809,13 +9815,13 @@ void MMSEngineProcessor::manageSlideShowTask(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
             
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
@@ -9972,20 +9978,20 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName
 				= _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
             
@@ -9996,8 +10002,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 string userData;
                 string ingestionDate;
 				int64_t localIngestionJobKey;
-                tie(localMediaItemKey, contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-					= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(localMediaItemKey, contentType, localTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore)
+					= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
             
             if (!concatContentTypeInitialized)
@@ -10304,12 +10311,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             sourcePhysicalPathKey = key;
 
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 
         bool warningIfMissing = false;
@@ -10705,8 +10712,8 @@ void MMSEngineProcessor::manageEncodeTask(
 				sourcePhysicalPathKey = key;
             
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 					sourcePhysicalPathKey, warningIfMissing);
 
@@ -10715,8 +10722,9 @@ void MMSEngineProcessor::manageEncodeTask(
 				string userData;
                 string ingestionDate;
 				int64_t localIngestionJobKey;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
 
@@ -10906,8 +10914,8 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 				sourcePhysicalPathKey = key;
             
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 					sourcePhysicalPathKey, warningIfMissing);
 
@@ -10916,8 +10924,9 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 				string userData;
                 string ingestionDate;
 				int64_t localIngestionJobKey;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
 
@@ -11058,13 +11067,13 @@ void MMSEngineProcessor::managePictureInPictureTask(
             sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_1, warningIfMissing);
 
-            tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore, ignore)
-				= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey_1, ignore, ignore, ignore, ignore, ignore, ignore)
+				= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
         {
@@ -11097,13 +11106,13 @@ void MMSEngineProcessor::managePictureInPictureTask(
             sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_2, warningIfMissing);
 
-            tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore, ignore)
-				= mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey_2, ignore, ignore, ignore, ignore, ignore, ignore)
+				= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
         {
@@ -11267,8 +11276,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_1, warningIfMissing);
 
@@ -11277,8 +11286,9 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             string userData;
             string ingestionDate;
 			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey_1,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey_1,localContentType, localTitle, userData, ingestionDate,
+					localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
         {
@@ -11311,8 +11321,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_2, warningIfMissing);
 
@@ -11321,8 +11331,9 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             string userData;
             string ingestionDate;
 			int64_t localIngestionJobKey;
-            tie(sourceMediaItemKey_2,localContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey_2,localContentType, localTitle, userData, ingestionDate,
+					localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 		else
         {
@@ -11495,13 +11506,13 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         }
 
 		_logger->info(__FILEREF__ + "addEncoding_OverlayTextOnVideoJob"
@@ -11626,8 +11637,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         	else
         	{
             	bool warningIfMissing = false;
-            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                 	_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     	key, warningIfMissing);
 
@@ -11635,8 +11646,9 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             	string userData;
                 string ingestionDate;
 				int64_t localIngestionJobKey;
-            	tie(mediaItemKey,localContentType, firstTitle, userData, ingestionDate, localIngestionJobKey)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            	tie(mediaItemKey,localContentType, firstTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
         	}
 		}
 
@@ -11845,13 +11857,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 int64_t physicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         physicalPathKey, warningIfMissing);
 
-                tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(firstMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 		}
 
@@ -11875,13 +11887,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 int64_t physicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         physicalPathKey, warningIfMissing);
 
-                tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(secondMediaItemKey,ignore, ignore, ignore, ignore, ignore, ignore)
+                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 		}
 
@@ -15870,6 +15882,20 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + ", data: " + data
                 + ", sResponse: " + sResponse
         );        
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);
+		if (responseCode != 200)
+		{
+			string errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
+                + ", userURL: " + userURL
+				+ ", responseCode: " + to_string(responseCode)
+                + ", data: " + data
+				+ ", sResponse: " + sResponse
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
