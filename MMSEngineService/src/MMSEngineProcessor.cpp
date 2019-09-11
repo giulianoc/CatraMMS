@@ -6061,19 +6061,19 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                 workspace->_workspaceKey, configurationLabel);            
         tie(ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory) = ftp;
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-				dependencies)
+        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
+		// 		dependencies)
+        for (int dependencyIndex = 0; dependencyIndex < dependencies.size(); dependencyIndex++)
         {
 			string mmsAssetPathName;
 			string fileName;
 			int64_t sizeInBytes;
 			string deliveryFileName;
+			int64_t mediaItemKey;
+			int64_t physicalPathKey;
 
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-			*/
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType =
+				dependencies[dependencyIndex];
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -6083,65 +6083,49 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
+				mediaItemKey = key;
+
                 int64_t encodingProfileKey = -1;
                
 				tuple<int64_t, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
+				tie(physicalPathKey, mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                shared_ptr<Workspace> workspace;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, ignore, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
             }
             else
             {
+				physicalPathKey = key;
+
+				{
+					bool warningIfMissing = false;
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+							physicalPathKey, warningIfMissing);            
+					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore) =
+						mediaItemKeyContentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+				}
+
 				tuple<string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
 				tie(mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
-
-                shared_ptr<Workspace> workspace;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, ignore, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
             }
 
-			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-            
+			bool updateIngestionJobToBeDone;
+			if (dependencyIndex + 1 >= dependencies.size())
+				updateIngestionJobToBeDone = true;
+			else
+				updateIngestionJobToBeDone = false;
+
             // check on thread availability was done at the beginning in this method
 			thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
 				_processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes,
-				ingestionJobKey, workspace, ftpServer, ftpPort, ftpUserName, ftpPassword,
-				ftpRemoteDirectory, deliveryFileName);
+				ingestionJobKey, workspace, mediaItemKey, physicalPathKey,
+				ftpServer, ftpPort, ftpUserName, ftpPassword,
+				ftpRemoteDirectory, deliveryFileName, updateIngestionJobToBeDone);
 			ftpUploadMediaSource.detach();
 		}
     }
@@ -13449,8 +13433,10 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+		int64_t mediaItemKey, int64_t physicalPathKey,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
-        string ftpRemoteDirectory, string ftpRemoteFileName)
+        string ftpRemoteDirectory, string ftpRemoteFileName,
+		bool updateIngestionJobToBeDone)
 {
 
     // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
@@ -13562,15 +13548,25 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );
         request.perform();
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
-        );
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+		// FTP-Delivery just forward the MIK to the next Task
+		{
+			int64_t liveRecordingIngestionJobKey = -1;
+			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
+				mediaItemKey, physicalPathKey, liveRecordingIngestionJobKey);
+		}
+
+		if (updateIngestionJobToBeDone)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+			);
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
-        );
+			);
+		}
     }
     catch (curlpp::LogicError & e) 
     {

@@ -374,8 +374,10 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+		int64_t mediaItemKey, int64_t physicalPathKey,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
-        string ftpRemoteDirectory, string ftpRemoteFileName);
+        string ftpRemoteDirectory, string ftpRemoteFileName,
+		bool updateIngestionJobToBeDone);
 
     void postVideoOnFacebookThread(
         shared_ptr<long> processorsThreadsNumber,
