@@ -6783,110 +6783,137 @@ void MMSEngineProcessor::httpCallbackTask(
                 {
                     callbackMedatada["mediaItemKey"] = key;
 
-                    bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
-                        _mmsEngineDBFacade->getMediaItemKeyDetails(
-                            key, warningIfMissing);
+					{
+						bool warningIfMissing = false;
+						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+							_mmsEngineDBFacade->getMediaItemKeyDetails(
+								key, warningIfMissing);
 
-                    MMSEngineDBFacade::ContentType contentType;
-                    string localTitle;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+						string localTitle;
+						string userData;
+						tie(ignore, localTitle, userData, ignore, ignore)
+							= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
-                    callbackMedatada["title"] = localTitle;
+						callbackMedatada["title"] = localTitle;
 
-                    if (userData == "")
-                        callbackMedatada["userData"] = Json::nullValue;
-                    else
-                    {
-                        Json::Value userDataRoot;
-                        {
-                            Json::CharReaderBuilder builder;
-                            Json::CharReader* reader = builder.newCharReader();
-                            string errors;
+						if (userData == "")
+							callbackMedatada["userData"] = Json::nullValue;
+						else
+						{
+							Json::Value userDataRoot;
+							{
+								Json::CharReaderBuilder builder;
+								Json::CharReader* reader = builder.newCharReader();
+								string errors;
 
-                            bool parsingSuccessful = reader->parse(userData.c_str(),
+								bool parsingSuccessful = reader->parse(userData.c_str(),
                                     userData.c_str() + userData.size(), 
                                     &userDataRoot, &errors);
-                            delete reader;
+								delete reader;
 
-                            if (!parsingSuccessful)
-                            {
-                                string errorMessage = __FILEREF__ + "failed to parse the userData"
+								if (!parsingSuccessful)
+								{
+									string errorMessage = __FILEREF__ + "failed to parse the userData"
                                         + ", errors: " + errors
                                         + ", userData: " + userData
                                         ;
-                                _logger->error(errorMessage);
+									_logger->error(errorMessage);
 
-                                throw runtime_error(errors);
-                            }
-                        }
+									throw runtime_error(errors);
+								}
+							}
 
-                        callbackMedatada["userData"] = userDataRoot;
-                    }
+							callbackMedatada["userData"] = userDataRoot;
+						}
+					}
+
+					{
+						int64_t encodingProfileKey = -1;
+						tuple<int64_t, string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPath(key, encodingProfileKey);
+
+						int64_t physicalPathKey;
+						string physicalPath;
+						string fileName;
+						int64_t sizeInBytes;
+						string deliveryFileName;
+
+						tie(physicalPathKey, physicalPath, ignore, ignore, ignore) = physicalPathDetails;
+
+						callbackMedatada["physicalPathKey"] = key;
+						callbackMedatada["physicalPath"] = physicalPath;
+					}
                 }
                 else
                 {
                     callbackMedatada["physicalPathKey"] = key;
 
-                    bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                            key, warningIfMissing);
+					{
+						bool warningIfMissing = false;
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+								key, warningIfMissing);
 
-                    int64_t mediaItemKey;
-                    MMSEngineDBFacade::ContentType contentType;
-                    string localTitle;
-                    string fileName;
-                    string userData;
-					string ingestionDate;
-					int64_t localIngestionJobKey;
-                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate,
-							localIngestionJobKey, fileName)
+						int64_t mediaItemKey;
+						string localTitle;
+						string userData;
+						tie(mediaItemKey, ignore, localTitle, userData, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
-                    callbackMedatada["mediaItemKey"] = mediaItemKey;
-                    callbackMedatada["title"] = localTitle;
-                    callbackMedatada["fileName"] = fileName;
+						callbackMedatada["mediaItemKey"] = mediaItemKey;
+						callbackMedatada["title"] = localTitle;
 
-                    if (userData == "")
-                        callbackMedatada["userData"] = Json::nullValue;
-                    else
-                    {
-                        Json::Value userDataRoot;
-                        {
-                            Json::CharReaderBuilder builder;
-                            Json::CharReader* reader = builder.newCharReader();
-                            string errors;
+						if (userData == "")
+							callbackMedatada["userData"] = Json::nullValue;
+						else
+						{
+							Json::Value userDataRoot;
+							{
+								Json::CharReaderBuilder builder;
+								Json::CharReader* reader = builder.newCharReader();
+								string errors;
 
-                            bool parsingSuccessful = reader->parse(userData.c_str(),
+								bool parsingSuccessful = reader->parse(userData.c_str(),
                                     userData.c_str() + userData.size(), 
                                     &userDataRoot, &errors);
-                            delete reader;
+								delete reader;
 
-                            if (!parsingSuccessful)
-                            {
-                                string errorMessage = __FILEREF__ + "failed to parse the userData"
+								if (!parsingSuccessful)
+								{
+									string errorMessage = __FILEREF__ + "failed to parse the userData"
                                         + ", errors: " + errors
                                         + ", userData: " + userData
                                         ;
-                                _logger->error(errorMessage);
+									_logger->error(errorMessage);
 
-                                throw runtime_error(errors);
-                            }
-                        }
+									throw runtime_error(errors);
+								}
+							}
 
-                        callbackMedatada["userData"] = userDataRoot;
-                    }
+							callbackMedatada["userData"] = userDataRoot;
+						}
+					}
+
+					{
+						int64_t encodingProfileKey = -1;
+						tuple<string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPath(key);
+
+						string physicalPath;
+						string fileName;
+						int64_t sizeInBytes;
+						string deliveryFileName;
+
+						tie(physicalPath, ignore, ignore, ignore) = physicalPathDetails;
+
+						callbackMedatada["physicalPath"] = physicalPath;
+					}
                 }
             }
         }
-        
+
         // check on thread availability was done at the beginning in this method
         thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
             _processorsThreadsNumber, ingestionJobKey, httpProtocol, httpHostName, 
@@ -13562,6 +13589,12 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
 		// FTP-Delivery just forward the MIK to the next Task
 		{
+			_logger->info(__FILEREF__ + "addIngestionJobOutput"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+			);
 			int64_t liveRecordingIngestionJobKey = -1;
 			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
 				mediaItemKey, physicalPathKey, liveRecordingIngestionJobKey);
