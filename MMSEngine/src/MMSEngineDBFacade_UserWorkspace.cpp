@@ -36,108 +36,238 @@ string trim(string s)
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-    _logger->debug(__FILEREF__ + "DB connection borrow"
-        + ", getConnectionId: " + to_string(conn->getConnectionId())
-    );
+    shared_ptr<MySQLConnection> conn = nullptr;
+    string  lastSQLCommand;
 
-    string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
-		"from MMS_Workspace where workspaceKey = ?";
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-    int queryParameterIndex = 1;
-    preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+    try
+    {
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
 
-    shared_ptr<Workspace>    workspace = make_shared<Workspace>();
+		lastSQLCommand =
+			"select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
+			"from MMS_Workspace where workspaceKey = ?";
+		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+		int queryParameterIndex = 1;
+		preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+		shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
-    if (resultSet->next())
-    {
-        workspace->_workspaceKey = resultSet->getInt("workspaceKey");
-        workspace->_name = resultSet->getString("name");
-        workspace->_directoryName = resultSet->getString("directoryName");
-        workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
-        workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
+		if (resultSet->next())
+		{
+			workspace->_workspaceKey = resultSet->getInt("workspaceKey");
+			workspace->_name = resultSet->getString("name");
+			workspace->_directoryName = resultSet->getString("directoryName");
+			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
+			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
+						resultSet->getString("maxEncodingPriority")));
 
-        // getTerritories(workspace);
-    }
-    else
-    {
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
+			// getTerritories(workspace);
+		}
+		else
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
 
-        string errorMessage = __FILEREF__ + "select failed"
+			string errorMessage = __FILEREF__ + "select failed"
                 + ", workspaceKey: " + to_string(workspaceKey)
                 + ", lastSQLCommand: " + lastSQLCommand
-        ;
-        _logger->error(errorMessage);
+			;
+			_logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);                    
-    }
+			throw runtime_error(errorMessage);                    
+		}
 
-    _logger->debug(__FILEREF__ + "DB connection unborrow"
-        + ", getConnectionId: " + to_string(conn->getConnectionId())
-    );
-    _connectionPool->unborrow(conn);
-	conn = nullptr;
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		_connectionPool->unborrow(conn);
+		conn = nullptr;
     
-    return workspace;
+		return workspace;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
 }
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-    _logger->debug(__FILEREF__ + "DB connection borrow"
-        + ", getConnectionId: " + to_string(conn->getConnectionId())
-    );
+    shared_ptr<MySQLConnection> conn = nullptr;
+    string  lastSQLCommand;
 
-    string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
-		"from MMS_Workspace where name = ?";
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-    int queryParameterIndex = 1;
-    preparedStatement->setString(queryParameterIndex++, workspaceName);
-    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+    try
+    {
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
 
-    shared_ptr<Workspace>    workspace = make_shared<Workspace>();
+		lastSQLCommand =
+			"select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
+			"from MMS_Workspace where name = ?";
+		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+		int queryParameterIndex = 1;
+		preparedStatement->setString(queryParameterIndex++, workspaceName);
+		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+		shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
-    if (resultSet->next())
-    {
-        workspace->_workspaceKey = resultSet->getInt("workspaceKey");
-        workspace->_name = resultSet->getString("name");
-        workspace->_directoryName = resultSet->getString("directoryName");
-        workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
-        workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
+		if (resultSet->next())
+		{
+			workspace->_workspaceKey = resultSet->getInt("workspaceKey");
+			workspace->_name = resultSet->getString("name");
+			workspace->_directoryName = resultSet->getString("directoryName");
+			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
+			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
+						resultSet->getString("maxEncodingPriority")));
 
-        // getTerritories(workspace);
-    }
-    else
-    {
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-		conn = nullptr;
+			// getTerritories(workspace);
+		}
+		else
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
 
-        string errorMessage = __FILEREF__ + "select failed"
+			string errorMessage = __FILEREF__ + "select failed"
                 + ", workspaceName: " + workspaceName
                 + ", lastSQLCommand: " + lastSQLCommand
-        ;
-        _logger->error(errorMessage);
+			;
+			_logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);                    
-    }
+			throw runtime_error(errorMessage);                    
+		}
 
-    _logger->debug(__FILEREF__ + "DB connection unborrow"
-        + ", getConnectionId: " + to_string(conn->getConnectionId())
-    );
-    _connectionPool->unborrow(conn);
-	conn = nullptr;
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		_connectionPool->unborrow(conn);
+		conn = nullptr;
     
-    return workspace;
+		return workspace;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
 }
 
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(

@@ -1302,13 +1302,25 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
             }
         }
 
-        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+		_logger->info(__FILEREF__ + "getStorageDetails"
+			+ ", physicalPathKey: " + to_string(physicalPathKey)
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+			+ ", relativePath: " + relativePath
+			+ ", fileName: " + fileName
+			+ ", deliveryFileName: " + deliveryFileName
+			+ ", title: " + title
+			+ ", sizeInBytes: " + to_string(sizeInBytes)
+			+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+		);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
         return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
@@ -1457,13 +1469,13 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
             }
         }
 
-        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
         return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);

@@ -1083,8 +1083,10 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
++ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
 + ", 1: "
 );
+// 2019-09-14: crashed after the above message
 					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
 					tie(mmsSourceAssetPathName, ignore, ignore, ignore)
