@@ -64,7 +64,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         {
             lastSQLCommand = 
                 "select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
-				"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+				"DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem where "
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMSForRetention is null "
