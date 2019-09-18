@@ -63,7 +63,9 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 !noMoreRowsReturned)
         {
             lastSQLCommand = 
-                "select workspaceKey, mediaItemKey, ingestionJobKey from MMS_MediaItem where "
+                "select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
+				"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+				"from MMS_MediaItem where "
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMSForRetention is null "
                 "limit ? offset ? for update";
@@ -83,6 +85,9 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
                 int64_t workspaceKey = resultSet->getInt64("workspaceKey");
                 int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                int64_t retentionInMinutes = resultSet->getInt64("retentionInMinutes");
+                string ingestionDate = resultSet->getString("ingestionDate");
+                string title = resultSet->getString("title");
                 
                 // check if there is still an ingestion depending on the ingestionJobKey
                 bool ingestionDependingOnMediaItemKey = false;
@@ -159,6 +164,9 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                         + "ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", title: " + title
+                        + ", ingestionDate: " + ingestionDate
+                        + ", retentionInMinutes: " + to_string(retentionInMinutes)
                     );
                 }
             }
