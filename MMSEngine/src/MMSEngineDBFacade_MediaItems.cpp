@@ -2544,7 +2544,11 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
         {
             // order by in the next select is important  to have the right order in case of dependency in a workflow
             lastSQLCommand = 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
+                "select ijo.mediaItemKey, ijo.physicalPathKey from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
+				"where ijo.mediaItemKey = mi.mediaItemKey and ijo.ingestionJobKey = ? and "
+				"(JSON_EXTRACT(userData, '$.mmsData.validated') is null or "	// in case of no live chunk MIK
+					"JSON_EXTRACT(userData, '$.mmsData.validated') = true) "	// in case of live chunk MIK, we get only the one validated
+				"order by ijo.mediaItemKey";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
