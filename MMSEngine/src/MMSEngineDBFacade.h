@@ -1143,6 +1143,9 @@ public:
 
 	void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
 
+	bool liveRecorderMainAndBackupChunksManagementCompleted(
+		int64_t ingestionJobKey);
+
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     
     int64_t addIngestionRoot (

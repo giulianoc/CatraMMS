@@ -4664,7 +4664,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             
-		_logger->info(__FILEREF__ + "VidepoSpeed media file"
+		_logger->info(__FILEREF__ + "VideoSpeed media file"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
@@ -8950,9 +8950,13 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
     try
     {
 		bool main;
+		bool highAvailability;
 		{
 			string field = "main";
 			main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+			field = "highAvailability";
+			highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
 		}
 
 		/*
@@ -8964,18 +8968,59 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 
 		if (main)
 		{
-			string errorMessage;
-			string processorMMS;
-			MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
-				MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-				+ ", errorMessage: " + errorMessage
-				+ ", processorMMS: " + processorMMS
-			);
-			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
-				errorMessage);
+			// in case of highAvailability, the IngestionJob is not updated to Success until all the
+			// main and backup chunks are managed.
+			// This is to avoid the 'on success' task receives input MIKs that are not validated (and that
+			// will be removed soon)
+			if (highAvailability)
+			{
+				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
+				// So in case this is changed, also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA has to be changed too
+				int toleranceMinutes = 5;
+				int sleepTimeInSeconds = 15;	// main and backup management starts: * * * * * * 15,30,45
+
+				_logger->info(__FILEREF__ + "Waiting the finishing of main and backup chunks management"
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				);
+
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				chrono::system_clock::time_point endPoint;
+				bool mainAndBackupChunksManagementCompleted;
+				do
+				{
+					this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
+
+					mainAndBackupChunksManagementCompleted = _mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
+						_encodingItem->_ingestionJobKey);
+					endPoint = chrono::system_clock::now();
+				}
+				while(!mainAndBackupChunksManagementCompleted ||
+					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() > toleranceMinutes * 60);
+
+				if (mainAndBackupChunksManagementCompleted)
+					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					);
+				else
+					_logger->warn(__FILEREF__ + "Managing of main and backup chunks NOT completed"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					);
+			}
+
+			{
+				string errorMessage;
+				string processorMMS;
+				MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
+					MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);
+				_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+					errorMessage);
+			}
 		}
 		else
 		{

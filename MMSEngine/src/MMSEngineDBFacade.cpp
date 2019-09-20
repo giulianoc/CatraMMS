@@ -516,6 +516,9 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         }
         
         {
+			// the setting of this variable is done also in EncoderVideoAudioProxy::processLiveRecorder method
+			// So in case this is changed, also in EncoderVideoAudioProxy::processLiveRecorder has to be changed too
+
 			// if the ingestionJob is 'just' finished, anyway we have to get the ingestionJob
 			// in order to remove the last backup file 
 			int toleranceMinutes = 5;
@@ -1117,6 +1120,106 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         throw e;
     }
 }
+
+bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
+		int64_t ingestionJobKey)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		bool		mainAndBackupChunksManagementCompleted = false;
+
+        {
+            lastSQLCommand =
+				string("select count(*) from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
+					"where ijo.mediaItemKey = mi.mediaItemKey and ijo.ingestionJobKey = ? "
+					"and JSON_EXTRACT(mi.userData, '$.mmsData.validated') = false "
+				);
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+				mainAndBackupChunksManagementCompleted = (resultSet->getInt64(1) == 0) ? true : false;
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return mainAndBackupChunksManagementCompleted;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (
     int64_t workspaceKey

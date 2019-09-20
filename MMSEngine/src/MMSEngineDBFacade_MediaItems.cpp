@@ -2543,12 +2543,19 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
         {
             // order by in the next select is important  to have the right order in case of dependency in a workflow
+			/*
             lastSQLCommand = 
                 "select ijo.mediaItemKey, ijo.physicalPathKey from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where ijo.mediaItemKey = mi.mediaItemKey and ijo.ingestionJobKey = ? and "
 				"(JSON_EXTRACT(userData, '$.mmsData.validated') is null or "	// in case of no live chunk MIK
 					"JSON_EXTRACT(userData, '$.mmsData.validated') = true) "	// in case of live chunk MIK, we get only the one validated
 				"order by ijo.mediaItemKey";
+			*/
+			// 2019-09-20: The Live-Recorder task now updates the Ingestion Status at the end of the task,
+			// when main and backup management is finished (no MIKs with valitaded==false are present)
+			// So we do not need anymore the above check
+			lastSQLCommand =
+				"select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey"
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
