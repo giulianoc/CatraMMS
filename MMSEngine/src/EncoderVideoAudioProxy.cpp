@@ -8995,8 +8995,8 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					endPoint = chrono::system_clock::now();
 					mainAndBackupChunksManagementCompleted = false;
 				}
-				while(!mainAndBackupChunksManagementCompleted ||
-					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() > toleranceMinutes * 60);
+				while(!mainAndBackupChunksManagementCompleted &&
+					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
 
 				if (mainAndBackupChunksManagementCompleted)
 					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
