@@ -8993,7 +8993,6 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					mainAndBackupChunksManagementCompleted = _mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
 						_encodingItem->_ingestionJobKey);
 					endPoint = chrono::system_clock::now();
-					mainAndBackupChunksManagementCompleted = false;
 				}
 				while(!mainAndBackupChunksManagementCompleted &&
 					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
