@@ -2555,7 +2555,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// when main and backup management is finished (no MIKs with valitaded==false are present)
 			// So we do not need anymore the above check
 			lastSQLCommand =
-				"select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey"
+				"select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
