@@ -7,8 +7,8 @@
 
 	"Parameters": {
 
-		// mandatory, supported protocols: http, https, rtsp, ...
-		"LiveURL": "https://...",
+		// mandatory...
+		"ConfigurationLabel": "",
 
 		// optional. If this parameter is true, MMS starts two recordings,
 		// a main and a backup recording. Both will ingest the chunk media items but 

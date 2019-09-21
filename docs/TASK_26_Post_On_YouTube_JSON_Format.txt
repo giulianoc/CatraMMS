@@ -21,6 +21,10 @@
 			// In case this task depend on one task generating a profile (i.e. Encode Task),
 			// the profile will be used.
 
+			// The below object could contain optionally the "ErrorContentIfNotFound" boolean field
+			// to specify if the MMS has to continue or not in case of a content not found.
+			// Default is true
+
 			{ "ReferenceMediaItemKey": 11 }
 		],
 

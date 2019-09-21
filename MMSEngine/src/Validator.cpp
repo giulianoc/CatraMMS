@@ -3343,6 +3343,11 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
     {
         Json::Value referenceRoot = referencesRoot[referenceIndex];
 
+		bool errorIfContentNotFound = true;
+        field = "ErrorContentIfNotFound";
+        if (isMetadataPresent(referenceRoot, field))
+			errorIfContentNotFound = referenceRoot.get(field, true).asBool();
+
         int64_t referenceMediaItemKey = -1;
         int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
@@ -3546,12 +3551,35 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             {
             }
         }
+        catch(MediaItemKeyNotFound e)
+        {
+            string errorMessage = __FILEREF__ + "Reference... was not found"
+				+ ", label: " + label
+				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+				+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", referenceUniqueName: " + referenceUniqueName
+				+ ", referenceLabel: " + to_string(referenceLabel)
+                    ;
+			if (errorIfContentNotFound)
+			{
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				_logger->warn(errorMessage);
+
+				continue;
+			}
+        }
         catch(runtime_error e)
         {
             string errorMessage = __FILEREF__ + "Reference... was not found"
                     + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
                     ;
-            _logger->warn(errorMessage);
+            _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
