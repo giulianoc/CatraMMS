@@ -1481,10 +1481,16 @@ void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed)
 						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
 						_logger->info(__FILEREF__ + "Partition info"
 							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
+							+ ", ullUsedInKB: " + to_string(ullUsedInKB)
 						);
 
 						if (maxStorageUsageInKB != -1)
-							ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+						{
+							if (maxStorageUsageInKB > ullUsedInKB)
+								ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+							else
+								ullAvailableInKB = 0;
+						}
 					}
 					catch(...)
 					{
@@ -1537,10 +1543,16 @@ void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed)
 						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
 						_logger->info(__FILEREF__ + "Partition info"
 							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
+							+ ", ullUsedInKB: " + to_string(ullUsedInKB)
 						);
 
 						if (maxStorageUsageInKB != -1)
-							ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+						{
+							if (maxStorageUsageInKB > ullUsedInKB)
+								ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+							else
+								ullAvailableInKB = 0;
+						}
 					}
 					catch(...)
 					{
