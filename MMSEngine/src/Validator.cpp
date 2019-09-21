@@ -3344,7 +3344,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         Json::Value referenceRoot = referencesRoot[referenceIndex];
 
 		bool errorIfContentNotFound = true;
-        field = "ErrorContentIfNotFound";
+        field = "ErrorIfContentNotFound";
         if (isMetadataPresent(referenceRoot, field))
 			errorIfContentNotFound = referenceRoot.get(field, true).asBool();
 

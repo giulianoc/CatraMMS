@@ -14,7 +14,7 @@
 			// of the video by which the Overlay has to depend on.
 			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
-			// The below object could contain optionally the "ErrorContentIfNotFound" boolean field
+			// The below object could contain optionally the "ErrorIfContentNotFound" boolean field
 			// to specify if the MMS has to continue or not in case of a content not found.
 			// Default is true
 
