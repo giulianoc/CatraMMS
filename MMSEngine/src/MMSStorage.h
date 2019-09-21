@@ -67,7 +67,7 @@ public:
     
     void removeMediaItem(int64_t mediaItemKey);
 
-    void refreshPartitionsFreeSizes (void);
+    void refreshPartitionsFreeSizes (long partitionIndexToBeRefreshed);
 
     void moveContentInRepository (
         string filePathName,

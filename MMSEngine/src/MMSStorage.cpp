@@ -158,7 +158,7 @@ MMSStorage::MMSStorage(
             throw runtime_error("No MMS partition found");
         }
 
-        refreshPartitionsFreeSizes();
+        refreshPartitionsFreeSizes(-1);
     }
 }
 
@@ -1071,6 +1071,8 @@ string MMSStorage::moveAssetInMMSRepository(
     // update _pullMMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
     if (partitionIndexToBeCalculated) 
     {
+		refreshPartitionsFreeSizes(_ulCurrentMMSPartitionIndex); 
+		/*
         unsigned long long ullUsedInKB;
         unsigned long long ullAvailableInKB;
         long lPercentUsed;
@@ -1086,6 +1088,7 @@ string MMSStorage::moveAssetInMMSRepository(
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", _mmsPartitionsFreeSizeInMB[" + to_string(_ulCurrentMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex])
         );
+		*/
     }
 
 
@@ -1434,7 +1437,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
     return ulStorageUsageInMB;
 }
 
-void MMSStorage::refreshPartitionsFreeSizes(void) 
+void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed) 
 {
     char pMMSPartitionName [64];
     unsigned long long ullUsedInKB;
@@ -1444,60 +1447,127 @@ void MMSStorage::refreshPartitionsFreeSizes(void)
 
     lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-    for (unsigned long ulMMSPartitionIndex = 0;
+	if (partitionIndexToBeRefreshed == -1)
+	{
+		for (unsigned long ulMMSPartitionIndex = 0;
             ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
             ulMMSPartitionIndex++) 
-    {
-        string pathNameToGetFileSystemInfo(_mmsRootRepository);
+		{
+			string pathNameToGetFileSystemInfo(_mmsRootRepository);
 
-        sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
+			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
 
-        pathNameToGetFileSystemInfo.append(pMMSPartitionName);
+			pathNameToGetFileSystemInfo.append(pMMSPartitionName);
 
-        FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
+			FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
 
-		{
-			string partitionInfoPathName = pathNameToGetFileSystemInfo;
-
-			partitionInfoPathName.append("/partitionInfo.json");
-			_logger->info(__FILEREF__ + "Looking for the Partition info file"
-				+ ", partitionInfoPathName: " + partitionInfoPathName
-			);
-			if (FileIO::fileExisting(partitionInfoPathName))
 			{
-				Json::Value partitionInfoJson;
+				string partitionInfoPathName = pathNameToGetFileSystemInfo;
 
-				try
+				partitionInfoPathName.append("/partitionInfo.json");
+				_logger->info(__FILEREF__ + "Looking for the Partition info file"
+					+ ", partitionInfoPathName: " + partitionInfoPathName
+				);
+				if (FileIO::fileExisting(partitionInfoPathName))
 				{
-					ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
-					partitionInfoFile >> partitionInfoJson;
+					Json::Value partitionInfoJson;
 
-					int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
-					_logger->info(__FILEREF__ + "Partition info"
-						+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
-					);
+					try
+					{
+						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+						partitionInfoFile >> partitionInfoJson;
 
-					if (maxStorageUsageInKB != -1)
-						ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
-				}
-				catch(...)
-				{
-					_logger->error(__FILEREF__ + "wrong json partition info format"
-						+ ", partitionInfoPathName: " + partitionInfoPathName
-					);
+						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
+						_logger->info(__FILEREF__ + "Partition info"
+							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
+						);
+
+						if (maxStorageUsageInKB != -1)
+							ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+					}
+					catch(...)
+					{
+						_logger->error(__FILEREF__ + "wrong json partition info format"
+							+ ", partitionInfoPathName: " + partitionInfoPathName
+						);
+					}
 				}
 			}
-		}
 
-        _mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex] =
+			_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex] =
                 ullAvailableInKB / 1024;
 
-        _logger->info(__FILEREF__ + "Available space"
-            + ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
-            + ", _mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex])
-        );
-    }
+			_logger->info(__FILEREF__ + "Available space"
+				+ ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
+				+ ", _mmsPartitionsFreeSizeInMB[" + to_string(ulMMSPartitionIndex) + "]: "
+					+ to_string(_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex])
+			);
+		}
+	}
+	else
+	{
+		if (partitionIndexToBeRefreshed < _mmsPartitionsFreeSizeInMB.size())
+		{
+			string pathNameToGetFileSystemInfo(_mmsRootRepository);
+
+			sprintf(pMMSPartitionName, "MMS_%04ld", partitionIndexToBeRefreshed);
+
+			pathNameToGetFileSystemInfo.append(pMMSPartitionName);
+
+			FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
+                &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
+
+			{
+				string partitionInfoPathName = pathNameToGetFileSystemInfo;
+
+				partitionInfoPathName.append("/partitionInfo.json");
+				_logger->info(__FILEREF__ + "Looking for the Partition info file"
+					+ ", partitionInfoPathName: " + partitionInfoPathName
+				);
+				if (FileIO::fileExisting(partitionInfoPathName))
+				{
+					Json::Value partitionInfoJson;
+
+					try
+					{
+						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+						partitionInfoFile >> partitionInfoJson;
+
+						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
+						_logger->info(__FILEREF__ + "Partition info"
+							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
+						);
+
+						if (maxStorageUsageInKB != -1)
+							ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
+					}
+					catch(...)
+					{
+						_logger->error(__FILEREF__ + "wrong json partition info format"
+							+ ", partitionInfoPathName: " + partitionInfoPathName
+						);
+					}
+				}
+			}
+
+			_mmsPartitionsFreeSizeInMB[partitionIndexToBeRefreshed] =
+                ullAvailableInKB / 1024;
+
+			_logger->info(__FILEREF__ + "Available space"
+				+ ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
+				+ ", _mmsPartitionsFreeSizeInMB[" + to_string(partitionIndexToBeRefreshed) + "]: "
+					+ to_string(_mmsPartitionsFreeSizeInMB[partitionIndexToBeRefreshed])
+			);
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "Wrong input"
+				+ ", partitionIndexToBeRefreshed: " + to_string(partitionIndexToBeRefreshed)
+				+ ", _mmsPartitionsFreeSizeInMB.size(): " + to_string(_mmsPartitionsFreeSizeInMB.size())
+			);
+		}
+	}
 }
 
 string MMSStorage::creatingDirsUsingTerritories(
