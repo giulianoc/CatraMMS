@@ -2944,7 +2944,23 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    string field = "RecordingPeriod";
+    string field = "UniqueName";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+		string errorMessage = __FILEREF__ + "Field cannot be present in this Task"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+    field = "RecordingPeriod";
 	Json::Value recordingPeriodRoot = parametersRoot[field];
     field = "Start";
 	if (!isMetadataPresent(recordingPeriodRoot, field))

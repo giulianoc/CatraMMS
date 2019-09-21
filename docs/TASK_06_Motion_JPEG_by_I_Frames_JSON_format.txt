@@ -64,6 +64,15 @@
 		// optional: it specifies the filename without extension used by MMS when the content is delivered
 		"DeliveryFileName": "myFileName",
 
+		// Optional: UniqueName can be used by the Client to set a Key to the content.
+		// Since it represents a unique key, the Client cannot add two contents using the same UniqueName within a Workspace,
+		// unless the field 'AllowUniqueNameOverride' is set to true
+		"UniqueName": "XXX",
+
+		// Optional: if true this field allow a unique name to be override. Since the UniqueName has to be unique in MMS,
+		// in case a UniqueName is override, the previous one is changed to be <previous unique name>-<timestamp>
+		"AllowUniqueNameOverride": false,
+
 		// optional: by default the content is published.
 		//    It specifies if and when the content is published.
 		//    In case the content is not published, the delivery of the content will fail

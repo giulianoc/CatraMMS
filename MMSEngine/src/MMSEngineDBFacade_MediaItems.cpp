@@ -3607,6 +3607,24 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
             if (uniqueName != "")
             {
+				bool allowUniqueNameOverride = false;
+				if (isMetadataPresent(parametersRoot, "AllowUniqueNameOverride"))
+					allowUniqueNameOverride = parametersRoot.get("AllowUniqueNameOverride", false).asBool();
+
+				if (allowUniqueNameOverride)
+				{
+					lastSQLCommand = 
+						"update MMS_ExternalUniqueName set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+						"where workspaceKey = ? and uniqueName = ?";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+					preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+					int rowsUpdated = preparedStatement->executeUpdate();
+				}
+
                 lastSQLCommand = 
                     "insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) values ("
                     "?, ?, ?)";

@@ -681,11 +681,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
 	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
 	// In these case we use the "DependenciesToBeAddedToReferences" parameter.
-    bool dependenciesToBeAddedToReferences = false;
+	string atTheBeginning = "AtTheBeginning";
+	string atTheEnd = "AtTheEnd";
+
+    string dependenciesToBeAddedToReferences;
     field = "DependenciesToBeAddedToReferences";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
-		dependenciesToBeAddedToReferences = parametersRoot.get(field, false).asBool();
+		dependenciesToBeAddedToReferences = parametersRoot.get(field, "").asString();
+		if (dependenciesToBeAddedToReferences != atTheBeginning
+				&& dependenciesToBeAddedToReferences != atTheEnd)
+			dependenciesToBeAddedToReferences = "";
 	}
 
 	// initialize referencesRoot
@@ -800,25 +806,49 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         + ", IngestionType: " + type
         + ", parametersSectionPresent: " + to_string(parametersSectionPresent)
         + ", referencesSectionPresent: " + to_string(referencesSectionPresent)
-        + ", dependenciesToBeAddedToReferences: " + to_string(dependenciesToBeAddedToReferences)
+        + ", dependenciesToBeAddedToReferences: " + dependenciesToBeAddedToReferences
         + ", dependOnIngestionJobKeysOverallInput.size(): " + to_string(dependOnIngestionJobKeysOverallInput.size())
     );
 
 	// add to referencesRoot all the inherited references
-    if ((!referencesSectionPresent || dependenciesToBeAddedToReferences)
+    if ((!referencesSectionPresent || dependenciesToBeAddedToReferences != "")
 			&& dependOnIngestionJobKeysOverallInput.size() > 0)
     {
 		// Enter here if No References tag is present (so we have to add the inherit input)
 		// OR we want to add dependOnReferences to the Raferences tag
 
-        for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
-        {
-            Json::Value referenceRoot;
-            string addedField = "ReferenceIngestionJobKey";
-            referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
+		if (dependenciesToBeAddedToReferences == atTheBeginning)
+		{
+			for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
+					referenceIndex > 0; --referenceIndex)
+			{
+				Json::Value referenceRoot;
+				string addedField = "ReferenceIngestionJobKey";
+				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
             
-            referencesRoot.append(referenceRoot);
-        }
+				// add at the beginning in referencesRoot
+				{
+					int previousSize = referencesRoot.size();
+					referencesRoot.resize(previousSize + 1);
+					for(int index = previousSize; index > 0 ; index--)
+					{
+						referencesRoot[index] = referencesRoot[index - 1];
+					}
+					referencesRoot[0]= referenceRoot;
+				}
+			}
+		}
+		else
+		{
+			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
+			{
+				Json::Value referenceRoot;
+				string addedField = "ReferenceIngestionJobKey";
+				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
+            
+				referencesRoot.append(referenceRoot);
+			}
+		}
 
         field = "Parameters";
         string arrayField = "References";

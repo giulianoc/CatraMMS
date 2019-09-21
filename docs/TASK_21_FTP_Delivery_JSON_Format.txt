@@ -24,6 +24,12 @@
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
+		// Optional. This tag is used in the scenario where it is needed to ftp both
+		//	the media inherited by the parent Task and the media specified by the References tag
+		//	In this scenario this tag has to be set
+		//  Options: "", "atTheBeginning", "atTheEnd"
+		"DependenciesToBeAddedToReferences": "atTheEnd",
+
 		// mandatory
 		"ConfigurationLabel": "my ftp server"
 	}

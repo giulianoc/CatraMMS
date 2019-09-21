@@ -22,6 +22,12 @@
 			// the profiles will be removed.
 
 			{ "ReferenceMediaItemKey": 11 }
-		]
+		],
+
+		// Optional. This tag is used in the scenario where the Contents to be removed are the one specified
+		//	by the References tag and also the one inherit from the parent Task
+		//	In this scenario this tag has to be set
+		//  Options: "", "atTheBeginning", "atTheEnd"
+		"DependenciesToBeAddedToReferences": "atTheEnd"
 	}
 }
