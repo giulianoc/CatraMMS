@@ -1699,30 +1699,39 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// _logger->error(__FILEREF__ + "select"
 					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
 					// );
+					// 2019-09-23: we have to exclude the IngestionJobKey of the GroupOfTasks. This is because:
+					// - GroupOfTasks canno tbe set to End_NotToBeExecuted, it has always to be executed
 					if (hierarchicalLevelIndex == 0)
 					{
 						lastSQLCommand = 
-                            "select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey in ("
+                            "select ijd.ingestionJobKey "
+							"from MMMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
+							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
+							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
-                            + ") and dependOnSuccess = ?";
+                            + ") and ijd.dependOnSuccess = ?";
 					}
 					else
 					{
 						lastSQLCommand = 
-                            "select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey in ("
+                            "select ijd.ingestionJobKey "
+							"from MMMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
+							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
+							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
                             + ")";
 					}
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
 					if (hierarchicalLevelIndex == 0)
 						preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
-					_logger->info(__FILEREF__ + "select"
-						+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
-						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
-						+ ", dependOnSuccess (important in case of levelIndex 0): " + to_string(dependOnSuccess)
-					);
+					// _logger->info(__FILEREF__ + "select"
+					// 	+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
+					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+					// 	+ ", dependOnSuccess (important in case of levelIndex 0): " + to_string(dependOnSuccess)
+					// );
 
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                     bool dependenciesFound = false;
@@ -1742,10 +1751,10 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
                     }
                     
-					_logger->error(__FILEREF__ + "select result"
-						+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
-						+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
-					);
+					// _logger->info(__FILEREF__ + "select result"
+					// 	+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
+					// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+					// );
 
                     if (!dependenciesFound)
                     {
@@ -1771,11 +1780,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             
             if (hierarchicalIngestionJobKeysDependencies != "")
             {
-				_logger->info(__FILEREF__ + "manageIngestionJobStatusUpdate. update"
-					+ ", status: " + "End_NotToBeExecuted"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
-				);
+				// _logger->info(__FILEREF__ + "manageIngestionJobStatusUpdate. update"
+				// 	+ ", status: " + "End_NotToBeExecuted"
+				// 	+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+				// );
 
                 lastSQLCommand = 
                     "update MMS_IngestionJob set status = ?, "
