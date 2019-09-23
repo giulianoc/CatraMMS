@@ -6839,9 +6839,10 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPathKey, physicalPath, ignore, ignore, ignore) = physicalPathDetails;
+						tie(physicalPathKey, physicalPath, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["physicalPathKey"] = key;
+						callbackMedatada["fileName"] = fileName;
 						callbackMedatada["physicalPath"] = physicalPath;
 					}
                 }
@@ -6906,8 +6907,9 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPath, ignore, ignore, ignore) = physicalPathDetails;
+						tie(physicalPath, fileName, ignore, ignore) = physicalPathDetails;
 
+						callbackMedatada["fileName"] = fileName;
 						callbackMedatada["physicalPath"] = physicalPath;
 					}
                 }
