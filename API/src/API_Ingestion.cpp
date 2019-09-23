@@ -1112,6 +1112,9 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKeyExecution)
         {
+			// By default we fill newDependOnIngestionJobKeysOverallInput with the ingestionJobKeys
+			// of the first level of Tasks to be executed by the Group of Tasks
+
             // newDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKey);
             newDependOnIngestionJobKeysOverallInput.push_back(localDependOnIngestionJobKey);
         }
@@ -1140,8 +1143,13 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 		// manage ReferenceOutputLabel, inside the References Tag, If present ReferenceLabel,
 		// replace it with ReferenceIngestionJobKey
-		if (referencesOutputSectionPresent)
+		if (referencesOutputSectionPresent && referencesOutputRoot.size() > 0)
 		{
+			// GroupOfTasks will wait only the specified ReferencesOutput. For this reason we replace
+			// the ingestionJobKeys into newDependOnIngestionJobKeysOverallInput with the one of ReferencesOutput
+
+			newDependOnIngestionJobKeysOverallInput.clear();
+
 			for (int referenceIndex = 0; referenceIndex < referencesOutputRoot.size(); ++referenceIndex)
 			{
 				Json::Value referenceOutputRoot = referencesOutputRoot[referenceIndex];
@@ -1188,20 +1196,21 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 
 					field = "ReferencesOutput";
 					parametersRoot[field] = referencesOutputRoot;
+
+					newDependOnIngestionJobKeysOverallInput.push_back(ingestionJobKeys.back());
 				}
 			}
 		}
-
-		_logger->info(__FILEREF__ + "add to referencesOutputRoot all the inherited references?"
-			+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-			+ ", groupOfTaskLabel: " + groupOfTaskLabel
-			+ ", referencesOutputSectionPresent: " + to_string(referencesOutputSectionPresent)
-			+ ", newDependOnIngestionJobKeysOverallInput.size(): " + to_string(newDependOnIngestionJobKeysOverallInput.size())
-		);
-
-		// add to referencesRoot all the inherited references
-		if (!referencesOutputSectionPresent && newDependOnIngestionJobKeysOverallInput.size() > 0)
+		else if (newDependOnIngestionJobKeysOverallInput.size() > 0)
 		{
+			_logger->info(__FILEREF__ + "add to referencesOutputRoot all the inherited references?"
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", groupOfTaskLabel: " + groupOfTaskLabel
+				+ ", referencesOutputSectionPresent: " + to_string(referencesOutputSectionPresent)
+				+ ", newDependOnIngestionJobKeysOverallInput.size(): "
+					+ to_string(newDependOnIngestionJobKeysOverallInput.size())
+			);
+
 			// Enter here if No ReferencesOutput tag is present (so we have to add the inherit input)
 			// OR we want to add dependOnReferences to the Raferences tag
 

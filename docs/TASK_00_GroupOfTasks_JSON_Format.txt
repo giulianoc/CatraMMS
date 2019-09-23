@@ -19,6 +19,8 @@
 		//	to the OnSuccess/OnError/OnComplete events Tasks.
 		//	In case we have to change this default behaviour, we have to add this ReferencesOutput tag
 		//	and specify which output this GroupOfTasks has to forward to his events Tasks
+		// Remark: GroupOfTasks waits until all the ReferencesOutput will not finish. Only at this moment,
+		//		the workflow will continue with the execution of OnSuccess, OnError, OnComplete of the GroupOfTasks
 		"ReferencesOutput": [
 			// optional. References to identify the videos the GroupOfTasks has to forward to the Tasks
 			// connected to the OnSuccess, OnError and OnComplete events
