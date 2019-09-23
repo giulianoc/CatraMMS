@@ -1262,13 +1262,17 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		+ ", referencesOutputPresent: " + to_string(referencesOutputPresent)
 	);
 
-	// By default we fill newDependOnIngestionJobKeysOverallInput with the ingestionJobKeys
-	// of the first level of Tasks to be executed by the Group of Tasks
+	// - By default we fill newDependOnIngestionJobKeysOverallInput with the ingestionJobKeys
+	//		of the first level of Tasks to be executed by the Group of Tasks
+	// - dependOnSuccess: we have to set it to -1, otherwise,
+	//		if the dependent job will fail and the dependency is OnSuccess or viceversa,
+	//		the GroupOfTasks will not be executed
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
 		workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata,
 		MMSEngineDBFacade::toIngestionType(type),
 		referencesOutputPresent ? newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput
-			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks, dependOnSuccess);
+			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
+			-1);	// dependOnSuccess);
 
 	// for each group of tasks child, the group of tasks (parent) IngestionJobKey is set
 	{
