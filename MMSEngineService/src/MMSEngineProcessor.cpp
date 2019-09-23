@@ -5761,10 +5761,25 @@ void MMSEngineProcessor::manageGroupOfTasks(
 		int64_t liveRecordingIngestionJobKey = -1;
 		for (pair<int64_t, int64_t>  referenceOutput: referencesOutput)
 		{
+			_logger->info(__FILEREF__ + "References.Output"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaItemKey: " + to_string(referenceOutput.first)
+				+ ", physicalPathKey: " + to_string(referenceOutput.second)
+			);
 			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
 				referenceOutput.first, referenceOutput.second, liveRecordingIngestionJobKey);
 		}
 
+		/*
+		 * 2019-09-23: It is not clean now how to manage the status of the GroupOfTasks:
+		 *	- depend on the status of his children (first level of Tasks of the GroupOfTasks)
+		 *		as calculated below (now commented)?
+		 *	- depend on the ReferencesOutput?
+		 *
+		 *	Since this is not clean, I left it always Success
+		 *
+		 */
+		/*
 		// GroupOfTasks Ingestion Status is by default Failure;
 		// It will be Success if at least just one Status of the children is Success
 		MMSEngineDBFacade::IngestionStatus groupOfTasksIngestionStatus
@@ -5803,6 +5818,9 @@ void MMSEngineProcessor::manageGroupOfTasks(
 				}
 			}
 		}
+		*/
+		MMSEngineDBFacade::IngestionStatus groupOfTasksIngestionStatus
+			= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
 		string errorMessage = "";
 		if (groupOfTasksIngestionStatus != MMSEngineDBFacade::IngestionStatus::End_TaskSuccess)
