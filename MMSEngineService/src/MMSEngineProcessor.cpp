@@ -494,7 +494,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     {
         vector<tuple<int64_t,shared_ptr<Workspace>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
-        
+
         try
         {
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
@@ -4199,6 +4199,24 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 );
             }
         }
+
+		if (ingestionsToBeManaged.size() >= _maxIngestionJobsPerEvent)
+		{
+			shared_ptr<Event2>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event2>(
+				MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
+
+			event->setSource(MMSENGINEPROCESSORNAME);
+			event->setDestination(MMSENGINEPROCESSORNAME);
+			event->setExpirationTimePoint(chrono::system_clock::now());
+
+			_multiEventsSet->addEvent(event);
+
+			_logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE"
+					+ ", MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+					+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+					+ ", getEventKey().second: " + to_string(event->getEventKey().second)
+			);
+		}
     }
     catch(...)
     {
