@@ -1718,6 +1718,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					if (hierarchicalLevelIndex == 0)
 						preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
+					_logger->info(__FILEREF__ + "select"
+						+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
+						+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
+						+ ", dependOnSuccess (important in case of levelIndex 0): " + to_string(dependOnSuccess)
+					);
+
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                     bool dependenciesFound = false;
                     ingestionJobKeysToFindDependencies = "";
@@ -1736,10 +1742,10 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
                     }
                     
-					// _logger->error(__FILEREF__ + "select"
-					// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
-					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
-					// );
+					_logger->error(__FILEREF__ + "select result"
+						+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
+						+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+					);
 
                     if (!dependenciesFound)
                     {
