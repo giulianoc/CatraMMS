@@ -1705,7 +1705,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					{
 						lastSQLCommand = 
                             "select ijd.ingestionJobKey "
-							"from MMMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
+							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
@@ -1715,7 +1715,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					{
 						lastSQLCommand = 
                             "select ijd.ingestionJobKey "
-							"from MMMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
+							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
