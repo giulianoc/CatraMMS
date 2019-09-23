@@ -2111,9 +2111,14 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 	if (isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
-		if (referencesRoot.size() != 2)
-		{
-			string errorMessage = __FILEREF__ + "Field is present but it does not have right number of elements"
+		// before the check was
+		//	if (referencesRoot.size() != 2)
+		// This was changed to > 2 because it could be used
+		// the "DependOnIngestionJobKeysToBeAddedToReferences" tag
+		// or it is a ReferenceIngestionJob referring a number of contents
+        if (referencesRoot.size() > 2)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it has more than two elements"
 				+ ", Field: " + field
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
@@ -2130,6 +2135,17 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 			encodingProfileFieldsToBeManaged);
 		if (validateDependenciesToo)
 		{
+            if (dependencies.size() != 2)
+			{
+				string errorMessage = __FILEREF__ + "Field is present but it has a wrong number of elements"
+					+ ", Field: " + field
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", label: " + label
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
     }
 }
