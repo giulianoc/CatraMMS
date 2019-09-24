@@ -4386,7 +4386,9 @@ void FFMpeg::generateCutMediaToIngest(
         -ss: When used as an output option (before an output url), decodes but discards input 
             until the timestamps reach position.
             Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
-		2019-09-24: Added -async 1 option because the Escenic transcoder was failing
+		2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
+			The generated error was: Too many packets buffered for output stream
+			(look https://trac.ffmpeg.org/ticket/6375)
     */
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
