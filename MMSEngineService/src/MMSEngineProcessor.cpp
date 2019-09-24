@@ -6815,6 +6815,8 @@ void MMSEngineProcessor::httpCallbackTask(
 
                 tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+				callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
+
                 if (dependencyType == Validator::DependencyType::MediaItemKey)
                 {
                     callbackMedatada["mediaItemKey"] = key;
