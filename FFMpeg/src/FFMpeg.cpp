@@ -4386,12 +4386,14 @@ void FFMpeg::generateCutMediaToIngest(
         -ss: When used as an output option (before an output url), decodes but discards input 
             until the timestamps reach position.
             Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
+		2019-09-24: Added -async 1 option because the Escenic transcoder was failing
     */
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-i " + sourcePhysicalPath + " "
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-async 1 "
             + "-c copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
