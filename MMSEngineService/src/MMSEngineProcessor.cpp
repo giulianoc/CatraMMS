@@ -6877,9 +6877,9 @@ void MMSEngineProcessor::httpCallbackTask(
 
 						tie(physicalPathKey, physicalPath, fileName, ignore, ignore) = physicalPathDetails;
 
-						callbackMedatada["physicalPathKey"] = key;
+						callbackMedatada["physicalPathKey"] = physicalPathKey;
 						callbackMedatada["fileName"] = fileName;
-						callbackMedatada["physicalPath"] = physicalPath;
+						// callbackMedatada["physicalPath"] = physicalPath;
 					}
                 }
                 else
@@ -6946,7 +6946,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						tie(physicalPath, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["fileName"] = fileName;
-						callbackMedatada["physicalPath"] = physicalPath;
+						// callbackMedatada["physicalPath"] = physicalPath;
 					}
                 }
             }
