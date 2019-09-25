@@ -83,6 +83,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", database->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
     );
 
+    _ingestionJobsSelectPageSize = configuration["mms"].get("ingestionJobsSelectPageSize", 500).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize)
+    );
+
     _maxEncodingFailures            = configuration["encoding"].get("maxEncodingFailures", 3).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures)

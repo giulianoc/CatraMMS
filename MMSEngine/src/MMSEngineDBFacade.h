@@ -1701,6 +1701,7 @@ private:
     shared_ptr<DBConnectionPool<MySQLConnection>>       _connectionPool;
     string                          _defaultContentProviderName;
     // string                          _defaultTerritoryName;
+    int								_ingestionJobsSelectPageSize;
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
     int                             _contentRetentionInMinutesDefaultValue;

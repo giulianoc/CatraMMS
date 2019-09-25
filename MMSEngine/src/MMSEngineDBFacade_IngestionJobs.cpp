@@ -146,7 +146,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			pointAfterLive = chrono::system_clock::now();
 
             int mysqlOffset = 0;
-            int mysqlRowCount = maxIngestionJobs;
+            int mysqlRowCount = _ingestionJobsSelectPageSize;
             bool moreRows = true;
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
@@ -189,7 +189,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						moreRows = false;
 					else
 						moreRows = true;
-					mysqlOffset += maxIngestionJobs;
+					mysqlOffset += _ingestionJobsSelectPageSize;
 
 					while (resultSet->next())
 					{
@@ -226,6 +226,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                                 = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
 
 							ingestionsToBeManaged.push_back(ingestionToBeManaged);
+							if (ingestionsToBeManaged.size() >= maxIngestionJobs)
+								break;
 						}
 						else
 						{
