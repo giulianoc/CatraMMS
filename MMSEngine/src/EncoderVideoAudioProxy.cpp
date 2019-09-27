@@ -7530,6 +7530,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		}
 
 		int64_t mediaItemKey = -1;
+		vector<int64_t> otherMediaItemsKey;
 		string uniqueName;
 		int64_t physicalPathKey = -1;
 		bool contentTypePresent = true;
@@ -7557,7 +7558,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		{
 			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
-				start, rows, contentTypePresent, contentType,
+				otherMediaItemsKey, start, rows, contentTypePresent, contentType,
 				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
 				ingestionDateOrder, jsonOrderBy, admin);

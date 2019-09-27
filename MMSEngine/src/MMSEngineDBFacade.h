@@ -1251,6 +1251,7 @@ public:
     Json::Value getMediaItemsList (
         int64_t workspaceKey, 
 		int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -1751,6 +1752,7 @@ private:
 	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, int64_t mediaItemKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -1763,6 +1765,7 @@ private:
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, string temporaryTableName,
 		int64_t mediaItemKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,

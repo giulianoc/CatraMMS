@@ -4370,6 +4370,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 void FFMpeg::generateCutMediaToIngest(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,
@@ -4389,8 +4390,22 @@ void FFMpeg::generateCutMediaToIngest(
 		2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
 			The generated error was: Too many packets buffered for output stream
 			(look https://trac.ffmpeg.org/ticket/6375)
+		2019-09-26: introduced the concept of 'Key-Frame Seeking' vs 'All-Frame Seeking' vs 'Full Re-Encoding'
+			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
     */
-    string ffmpegExecuteCommand = 
+    string ffmpegExecuteCommand;
+	if (keyFrameSeeking)
+		ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-ss " + to_string(startTimeInSeconds) + " "
+            + "-i " + sourcePhysicalPath + " "
+            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-c copy " + cutMediaPathName + " "
+            + "> " + _outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+	else
+		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-i " + sourcePhysicalPath + " "
             + "-ss " + to_string(startTimeInSeconds) + " "

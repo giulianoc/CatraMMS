@@ -511,6 +511,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 
 Json::Value MMSEngineDBFacade::getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -546,6 +547,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", title: " + title
             + ", tagsIn.size(): " + to_string(tagsIn.size())
             + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
+            + ", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", jsonCondition: " + jsonCondition
             + ", ingestionDateOrder: " + ingestionDateOrder
@@ -625,6 +627,17 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 field = "tagsNotIn";
                 requestParametersRoot[field] = tagsRoot;
+			}
+
+            if (otherMediaItemsKey.size() > 0)
+			{
+				Json::Value otherMediaItemsKeyRoot(Json::arrayValue);
+
+				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
+					otherMediaItemsKeyRoot.append(otherMediaItemsKey[mediaItemIndex]);
+
+                field = "otherMediaItemsKey";
+                requestParametersRoot[field] = otherMediaItemsKeyRoot;
 			}
 
             if (liveRecordingChunk != -1)
@@ -726,7 +739,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         
 			// getMediaItemsList_withTagsCheck creates a temporary table
 			resultSetAndNumFound = getMediaItemsList_withTagsCheck (
-					conn, workspaceKey, temporaryTableName, newMediaItemKey, start, rows,
+					conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey, start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
@@ -739,7 +752,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		else
 		{
 			resultSetAndNumFound = getMediaItemsList_withoutTagsCheck (
-					conn, workspaceKey, newMediaItemKey, start, rows,
+					conn, workspaceKey, newMediaItemKey, otherMediaItemsKey, start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
@@ -1507,6 +1520,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_withoutTagsCheck (
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, int64_t mediaItemKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -1523,7 +1537,20 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         string sqlWhere;
 		sqlWhere = string ("where mi.workspaceKey = ? ");
         if (mediaItemKey != -1)
-            sqlWhere += ("and mi.mediaItemKey = ? ");
+		{
+			if (otherMediaItemsKey.size() > 0)
+			{
+				sqlWhere += ("and mi.mediaItemKey = in (");
+				sqlWhere += to_string(mediaItemKey);
+				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
+				{
+					sqlWhere += (", " + to_string(otherMediaItemsKey[mediaItemIndex]));
+				}
+				sqlWhere += ") ";
+			}
+			else
+				sqlWhere += ("and mi.mediaItemKey = ? ");
+		}
         if (contentTypePresent)
             sqlWhere += ("and mi.contentType = ? ");
         if (startAndEndIngestionDatePresent)
@@ -1559,7 +1586,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (mediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			{
+				if (otherMediaItemsKey.size() == 0)
+					preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			}
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
@@ -1617,7 +1647,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (mediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			{
+				if (otherMediaItemsKey.size() == 0)
+					preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			}
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
@@ -1672,6 +1705,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, string temporaryTableName,
 		int64_t mediaItemKey,
+		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
@@ -1734,7 +1768,20 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			string sqlWhere;
 			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
 			if (mediaItemKey != -1)
-				sqlWhere += ("and mi.mediaItemKey = ? ");
+			{
+				if (otherMediaItemsKey.size() > 0)
+				{
+					sqlWhere += ("and mi.mediaItemKey = in (");
+					sqlWhere += to_string(mediaItemKey);
+					for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
+					{
+						sqlWhere += (", " + to_string(otherMediaItemsKey[mediaItemIndex]));
+					}
+					sqlWhere += ") ";
+				}
+				else
+					sqlWhere += ("and mi.mediaItemKey = ? ");
+			}
 			if (contentTypePresent)
 				sqlWhere += ("and mi.contentType = ? ");
 			if (startAndEndIngestionDatePresent)
@@ -1773,7 +1820,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			if (mediaItemKey != -1)
-				preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			{
+				if (otherMediaItemsKey.size() == 0)
+					preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			}
 			if (contentTypePresent)
 				preparedStatement->setString(queryParameterIndex++, toString(contentType));
 			if (startAndEndIngestionDatePresent)

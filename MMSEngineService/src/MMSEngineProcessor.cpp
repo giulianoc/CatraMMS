@@ -215,7 +215,8 @@ void MMSEngineProcessor::operator ()()
     bool endEvent = false;
     while(!endEvent)
     {
-        shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
+        shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(
+				MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
             // cout << "No event found or event not yet expired" << endl;
@@ -10413,8 +10414,15 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             throw runtime_error(errorMessage);
         }
 
+		bool keyFrameSeeking = true;
+        string field = "KeyFrameSeeking";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+			keyFrameSeeking = parametersRoot.get(field, true).asBool();
+        }
+
         double startTimeInSeconds;
-        string field = "StartTimeInSeconds";
+        field = "StartTimeInSeconds";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10575,7 +10583,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         
         FFMpeg ffmpeg (_configuration, _logger);
         ffmpeg.generateCutMediaToIngest(ingestionJobKey, sourcePhysicalPath, 
-                startTimeInSeconds, endTimeInSeconds, framesNumber,
+                keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
                 cutMediaPathName);
 
         _logger->info(__FILEREF__ + "generateCutMediaToIngest done"

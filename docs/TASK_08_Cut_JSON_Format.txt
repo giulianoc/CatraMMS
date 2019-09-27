@@ -34,6 +34,17 @@
 		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
 		"FramesNumber": 10,
 
+		// optional, default is true
+		// - true means Key-Frame Seeking, faster, no frame accuracy, the start of your video will be aligned
+		//		with the nearest Key frame, not the nearest frame independent of encoding format
+		// - false means All-Frame Seeking (output seeking), slower, considers all frames (including Predicted frames),
+		//		If you use this option and try to play your output clip, you may notice that the clip starts frozen,
+		//		or with black frames in the beginning
+		// So Key frame seeking causes missalignment and All-frame seeking causes broken frames, is there another option?
+		// Yes, instead of performing a stream copy we can decode the source video, and then re-encode the output clip.
+		// If you want to copy a frame-exact section of video you have to re-encode.
+		"KeyFrameSeeking": true,
+
 		// optional: by default the file format of the output is the same of the source media to be cut.
 		//	This parameter is needed only in case the default output file format has to be changed
 		"OutputFileFormat": "mp4",

@@ -175,6 +175,7 @@ public:
     void generateCutMediaToIngest(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,

@@ -1352,8 +1352,9 @@ void API::mediaItemsList(
 
 		vector<string> tagsIn;
 		vector<string> tagsNotIn;
+		vector<int64_t> otherMediaItemsKey;
 		{
-			Json::Value tagsRoot;
+			Json::Value otherInputsRoot;
 			try
 			{
 				Json::CharReaderBuilder builder;
@@ -1362,7 +1363,7 @@ void API::mediaItemsList(
 
 				bool parsingSuccessful = reader->parse(requestBody.c_str(),
 						requestBody.c_str() + requestBody.size(), 
-						&tagsRoot, &errors);
+						&otherInputsRoot, &errors);
 				delete reader;
 
 				if (!parsingSuccessful)
@@ -1389,9 +1390,9 @@ void API::mediaItemsList(
 			}
 
 			string field = "tagsIn";
-            if (_mmsEngineDBFacade->isMetadataPresent(tagsRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
             {
-				Json::Value tagsInRoot = tagsRoot[field];
+				Json::Value tagsInRoot = otherInputsRoot[field];
 
 				for (int tagIndex = 0; tagIndex < tagsInRoot.size(); ++tagIndex)
 				{
@@ -1400,13 +1401,24 @@ void API::mediaItemsList(
 			}
 
 			field = "tagsNotIn";
-            if (_mmsEngineDBFacade->isMetadataPresent(tagsRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
             {
-				Json::Value tagsNotInRoot = tagsRoot[field];
+				Json::Value tagsNotInRoot = otherInputsRoot[field];
 
 				for (int tagIndex = 0; tagIndex < tagsNotInRoot.size(); ++tagIndex)
 				{
 					tagsNotIn.push_back (tagsNotInRoot[tagIndex].asString());
+				}
+			}
+
+			field = "otherMediaItemsKey";
+            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
+            {
+				Json::Value otherMediaItemsKeyRoot = otherInputsRoot[field];
+
+				for (int mediaItemsIndex = 0; mediaItemsIndex < otherMediaItemsKeyRoot.size(); ++mediaItemsIndex)
+				{
+					otherMediaItemsKey.push_back (otherMediaItemsKeyRoot[mediaItemsIndex].asInt64());
 				}
 			}
 		}
@@ -1488,7 +1500,7 @@ void API::mediaItemsList(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-                    workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
+                    workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
