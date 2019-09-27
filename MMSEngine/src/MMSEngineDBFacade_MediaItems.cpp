@@ -1540,7 +1540,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		{
 			if (otherMediaItemsKey.size() > 0)
 			{
-				sqlWhere += ("and mi.mediaItemKey = in (");
+				sqlWhere += ("and mi.mediaItemKey in (");
 				sqlWhere += to_string(mediaItemKey);
 				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
 				{
@@ -1771,7 +1771,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			{
 				if (otherMediaItemsKey.size() > 0)
 				{
-					sqlWhere += ("and mi.mediaItemKey = in (");
+					sqlWhere += ("and mi.mediaItemKey in (");
 					sqlWhere += to_string(mediaItemKey);
 					for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
 					{
