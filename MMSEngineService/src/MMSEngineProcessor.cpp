@@ -7682,6 +7682,7 @@ void MMSEngineProcessor::manageLiveRecorder(
             	outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
 
+		// next code is the same in the Validator class
 		time_t utcRecordingPeriodStart;
 		{
 			unsigned long		ulUTCYear;
@@ -7732,6 +7733,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
+		// next code is the same in the Validator class
 		time_t utcRecordingPeriodEnd;
 		{
 			unsigned long		ulUTCYear;

@@ -2993,6 +2993,60 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
+	// next code is the same in the MMSEngineProcessor class
+	time_t utcRecordingPeriodStart;
+	{
+		string recordingPeriodStart = recordingPeriodRoot.get(field, "XXX").asString();
+
+		unsigned long       ulUTCYear;
+		unsigned long       ulUTCMonth;
+		unsigned long       ulUTCDay;
+		unsigned long       ulUTCHour;
+		unsigned long       ulUTCMinutes;
+		unsigned long       ulUTCSeconds;
+		tm                  tmRecordingPeriodStart;
+		int                 sscanfReturn;
+
+
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+		// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
+		if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
+			"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds)) != 6)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", Field: " + field
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		time (&utcRecordingPeriodStart);
+		gmtime_r(&utcRecordingPeriodStart, &tmRecordingPeriodStart);
+
+		tmRecordingPeriodStart.tm_year      = ulUTCYear - 1900;
+		tmRecordingPeriodStart.tm_mon       = ulUTCMonth - 1;
+		tmRecordingPeriodStart.tm_mday      = ulUTCDay;
+		tmRecordingPeriodStart.tm_hour      = ulUTCHour;                       
+		tmRecordingPeriodStart.tm_min       = ulUTCMinutes;
+		tmRecordingPeriodStart.tm_sec       = ulUTCSeconds;
+
+		utcRecordingPeriodStart = timegm(&tmRecordingPeriodStart);
+	}
+
     field = "End";
 	if (!isMetadataPresent(recordingPeriodRoot, field))
 	{
@@ -3006,6 +3060,75 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		;
 		_logger->error(errorMessage);
 
+		throw runtime_error(errorMessage);
+	}
+	// next code is the same in the MMSEngineProcessor class
+	time_t utcRecordingPeriodEnd;
+	{
+		string recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
+
+		unsigned long       ulUTCYear;
+		unsigned long       ulUTCMonth;
+		unsigned long       ulUTCDay;
+		unsigned long       ulUTCHour;
+		unsigned long       ulUTCMinutes;
+		unsigned long       ulUTCSeconds;
+		tm                  tmRecordingPeriodEnd;
+		int                 sscanfReturn;
+
+
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+		// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
+		if ((sscanfReturn = sscanf (recordingPeriodEnd.c_str(),
+			"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds)) != 6)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", Field: " + field
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		time (&utcRecordingPeriodEnd);
+		gmtime_r(&utcRecordingPeriodEnd, &tmRecordingPeriodEnd);
+
+		tmRecordingPeriodEnd.tm_year      = ulUTCYear - 1900;
+		tmRecordingPeriodEnd.tm_mon       = ulUTCMonth - 1;
+		tmRecordingPeriodEnd.tm_mday      = ulUTCDay;
+		tmRecordingPeriodEnd.tm_hour      = ulUTCHour;                       
+		tmRecordingPeriodEnd.tm_min       = ulUTCMinutes;
+		tmRecordingPeriodEnd.tm_sec       = ulUTCSeconds;
+
+		utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
+	}
+	if (utcRecordingPeriodStart >= utcRecordingPeriodEnd)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__
+			+ "RecordingPeriodStart cannot be bigger than RecordingPeriodEnd"
+			+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+        
 		throw runtime_error(errorMessage);
 	}
 
