@@ -4390,6 +4390,15 @@ void FFMpeg::generateCutMediaToIngest(
 		2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
 			The generated error was: Too many packets buffered for output stream
 			(look https://trac.ffmpeg.org/ticket/6375)
+			-async samples_per_second
+				Audio sync method. "Stretches/squeezes" the audio stream to match the timestamps, the parameter is
+				the maximum samples per second by which the audio is changed.  -async 1 is a special case where only
+				the start of the audio stream is corrected without any later correction.
+			-af "aresample=async=1:min_hard_comp=0.100000:first_pts=0" helps to keep your audio lined up
+				with the beginning of your video. It is common for a container to have the beginning
+				of the video and the beginning of the audio start at different points. By using this your container
+				should have little to no audio drift or offset as it will pad the audio with silence or trim audio
+				with negative PTS timestamps if the audio does not actually start at the beginning of the video.
 		2019-09-26: introduced the concept of 'Key-Frame Seeking' vs 'All-Frame Seeking' vs 'Full Re-Encoding'
 			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
     */
@@ -4400,6 +4409,7 @@ void FFMpeg::generateCutMediaToIngest(
             + "-ss " + to_string(startTimeInSeconds) + " "
             + "-i " + sourcePhysicalPath + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
             + "-c copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
@@ -4410,7 +4420,7 @@ void FFMpeg::generateCutMediaToIngest(
             + "-i " + sourcePhysicalPath + " "
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-            + "-async 1 "
+            + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
             + "-c copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"

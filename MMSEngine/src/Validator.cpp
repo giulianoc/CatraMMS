@@ -1225,7 +1225,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
-    }    
+    }
 }
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
@@ -1298,7 +1298,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
-    }    
+    }
 }
 
 void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
