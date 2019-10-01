@@ -4409,7 +4409,9 @@ void FFMpeg::generateCutMediaToIngest(
             + "-ss " + to_string(startTimeInSeconds) + " "
             + "-i " + sourcePhysicalPath + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-            + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+			+ "-async 1 "
+			// commented because aresample filtering requires encoding and here we are just streamcopy
+            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
             + "-c copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
@@ -4420,7 +4422,9 @@ void FFMpeg::generateCutMediaToIngest(
             + "-i " + sourcePhysicalPath + " "
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-            + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+			+ "-async 1 "
+			// commented because aresample filtering requires encoding and here we are just streamcopy
+            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
             + "-c copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
