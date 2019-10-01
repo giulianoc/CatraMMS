@@ -1308,8 +1308,6 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             + "\"label\": \"" + groupOfTaskLabel + "\" "
             + "}");
 
-    vector<int64_t> localDependOnIngestionJobKeysForStarting;
-    localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
 	/*
 	 * 2019-10-01.
 	 *		We have the following workflow:
@@ -1330,10 +1328,12 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	 *		the Concat before removing the three cuts
 	 *
 	 */
+    vector<int64_t> localDependOnIngestionJobKeysForStarting;
 	for (int64_t referenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 	{
 		localDependOnIngestionJobKeysForStarting.push_back(referenceOutputIngestionJobKey);
 	}
+    localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
 
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
