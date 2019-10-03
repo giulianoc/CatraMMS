@@ -1782,11 +1782,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             
             if (hierarchicalIngestionJobKeysDependencies != "")
             {
-				// _logger->info(__FILEREF__ + "manageIngestionJobStatusUpdate. update"
-				// 	+ ", status: " + "End_NotToBeExecuted"
-				// 	+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
-				// );
+				_logger->info(__FILEREF__ + "manageIngestionJobStatusUpdate. update"
+					+ ", status: " + "End_NotToBeExecuted"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+				);
 
                 lastSQLCommand = 
                     "update MMS_IngestionJob set status = ?, "
