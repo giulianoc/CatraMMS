@@ -918,11 +918,14 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
     localDependOnIngestionJobKeysOverallInput.push_back(localDependOnIngestionJobKeyExecution);
     
+	vector<int64_t> referencesOutputIngestionJobKeys;
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
             localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
 
 			// in case of OnError, OverallInput has to be the same of the failed task
             dependOnIngestionJobKeysOverallInput,
+
+			referencesOutputIngestionJobKeys,
 
 			mapLabelAndIngestionJobKey, responseBody);
 
@@ -930,7 +933,6 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     return localDependOnIngestionJobKeysForStarting;
 }
 
-#ifdef DB_FOR_GROUP_OF_TASKS
 vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -1323,16 +1325,19 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	 *					is executed and the three cuts does not have any other dependencies
 	 *				4. MMSEngine executes the Concat and fails because there are no cuts anymore
 	 *
-	 *		To solve this issue, the below ingestionEvents, shall have the ingestionJobKey of the GroupOfTasks
-	 *		as well as the ingestionJobKeys of the ReferencesOutput. In this way, the retention check will wait
-	 *		the Concat before removing the three cuts
+	 *		Actually the Tasks (1) specified by OnSuccess/OnError/OnComplete of the GroupOfTasks depend just
+	 *		on the GroupOfTasks IngestionJobKey.
+	 *		We need to add the ONCOMPLETE dependencies between the Tasks just mentioned above (1) and
+	 *		the ReferencesOutput of the GroupOfTasks. This will solve the issue above. It is important that
+	 *		the dependency is ONCOMPLETE. This because otherwise, if the dependency is OnSuccess and a ReferenceOutput fails,
+	 *		the Tasks (1) will be marked as End_NotToBeExecuted and we do not want this because the execution or not
+	 *		of the Task has to be decided ONLY by the logic inside the GroupOfTasks and not by the ReferenceOutput Task.
+	 *
+	 *		To implement that, we provide, as input parameter, the ReferencesOutput to the ingestionEvents method.
+	 *		The ingestionEvents add the dependencies, OnComplete, between the Tasks (1) and the ReferencesOutput.
 	 *
 	 */
     vector<int64_t> localDependOnIngestionJobKeysForStarting;
-	for (int64_t referenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
-	{
-		localDependOnIngestionJobKeysForStarting.push_back(referenceOutputIngestionJobKey);
-	}
     localDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKeyExecution);
 
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
@@ -1340,180 +1345,11 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		// in case of OnError, OverallInput has to be the same of the failed task
         dependOnIngestionJobKeysOverallInput,
 
+		referencesOutputIngestionJobKeys,
 		mapLabelAndIngestionJobKey, responseBody);
 
     return localDependOnIngestionJobKeysForStarting;
 }
-#endif
-
-#ifdef NO_DB_FOR_GROUP_OF_TASKS
-vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-		int64_t userKey, string apiKey,
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-        Json::Value groupOfTasksRoot, 
-        vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-        vector<int64_t> dependOnIngestionJobKeysOverallInput,
-        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey, string& responseBody)
-{
-    
-	// initialize parametersRoot
-    string field = "Parameters";
-    Json::Value parametersRoot;
-    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    parametersRoot = groupOfTasksRoot[field];
-
-    bool parallelTasks;
-    
-    field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    string executionType = parametersRoot.get(field, "XXX").asString();
-    if (executionType == "parallel")
-        parallelTasks = true;
-    else if (executionType == "sequential")
-        parallelTasks = false;
-    else
-    {
-        string errorMessage = __FILEREF__ + "executionType field is wrong"
-                + ", executionType: " + executionType;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    field = "Tasks";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    Json::Value tasksRoot = parametersRoot[field];
-
-    if (tasksRoot.size() == 0)
-    {
-        string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    vector<int64_t> newDependOnIngestionJobKeysForStarting;
-    vector<int64_t> newDependOnIngestionJobKeysOverallInput;
-    vector<int64_t> lastDependOnIngestionJobKeysForStarting;
-    for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
-    {
-        Json::Value taskRoot = tasksRoot[taskIndex];
-
-        string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }    
-        string taskType = taskRoot.get(field, "XXX").asString();
-            
-        vector<int64_t> localIngestionTaskDependOnIngestionJobKeyExecution;
-        if (parallelTasks)
-        {
-            if (taskType == "GroupOfTasks")
-            {
-                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                    conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
-            }
-            else
-            {
-                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                    conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                    responseBody);
-            }
-        }
-        else
-        {
-            if (taskIndex == 0)
-            {
-                if (taskType == "GroupOfTasks")
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                        conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess, 
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-                else
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                        conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysForStarting, dependOnSuccess,
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-            }
-            else
-            {
-                int localDependOnSuccess = -1;
-                
-                if (taskType == "GroupOfTasks")
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-                        conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-                else
-                {
-                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-                        conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
-                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
-                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
-                        responseBody);
-                }
-            }
-            
-            lastDependOnIngestionJobKeysForStarting = localIngestionTaskDependOnIngestionJobKeyExecution;
-        }
-
-        for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKeyExecution)
-        {
-            newDependOnIngestionJobKeysForStarting.push_back(localDependOnIngestionJobKey);
-            newDependOnIngestionJobKeysOverallInput.push_back(localDependOnIngestionJobKey);
-        }
-    }
-
-    ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
-		newDependOnIngestionJobKeysForStarting, newDependOnIngestionJobKeysOverallInput,
-		// in case of OnError, OverallInput has to be the same of the failed task
-        dependOnIngestionJobKeysOverallInput,
-
-		mapLabelAndIngestionJobKey, responseBody);
-    
-    return newDependOnIngestionJobKeysForStarting;
-}
-#endif
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
@@ -1521,6 +1357,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
         vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+        vector<int64_t>& referencesOutputIngestionJobKeys,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
 {
@@ -1552,10 +1389,11 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = taskRoot.get(field, "XXX").asString();
 
+		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 1;
-            ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
@@ -1564,11 +1402,27 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         else
         {
             int localDependOnSuccess = 1;
-            ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+            localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
+
+		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
+		// inside the ingestionGroupOfTasks method
+		{
+			int dependOnSuccess = -1;	// OnComplete
+			int orderNumber = -1;
+
+			for (int64_t localIngestionJobKey: localIngestionJobKeys)
+			{
+				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
+				{
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+				}
+			}
+		}
     }
 
     field = "OnError";
@@ -1598,10 +1452,11 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = taskRoot.get(field, "XXX").asString();
 
+		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 0;
-            ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
@@ -1610,11 +1465,27 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         else
         {
             int localDependOnSuccess = 0;
-            ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+            localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
+
+		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
+		// inside the ingestionGroupOfTasks method
+		{
+			int dependOnSuccess = -1;	// OnComplete
+			int orderNumber = -1;
+
+			for (int64_t localIngestionJobKey: localIngestionJobKeys)
+			{
+				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
+				{
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+				}
+			}
+		}
     }    
 
     field = "OnComplete";
@@ -1644,10 +1515,11 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = taskRoot.get(field, "XXX").asString();
 
+		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = -1;
-            ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
@@ -1656,11 +1528,27 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         else
         {
             int localDependOnSuccess = -1;
-            ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+            localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
+
+		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
+		// inside the ingestionGroupOfTasks method
+		{
+			int dependOnSuccess = -1;	// OnComplete
+			int orderNumber = -1;
+
+			for (int64_t localIngestionJobKey: localIngestionJobKeys)
+			{
+				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
+				{
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+				}
+			}
+		}
     }    
 }
 

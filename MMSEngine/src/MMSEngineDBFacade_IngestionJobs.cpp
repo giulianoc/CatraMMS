@@ -1043,54 +1043,16 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 {
                     int orderNumber = 0;
 
-                    lastSQLCommand = 
-                        "insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
-                        "NULL, ?, ?, ?, ?)";
-
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
-                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-                    preparedStatement->setInt(queryParameterIndex++, orderNumber);
-
-                    int rowsInserted = preparedStatement->executeUpdate();
-                    
-                    _logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency"
-                        + ", getConnectionId: " + to_string(conn->getConnectionId())
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", dependOnSuccess: " + to_string(dependOnSuccess)
-                        + ", orderNumber: " + to_string(orderNumber)
-                        + ", rowsInserted: " + to_string(rowsInserted)
-                    );
+					addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess, -1, orderNumber);
                 }
                 else
                 {
                     int orderNumber = 0;
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
-                        lastSQLCommand = 
-                            "insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
-                            "NULL, ?, ?, ?, ?)";
+						addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess,
+								dependOnIngestionJobKey, orderNumber);
 
-                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                        preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
-                        preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
-                        preparedStatement->setInt(queryParameterIndex++, orderNumber);
-
-                        int rowsInserted = preparedStatement->executeUpdate();
-                        
-                        _logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency"
-                            + ", getConnectionId: " + to_string(conn->getConnectionId())
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", dependOnSuccess: " + to_string(dependOnSuccess)
-                            + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-                            + ", orderNumber: " + to_string(orderNumber)
-                            + ", rowsInserted: " + to_string(rowsInserted)
-                        );
-                        
                         orderNumber++;
                     }
                 }
@@ -1127,6 +1089,105 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     }
     
     return ingestionJobKey;
+}
+
+void MMSEngineDBFacade::addIngestionJobDependency (
+        shared_ptr<MySQLConnection> conn,
+        int64_t ingestionJobKey,
+        int dependOnSuccess,
+        int64_t dependOnIngestionJobKey,
+        int orderNumber
+)
+{
+    string      lastSQLCommand;
+
+    try
+    {
+		int localOrderNumber = 0;
+		if (orderNumber == -1)
+		{
+			lastSQLCommand = 
+				"select max(orderNumber) as maxOrderNumber from MMS_IngestionJobDependency "
+				"where ingestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+				if (resultSet->isNull("maxOrderNumber"))
+					localOrderNumber = 0;
+				else
+					localOrderNumber = resultSet->getInt("maxOrderNumber") + 1;
+            }
+		}
+		else
+		{
+			localOrderNumber = orderNumber;
+		}
+
+        {
+			lastSQLCommand = 
+				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, "
+				"dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
+				"NULL, ?, ?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+			if (dependOnIngestionJobKey == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+			preparedStatement->setInt(queryParameterIndex++, localOrderNumber);
+
+			int rowsInserted = preparedStatement->executeUpdate();
+
+			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency successful"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+				+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+				+ ", orderNumber: " + to_string(orderNumber)
+				+ ", rowsInserted: " + to_string(rowsInserted)
+			);
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
 }
 
 void MMSEngineDBFacade::updateIngestionJobMetadataContent (
@@ -1291,7 +1352,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		{            
+		{
 			lastSQLCommand = 
 				"select ingestionJobKey, status "
                 "from MMS_IngestionJob "

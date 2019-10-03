@@ -17,8 +17,6 @@
 #include "MMSStorage.h"
 #include "APICommon.h"
 
-// #define NO_DB_FOR_GROUP_OF_TASKS
-#define DB_FOR_GROUP_OF_TASKS
 
 class API: public APICommon {
 public:
@@ -264,6 +262,7 @@ private:
             Json::Value taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
             vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+            vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 

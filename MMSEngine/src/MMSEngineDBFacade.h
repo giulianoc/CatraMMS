@@ -1153,6 +1153,13 @@ public:
     	int64_t workspaceKey, string rootType, string rootLabel,
 		string metaDataContent);
 
+	void addIngestionJobDependency (                                                           
+        shared_ptr<MySQLConnection> conn,                                                                     
+        int64_t ingestionJobKey,                                                                              
+        int dependOnSuccess,                                                                                  
+        int64_t dependOnIngestionJobKey,                                                                      
+        int orderNumber);
+
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
