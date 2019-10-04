@@ -2815,6 +2815,8 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 					mmsDataRoot["validated"] = validated;
 				}
 				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+				mmsDataRoot["utcPreviousChunkStartTime"] =
+					(time_t) (utcCurrentRecordedFileCreationTime - segmentDurationInSeconds);
 				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
 				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
 
@@ -3148,6 +3150,19 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		field = "Type";
 		workflowRoot[field] = "Workflow";
+
+		{
+			Json::Value variablesWorkflowRoot;
+
+			field = "CurrentUtcChunkStartTime";
+			variablesWorkflowRoot[field] = userDataRoot["utcChunkStartTime"];
+
+			field = "PreviousUtcChunkStartTime";
+			variablesWorkflowRoot[field] = userDataRoot["utcPreviousChunkStartTime"];
+
+			field = "Variables";
+			workflowRoot[field] = variablesWorkflowRoot;
+		}
 
 		field = "Task";
 		workflowRoot[field] = addContentRoot;

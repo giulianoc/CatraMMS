@@ -884,6 +884,30 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         taskMetadata = Json::writeString(wbuilder, parametersRoot);        
     }
     
+	vector<int64_t> waitForGlobalIngestionJobKeys;
+	{
+		field = "WaitFor";
+		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		{
+			Json::Value waitForRoot = parametersRoot[field];
+
+			for (int waitForIndex = 0; waitForIndex < waitForRoot.size(); ++waitForIndex)
+			{
+				Json::Value waitForLabelRoot = waitForRoot[waitForIndex];
+
+				field = "GlobalIngestionLabel";
+				if (_mmsEngineDBFacade->isMetadataPresent(waitForLabelRoot, field))
+				{
+					string waitForGlobalIngestionLabel = waitForLabelRoot.get(field, "XXX").asString();
+
+					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel (
+							workspace->_workspaceKey, waitForGlobalIngestionLabel,
+							waitForGlobalIngestionJobKeys);
+				}
+			}
+		}
+	}
+
     _logger->info(__FILEREF__ + "add IngestionJob"
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
         + ", taskLabel: " + taskLabel
@@ -891,12 +915,14 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         + ", IngestionType: " + type
         + ", dependOnIngestionJobKeysForStarting.size(): " + to_string(dependOnIngestionJobKeysForStarting.size())
         + ", dependOnSuccess: " + to_string(dependOnSuccess)
+        + ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
     );
 
     int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
-            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
-            dependOnIngestionJobKeysForStarting, dependOnSuccess);
-    
+            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
+			MMSEngineDBFacade::toIngestionType(type), 
+            dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
+
 	_logger->info(__FILEREF__ + "Save Label..."
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 		+ ", taskLabel: " + taskLabel
@@ -1276,12 +1302,14 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	// - dependOnSuccess: we have to set it to -1, otherwise,
 	//		if the dependent job will fail and the dependency is OnSuccess or viceversa,
 	//		the GroupOfTasks will not be executed
+	vector<int64_t> waitForGlobalIngestionJobKeys;
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
 		workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata,
 		MMSEngineDBFacade::toIngestionType(type),
 		referencesOutputPresent ? newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput
 			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
-			-1);	// dependOnSuccess);
+			dependOnSuccess,
+			waitForGlobalIngestionJobKeys);
 
 	// for each group of tasks child, the group of tasks (parent) IngestionJobKey is set
 	{

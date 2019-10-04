@@ -1164,8 +1164,13 @@ public:
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+		vector<int64_t> waitForGlobalIngestionJobKeys
     );
+
+	void getIngestionJobsKeyByGlobalLabel (
+		int64_t workspaceKey, string globalIngestionLabel,
+		vector<int64_t>& ingestionJobsKey);
 
     void updateIngestionJobMetadataContent (
         shared_ptr<MySQLConnection> conn,

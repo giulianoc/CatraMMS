@@ -960,7 +960,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
     	int64_t ingestionRootKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+        vector<int64_t> waitForGlobalIngestionJobKeys
 )
 {
     int64_t     ingestionJobKey;
@@ -1039,15 +1040,14 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             ingestionJobKey = getLastInsertId(conn);
             
             {
+				int orderNumber = 0;
                 if (dependOnIngestionJobKeys.size() == 0)
                 {
-                    int orderNumber = 0;
-
 					addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess, -1, orderNumber);
+					orderNumber++;
                 }
                 else
                 {
-                    int orderNumber = 0;
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
 						addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess,
@@ -1056,6 +1056,17 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                         orderNumber++;
                     }
                 }
+
+				{
+					int waitForDependOnSuccess = -1;	// OnComplete
+                    for (int64_t dependOnIngestionJobKey: waitForGlobalIngestionJobKeys)
+                    {
+						addIngestionJobDependency (conn, ingestionJobKey, waitForDependOnSuccess,
+								dependOnIngestionJobKey, orderNumber);
+
+                        orderNumber++;
+                    }
+				}
             }
         }        
     }
@@ -1089,6 +1100,107 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     }
     
     return ingestionJobKey;
+}
+
+void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
+	int64_t workspaceKey, string globalIngestionLabel,
+	vector<int64_t>& ingestionJobsKey
+)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		{
+			lastSQLCommand = 
+				"select ij.ingestionJobKey "
+                "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+				"where ir.ingestionRootKey = ij.ingestionRootKey "
+				"and ir.workspaceKey = ? and ij.label = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, globalIngestionLabel);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+				ingestionJobsKey.push_back(resultSet->getInt64("ingestionJobKey"));
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
 }
 
 void MMSEngineDBFacade::addIngestionJobDependency (
