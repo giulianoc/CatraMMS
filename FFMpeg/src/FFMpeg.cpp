@@ -4071,6 +4071,7 @@ void FFMpeg::generateConcatMediaToIngest(
     for (string sourcePhysicalPath: sourcePhysicalPaths)
     {
         _logger->info(__FILEREF__ + "ffmpeg: adding physical path"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePhysicalPath: " + sourcePhysicalPath
         );
         
