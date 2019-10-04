@@ -3155,10 +3155,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 			Json::Value variablesWorkflowRoot;
 
 			field = "CurrentUtcChunkStartTime";
-			variablesWorkflowRoot[field] = userDataRoot["utcChunkStartTime"];
+			variablesWorkflowRoot[field] = userDataRoot.get("utcChunkStartTime", -1).asInt64();
 
 			field = "PreviousUtcChunkStartTime";
-			variablesWorkflowRoot[field] = userDataRoot["utcPreviousChunkStartTime"];
+			variablesWorkflowRoot[field] = userDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();
 
 			field = "Variables";
 			workflowRoot[field] = variablesWorkflowRoot;
