@@ -71,13 +71,16 @@ else
 	elif [ $commandIndex -eq 12 ]
 	then
 		DATE=$(date +%Y-%m-%d)
-		mkdir /var/catramms/logs/nginx/$DATE
-		mv /var/catramms/logs/nginx/*.log /var/catramms/logs/nginx/$DATE
+		DIRPATHNAME=/var/catramms/logs/nginx/$DATE
+		if [ ! -d "$DIRPATHNAME" ]; then
+			mkdir $DIRPATHNAME
+			mv /var/catramms/logs/nginx/*.log $DIRPATHNAME
 
-		#BE CAREFULL SUDO MAY ASK PASSWORD 
-		sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+			#BE CAREFULL SUDO MAY ASK PASSWORD 
+			sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+		fi
 
-		commandToBeEecuted="find /var/catramms/logs/nginx -mmin +$threeDaysInMinutes -type d -delete"
+		commandToBeEecuted="find /var/catramms/logs/nginx -mmin +$twoDaysInMinutes -type d -exec rm -rv {} +"
 		timeoutValue="1h"
 	else
 		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log

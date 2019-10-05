@@ -583,6 +583,9 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
 		shared_ptr<sql::ResultSet> resultSetDependency (
 			preparedStatementDependency->executeQuery());
+		// 2019-10-05: GroupOfTasks has always to be executed once the dependencies are in a final state.
+		//	This is because the manageIngestionJobStatusUpdate do not update the GroupOfTasks with a state 
+		//	like End_NotToBeExecuted
 		while (resultSetDependency->next())
 		{
 			if (!atLeastOneDependencyRowFound)
@@ -614,30 +617,44 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
 					ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 
-					if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
+					if (ingestionType == IngestionType::GroupOfTasks)
 					{
-						if (dependOnSuccess == 1
-								&& MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+						if (!MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
 						{
+							// 2019-10-05: In case of GroupOfTasks, it has to be managed when all the dependencies
+							// are in a final state
 							ingestionJobToBeManaged = false;
 
 							break;
 						}
-						else if (dependOnSuccess == 0
-								&& MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
-						{
-							ingestionJobToBeManaged = false;
-
-							break;
-						}
-						// else if (dependOnSuccess == -1)
-						//      It means OnComplete and we have to do it since it's a final state
 					}
 					else
 					{
-						ingestionJobToBeManaged = false;
+						if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
+						{
+							if (dependOnSuccess == 1
+								&& MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+							{
+								ingestionJobToBeManaged = false;
 
-						break;
+								break;
+							}
+							else if (dependOnSuccess == 0
+								&& MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+							{
+								ingestionJobToBeManaged = false;
+
+								break;
+							}
+							// else if (dependOnSuccess == -1)
+							//      It means OnComplete and we have to do it since it's a final state
+						}
+						else
+						{
+							ingestionJobToBeManaged = false;
+
+							break;
+						}
 					}
 				}
 				else
@@ -1875,7 +1892,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
 					// );
 					// 2019-09-23: we have to exclude the IngestionJobKey of the GroupOfTasks. This is because:
-					// - GroupOfTasks canno tbe set to End_NotToBeExecuted, it has always to be executed
+					// - GroupOfTasks cannot tbe set to End_NotToBeExecuted, it has always to be executed
 					if (hierarchicalLevelIndex == 0)
 					{
 						lastSQLCommand = 
