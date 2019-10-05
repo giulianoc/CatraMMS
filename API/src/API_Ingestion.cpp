@@ -903,6 +903,13 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel (
 							workspace->_workspaceKey, waitForGlobalIngestionLabel,
 							waitForGlobalIngestionJobKeys);
+					_logger->info(__FILEREF__ + "getIngestionJobsKeyByGlobalLabel"
+						+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+						+ ", taskLabel: " + taskLabel
+						+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+						+ ", waitForGlobalIngestionLabel: " + waitForGlobalIngestionLabel
+						+ ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
+					);
 				}
 			}
 		}
