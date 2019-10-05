@@ -1058,9 +1058,11 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             
             {
 				int orderNumber = 0;
+				bool referenceOutputDependency = false;
                 if (dependOnIngestionJobKeys.size() == 0)
                 {
-					addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess, -1, orderNumber);
+					addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess, -1, orderNumber,
+							referenceOutputDependency);
 					orderNumber++;
                 }
                 else
@@ -1068,7 +1070,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
 						addIngestionJobDependency (conn, ingestionJobKey, dependOnSuccess,
-								dependOnIngestionJobKey, orderNumber);
+								dependOnIngestionJobKey, orderNumber, referenceOutputDependency);
 
                         orderNumber++;
                     }
@@ -1079,7 +1081,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     for (int64_t dependOnIngestionJobKey: waitForGlobalIngestionJobKeys)
                     {
 						addIngestionJobDependency (conn, ingestionJobKey, waitForDependOnSuccess,
-								dependOnIngestionJobKey, orderNumber);
+								dependOnIngestionJobKey, orderNumber, referenceOutputDependency);
 
                         orderNumber++;
                     }
@@ -1225,7 +1227,8 @@ void MMSEngineDBFacade::addIngestionJobDependency (
         int64_t ingestionJobKey,
         int dependOnSuccess,
         int64_t dependOnIngestionJobKey,
-        int orderNumber
+        int orderNumber,
+		bool referenceOutputDependency
 )
 {
     string      lastSQLCommand;
@@ -1260,8 +1263,8 @@ void MMSEngineDBFacade::addIngestionJobDependency (
         {
 			lastSQLCommand = 
 				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, "
-				"dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
-				"NULL, ?, ?, ?, ?)";
+				"dependOnSuccess, dependOnIngestionJobKey, orderNumber, referenceOutputDependency) values ("
+				"NULL, ?, ?, ?, ?, ?)";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1273,6 +1276,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 			else
 				preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
 			preparedStatement->setInt(queryParameterIndex++, localOrderNumber);
+			preparedStatement->setInt(queryParameterIndex++, referenceOutputDependency ? 1 : 0);
 
 			int rowsInserted = preparedStatement->executeUpdate();
 
@@ -1893,12 +1897,18 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// );
 					// 2019-09-23: we have to exclude the IngestionJobKey of the GroupOfTasks. This is because:
 					// - GroupOfTasks cannot tbe set to End_NotToBeExecuted, it has always to be executed
+
+					// 2019-10-05: referenceOutputDependency==1 specifies that this dependency comes
+					//	from a ReferenceOutput, it means his parent is a GroupOfTasks.
+					//	This dependency has not to be considered here because, the only dependency
+					//	to be used is the one with the GroupOfTasks
 					if (hierarchicalLevelIndex == 0)
 					{
 						lastSQLCommand = 
                             "select ijd.ingestionJobKey "
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
+							"and ijd.referenceOutputDependency != 1 "
 							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
                             + ") and ijd.dependOnSuccess = ?";
@@ -1909,6 +1919,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             "select ijd.ingestionJobKey "
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
+							"and ijd.referenceOutputDependency != 1 "
 							"and ijd.dependOnIngestionJobKey in ("
                             + ingestionJobKeysToFindDependencies
                             + ")";

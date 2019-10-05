@@ -893,6 +893,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
                     "orderNumber                        INT UNSIGNED NOT NULL,"
+                    "referenceOutputDependency			TINYINT (1) NOT NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependencyKey), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "	   	        				

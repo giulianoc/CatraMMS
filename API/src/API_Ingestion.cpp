@@ -1448,13 +1448,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		{
 			int dependOnSuccess = -1;	// OnComplete
 			int orderNumber = -1;
+			bool referenceOutputDependency = true;
 
 			for (int64_t localIngestionJobKey: localIngestionJobKeys)
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
 					_mmsEngineDBFacade->addIngestionJobDependency (
-						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
+						referenceOutputDependency);
 				}
 			}
 		}
@@ -1511,13 +1513,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		{
 			int dependOnSuccess = -1;	// OnComplete
 			int orderNumber = -1;
+			bool referenceOutputDependency = true;
 
 			for (int64_t localIngestionJobKey: localIngestionJobKeys)
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
 					_mmsEngineDBFacade->addIngestionJobDependency (
-						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
+						referenceOutputDependency);
 				}
 			}
 		}
@@ -1574,13 +1578,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		{
 			int dependOnSuccess = -1;	// OnComplete
 			int orderNumber = -1;
+			bool referenceOutputDependency = true;
 
 			for (int64_t localIngestionJobKey: localIngestionJobKeys)
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
 					_mmsEngineDBFacade->addIngestionJobDependency (
-						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber);
+						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey,
+						orderNumber, referenceOutputDependency);
 				}
 			}
 		}
