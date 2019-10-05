@@ -4408,8 +4408,8 @@ void FFMpeg::generateCutMediaToIngest(
 		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-ss " + to_string(startTimeInSeconds) + " "
-            + "-i " + sourcePhysicalPath + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-i " + sourcePhysicalPath + " "
 			+ "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
             // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
