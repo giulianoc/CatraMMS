@@ -3156,8 +3156,26 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 			Json::Value variablesWorkflowRoot;
 
+			int64_t utcChunkStartTime = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
 			field = "CurrentUtcChunkStartTime";
-			variablesWorkflowRoot[field] = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
+			variablesWorkflowRoot[field] = utcChunkStartTime;
+
+			char	currentUtcChunkStartTime_HHMISS [64];
+			{
+				tm		tmDateTime;
+
+				// from utc to local time
+				localtime_r (&utcChunkStartTime, &tmDateTime);
+
+				sprintf (currentUtcChunkStartTime_HHMISS,
+					"%02d:%02d:%02d",
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
+
+			}
+			field = "CurrentUtcChunkStartTime_HHMISS";
+			variablesWorkflowRoot[field] = currentUtcChunkStartTime_HHMISS;
 
 			field = "PreviousUtcChunkStartTime";
 			variablesWorkflowRoot[field] = mmsDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();

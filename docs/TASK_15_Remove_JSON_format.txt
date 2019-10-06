@@ -32,6 +32,13 @@
 		//	by the References tag and also the one inherit from the parent Task
 		//	In this scenario this tag has to be set
 		//  Options: "", "atTheBeginning", "atTheEnd"
-		"DependenciesToBeAddedToReferences": "atTheEnd"
+		"DependenciesToBeAddedToReferences": "atTheEnd",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

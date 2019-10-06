@@ -38,6 +38,13 @@
 		"LocalPath": "/directory_1/directory_2/directory_3",
 
 		// optional, if not provided the internal filename will be used
-		"LocalFileName": "FileName.pnp"
+		"LocalFileName": "FileName.pnp",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

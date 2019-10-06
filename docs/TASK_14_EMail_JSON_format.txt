@@ -23,5 +23,12 @@
 
 		// mandatory
 		"ConfigurationLabel": "My email"
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

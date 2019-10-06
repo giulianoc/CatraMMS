@@ -52,6 +52,13 @@
 		"CategoryId": 22,
 
 		// optional, it could be: private or public, default is private
-		"Privacy": "private"
+		"Privacy": "private",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

@@ -39,6 +39,13 @@
 		// default is the height of the video
 		"Height": 640,
 
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		],
+
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.

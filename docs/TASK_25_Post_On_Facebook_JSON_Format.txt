@@ -38,6 +38,13 @@
 		"ConfigurationLabel": "My Facebook Conf",
 
 		// page_id || user_id || event_id || group_id
-		"NodeId": "YYYY"
+		"NodeId": "YYYY",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

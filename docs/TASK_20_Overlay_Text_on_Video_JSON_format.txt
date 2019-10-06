@@ -74,6 +74,13 @@
 		//   the MaxEncodingPriority of the Workspace will be used.
 		"EncodingPriority": "Low",
 
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		],
+
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.

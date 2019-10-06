@@ -35,6 +35,13 @@
 		"DependenciesToBeAddedToReferences": "atTheEnd",
 
 		// mandatory
-		"ConfigurationLabel": "my ftp server"
+		"ConfigurationLabel": "my ftp server",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

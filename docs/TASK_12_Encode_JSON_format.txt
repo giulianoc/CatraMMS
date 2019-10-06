@@ -6,34 +6,41 @@
 	"Type": "Encode",
 
 	"Parameters": {
-	// mandatory
-	"References": [
-		// mandatory. Just one Reference needed to identify the video to encode
-		// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
-		// In such a case, the System will automatically add the Reference... item using the key
-		// of the video that is supposed has to be encoded.
-		// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
+		// mandatory
+		"References": [
+			// mandatory. Just one Reference needed to identify the video to encode
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video that is supposed has to be encoded.
+			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
-		// The below object could contain optionally the "ErrorIfContentNotFound" boolean field
-		// to specify if the MMS has to continue or not in case of a content not found.
-		// Default is true
+			// The below object could contain optionally the "ErrorIfContentNotFound" boolean field
+			// to specify if the MMS has to continue or not in case of a content not found.
+			// Default is true
 
-		{ "ReferenceMediaItemKey": 11 }
-	],
+			{ "ReferenceMediaItemKey": 11 }
+		],
 
-	// optional. Possible values: Low, Medium, High
-	// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
-	//   the MaxEncodingPriority of the Workspace will be used.
-	"EncodingPriority": "Low",
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
+		//   the MaxEncodingPriority of the Workspace will be used.
+		"EncodingPriority": "Low",
 
-	// mandatory: just one, EncodingProfilesSetKey, EncodingProfilesSetLabel,
-	//    EncodingProfileKey or EncodingProfileLabel has to be present.
-	//      EncodingProfilesSetLabel or EncodingProfilesSetKey will refer a set of profiles, 
-	//            so several encodings will be generated.
-	//      EncodingProfileLabel or EncodingProfileKey will represent just one profile
-	"EncodingProfilesSetLabel": "Sport",
-	"EncodingProfilesSetKey": 1,
-	"EncodingProfileKey": 1,
-	"EncodingProfileLabel": "Profile Logo"
+		// mandatory: just one, EncodingProfilesSetKey, EncodingProfilesSetLabel,
+		//    EncodingProfileKey or EncodingProfileLabel has to be present.
+		//      EncodingProfilesSetLabel or EncodingProfilesSetKey will refer a set of profiles, 
+		//            so several encodings will be generated.
+		//      EncodingProfileLabel or EncodingProfileKey will represent just one profile
+		"EncodingProfilesSetLabel": "Sport",
+		"EncodingProfilesSetKey": 1,
+		"EncodingProfileKey": 1,
+		"EncodingProfileLabel": "Profile Logo"
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }

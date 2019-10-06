@@ -56,6 +56,13 @@
 		"Headers": [],
 		
 		// optional, set maximum time in seconds the request is allowed to take, default is 120 seconds
-		"Timeout": 120
+		"Timeout": 120,
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"WaitFor": [
+			{
+				"GlobalIngestionLabel": "XXXX"
+			}
+		]
 	}
 }
