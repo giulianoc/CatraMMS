@@ -3175,7 +3175,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 			}
 			field = "CurrentUtcChunkStartTime_HHMISS";
-			variablesWorkflowRoot[field] = currentUtcChunkStartTime_HHMISS;
+			variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
 
 			field = "PreviousUtcChunkStartTime";
 			variablesWorkflowRoot[field] = mmsDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();
