@@ -555,9 +555,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                    + ", metaDataContent: " + metaDataContent
                     + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
                     + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                    + ", metaDataContent: " + metaDataContent
                 );
 
                 try
