@@ -82,6 +82,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
     );
+    _doNotManageIngestionsOlderThanDays = configuration["mms"].get("doNotManageIngestionsOlderThanDays", 7).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
+    );
 
     _ingestionJobsSelectPageSize = configuration["mms"].get("ingestionJobsSelectPageSize", 500).asInt();
     _logger->info(__FILEREF__ + "Configuration item"

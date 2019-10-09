@@ -493,7 +493,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,shared_ptr<Workspace>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
+        vector<tuple<int64_t,shared_ptr<Workspace>,string, string,
+			MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
 
         try
@@ -536,25 +537,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
             throw e;
         }
         
-        for (tuple<int64_t, shared_ptr<Workspace>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
+        for (tuple<int64_t, shared_ptr<Workspace>, string, string,
+				MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             try
             {
                 shared_ptr<Workspace> workspace;
+                string ingestionDate;
                 string metaDataContent;
                 string sourceReference;
                 MMSEngineDBFacade::IngestionType ingestionType;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-                tie(ingestionJobKey, workspace, metaDataContent,
+                tie(ingestionJobKey, workspace, ingestionDate, metaDataContent,
                         ingestionType, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                    + ", ingestionDate: " + ingestionDate
                     + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
                     + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                     + ", metaDataContent: " + metaDataContent

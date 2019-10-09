@@ -64,9 +64,20 @@ struct MediaItemKeyNotFound: public exception {
 };
 
 struct AlreadyLocked: public exception {    
+    string _errorMessage;
+    
+    AlreadyLocked(string label, string owner, int currentLockDuration)
+    {
+		_errorMessage = string("Already locked")
+			+ ", label: " + label
+			+ ", owner: " + owner
+			+ ", currentLockDuration (secs): " + to_string(currentLockDuration)
+			;
+    }
+    
     char const* what() const throw() 
     {
-		return "Already locked";
+        return _errorMessage.c_str();
     };
 };
 
@@ -1132,7 +1143,7 @@ public:
 			shared_ptr<MySQLConnection> conn, int64_t ingestionJobKey);
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Workspace>,string, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck
@@ -1728,6 +1739,7 @@ private:
 	int								_maxSecondsToWaitMainAndBackupLiveChunkLock;
 	int								_maxSecondsToWaitSetNotToBeExecutedLock;
     
+	int								_doNotManageIngestionsOlderThanDays;
 	int								_ingestionWorkflowRetentionInDays;
 
     chrono::system_clock::time_point _lastConnectionStatsReport;

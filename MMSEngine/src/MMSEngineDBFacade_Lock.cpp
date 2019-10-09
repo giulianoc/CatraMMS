@@ -27,6 +27,8 @@ void MMSEngineDBFacade::setLock(
 		bool alreadyLocked = false;
 		time_t utcCallStart = time(NULL);
 
+		string previousOwner;
+		int currentLockDuration = 0;
 		do
 		{
 			autoCommit = false;
@@ -42,13 +44,14 @@ void MMSEngineDBFacade::setLock(
 			bool active;
 			long maxDurationInMinutes;
 			string start;
-			string previousOwner;
 			{
 				lastSQLCommand = 
 					"select active, maxDurationInMinutes, owner, "
+					"TIME_TO_SEC(TIMEDIFF(NOW(), start)) as currentLockDuration,"
 					"DATE_FORMAT(convert_tz(start, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as start "
 					"from MMS_Lock where type = ? for update";
-				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndexIngestionJob = 1;
 				preparedStatement->setString(queryParameterIndexIngestionJob++, sLockType);
 
@@ -68,6 +71,7 @@ void MMSEngineDBFacade::setLock(
 				maxDurationInMinutes = resultSet->getInt("maxDurationInMinutes");
 				start = resultSet->getString("start");
 				previousOwner = resultSet->getString("owner");
+				currentLockDuration = resultSet->getInt("currentLockDuration");
 			}
 
 			alreadyLocked = false;
@@ -210,7 +214,7 @@ void MMSEngineDBFacade::setLock(
 			;
 			_logger->warn(errorMessage);
 
-			throw AlreadyLocked();
+			throw AlreadyLocked(label, previousOwner, currentLockDuration);
 		}
 		else
 		{

@@ -3,7 +3,7 @@
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t, shared_ptr<Workspace>, string, IngestionType,
+        vector<tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType,
 		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
@@ -61,12 +61,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
-			// 2019-03-31: scenario: we have a long link of encodings to be done (113 encodings) and among these we have 2 live recordings.
+			// 2019-03-31: scenario: we have a long list of encodings to be done (113 encodings) and among these we have 2 live recordings.
 			//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
 			//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
 			{
 				lastSQLCommand = 
-					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType, "
+						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Recorder' "
@@ -103,6 +104,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						resultSet->getString("status"));
 					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 						resultSet->getString("ingestionType"));
+					string ingestionDate      = resultSet->getString("ingestionDate");
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
@@ -125,8 +127,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                        
 						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-						tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                               = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
+						tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                               = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
+									   ingestionType, ingestionStatus);
 
 						ingestionsToBeManaged.push_back(ingestionToBeManaged);
 					}
@@ -157,11 +160,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					);
 
 					lastSQLCommand = 
-						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, "
+							"ij.status, ij.ingestionType, "
+							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 							"and ij.ingestionType != 'Live-Recorder' "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+							"and ir.ingestionDate >= DATE_SUB(NOW(), INTERVAL ? DAY) "
 							"order by ir.ingestionDate asc "
 							"limit ? offset ?"
 							// "limit ? offset ? for update"
@@ -179,6 +185,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 					preparedStatement->setString(queryParameterIndexIngestionJob++,
 					   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+					preparedStatement->setInt(queryParameterIndexIngestionJob++, _doNotManageIngestionsOlderThanDays);
 
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
@@ -200,6 +207,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							resultSet->getString("status"));
 						IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
 							resultSet->getString("ingestionType"));
+						string ingestionDate      = resultSet->getString("ingestionDate");
 
 						tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
 							ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
@@ -222,8 +230,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
 							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-							tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
+							tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
+										ingestionType, ingestionStatus);
 
 							ingestionsToBeManaged.push_back(ingestionToBeManaged);
 							if (ingestionsToBeManaged.size() >= maxIngestionJobs)
@@ -246,17 +255,19 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			pointAfterNotLive = chrono::system_clock::now();
         }
 
-        for (tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
+        for (tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             shared_ptr<Workspace> workspace;
+            string ingestionDate;
             string metaDataContent;
             string sourceReference;
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
             MMSEngineDBFacade::IngestionType ingestionType;
 
-            tie(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
+            tie(ingestionJobKey, workspace, ingestionDate, metaDataContent, ingestionType,
+					ingestionStatus) = ingestionToBeManaged;
 
             if (ingestionStatus == IngestionStatus::SourceMovingInProgress
                     || ingestionStatus == IngestionStatus::SourceCopingInProgress
@@ -4515,7 +4526,8 @@ void MMSEngineDBFacade::retentionOfIngestionData()
             lastSQLCommand = 
                 "delete from MMS_IngestionRoot where ingestionDate < DATE_SUB(NOW(), INTERVAL ? DAY)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, _ingestionWorkflowRetentionInDays);
 
