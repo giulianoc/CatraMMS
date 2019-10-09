@@ -48,11 +48,22 @@ void MMSEngineDBFacade::getEncodingJobs(
 				+ ", startRow: " + to_string(startRow)
 			);
             lastSQLCommand = 
+				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
+				"ej.encodingPriority, ej.transcoder, ej.stagingEncodedAssetPathName "
+				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
+				"where ir.ingestionRootKey = ij.ingestionRootKey "
+				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null and "
+				"ej.status = ? and ej.encodingJobStart <= NOW() "
+				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
+				"limit ? offset ?"
+
+				/*
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
 				"transcoder, stagingEncodedAssetPathName from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
                 "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
 				"limit ? offset ?"
+				*/
 				// "limit ? for update"
 				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
