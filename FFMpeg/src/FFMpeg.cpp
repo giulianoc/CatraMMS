@@ -4088,10 +4088,11 @@ void FFMpeg::generateConcatMediaToIngest(
     // Then you can stream copy or re-encode your files
     // The -safe 0 above is not required if the paths are relative
     // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
-
+	// 2019-10-10: added -fflags +genpts -async 1 for lipsync issue!!!
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 -i " + concatenationListPathName + " "
+			+ "-fflags +genpts -async 1 "
             + "-c copy " + concatenatedMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
