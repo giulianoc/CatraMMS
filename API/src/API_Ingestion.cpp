@@ -88,10 +88,14 @@ void API::ingestion(
                         
                         Json::StreamWriterBuilder wbuilder;
                         string sKey = Json::writeString(wbuilder, key);
-                        if (sKey.length() > 2)  // to remove the first and last "
+                        if (sKey.length() > 2)
                             sKey = sKey.substr(1, sKey.length() - 2);
+
                         string sValue = Json::writeString(wbuilder, value);        
-                        if (sValue.length() > 2)    // to remove the first and last "
+						/* The value could be a string (in this case we have to remove the " at the beginning
+						 * and at the end) or could be a integer (in this case we do not have to remove anythink)
+						 */
+                        if (sValue.length() > 2 && sValue.front() == '"' && sValue.back() == '"')
                             sValue = sValue.substr(1, sValue.length() - 2);
                         
                         // string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
