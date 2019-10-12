@@ -51,10 +51,10 @@ public:
 
     string getDoneRootRepository (void);
 
-	tuple<int64_t,string, string, int64_t, string> getPhysicalPath(
+	tuple<int64_t,string, string, string, int64_t, string> getPhysicalPath(
 		int64_t mediaItemKey, int64_t encodingProfileKey);
     
-	tuple<string, string, int64_t, string> getPhysicalPath(
+	tuple<string, string, string, int64_t, string> getPhysicalPath(
 		int64_t physicalPathKey);
 
 	pair<string, string> getDeliveryURI(int64_t physicalPathKey, bool save,

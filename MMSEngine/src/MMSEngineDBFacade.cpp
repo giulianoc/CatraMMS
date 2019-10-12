@@ -1516,43 +1516,32 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        int64_t workspaceKey;
-        int64_t physicalPathKey;
+        int64_t workspaceKey = -1;
+        int64_t physicalPathKey = -1;
         int mmsPartitionNumber;
-        int externalReadOnlyStorage;
+        bool externalReadOnlyStorage;
         string relativePath;
         string fileName;
         int64_t sizeInBytes;
-		int64_t maxSizeInBytes = -1;
         string deliveryFileName;
         string title;
+		if (encodingProfileKey != -1)
         {
             lastSQLCommand = string("") +
                 "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.externalReadOnlyStorage, "
 				"pp.physicalPathKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
-                "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
+                "and pp.encodingProfileKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            if (encodingProfileKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			// in case of encodingProfileKey == -1, we could have more then one row into result set
-			// (because we could have more then one profile ingested by the user, without encodingProfileKey,
-			// non only the source, may be alse a profile)
-			// In this case we will return the one having the bigger size that it is supposed to be the source
-			// This is the reason we have the below while
-            while (resultSet->next())
+            if (resultSet->next())
             {
-                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
-
-				if (maxSizeInBytes != -1 && localSizeInBytes <= maxSizeInBytes)
-					continue;
-
                 workspaceKey = resultSet->getInt64("workspaceKey");
                 title = resultSet->getString("title");
                 if (!resultSet->isNull("deliveryFileName"))
@@ -1562,13 +1551,10 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-
-                sizeInBytes = localSizeInBytes;
-
-				maxSizeInBytes = localSizeInBytes;
+                sizeInBytes = resultSet->getInt64("sizeInBytes");
             }
 
-			if (maxSizeInBytes == -1)
+			if (physicalPathKey == -1)
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present"
                     + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1577,9 +1563,46 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
                 ;
                 _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }
         }
+		else
+		{
+			bool warningIfMissing = false;
+			tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+				getSourcePhysicalPath(mediaItemKey, warningIfMissing);
+			tie(physicalPathKey, mmsPartitionNumber, relativePath,
+					fileName, sizeInBytes, externalReadOnlyStorage) = sourcePhysicalPathDetails;
+
+            lastSQLCommand = string("") +
+                "select workspaceKey, title, deliveryFileName "
+                "from MMS_MediaItem where mediaItemKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                workspaceKey = resultSet->getInt64("workspaceKey");
+                title = resultSet->getString("title");
+                if (!resultSet->isNull("deliveryFileName"))
+                    deliveryFileName = resultSet->getString("deliveryFileName");
+            }
+
+			if (workspaceKey == -1)
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }
+		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1613,8 +1636,27 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(MediaItemKeyNotFound e)
     {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }        
+    catch(runtime_error e)
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand

@@ -481,9 +481,9 @@ string ActiveEncodingsManager::encodeContentImage(
             + to_string(encodingProfileKey);
     
     string mmsSourceAssetPathName;
-	tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+	tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 		_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-	tie(mmsSourceAssetPathName, ignore, ignore, ignore)
+	tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
 		= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 	/*
     string mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(

@@ -1308,6 +1308,9 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel, bool warningIfMissing);
 
+	tuple<int64_t, int, string, string, int64_t, bool> getSourcePhysicalPath(
+		int64_t mediaItemKey, bool warningIfMissing);
+
     tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
 

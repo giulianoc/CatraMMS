@@ -1939,7 +1939,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     int64_t referenceMediaItemKey,
-	// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
+	// encodingProfileKey == -1 means it is requested the source file (the one having 'ts' file format and bigger size in case there are more than one)
 	int64_t encodingProfileKey,
 	bool warningIfMissing)
 {
@@ -1956,32 +1956,22 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		if (encodingProfileKey != -1)
         {
 			lastSQLCommand = string("") +
-				"select physicalPathKey, sizeInBytes from MMS_PhysicalPath where mediaItemKey = ? "
-				"and encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? "
+				"and encodingProfileKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceMediaItemKey);
-			if (encodingProfileKey != -1)
-				preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
-
-			int64_t maxSizeInBytes = -1;
+			preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
-            {
-                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
-
-				if (maxSizeInBytes != -1 && localSizeInBytes <= maxSizeInBytes)
-					continue;
-
+            if (resultSet->next())
                 physicalPathKey = resultSet->getInt64("physicalPathKey");
 
-				maxSizeInBytes = localSizeInBytes;
-            }
-
-			if (maxSizeInBytes == -1)
+			if (physicalPathKey == -1)
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
                     + ", mediaItemKey: " + to_string(referenceMediaItemKey)
@@ -1994,8 +1984,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
                     _logger->error(errorMessage);
 
                 throw MediaItemKeyNotFound(errorMessage);                    
-            }            
+            }
         }
+		else
+		{
+			tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
+				getSourcePhysicalPath(referenceMediaItemKey, warningIfMissing);
+			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
+		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -2085,8 +2081,196 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         
         throw e;
     }
-    
+
     return physicalPathKey;
+}
+
+
+tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourcePhysicalPath(
+    int64_t mediaItemKey, bool warningIfMissing)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		int64_t physicalPathKey = -1;
+        int mmsPartitionNumber;
+        bool externalReadOnlyStorage;
+        string relativePath;
+        string fileName;
+        int64_t sizeInBytes;
+        {
+			lastSQLCommand = string("") +
+				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, externalReadOnlyStorage "
+				"from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey is null";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+			int64_t maxSizeInBytes = -1;
+			string selectedFileFormat;
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
+
+                string localFileName = resultSet->getString("fileName");
+				string localFileFormat;
+				size_t extensionIndex = fileName.find_last_of(".");
+				if (extensionIndex != string::npos)
+					localFileFormat = fileName.substr(extensionIndex + 1);
+
+				if (maxSizeInBytes != -1)
+				{
+					// this is the second or third... physicalPath
+					// we are fore sure in the scenario encodingProfileKey == -1
+					// So, in case we have more than one "source" physicalPath, we will select the 'ts' one
+					// We prefer 'ts' because is easy and safe do activities like cut or concat
+					if (selectedFileFormat == "ts")
+					{
+						if (localFileFormat == "ts")
+						{
+							if (localSizeInBytes <= maxSizeInBytes)
+								continue;
+						}
+						else
+						{
+							continue;
+						}
+					}
+					else
+					{
+						if (localSizeInBytes <= maxSizeInBytes)
+							continue;
+					}
+				}
+
+                physicalPathKey = resultSet->getInt64("physicalPathKey");
+                externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
+                mmsPartitionNumber = resultSet->getInt("partitionNumber");
+                relativePath = resultSet->getString("relativePath");
+                fileName = resultSet->getString("fileName");
+                sizeInBytes = resultSet->getInt64("sizeInBytes");
+
+				maxSizeInBytes = localSizeInBytes;
+				selectedFileFormat = localFileFormat;
+            }
+
+			if (maxSizeInBytes == -1)
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return make_tuple(physicalPathKey, mmsPartitionNumber,
+				relativePath, fileName, sizeInBytes, externalReadOnlyStorage);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+        else
+            _logger->error(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(

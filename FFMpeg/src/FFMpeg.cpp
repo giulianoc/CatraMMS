@@ -4089,10 +4089,10 @@ void FFMpeg::generateConcatMediaToIngest(
     // The -safe 0 above is not required if the paths are relative
     // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
 	// 2019-10-10: added -fflags +genpts -async 1 for lipsync issue!!!
+	// 2019-10-11: removed -fflags +genpts -async 1 because does not have inpact on lipsync issue!!!
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 -i " + concatenationListPathName + " "
-			+ "-fflags +genpts -async 1 "
             + "-c copy " + concatenatedMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
@@ -4407,20 +4407,6 @@ void FFMpeg::generateCutMediaToIngest(
     string ffmpegExecuteCommand;
 	if (keyFrameSeeking)
 	{
-		/*
-		2019-10-10: setting keyFrameSeeking to true could generate lipSync issue
-		with the player doing editing (like Adobe Premiere) because they start the tracks from 0
-		without syncing the two tracks (audio and video) using the PTS (timestamps).
-		Most of the player uses PTS and do not have any issue. See below an email from Valentini:
-		Sembra che ci sia più audio che video nel file... E sembra che questo "over head" sia esattamente
-		legato alla lunghezza GOP. Secondo me il taglio ffmmpeg sul frame "I" fa si
-		che il video venga tagliato dopo l'audio.
-		Premiere allinea le tracce al loro tempo "0" per cui c'è questo shift....
-		Spostando il video (ritardarlo) tutto va a posto.
-		Probabilmente i player usano dei time stamps invece che allineare le tracce al loro tempo "0"...compensando così lo shift.
-		Penso si risolva tutto rimettendo il taglio "non" sull' I frame
-		*/
-
 		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-ss " + to_string(startTimeInSeconds) + " "

@@ -4015,7 +4015,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
                             try
                             {
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage changeFileFormatThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4039,8 +4039,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             errorMessage,
                                             processorMMS
                                             );
-                               }
-                                else
+								}
+								else
                                 {
                                     thread changeFileFormatThread(&MMSEngineProcessor::changeFileFormatThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -6131,10 +6131,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
                 int64_t encodingProfileKey = -1;
                
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(physicalPathKey, mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
+				tie(physicalPathKey, mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
             else
@@ -6151,10 +6151,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 				}
 
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, fileName, sizeInBytes, deliveryFileName)
+				tie(mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
 
@@ -6300,10 +6300,10 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, sizeInBytes, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -6332,10 +6332,10 @@ void MMSEngineProcessor::postOnFacebookTask(
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, sizeInBytes, ignore)
+				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -6538,10 +6538,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, sizeInBytes, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -6569,10 +6569,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, sizeInBytes, ignore)
+				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -6873,7 +6873,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						int64_t encodingProfileKey = -1;
-						tuple<int64_t, string, string, int64_t, string> physicalPathDetails =
+						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(key, encodingProfileKey);
 
 						int64_t physicalPathKey;
@@ -6882,7 +6882,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPathKey, physicalPath, fileName, ignore, ignore) = physicalPathDetails;
+						tie(physicalPathKey, physicalPath, ignore, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["physicalPathKey"] = physicalPathKey;
 						callbackMedatada["fileName"] = fileName;
@@ -6942,7 +6942,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						int64_t encodingProfileKey = -1;
-						tuple<string, string, int64_t, string> physicalPathDetails =
+						tuple<string, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(key);
 
 						string physicalPath;
@@ -6950,7 +6950,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPath, fileName, ignore, ignore) = physicalPathDetails;
+						tie(physicalPath, ignore, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["fileName"] = fileName;
 						// callbackMedatada["physicalPath"] = physicalPath;
@@ -7088,10 +7088,10 @@ void MMSEngineProcessor::localCopyContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7110,10 +7110,10 @@ void MMSEngineProcessor::localCopyContentTask(
             {
 				physicalPathKey = key;
 
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7282,10 +7282,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourceMediaItemKey = key;
@@ -7315,10 +7315,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourcePhysicalPathKey = key;
@@ -7483,10 +7483,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7514,10 +7514,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t, int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7880,74 +7880,41 @@ void MMSEngineProcessor::changeFileFormatThread(
 
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
-			string mmsAssetPathName;
-			/*
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-            shared_ptr<Workspace> workspace;
-			*/
-            
+			int64_t mediaItemKey;
+			string mmsSourceAssetPathName;
+			string relativePath;
+
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
+				mediaItemKey = key;
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+				tie(ignore, mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(
-                        key, encodingProfileKey);
-
-                int64_t physicalPathKey;
-                string deliveryFileName;
-                string title;
-                int64_t sizeInBytes;
-                
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, ignore, ignore)
+				tie(mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				/*
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(key);
 
-                string deliveryFileName;
-                string title;
-                int64_t sizeInBytes;
-                
-                tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
-                        = storageDetails;
-                workspaceDirectoryName = workspace->_directoryName;
-				*/
+				bool warningIfMissing = false;
+				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						key, warningIfMissing);
+				tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+					= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
 
 			/*
-            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-                + ", workspaceDirectoryName: " + workspaceDirectoryName
-                + ", relativePath: " + relativePath
-                + ", fileName: " + fileName
-            );
-            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
-                mmsPartitionNumber,
-                workspaceDirectoryName,
-                relativePath,
-                fileName);
-			*/
-            
+			 * 2019-10-11: next code is to create a new MediaItem. I commented it because this is not a new asset,
+			 * it is just another variant of the asset 
             {
                 string localSourceFileName;
                 string changeFileFormatMediaPathName;
@@ -8028,12 +7995,406 @@ void MMSEngineProcessor::changeFileFormatThread(
                         + ", getEventKey().second: " + to_string(event->getEventKey().second));
                 }
             }
+			*/
+
+			// add the new file as a new variant of the MIK
+			{
+				string changeFormatFileName = to_string(ingestionJobKey)
+					+ "_" + to_string(mediaItemKey)
+					+ "_changeFileFormat"
+					+ "." + outputFileFormat
+				;
+
+				string stagingChangeFileFormatAssetPathName;
+				{
+					bool removeLinuxPathIfExist = true;
+					bool neededForTranscoder = false;
+					stagingChangeFileFormatAssetPathName = _mmsStorage->getStagingAssetPathName(
+						neededForTranscoder,
+						workspace->_directoryName,
+						to_string(ingestionJobKey),
+						"/",
+						changeFormatFileName,
+						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+						removeLinuxPathIfExist);
+				}
+
+				try
+				{
+					_logger->info(__FILEREF__ + "Calling ffmpeg.changeFileFormat"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", changeFormatFileName: " + changeFormatFileName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+					);
+
+					FFMpeg ffmpeg (_configuration, _logger);
+
+					ffmpeg.changeFileFormat(
+						ingestionJobKey,
+						key,
+						mmsSourceAssetPathName,
+						stagingChangeFileFormatAssetPathName);
+
+					_logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", changeFormatFileName: " + changeFormatFileName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+					);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+
+				int64_t durationInMilliSeconds = -1;
+				long bitRate = -1;
+				string videoCodecName;
+				string videoProfile;
+				int videoWidth = -1;
+				int videoHeight = -1;
+				string videoAvgFrameRate;
+				long videoBitRate = -1;
+				string audioCodecName;
+				long audioSampleRate = -1;
+				int audioChannels = -1;
+				long audioBitRate = -1;
+
+				int imageWidth = -1;
+				int imageHeight = -1;
+				string imageFormat;
+				int imageQuality = -1;
+				try
+				{
+					_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+					);
+					FFMpeg ffmpeg (_configuration, _logger);
+					tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+						ffmpeg.getMediaInfo(stagingChangeFileFormatAssetPathName);
+
+					tie(durationInMilliSeconds, bitRate, 
+						videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+						audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "getMediaInfo failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", _workspace->_directoryName: " + workspace->_directoryName
+						+ ", e.what(): " + e.what()
+					);
+
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "getMediaInfo failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", workspace->_directoryName: " + workspace->_directoryName
+					);
+
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					throw e;
+				}
+
+				string mmsChangeFileFormatAssetPathName;
+				unsigned long mmsPartitionIndexUsed;
+				try
+				{
+					bool partitionIndexToBeCalculated = true;
+					bool deliveryRepositoriesToo = true;
+
+					mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(                                             
+						stagingChangeFileFormatAssetPathName,                                                                      
+						workspace->_directoryName,                                                        
+						changeFormatFileName,                                                                                  
+						relativePath,                                                        
+
+						partitionIndexToBeCalculated,                                                                     
+						&mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+
+						deliveryRepositoriesToo,                                                                          
+						workspace->_territories                                                           
+					);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", e.what(): " + e.what()
+					);
+
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+						+ ", e.what(): " + e.what()
+					);
+
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					throw e;
+				}
+
+				try
+				{
+					unsigned long long mmsAssetSizeInBytes;
+					{
+						bool inCaseOfLinkHasItToBeRead = false;
+						mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsChangeFileFormatAssetPathName,
+							inCaseOfLinkHasItToBeRead);   
+					}
+
+					bool externalReadOnlyStorage = false;
+					string externalDeliveryTechnology;
+					string externalDeliveryURL;
+					int64_t liveRecordingIngestionJobKey = -1;
+					int64_t changeFormatPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
+						workspace->_workspaceKey,
+						ingestionJobKey,
+						liveRecordingIngestionJobKey,
+						mediaItemKey,
+						externalReadOnlyStorage,
+						externalDeliveryTechnology,
+						externalDeliveryURL,
+						changeFormatFileName,
+						relativePath,
+						mmsPartitionIndexUsed,
+						mmsAssetSizeInBytes,
+						-1,	// encodingProfileKey,
+
+						durationInMilliSeconds,
+						bitRate,
+						videoCodecName,
+						videoProfile,
+						videoWidth,
+						videoHeight,
+						videoAvgFrameRate,
+						videoBitRate,
+						audioCodecName,
+						audioSampleRate,
+						audioChannels,
+						audioBitRate,
+
+						imageWidth,
+						imageHeight,
+						imageFormat,
+						imageQuality
+					);
+
+					_logger->info(__FILEREF__ + "Saved the Encoded content"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", changeFormatPhysicalPathKey: " + to_string(changeFormatPhysicalPathKey)
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+					);
+
+					if (FileIO::fileExisting(mmsChangeFileFormatAssetPathName))
+					{
+						_logger->info(__FILEREF__ + "Remove"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
+						);
+
+						FileIO::remove(mmsChangeFileFormatAssetPathName);
+					}
+
+					{
+						string directoryPathName;
+						try
+						{
+							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+							if (endOfDirectoryIndex != string::npos)
+							{
+								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+								_logger->info(__FILEREF__ + "removeDirectory"
+									+ ", directoryPathName: " + directoryPathName
+								);
+								Boolean_t bRemoveRecursively = true;
+								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "removeDirectory failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+								+ ", directoryPathName: " + directoryPathName
+								+ ", exception: " + e.what()
+							);
+						}
+					}
+
+					throw e;
+				}
+			}
         }
     }
     catch (runtime_error& e) 
     {
         _logger->error(__FILEREF__ + "ChangeFileFormat failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", exception: " + e.what()
         );
@@ -8384,10 +8745,10 @@ void MMSEngineProcessor::extractTracksContentThread(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -8406,10 +8767,10 @@ void MMSEngineProcessor::extractTracksContentThread(
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(mmsAssetPathName, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -9672,20 +10033,20 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
             int64_t encodingProfileKey = -1;
-			tuple<int64_t, string, string, int64_t, string>
+			tuple<int64_t, string, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore)
+            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourceMediaItemKey = key;
         }
         else
         {
-			tuple<string, string, int64_t, string>
+			tuple<string, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
 				_mmsStorage->getPhysicalPath(key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore)
+			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 
@@ -9870,20 +10231,20 @@ void MMSEngineProcessor::manageSlideShowTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourceMediaItemKey = key;
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore)
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourcePhysicalPathKey = key;
@@ -10033,20 +10394,20 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
-				tuple<int64_t, string, string, int64_t, string>
+				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourceMediaItemKey = key;
             }
             else
             {
-				tuple<string, string, int64_t, string>
+				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore)
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourcePhysicalPathKey = key;
@@ -10366,20 +10727,20 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
 			int64_t encodingProfileKey = -1;
-			tuple<int64_t, string, string, int64_t, string>
+			tuple<int64_t, string, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
-			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore) =
+			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourceMediaItemKey = key;
         }
         else
         {
-			tuple<string, string, int64_t, string>
+			tuple<string, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
 				_mmsStorage->getPhysicalPath(key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore)
+			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourcePhysicalPathKey = key;

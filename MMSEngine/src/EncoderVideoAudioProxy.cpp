@@ -1079,6 +1079,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
 				// stagingEncodedAssetPathName preparation
 				{
+					/*
 _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1087,10 +1088,12 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", 1: "
 );
 // 2019-09-14: crashed after the above message
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+*/
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-					tie(mmsSourceAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+/*
 _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1105,13 +1108,6 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
 + ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
 );
-					/*
-					mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
-						_encodingItem->_encodeData->_mmsPartitionNumber,
-						_encodingItem->_workspace->_directoryName,
-						_encodingItem->_encodeData->_relativePath,
-						_encodingItem->_encodeData->_fileName);
-					*/
 _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1126,6 +1122,7 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
 + ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
 );
+*/
 					size_t extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
 					if (extensionIndex == string::npos)
 					{
@@ -1139,24 +1136,28 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 						throw runtime_error(errorMessage);
 					}
 
+/*
 _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 + ", 4: "
 );
+*/
 					encodedFileName =
 						to_string(_encodingItem->_ingestionJobKey)
 						+ "_"
 						+ to_string(_encodingItem->_encodingJobKey)
 						+ "_" 
 						+ to_string(encodingProfileKey);
+/*
 _logger->info(__FILEREF__ + "building body for encoder 2"
 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 + ", 5: "
 );
+*/
 					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
 						encodedFileName.append(".mp4");
 					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
@@ -1175,6 +1176,7 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 
 						throw runtime_error(errorMessage);
 					}
+/*
 				_logger->info(__FILEREF__ + "building body for encoder 3"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1184,6 +1186,7 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 
 					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 				);
+*/
 
 
 					bool removeLinuxPathIfExist = true;
@@ -2481,14 +2484,14 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
     
 				// stagingEncodedAssetPathName preparation
 				{        
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_video =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_video =
 						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_video;
 
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_image =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_image =
 						_mmsStorage->getPhysicalPath(sourceImagePhysicalPathKey);
-					tie(mmsSourceImageAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceImageAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_image;
 
 					/*
@@ -3380,9 +3383,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
     
 				// stagingEncodedAssetPathName preparation
 				{
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 					/*
@@ -4261,9 +4264,9 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
     
 				// stagingEncodedAssetPathName preparation
 				{
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 					/*
@@ -4968,14 +4971,14 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
 				// stagingEncodedAssetPathName preparation
 				{
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_main =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_main =
 						_mmsStorage->getPhysicalPath(mainVideoPhysicalPathKey);
-					tie(mmsMainVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsMainVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_main;
 
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay =
 						_mmsStorage->getPhysicalPath(overlayVideoPhysicalPathKey);
-					tie(mmsOverlayVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsOverlayVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName_overlay;
 
 					/*
@@ -5686,9 +5689,9 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 				// stagingEncodedAssetPathName preparation
 				{
-					tuple<string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(sourceVideoPhysicalPathKey);
-					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore)
+					tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 					/*
@@ -7626,11 +7629,11 @@ string EncoderVideoAudioProxy::faceIdentification()
 					field = "physicalPathKey";
 					int64_t physicalPathKey = physicalPathRoot.get(field, 0).asInt64();
 
-					tuple<string, string, int64_t, string>
+					tuple<string, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPath(physicalPathKey);
 					string mmsImagePathName;
-					tie(mmsImagePathName, ignore, ignore, ignore)
+					tie(mmsImagePathName, ignore, ignore, ignore, ignore)
 						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 					images.push_back(cv::imread(mmsImagePathName, 0));
