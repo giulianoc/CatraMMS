@@ -8289,6 +8289,34 @@ void MMSEngineProcessor::changeFileFormatThread(
 					throw e;
 				}
 
+				{
+					string directoryPathName;
+					try
+					{
+						size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
+						if (endOfDirectoryIndex != string::npos)
+						{
+							directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", directoryPathName: " + directoryPathName
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+						}
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "removeDirectory failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
+							+ ", directoryPathName: " + directoryPathName
+							+ ", exception: " + e.what()
+						);
+					}
+				}
+
 				try
 				{
 					unsigned long long mmsAssetSizeInBytes;
@@ -8358,38 +8386,20 @@ void MMSEngineProcessor::changeFileFormatThread(
 						FileIO::remove(mmsChangeFileFormatAssetPathName);
 					}
 
-					{
-						string directoryPathName;
-						try
-						{
-							size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
-							if (endOfDirectoryIndex != string::npos)
-							{
-								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
-
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", directoryPathName: " + directoryPathName
-								);
-								Boolean_t bRemoveRecursively = true;
-								FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "removeDirectory failed"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
-								+ ", directoryPathName: " + directoryPathName
-								+ ", exception: " + e.what()
-							);
-						}
-					}
-
 					throw e;
 				}
 			}
         }
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
     }
     catch (runtime_error& e) 
     {
