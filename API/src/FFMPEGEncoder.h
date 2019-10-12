@@ -162,7 +162,7 @@ private:
 		int64_t ingestionJobKey,
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
 		string stagingContentsPath,
-		string title,
+		string addContentTitle,
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);

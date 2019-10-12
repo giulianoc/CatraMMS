@@ -2824,12 +2824,12 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 			}
 
 			// Title
-			string newTitle;
+			string addContentTitle;
 			{
 				// ConfigurationLabel is the label associated to the live URL
-				newTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "XXX").asString();
+				addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "XXX").asString();
 
-				newTitle += " - ";
+				addContentTitle += " - ";
 
 				{
 					tm		tmDateTime;
@@ -2847,10 +2847,10 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
 
-					newTitle += strCurrentRecordedFileTime;	// local time
+					addContentTitle += strCurrentRecordedFileTime;	// local time
 				}
 
-				newTitle += " - ";
+				addContentTitle += " - ";
 
 				{
 					tm		tmDateTime;
@@ -2875,11 +2875,11 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
 
-					newTitle += strCurrentRecordedFileTime;	// local time
+					addContentTitle += strCurrentRecordedFileTime;	// local time
 				}
 
 				if (!main)
-					newTitle += " (BCK)";
+					addContentTitle += " (BCK)";
 			}
 
 			if (lastRecordedAssetFileName == "")
@@ -2888,7 +2888,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", currentRecordedAssetPathName: " + transcoderStagingContentsPath + currentRecordedAssetFileName
-					+ ", title: " + newTitle
+					+ ", title: " + addContentTitle
 				);
 
 				_logger->info(__FILEREF__ + "Remove"
@@ -2907,13 +2907,14 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 						+ ", stagingContentsPath: " + stagingContentsPath
-						+ ", title: " + newTitle
+						+ ", addContentTitle: " + addContentTitle
 					);
 
 					liveRecorder_ingestRecordedMedia(ingestionJobKey,
 						transcoderStagingContentsPath, currentRecordedAssetFileName,
 						stagingContentsPath,
-						newTitle, userDataRoot, outputFileFormat, liveRecorderParametersRoot);
+						addContentTitle, userDataRoot, outputFileFormat,
+						liveRecorderParametersRoot);
 				}
 				catch(runtime_error e)
 				{
@@ -2923,7 +2924,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 						+ ", stagingContentsPath: " + stagingContentsPath
-						+ ", newTitle: " + newTitle
+						+ ", addContentTitle: " + addContentTitle
 						+ ", outputFileFormat: " + outputFileFormat
 						+ ", e.what(): " + e.what()
 					);
@@ -2938,7 +2939,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 						+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 						+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName
 						+ ", stagingContentsPath: " + stagingContentsPath
-						+ ", newTitle: " + newTitle
+						+ ", addContentTitle: " + addContentTitle
 						+ ", outputFileFormat: " + outputFileFormat
 					);
                 
@@ -2991,7 +2992,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	int64_t ingestionJobKey,
 	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
 	string stagingContentsPath,
-	string title,
+	string addContentTitle,
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value liveRecorderParametersRoot)
@@ -3076,10 +3077,13 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
         	}
 		}
 		*/
+		Json::Value mmsDataRoot = userDataRoot["mmsData"];
+		int64_t utcChunkStartTime = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
+
 		Json::Value addContentRoot;
 
 		string field = "Label";
-		addContentRoot[field] = title;
+		addContentRoot[field] = to_string(utcChunkStartTime);
 
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
@@ -3134,7 +3138,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		addContentParametersRoot[field] = "Live Recorder Task";
 
 		field = "Title";
-		addContentParametersRoot[field] = title;
+		addContentParametersRoot[field] = addContentTitle;
 
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
@@ -3146,17 +3150,14 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		Json::Value workflowRoot;
 
 		field = "Label";
-		workflowRoot[field] = title;
+		workflowRoot[field] = addContentTitle;
 
 		field = "Type";
 		workflowRoot[field] = "Workflow";
 
 		{
-			Json::Value mmsDataRoot = userDataRoot["mmsData"];
-
 			Json::Value variablesWorkflowRoot;
 
-			int64_t utcChunkStartTime = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
 			field = "CurrentUtcChunkStartTime";
 			variablesWorkflowRoot[field] = utcChunkStartTime;
 
