@@ -8193,17 +8193,17 @@ void MMSEngineProcessor::changeFileFormatThread(
 					bool partitionIndexToBeCalculated = true;
 					bool deliveryRepositoriesToo = true;
 
-					mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(                                             
-						stagingChangeFileFormatAssetPathName,                                                                      
-						workspace->_directoryName,                                                        
-						changeFormatFileName,                                                                                  
-						relativePath,                                                        
+					mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+						stagingChangeFileFormatAssetPathName,
+						workspace->_directoryName,
+						changeFormatFileName,
+						relativePath,
 
-						partitionIndexToBeCalculated,                                                                     
+						partitionIndexToBeCalculated,
 						&mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
-						deliveryRepositoriesToo,                                                                          
-						workspace->_territories                                                           
+						deliveryRepositoriesToo,
+						workspace->_territories
 					);
 				}
 				catch(runtime_error e)
@@ -8289,6 +8289,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					throw e;
 				}
 
+				// remove staging directory
 				{
 					string directoryPathName;
 					try
@@ -8296,7 +8297,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 						size_t endOfDirectoryIndex = stagingChangeFileFormatAssetPathName.find_last_of("/");
 						if (endOfDirectoryIndex != string::npos)
 						{
-							directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
+							directoryPathName = stagingChangeFileFormatAssetPathName.substr(0,
+									endOfDirectoryIndex);
 
 							_logger->info(__FILEREF__ + "removeDirectory"
 								+ ", directoryPathName: " + directoryPathName

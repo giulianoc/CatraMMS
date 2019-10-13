@@ -800,6 +800,37 @@ int64_t ActiveEncodingsManager::processEncodedImage(
         throw e;
     }
 
+	// remove staging directory
+	{
+		string directoryPathName;
+		try
+		{
+			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex != string::npos)
+			{
+				directoryPathName = stagingEncodedAssetPathName.substr(0,
+						endOfDirectoryIndex);
+
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", directoryPathName: " + directoryPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+			}
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "removeDirectory failed"
+				+ ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+				+ ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+				+ ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", directoryPathName: " + directoryPathName
+				+ ", exception: " + e.what()
+			);
+		}
+	}
+
     try
     {
         unsigned long long mmsAssetSizeInBytes;

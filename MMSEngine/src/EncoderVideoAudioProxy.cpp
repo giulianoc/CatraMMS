@@ -2183,6 +2183,38 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         throw e;
     }
 
+	// remove staging directory
+	{
+		string directoryPathName;
+		try
+		{
+			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex != string::npos)
+			{
+				directoryPathName = stagingEncodedAssetPathName.substr(0,
+						endOfDirectoryIndex);
+
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", directoryPathName: " + directoryPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+			}
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "removeDirectory failed"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", directoryPathName: " + directoryPathName
+				+ ", exception: " + e.what()
+			);
+		}
+	}
+
     try
     {
         unsigned long long mmsAssetSizeInBytes;
@@ -2332,34 +2364,6 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         throw e;
     }
     
-	if (stagingEncodedAssetPathName != "")
-	{
-		string directoryPathName;
-		try
-		{
-			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-			if (endOfDirectoryIndex != string::npos)
-			{
-				directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-				_logger->info(__FILEREF__ + "removeDirectory"
-					+ ", directoryPathName: " + directoryPathName
-				);
-				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-			}
-		}
-		catch(runtime_error e)
-		{
-			// 2019-05-12: using warn because sometimes we still we have a file like .nfs00000001061ec25c000382e1
-			//	where his deletion give us the Errno: 16 (EBUSY) because it wass not aready removed by nfs daemon
-			_logger->warn(__FILEREF__ + "removeDirectory failed"
-				+ ", directoryPathName: " + directoryPathName
-				+ ", exception: " + e.what()
-			);
-		}
-	}
-
     return encodedPhysicalPathKey;
 }
 
