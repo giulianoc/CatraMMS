@@ -4950,6 +4950,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
 
+			/*
+			 * 2019-10-13: commented because I guess the avg frame rate returned by ffmpeg is OK
+			 * avg frame rate format is: total duration / total # of frames
             if (localAssetIngestionEvent->getForcedAvgFrameRate() != "")
             {
                 _logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent. Forced Avg Frame Rate"
@@ -4959,6 +4962,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 
                 videoAvgFrameRate = localAssetIngestionEvent->getForcedAvgFrameRate();
             }
+			*/
 
             if (videoCodecName == "")
                 contentType = MMSEngineDBFacade::ContentType::Audio;
@@ -7869,7 +7873,8 @@ void MMSEngineProcessor::changeFileFormatThread(
             outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
 
-        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>::iterator it = dependencies.begin(); 
+        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>::iterator
+				it = dependencies.begin(); 
                 it != dependencies.end(); ++it) 
         {
             tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = *it;
@@ -10389,11 +10394,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         vector<string> sourcePhysicalPaths;
         string forcedAvgFrameRate;
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType: dependencies)
         {
-            // int64_t encodingProfileKey = -1;
-            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
-
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
@@ -10491,25 +10494,12 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             if (concatContentType == MMSEngineDBFacade::ContentType::Video
                     && forcedAvgFrameRate == "")
             {
-                int64_t localDurationInMilliSeconds;
-                long localBitRate;
-                string localVideoCodecName;
-                string localVideoProfile;
-                int localVideoWidth;
-                int localVideoHeight;
-                // string localVideoAvgFrameRate;
-                long localVideoBitRate;
-                string localAudioCodecName;
-                long localAudioSampleRate;
-                int localAudioChannels;
-                long localAudioBitRate;
-                
                 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> videoDetails 
                     = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
 
-                tie(localDurationInMilliSeconds, localBitRate, localVideoCodecName,
-                    localVideoProfile, localVideoWidth, localVideoHeight, forcedAvgFrameRate,
-                    localVideoBitRate, localAudioCodecName, localAudioSampleRate, localAudioChannels, localAudioBitRate)
+                tie(ignore, ignore, ignore,
+                    ignore, ignore, ignore, forcedAvgFrameRate,
+                    ignore, ignore, ignore, ignore, ignore)
                     = videoDetails;
             }
         }

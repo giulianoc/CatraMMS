@@ -11,9 +11,7 @@
 			"References": [
 				{ "ReferenceMediaItemKey": 12 }
 			],
-			OutputFileFormat="mp4",
-			"UserData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			OutputFileFormat="mp4"
 		}
 	}
 }
