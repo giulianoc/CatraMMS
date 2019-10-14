@@ -4084,7 +4084,7 @@ void FFMpeg::generateConcatMediaToIngest(
             + to_string(ingestionJobKey)
             + ".concat.log"
             ;
-    
+
     // Then you can stream copy or re-encode your files
     // The -safe 0 above is not required if the paths are relative
     // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
@@ -4129,7 +4129,8 @@ void FFMpeg::generateConcatMediaToIngest(
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+            + ", ffmpegCommandDuration (secs): "
+				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );
     }
     catch(runtime_error e)
@@ -4160,6 +4161,130 @@ void FFMpeg::generateConcatMediaToIngest(
     FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
     _logger->info(__FILEREF__ + "Remove"
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+void FFMpeg::generateCutMediaToIngest(
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+		bool keyFrameSeeking,
+        double startTimeInSeconds,
+        double endTimeInSeconds,
+        int framesNumber,
+        string cutMediaPathName)
+{
+
+    _outputFfmpegPathFileName =
+            _ffmpegTempDir + "/"
+            + to_string(ingestionJobKey)
+            + ".cut.log"
+            ;
+
+    /*
+        -ss: When used as an output option (before an output url), decodes but discards input 
+            until the timestamps reach position.
+            Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
+		2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
+			The generated error was: Too many packets buffered for output stream
+			(look https://trac.ffmpeg.org/ticket/6375)
+			-async samples_per_second
+				Audio sync method. "Stretches/squeezes" the audio stream to match the timestamps, the parameter is
+				the maximum samples per second by which the audio is changed.  -async 1 is a special case where only
+				the start of the audio stream is corrected without any later correction.
+			-af "aresample=async=1:min_hard_comp=0.100000:first_pts=0" helps to keep your audio lined up
+				with the beginning of your video. It is common for a container to have the beginning
+				of the video and the beginning of the audio start at different points. By using this your container
+				should have little to no audio drift or offset as it will pad the audio with silence or trim audio
+				with negative PTS timestamps if the audio does not actually start at the beginning of the video.
+		2019-09-26: introduced the concept of 'Key-Frame Seeking' vs 'All-Frame Seeking' vs 'Full Re-Encoding'
+			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
+    */
+    string ffmpegExecuteCommand;
+	if (keyFrameSeeking)
+	{
+		ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-ss " + to_string(startTimeInSeconds) + " "
+            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-i " + sourcePhysicalPath + " "
+			+ "-async 1 "
+			// commented because aresample filtering requires encoding and here we are just streamcopy
+            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+            + "-c copy " + cutMediaPathName + " "
+            + "> " + _outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+	}
+	else
+		ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-i " + sourcePhysicalPath + " "
+            + "-ss " + to_string(startTimeInSeconds) + " "
+            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+			+ "-async 1 "
+			// commented because aresample filtering requires encoding and here we are just streamcopy
+            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+            + "-c copy " + cutMediaPathName + " "
+            + "> " + _outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+
+    #ifdef __APPLE__
+        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
+    try
+    {
+        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "generateCutMediaToIngest: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
@@ -4367,130 +4492,6 @@ void FFMpeg::generateSlideshowMediaToIngest(
     _logger->info(__FILEREF__ + "Remove"
         + ", slideshowListPathName: " + slideshowListPathName);
     FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
-}
-
-void FFMpeg::generateCutMediaToIngest(
-        int64_t ingestionJobKey,
-        string sourcePhysicalPath,
-		bool keyFrameSeeking,
-        double startTimeInSeconds,
-        double endTimeInSeconds,
-        int framesNumber,
-        string cutMediaPathName)
-{
-
-    _outputFfmpegPathFileName =
-            _ffmpegTempDir + "/"
-            + to_string(ingestionJobKey)
-            + ".cut.log"
-            ;
-
-    /*
-        -ss: When used as an output option (before an output url), decodes but discards input 
-            until the timestamps reach position.
-            Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
-		2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
-			The generated error was: Too many packets buffered for output stream
-			(look https://trac.ffmpeg.org/ticket/6375)
-			-async samples_per_second
-				Audio sync method. "Stretches/squeezes" the audio stream to match the timestamps, the parameter is
-				the maximum samples per second by which the audio is changed.  -async 1 is a special case where only
-				the start of the audio stream is corrected without any later correction.
-			-af "aresample=async=1:min_hard_comp=0.100000:first_pts=0" helps to keep your audio lined up
-				with the beginning of your video. It is common for a container to have the beginning
-				of the video and the beginning of the audio start at different points. By using this your container
-				should have little to no audio drift or offset as it will pad the audio with silence or trim audio
-				with negative PTS timestamps if the audio does not actually start at the beginning of the video.
-		2019-09-26: introduced the concept of 'Key-Frame Seeking' vs 'All-Frame Seeking' vs 'Full Re-Encoding'
-			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
-    */
-    string ffmpegExecuteCommand;
-	if (keyFrameSeeking)
-	{
-		ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-ss " + to_string(startTimeInSeconds) + " "
-            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-            + "-i " + sourcePhysicalPath + " "
-			+ "-async 1 "
-			// commented because aresample filtering requires encoding and here we are just streamcopy
-            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-            + "-c copy " + cutMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
-	}
-	else
-		ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-i " + sourcePhysicalPath + " "
-            + "-ss " + to_string(startTimeInSeconds) + " "
-            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-			+ "-async 1 "
-			// commented because aresample filtering requires encoding and here we are just streamcopy
-            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-            + "-c copy " + cutMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
-
-    #ifdef __APPLE__
-        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-
-    try
-    {
-        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executing ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        );
-
-        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
-
-        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "generateCutMediaToIngest: ffmpeg command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executed ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-        );
-    }
-    catch(runtime_error e)
-    {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-        ;
-        _logger->error(errorMessage);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-
-    _logger->info(__FILEREF__ + "Remove"
-        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
 void FFMpeg::extractTrackMediaToIngest(

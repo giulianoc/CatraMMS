@@ -2502,16 +2502,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked by
+							// _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                if (_processorsThreadsNumber.use_count() >
+										_processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestConcatenationThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorsThreadsNumber.use_count(): "
+											+ to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -2532,13 +2536,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread generateAndIngestConcatenationThread(&MMSEngineProcessor::generateAndIngestConcatenationThread, this, 
+                                    thread generateAndIngestConcatenationThread(
+										&MMSEngineProcessor::generateAndIngestConcatenationThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
-                                            workspace, 
-                                            parametersRoot,
-                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
-                                            );
-                                    generateAndIngestConcatenationThread.detach();
+										workspace, 
+										parametersRoot,
+										
+										// it cannot be passed as reference because it will change soon
+										// by the parent thread
+										dependencies
+									);
+									generateAndIngestConcatenationThread.detach();
                                 }
                             }
                             catch(runtime_error e)
@@ -2630,106 +2638,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-							/*
-                            try
-                            {
-                                generateAndIngestConcatenationTask(
-                                        ingestionJobKey, 
-                                        workspace, 
-                                        parametersRoot, 
-                                        dependencies);
-                            }
-                            catch(runtime_error e)
-                            {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
-                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", exception: " + e.what()
-                                );
-
-                                string errorMessage = e.what();
-
-                                _logger->info(__FILEREF__ + "Update IngestionJob"
-                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_IngestionFailure"
-                                    + ", errorMessage: " + errorMessage
-                                    + ", processorMMS: " + ""
-                                );                            
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage
-                                        );
-								}
-								catch(runtime_error& re)
-								{
-									_logger->info(__FILEREF__ + "Update IngestionJob failed"
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", IngestionStatus: " + "End_IngestionFailure"
-										+ ", errorMessage: " + re.what()
-									);
-								}
-								catch(exception ex)
-								{
-									_logger->info(__FILEREF__ + "Update IngestionJob failed"
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", IngestionStatus: " + "End_IngestionFailure"
-										+ ", errorMessage: " + ex.what()
-									);
-								}
-
-                                throw runtime_error(errorMessage);
-                            }
-                            catch(exception e)
-                            {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
-                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", exception: " + e.what()
-                                );
-
-                                string errorMessage = e.what();
-
-                                _logger->info(__FILEREF__ + "Update IngestionJob"
-                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_IngestionFailure"
-                                    + ", errorMessage: " + errorMessage
-                                    + ", processorMMS: " + ""
-                                );                            
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage
-                                        );
-								}
-								catch(runtime_error& re)
-								{
-									_logger->info(__FILEREF__ + "Update IngestionJob failed"
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", IngestionStatus: " + "End_IngestionFailure"
-										+ ", errorMessage: " + re.what()
-									);
-								}
-								catch(exception ex)
-								{
-									_logger->info(__FILEREF__ + "Update IngestionJob failed"
-										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", IngestionStatus: " + "End_IngestionFailure"
-										+ ", errorMessage: " + ex.what()
-									);
-								}
-
-                                throw runtime_error(errorMessage);
-                            }
-							*/
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
                         {
@@ -5908,107 +5816,157 @@ void MMSEngineProcessor::removeContentTask(
             throw runtime_error(errorMessage);
         }
 
+		bool multipleInput_ReturnErrorInCaseOfOneFailure = false;
+		string field = "MultipleInput_ReturnErrorInCaseOfOneFailure";
+		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			multipleInput_ReturnErrorInCaseOfOneFailure = parametersRoot.get(field, false).asBool();
+
+		int dependencyIndex = 0;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
 				dependencies)
         {
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-            
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-            
-			// check if there are ingestion dependencies on this media item
+			try
 			{
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
+
+				tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+				// check if there are ingestion dependencies on this media item
+				{
+					if (dependencyType == Validator::DependencyType::MediaItemKey)
+					{
+						bool warningIfMissing = false;
+						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+							_mmsEngineDBFacade->getMediaItemKeyDetails(                       
+								key, warningIfMissing);
+
+						MMSEngineDBFacade::ContentType localContentType;
+						string localTitle;
+						string localUserData;
+						string localIngestionDate;
+						int64_t localIngestionJobKey;
+						tie(localContentType, localTitle, localUserData, localIngestionDate, localIngestionJobKey)
+							= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+
+						int ingestionDependenciesNumber = 
+							_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+									localIngestionJobKey);
+						if (ingestionDependenciesNumber > 0)
+						{
+							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else
+					{
+						bool warningIfMissing = false;
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+								key, warningIfMissing);
+
+						int64_t localMediaItemKey;
+						MMSEngineDBFacade::ContentType localContentType;
+						string localTitle;
+						string localUserData;
+						string localIngestionDate;
+						int64_t localIngestionJobKey;
+						tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate,
+							localIngestionJobKey, ignore)
+							= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+
+						int ingestionDependenciesNumber = 
+						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+								localIngestionJobKey);
+						if (ingestionDependenciesNumber > 0)
+						{
+							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+
 				if (dependencyType == Validator::DependencyType::MediaItemKey)
 				{
-					bool warningIfMissing = false;
-					tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
-						_mmsEngineDBFacade->getMediaItemKeyDetails(                       
-						key, warningIfMissing);
-
-					MMSEngineDBFacade::ContentType localContentType;
-					string localTitle;
-					string localUserData;
-					string localIngestionDate;
-					int64_t localIngestionJobKey;
-					tie(localContentType, localTitle, localUserData, localIngestionDate, localIngestionJobKey)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
-
-					int ingestionDependenciesNumber = 
-						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(localIngestionJobKey);
-					if (ingestionDependenciesNumber > 0)
-					{
-						string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
+					_logger->info(__FILEREF__ + "removeMediaItem"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", mediaItemKey: " + to_string(key)
+					);
+					_mmsStorage->removeMediaItem(key);
 				}
 				else
 				{
-					bool warningIfMissing = false;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						key, warningIfMissing);
-
-					int64_t localMediaItemKey;
-					MMSEngineDBFacade::ContentType localContentType;
-					string localTitle;
-					string localUserData;
-					string localIngestionDate;
-					int64_t localIngestionJobKey;
-					tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate,
-							localIngestionJobKey, ignore)
-						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-
-					int ingestionDependenciesNumber = 
-						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(localIngestionJobKey);
-					if (ingestionDependenciesNumber > 0)
-					{
-						string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
+					_logger->info(__FILEREF__ + "removePhysicalPath"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", physicalPathKey: " + to_string(key)
+					);
+					_mmsStorage->removePhysicalPath(key);
 				}
 			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "Remove Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-                _logger->info(__FILEREF__ + "removeMediaItem"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", mediaItemKey: " + to_string(key)
-                );
-                _mmsStorage->removeMediaItem(key);
-            }
-            else
-            {
-                _logger->info(__FILEREF__ + "removePhysicalPath"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", physicalPathKey: " + to_string(key)
-                );
-                _mmsStorage->removePhysicalPath(key);
-            }
-        }
+				if (dependencies.size() > 1)
+				{
+					if (multipleInput_ReturnErrorInCaseOfOneFailure)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "Remove Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
-        );
-    }
+				if (dependencies.size() > 1)
+				{
+					if (multipleInput_ReturnErrorInCaseOfOneFailure)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
+		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);                            
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "removeContentTask failed"
