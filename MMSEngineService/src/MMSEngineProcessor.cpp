@@ -10517,6 +10517,11 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         string field = "MaxDurationInSeconds";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
 			maxDurationInSeconds = parametersRoot.get(field, -1.0).asDouble();
+		_logger->info(__FILEREF__ + "duration check"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", maxDurationInSeconds: " + to_string(maxDurationInSeconds)
+		);
 		if (maxDurationInSeconds > 0)
 		{
 			int64_t durationInMilliSeconds;
@@ -10535,6 +10540,12 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				ignore, ignore, ignore, ignore, ignore, ignore,
 				ignore, ignore, ignore, ignore) = mediaInfo;
 
+			_logger->info(__FILEREF__ + "duration check"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				+ ", maxDurationInSeconds: " + to_string(maxDurationInSeconds)
+			);
 			if (durationInMilliSeconds > maxDurationInSeconds * 1000)
 			{
 				string localCutSourceFileName = to_string(ingestionJobKey)
