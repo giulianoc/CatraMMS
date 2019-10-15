@@ -10512,55 +10512,129 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", concatenatedMediaPathName: " + concatenatedMediaPathName
         );
-                
-        string title;
-		int64_t imageOfVideoMediaItemKey = -1;
-		int64_t cutOfVideoMediaItemKey = -1;
-		int64_t cutOfAudioMediaItemKey = -1;
-		double startTimeInSeconds = 0.0;
-		double endTimeInSeconds = 0.0;
-        string mediaMetaDataContent = generateMediaMetadataToIngest(
-            ingestionJobKey,
-            // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-            fileFormat,
-            title,
-			imageOfVideoMediaItemKey,
-			cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-            parametersRoot
-        );
 
-        {
-            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
-            localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
-
-            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-            // force the concat file to have the same avgFrameRate of the source media
-            if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
-                localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+        double maxDurationInSeconds = -1.0;
+        string field = "MaxDurationInSeconds";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			maxDurationInSeconds = parametersRoot.get(field, -1.0).asDouble();
+		if (maxDurationInSeconds > 0)
+		{
+			int64_t durationInMilliSeconds;
 
 
-            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+			_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
+			);
+			FFMpeg ffmpeg (_configuration, _logger);
+			tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+				ffmpeg.getMediaInfo(concatenatedMediaPathName);
 
-            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-            _multiEventsSet->addEvent(event);
+			tie(durationInMilliSeconds, ignore,
+				ignore, ignore, ignore, ignore, ignore, ignore,
+				ignore, ignore, ignore, ignore) = mediaInfo;
 
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+			if (durationInMilliSeconds > maxDurationInSeconds * 1000)
+			{
+				string localCutSourceFileName = to_string(ingestionJobKey)
+					+ "_concat_cut"
+					+ "." + fileFormat // + "_source"
+				;
+
+				string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+					workspace);
+				string cutMediaPathName = workspaceIngestionRepository + "/" 
+					+ localCutSourceFileName;
+
+				bool keyFrameSeeking = false;
+				double startTimeInSeconds = 0.0;
+				double endTimeInSeconds = maxDurationInSeconds;
+				int framesNumber = -1;
+
+				_logger->info(__FILEREF__ + "Calling ffmpeg.generateCutMediaToIngest"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
+					+ ", keyFrameSeeking: " + to_string(keyFrameSeeking)
+					+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+					+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+					+ ", framesNumber: " + to_string(framesNumber)
+				);
+
+				ffmpeg.generateCutMediaToIngest(ingestionJobKey, concatenatedMediaPathName, 
+					keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
+					cutMediaPathName);
+
+				_logger->info(__FILEREF__ + "generateCutMediaToIngest done"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", cutMediaPathName: " + cutMediaPathName
+				);
+
+				localSourceFileName = localCutSourceFileName;
+
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
+				);
+
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(concatenatedMediaPathName, exceptionInCaseOfError);
+			}
+		}
+
+		{
+			string title;
+			int64_t imageOfVideoMediaItemKey = -1;
+			int64_t cutOfVideoMediaItemKey = -1;
+			int64_t cutOfAudioMediaItemKey = -1;
+			double startTimeInSeconds = 0.0;
+			double endTimeInSeconds = 0.0;
+			string mediaMetaDataContent = generateMediaMetadataToIngest(
+				ingestionJobKey,
+				// concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+				fileFormat,
+				title,
+				imageOfVideoMediaItemKey,
+				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+				parametersRoot
+			);
+
+			{
+				shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+					->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+				localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+				localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+				localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+				localAssetIngestionEvent->setExternalReadOnlyStorage(false);
+				localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+				localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+				localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
+				localAssetIngestionEvent->setWorkspace(workspace);
+				localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
+				localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+
+				// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+				// force the concat file to have the same avgFrameRate of the source media
+				if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+					localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+
+
+				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+				shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+				_multiEventsSet->addEvent(event);
+
+				_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+					+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+			}
         }
     }
     catch(runtime_error e)
