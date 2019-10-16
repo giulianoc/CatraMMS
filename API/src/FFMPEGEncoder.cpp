@@ -2620,7 +2620,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								outputFileFormat = liveRecording->_encodingParametersRoot.get(field, "XXX").asString();                   
 							}
 
-							liveRecording->_lastRecordedAssetFileName = liveRecorder_processLastGeneratedLiveRecorderFiles(
+							pair<string, int> lastRecordedAssetInfo = liveRecorder_processLastGeneratedLiveRecorderFiles(
 								liveRecording->_ingestionJobKey,
 								liveRecording->_encodingJobKey,
 								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
@@ -2630,7 +2630,11 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								liveRecording->_stagingContentsPath,
 								liveRecording->_segmentListFileName,
 								liveRecording->_recordedFileNamePrefix,
-								liveRecording->_lastRecordedAssetFileName);
+								liveRecording->_lastRecordedAssetFileName,
+								liveRecording->_lastRecordedAssetDurationInSeconds);
+
+							tie(liveRecording->_lastRecordedAssetFileName,
+								liveRecording->_lastRecordedAssetDurationInSeconds) = lastRecordedAssetInfo;
 						}
 					}
 					catch(runtime_error e)
@@ -2685,20 +2689,22 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 	}
 }
 
-string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
+pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,                                                                              
+	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value liveRecorderParametersRoot,
 	string transcoderStagingContentsPath,
 	string stagingContentsPath,
 	string segmentListFileName,
 	string recordedFileNamePrefix,
-	string lastRecordedAssetFileName)
+	string lastRecordedAssetFileName,
+	int lastRecordedAssetDurationInSeconds)
 {
 
 	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
 	// the same lastRecordedAssetFileName has to be returned
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
+	int newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
     try
     {
 		_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles"
@@ -2713,7 +2719,8 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 			+ ", segmentListFileName: " + segmentListFileName
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
-			);
+			+ ", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
+		);
 
 		ifstream segmentList(transcoderStagingContentsPath + segmentListFileName);
 		if (!segmentList)
@@ -2724,7 +2731,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 				+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
             _logger->warn(errorMessage);
 
-			return lastRecordedAssetFileName;
+			return make_pair(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds);
             // throw runtime_error(errorMessage);
         }
 
@@ -2790,9 +2797,52 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 					+ ", ingestionRowToBeUpdatedAsSuccess: " + to_string(ingestionRowToBeUpdatedAsSuccess));
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
+			newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
+
+			try
+			{
+				int64_t durationInMilliSeconds;
+
+
+				_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", transcoderStagingContentsPath + currentRecordedAssetFileName: "
+						+ (transcoderStagingContentsPath + currentRecordedAssetFileName)
+				);
+				FFMpeg ffmpeg (_configuration, _logger);
+				tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+					ffmpeg.getMediaInfo(transcoderStagingContentsPath + currentRecordedAssetFileName);
+
+				tie(durationInMilliSeconds, ignore,
+					ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore, ignore) = mediaInfo;
+
+				newLastRecordedAssetDurationInSeconds = durationInMilliSeconds / 1000;
+
+				if (newLastRecordedAssetDurationInSeconds != segmentDurationInSeconds)
+				{
+					_logger->warn(__FILEREF__ + "segment duration is different from file duration"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", newLastRecordedAssetDurationInSeconds: "
+							+ to_string (newLastRecordedAssetDurationInSeconds)
+						+ ", segmentDurationInSeconds: " + to_string (segmentDurationInSeconds)
+					);
+				}
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", transcoderStagingContentsPath + currentRecordedAssetFileName: "
+						+ (transcoderStagingContentsPath + currentRecordedAssetFileName)
+				);
+			}
 
 			time_t utcCurrentRecordedFileLastModificationTime =
-				utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
+				utcCurrentRecordedFileCreationTime + newLastRecordedAssetDurationInSeconds;
 			/*
 			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
 				currentRecordedAssetPathName);
@@ -2816,7 +2866,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 				}
 				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
 				mmsDataRoot["utcPreviousChunkStartTime"] =
-					(time_t) (utcCurrentRecordedFileCreationTime - segmentDurationInSeconds);
+					(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
 				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
 				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
 
@@ -2985,7 +3035,7 @@ string FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
         throw e;
     }
 
-	return newLastRecordedAssetFileName;
+	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
 }
 
 void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
@@ -3522,6 +3572,11 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	// For this reason, utcMediaLiveRecorderStartTime is fixed.
 	// From the other side the first generated file is the only one where we can have seconds
 	// different from 0, anyway here this is not possible because we discard the first chunk
+	// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
+	//	as done below but we should do utcMediaLiveRecorderStartTime += 1.
+	//	Really ffmpeg could do a segment having 59 seconds as duration, so starting from now,
+	//	we will not do any change to utcMediaLiveRecorderStartTime
+	/*
 	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
 	if (seconds != 0)
 	{
@@ -3533,6 +3588,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 				);
 		utcMediaLiveRecorderStartTime -= seconds;
 	}
+	*/
 
 	return utcMediaLiveRecorderStartTime;
 	/*

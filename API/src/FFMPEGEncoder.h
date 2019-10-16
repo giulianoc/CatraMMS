@@ -74,6 +74,7 @@ private:
         string					_segmentListFileName;
         string					_recordedFileNamePrefix;
 		string					_lastRecordedAssetFileName;
+		int						_lastRecordedAssetDurationInSeconds;
     };
 
 	struct EncodingCompleted
@@ -142,15 +143,16 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 	void liveRecorderChunksIngestionThread();
-	string liveRecorder_processLastGeneratedLiveRecorderFiles(
+	pair<string, int> liveRecorder_processLastGeneratedLiveRecorderFiles(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,                                                                              
+		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value liveRecorderParametersRoot,
 		string transcoderStagingContentsPath,
 		string stagingContentsPath,
 		string segmentListFileName,
 		string recordedFileNamePrefix,
-		string lastRecordedAssetFileName);
+		string lastRecordedAssetFileName,
+		int lastRecordedAssetDurationInSeconds);
 	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string mediaLiveRecorderFileName);
 	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
