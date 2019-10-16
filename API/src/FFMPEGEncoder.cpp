@@ -2633,8 +2633,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								liveRecording->_lastRecordedAssetFileName,
 								liveRecording->_lastRecordedAssetDurationInSeconds);
 
-							tie(liveRecording->_lastRecordedAssetFileName,
-								liveRecording->_lastRecordedAssetDurationInSeconds) = lastRecordedAssetInfo;
+							liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
+							liveRecording->_lastRecordedAssetDurationInSeconds	= lastRecordedAssetInfo.second;
 						}
 					}
 					catch(runtime_error e)
@@ -2825,6 +2825,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 					_logger->warn(__FILEREF__ + "segment duration is different from file duration"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", durationInMilliSeconds: " + to_string (durationInMilliSeconds)
 						+ ", newLastRecordedAssetDurationInSeconds: "
 							+ to_string (newLastRecordedAssetDurationInSeconds)
 						+ ", segmentDurationInSeconds: " + to_string (segmentDurationInSeconds)
