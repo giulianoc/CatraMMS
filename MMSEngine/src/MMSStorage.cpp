@@ -1714,6 +1714,15 @@ void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed)
 						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
 						partitionInfoFile >> partitionInfoJson;
 
+						string partitionUsageType       = partitionInfoJson.get("partitionUsageType", "").asString();
+						if (partitionUsageType == "getDirectoryUsage")
+						{
+							unsigned long long ullDirectoryUsageInBytes;
+
+							FileIO::getDirectoryUsage(pathNameToGetFileSystemInfo.c_str(), &ullDirectoryUsageInBytes);
+							ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+						}
+
 						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
 						_logger->info(__FILEREF__ + "Partition info"
 							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
