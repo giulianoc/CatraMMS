@@ -2607,11 +2607,11 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 							int segmentDurationInSeconds;
 							string outputFileFormat;
 							{
-								string field = "highAvailability";                                                                    
-								highAvailability = liveRecording->_encodingParametersRoot.get(field, 0).asBool();                             
+								string field = "highAvailability";
+								highAvailability = liveRecording->_encodingParametersRoot.get(field, 0).asBool();
 
-								field = "main";                                                                                       
-								main = liveRecording->_encodingParametersRoot.get(field, 0).asBool();                                         
+								field = "main";
+								main = liveRecording->_encodingParametersRoot.get(field, 0).asBool();
 
 								field = "segmentDurationInSeconds";
 								segmentDurationInSeconds = liveRecording->_encodingParametersRoot.get(field, 0).asInt();
@@ -3066,7 +3066,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
 				+ ", dest: " + stagingContentsPath
-				+ ", movingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
+				+ ", movingDuration (millisecs): "
+					+ to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
 			);
 		}
 	}
@@ -3129,7 +3130,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		}
 		*/
 		Json::Value mmsDataRoot = userDataRoot["mmsData"];
+		int64_t utcPreviousChunkStartTime = mmsDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();
 		int64_t utcChunkStartTime = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
+		int64_t utcChunkEndTime = mmsDataRoot.get("utcChunkEndTime", -1).asInt64();
 
 		Json::Value addContentRoot;
 
@@ -3230,7 +3233,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 			variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
 
 			field = "PreviousUtcChunkStartTime";
-			variablesWorkflowRoot[field] = mmsDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();
+			variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
 
 			field = "Variables";
 			workflowRoot[field] = variablesWorkflowRoot;
@@ -3246,6 +3249,10 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", addContentTitle: " + addContentTitle
+			+ ", utcPreviousChunkStartTime: " + to_string(utcPreviousChunkStartTime)
+			+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+			+ ", utcChunkEndTime: " + to_string(utcChunkEndTime)
 			+ ", workflowMetadata: " + workflowMetadata
 		);
 
