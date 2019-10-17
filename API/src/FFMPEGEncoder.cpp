@@ -2799,6 +2799,10 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 			newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
 
+			/*
+			 * 2019-10-17: we just saw that, even if the real duration is 59 seconds,
+			 * next utc time inside the chunk file name is still like +60 from the previuos chunk utc.
+			 * For this reason next code was commented.
 			try
 			{
 				int64_t durationInMilliSeconds;
@@ -2841,6 +2845,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 						+ (transcoderStagingContentsPath + currentRecordedAssetFileName)
 				);
 			}
+			*/
 
 			time_t utcCurrentRecordedFileLastModificationTime =
 				utcCurrentRecordedFileCreationTime + newLastRecordedAssetDurationInSeconds;
@@ -3249,11 +3254,11 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		_logger->info(__FILEREF__ + "Recording Workflow metadata generated"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", addContentTitle: " + addContentTitle
-			+ ", utcPreviousChunkStartTime: " + to_string(utcPreviousChunkStartTime)
-			+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
-			+ ", utcChunkEndTime: " + to_string(utcChunkEndTime)
-			+ ", workflowMetadata: " + workflowMetadata
+			+ ", " + addContentTitle + ", "
+				+ currentRecordedAssetFileName
+				+ ", prev: " + to_string(utcPreviousChunkStartTime)
+				+ ", from: " + to_string(utcChunkStartTime)
+				+ ", to: " + to_string(utcChunkEndTime)
 		);
 
 		mmsAPIURL =
@@ -3581,22 +3586,31 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	// From the other side the first generated file is the only one where we can have seconds
 	// different from 0, anyway here this is not possible because we discard the first chunk
 	// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
-	//	as done below but we should do utcMediaLiveRecorderStartTime += 1.
-	//	Really ffmpeg could do a segment having 59 seconds as duration, so starting from now,
-	//	we will not do any change to utcMediaLiveRecorderStartTime
-	/*
+	//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
 	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
 	if (seconds != 0)
 	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+		if (seconds < 5)
+		{
+			_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(seconds)
 				);
-		utcMediaLiveRecorderStartTime -= seconds;
+			utcMediaLiveRecorderStartTime -= seconds;
+		}
+		else if (seconds > 55 && seconds < 60)
+		{
+			_logger->warn(__FILEREF__ + "Wrong seconds (start time), increase it"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+				+ ", seconds: " + to_string(seconds)
+				);
+			utcMediaLiveRecorderStartTime += (60 - seconds);
+		}
 	}
-	*/
 
 	return utcMediaLiveRecorderStartTime;
 	/*
