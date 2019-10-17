@@ -2781,3 +2781,76 @@ void API::ingestionJobsStatus(
     }
 }
 
+
+void API::cancelIngestionJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "API::cancelIngestionJob";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+		{
+			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", IngestionStatus: " + "End_CancelledByUser"
+			+ ", errorMessage: " + ""
+		);
+
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+			MMSEngineDBFacade::IngestionStatus::End_CancelledByUser, 
+			"");
+
+        string responseBody;
+        sendSuccess(request, 200, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+

@@ -2527,7 +2527,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
         {
-            IngestionStatus ingestionStatus = IngestionStatus::End_DwlUplOrEncCancelledByUser;
+            IngestionStatus ingestionStatus = IngestionStatus::End_CancelledByUser;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
@@ -2543,7 +2543,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         else if (newEncodingStatus == EncodingStatus::End_CanceledByUser && ingestionJobKey != -1)
         {
-            IngestionStatus ingestionStatus = IngestionStatus::End_DwlUplOrEncCancelledByUser;
+            IngestionStatus ingestionStatus = IngestionStatus::End_CancelledByUser;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;

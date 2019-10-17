@@ -189,6 +189,12 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+	void cancelIngestionJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void encodingJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

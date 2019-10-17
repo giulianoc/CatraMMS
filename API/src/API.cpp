@@ -748,6 +748,10 @@ void API::manageRequestAndResponse(
     {
         ingestionJobsStatus(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "cancelIngestionJob")
+    {
+        cancelIngestionJob(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "encodingJobsStatus")
     {
         encodingJobsStatus(request, workspace, queryParameters, requestBody);

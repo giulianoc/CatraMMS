@@ -5961,7 +5961,7 @@ void MMSEngineProcessor::removeContentTask(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", IngestionStatus: " + "End_TaskSuccess"
 				+ ", errorMessage: " + ""
-		);                            
+		);
 		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
 			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
 			"" // errorMessage

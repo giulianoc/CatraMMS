@@ -2511,7 +2511,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
-                if (ingestionStatus == IngestionStatus::End_DwlUplOrEncCancelledByUser)
+                if (ingestionStatus == IngestionStatus::End_CancelledByUser)
                     toBeCancelled = true;
             }
             else
@@ -2651,7 +2651,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
-                if (ingestionStatus == IngestionStatus::End_DwlUplOrEncCancelledByUser)
+                if (ingestionStatus == IngestionStatus::End_CancelledByUser)
                     toBeCancelled = true;
             }
             else

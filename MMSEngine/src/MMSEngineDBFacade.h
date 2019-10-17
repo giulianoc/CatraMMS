@@ -779,7 +779,8 @@ public:
         SourceUploadingInProgress,
         EncodingQueued,
 
-        End_DwlUplOrEncCancelledByUser,   
+		// DOWNLOAD / UPLOAD / ENCODING / JOB --> cancelled by User
+        End_CancelledByUser,
 
         End_ValidationMetadataFailed,   
 
@@ -810,8 +811,8 @@ public:
                 return "SourceUploadingInProgress";
             case IngestionStatus::EncodingQueued:
                 return "EncodingQueued";
-            case IngestionStatus::End_DwlUplOrEncCancelledByUser:
-                return "End_DwlUplOrEncCancelledByUser";
+            case IngestionStatus::End_CancelledByUser:
+                return "End_CancelledByUser";
             case IngestionStatus::End_ValidationMetadataFailed:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
@@ -848,8 +849,8 @@ public:
             return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "encodingqueued")
             return IngestionStatus::EncodingQueued;
-        else if (lowerCase == "end_dwluplorenccancelledbyuser")
-            return IngestionStatus::End_DwlUplOrEncCancelledByUser;
+        else if (lowerCase == "end_cancelledbyuser")
+            return IngestionStatus::End_CancelledByUser;
         else if (lowerCase == "end_validationmetadatafailed")
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
