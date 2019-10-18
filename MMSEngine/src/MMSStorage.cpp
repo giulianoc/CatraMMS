@@ -1628,6 +1628,12 @@ void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed)
 					+ ", partitionInfoPathName: " + partitionInfoPathName
 				);
 				/*
+				 * In case of a partition where only a subset of it is dedicated to MMS,
+				 * we cannot use getFileSystemInfo because it will return info about the entire partition.
+				 * So this conf file will tell us
+				 *	- the max size of this storage to be used
+				 *	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
+				 *		calculate the usage of any directory/files
 				 * Sample of file:
 					{
 						"partitionUsageType": "getDirectoryUsage",
@@ -1648,8 +1654,16 @@ void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed)
 						{
 							unsigned long long ullDirectoryUsageInBytes;
 
+							chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
 							FileIO::getDirectoryUsage(pathNameToGetFileSystemInfo.c_str(), &ullDirectoryUsageInBytes);
 							ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+
+							chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+							_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
+								+ ", elapsed (secs): "
+									+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+							);
 						}
 
 						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();

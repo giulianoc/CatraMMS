@@ -59,9 +59,6 @@ int main(int argc, char** argv)
 		logger->flush_on(spdlog::level::trace);
     
 		string logLevel =  configuration["log"]["api"].get("level", "XXX").asString();
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", log->level: " + logLevel
-		);
 		if (logLevel == "debug")
 			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "info")
@@ -69,9 +66,6 @@ int main(int argc, char** argv)
 		else if (logLevel == "err")
 			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
 		string pattern =  configuration["log"]["api"].get("pattern", "XXX").asString();
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", log->pattern: " + pattern
-		);
 		spdlog::set_pattern(pattern);
 
 		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
