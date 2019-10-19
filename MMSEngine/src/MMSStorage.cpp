@@ -1123,7 +1123,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 		{
 			lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-			PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+			PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
 			if (chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
@@ -1289,7 +1289,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 						{
 							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-							PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
 							if (chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
@@ -1348,7 +1348,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 						{
 							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-							PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
 							if (chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
@@ -1757,7 +1757,7 @@ string MMSStorage::moveAssetInMMSRepository(
 	//	I do it always
     // if (partitionIndexToBeCalculated) 
     {
-		PartitionInfo partitionInfo = _mmsPartitionsInfo.at(_ulCurrentMMSPartitionIndex);
+		PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(_ulCurrentMMSPartitionIndex);
 
 		if (chrono::duration_cast<chrono::seconds>(
 			chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
@@ -1818,7 +1818,7 @@ void MMSStorage::deleteWorkspace(
 				FileIO::removeDirectory(workspacePathName, removeRecursively);
 
 				{
-					PartitionInfo partitionInfo = _mmsPartitionsInfo.at(ulMMSPartitionIndex);
+					PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(ulMMSPartitionIndex);
 
 					if (chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
@@ -1919,6 +1919,7 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
 			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
 			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+			+ ", _lastUpdateFreeSize: " + to_string(chrono::system_clock::to_time_t(partitionInfo._lastUpdateFreeSize))
 	);
 
 	if (partitionInfo._partitionUsageType == "getDirectoryUsage"
@@ -1990,6 +1991,7 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
 			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
 			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+			+ ", _lastUpdateFreeSize: " + to_string(chrono::system_clock::to_time_t(partitionInfo._lastUpdateFreeSize))
 	);
 }
 
