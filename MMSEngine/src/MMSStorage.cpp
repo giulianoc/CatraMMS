@@ -17,9 +17,22 @@ MMSStorage::MMSStorage(
     _hostName = System::getHostName();
 
     _storage = configuration["storage"].get("path", "XXX").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->path: " + _storage
+    );
     if (_storage.back() != '/')
         _storage.push_back('/');
+
     _freeSpaceToLeaveInEachPartitionInMB = configuration["storage"].get("freeSpaceToLeaveInEachPartitionInMB", 5).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
+    );
+
+    _recalculatePartitionUsagePeriodInSeconds = configuration["storage"].
+		get("recalculatePartitionUsagePeriodInSeconds", 900).asInt();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->recalculatePartitionUsagePeriodInSeconds: " + to_string(_recalculatePartitionUsagePeriodInSeconds)
+    );
 
     _ingestionRootRepository = _storage + "IngestionRepository/users/";
     _mmsRootRepository = _storage + "MMSRepository/";
@@ -118,9 +131,6 @@ MMSStorage::MMSStorage(
     // Partitions staff
     {
         char pMMSPartitionName [64];
-        unsigned long long ullUsedInKB;
-        unsigned long long ullAvailableInKB;
-        long lPercentUsed;
 
 
         lock_guard<recursive_mutex> locker(_mtMMSPartitions);
@@ -130,35 +140,93 @@ MMSStorage::MMSStorage(
 
         _ulCurrentMMSPartitionIndex = 0;
 
-        // inizializzare FreeSize
+        // inizializzare PartitionInfos
         while (mmsAvailablePartitions) 
         {
-            string pathNameToGetFileSystemInfo(_mmsRootRepository);
+			string partitionPathName(_mmsRootRepository);
+			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber++);
+			partitionPathName.append(pMMSPartitionName);
 
-            sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber);
+			PartitionInfo	partitionInfo;
 
-            pathNameToGetFileSystemInfo.append(pMMSPartitionName);
+			partitionInfo._partitionPathName = partitionPathName;
 
-            try 
-            {
-                FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
-                        &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-            }
-            catch (...) 
-            {
-                break;
-            }
+			if (!FileIO::directoryExisting(partitionPathName))
+			{
+				mmsAvailablePartitions = false;
 
-            _mmsPartitionsFreeSizeInMB.push_back(ullAvailableInKB / 1024);
+				continue;
+			}
 
-            ulMMSPartitionsNumber++;
-        }
+			string partitionInfoPathName = partitionPathName;
 
-        if (ulMMSPartitionsNumber == 0) {
+			partitionInfoPathName.append("/partitionInfo.json");
+			_logger->info(__FILEREF__ + "Looking for the Partition info file"
+				+ ", partitionInfoPathName: " + partitionInfoPathName
+			);
+			if (FileIO::fileExisting(partitionInfoPathName))
+			{
+				/*
+				* In case of a partition where only a subset of it is dedicated to MMS,
+				* we cannot use getFileSystemInfo because it will return info about the entire partition.
+				* So this conf file will tell us
+				*	- the max size of this storage to be used
+				*	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
+				*		calculate the usage of any directory/files
+				* Sample of file:
+					{
+						"partitionUsageType": "getDirectoryUsage",
+						"maxStorageUsageInKB": 1500000000
+					}
+				*/
+				Json::Value partitionInfoJson;
+
+				try
+				{
+					ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+					partitionInfoFile >> partitionInfoJson;
+
+					// getFileSystemInfo (default and more performant) or getDirectoryUsage
+					string field = "partitionUsageType";
+					if (!_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
+						partitionInfo._partitionUsageType = "getFileSystemInfo";
+					else
+					{
+						partitionInfo._partitionUsageType	= partitionInfoJson.get(field, "").asString();
+						if (partitionInfo._partitionUsageType != "getDirectoryUsage")
+							partitionInfo._partitionUsageType = "getFileSystemInfo";
+					}
+
+					field = "maxStorageUsageInKB";
+					if (_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
+						partitionInfo._maxStorageUsageInKB       = partitionInfoJson.get(field, -1).asInt64();
+					else
+						partitionInfo._maxStorageUsageInKB       = -1;
+				}
+				catch(...)
+				{
+					_logger->error(__FILEREF__ + "wrong json partition info format"
+						+ ", partitionInfoPathName: " + partitionInfoPathName
+					);
+				}
+			}
+			else
+			{
+				partitionInfo._partitionUsageType		= "getFileSystemInfo";
+				partitionInfo._maxStorageUsageInKB		= -1;
+			}
+
+			refreshPartitionFreeSizes(partitionInfo);
+
+			_mmsPartitionsInfo.push_back(partitionInfo);
+		}
+
+        if (_mmsPartitionsInfo.size() == 0)
+		{
+			_logger->error(__FILEREF__ + "No partition available");
+
             throw runtime_error("No MMS partition found");
         }
-
-        refreshPartitionsFreeSizes(-1);
     }
 }
 
@@ -225,7 +293,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -237,7 +305,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -248,7 +316,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
         ;
 
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -295,7 +363,7 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -306,7 +374,7 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -316,7 +384,7 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
             + ", physicalPathKey: " + to_string(physicalPathKey)
         ;
 
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -398,7 +466,7 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -409,7 +477,7 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -419,7 +487,7 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
             + ", physicalPathKey: " + to_string(physicalPathKey)
         ;
 
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -495,7 +563,7 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -507,7 +575,7 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
 			+ ", e.what(): " + e.what()
         ;
         
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -518,278 +586,9 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
         ;
 
-        _logger->info(__FILEREF__ + errorMessage);
+        _logger->error(__FILEREF__ + errorMessage);
         
         throw e;
-    }
-}
-
-void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
-{    
-    
-    try
-    {
-        _logger->info(__FILEREF__ + "getStorageDetailsByPhysicalPathKey ..."
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-        );
-        
-        tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
-            _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
-
-        int mmsPartitionNumber;
-        shared_ptr<Workspace> workspace;
-        string relativePath;
-        string fileName;
-        string deliveryFileName;
-        string title;
-        int64_t sizeInBytes;
-		bool externalReadOnlyStorage;
-        tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
-                deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
-
-        _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-            + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-            + ", workspaceDirectoryName: " + workspace->_directoryName
-            + ", relativePath: " + relativePath
-            + ", fileName: " + fileName
-        );
-        string mmsAssetPathName = getMMSAssetPathName(
-			externalReadOnlyStorage,
-            mmsPartitionNumber,
-            workspace->_directoryName,
-            relativePath,
-            fileName);
-        
-        _logger->info(__FILEREF__ + "removePhysicalPathKey ..."
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-        );
-
-        _mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
-        
-        {
-            FileIO::DirectoryEntryType_t detSourceFileType;
-
-            detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-            {
-                _logger->info(__FILEREF__ + "Remove directory"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                bool removeRecursively = true;
-                FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
-            } 
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove file"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                FileIO::remove(mmsAssetPathName);
-            } 
-            else 
-            {
-                string errorMessage = string("Unexpected directory entry")
-                        + ", detSourceFileType: " + to_string(detSourceFileType);
-                
-                _logger->error(__FILEREF__ + errorMessage);
-                
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-    catch(MediaItemKeyNotFound e)
-    {
-        string errorMessage = string("removePhysicalPath failed")
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-			+ ", e.what(): " + e.what()
-        ;
-        
-        _logger->info(__FILEREF__ + errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = string("removePhysicalPath failed")
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-			+ ", e.what(): " + e.what()
-        ;
-        
-        _logger->info(__FILEREF__ + errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = string("removePhysicalPath failed")
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-        ;
-        
-        _logger->info(__FILEREF__ + errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }    
-}
-
-void MMSStorage::removeMediaItem(int64_t mediaItemKey)
-{
-    try
-    {
-        _logger->info(__FILEREF__ + "getAllStorageDetails ..."
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-        );
-        
-        vector<tuple<int, string, string, string, bool>> allStorageDetails;
-        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
-
-        for (tuple<int, string, string, string, bool>& storageDetails: allStorageDetails)
-        {
-            int mmsPartitionNumber;
-            string workspaceDirectoryName;
-            string relativePath;
-            string fileName;
-			bool externalReadOnlyStorage;
-            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath,
-					fileName, externalReadOnlyStorage) = storageDetails;
-
-			if (!externalReadOnlyStorage)
-            {
-				_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-					+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
-					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-					+ ", workspaceDirectoryName: " + workspaceDirectoryName
-					+ ", relativePath: " + relativePath
-					+ ", fileName: " + fileName
-				);
-				string mmsAssetPathName = getMMSAssetPathName(
-					externalReadOnlyStorage,
-					mmsPartitionNumber,
-					workspaceDirectoryName,
-					relativePath,
-					fileName);
-
-                FileIO::DirectoryEntryType_t detSourceFileType;
-				bool fileExist = true;
-
-				try
-				{
-					detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-				}
-				catch(FileNotExisting fne)
-				{
-					string errorMessage = string("file/directory not present")
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					;
-       
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					fileExist = false;
-				}
-				catch(runtime_error e)
-				{
-					throw e;
-				}
-				catch(exception e)
-				{
-					throw e;
-				}
-
-				if (fileExist)
-				{
-					if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "Remove directory"
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							);
-							bool removeRecursively = true;
-							FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
-						}
-						catch(DirectoryNotExisting dne)
-						{
-							string errorMessage = string("directory not present")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-        
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							throw e;
-						}
-						catch(exception e)
-						{
-							throw e;
-						}
-					} 
-					else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "Remove file"
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							);
-							FileIO::remove(mmsAssetPathName);
-						}
-						catch(FileNotExisting fne)
-						{
-							string errorMessage = string("file not present")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-        
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							throw e;
-							}
-						catch(exception e)
-						{
-							throw e;
-						}
-					} 
-					else 
-					{
-						string errorMessage = string("Unexpected directory entry")
-                            + ", detSourceFileType: " + to_string(detSourceFileType);
-
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
-        }
-
-        _logger->info(__FILEREF__ + "removeMediaItem ..."
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-        );
-        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = string("removeMediaItem failed")
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-            + ", exception: " + e.what()
-        ;
-        
-        _logger->info(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = string("removeMediaItem failed")
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-        ;
-
-        _logger->info(__FILEREF__ + errorMessage);
-        
-        throw runtime_error(errorMessage);
     }
 }
 
@@ -815,83 +614,8 @@ string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspa
     return workspaceIngestionDirectory;
 }
 
-void MMSStorage::deleteWorkspace(
-		shared_ptr<Workspace> workspace)
-{
-	{
-		string workspaceIngestionDirectory = getIngestionRootRepository();
-		workspaceIngestionDirectory.append(workspace->_directoryName);
-
-        if (FileIO::directoryExisting(workspaceIngestionDirectory))
-        {
-			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
-			);
-			bool removeRecursively = true;
-			FileIO::removeDirectory(workspaceIngestionDirectory, removeRecursively);
-        }
-	}
-
-	{
-		char pMMSPartitionName [64];
-
-
-		lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-		for (unsigned long ulMMSPartitionIndex = 0;
-            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
-            ulMMSPartitionIndex++) 
-		{
-			string mmsPartitionRepository(_mmsRootRepository);
-
-			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
-
-			mmsPartitionRepository.append(pMMSPartitionName);
-
-			if (FileIO::directoryExisting(mmsPartitionRepository))
-			{
-				_logger->info(__FILEREF__ + "Remove directory"
-					+ ", mmsPartitionRepository: " + mmsPartitionRepository
-				);
-				bool removeRecursively = true;
-				FileIO::removeDirectory(mmsPartitionRepository, removeRecursively);
-			}
-		}
-	}
-}
-
 string MMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
-}
-
-void MMSStorage::moveContentInRepository(
-        string filePathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
-
-    contentInRepository(
-        1,
-        filePathName,
-        rtRepositoryType,
-        workspaceDirectoryName,
-        addDateTimeToFileName);
-}
-
-void MMSStorage::copyFileInRepository(
-        string filePathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
-
-    contentInRepository(
-        0,
-        filePathName,
-        rtRepositoryType,
-        workspaceDirectoryName,
-        addDateTimeToFileName);
 }
 
 string MMSStorage::getRepository(RepositoryType rtRepositoryType) 
@@ -921,336 +645,14 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         }
         default:
         {
-            throw runtime_error(string("Wrong argument")
-                    + ", rtRepositoryType: " + to_string(static_cast<int>(rtRepositoryType))
-                    );
-        }
-    }
-}
+			string errorMessage = string("Wrong argument")                                                      
+                    + ", rtRepositoryType: " + to_string(static_cast<int>(rtRepositoryType));
 
-void MMSStorage::contentInRepository(
-        unsigned long ulIsCopyOrMove,
-        string contentPathName,
-        RepositoryType rtRepositoryType,
-        string workspaceDirectoryName,
-        bool addDateTimeToFileName)
-{
+			_logger->error(__FILEREF__ + errorMessage);
 
-    tm tmDateTime;
-    unsigned long ulMilliSecs;
-    FileIO::DirectoryEntryType_t detSourceFileType;
-
-
-    // pDestRepository includes the '/' at the end
-    string metaDataFileInDestRepository(getRepository(rtRepositoryType));
-    metaDataFileInDestRepository
-        .append(workspaceDirectoryName)
-        .append("/");
-
-    DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
-
-    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING) 
-    {
-        char pDateTime [64];
-        bool directoryExisting;
-
-
-        sprintf(pDateTime,
-                "%04lu_%02lu_%02lu",
-                (unsigned long) (tmDateTime. tm_year + 1900),
-                (unsigned long) (tmDateTime. tm_mon + 1),
-                (unsigned long) (tmDateTime. tm_mday));
-
-        metaDataFileInDestRepository.append(pDateTime);
-
-        if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
-        {
-            _logger->info(__FILEREF__ + "Create directory"
-                + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
-            );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-        }
-
-        metaDataFileInDestRepository.append("/");
-    }
-
-    if (addDateTimeToFileName) 
-    {
-        char pDateTime [64];
-
-
-        sprintf(pDateTime,
-                "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_",
-                (unsigned long) (tmDateTime. tm_year + 1900),
-                (unsigned long) (tmDateTime. tm_mon + 1),
-                (unsigned long) (tmDateTime. tm_mday),
-                (unsigned long) (tmDateTime. tm_hour),
-                (unsigned long) (tmDateTime. tm_min),
-                (unsigned long) (tmDateTime. tm_sec),
-                ulMilliSecs);
-
-        metaDataFileInDestRepository.append(pDateTime);
-    }
-
-    size_t fileNameStart;
-    string fileName;
-    if ((fileNameStart = contentPathName.find_last_of('/')) == string::npos)
-        fileName = contentPathName;
-    else
-        fileName = contentPathName.substr(fileNameStart + 1);
-
-    metaDataFileInDestRepository.append(fileName);
-
-    // file in case of .3gp content OR
-    // directory in case of IPhone content
-    detSourceFileType = FileIO::getDirectoryEntryType(contentPathName);
-
-    if (ulIsCopyOrMove == 1) 
-    {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            _logger->info(__FILEREF__ + "Move directory"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::moveDirectory(contentPathName,
-                    metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
-        } 
-        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
-        {
-            _logger->info(__FILEREF__ + "Move file"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::moveFile(contentPathName, metaDataFileInDestRepository);
-        }
-    } 
-    else 
-    {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            _logger->info(__FILEREF__ + "Copy directory"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::copyDirectory(contentPathName,
-                    metaDataFileInDestRepository,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
-        } 
-        else 
-        {
-            _logger->info(__FILEREF__ + "Copy file"
-                + ", from: " + contentPathName
-                + ", to: " + metaDataFileInDestRepository
-            );
-
-            FileIO::copyFile(contentPathName,
-                    metaDataFileInDestRepository);
-        }
-    }
-}
-
-string MMSStorage::moveAssetInMMSRepository(
-        string sourceAssetPathName,
-        string workspaceDirectoryName,
-        string destinationAssetFileName,
-        string relativePath,
-
-        bool partitionIndexToBeCalculated,
-        unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
-
-        bool deliveryRepositoriesToo,
-        Workspace::TerritoriesHashMap& phmTerritories
-        )
-{
-    FileIO::DirectoryEntryType_t detSourceFileType;
-
-    if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
-    {
-            throw runtime_error(string("Wrong argument")
-                    + ", relativePath: " + relativePath
-                    );
-    }
-
-    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-    // file in case of .3gp content OR
-    // directory in case of IPhone content
-    detSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
-
-    if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-            detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
-    {
-        throw runtime_error("Wrong directory entry type");
-    }
-
-    if (partitionIndexToBeCalculated) 
-    {
-        unsigned long long ullFSEntrySizeInBytes;
-
-
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(sourceAssetPathName);
-        } 
-        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
-        {
-            unsigned long ulFileSizeInBytes;
-            bool inCaseOfLinkHasItToBeRead = false;
-
-
-            ulFileSizeInBytes = FileIO::getFileSizeInBytes(sourceAssetPathName, inCaseOfLinkHasItToBeRead);
-
-            ullFSEntrySizeInBytes = ulFileSizeInBytes;
-        }
-
-        // find the MMS partition index
-        unsigned long ulMMSPartitionIndex;
-        for (ulMMSPartitionIndex = 0;
-                ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
-                ulMMSPartitionIndex++) 
-        {
-            unsigned long long mmsPartitionsFreeSizeInKB = (unsigned long long)
-                ((_mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex]) * 1024);
-
-            if (mmsPartitionsFreeSizeInKB <=
-                    (_freeSpaceToLeaveInEachPartitionInMB * 1024)) 
-            {
-                _logger->info(__FILEREF__ + "Partition space too low"
-                    + ", _ulCurrentMMSPartitionIndex: " + to_string(_ulCurrentMMSPartitionIndex)
-                    + ", mmsPartitionsFreeSizeInKB: " + to_string(mmsPartitionsFreeSizeInKB)
-                    + ", _freeSpaceToLeaveInEachPartitionInMB * 1024: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1024)
-                );
-
-                if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsFreeSizeInMB.size())
-                    _ulCurrentMMSPartitionIndex = 0;
-                else
-                    _ulCurrentMMSPartitionIndex++;
-
-                continue;
-            }
-
-            if ((unsigned long long) (mmsPartitionsFreeSizeInKB -
-                    (_freeSpaceToLeaveInEachPartitionInMB * 1024)) >
-                    (ullFSEntrySizeInBytes / 1024)) 
-            {
-                break;
-            }
-
-            if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsFreeSizeInMB.size())
-                _ulCurrentMMSPartitionIndex = 0;
-            else
-                _ulCurrentMMSPartitionIndex++;
-        }
-
-        if (ulMMSPartitionIndex == _mmsPartitionsFreeSizeInMB.size()) 
-        {
-            string errorMessage = string("No more space in MMS Partitions")
-                    + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
-                    ;
-            for (ulMMSPartitionIndex = 0;
-                ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
-                ulMMSPartitionIndex++) 
-            {
-                errorMessage +=
-                    (", _mmsPartitionsFreeSizeInMB [" + to_string(ulMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB [ulMMSPartitionIndex]))
-                    ;
-            }
-
-            _logger->error(__FILEREF__ + errorMessage);
-            
             throw runtime_error(errorMessage);
         }
-
-        *pulMMSPartitionIndexUsed = _ulCurrentMMSPartitionIndex;
     }
-
-    // creating directories and build the bMMSAssetPathName
-    string mmsAssetPathName;
-    {
-        // to create the content provider directory and the
-        // territories directories (if not already existing)
-        mmsAssetPathName = creatingDirsUsingTerritories(*pulMMSPartitionIndexUsed,
-            relativePath, workspaceDirectoryName, deliveryRepositoriesToo,
-            phmTerritories);
-
-        mmsAssetPathName.append(destinationAssetFileName);
-    }
-
-    _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
-        + ", workspaceDirectoryName: " + workspaceDirectoryName
-        + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
-        + ", mmsAssetPathName: " + mmsAssetPathName
-        + ", _mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex])
-    );
-
-    // move the file in case of .3gp content OR
-    // move the directory in case of IPhone content
-    {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-        {
-            _logger->info(__FILEREF__ + "Move directory"
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
-            );
-
-            FileIO::moveDirectory(sourceAssetPathName,
-                    mmsAssetPathName,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH);
-        } 
-        else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
-        {
-            _logger->info(__FILEREF__ + "Move file"
-                + ", from: " + sourceAssetPathName
-                + ", to: " + mmsAssetPathName
-            );
-
-            FileIO::moveFile(sourceAssetPathName,
-                    mmsAssetPathName);
-        }
-    }
-
-    // update _pullMMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
-    if (partitionIndexToBeCalculated) 
-    {
-		refreshPartitionsFreeSizes(_ulCurrentMMSPartitionIndex); 
-		/*
-        unsigned long long ullUsedInKB;
-        unsigned long long ullAvailableInKB;
-        long lPercentUsed;
-
-
-        FileIO::getFileSystemInfo(mmsAssetPathName,
-                &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-
-        _mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex] =
-            ullAvailableInKB / 1024;
-
-        _logger->info(__FILEREF__ + "Available space"
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", _mmsPartitionsFreeSizeInMB[" + to_string(_ulCurrentMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex])
-        );
-		*/
-    }
-
-
-    return mmsAssetPathName;
 }
 
 string MMSStorage::getMMSAssetPathName(
@@ -1269,16 +671,13 @@ string MMSStorage::getMMSAssetPathName(
 	}
 	else
 	{
-		char pMMSPartitionName [64];
-
-		sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
-
-		assetPathName = _mmsRootRepository;
-		assetPathName
-			.append(pMMSPartitionName)
-			.append(workspaceDirectoryName)
-			.append(relativePath)
-			.append(fileName);
+		PartitionInfo partitionInfo = _mmsPartitionsInfo[ulPartitionNumber];
+		assetPathName =
+			partitionInfo._partitionPathName
+			+ "/"
+			+ workspaceDirectoryName
+			+ relativePath
+			+ fileName;
 	}
 
     return assetPathName;
@@ -1470,9 +869,12 @@ string MMSStorage::getStagingAssetPathName(
                 } 
                 else 
                 {
-                    throw runtime_error(string("Unexpected file in staging")
-                            + ", assetPathName: " + assetPathName
-                            );
+					string errorMessage = string("Unexpected file in staging")                                  
+                            + ", assetPathName: " + assetPathName;
+
+					_logger->error(__FILEREF__ + errorMessage);
+
+                    throw runtime_error(errorMessage);
                 }
             }
             catch (...) 
@@ -1519,9 +921,12 @@ string MMSStorage::getFFMPEGEncodingProfilePathName(
             contentType != MMSEngineDBFacade::ContentType::Audio &&
             contentType != MMSEngineDBFacade::ContentType::Image)
     {
-        throw runtime_error(string("Wrong argument")
-                + ", contentType: " + to_string(static_cast<int>(contentType))
-                );
+		string errorMessage = string("Wrong argument")                                                          
+                + ", contentType: " + to_string(static_cast<int>(contentType));
+
+		_logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
     }
 
     string encodingProfilePathName(_profilesRootRepository);
@@ -1544,239 +949,6 @@ string MMSStorage::getFFMPEGEncodingProfilePathName(
 
 
     return encodingProfilePathName;
-}
-
-unsigned long MMSStorage::getWorkspaceStorageUsage(
-        string workspaceDirectoryName)
-{
-
-    unsigned long ulStorageUsageInMB;
-
-    unsigned long ulMMSPartitionIndex;
-    unsigned long long ullDirectoryUsageInBytes;
-    unsigned long long ullWorkspaceStorageUsageInBytes;
-
-
-    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-    ullWorkspaceStorageUsageInBytes = 0;
-
-    for (ulMMSPartitionIndex = 0;
-            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
-            ulMMSPartitionIndex++) 
-    {
-        string contentProviderPathName = getMMSAssetPathName(
-				false,	// externalReadOnlyStorage
-                ulMMSPartitionIndex, workspaceDirectoryName,
-                string(""), string(""));
-
-        try 
-        {
-            ullDirectoryUsageInBytes = FileIO::getDirectoryUsage(contentProviderPathName);
-        } 
-        catch (DirectoryNotExisting d) 
-        {
-            continue;
-        } 
-        catch (...) 
-        {
-            throw runtime_error(string("FileIO:: getDirectoryUsage failed")
-                    + ", contentProviderPathName: " + contentProviderPathName
-                    );
-        }
-
-        ullWorkspaceStorageUsageInBytes += ullDirectoryUsageInBytes;
-    }
-
-
-    ulStorageUsageInMB = (unsigned long)
-            (ullWorkspaceStorageUsageInBytes / (1024 * 1024));
-
-    return ulStorageUsageInMB;
-}
-
-void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed) 
-{
-    char pMMSPartitionName [64];
-    unsigned long long ullUsedInKB;
-    unsigned long long ullAvailableInKB;
-    long lPercentUsed;
-
-
-    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-	if (partitionIndexToBeRefreshed == -1)
-	{
-		for (unsigned long ulMMSPartitionIndex = 0;
-            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
-            ulMMSPartitionIndex++) 
-		{
-			string pathNameToGetFileSystemInfo(_mmsRootRepository);
-
-			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
-
-			pathNameToGetFileSystemInfo.append(pMMSPartitionName);
-
-			FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
-                &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-
-			{
-				string partitionInfoPathName = pathNameToGetFileSystemInfo;
-
-				partitionInfoPathName.append("/partitionInfo.json");
-				_logger->info(__FILEREF__ + "Looking for the Partition info file"
-					+ ", partitionInfoPathName: " + partitionInfoPathName
-				);
-				/*
-				 * In case of a partition where only a subset of it is dedicated to MMS,
-				 * we cannot use getFileSystemInfo because it will return info about the entire partition.
-				 * So this conf file will tell us
-				 *	- the max size of this storage to be used
-				 *	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
-				 *		calculate the usage of any directory/files
-				 * Sample of file:
-					{
-						"partitionUsageType": "getDirectoryUsage",
-						"maxStorageUsageInKB": 1500000000
-					}
-				*/
-				if (FileIO::fileExisting(partitionInfoPathName))
-				{
-					Json::Value partitionInfoJson;
-
-					try
-					{
-						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
-						partitionInfoFile >> partitionInfoJson;
-
-						string partitionUsageType       = partitionInfoJson.get("partitionUsageType", "").asString();
-						if (partitionUsageType == "getDirectoryUsage")
-						{
-							unsigned long long ullDirectoryUsageInBytes;
-
-							chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-
-							FileIO::getDirectoryUsage(pathNameToGetFileSystemInfo.c_str(), &ullDirectoryUsageInBytes);
-							ullUsedInKB = ullDirectoryUsageInBytes / 1000;
-
-							chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
-							_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
-								+ ", elapsed (secs): "
-									+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
-							);
-						}
-
-						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
-						_logger->info(__FILEREF__ + "Partition info"
-							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
-							+ ", ullUsedInKB: " + to_string(ullUsedInKB)
-						);
-
-						if (maxStorageUsageInKB != -1)
-						{
-							if (maxStorageUsageInKB > ullUsedInKB)
-								ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
-							else
-								ullAvailableInKB = 0;
-						}
-					}
-					catch(...)
-					{
-						_logger->error(__FILEREF__ + "wrong json partition info format"
-							+ ", partitionInfoPathName: " + partitionInfoPathName
-						);
-					}
-				}
-			}
-
-			_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex] =
-                ullAvailableInKB / 1024;
-
-			_logger->info(__FILEREF__ + "Available space"
-				+ ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
-				+ ", _mmsPartitionsFreeSizeInMB[" + to_string(ulMMSPartitionIndex) + "]: "
-					+ to_string(_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex])
-			);
-		}
-	}
-	else
-	{
-		if (partitionIndexToBeRefreshed < _mmsPartitionsFreeSizeInMB.size())
-		{
-			string pathNameToGetFileSystemInfo(_mmsRootRepository);
-
-			sprintf(pMMSPartitionName, "MMS_%04ld", partitionIndexToBeRefreshed);
-
-			pathNameToGetFileSystemInfo.append(pMMSPartitionName);
-
-			FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
-                &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-
-			{
-				string partitionInfoPathName = pathNameToGetFileSystemInfo;
-
-				partitionInfoPathName.append("/partitionInfo.json");
-				_logger->info(__FILEREF__ + "Looking for the Partition info file"
-					+ ", partitionInfoPathName: " + partitionInfoPathName
-				);
-				if (FileIO::fileExisting(partitionInfoPathName))
-				{
-					Json::Value partitionInfoJson;
-
-					try
-					{
-						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
-						partitionInfoFile >> partitionInfoJson;
-
-						string partitionUsageType       = partitionInfoJson.get("partitionUsageType", "").asString();
-						if (partitionUsageType == "getDirectoryUsage")
-						{
-							unsigned long long ullDirectoryUsageInBytes;
-
-							FileIO::getDirectoryUsage(pathNameToGetFileSystemInfo.c_str(), &ullDirectoryUsageInBytes);
-							ullUsedInKB = ullDirectoryUsageInBytes / 1000;
-						}
-
-						int64_t maxStorageUsageInKB       = partitionInfoJson.get("maxStorageUsageInKB", 5).asInt64();
-						_logger->info(__FILEREF__ + "Partition info"
-							+ ", maxStorageUsageInKB: " + to_string(maxStorageUsageInKB)
-							+ ", ullUsedInKB: " + to_string(ullUsedInKB)
-						);
-
-						if (maxStorageUsageInKB != -1)
-						{
-							if (maxStorageUsageInKB > ullUsedInKB)
-								ullAvailableInKB = maxStorageUsageInKB - ullUsedInKB;
-							else
-								ullAvailableInKB = 0;
-						}
-					}
-					catch(...)
-					{
-						_logger->error(__FILEREF__ + "wrong json partition info format"
-							+ ", partitionInfoPathName: " + partitionInfoPathName
-						);
-					}
-				}
-			}
-
-			_mmsPartitionsFreeSizeInMB[partitionIndexToBeRefreshed] =
-                ullAvailableInKB / 1024;
-
-			_logger->info(__FILEREF__ + "Available space"
-				+ ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
-				+ ", _mmsPartitionsFreeSizeInMB[" + to_string(partitionIndexToBeRefreshed) + "]: "
-					+ to_string(_mmsPartitionsFreeSizeInMB[partitionIndexToBeRefreshed])
-			);
-		}
-		else
-		{
-			_logger->info(__FILEREF__ + "Wrong input"
-				+ ", partitionIndexToBeRefreshed: " + to_string(partitionIndexToBeRefreshed)
-				+ ", _mmsPartitionsFreeSizeInMB.size(): " + to_string(_mmsPartitionsFreeSizeInMB.size())
-			);
-		}
-	}
 }
 
 string MMSStorage::creatingDirsUsingTerritories(
@@ -1872,5 +1044,943 @@ string MMSStorage::creatingDirsUsingTerritories(
 
 
     return mmsAssetPathName;
+}
+
+void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
+{    
+
+    try
+    {
+        _logger->info(__FILEREF__ + "getStorageDetailsByPhysicalPathKey ..."
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        );
+        
+        tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+            _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+
+        int mmsPartitionNumber;
+        shared_ptr<Workspace> workspace;
+        string relativePath;
+        string fileName;
+        string deliveryFileName;
+        string title;
+        int64_t sizeInBytes;
+		bool externalReadOnlyStorage;
+
+        tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
+                deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
+
+        _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+            + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+            + ", workspaceDirectoryName: " + workspace->_directoryName
+            + ", relativePath: " + relativePath
+            + ", fileName: " + fileName
+        );
+        string mmsAssetPathName = getMMSAssetPathName(
+			externalReadOnlyStorage,
+            mmsPartitionNumber,
+            workspace->_directoryName,
+            relativePath,
+            fileName);
+        
+        _logger->info(__FILEREF__ + "removePhysicalPathKey ..."
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        );
+
+        _mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
+
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType;
+
+            detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+            {
+                _logger->info(__FILEREF__ + "Remove directory"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+                bool removeRecursively = true;
+                FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+            } 
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove file"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+                FileIO::remove(mmsAssetPathName);
+            } 
+            else 
+            {
+                string errorMessage = string("Unexpected directory entry")
+                        + ", detSourceFileType: " + to_string(detSourceFileType);
+                
+                _logger->error(__FILEREF__ + errorMessage);
+                
+                throw runtime_error(errorMessage);
+            }
+        }
+
+		{
+			lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+			PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+
+			if (chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
+					_recalculatePartitionUsagePeriodInSeconds)
+			{
+				refreshPartitionFreeSizes(partitionInfo);
+			}
+			else
+			{
+				partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
+			}
+		}
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        string errorMessage = string("removePhysicalPath failed")
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+			+ ", e.what(): " + e.what()
+        ;
+        
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("removePhysicalPath failed")
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+			+ ", e.what(): " + e.what()
+        ;
+        
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("removePhysicalPath failed")
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        ;
+        
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }    
+}
+
+void MMSStorage::removeMediaItem(int64_t mediaItemKey)
+{
+    try
+    {
+        _logger->info(__FILEREF__ + "getAllStorageDetails ..."
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+
+        vector<tuple<int, string, string, string, int64_t, bool>> allStorageDetails;
+        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
+
+        for (tuple<int, string, string, string, int64_t, bool>& storageDetails: allStorageDetails)
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+			bool externalReadOnlyStorage;
+			int64_t sizeInBytes;
+
+            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath,
+					fileName, sizeInBytes, externalReadOnlyStorage) = storageDetails;
+
+			if (externalReadOnlyStorage)
+				continue;
+
+            {
+				_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+					+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+					+ ", workspaceDirectoryName: " + workspaceDirectoryName
+					+ ", relativePath: " + relativePath
+					+ ", fileName: " + fileName
+				);
+				string mmsAssetPathName = getMMSAssetPathName(
+					externalReadOnlyStorage,
+					mmsPartitionNumber,
+					workspaceDirectoryName,
+					relativePath,
+					fileName);
+
+                FileIO::DirectoryEntryType_t detSourceFileType;
+				bool fileExist = true;
+
+				try
+				{
+					detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+				}
+				catch(FileNotExisting fne)
+				{
+					string errorMessage = string("file/directory not present")
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					;
+       
+					_logger->warn(__FILEREF__ + errorMessage);
+
+					fileExist = false;
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + e.what());
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "...exception");
+
+					throw e;
+				}
+
+				if (fileExist)
+				{
+					if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "Remove directory"
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							);
+							bool removeRecursively = true;
+							FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+						}
+						catch(DirectoryNotExisting dne)
+						{
+							string errorMessage = string("removeDirectory failed. directory not present")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+        
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string("removeDirectory failed")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+								+ ", exception: " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = string("removeDirectory failed")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw e;
+						}
+
+						{
+							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+							PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+
+							if (chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
+									_recalculatePartitionUsagePeriodInSeconds)
+							{
+								refreshPartitionFreeSizes(partitionInfo);
+							}
+							else
+							{
+								partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
+							}
+						}
+					} 
+					else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "Remove file"
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							);
+							FileIO::remove(mmsAssetPathName);
+						}
+						catch(FileNotExisting fne)
+						{
+							string errorMessage = string("removefailed, file not present")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+        
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string("remove failed")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+								+ ", exception: " + e.what()
+							;
+        
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = string("remove failed")
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", mmsAssetPathName: " + mmsAssetPathName
+							;
+        
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw e;
+						}
+
+						{
+							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+							PartitionInfo partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+
+							if (chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
+									_recalculatePartitionUsagePeriodInSeconds)
+							{
+								refreshPartitionFreeSizes(partitionInfo);
+							}
+							else
+							{
+								partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
+							}
+						}
+					} 
+					else 
+					{
+						string errorMessage = string("Unexpected directory entry")
+                            + ", detSourceFileType: " + to_string(detSourceFileType);
+
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+            }
+        }
+
+        _logger->info(__FILEREF__ + "removeMediaItem ..."
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("removeMediaItem failed")
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", exception: " + e.what()
+        ;
+        
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("removeMediaItem failed")
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+}
+
+/*
+void MMSStorage::moveContentInRepository(
+        string filePathName,
+        RepositoryType rtRepositoryType,
+        string workspaceDirectoryName,
+        bool addDateTimeToFileName)
+{
+
+    contentInRepository(
+        1,
+        filePathName,
+        rtRepositoryType,
+        workspaceDirectoryName,
+        addDateTimeToFileName);
+}
+
+void MMSStorage::copyFileInRepository(
+        string filePathName,
+        RepositoryType rtRepositoryType,
+        string workspaceDirectoryName,
+        bool addDateTimeToFileName)
+{
+
+    contentInRepository(
+        0,
+        filePathName,
+        rtRepositoryType,
+        workspaceDirectoryName,
+        addDateTimeToFileName);
+}
+
+void MMSStorage::contentInRepository(
+        unsigned long ulIsCopyOrMove,
+        string contentPathName,
+        RepositoryType rtRepositoryType,
+        string workspaceDirectoryName,
+        bool addDateTimeToFileName)
+{
+
+    tm tmDateTime;
+    unsigned long ulMilliSecs;
+    FileIO::DirectoryEntryType_t detSourceFileType;
+
+
+    // pDestRepository includes the '/' at the end
+    string metaDataFileInDestRepository(getRepository(rtRepositoryType));
+    metaDataFileInDestRepository
+        .append(workspaceDirectoryName)
+        .append("/");
+
+    DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
+
+    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING) 
+    {
+        char pDateTime [64];
+        bool directoryExisting;
+
+
+        sprintf(pDateTime,
+                "%04lu_%02lu_%02lu",
+                (unsigned long) (tmDateTime. tm_year + 1900),
+                (unsigned long) (tmDateTime. tm_mon + 1),
+                (unsigned long) (tmDateTime. tm_mday));
+
+        metaDataFileInDestRepository.append(pDateTime);
+
+        if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
+        {
+            _logger->info(__FILEREF__ + "Create directory"
+                + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
+            );
+
+            bool noErrorIfExists = true;
+            bool recursive = true;
+            FileIO::createDirectory(metaDataFileInDestRepository,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+        }
+
+        metaDataFileInDestRepository.append("/");
+    }
+
+    if (addDateTimeToFileName) 
+    {
+        char pDateTime [64];
+
+
+        sprintf(pDateTime,
+                "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_",
+                (unsigned long) (tmDateTime. tm_year + 1900),
+                (unsigned long) (tmDateTime. tm_mon + 1),
+                (unsigned long) (tmDateTime. tm_mday),
+                (unsigned long) (tmDateTime. tm_hour),
+                (unsigned long) (tmDateTime. tm_min),
+                (unsigned long) (tmDateTime. tm_sec),
+                ulMilliSecs);
+
+        metaDataFileInDestRepository.append(pDateTime);
+    }
+
+    size_t fileNameStart;
+    string fileName;
+    if ((fileNameStart = contentPathName.find_last_of('/')) == string::npos)
+        fileName = contentPathName;
+    else
+        fileName = contentPathName.substr(fileNameStart + 1);
+
+    metaDataFileInDestRepository.append(fileName);
+
+    // file in case of .3gp content OR
+    // directory in case of IPhone content
+    detSourceFileType = FileIO::getDirectoryEntryType(contentPathName);
+
+    if (ulIsCopyOrMove == 1) 
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(__FILEREF__ + "Move directory"
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
+            FileIO::moveDirectory(contentPathName,
+                    metaDataFileInDestRepository,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH);
+        } 
+        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
+        {
+            _logger->info(__FILEREF__ + "Move file"
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
+            FileIO::moveFile(contentPathName, metaDataFileInDestRepository);
+        }
+    } 
+    else 
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(__FILEREF__ + "Copy directory"
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
+            FileIO::copyDirectory(contentPathName,
+                    metaDataFileInDestRepository,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH);
+        } 
+        else 
+        {
+            _logger->info(__FILEREF__ + "Copy file"
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
+            FileIO::copyFile(contentPathName,
+                    metaDataFileInDestRepository);
+        }
+    }
+}
+*/
+
+string MMSStorage::moveAssetInMMSRepository(
+        string sourceAssetPathName,
+        string workspaceDirectoryName,
+        string destinationAssetFileName,
+        string relativePath,
+
+        bool partitionIndexToBeCalculated,
+        unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+
+        bool deliveryRepositoriesToo,
+        Workspace::TerritoriesHashMap& phmTerritories
+        )
+{
+    FileIO::DirectoryEntryType_t detSourceFileType;
+
+    if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
+    {
+		string errorMessage = string("Wrong argument")                                                          
+            + ", relativePath: " + relativePath;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+    }
+
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+    // file in case of .3gp content OR
+    // directory in case of IPhone content
+    detSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
+
+    if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
+            detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
+    {
+        _logger->error(__FILEREF__ + "Wrong directory entry type");
+
+        throw runtime_error("Wrong directory entry type");
+    }
+
+	unsigned long long ullFSEntrySizeInBytes;
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(sourceAssetPathName);
+        } 
+        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        {
+            unsigned long ulFileSizeInBytes;
+            bool inCaseOfLinkHasItToBeRead = false;
+
+
+            ulFileSizeInBytes = FileIO::getFileSizeInBytes(sourceAssetPathName, inCaseOfLinkHasItToBeRead);
+
+            ullFSEntrySizeInBytes = ulFileSizeInBytes;
+        }
+	}
+
+    if (partitionIndexToBeCalculated) 
+    {
+        // find the MMS partition index
+        unsigned long ulMMSPartitionIndex;
+        for (ulMMSPartitionIndex = 0;
+                ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+                ulMMSPartitionIndex++) 
+        {
+            int64_t mmsPartitionsFreeSizeInKB = (int64_t)
+                ((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInMB * 1000);
+
+            if (mmsPartitionsFreeSizeInKB <=
+                    (_freeSpaceToLeaveInEachPartitionInMB * 1000)) 
+            {
+                _logger->info(__FILEREF__ + "Partition space too low"
+                    + ", _ulCurrentMMSPartitionIndex: " + to_string(_ulCurrentMMSPartitionIndex)
+                    + ", mmsPartitionsFreeSizeInKB: " + to_string(mmsPartitionsFreeSizeInKB)
+                    + ", _freeSpaceToLeaveInEachPartitionInMB * 1000: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1000)
+                );
+
+                if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsInfo.size())
+                    _ulCurrentMMSPartitionIndex = 0;
+                else
+                    _ulCurrentMMSPartitionIndex++;
+
+                continue;
+            }
+
+            if ((unsigned long long) (mmsPartitionsFreeSizeInKB -
+                    (_freeSpaceToLeaveInEachPartitionInMB * 1000)) >
+                    (ullFSEntrySizeInBytes / 1000)) 
+            {
+                break;
+            }
+
+            if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsInfo.size())
+                _ulCurrentMMSPartitionIndex = 0;
+            else
+                _ulCurrentMMSPartitionIndex++;
+        }
+
+        if (ulMMSPartitionIndex == _mmsPartitionsInfo.size()) 
+        {
+            string errorMessage = string("No more space in MMS Partitions")
+                    + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+                    ;
+            for (ulMMSPartitionIndex = 0;
+                ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+                ulMMSPartitionIndex++) 
+            {
+                errorMessage +=
+                    (", _mmsPartitionsInfo [" + to_string(ulMMSPartitionIndex) + "]: "
+					+ to_string((_mmsPartitionsInfo[ulMMSPartitionIndex])._currentFreeSizeInMB))
+                    ;
+            }
+
+            _logger->error(__FILEREF__ + errorMessage);
+            
+            throw runtime_error(errorMessage);
+        }
+
+        *pulMMSPartitionIndexUsed = _ulCurrentMMSPartitionIndex;
+    }
+
+    // creating directories and build the bMMSAssetPathName
+    string mmsAssetPathName;
+    {
+        // to create the content provider directory and the
+        // territories directories (if not already existing)
+        mmsAssetPathName = creatingDirsUsingTerritories(*pulMMSPartitionIndexUsed,
+            relativePath, workspaceDirectoryName, deliveryRepositoriesToo,
+            phmTerritories);
+
+        mmsAssetPathName.append(destinationAssetFileName);
+    }
+
+    _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
+        + ", workspaceDirectoryName: " + workspaceDirectoryName
+        + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
+        + ", mmsAssetPathName: " + mmsAssetPathName
+        + ", _mmsPartitionsInfo[_ulCurrentMMSPartitionIndex]: "
+			+ to_string((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInMB)
+    );
+
+    // move the file in case of .3gp content OR
+    // move the directory in case of IPhone content
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(__FILEREF__ + "Move directory"
+                + ", from: " + sourceAssetPathName
+                + ", to: " + mmsAssetPathName
+            );
+
+			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+            FileIO::moveDirectory(sourceAssetPathName,
+                    mmsAssetPathName,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH);
+			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			_logger->info(__FILEREF__ + "Move directory statistics"
+				+ ", elapsed (secs): "
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			);
+        } 
+        else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        {
+            _logger->info(__FILEREF__ + "Move file"
+                + ", from: " + sourceAssetPathName
+                + ", to: " + mmsAssetPathName
+            );
+
+			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+            FileIO::moveFile(sourceAssetPathName,
+                    mmsAssetPathName);
+			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			_logger->info(__FILEREF__ + "Move file statistics"
+				+ ", elapsed (secs): "
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			);
+        }
+    }
+
+    // update _pullMMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
+	// 2019-10-19: why I should update PartitionInfo ONLY if bIsPartitionIndexToBeCalculated?
+	//	I do it always
+    // if (partitionIndexToBeCalculated) 
+    {
+		PartitionInfo partitionInfo = _mmsPartitionsInfo.at(_ulCurrentMMSPartitionIndex);
+
+		if (chrono::duration_cast<chrono::seconds>(
+			chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
+			_recalculatePartitionUsagePeriodInSeconds)
+		{
+			refreshPartitionFreeSizes(partitionInfo);
+		}
+		else
+		{
+			partitionInfo._currentFreeSizeInMB			-= (ullFSEntrySizeInBytes / (1000 * 1000));
+		}
+    }
+
+
+    return mmsAssetPathName;
+}
+
+void MMSStorage::deleteWorkspace(
+		shared_ptr<Workspace> workspace)
+{
+	{
+		string workspaceIngestionDirectory = getIngestionRootRepository();
+		workspaceIngestionDirectory.append(workspace->_directoryName);
+
+        if (FileIO::directoryExisting(workspaceIngestionDirectory))
+        {
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(workspaceIngestionDirectory, removeRecursively);
+        }
+	}
+
+	{
+		lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+		for (unsigned long ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+            ulMMSPartitionIndex++) 
+		{
+			string workspacePathName = getMMSAssetPathName(
+				false,	// externalReadOnlyStorage
+				ulMMSPartitionIndex,
+				workspace->_directoryName,
+                string(""),		// relativePath
+				string("")		// fileName
+				);
+
+			if (FileIO::directoryExisting(workspacePathName))
+			{
+				int64_t directorySizeInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+
+				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", workspacePathName: " + workspacePathName
+				);
+				bool removeRecursively = true;
+				FileIO::removeDirectory(workspacePathName, removeRecursively);
+
+				{
+					PartitionInfo partitionInfo = _mmsPartitionsInfo.at(ulMMSPartitionIndex);
+
+					if (chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
+						_recalculatePartitionUsagePeriodInSeconds)
+					{
+						refreshPartitionFreeSizes(partitionInfo);
+					}
+					else
+					{
+						partitionInfo._currentFreeSizeInMB			+= (directorySizeInBytes / (1000 * 1000));
+					}
+				}
+			}
+		}
+	}
+}
+
+unsigned long MMSStorage::getWorkspaceStorageUsage(
+        string workspaceDirectoryName)
+{
+
+    unsigned long ulStorageUsageInMB;
+
+    unsigned long ulMMSPartitionIndex;
+    unsigned long long ullDirectoryUsageInBytes;
+    unsigned long long ullWorkspaceStorageUsageInBytes;
+
+
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+    ullWorkspaceStorageUsageInBytes = 0;
+
+    for (ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+            ulMMSPartitionIndex++) 
+    {
+		string workspacePathName = getMMSAssetPathName(
+			false,	// externalReadOnlyStorage
+			ulMMSPartitionIndex,
+			workspaceDirectoryName,
+			string(""),		// relativePath
+			string("")		// fileName
+		);
+
+		if (FileIO::directoryExisting(workspacePathName))
+		{
+			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+
+			ullWorkspaceStorageUsageInBytes += ullDirectoryUsageInBytes;
+		}
+    }
+
+
+    ulStorageUsageInMB = (unsigned long) (ullWorkspaceStorageUsageInBytes / (1000 * 1000));
+
+
+    return ulStorageUsageInMB;
+}
+
+/*
+void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed) 
+{
+    char pMMSPartitionName [64];
+    unsigned long long ullUsedInKB;
+    unsigned long long ullAvailableInKB;
+    long lPercentUsed;
+
+
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+	if (partitionIndexToBeRefreshed == -1)
+	{
+		for (unsigned long ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+            ulMMSPartitionIndex++) 
+		{
+			refreshPartitionFreeSizes(_mmsPartitionsInfo.at(ulMMSPartitionIndex)); 
+		}
+	}
+	else
+	{
+		refreshPartitionFreeSizes(_mmsPartitionsInfo.at(partitionIndexToBeRefreshed)); 
+	}
+}
+*/
+
+void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo) 
+{
+
+    unsigned long long ullUsedInKB;
+    unsigned long long ullAvailableInKB;
+
+	// lock has to be already done
+    // lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+	if (partitionInfo._partitionUsageType == "getDirectoryUsage"
+		&& partitionInfo._maxStorageUsageInKB != -1)
+	{
+		// ullUsedInKB
+		{
+			unsigned long long ullDirectoryUsageInBytes;
+
+			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
+			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+
+			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
+				+ ", elapsed (secs): "
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			);
+		}
+
+		// ullAvailableInKB;
+		{
+			if (partitionInfo._maxStorageUsageInKB > ullUsedInKB)
+				ullAvailableInKB = partitionInfo._maxStorageUsageInKB - ullUsedInKB;
+			else
+				ullAvailableInKB = 0;
+		}
+	}
+	else
+	{
+		long lPercentUsed;
+
+		FileIO::getFileSystemInfo(partitionInfo._partitionPathName,
+			&ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
+
+		// ullUsedInKB
+		if (partitionInfo._partitionUsageType == "getDirectoryUsage")
+		{
+			unsigned long long ullDirectoryUsageInBytes;
+
+			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
+			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+
+			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
+				+ ", elapsed (secs): "
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			);
+		}
+
+		// ullAvailableInKB;
+		if (partitionInfo._maxStorageUsageInKB != -1)
+		{
+			if (partitionInfo._maxStorageUsageInKB > ullUsedInKB)
+				ullAvailableInKB = partitionInfo._maxStorageUsageInKB - ullUsedInKB;
+			else
+				ullAvailableInKB = 0;
+		}
+	}
+
+	partitionInfo._currentFreeSizeInMB		= ullAvailableInKB / 1000;
+	partitionInfo._lastUpdateFreeSize		= chrono::system_clock::now();
+
+	_logger->info(__FILEREF__ + "Available space"
+		+ ", partitionPathName: " + partitionInfo._partitionPathName
+		+ ", partitionInfo._currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+	);
 }
 

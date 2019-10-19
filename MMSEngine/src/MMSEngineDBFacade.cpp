@@ -1695,12 +1695,12 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 }
 
 void MMSEngineDBFacade::getAllStorageDetails(
-        int64_t mediaItemKey, vector<tuple<int, string, string, string, bool>>& allStorageDetails
+        int64_t mediaItemKey, vector<tuple<int, string, string, string, int64_t, bool>>& allStorageDetails
 )
 {
-        
+
     string      lastSQLCommand;
-    
+
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
@@ -1712,15 +1712,16 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
         int64_t workspaceKey;
         int mmsPartitionNumber;
+        int64_t sizeInBytes;
         int externalReadOnlyStorage;
         string relativePath;
         string fileName;
         {
-            lastSQLCommand = string("") +
-                "select mi.workspaceKey, pp.externalReadOnlyStorage, pp.partitionNumber, "
-				"pp.relativePath, pp.fileName "
-                "from MMS_MediaItem mi, MMS_PhysicalPath pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? ";
+			lastSQLCommand =
+				"select mi.workspaceKey, pp.externalReadOnlyStorage, pp.partitionNumber, "
+				"pp.relativePath, pp.fileName, pp.sizeInBytes "
+				"from MMS_MediaItem mi, MMS_PhysicalPath pp "
+				"where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1734,17 +1735,17 @@ void MMSEngineDBFacade::getAllStorageDetails(
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
+                sizeInBytes = resultSet->getInt64("sizeInBytes");
 
                 shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
         
-                tuple<int, string, string, string, bool> storageDetails =
+                tuple<int, string, string, string, int64_t, bool> storageDetails =
                     make_tuple(mmsPartitionNumber, workspace->_directoryName,
-							relativePath, fileName, externalReadOnlyStorage);
+							relativePath, fileName, sizeInBytes, externalReadOnlyStorage);
                 
                 allStorageDetails.push_back(storageDetails);
             }
         }
-
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

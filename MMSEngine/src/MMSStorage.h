@@ -67,7 +67,7 @@ public:
     
     void removeMediaItem(int64_t mediaItemKey);
 
-    void refreshPartitionsFreeSizes (long partitionIndexToBeRefreshed);
+    // void refreshPartitionsFreeSizes (long partitionIndexToBeRefreshed);
 
     void moveContentInRepository (
         string filePathName,
@@ -161,10 +161,27 @@ private:
     string                      _ingestionRootRepository;
     string                      _profilesRootRepository;
 
-    unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
+	unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
+	int							_recalculatePartitionUsagePeriodInSeconds;
 
+	struct PartitionInfo {
+		// it is without / at the end
+		string			_partitionPathName;
+
+		// getFileSystemInfo (default and more performance) or getDirectoryUsage (less performance)
+		string			_partitionUsageType;
+
+		// this is in case we have to use a subset of the partition
+		int64_t			_maxStorageUsageInKB;
+
+
+		// real free size got from file system
+		int64_t			_currentFreeSizeInMB;
+
+		chrono::system_clock::time_point	_lastUpdateFreeSize;
+	};
     recursive_mutex                 _mtMMSPartitions;
-    vector<unsigned long long>      _mmsPartitionsFreeSizeInMB;
+    vector<PartitionInfo>			_mmsPartitionsInfo;
     unsigned long                   _ulCurrentMMSPartitionIndex;
 
     
@@ -184,6 +201,7 @@ private:
 	bool deliveryRepositoriesToo,
 	Workspace::TerritoriesHashMap& phmTerritories);
 
+	void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
 
 } ;
 

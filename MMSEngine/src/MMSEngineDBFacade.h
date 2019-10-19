@@ -1353,7 +1353,7 @@ public:
     );
 
     void getAllStorageDetails(int64_t mediaItemKey,
-        vector<tuple<int, string, string, string, bool>>& allStorageDetails);
+        vector<tuple<int, string, string, string, int64_t, bool>>& allStorageDetails);
     
     int64_t createDeliveryAuthorization(
         int64_t userKey,
