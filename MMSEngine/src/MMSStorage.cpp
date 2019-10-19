@@ -1914,6 +1914,13 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 	// lock has to be already done
     // lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
+	_logger->info(__FILEREF__ + "refreshPartitionFreeSizes (before)"
+			+ ", _partitionPathName: " + partitionInfo._partitionPathName
+			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
+			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
+			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+	);
+
 	if (partitionInfo._partitionUsageType == "getDirectoryUsage"
 		&& partitionInfo._maxStorageUsageInKB != -1)
 	{
@@ -1978,9 +1985,11 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 	partitionInfo._currentFreeSizeInMB		= ullAvailableInKB / 1000;
 	partitionInfo._lastUpdateFreeSize		= chrono::system_clock::now();
 
-	_logger->info(__FILEREF__ + "Available space"
-		+ ", partitionPathName: " + partitionInfo._partitionPathName
-		+ ", partitionInfo._currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+	_logger->info(__FILEREF__ + "refreshPartitionFreeSizes (after)"
+			+ ", _partitionPathName: " + partitionInfo._partitionPathName
+			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
+			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
+			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
 	);
 }
 
