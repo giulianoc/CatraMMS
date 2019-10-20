@@ -28,12 +28,6 @@ MMSStorage::MMSStorage(
 		+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
     );
 
-    _recalculatePartitionUsagePeriodInSeconds = configuration["storage"].
-		get("recalculatePartitionUsagePeriodInSeconds", 900).asInt();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", storage->recalculatePartitionUsagePeriodInSeconds: " + to_string(_recalculatePartitionUsagePeriodInSeconds)
-    );
-
     _ingestionRootRepository = _storage + "IngestionRepository/users/";
     _mmsRootRepository = _storage + "MMSRepository/";
     _downloadRootRepository = _storage + "DownloadRepository/";
@@ -1125,16 +1119,12 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 
 			PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
-			if (chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
-					_recalculatePartitionUsagePeriodInSeconds)
-			{
-				refreshPartitionFreeSizes(partitionInfo);
-			}
-			else
-			{
-				partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
-			}
+			partitionInfo._currentFreeSizeInBytes			+= sizeInBytes;
+
+			_logger->info(__FILEREF__ + "Partition free size info"
+				+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+				+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
+			);
 		}
     }
     catch(MediaItemKeyNotFound e)
@@ -1291,16 +1281,13 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 
 							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
-							if (chrono::duration_cast<chrono::seconds>(
-									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
-									_recalculatePartitionUsagePeriodInSeconds)
-							{
-								refreshPartitionFreeSizes(partitionInfo);
-							}
-							else
-							{
-								partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
-							}
+							partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
+
+							_logger->info(__FILEREF__ + "Partition free size info"
+								+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+								+ ", _currentFreeSizeInBytes: "
+									+ to_string(partitionInfo._currentFreeSizeInBytes)
+							);
 						}
 					} 
 					else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
@@ -1350,16 +1337,13 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 
 							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
 
-							if (chrono::duration_cast<chrono::seconds>(
-									chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
-									_recalculatePartitionUsagePeriodInSeconds)
-							{
-								refreshPartitionFreeSizes(partitionInfo);
-							}
-							else
-							{
-								partitionInfo._currentFreeSizeInMB			+= (sizeInBytes / (1000 * 1000));
-							}
+							partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
+
+							_logger->info(__FILEREF__ + "Partition free size info"
+								+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+								+ ", _currentFreeSizeInBytes: "
+									+ to_string(partitionInfo._currentFreeSizeInBytes)
+							);
 						}
 					} 
 					else 
@@ -1637,7 +1621,7 @@ string MMSStorage::moveAssetInMMSRepository(
                 ulMMSPartitionIndex++) 
         {
             int64_t mmsPartitionsFreeSizeInKB = (int64_t)
-                ((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInMB * 1000);
+                ((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInBytes / 1000);
 
             if (mmsPartitionsFreeSizeInKB <=
                     (_freeSpaceToLeaveInEachPartitionInMB * 1000)) 
@@ -1680,7 +1664,7 @@ string MMSStorage::moveAssetInMMSRepository(
             {
                 errorMessage +=
                     (", _mmsPartitionsInfo [" + to_string(ulMMSPartitionIndex) + "]: "
-					+ to_string((_mmsPartitionsInfo[ulMMSPartitionIndex])._currentFreeSizeInMB))
+					+ to_string((_mmsPartitionsInfo[ulMMSPartitionIndex])._currentFreeSizeInBytes))
                     ;
             }
 
@@ -1709,7 +1693,7 @@ string MMSStorage::moveAssetInMMSRepository(
         + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
         + ", mmsAssetPathName: " + mmsAssetPathName
         + ", _mmsPartitionsInfo[_ulCurrentMMSPartitionIndex]: "
-			+ to_string((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInMB)
+			+ to_string((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInBytes)
     );
 
     // move the file in case of .3gp content OR
@@ -1759,16 +1743,12 @@ string MMSStorage::moveAssetInMMSRepository(
     {
 		PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(_ulCurrentMMSPartitionIndex);
 
-		if (chrono::duration_cast<chrono::seconds>(
-			chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
-			_recalculatePartitionUsagePeriodInSeconds)
-		{
-			refreshPartitionFreeSizes(partitionInfo);
-		}
-		else
-		{
-			partitionInfo._currentFreeSizeInMB			-= (ullFSEntrySizeInBytes / (1000 * 1000));
-		}
+		partitionInfo._currentFreeSizeInBytes			-= ullFSEntrySizeInBytes;
+
+		_logger->info(__FILEREF__ + "Partition free size info"
+			+ ", mmsPartitionNumber: " + to_string(_ulCurrentMMSPartitionIndex)
+			+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
+		);
     }
 
 
@@ -1820,16 +1800,13 @@ void MMSStorage::deleteWorkspace(
 				{
 					PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(ulMMSPartitionIndex);
 
-					if (chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - partitionInfo._lastUpdateFreeSize).count() >
-						_recalculatePartitionUsagePeriodInSeconds)
-					{
-						refreshPartitionFreeSizes(partitionInfo);
-					}
-					else
-					{
-						partitionInfo._currentFreeSizeInMB			+= (directorySizeInBytes / (1000 * 1000));
-					}
+					partitionInfo._currentFreeSizeInBytes			+= directorySizeInBytes;
+
+					_logger->info(__FILEREF__ + "Partition free size info"
+						+ ", mmsPartitionNumber: " + to_string(ulMMSPartitionIndex)
+						+ ", _currentFreeSizeInBytes: "
+							+ to_string(partitionInfo._currentFreeSizeInBytes)
+					);
 				}
 			}
 		}
@@ -1878,38 +1855,24 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
     return ulStorageUsageInMB;
 }
 
-/*
-void MMSStorage::refreshPartitionsFreeSizes(long partitionIndexToBeRefreshed) 
+void MMSStorage::refreshPartitionsFreeSizes() 
 {
-    char pMMSPartitionName [64];
-    unsigned long long ullUsedInKB;
-    unsigned long long ullAvailableInKB;
-    long lPercentUsed;
 
+	lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-	if (partitionIndexToBeRefreshed == -1)
+	for (unsigned long ulMMSPartitionIndex = 0;
+		ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+		ulMMSPartitionIndex++) 
 	{
-		for (unsigned long ulMMSPartitionIndex = 0;
-            ulMMSPartitionIndex < _mmsPartitionsInfo.size();
-            ulMMSPartitionIndex++) 
-		{
-			refreshPartitionFreeSizes(_mmsPartitionsInfo.at(ulMMSPartitionIndex)); 
-		}
-	}
-	else
-	{
-		refreshPartitionFreeSizes(_mmsPartitionsInfo.at(partitionIndexToBeRefreshed)); 
+		refreshPartitionFreeSizes(_mmsPartitionsInfo.at(ulMMSPartitionIndex)); 
 	}
 }
-*/
 
 void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo) 
 {
 
-    unsigned long long ullUsedInKB;
-    unsigned long long ullAvailableInKB;
+    int64_t usedInBytes;
+    int64_t availableInBytes;
 
 	// lock has to be already done
     // lock_guard<recursive_mutex> locker(_mtMMSPartitions);
@@ -1918,21 +1881,20 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", _partitionPathName: " + partitionInfo._partitionPathName
 			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
 			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
-			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+			+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
 			+ ", _lastUpdateFreeSize: " + to_string(chrono::system_clock::to_time_t(partitionInfo._lastUpdateFreeSize))
 	);
+
+	chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
 	if (partitionInfo._partitionUsageType == "getDirectoryUsage"
 		&& partitionInfo._maxStorageUsageInKB != -1)
 	{
 		// ullUsedInKB
 		{
-			unsigned long long ullDirectoryUsageInBytes;
-
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
-			ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+			usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
@@ -1941,12 +1903,12 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			);
 		}
 
-		// ullAvailableInKB;
+		// ullAvailableInBytes;
 		{
-			if (partitionInfo._maxStorageUsageInKB > ullUsedInKB)
-				ullAvailableInKB = partitionInfo._maxStorageUsageInKB - ullUsedInKB;
+			if (partitionInfo._maxStorageUsageInKB * 1000 > usedInBytes)
+				availableInBytes = (partitionInfo._maxStorageUsageInKB * 1000) - usedInBytes;
 			else
-				ullAvailableInKB = 0;
+				availableInBytes = 0;
 		}
 	}
 	else
@@ -1954,17 +1916,14 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 		long lPercentUsed;
 
 		FileIO::getFileSystemInfo(partitionInfo._partitionPathName,
-			&ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
+			&usedInBytes, &availableInBytes, &lPercentUsed);
 
-		// ullUsedInKB
+		// ullUsedInBytes
 		if (partitionInfo._partitionUsageType == "getDirectoryUsage")
 		{
-			unsigned long long ullDirectoryUsageInBytes;
-
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
-			ullUsedInKB = ullDirectoryUsageInBytes / 1000;
+			usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
@@ -1973,25 +1932,29 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			);
 		}
 
-		// ullAvailableInKB;
+		// ullAvailableInBytes;
 		if (partitionInfo._maxStorageUsageInKB != -1)
 		{
-			if (partitionInfo._maxStorageUsageInKB > ullUsedInKB)
-				ullAvailableInKB = partitionInfo._maxStorageUsageInKB - ullUsedInKB;
+			if (partitionInfo._maxStorageUsageInKB * 1000 > usedInBytes)
+				availableInBytes = (partitionInfo._maxStorageUsageInKB * 1000) - usedInBytes;
 			else
-				ullAvailableInKB = 0;
+				availableInBytes = 0;
 		}
 	}
 
-	partitionInfo._currentFreeSizeInMB		= ullAvailableInKB / 1000;
+	partitionInfo._currentFreeSizeInBytes	= availableInBytes;
 	partitionInfo._lastUpdateFreeSize		= chrono::system_clock::now();
+
+	chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 
 	_logger->info(__FILEREF__ + "refreshPartitionFreeSizes (after)"
 			+ ", _partitionPathName: " + partitionInfo._partitionPathName
 			+ ", _partitionUsageType: " + partitionInfo._partitionUsageType
 			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
-			+ ", _currentFreeSizeInMB: " + to_string(partitionInfo._currentFreeSizeInMB)
+			+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
 			+ ", _lastUpdateFreeSize: " + to_string(chrono::system_clock::to_time_t(partitionInfo._lastUpdateFreeSize))
+			+ ", elapsed (secs): "
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
 	);
 }
 

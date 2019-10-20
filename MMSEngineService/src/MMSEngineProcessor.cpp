@@ -16,6 +16,7 @@
 #include "CheckEncodingTimes.h"
 #include "ContentRetentionTimes.h"
 #include "IngestionDataRetentionTimes.h"
+#include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
@@ -463,6 +464,48 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT:	// 8
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                try
+                {
+					/* 2019-07-10: this check was removed since this event happens once a day
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // content retention is a periodical event, we will wait the next one
+                        
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+					*/
+                    {
+                        thread checkRefreshPartitionFreeSize(&MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread,
+								this);
+                        checkRefreshPartitionFreeSize.detach();
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleCheckRefreshPartitionFreeSizeEvent failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -13124,6 +13167,48 @@ void MMSEngineProcessor::handleIngestionDataRetentionEventThread ()
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+		);
+    }
+}
+
+void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
+{
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
+    {
+        _logger->info(__FILEREF__ + "Check Refresh Partition Free Size started"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        );
+
+		try
+		{
+			_mmsStorage->refreshPartitionsFreeSizes();
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "refreshPartitionsFreeSizes failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "refreshPartitionsFreeSizes failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+        _logger->info(__FILEREF__ + "Check Refresh Partition Free Size finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
 		);

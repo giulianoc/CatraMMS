@@ -25,6 +25,7 @@ SET (SOURCES
 	MMSEngineProcessor.cpp
 	CheckIngestionTimes.cpp
 	CheckEncodingTimes.cpp
+	CheckRefreshPartitionFreeSizeTimes.cpp
 	ContentRetentionTimes.cpp
 	IngestionDataRetentionTimes.cpp
 	MainAndBackupRunningHALiveRecordingEvent.cpp
@@ -34,6 +35,7 @@ SET (HEADERS
 	MMSEngineProcessor.h
 	CheckIngestionTimes.h
 	CheckEncodingTimes.h
+	CheckRefreshPartitionFreeSizeTimes.h
 	ContentRetentionTimes.h
 	IngestionDataRetentionTimes.h
 	MainAndBackupRunningHALiveRecordingEvent.h

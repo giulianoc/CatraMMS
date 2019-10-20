@@ -136,6 +136,8 @@ private:
 
     void handleIngestionDataRetentionEventThread ();
 
+	void handleCheckRefreshPartitionFreeSizeEventThread();
+
 	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(

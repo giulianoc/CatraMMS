@@ -67,7 +67,7 @@ public:
     
     void removeMediaItem(int64_t mediaItemKey);
 
-    // void refreshPartitionsFreeSizes (long partitionIndexToBeRefreshed);
+    void refreshPartitionsFreeSizes();
 
     void moveContentInRepository (
         string filePathName,
@@ -162,7 +162,6 @@ private:
     string                      _profilesRootRepository;
 
 	unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
-	int							_recalculatePartitionUsagePeriodInSeconds;
 
 	struct PartitionInfo {
 		// it is without / at the end
@@ -176,7 +175,7 @@ private:
 
 
 		// real free size got from file system
-		int64_t			_currentFreeSizeInMB;
+		int64_t			_currentFreeSizeInBytes;
 
 		chrono::system_clock::time_point	_lastUpdateFreeSize;
 	};

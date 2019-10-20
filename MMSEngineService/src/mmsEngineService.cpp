@@ -10,6 +10,7 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
+#include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "IngestionDataRetentionTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
@@ -259,6 +260,17 @@ int main (int iArgc, char *pArgv [])
             make_shared<IngestionDataRetentionTimes>(ingestionDataRetentionTimesSchedule, multiEventsSet, logger);
     ingestionDataRetentionTimes->start();
     scheduler.activeTimes(ingestionDataRetentionTimes);
+
+    string			checkRefreshPartitionFreeSizeTimesSchedule =
+		configuration["scheduler"].get("checkRefreshPartitionFreeSizeTimesSchedule", "").asString();
+    logger->info(__FILEREF__ + "Creating and Starting CheckRefreshPartitionFreeSizeTimes"
+        + ", checkRefreshPartitionFreeSizeTimesSchedule: "
+			+ checkRefreshPartitionFreeSizeTimesSchedule
+            );
+    shared_ptr<CheckRefreshPartitionFreeSizeTimes>     checkRefreshPartitionFreeSizeTimes =
+            make_shared<CheckRefreshPartitionFreeSizeTimes>(checkRefreshPartitionFreeSizeTimesSchedule, multiEventsSet, logger);
+    checkRefreshPartitionFreeSizeTimes->start();
+    scheduler.activeTimes(checkRefreshPartitionFreeSizeTimes);
 
     string           mainAndBackupRunningHALiveRecordingTimesSchedule = configuration["scheduler"].get("mainAndBackupRunningHALiveRecordingTimesSchedule", "").asString();
     logger->info(__FILEREF__ + "Creating and Starting MainAndBackupRunningHALiveRecordingEvent"
