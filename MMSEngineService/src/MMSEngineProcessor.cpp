@@ -533,7 +533,7 @@ void MMSEngineProcessor::operator ()()
 
 void MMSEngineProcessor::handleCheckIngestionEvent()
 {
-    
+
     try
     {
         vector<tuple<int64_t,shared_ptr<Workspace>,string, string,
@@ -2342,12 +2342,53 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else // Frame
                                 {
-                                    generateAndIngestFramesTask(
-                                        ingestionJobKey, 
-                                        workspace, 
-                                        ingestionType,
-                                        parametersRoot, 
-                                        dependencies);
+									if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+									{
+										_logger->warn(__FILEREF__
+											+ "Not enough available threads to manage changeFileFormatThread, activity is postponed"
+											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+											+ ", _processorsThreadsNumber.use_count(): "
+												+ to_string(_processorsThreadsNumber.use_count())
+											+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+										);
+
+										string errorMessage = "";
+										string processorMMS = "";
+
+										_logger->info(__FILEREF__ + "Update IngestionJob"
+											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+											+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+											+ ", errorMessage: " + errorMessage
+											+ ", processorMMS: " + processorMMS
+										);                            
+										_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+									}
+									else
+									{
+										thread generateAndIngestFramesThread(&MMSEngineProcessor::generateAndIngestFramesThread,
+												this, _processorsThreadsNumber, ingestionJobKey, workspace,
+												ingestionType,
+												parametersRoot,
+												// it cannot be passed as reference because it will change soon by the parent thread
+												dependencies
+										);
+										generateAndIngestFramesThread.detach();
+										/*
+										generateAndIngestFramesTask(
+											ingestionJobKey, 
+											workspace, 
+											ingestionType,
+											parametersRoot, 
+											dependencies);
+										*/
+									}
                                 }
                             }
                             catch(runtime_error e)
@@ -3968,11 +4009,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
 								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
-                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage changeFileFormatThread, activity is postponed"
+                                    _logger->warn(__FILEREF__
+											+ "Not enough available threads to manage changeFileFormatThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
                                     );
 
                                     string errorMessage = "";
@@ -9343,12 +9386,12 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
 }
 
 // this is to generate one Frame
-void MMSEngineProcessor::generateAndIngestFramesTask(
-        int64_t ingestionJobKey,
+void MMSEngineProcessor::generateAndIngestFramesThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
 )
 {
     try
@@ -9359,8 +9402,9 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
         {
             string errorMessage = __FILEREF__ + "No video found"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
+				+ ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -9807,9 +9851,38 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
             + ", e.what(): " + e.what()
         );
         
-        // Update IngestionJob done in the calling method
-
-        throw e;
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+        
+		// it's a thread, no throw
+        // throw e;
+        return;
     }
     catch(exception e)
     {
@@ -9818,9 +9891,38 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
-
-        throw e;
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+        
+		// it's a thread, no throw
+        // throw e;
+        return;
     }
 }
 

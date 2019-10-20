@@ -5486,7 +5486,10 @@ void FFMpeg::settingFfmpegParameters(
 
 void FFMpeg::addToArguments(string parameter, vector<string>& argumentList)
 {
-	_logger->info(string("parameter: ") + parameter);
+	_logger->info(__FILEREF__ + "addToArguments"
+			+ ", parameter: " + parameter
+	);
+
 	if (parameter != "")
 	{
 		string item;
