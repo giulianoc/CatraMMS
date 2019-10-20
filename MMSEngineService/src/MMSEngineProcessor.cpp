@@ -260,11 +260,73 @@ void MMSEngineProcessor::operator ()()
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
 
-                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
+                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent
+					= dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
                 try
                 {
-                    handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+					if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+					{
+						_logger->warn(__FILEREF__
+							+ "Not enough available threads to manage handleLocalAssetIngestionEvent, activity is postponed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+						);
+            
+						{
+							shared_ptr<LocalAssetIngestionEvent>    cloneLocalAssetIngestionEvent
+								= _multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(
+										MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+							cloneLocalAssetIngestionEvent->setSource(
+								localAssetIngestionEvent->getSource());
+							cloneLocalAssetIngestionEvent->setDestination(
+								localAssetIngestionEvent->getDestination());
+							cloneLocalAssetIngestionEvent->setExpirationTimePoint(
+								chrono::system_clock::now());
+
+							cloneLocalAssetIngestionEvent->setExternalReadOnlyStorage(
+								localAssetIngestionEvent->getExternalReadOnlyStorage());
+							cloneLocalAssetIngestionEvent->setExternalStorageMediaSourceURL(
+								localAssetIngestionEvent->getExternalStorageMediaSourceURL());
+							cloneLocalAssetIngestionEvent->setIngestionJobKey(
+								localAssetIngestionEvent->getIngestionJobKey());
+							cloneLocalAssetIngestionEvent->setIngestionSourceFileName(
+								localAssetIngestionEvent->getIngestionSourceFileName());
+							cloneLocalAssetIngestionEvent->setMMSSourceFileName(
+								localAssetIngestionEvent->getMMSSourceFileName());
+							cloneLocalAssetIngestionEvent->setForcedAvgFrameRate(
+								localAssetIngestionEvent->getForcedAvgFrameRate());
+							cloneLocalAssetIngestionEvent->setWorkspace(
+								localAssetIngestionEvent->getWorkspace());
+							cloneLocalAssetIngestionEvent->setIngestionType(
+								localAssetIngestionEvent->getIngestionType());
+							cloneLocalAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+								localAssetIngestionEvent->getIngestionRowToBeUpdatedAsSuccess());
+
+							cloneLocalAssetIngestionEvent->setMetadataContent(
+								localAssetIngestionEvent->getMetadataContent());
+
+							shared_ptr<Event2>    cloneEvent = dynamic_pointer_cast<Event2>(
+									cloneLocalAssetIngestionEvent);
+							_multiEventsSet->addEvent(cloneEvent);
+
+							_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+								+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+						}
+					}
+					else
+					{
+						// handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                        thread handleLocalAssetIngestionEventThread(&MMSEngineProcessor::handleLocalAssetIngestionEventThread, this,
+                            _processorsThreadsNumber, localAssetIngestionEvent);
+                        handleLocalAssetIngestionEventThread.detach();
+					}
                 }
                 catch(runtime_error e)
                 {
@@ -281,7 +343,8 @@ void MMSEngineProcessor::operator ()()
                     );
                 }
 
-                _multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
+                _multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(
+						localAssetIngestionEvent);
 
                 _logger->debug(__FILEREF__ + "2. Received LOCALASSETINGESTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -359,11 +422,61 @@ void MMSEngineProcessor::operator ()()
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
 
-                shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = dynamic_pointer_cast<MultiLocalAssetIngestionEvent>(event);
+                shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent
+					= dynamic_pointer_cast<MultiLocalAssetIngestionEvent>(event);
 
                 try
                 {
-                    handleMultiLocalAssetIngestionEvent (multiLocalAssetIngestionEvent);
+					if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+					{
+						_logger->warn(__FILEREF__
+							+ "Not enough available threads to manage handleLocalAssetIngestionEvent, activity is postponed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+						);
+            
+						{
+							shared_ptr<MultiLocalAssetIngestionEvent>    cloneMultiLocalAssetIngestionEvent
+								= _multiEventsSet->getEventsFactory()->getFreeEvent<MultiLocalAssetIngestionEvent>(
+										MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
+
+							cloneMultiLocalAssetIngestionEvent->setSource(
+								multiLocalAssetIngestionEvent->getSource());
+							cloneMultiLocalAssetIngestionEvent->setDestination(
+								multiLocalAssetIngestionEvent->getDestination());
+							cloneMultiLocalAssetIngestionEvent->setExpirationTimePoint(
+								chrono::system_clock::now());
+
+							cloneMultiLocalAssetIngestionEvent->setIngestionJobKey(
+								multiLocalAssetIngestionEvent->getIngestionJobKey());
+							cloneMultiLocalAssetIngestionEvent->setEncodingJobKey(
+								multiLocalAssetIngestionEvent->getEncodingJobKey());
+							cloneMultiLocalAssetIngestionEvent->setWorkspace(
+								multiLocalAssetIngestionEvent->getWorkspace());
+							cloneMultiLocalAssetIngestionEvent->setParametersRoot(
+								multiLocalAssetIngestionEvent->getParametersRoot());
+
+							shared_ptr<Event2>    cloneEvent = dynamic_pointer_cast<Event2>(
+									cloneMultiLocalAssetIngestionEvent);
+							_multiEventsSet->addEvent(cloneEvent);
+
+							_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+								+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+						}
+					}
+					else
+					{
+						// handleMultiLocalAssetIngestionEvent (multiLocalAssetIngestionEvent);
+                        thread handleMultiLocalAssetIngestionEventThread(
+								&MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread, this,
+                            _processorsThreadsNumber, multiLocalAssetIngestionEvent);
+                        handleMultiLocalAssetIngestionEventThread.detach();
+					}
                 }
                 catch(runtime_error e)
                 {
@@ -4225,7 +4338,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     }
 }
 
-void MMSEngineProcessor::handleLocalAssetIngestionEvent (
+
+void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
+		shared_ptr<long> processorsThreadsNumber,
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
 	string binaryPathName;
@@ -4311,7 +4426,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(exception e)
     {
@@ -4355,7 +4471,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
 
 	_logger->info(__FILEREF__ + "binaryPathName"
@@ -4455,7 +4572,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(exception e)
     {
@@ -4509,7 +4627,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
             
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
 
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
@@ -4582,7 +4701,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(exception e)
     {
@@ -4637,7 +4757,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
 
     try
@@ -4700,7 +4821,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(exception e)
     {
@@ -4755,7 +4877,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
 
 	string mediaSourceFileName;
@@ -4860,7 +4983,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
 
-		throw e;
+        // throw e;
+		return;	// return because it is a thread
 	}
 	catch(exception e)
 	{
@@ -4910,7 +5034,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 			FileIO::remove(binaryPathName);
 		}
            
-		throw e;
+        // throw e;
+		return;	// return because it is a thread
 	}
 
     MMSEngineDBFacade::ContentType contentType;
@@ -5010,7 +5135,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw e;
+			// throw e;
+			return;	// return because it is a thread
         }
         catch(exception e)
         {
@@ -5059,7 +5185,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw e;
+			// throw e;
+			return;	// return because it is a thread
         }        
     }
     else if (validator.isImageFileFormat(mediaFileFormat))
@@ -5135,7 +5262,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw runtime_error(e.what());
+            // throw runtime_error(e.what());
+			// throw e;
+			return;	// return because it is a thread
         }
         catch( Magick::Warning &e )
         {
@@ -5185,7 +5314,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw runtime_error(e.what());
+            // throw runtime_error(e.what());
+			// throw e;
+			return;	// return because it is a thread
         }
         catch( Magick::ErrorFileOpen &e ) 
         { 
@@ -5235,7 +5366,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw runtime_error(e.what());
+            // throw runtime_error(e.what());
+			// throw e;
+			return;	// return because it is a thread
         }
         catch (Magick::Error &e)
         { 
@@ -5285,7 +5418,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw runtime_error(e.what());
+            // throw runtime_error(e.what());
+			// throw e;
+			return;	// return because it is a thread
         }
         catch(exception e)
         {
@@ -5334,7 +5469,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 					);
 			}
 
-            throw e;
+            // throw e;
+			// throw e;
+			return;	// return because it is a thread
         }
     }
     else
@@ -5387,7 +5524,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw runtime_error(errorMessage);
+        // throw runtime_error(errorMessage);
+		return;	// return because it is a thread
     }
 
     // int64_t mediaItemKey;
@@ -5659,7 +5797,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(runtime_error e)
     {
@@ -5709,7 +5848,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }
     catch(exception e)
     {
@@ -5758,7 +5898,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 				);
 		}
 
-        throw e;
+        // throw e;
+		return;	// return because it is a thread
     }    
 }
 
@@ -9023,7 +9164,8 @@ void MMSEngineProcessor::extractTracksContentThread(
     }
 }
 
-void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
+void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
+		shared_ptr<long> processorsThreadsNumber,
     shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent)
 {
     
@@ -9200,7 +9342,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
 
                     try
                     {
-                        handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                        handleLocalAssetIngestionEventThread (
+							processorsThreadsNumber, localAssetIngestionEvent);
                     }
                     catch(runtime_error e)
                     {
@@ -9432,226 +9575,6 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
                 mjpeg, imageWidth, imageHeight,
                 sourcePhysicalPathKey, sourcePhysicalPath, durationInMilliSeconds);
         
-        /*
-        int periodInSeconds = -1;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
-        {
-            field = "PeriodInSeconds";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            periodInSeconds = parametersRoot.get(field, "XXX").asInt();
-        }
-        else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            
-        }
-            
-        double startTimeInSeconds = 0;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-            field = "InstantInSeconds";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
-            }
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            field = "StartTimeInSeconds";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
-            }
-        }
-
-        int maxFramesNumber = -1;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-            maxFramesNumber = 1;
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            field = "MaxFramesNumber";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                maxFramesNumber = parametersRoot.get(field, "XXX").asInt();
-            }
-        }
-
-        string videoFilter;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
-        {
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
-        {
-            videoFilter = "PeriodicFrame";
-        }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
-        {
-            videoFilter = "All-I-Frames";
-        }
-
-        bool mjpeg;
-        if (ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
-        {
-            mjpeg = true;
-        }
-        else
-        {
-            mjpeg = false;
-        }
-
-        int width = -1;
-        field = "Width";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            width = parametersRoot.get(field, "XXX").asInt();
-        }
-
-        int height = -1;
-        field = "Height";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            height = parametersRoot.get(field, "XXX").asInt();
-        }
-
-        int64_t sourceMediaItemKey;
-        int64_t sourcePhysicalPathKey;
-        string sourcePhysicalPath;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
-        {
-            sourceMediaItemKey = keyAndDependencyType.first;
-
-            sourcePhysicalPathKey = -1;
-            int64_t encodingProfileKey = -1;
-            pair<int64_t,string> physicalPathKeyAndPhysicalPath 
-                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-            
-            int64_t localPhysicalPathKey;
-            tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
-        }
-        else
-        {
-            sourcePhysicalPathKey = keyAndDependencyType.first;
-            
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    sourcePhysicalPathKey, warningIfMissing);
-    
-			string userData;
-			string localTitle;
-            MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
-            
-            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-        }
-
-        int64_t durationInMilliSeconds;
-        int videoWidth;
-        int videoHeight;
-        try
-        {
-            long bitRate;
-            string videoCodecName;
-            string videoProfile;
-            string videoAvgFrameRate;
-            long videoBitRate;
-            string audioCodecName;
-            long audioSampleRate;
-            int audioChannels;
-            long audioBitRate;
-        
-            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
-            
-            tie(durationInMilliSeconds, bitRate,
-                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", e.what(): " + e.what()
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", e.what(): " + e.what()
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        if (durationInMilliSeconds < startTimeInSeconds * 1000)
-        {
-            string errorMessage = __FILEREF__ + "Frame was not generated because instantInSeconds is bigger than the video duration"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-            ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        string sourceFileName;
-        field = "SourceFileName";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            sourceFileName = parametersRoot.get(field, "XXX").asString();
-        }
-
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-                workspace);
-
-        string localSourceFileName;
-        // string textToBeReplaced;
-        // string textToReplace;
-        {
-            localSourceFileName = to_string(ingestionJobKey) + ".jpg";
-            // size_t extensionIndex = sourceFileName.find_last_of(".");
-            // if (extensionIndex != string::npos)
-            //    temporaryFileName.append(sourceFileName.substr(extensionIndex))
-
-            // textToBeReplaced = to_string(ingestionJobKey) + "_source";
-            // textToReplace = sourceFileName.substr(0, extensionIndex);
-        }
-        */
-        
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
@@ -9807,7 +9730,8 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 
                         try
                         {
-                            handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                            handleLocalAssetIngestionEventThread (
+									processorsThreadsNumber, localAssetIngestionEvent);
                         }
                         catch(runtime_error e)
                         {
