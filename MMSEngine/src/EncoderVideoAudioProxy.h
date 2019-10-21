@@ -21,6 +21,7 @@
 #include "MMSStorage.h"
 #include "EncodersLoadBalancer.h"
 #include "spdlog/spdlog.h"
+#include "Magick++.h"
 #include "catralibraries/MultiEventsSet.h"
 
 
@@ -178,6 +179,19 @@ private:
     double					_computerVisionDefaultScale;
     int						_computerVisionDefaultMinNeighbors;
     bool					_computerVisionDefaultTryFlip;
+
+	string encodeContentImage();
+	int64_t processEncodedImage(string stagingEncodedAssetPathName);
+	void readingImageProfile(
+        string jsonProfile,
+        string& newFormat,
+        int& newWidth,
+        int& newHeight,
+        bool& newAspectRatio,
+        string& sNewInterlaceType,
+        Magick::InterlaceType& newInterlaceType);
+	void encodingImageFormatValidation(string newFormat);
+	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
     pair<string, bool> encodeContentVideoAudio();
     pair<string, bool> encodeContent_VideoAudio_through_ffmpeg();

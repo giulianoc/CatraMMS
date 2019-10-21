@@ -50,8 +50,8 @@ public:
     unsigned long addEncodingItems (
 	vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
-    static void encodingImageFormatValidation(string newFormat);
-    static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
+    // static void encodingImageFormatValidation(string newFormat);
+    // static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
 private:
     struct EncodingJob
@@ -90,6 +90,7 @@ private:
 
     void processEncodingJob(EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	/*
     string encodeContentImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
     int64_t processEncodedImage(
@@ -105,6 +106,7 @@ private:
         string& sNewInterlaceType,
         Magick::InterlaceType& newInterlaceType
     );
+	*/
 };
 
 #endif

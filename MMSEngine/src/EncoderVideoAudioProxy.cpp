@@ -250,7 +250,11 @@ void EncoderVideoAudioProxy::operator()()
 	bool main = true;
     try
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
+        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
+        {
+			stagingEncodedAssetPathName = encodeContentImage();
+        }
+		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
         {
 			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = encodeContentVideoAudio();
 			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
@@ -623,7 +627,13 @@ void EncoderVideoAudioProxy::operator()()
 
     try
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
+        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
+        {
+            mediaItemKey = _encodingItem->_encodeData->_mediaItemKey;
+
+			encodedPhysicalPathKey = processEncodedImage(stagingEncodedAssetPathName);
+        }
+		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
         {
             mediaItemKey = _encodingItem->_encodeData->_mediaItemKey;
 
@@ -954,7 +964,726 @@ void EncoderVideoAudioProxy::operator()()
         + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
         + ", _encodingParameters: " + _encodingItem->_encodingParameters
     );
+}
+
+string EncoderVideoAudioProxy::encodeContentImage()
+{
+
+	string          stagingEncodedAssetPathName;
+
+    try
+    {
+		string mmsSourceAssetPathName;
+		int64_t encodingProfileKey;    
+		string                      newImageFormat;
+		int                         newWidth;
+		int                         newHeight;
+		bool                        newAspectRatio;
+		string                      sNewInterlaceType;
+		Magick::InterlaceType       newInterlaceType;
+		string encodedFileName;
+		size_t extensionIndex;
+
+		{
+			int64_t sourcePhysicalPathKey;
+
+			{
+				string field = "sourcePhysicalPathKey";
+				sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+				field = "encodingProfileKey";
+				encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+			}
+
+			extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
+			if (extensionIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+					+ ", encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodedFileName =
+				_encodingItem->_encodeData->_fileName.substr(0, extensionIndex)
+				+ "_" 
+				+ to_string(encodingProfileKey);
+    
+			tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+				_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+			tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
+				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+
+			// added the check of the file size is zero because in this case the
+			// magick library cause the crash of the xmms engine
+			{
+				bool inCaseOfLinkHasItToBeRead = false;
+				unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+					mmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
+				if (ulFileSize == 0)
+				{
+					string errorMessage = __FILEREF__ + "source image file size is zero"
+						+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
         
+			readingImageProfile(_encodingItem->_encodeData->_jsonProfile,
+				newImageFormat, newWidth, newHeight, newAspectRatio, sNewInterlaceType, newInterlaceType);
+		}
+
+        Magick:: Image      imageToEncode;
+        
+        imageToEncode.read (mmsSourceAssetPathName.c_str());
+
+        string currentImageFormat = imageToEncode.magick ();
+        
+        if (currentImageFormat == "jpeg")
+            currentImageFormat = "JPG";
+
+        int currentWidth	= imageToEncode. columns ();
+        int currentHeight	= imageToEncode. rows ();
+
+        _logger->info(__FILEREF__ + "Image processing"
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+            + ", currentImageFormat: " + currentImageFormat
+            + ", currentWidth: " + to_string(currentWidth)
+            + ", currentHeight: " + to_string(currentHeight)
+            + ", newImageFormat: " + newImageFormat
+            + ", newWidth: " + to_string(newWidth)
+            + ", newHeight: " + to_string(newHeight)
+            + ", newAspectRatio: " + to_string(newAspectRatio)
+            + ", sNewInterlace: " + sNewInterlaceType
+        );
+        
+        if (currentImageFormat == newImageFormat
+            && currentWidth == newWidth
+            && currentHeight == newHeight)
+        {
+            // same as the ingested content. Just copy the content
+
+            encodedFileName.append(_encodingItem->_encodeData->_fileName.substr(extensionIndex));
+
+            bool removeLinuxPathIfExist = true;
+			bool neededForTranscoder = false;
+            stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
+					neededForTranscoder,
+                _encodingItem->_workspace->_directoryName,
+                to_string(_encodingItem->_encodingJobKey),
+                _encodingItem->_encodeData->_relativePath,
+                encodedFileName,
+                -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+                -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+                removeLinuxPathIfExist);
+
+            FileIO::copyFile (mmsSourceAssetPathName, stagingEncodedAssetPathName);
+        }
+        else
+        {
+            if (newImageFormat == "JPG")
+            {
+                imageToEncode. magick ("JPEG");                
+                encodedFileName.append(".jpg");
+            }
+            else if (newImageFormat == "GIF")
+            {
+                imageToEncode. magick ("GIF");                
+                encodedFileName.append(".gif");
+            }
+            else if (newImageFormat == "PNG")
+            {
+                imageToEncode. magick ("PNG");
+                imageToEncode. depth (8);
+                encodedFileName.append(".png");
+            }
+
+            bool removeLinuxPathIfExist = true;
+			bool neededForTranscoder = false;
+            stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
+				neededForTranscoder,
+                _encodingItem->_workspace->_directoryName,
+                to_string(_encodingItem->_encodingJobKey),
+                "/",    // encodingItem->_encodeData->_relativePath,
+                encodedFileName,
+                -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+                -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+                removeLinuxPathIfExist);
+            
+            Magick:: Geometry	newGeometry (newWidth, newHeight);
+
+            // if Aspect is true the proportion are not mantained
+            // if Aspect is false the proportion are mantained
+            newGeometry. aspect (newAspectRatio);
+
+            // if ulAspect is false, it means the aspect is preserved,
+            // the width is fixed and the height will be calculated
+
+            // also 'scale' could be used
+            imageToEncode.scale (newGeometry);
+            imageToEncode.interlaceType (newInterlaceType);
+            imageToEncode.write(stagingEncodedAssetPathName);
+        }
+    }
+    catch (Magick::Error &e)
+    {
+        _logger->info(__FILEREF__ + "ImageMagick exception"
+            + ", e.what(): " + e.what()
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw runtime_error(e.what());
+    }
+    catch (exception e)
+    {
+        _logger->info(__FILEREF__ + "ImageMagick exception"
+            + ", e.what(): " + e.what()
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw e;
+    }
+        
+    return stagingEncodedAssetPathName;
+}
+
+int64_t EncoderVideoAudioProxy::processEncodedImage(
+	string stagingEncodedAssetPathName)
+{
+    int64_t sourcePhysicalPathKey;
+    int64_t encodingProfileKey;    
+
+    {
+        string field = "sourcePhysicalPathKey";
+        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "encodingProfileKey";
+        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+    
+    int64_t durationInMilliSeconds = -1;
+    long bitRate = -1;
+    string videoCodecName;
+    string videoProfile;
+    int videoWidth = -1;
+    int videoHeight = -1;
+    string videoAvgFrameRate;
+    long videoBitRate = -1;
+    string audioCodecName;
+    long audioSampleRate = -1;
+    int audioChannels = -1;
+    long audioBitRate = -1;
+
+    int imageWidth = -1;
+    int imageHeight = -1;
+    string imageFormat;
+    int imageQuality = -1;
+    try
+    {
+        _logger->info(__FILEREF__ + "Processing through Magick"
+            + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+        Magick::Image      imageToEncode;
+
+        imageToEncode.read (stagingEncodedAssetPathName.c_str());
+
+        imageWidth	= imageToEncode.columns();
+        imageHeight	= imageToEncode.rows();
+        imageFormat = imageToEncode.magick();
+        imageQuality = imageToEncode.quality();
+    }
+    catch( Magick::WarningCoder &e )
+    {
+        // Process coder warning while loading file (e.g. TIFF warning)
+        // Maybe the user will be interested in these warnings (or not).
+        // If a warning is produced while loading an image, the image
+        // can normally still be used (but not if the warning was about
+        // something important!)
+        _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw runtime_error(e.what());
+    }
+    catch( Magick::Warning &e )
+    {
+        _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw runtime_error(e.what());
+    }
+    catch( Magick::ErrorFileOpen &e ) 
+    { 
+        _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw runtime_error(e.what());
+    }
+    catch (Magick::Error &e)
+    { 
+        _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw runtime_error(e.what());
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw e;
+    }    
+    
+    int64_t encodedPhysicalPathKey;
+    string encodedFileName;
+    string mmsAssetPathName;
+    unsigned long mmsPartitionIndexUsed;
+    try
+    {
+        size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+        if (fileNameIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+
+        bool partitionIndexToBeCalculated = true;
+        bool deliveryRepositoriesToo = true;
+
+        mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+            stagingEncodedAssetPathName,
+            _encodingItem->_workspace->_directoryName,
+            encodedFileName,
+            _encodingItem->_encodeData->_relativePath,
+
+            partitionIndexToBeCalculated,
+            &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+
+            deliveryRepositoriesToo,
+            _encodingItem->_workspace->_territories
+        );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			+ ", e.what(): " + e.what()
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+		if (stagingEncodedAssetPathName != "")
+		{
+			string directoryPathName;
+			try
+			{
+				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+				if (endOfDirectoryIndex != string::npos)
+				{
+					directoryPathName =
+						stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
+
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", directoryPathName: " + directoryPathName
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "removeDirectory failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", directoryPathName: " + directoryPathName
+					+ ", exception: " + e.what()
+				);
+			}
+		}
+
+        throw e;
+    }
+
+	// remove staging directory
+	{
+		string directoryPathName;
+		try
+		{
+			size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex != string::npos)
+			{
+				directoryPathName = stagingEncodedAssetPathName.substr(0,
+						endOfDirectoryIndex);
+
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", directoryPathName: " + directoryPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
+			}
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "removeDirectory failed"
+				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", directoryPathName: " + directoryPathName
+				+ ", exception: " + e.what()
+			);
+		}
+	}
+
+    try
+    {
+        unsigned long long mmsAssetSizeInBytes;
+        {
+            bool inCaseOfLinkHasItToBeRead = false;
+            mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
+                    inCaseOfLinkHasItToBeRead);   
+        }
+
+		bool externalReadOnlyStorage = false;
+		string externalDeliveryTechnology;
+		string externalDeliveryURL;
+		int64_t liveRecordingIngestionJobKey = -1;
+        encodedPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
+            _encodingItem->_workspace->_workspaceKey,
+			_encodingItem->_ingestionJobKey,
+			liveRecordingIngestionJobKey,
+            _encodingItem->_encodeData->_mediaItemKey,
+			externalReadOnlyStorage,
+			externalDeliveryTechnology,
+			externalDeliveryURL,
+            encodedFileName,
+            _encodingItem->_encodeData->_relativePath,
+            mmsPartitionIndexUsed,
+            mmsAssetSizeInBytes,
+            encodingProfileKey,
+                
+            durationInMilliSeconds,
+            bitRate,
+            videoCodecName,
+            videoProfile,
+            videoWidth,
+            videoHeight,
+            videoAvgFrameRate,
+            videoBitRate,
+            audioCodecName,
+            audioSampleRate,
+            audioChannels,
+            audioBitRate,
+
+            imageWidth,
+            imageHeight,
+            imageFormat,
+            imageQuality
+                );
+        
+        _logger->info(__FILEREF__ + "Saved the Encoded content"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+		bool exceptionInCaseOfErr = false;
+        _logger->info(__FILEREF__ + "Remove"
+            + ", mmsAssetPathName: " + mmsAssetPathName
+        );
+        FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
+
+        throw e;
+    }
+    
+    return encodedPhysicalPathKey;
 }
 
 pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
@@ -963,7 +1692,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 
 	_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
 		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-		+ ", _encodeData->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+		+ ", _encodeData->_encodingProfileTechnology: "
+			+ to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
 		+ ", _mp4Encoder: " + _mp4Encoder
 	);
 
@@ -2332,34 +3062,6 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
                 FileIO::remove(mmsAssetPathName);
             }
         }
-
-		if (stagingEncodedAssetPathName != "")
-		{
-			string directoryPathName;
-			try
-			{
-				size_t endOfDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", directoryPathName: " + directoryPathName
-					);
-					Boolean_t bRemoveRecursively = true;
-					FileIO::removeDirectory(directoryPathName, bRemoveRecursively);
-				}
-			}
-			catch(runtime_error e)
-			{
-				_logger->error(__FILEREF__ + "removeDirectory failed"
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", directoryPathName: " + directoryPathName
-					+ ", exception: " + e.what()
-				);
-			}
-		}
 
         throw e;
     }
@@ -9733,5 +10435,184 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
             );
 
     return mediaMetadata;
+}
+
+void EncoderVideoAudioProxy::readingImageProfile(
+        string jsonProfile,
+        string& newFormat,
+        int& newWidth,
+        int& newHeight,
+        bool& newAspectRatio,
+        string& sNewInterlaceType,
+        Magick::InterlaceType& newInterlaceType
+)
+{
+    string field;
+    Json::Value encodingProfileRoot;
+    try
+    {
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+        string errors;
+
+        bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
+                jsonProfile.c_str() + jsonProfile.size(), 
+                &encodingProfileRoot, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+            string errorMessage = __FILEREF__ + "failed to parse the encoder details"
+                    + ", errors: " + errors
+                    + ", jsonProfile: " + jsonProfile
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(...)
+    {
+        throw runtime_error(string("wrong encoding profile json format")
+                + ", jsonProfile: " + jsonProfile
+                );
+    }
+
+    // FileFormat
+    {
+        field = "FileFormat";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newFormat = encodingProfileRoot.get(field, "XXX").asString();
+
+        encodingImageFormatValidation(newFormat);
+    }
+
+    Json::Value encodingProfileImageRoot;
+    {
+        field = "Image";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        encodingProfileImageRoot = encodingProfileRoot[field];
+    }
+    
+    // Width
+    {
+        field = "Width";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newWidth = encodingProfileImageRoot.get(field, "XXX").asInt();
+    }
+
+    // Height
+    {
+        field = "Height";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newHeight = encodingProfileImageRoot.get(field, "XXX").asInt();
+    }
+
+    // Aspect
+    {
+        field = "AspectRatio";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newAspectRatio = encodingProfileImageRoot.get(field, "XXX").asBool();
+    }
+
+    // Interlace
+    {
+        field = "InterlaceType";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        sNewInterlaceType = encodingProfileImageRoot.get(field, "XXX").asString();
+
+        newInterlaceType = encodingImageInterlaceTypeValidation(sNewInterlaceType);
+    }
+}
+
+void EncoderVideoAudioProxy::encodingImageFormatValidation(string newFormat)
+{    
+    auto logger = spdlog::get("mmsEngineService");
+    if (newFormat != "JPG" 
+            && newFormat != "GIF" 
+            && newFormat != "PNG" 
+            )
+    {
+        string errorMessage = __FILEREF__ + "newFormat is wrong"
+                + ", newFormat: " + newFormat;
+
+        logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+}
+
+Magick::InterlaceType EncoderVideoAudioProxy::encodingImageInterlaceTypeValidation(string sNewInterlaceType)
+{    
+    auto logger = spdlog::get("mmsEngineService");
+    Magick::InterlaceType       interlaceType;
+    
+    if (sNewInterlaceType == "NoInterlace")
+        interlaceType       = Magick::NoInterlace;
+    else if (sNewInterlaceType == "LineInterlace")
+        interlaceType       = Magick::LineInterlace;
+    else if (sNewInterlaceType == "PlaneInterlace")
+        interlaceType       = Magick::PlaneInterlace;
+    else if (sNewInterlaceType == "PartitionInterlace")
+        interlaceType       = Magick::PartitionInterlace;
+    else
+    {
+        string errorMessage = __FILEREF__ + "sNewInterlaceType is wrong"
+                + ", sNewInterlaceType: " + sNewInterlaceType;
+
+        logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
+    return interlaceType;
 }
 

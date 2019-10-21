@@ -206,7 +206,6 @@ void ActiveEncodingsManager::operator()()
                             {
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed");
                             }
-
                         }
 
 						if (encodingJob->_encodingItem->_encodingType !=
@@ -295,17 +294,18 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
 	chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
-    if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
-            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture
-            )
+    if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture
+	)
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(
             &(encodingJob->_status),
@@ -325,6 +325,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         encodingJob->_encodingJobStart		= chrono::system_clock::now();
         encodingJob->_status			= EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun;
     }
+	/*
     else if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
     {
         string stagingEncodedAssetPathName;
@@ -451,6 +452,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 
         encodingJob->_status = EncoderVideoAudioProxy::EncodingJobStatus::Free;
     }
+	*/
     else
     {
         string errorMessage = __FILEREF__ + "Encoding not managed for the EncodingType"
@@ -470,6 +472,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 	);
 }
 
+/*
 string ActiveEncodingsManager::encodeContentImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
@@ -503,13 +506,6 @@ string ActiveEncodingsManager::encodeContentImage(
 		_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
 	tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
 		= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-	/*
-    string mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
-        encodingItem->_encodeData->_mmsPartitionNumber,
-        encodingItem->_workspace->_directoryName,
-        encodingItem->_encodeData->_relativePath,
-        encodingItem->_encodeData->_fileName);
-	*/
 
     string          stagingEncodedAssetPathName;
     
@@ -922,6 +918,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
     
     return encodedPhysicalPathKey;
 }
+*/
 
 void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
@@ -1046,6 +1043,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
     return ulEncodingsNumberAdded;
 }
 
+/*
 void ActiveEncodingsManager::readingImageProfile(
         string jsonProfile,
         string& newFormat,
@@ -1224,3 +1222,5 @@ Magick::InterlaceType ActiveEncodingsManager::encodingImageInterlaceTypeValidati
     
     return interlaceType;
 }
+*/
+
