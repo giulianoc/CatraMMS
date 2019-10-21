@@ -12820,10 +12820,19 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
 	try
 	{
+		_logger->info(__FILEREF__ + "Received handleCheckEncodingEvent"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		);
+
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
 		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems,
 				_maxEncodingJobsPerEvent);
+
+		_logger->info(__FILEREF__ + "_pActiveEncodingsManager->addEncodingItems"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", encodingItems.size: " + to_string(encodingItems.size())
+		);
 
 		_pActiveEncodingsManager->addEncodingItems(encodingItems);
 
