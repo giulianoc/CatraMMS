@@ -4564,13 +4564,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -4620,12 +4639,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
-			FileIO::remove(binaryPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
+
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
             
         // throw e;
@@ -4694,12 +4733,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
-			FileIO::remove(binaryPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
+
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -4749,13 +4808,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -4813,13 +4891,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -4869,13 +4966,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -4975,13 +5091,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
        
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         // throw e;
@@ -5026,13 +5161,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
        
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", binaryPathName: " + binaryPathName
-			);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", binaryPathName: " + binaryPathName
+				);
 
-			FileIO::remove(binaryPathName);
+				FileIO::remove(binaryPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
            
         // throw e;
@@ -5098,12 +5252,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5148,12 +5322,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5225,12 +5419,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5277,12 +5491,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5329,12 +5563,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5381,12 +5635,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5432,12 +5706,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-					+ ", mmsAssetPathName: " + mmsAssetPathName
-				);
-				FileIO::remove(mmsAssetPathName);
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
 			}
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5487,12 +5781,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", mmsAssetPathName: " + mmsAssetPathName
-			);
-			FileIO::remove(mmsAssetPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+
+				FileIO::remove(mmsAssetPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5760,12 +6074,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", mmsAssetPathName: " + mmsAssetPathName
-			);
-			FileIO::remove(mmsAssetPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+
+				FileIO::remove(mmsAssetPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5811,12 +6145,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", mmsAssetPathName: " + mmsAssetPathName
-			);
-			FileIO::remove(mmsAssetPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+
+				FileIO::remove(mmsAssetPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -5861,12 +6215,32 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
 		{
-			_logger->info(__FILEREF__ + "Remove file"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-				+ ", mmsAssetPathName: " + mmsAssetPathName
-			);
-			FileIO::remove(mmsAssetPathName);
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove file"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+
+				FileIO::remove(mmsAssetPathName);
+			}
+			catch(runtime_error e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->info(__FILEREF__ + "remove failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", errorMessage: " + e.what()
+				);
+			}
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
