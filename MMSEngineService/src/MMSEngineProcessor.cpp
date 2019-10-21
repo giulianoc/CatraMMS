@@ -635,6 +635,7 @@ void MMSEngineProcessor::operator ()()
 			_logger->warn(__FILEREF__ + "MMSEngineProcessor. Event management took too time"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", event id: " + to_string(event->getEventKey().first)
+				+ ", _maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds)
 				+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
 		);
     }

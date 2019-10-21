@@ -126,7 +126,9 @@ void ActiveEncodingsManager::operator()()
             }
              */
 
-			_logger->info(__FILEREF__ + "Checking encodingJobs");
+			chrono::system_clock::time_point startEvent = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Begin checking encodingJobs");
 
             for (MMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
             {
@@ -275,6 +277,12 @@ void ActiveEncodingsManager::operator()()
                     }
                 }
             }
+
+			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
+			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
+			_logger->info(__FILEREF__ + "End checking encodingJobs"
+				+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+			);
         }
         catch(exception e)
         {
@@ -285,6 +293,8 @@ void ActiveEncodingsManager::operator()()
 
 void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
+	chrono::system_clock::time_point startEvent = chrono::system_clock::now();
+
     if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
@@ -450,6 +460,14 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         
         throw runtime_error(errorMessage);
     }
+
+	chrono::system_clock::time_point endEvent = chrono::system_clock::now();
+	long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
+	_logger->warn(__FILEREF__ + "processEncodingJob"
+		+ ", encodingJob->_encodingItem->_encodingType: "
+			+ MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+		+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+	);
 }
 
 string ActiveEncodingsManager::encodeContentImage(
