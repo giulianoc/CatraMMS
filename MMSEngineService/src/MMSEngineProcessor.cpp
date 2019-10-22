@@ -7243,7 +7243,8 @@ void MMSEngineProcessor::httpCallbackTask(
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                + ", _processorThreads + _maxAdditionalProcessorThreads: "
+					+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
             );
 
             string errorMessage = "";
@@ -7386,20 +7387,26 @@ void MMSEngineProcessor::httpCallbackTask(
 
 				callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
 
+				MMSEngineDBFacade::ContentType contentType;
+				int64_t physicalPathKey;
+				int64_t mediaItemKey;
+
                 if (dependencyType == Validator::DependencyType::MediaItemKey)
                 {
-                    callbackMedatada["mediaItemKey"] = key;
+					mediaItemKey = key;
+
+                    callbackMedatada["mediaItemKey"] = mediaItemKey;
 
 					{
 						bool warningIfMissing = false;
 						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
-								key, warningIfMissing);
+								mediaItemKey, warningIfMissing);
 
 						string localTitle;
 						string userData;
-						tie(ignore, localTitle, userData, ignore, ignore)
+						tie(contentType, localTitle, userData, ignore, ignore)
 							= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
 
 						callbackMedatada["title"] = localTitle;
@@ -7440,7 +7447,6 @@ void MMSEngineProcessor::httpCallbackTask(
 						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(key, encodingProfileKey);
 
-						int64_t physicalPathKey;
 						string physicalPath;
 						string fileName;
 						int64_t sizeInBytes;
@@ -7455,19 +7461,20 @@ void MMSEngineProcessor::httpCallbackTask(
                 }
                 else
                 {
-                    callbackMedatada["physicalPathKey"] = key;
+					physicalPathKey = key;
+
+                    callbackMedatada["physicalPathKey"] = physicalPathKey;
 
 					{
 						bool warningIfMissing = false;
 						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
 							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								key, warningIfMissing);
+								physicalPathKey, warningIfMissing);
 
-						int64_t mediaItemKey;
 						string localTitle;
 						string userData;
-						tie(mediaItemKey, ignore, localTitle, userData, ignore, ignore, ignore)
+						tie(mediaItemKey, contentType, localTitle, userData, ignore, ignore, ignore)
                             = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
 						callbackMedatada["mediaItemKey"] = mediaItemKey;
@@ -7507,7 +7514,7 @@ void MMSEngineProcessor::httpCallbackTask(
 					{
 						int64_t encodingProfileKey = -1;
 						tuple<string, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(key);
+							_mmsStorage->getPhysicalPath(physicalPathKey);
 
 						string physicalPath;
 						string fileName;
@@ -7520,7 +7527,37 @@ void MMSEngineProcessor::httpCallbackTask(
 						// callbackMedatada["physicalPath"] = physicalPath;
 					}
                 }
-            }
+
+				if (contentType == MMSEngineDBFacade::ContentType::Video)
+				{
+					int64_t durationInMilliSeconds;
+
+					tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+						videoDetails = _mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey);
+
+					tie(durationInMilliSeconds, ignore,
+						ignore, ignore, ignore, ignore, ignore, ignore,
+						ignore, ignore, ignore, ignore) = videoDetails;
+
+					float durationInSeconds = durationInMilliSeconds / 1000;
+
+					callbackMedatada["durationInSeconds"] = durationInSeconds;
+				}
+				else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+				{
+					int64_t durationInMilliSeconds;
+
+					tuple<int64_t,string,long,long,int> audioDetails
+						= _mmsEngineDBFacade->getAudioDetails(mediaItemKey, physicalPathKey);
+
+					tie(durationInMilliSeconds, ignore, ignore, ignore, ignore)
+						= audioDetails;
+
+					float durationInSeconds = durationInMilliSeconds / 1000;
+
+					callbackMedatada["durationInSeconds"] = durationInSeconds;
+				}
+			}
         }
 
         // check on thread availability was done at the beginning in this method
