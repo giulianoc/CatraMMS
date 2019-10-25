@@ -154,12 +154,12 @@ private:
 		string lastRecordedAssetFileName,
 		int lastRecordedAssetDurationInSeconds);
 	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
-			string mediaLiveRecorderFileName);
+			string mediaLiveRecorderFileName, int segmentDurationInSeconds);
 	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string mediaLiveRecorderFileName);
 	bool liveRecorder_isLastLiveRecorderFile(int64_t ingestionJobKey, int64_t encodingJobKey,
 			time_t currentRecordedFileCreationTime, string transcoderStagingContentsPath,
-			string recordedFileNamePrefix);
+			string recordedFileNamePrefix, int segmentDurationInSeconds);
 	void liveRecorder_ingestRecordedMedia(
 		int64_t ingestionJobKey,
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,

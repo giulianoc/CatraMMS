@@ -2755,7 +2755,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
 			time_t utcCurrentRecordedFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName);
+				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds);
 
 			if (!FileIO::fileExisting(transcoderStagingContentsPath + currentRecordedAssetFileName))
 			{
@@ -2782,7 +2782,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
 					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
-					transcoderStagingContentsPath, recordedFileNamePrefix);
+					transcoderStagingContentsPath, recordedFileNamePrefix, segmentDurationInSeconds);
 			_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3444,7 +3444,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	time_t utcCurrentRecordedFileCreationTime, string transcoderStagingContentsPath,
-	string recordedFileNamePrefix)
+	string recordedFileNamePrefix, int segmentDurationInSeconds)
 {
 	bool isLastLiveRecorderFile = true;
 
@@ -3453,6 +3453,7 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 		_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
 			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 		);
 
         FileIO::DirectoryEntryType_t detDirectoryEntryType;
@@ -3487,7 +3488,7 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 							recordedFileNamePrefix) == 0)
                 {
 					time_t utcFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-							ingestionJobKey, encodingJobKey, directoryEntry);
+							ingestionJobKey, encodingJobKey, directoryEntry, segmentDurationInSeconds);
 
 					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
 					{
@@ -3539,7 +3540,7 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 
 time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string mediaLiveRecorderFileName)
+	string mediaLiveRecorderFileName, int segmentDurationInSeconds)
 {
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
 	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
@@ -3582,9 +3583,11 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
 	//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
 	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
-	if (seconds != 0)
+	if (seconds % segmentDurationInSeconds != 0)
 	{
-		if (seconds < 5)
+		int halfSegmentDurationInSeconds = segmentDurationInSeconds / 2;
+
+		if (seconds <= halfSegmentDurationInSeconds)
 		{
 			_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3594,7 +3597,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 				);
 			utcMediaLiveRecorderStartTime -= seconds;
 		}
-		else if (seconds > 55 && seconds < 60)
+		else if (seconds > halfSegmentDurationInSeconds && seconds < segmentDurationInSeconds)
 		{
 			_logger->warn(__FILEREF__ + "Wrong seconds (start time), increase it"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3602,7 +3605,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(seconds)
 				);
-			utcMediaLiveRecorderStartTime += (60 - seconds);
+			utcMediaLiveRecorderStartTime += (segmentDurationInSeconds - seconds);
 		}
 	}
 
