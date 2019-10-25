@@ -2960,12 +2960,30 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    string field = "UniqueName";
+    string field = "SegmentDuration";
+	int segmentDuration = parametersRoot.get(field, 1).asInt();
+	if (segmentDuration % 2 != 0)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even)"
+			+ ", Field: " + field
+			+ ", value: " + segmentDuration
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+    field = "UniqueName";
 	if (isMetadataPresent(parametersRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
+
 		string errorMessage = __FILEREF__ + "Field cannot be present in this Task"
 			+ ", Field: " + field
 			+ ", sParametersRoot: " + sParametersRoot

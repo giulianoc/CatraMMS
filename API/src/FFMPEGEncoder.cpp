@@ -3552,7 +3552,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
 	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
 
-	_logger->info(__FILEREF__ + "liveRecorder_getMediaLiveRecorderStartTime"
+	_logger->info(__FILEREF__ + "Received liveRecorder_getMediaLiveRecorderStartTime"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
@@ -3587,36 +3587,48 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	time_t utcMediaLiveRecorderStartTime = stol(mediaLiveRecorderFileName.substr(beginUTCIndex + 1,
 				endIndex - beginUTCIndex + 1));
 
-	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
-	// For this reason, utcMediaLiveRecorderStartTime is fixed.
-	// From the other side the first generated file is the only one where we can have seconds
-	// different from 0, anyway here this is not possible because we discard the first chunk
-	// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
-	//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
-	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
-	if (!isFirstChunk && seconds % segmentDurationInSeconds != 0)
 	{
-		int halfSegmentDurationInSeconds = segmentDurationInSeconds / 2;
+		// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+		// For this reason, utcMediaLiveRecorderStartTime is fixed.
+		// From the other side the first generated file is the only one where we can have seconds
+		// different from 0, anyway here this is not possible because we discard the first chunk
+		// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
+		//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
+		int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
+		if (!isFirstChunk && seconds % segmentDurationInSeconds != 0)
+		{
+			int halfSegmentDurationInSeconds = segmentDurationInSeconds / 2;
 
-		if (seconds <= halfSegmentDurationInSeconds)
-		{
-			_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(seconds)
+			// scenario: segmentDurationInSeconds is 10 and seconds = 29
+			//	Before to compare seconds with halfSegmentDurationInSeconds
+			//	(the check compare the seconds between 0 and 10)
+			//	we have to redure 29 to 9
+			if (seconds > segmentDurationInSeconds)
+			{
+				int factorToBeReduced = seconds / segmentDurationInSeconds;
+				seconds -= (factorToBeReduced * segmentDurationInSeconds);
+			}
+
+			if (seconds <= halfSegmentDurationInSeconds)
+			{
+				_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+					+ ", seconds: " + to_string(seconds)
 				);
-			utcMediaLiveRecorderStartTime -= seconds;
-		}
-		else if (seconds > halfSegmentDurationInSeconds && seconds < segmentDurationInSeconds)
-		{
-			_logger->warn(__FILEREF__ + "Wrong seconds (start time), increase it"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
-				+ ", seconds: " + to_string(seconds)
+				utcMediaLiveRecorderStartTime -= seconds;
+			}
+			else if (seconds > halfSegmentDurationInSeconds && seconds < segmentDurationInSeconds)
+			{
+				_logger->warn(__FILEREF__ + "Wrong seconds (start time), increase it"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+					+ ", seconds: " + to_string(seconds)
 				);
-			utcMediaLiveRecorderStartTime += (segmentDurationInSeconds - seconds);
+				utcMediaLiveRecorderStartTime += (segmentDurationInSeconds - seconds);
+			}
 		}
 	}
 
