@@ -2969,7 +2969,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even)"
 			+ ", Field: " + field
-			+ ", value: " + segmentDuration
+			+ ", value: " + to_string(segmentDuration)
 			+ ", sParametersRoot: " + sParametersRoot
 			+ ", label: " + label
 		;
