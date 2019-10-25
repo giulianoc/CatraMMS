@@ -2754,9 +2754,6 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
-			time_t utcCurrentRecordedFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds);
-
 			if (!FileIO::fileExisting(transcoderStagingContentsPath + currentRecordedAssetFileName))
 			{
 				// it could be the scenario where mmsEngineService is restarted,
@@ -2767,6 +2764,13 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 				continue;
 			}
+
+			bool isFirstChunk = (lastRecordedAssetFileName == "");
+
+			time_t utcCurrentRecordedFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
+				ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds,
+				isFirstChunk);
+
 			/*
 			time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			if (utcNow - utcCurrentRecordedFileCreationTime < _secondsToWaitNFSBuffers)
@@ -2782,7 +2786,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 			bool ingestionRowToBeUpdatedAsSuccess = liveRecorder_isLastLiveRecorderFile(
 					ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime,
-					transcoderStagingContentsPath, recordedFileNamePrefix, segmentDurationInSeconds);
+					transcoderStagingContentsPath, recordedFileNamePrefix,
+					segmentDurationInSeconds, isFirstChunk);
 			_logger->info(__FILEREF__ + "liveRecorder_isLastLiveRecorderFile"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2932,7 +2937,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 					addContentTitle += " (BCK)";
 			}
 
-			if (lastRecordedAssetFileName == "")
+			if (isFirstChunk)
 			{
 				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3444,7 +3449,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	time_t utcCurrentRecordedFileCreationTime, string transcoderStagingContentsPath,
-	string recordedFileNamePrefix, int segmentDurationInSeconds)
+	string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk)
 {
 	bool isLastLiveRecorderFile = true;
 
@@ -3488,7 +3493,8 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 							recordedFileNamePrefix) == 0)
                 {
 					time_t utcFileCreationTime = liveRecorder_getMediaLiveRecorderStartTime(
-							ingestionJobKey, encodingJobKey, directoryEntry, segmentDurationInSeconds);
+							ingestionJobKey, encodingJobKey, directoryEntry, segmentDurationInSeconds,
+							isFirstChunk);
 
 					if (utcFileCreationTime > utcCurrentRecordedFileCreationTime)
 					{
@@ -3540,13 +3546,18 @@ bool FFMPEGEncoder::liveRecorder_isLastLiveRecorderFile(
 
 time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string mediaLiveRecorderFileName, int segmentDurationInSeconds)
+	string mediaLiveRecorderFileName, int segmentDurationInSeconds,
+	bool isFirstChunk)
 {
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
 	// liveRecorder_<ingestionJobKey>_<encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
 
 	_logger->info(__FILEREF__ + "liveRecorder_getMediaLiveRecorderStartTime"
-		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+		+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+		+ ", isFirstChunk: " + to_string(isFirstChunk)
 	);
 
 	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
@@ -3583,7 +3594,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderStartTime(
 	// 2019-10-16: I saw as well seconds == 59, in this case we would not do utcMediaLiveRecorderStartTime -= seconds
 	//	as it is done below in the code but we should do utcMediaLiveRecorderStartTime += 1.
 	int seconds = stoi(mediaLiveRecorderFileName.substr(beginUTCIndex - 2, 2));
-	if (seconds % segmentDurationInSeconds != 0)
+	if (!isFirstChunk && seconds % segmentDurationInSeconds != 0)
 	{
 		int halfSegmentDurationInSeconds = segmentDurationInSeconds / 2;
 
