@@ -126,11 +126,11 @@ private:
 
     void handleLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
-        shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent);
+        LocalAssetIngestionEvent localAssetIngestionEvent);
 
     void handleMultiLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
-        shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent);
+        MultiLocalAssetIngestionEvent multiLocalAssetIngestionEvent);
 
     void handleCheckEncodingEvent ();
 

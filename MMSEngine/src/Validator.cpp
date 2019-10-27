@@ -2962,12 +2962,12 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
     string field = "SegmentDuration";
 	int segmentDuration = parametersRoot.get(field, 1).asInt();
-	if (segmentDuration % 2 != 0)
+	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even)"
+		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even or slower than 10)"
 			+ ", Field: " + field
 			+ ", value: " + to_string(segmentDuration)
 			+ ", sParametersRoot: " + sParametersRoot

@@ -76,7 +76,8 @@ else
 			mkdir $DIRPATHNAME
 			mv /var/catramms/logs/nginx/*.log $DIRPATHNAME
 
-			#BE CAREFULL SUDO MAY ASK PASSWORD 
+			#BE CAREFULL SUDO MAY ASK PASSWORD. 
+			#Add the command '.../crontab.rsi.sh 12' to 'sudo crontab -e'
 			sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
 		fi
 

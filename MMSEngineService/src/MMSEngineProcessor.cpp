@@ -324,7 +324,7 @@ void MMSEngineProcessor::operator ()()
 					{
 						// handleLocalAssetIngestionEvent (localAssetIngestionEvent);
                         thread handleLocalAssetIngestionEventThread(&MMSEngineProcessor::handleLocalAssetIngestionEventThread, this,
-                            _processorsThreadsNumber, localAssetIngestionEvent);
+                            _processorsThreadsNumber, *localAssetIngestionEvent);
                         handleLocalAssetIngestionEventThread.detach();
 					}
                 }
@@ -474,7 +474,7 @@ void MMSEngineProcessor::operator ()()
 						// handleMultiLocalAssetIngestionEvent (multiLocalAssetIngestionEvent);
                         thread handleMultiLocalAssetIngestionEventThread(
 								&MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread, this,
-                            _processorsThreadsNumber, multiLocalAssetIngestionEvent);
+                            _processorsThreadsNumber, *multiLocalAssetIngestionEvent);
                         handleMultiLocalAssetIngestionEventThread.detach();
 					}
                 }
@@ -4342,28 +4342,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
-    shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
+    LocalAssetIngestionEvent localAssetIngestionEvent)
 {
 	string binaryPathName;
 	string externalStorageRelativePathName;
     try
     {
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			string workspaceIngestionBinaryPathName;
 
 			workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
-				localAssetIngestionEvent->getWorkspace());
+				localAssetIngestionEvent.getWorkspace());
 			workspaceIngestionBinaryPathName
 				.append("/")
-				.append(localAssetIngestionEvent->getIngestionSourceFileName())
+				.append(localAssetIngestionEvent.getIngestionSourceFileName())
 			;
 
 			binaryPathName = workspaceIngestionBinaryPathName;
 		}
 		else
 		{
-			string mediaSourceURL = localAssetIngestionEvent->getExternalStorageMediaSourceURL();
+			string mediaSourceURL = localAssetIngestionEvent.getExternalStorageMediaSourceURL();
 
 			string externalStoragePrefix("externalStorage://");
 			if (!(mediaSourceURL.size() >= externalStoragePrefix.size()
@@ -4371,7 +4371,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				string errorMessage = string("mediaSourceURL is not an externalStorage reference")
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", mediaSourceURL: " + mediaSourceURL 
 				;
 
@@ -4381,7 +4381,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 			externalStorageRelativePathName = mediaSourceURL.substr(externalStoragePrefix.length());
 			binaryPathName = _mmsStorage->getMMSRootRepository()
-				+"ExternalStorage_" + localAssetIngestionEvent->getWorkspace()->_directoryName
+				+"ExternalStorage_" + localAssetIngestionEvent.getWorkspace()->_directoryName
 				+ externalStorageRelativePathName;
 		}
     }
@@ -4389,7 +4389,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "binaryPathName initialization failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4397,13 +4397,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				e.what()
 			);
@@ -4412,7 +4412,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4421,7 +4421,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + ex.what()
 				);
@@ -4434,7 +4434,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "binaryPathName initialization failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4442,13 +4442,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				 e.what()
 			);
@@ -4457,7 +4457,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4466,7 +4466,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + ex.what()
 				);
@@ -4478,7 +4478,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 	_logger->info(__FILEREF__ + "binaryPathName"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 		+ ", binaryPathName: " + binaryPathName);
 
     string      metadataFileContent;
@@ -4491,7 +4491,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         Json::CharReader* reader = builder.newCharReader();
         string errors;
 
-        string sMetadataContent = localAssetIngestionEvent->getMetadataContent();
+        string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
         
         // LF and CR create problems to the json parser...
         while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
@@ -4506,7 +4506,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             string errorMessage = __FILEREF__ + "failed to parse the metadata"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                    + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                     + ", errors: " + errors
                     + ", metaDataContent: " + sMetadataContent
                     ;
@@ -4516,15 +4516,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         }
         
 		dependencies = validator.validateSingleTaskMetadata(
-			localAssetIngestionEvent->getWorkspace()->_workspaceKey,
-			localAssetIngestionEvent->getIngestionType(), parametersRoot);
+			localAssetIngestionEvent.getWorkspace()->_workspaceKey,
+			localAssetIngestionEvent.getIngestionType(), parametersRoot);
     }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", localAssetIngestionEvent->getMetadataContent(): " + localAssetIngestionEvent->getMetadataContent()
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent()
                 + ", exception: " + e.what()
         );
 
@@ -4532,13 +4532,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				e.what()
 			);
@@ -4547,7 +4547,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4556,19 +4556,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4578,7 +4578,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4586,7 +4586,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4599,7 +4599,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4607,13 +4607,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMetadataFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
 				 e.what()
 			);
@@ -4622,7 +4622,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4631,19 +4631,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4653,7 +4653,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4661,7 +4661,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4681,9 +4681,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
             mediaSourceDetails = getMediaSourceDetails(
-                localAssetIngestionEvent->getIngestionJobKey(),
-                localAssetIngestionEvent->getWorkspace(),
-                localAssetIngestionEvent->getIngestionType(), parametersRoot);
+                localAssetIngestionEvent.getIngestionJobKey(),
+                localAssetIngestionEvent.getWorkspace(),
+                localAssetIngestionEvent.getIngestionType(), parametersRoot);
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaFileFormat, 
@@ -4693,7 +4693,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4701,13 +4701,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
@@ -4716,7 +4716,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4725,19 +4725,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4747,7 +4747,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4755,7 +4755,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4768,7 +4768,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4776,13 +4776,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
@@ -4791,7 +4791,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4800,19 +4800,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4822,7 +4822,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4830,7 +4830,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4843,7 +4843,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     try
     {
         validateMediaSourceFile(
-                localAssetIngestionEvent->getIngestionJobKey(),
+                localAssetIngestionEvent.getIngestionJobKey(),
                 binaryPathName,
                 md5FileCheckSum, fileSizeInBytes);
     }
@@ -4851,7 +4851,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4859,13 +4859,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
@@ -4874,7 +4874,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4883,19 +4883,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4905,7 +4905,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4913,7 +4913,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4926,7 +4926,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -4934,13 +4934,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
 				e.what()
 			);
@@ -4949,7 +4949,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + re.what()
 				);
@@ -4958,19 +4958,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
 				+ ", errorMessage: " + ex.what()
 				);
 		}
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -4980,7 +4980,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -4988,7 +4988,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5004,29 +5004,29 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	long mmsPartitionUsed;
 	try
 	{
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
-			mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
+			mediaSourceFileName = localAssetIngestionEvent.getMMSSourceFileName();
 			if (mediaSourceFileName == "")
 			{
-				mediaSourceFileName = localAssetIngestionEvent->getIngestionSourceFileName() + "." + mediaFileFormat;
+				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName() + "." + mediaFileFormat;
 			}
 
 			relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
-                localAssetIngestionEvent->getWorkspace()->_workspaceKey);
+                localAssetIngestionEvent.getWorkspace()->_workspaceKey);
         
 			unsigned long mmsPartitionIndexUsed;
 			bool partitionIndexToBeCalculated   = true;
 			bool deliveryRepositoriesToo        = true;
 			mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 				binaryPathName,
-				localAssetIngestionEvent->getWorkspace()->_directoryName,
+				localAssetIngestionEvent.getWorkspace()->_directoryName,
 				mediaSourceFileName,
 				relativePathToBeUsed,
 				partitionIndexToBeCalculated,
 				&mmsPartitionIndexUsed,
 				deliveryRepositoriesToo,
-				localAssetIngestionEvent->getWorkspace()->_territories
+				localAssetIngestionEvent.getWorkspace()->_territories
             );
 			mmsPartitionUsed = mmsPartitionIndexUsed;
 		}
@@ -5040,7 +5040,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				string errorMessage = __FILEREF__ + "No fileName found in externalStorageRelativePathName"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", externalStorageRelativePathName: " + externalStorageRelativePathName
 				;
 				_logger->error(errorMessage);
@@ -5055,19 +5055,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	{
 		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", errorMessage: " + e.what()
 		);
        
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			+ ", IngestionStatus: " + "End_IngestionFailure"
 			+ ", errorMessage: " + e.what()
 		);                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
 				e.what()
 			);
@@ -5076,7 +5076,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 			);
 		}
@@ -5084,18 +5084,18 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 			);
 		}
        
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -5105,7 +5105,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5113,7 +5113,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5126,18 +5126,18 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	{
 		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 		);
        
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			+ ", IngestionStatus: " + "End_IngestionFailure"
 			+ ", errorMessage: " + e.what()
 		);                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
 				e.what()
 			);
@@ -5146,7 +5146,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 			);
 		}
@@ -5154,18 +5154,18 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 			);
 		}
        
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", binaryPathName: " + binaryPathName
 				);
 
@@ -5175,7 +5175,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5183,7 +5183,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5227,14 +5227,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			/*
 			 * 2019-10-13: commented because I guess the avg frame rate returned by ffmpeg is OK
 			 * avg frame rate format is: total duration / total # of frames
-            if (localAssetIngestionEvent->getForcedAvgFrameRate() != "")
+            if (localAssetIngestionEvent.getForcedAvgFrameRate() != "")
             {
                 _logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent. Forced Avg Frame Rate"
                     + ", current avgFrameRate: " + videoAvgFrameRate
-                    + ", forced avgFrameRate: " + localAssetIngestionEvent->getForcedAvgFrameRate()
+                    + ", forced avgFrameRate: " + localAssetIngestionEvent.getForcedAvgFrameRate()
                 );
                 
-                videoAvgFrameRate = localAssetIngestionEvent->getForcedAvgFrameRate();
+                videoAvgFrameRate = localAssetIngestionEvent.getForcedAvgFrameRate();
             }
 			*/
 
@@ -5247,16 +5247,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5266,7 +5266,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5274,7 +5274,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5282,13 +5282,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
                     e.what()
 				);
@@ -5297,7 +5297,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5305,7 +5305,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5317,16 +5317,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5336,7 +5336,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5344,7 +5344,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5352,13 +5352,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5367,7 +5367,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5375,7 +5375,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5390,7 +5390,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             _logger->info(__FILEREF__ + "Processing through Magick"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             Magick::Image      imageToEncode;
@@ -5413,17 +5413,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             // something important!)
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", e.what(): " + e.what()
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5433,7 +5433,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5441,7 +5441,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5449,13 +5449,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5464,7 +5464,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5472,7 +5472,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5485,17 +5485,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", e.what(): " + e.what()
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5505,7 +5505,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5513,7 +5513,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5521,13 +5521,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5536,7 +5536,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5544,7 +5544,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5557,17 +5557,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         { 
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", e.what(): " + e.what()
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5577,7 +5577,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5585,7 +5585,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5593,13 +5593,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5608,7 +5608,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5616,7 +5616,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5629,17 +5629,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         { 
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", e.what(): " + e.what()
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5649,7 +5649,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5657,7 +5657,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5665,13 +5665,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5680,7 +5680,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5688,7 +5688,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5701,16 +5701,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         {
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             );
 
-			if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 			{
 				try
 				{
 					_logger->info(__FILEREF__ + "Remove file"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", mmsAssetPathName: " + mmsAssetPathName
 					);
 
@@ -5720,7 +5720,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5728,7 +5728,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 						+ ", errorMessage: " + e.what()
 					);
 				}
@@ -5736,13 +5736,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
                 + ", IngestionStatus: " + "End_IngestionFailure"
                 + ", errorMessage: " + e.what()
             );                            
 			try
 			{
-				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                     e.what()
 				);
@@ -5751,7 +5751,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + re.what()
 					);
 			}
@@ -5759,7 +5759,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + ex.what()
 					);
 			}
@@ -5773,19 +5773,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         string errorMessage = string("Unknown mediaFileFormat")
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			+ ", mmsAssetPathName: " + mmsAssetPathName
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
         
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", mmsAssetPathName: " + mmsAssetPathName
 				);
 
@@ -5795,7 +5795,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5803,7 +5803,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -5811,13 +5811,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + errorMessage
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 errorMessage
 			);
@@ -5826,7 +5826,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -5834,7 +5834,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -5888,9 +5888,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata..."
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
-				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
+				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent.getExternalReadOnlyStorage())
 				+ ", relativePathToBeUsed: " + relativePathToBeUsed
 				+ ", mediaSourceFileName: " + mediaSourceFileName
 				+ ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
@@ -5917,12 +5917,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
                 _mmsEngineDBFacade->saveSourceContentMetadata (
-                    localAssetIngestionEvent->getWorkspace(),
-                    localAssetIngestionEvent->getIngestionJobKey(),
-                    localAssetIngestionEvent->getIngestionRowToBeUpdatedAsSuccess(),
+                    localAssetIngestionEvent.getWorkspace(),
+                    localAssetIngestionEvent.getIngestionJobKey(),
+                    localAssetIngestionEvent.getIngestionRowToBeUpdatedAsSuccess(),
                     contentType,
                     parametersRoot,
-					localAssetIngestionEvent->getExternalReadOnlyStorage(),
+					localAssetIngestionEvent.getExternalReadOnlyStorage(),
                     relativePathToBeUsed,
                     mediaSourceFileName,
                     mmsPartitionUsed,
@@ -5953,7 +5953,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			_logger->info(__FILEREF__ + "Added a new ingested content"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
 				+ ", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
 			);
@@ -5977,11 +5977,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata..."
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", workspaceKey: " + to_string(localAssetIngestionEvent->getWorkspace()->_workspaceKey)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
 				+ ", variantOfMediaItemKey: " + to_string(variantOfMediaItemKey)
-				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent->getExternalReadOnlyStorage())
+				+ ", ExternalReadOnlyStorage: " + to_string(localAssetIngestionEvent.getExternalReadOnlyStorage())
 				+ ", externalDeliveryTechnology: " + externalDeliveryTechnology
 				+ ", externalDeliveryURL: " + externalDeliveryURL
 
@@ -6011,11 +6011,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			);
 
 			int64_t physicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata (
-                    localAssetIngestionEvent->getWorkspace()->_workspaceKey,
-                    localAssetIngestionEvent->getIngestionJobKey(),
+                    localAssetIngestionEvent.getWorkspace()->_workspaceKey,
+                    localAssetIngestionEvent.getIngestionJobKey(),
 					liveRecordingIngestionJobKey,
 					variantOfMediaItemKey,
-					localAssetIngestionEvent->getExternalReadOnlyStorage(),
+					localAssetIngestionEvent.getExternalReadOnlyStorage(),
 					externalDeliveryTechnology,
 					externalDeliveryURL,
 
@@ -6047,18 +6047,18 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			);
 			_logger->info(__FILEREF__ + "Added a new variant content"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", variantOfMediaItemKey,: " + to_string(variantOfMediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 			);
 
 			_logger->info(__FILEREF__ + "Update IngestionJob"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", IngestionStatus: " + "End_TaskSuccess"
 				+ ", errorMessage: " + ""
 			);                            
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
 			);
@@ -6068,17 +6068,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			+ ", e.what: " + e.what()
         );
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", mmsAssetPathName: " + mmsAssetPathName
 				);
 
@@ -6088,7 +6088,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6096,7 +6096,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6104,13 +6104,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			+ ", IngestionStatus: " + "End_IngestionFailure"
 			+ ", errorMessage: " + e.what()
 		);                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
@@ -6119,7 +6119,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -6127,7 +6127,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -6139,17 +6139,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", e.what: " + e.what()
         );
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", mmsAssetPathName: " + mmsAssetPathName
 				);
 
@@ -6159,7 +6159,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6167,7 +6167,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6175,13 +6175,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
@@ -6190,7 +6190,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -6198,7 +6198,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -6210,16 +6210,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveSourceContentMetadata failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
         );
 
-		if (!localAssetIngestionEvent->getExternalReadOnlyStorage())
+		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove file"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", mmsAssetPathName: " + mmsAssetPathName
 				);
 
@@ -6229,7 +6229,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6237,7 +6237,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 					+ ", errorMessage: " + e.what()
 				);
 			}
@@ -6245,13 +6245,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what()
 			);
@@ -6260,7 +6260,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -6268,7 +6268,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -9578,18 +9578,18 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
-    shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent)
+    MultiLocalAssetIngestionEvent multiLocalAssetIngestionEvent)
 {
     
     string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-            multiLocalAssetIngestionEvent->getWorkspace());
+            multiLocalAssetIngestionEvent.getWorkspace());
     vector<string> generatedFramesFileNames;
     
     try
     {
         // get files from file system       
         {
-            string generatedFrames_BaseFileName = to_string(multiLocalAssetIngestionEvent->getIngestionJobKey());
+            string generatedFrames_BaseFileName = to_string(multiLocalAssetIngestionEvent.getIngestionJobKey());
 
             FileIO::DirectoryEntryType_t detDirectoryEntryType;
             shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (workspaceIngestionRepository + "/");
@@ -9663,7 +9663,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 
                 _logger->info(__FILEREF__ + "Remove file"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                     + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 );
                 FileIO::remove(workspaceIngestionBinaryPathName);
@@ -9672,7 +9672,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
             {
                 _logger->info(__FILEREF__ + "Generated Frame to ingest"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                     + ", generatedFrameFileName: " + generatedFrameFileName
                     // + ", textToBeReplaced: " + textToBeReplaced
                     // + ", textToReplace: " + textToReplace
@@ -9684,7 +9684,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 {
                     string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                             + ", generatedFrameFileName: " + generatedFrameFileName
                     ;
                     _logger->error(errorMessage);
@@ -9698,7 +9698,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 
                 _logger->info(__FILEREF__ + "Generated Frame to ingest"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                     + ", new generatedFrameFileName: " + generatedFrameFileName
                     + ", fileFormat: " + fileFormat
                 );
@@ -9706,8 +9706,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 string title;
                 {
                     string field = "Title";
-                    if (_mmsEngineDBFacade->isMetadataPresent(multiLocalAssetIngestionEvent->getParametersRoot(), field))
-                        title = multiLocalAssetIngestionEvent->getParametersRoot().get(field, "XXX").asString();                    
+                    if (_mmsEngineDBFacade->isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
+                        title = multiLocalAssetIngestionEvent.getParametersRoot().get(field, "XXX").asString();                    
                     title += (
                             " (" 
                             + to_string(it - generatedFramesFileNames.begin() + 1) 
@@ -9722,13 +9722,13 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 				double startTimeInSeconds = 0.0;
 				double endTimeInSeconds = 0.0;
                 string imageMetaDataContent = generateMediaMetadataToIngest(
-                        multiLocalAssetIngestionEvent->getIngestionJobKey(),
+                        multiLocalAssetIngestionEvent.getIngestionJobKey(),
                         // mjpeg,
                         fileFormat,
                         title,
 						imageOfVideoMediaItemKey,
 						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-                        multiLocalAssetIngestionEvent->getParametersRoot()
+                        multiLocalAssetIngestionEvent.getParametersRoot()
                 );
 
                 {
@@ -9742,10 +9742,10 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                     localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
 					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-                    localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent->getIngestionJobKey());
+                    localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent.getIngestionJobKey());
                     localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
                     localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
-                    localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent->getWorkspace());
+                    localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent.getWorkspace());
                     localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
                     localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
                         it + 1 == generatedFramesFileNames.end() ? true : false);
@@ -9755,7 +9755,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                     try
                     {
                         handleLocalAssetIngestionEventThread (
-							processorsThreadsNumber, localAssetIngestionEvent);
+							processorsThreadsNumber, *localAssetIngestionEvent);
                     }
                     catch(runtime_error e)
                     {
@@ -9832,19 +9832,19 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
             + ", e.what(): " + e.what()
         );
         
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
 				e.what()
 			);
@@ -9853,7 +9853,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -9861,7 +9861,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -9875,7 +9875,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
             
             _logger->info(__FILEREF__ + "Remove file"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                 + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
             );
             FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
@@ -9887,18 +9887,18 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
     {
         _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
         );
         
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
         );                            
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+			_mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent.getIngestionJobKey(),
 				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
 				e.what()
 			);
@@ -9907,7 +9907,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + re.what()
 				);
 		}
@@ -9915,7 +9915,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+				+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 				+ ", errorMessage: " + ex.what()
 				);
 		}
@@ -9929,7 +9929,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
             
             _logger->info(__FILEREF__ + "Remove file"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
                 + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
             );
             FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
@@ -10143,7 +10143,7 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
                         try
                         {
                             handleLocalAssetIngestionEventThread (
-									processorsThreadsNumber, localAssetIngestionEvent);
+									processorsThreadsNumber, *localAssetIngestionEvent);
                         }
                         catch(runtime_error e)
                         {
