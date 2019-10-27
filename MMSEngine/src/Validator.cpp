@@ -3578,7 +3578,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             if (referenceMediaItemKey != -1)
             {
                 tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
+                        _mmsEngineDBFacade->getMediaItemKeyDetails(workspaceKey, referenceMediaItemKey, warningIfMissing); 
                 tie(referenceContentType, ignore, ignore, ignore, ignore) = contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referencePhysicalPathKey != -1)
@@ -3586,7 +3586,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
 					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        referencePhysicalPathKey, warningIfMissing);  
+                        workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
                 tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
@@ -3599,7 +3599,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+                        workspaceKey, referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
                 if (mediaItemsDetails.size() == 0)
                 {
@@ -3744,6 +3744,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         catch(exception e)
         {
             string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                    + ", workspaceKey,: " + to_string(workspaceKey)
                     + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
                     + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
                     ;
@@ -3905,6 +3906,7 @@ void Validator::fillReferencesOutput(
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
 					);
 				}
@@ -3917,7 +3919,7 @@ void Validator::fillReferencesOutput(
 					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
 						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						referencePhysicalPathKey, warningIfMissing);  
+						workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
 					int64_t localMediaItemKey;
 					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore) =
@@ -3929,6 +3931,7 @@ void Validator::fillReferencesOutput(
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
 					);
 				}
@@ -3940,7 +3943,7 @@ void Validator::fillReferencesOutput(
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+                        workspaceKey, referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
                 if (mediaItemsDetails.size() == 0)
                 {
@@ -3991,6 +3994,7 @@ void Validator::fillReferencesOutput(
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", referenceUniqueName: " + referenceUniqueName
 					);
 				}

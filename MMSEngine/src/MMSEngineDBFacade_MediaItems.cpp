@@ -2444,7 +2444,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 	MMSEngineDBFacade::getMediaItemKeyDetails(
-    int64_t mediaItemKey, bool warningIfMissing)
+    int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -2464,9 +2464,10 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
             lastSQLCommand = 
                 "select contentType, title, userData, ingestionJobKey, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
-				"from MMS_MediaItem where mediaItemKey = ?";
+				"from MMS_MediaItem where workspaceKey = ? and mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -2600,7 +2601,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 
 tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
 	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
-    int64_t physicalPathKey, bool warningIfMissing)
+	int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -2621,9 +2622,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
                 "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, p.fileName, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
-                "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
+                "where mi.workspaceKey = ? and mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -2760,9 +2762,9 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 }
 
 void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
-    int64_t referenceIngestionJobKey, 
-        vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
-        bool warningIfMissing)
+	int64_t workspaceKey, int64_t referenceIngestionJobKey, 
+	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
+	bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -2789,9 +2791,13 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// when main and backup management is finished (no MIKs with valitaded==false are present)
 			// So we do not need anymore the above check
 			lastSQLCommand =
-				"select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
+				"select ijo.mediaItemKey, ijo.physicalPathKey "
+				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
+				"where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
+				"and ijo.ingestionJobKey = ? order by ijo.mediaItemKey";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());

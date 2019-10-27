@@ -1314,16 +1314,16 @@ public:
 		int64_t mediaItemKey, bool warningIfMissing);
 
     tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
-        int64_t mediaItemKey, bool warningIfMissing);
+        int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing);
 
     tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
 		getMediaItemKeyDetailsByPhysicalPathKey(
-        int64_t physicalPathKey, bool warningIfMissing);
+        int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(
-        int64_t referenceIngestionJobKey, 
-            vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
-            bool warningIfMissing);
+		int64_t workspaceKey, int64_t referenceIngestionJobKey, 
+		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
+		bool warningIfMissing);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
         int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing);
