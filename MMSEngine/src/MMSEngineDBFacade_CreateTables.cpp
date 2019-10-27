@@ -860,14 +860,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+			/*
+			 * 2019-10-27: removed MMS_IngestionJobOutput_FK2 on mediaItemKey (MMS_MediaItem)
+			 *	because causes errors
+			*/
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionJobOutput ("
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
                     "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
-                    "constraint MMS_IngestionJobOutput_FK2 foreign key (mediaItemKey) "
-                        "references MMS_MediaItem (mediaItemKey), "
                     "constraint MMS_IngestionJobOutput_FK foreign key (physicalPathKey) "
                         "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
                     "ENGINE=InnoDB";
