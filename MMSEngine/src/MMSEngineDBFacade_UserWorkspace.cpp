@@ -379,6 +379,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool editMedia = true;
             bool editConfiguration = true;
             bool killEncoding = true;
+            bool cancelIngestionJob = true;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -393,6 +394,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     editMedia,
 					editConfiguration,
 					killEncoding,
+					cancelIngestionJob,
                     workspaceName,
                     workspaceType,
                     deliveryURL,
@@ -785,6 +787,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
             bool editMedia = true;
             bool editConfiguration = true;
             bool killEncoding = true;
+            bool cancelIngestionJob = true;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -799,6 +802,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     editMedia,
 					editConfiguration,
 					killEncoding,
+					cancelIngestionJob,
                     workspaceName,
                     workspaceType,
                     deliveryURL,
@@ -1011,7 +1015,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     string userCountry,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
     int64_t workspaceKeyToBeShared,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1184,6 +1188,13 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("KILL_ENCODING");
+                }
+
+                if (cancelIngestionJob)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CANCEL_INGESTIONJOB");
                 }
             }
 
@@ -1395,7 +1406,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     string userCountry,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	string defaultWorkspaceKeys,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1484,7 +1495,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						userEmailAddress,
 						createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia,
-						editConfiguration, killEncoding,
+						editConfiguration, killEncoding, cancelIngestionJob,
 						llDefaultWorkspaceKey);
 					if (apiKey.empty())
 						apiKey = localApiKey;
@@ -1716,7 +1727,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     string userEmailAddress,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	int64_t workspaceKey
 )
 {
@@ -1737,7 +1748,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			userEmailAddress,
 			createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia,
-			editConfiguration, killEncoding,
+			editConfiguration, killEncoding, cancelIngestionJob,
 			workspaceKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -1835,7 +1846,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     string userEmailAddress,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	int64_t workspaceKey
 )
 {
@@ -1911,6 +1922,13 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
                     if (flags != "")
                        flags.append(",");
                     flags.append("KILL_ENCODING");
+                }
+
+                if (cancelIngestionJob)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CANCEL_INGESTIONJOB");
                 }
             }
 
@@ -2001,7 +2019,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         int64_t userKey,
         bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
         bool shareWorkspace, bool editMedia,
-        bool editConfiguration, bool killEncoding,
+        bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,
@@ -2140,6 +2158,13 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("KILL_ENCODING");
+                }
+
+                if (cancelIngestionJob)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("CANCEL_INGESTIONJOB");
                 }
             }
             
@@ -3286,6 +3311,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
                 field = "killEncoding";
                 workspaceDetailRoot[field] = flags.find("KILL_ENCODING") == string::npos ? false : true;
 
+                field = "cancelIngestionJob";
+                workspaceDetailRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos ? false : true;
+
                 workspaceDetailsRoot.append(workspaceDetailRoot);                        
             }
         }
@@ -3366,7 +3394,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding)
+        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob)
 {
     Json::Value workspaceDetailRoot;
     string          lastSQLCommand;
@@ -3540,6 +3568,13 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("KILL_ENCODING");
             }
 
+            if (newCancelIngestionJob)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("CANCEL_INGESTIONJOB");
+            }
+
             lastSQLCommand = 
                 "update MMS_APIKey set flags = ? "
                 "where workspaceKey = ? and userKey = ?";
@@ -3627,6 +3662,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         
         field = "killEncoding";
         workspaceDetailRoot[field] = newKillEncoding ? true : false;
+        
+        field = "cancelIngestionJob";
+        workspaceDetailRoot[field] = newCancelIngestionJob ? true : false;
         
         {
             lastSQLCommand = 

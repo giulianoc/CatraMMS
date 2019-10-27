@@ -2809,12 +2809,30 @@ void API::cancelIngestionJob(
 		}
 		ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
+		MMSEngineDBFacade::IngestionStatus ingestionStatus;
+
+		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
+			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (ingestionJobKey);
+		tie(ignore, ignore, ingestionStatus, ignore) = ingestionJobDetails;
+
+		if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+		{
+			string errorMessage = string("The IngestionJob cannot be removed because of his Status")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", IngestionStatus: " + "End_CancelledByUser"
 			+ ", errorMessage: " + ""
 		);
-
 		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
 			MMSEngineDBFacade::IngestionStatus::End_CancelledByUser, 
 			"");

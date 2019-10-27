@@ -1028,7 +1028,7 @@ public:
         string userCountry,
         bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
@@ -1040,7 +1040,7 @@ public:
 		string userCountry,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		string defaultWorkspaceKeys,
 		chrono::system_clock::time_point userExpirationDate
 	);
@@ -1050,7 +1050,7 @@ public:
 		string userEmailAddress,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		int64_t workspaceKey);
 
     pair<string,string> getUserDetails(int64_t userKey);
@@ -1073,7 +1073,8 @@ public:
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding);
+        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding,
+		bool newCancelIngestionJob);
 
 	Json::Value setWorkspaceAsDefault (
 		int64_t userKey,
@@ -1248,8 +1249,8 @@ public:
 	string getIngestionRootMetaDataContent (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
 
-	tuple<string,MMSEngineDBFacade::IngestionType,string> getIngestionJobDetails(
-		int64_t ingestionJobKey);
+	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
+		getIngestionJobDetails(int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
         shared_ptr<Workspace> workspace,
@@ -1759,7 +1760,7 @@ private:
 		string userEmailAddress,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		int64_t workspaceKey);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
@@ -1823,6 +1824,7 @@ private:
         bool editMedia,
 		bool editConfiguration,
 		bool killEncoding,
+		bool cancelIngestionJob,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,

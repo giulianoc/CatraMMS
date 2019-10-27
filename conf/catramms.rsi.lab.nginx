@@ -92,6 +92,9 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
 		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/([0-9]*)/?$ /api?version=$1&method=cancelIngestionJob&ingestionJobKey=$2 last;
+		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
 		}

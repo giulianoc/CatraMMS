@@ -507,6 +507,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 			processorMMS, "MainAndBackupLiveRecording",
 			milliSecondsToSleepWaitingLock, _logger);
 
+		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
         _logger->info(__FILEREF__ + "Live Recording HA just started");
 
         conn = _connectionPool->borrow();	
@@ -906,6 +908,12 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
+		_logger->info(__FILEREF__ + "manageMainAndBackupOfRunnungLiveRecordingHA"
+			+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+		);
     }
     catch(sql::SQLException se)
     {

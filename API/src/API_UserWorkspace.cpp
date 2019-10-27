@@ -702,6 +702,19 @@ void API::shareWorkspace_(
         }
         killEncoding = (killEncodingIt->second == "true" ? true : false);
 
+        bool cancelIngestionJob;
+        auto cancelIngestionJobIt = queryParameters.find("cancelIngestionJob");
+        if (cancelIngestionJobIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'cancelIngestionJob' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        cancelIngestionJob = (cancelIngestionJobIt->second == "true" ? true : false);
+
 
         string name;
         string email;
@@ -809,7 +822,7 @@ void API::shareWorkspace_(
                     password,
                     country, 
                     createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-					editMedia, editConfiguration, killEncoding,
+					editMedia, editConfiguration, killEncoding, cancelIngestionJob,
                     workspace->_workspaceKey,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
@@ -1265,13 +1278,14 @@ void API::login(
 						bool editMedia = true;
 						bool editConfiguration = false;
 						bool killEncoding = false;
+						bool cancelIngestionJob = false;
 						pair<int64_t,string> userKeyAndEmail =
 							_mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName,
 							email,
 							string(""),	// userCountry,
 							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-							editMedia, editConfiguration, killEncoding,
+							editMedia, editConfiguration, killEncoding, cancelIngestionJob,
 							_ldapDefaultWorkspaceKeys,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
@@ -1640,6 +1654,7 @@ void API::updateWorkspace(
         bool newEditMedia;
         bool newEditConfiguration;
         bool newKillEncoding;
+        bool newCancelIngestionJob;
 
         Json::Value metadataRoot;
         try
@@ -1694,7 +1709,8 @@ void API::updateWorkspace(
                 "ShareWorkspace",
                 "EditMedia",
                 "EditConfiguration",
-                "KillEncoding"
+                "KillEncoding",
+                "CancelIngestionJob"
             };
             for (string field: mandatoryFields)
             {
@@ -1725,6 +1741,7 @@ void API::updateWorkspace(
             newEditMedia = metadataRoot.get("EditMedia", "XXX").asBool();
             newEditConfiguration = metadataRoot.get("EditConfiguration", "XXX").asBool();
             newKillEncoding = metadataRoot.get("KillEncoding", "XXX").asBool();
+            newCancelIngestionJob = metadataRoot.get("CancelIngestionJob", "XXX").asBool();
         }
 
         try
@@ -1742,7 +1759,7 @@ void API::updateWorkspace(
                     newMaxStorageInMB, newLanguageCode,
                     newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles,
                     newDeliveryAuthorization, newShareWorkspace,
-                    newEditMedia, newEditConfiguration, newKillEncoding);
+                    newEditMedia, newEditConfiguration, newKillEncoding, newCancelIngestionJob);
 
             _logger->info(__FILEREF__ + "WorkspaceDetails updated"
                 + ", userKey: " + to_string(userKey)

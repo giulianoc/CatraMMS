@@ -12645,10 +12645,10 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
 						referenceIngestionJobKey = referenceRoot.get(field, 0).asInt64();
 
-						tuple<string, MMSEngineDBFacade::IngestionType, string>
+						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
 							labelIngestionTypeAndErrorMessage =
 							_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
-						tie(referenceLabel, ingestionType, referenceErrorMessage);
+						tie(referenceLabel, ingestionType, ignore, referenceErrorMessage);
 
 						break;
 					}

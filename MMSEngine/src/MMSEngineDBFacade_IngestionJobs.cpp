@@ -2957,13 +2957,14 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
     return metaDataContent;
 }
 
-tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getIngestionJobDetails(
-	int64_t ingestionJobKey
+tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
+	MMSEngineDBFacade::getIngestionJobDetails(int64_t ingestionJobKey
 )
 {
     string      lastSQLCommand;
 	string		label;
 	IngestionType	ingestionType;
+	IngestionStatus ingestionStatus;
 	string		errorMessage;
     
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -2977,7 +2978,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
 
         {
             lastSQLCommand = 
-                string("select label, ingestionType, errorMessage "
+                string("select label, ingestionType, status, errorMessage "
 						"from MMS_IngestionJob where ingestionJobKey = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2989,6 +2990,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
             {
                 label = static_cast<string>(resultSet->getString("label"));
 				ingestionType = toIngestionType(resultSet->getString("ingestionType"));
+				ingestionStatus = toIngestionStatus(resultSet->getString("status"));
                 errorMessage = static_cast<string>(resultSet->getString("errorMessage"));
             }
 			else
@@ -3070,7 +3072,7 @@ tuple<string,MMSEngineDBFacade::IngestionType,string> MMSEngineDBFacade::getInge
         throw e;
     }
     
-    return make_tuple(label, ingestionType, errorMessage);
+    return make_tuple(label, ingestionType, ingestionStatus, errorMessage);
 }
 
 
