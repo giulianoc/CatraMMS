@@ -5872,6 +5872,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					string errorMessage = string("IngestionJob does not refer the correct media Items number")
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", variantOfIngestionJobKey: " + to_string(variantOfIngestionJobKey)
+						+ ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey)
 						+ ", mediaItemsDetails.size(): " + to_string(mediaItemsDetails.size())
 					;
 					_logger->error(__FILEREF__ + errorMessage);

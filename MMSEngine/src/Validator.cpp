@@ -3577,23 +3577,25 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
-                tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetails(workspaceKey, referenceMediaItemKey, warningIfMissing); 
-                tie(referenceContentType, ignore, ignore, ignore, ignore) = contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+					contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
+					_mmsEngineDBFacade->getMediaItemKeyDetails(workspaceKey, referenceMediaItemKey,
+					warningIfMissing); 
+                tie(referenceContentType, ignore, ignore, ignore, ignore)
+					= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
             }
             else if (referencePhysicalPathKey != -1)
             {
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName = 
+					mediaItemKeyDetails = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore,
+					ignore) = mediaItemKeyDetails;
             }
             else if (referenceIngestionJobKey != -1)
             {
-
                 // the difference with the other if is that here, associated to the ingestionJobKey,
                 // we may have a list of mediaItems (i.e.: periodic-frame)
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
