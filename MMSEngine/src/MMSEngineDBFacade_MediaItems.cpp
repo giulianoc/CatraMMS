@@ -2803,7 +2803,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				"where ingestionJobKey = ? order by mediaItemKey";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            // preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
