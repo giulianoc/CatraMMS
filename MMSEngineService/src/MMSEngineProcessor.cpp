@@ -5863,8 +5863,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 				bool warningIfMissing = false;
 
-				_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(variantOfIngestionJobKey,
-					localAssetIngestionEvent.getWorkspace()->_workspaceKey,
+				_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+					localAssetIngestionEvent.getWorkspace()->_workspaceKey, variantOfIngestionJobKey,
 					mediaItemsDetails, warningIfMissing);
 
 				if (mediaItemsDetails.size() != 1)

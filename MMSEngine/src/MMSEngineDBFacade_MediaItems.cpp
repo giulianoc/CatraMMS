@@ -2790,20 +2790,21 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// 2019-09-20: The Live-Recorder task now updates the Ingestion Status at the end of the task,
 			// when main and backup management is finished (no MIKs with valitaded==false are present)
 			// So we do not need anymore the above check
-			/*
 			lastSQLCommand =
 				"select ijo.mediaItemKey, ijo.physicalPathKey "
 				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
 				"and ijo.ingestionJobKey = ? order by ijo.mediaItemKey";
-			*/
+			/*
 			lastSQLCommand =
 				"select mediaItemKey, physicalPathKey "
 				"from MMS_IngestionJobOutput "
 				"where ingestionJobKey = ? order by mediaItemKey";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			*/
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            // preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
