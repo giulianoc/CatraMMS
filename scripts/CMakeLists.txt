@@ -22,15 +22,9 @@
 
 SET (SCRIPTs
 	mmsApi.sh
-	mmsApi.rsi.lab.sh
-	mmsApi.rsi.mms2.sh
 	mmsEncoder.sh
-	mmsEncoder.rsi.lab.sh
-	mmsEncoder.rsi.mms2.sh
 	mmsEnv.sh
 	mmsEngineService.sh
-	mmsEngineService.rsi.lab.sh
-	mmsEngineService.rsi.mms2.sh
 	ffmpegHelper.sh
 	imageMagickHelper.sh
 	nginx.sh
@@ -42,7 +36,6 @@ SET (SCRIPTs
 	mmsTail.sh
 	printLogFileName.sh
 	crontab.sh
-	crontab.rsi.sh
 	sqlQueries.txt
 )
 

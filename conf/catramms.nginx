@@ -252,6 +252,9 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&encodingJobKey=$2 last;
+		}
+		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
@@ -345,6 +348,22 @@ server {
 		return 403;
 		break;
 	}
+}
+
+server {
+	server_name mms-delivery-f.catrasoft.cloud;
+	#listen 80;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	access_log   /var/catramms/logs/nginx/mms-delivery-f.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-delivery-f.error.log notice;
+
+	root /var/catramms/storage/MMSRepository-free/;
 }
 
 server {

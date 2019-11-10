@@ -264,7 +264,8 @@ public:
         FaceIdentification	= 7,
 		LiveRecorder		= 8,
 		VideoSpeed			= 9,
-		PictureInPicture	= 10
+		PictureInPicture	= 10,
+		LiveProxy			= 11
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -292,6 +293,8 @@ public:
                 return "VideoSpeed";
             case EncodingType::PictureInPicture:
                 return "PictureInPicture";
+            case EncodingType::LiveProxy:
+                return "LiveProxy";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -324,6 +327,8 @@ public:
             return EncodingType::VideoSpeed;
         else if (lowerCase == "pictureinpicture")
             return EncodingType::PictureInPicture;
+        else if (lowerCase == "liveproxy")
+            return EncodingType::LiveProxy;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -571,6 +576,12 @@ public:
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
             Json::Value                             _parametersRoot;
         };
+
+		struct LiveProxyData {
+			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_liveProxyParametersRoot;
+		};
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
@@ -581,6 +592,7 @@ public:
 		shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
+		shared_ptr<LiveProxyData>					_liveProxyData;
     } ;
 
     enum class WorkspaceType {
@@ -616,6 +628,8 @@ public:
         ChangeFileFormat		= 23,
         VideoSpeed				= 24,
         PictureInPicture		= 25,
+        LiveProxy				= 26,
+
         EmailNotification       = 30,
         MediaCrossReference		= 31,
         ContentUpdate           = 50,
@@ -678,7 +692,9 @@ public:
 				return "Video-Speed";
 			case IngestionType::PictureInPicture:
 				return "Picture-In-Picture";
-                
+			case IngestionType::LiveProxy:
+				return "Live-Proxy";
+
             case IngestionType::EmailNotification:
                 return "Email-Notification";
             case IngestionType::MediaCrossReference:
@@ -751,6 +767,8 @@ public:
             return IngestionType::VideoSpeed;
         else if (lowerCase == "picture-in-picture")
             return IngestionType::PictureInPicture;
+        else if (lowerCase == "live-proxy")
+            return IngestionType::LiveProxy;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1464,6 +1482,13 @@ public:
 		bool autoRenew,
 		int segmentDurationInSeconds,
 		string outputFileFormat,
+		EncodingPriority encodingPriority);
+
+	int addEncoding_LiveProxyJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		string configurationLabel, string liveURL,
+		string outputType, int segmentDurationInSeconds,
 		EncodingPriority encodingPriority);
 
     int addEncoding_VideoSpeed (

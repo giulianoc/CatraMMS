@@ -15,6 +15,8 @@
 18 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 9
 20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 10
 22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
+24 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 13
+26 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 14
 
 #retention for nginx logs
 #next line requires root rights, so set it through the command 'sudo crontab -e'

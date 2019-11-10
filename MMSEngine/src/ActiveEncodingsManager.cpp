@@ -305,6 +305,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
 		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed
 		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture
+		|| encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy
 	)
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(

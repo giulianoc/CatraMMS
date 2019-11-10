@@ -49,11 +49,11 @@ find_package(ZLIB)
 
 add_compile_options(-D_FILE_OFFSET_BITS=64)
 
-add_subdirectory(MMSEngine/src)
-add_subdirectory(FFMpeg/src)
-add_subdirectory(MMSEngineService/src)
-
 add_subdirectory(API/src)
+
+add_subdirectory(FFMpeg/src)
+add_subdirectory(MMSEngine/src)
+add_subdirectory(MMSEngineService/src)
 
 add_subdirectory(conf)
 add_subdirectory(ttfFont)

@@ -216,6 +216,12 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
+	void manageLiveProxy(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot);
+
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,

@@ -35,6 +35,7 @@ MMSStorage::MMSStorage(
 
     _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
     _transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
+    _deliveryFreeRootRepository = _storage + "MMSRepository-free/";
 
     string ffmpegArea = _storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
     
@@ -103,6 +104,13 @@ MMSStorage::MMSStorage(
         + ", _transcoderStagingRootRepository: " + _transcoderStagingRootRepository
     );
     FileIO::createDirectory(_transcoderStagingRootRepository,
+            S_IRUSR | S_IWUSR | S_IXUSR |
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
+        + ", _deliveryFreeRootRepository: " + _deliveryFreeRootRepository
+    );
+    FileIO::createDirectory(_deliveryFreeRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -891,6 +899,21 @@ string MMSStorage::getStagingAssetPathName(
 
 
     return assetPathName;
+}
+
+string MMSStorage::getDeliveryFreeAssetPathName(
+	string workspaceDirectoryName,
+	string liveProxyAssetName,
+	string assetExtension
+)
+{
+
+	string deliveryFreeAssetPathName = _deliveryFreeRootRepository
+		+ workspaceDirectoryName + "/" + liveProxyAssetName + "/"
+		+ liveProxyAssetName + assetExtension;
+
+
+    return deliveryFreeAssetPathName;
 }
 
 string MMSStorage::getEncodingProfilePathName(

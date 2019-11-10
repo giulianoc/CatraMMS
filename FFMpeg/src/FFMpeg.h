@@ -199,6 +199,14 @@ public:
         string outputFileFormat,
 		pid_t* pChildPid);
 
+	void liveProxyByHLS(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string liveURL,
+		int segmentDurationInSeconds,
+		string m3u8FilePathName,
+		pid_t* pChildPid);
+
 	void changeFileFormat(
 		int64_t ingestionJobKey,
 		int64_t sourceKey,

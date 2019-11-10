@@ -5003,6 +5003,244 @@ void FFMpeg::liveRecorder(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::liveProxyByHLS(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string liveURL,
+	int segmentDurationInSeconds,
+	string m3u8FilePathName,
+	pid_t* pChildPid)
+{
+	vector<string> ffmpegArgumentList;
+	ostringstream ffmpegArgumentListStream;
+	int iReturnedStatus = 0;
+	string segmentListPath;
+	chrono::system_clock::time_point startFfmpegCommand;
+	chrono::system_clock::time_point endFfmpegCommand;
+	time_t utcNow;
+
+	string m3u8DirectoryPathName;
+    try
+    {
+		size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
+		if (m3u8FilePathIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "No m3u8DirectoryPath find in the m3u8 file path name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", m3u8FilePathName: " + m3u8FilePathName;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+
+		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+		// I saw just once that the directory was not created and the liveencoder remains in the loop
+		// where:
+		//	1. the encoder returns an error becaise of the missing directory
+		//	2. EncoderVideoAudioProxy calls again the encoder
+		// So, for this reason, the below check is done
+		if (!FileIO::directoryExisting(m3u8DirectoryPathName))
+		{
+			_logger->warn(__FILEREF__ + "m3u8DirectoryPathName does not exist!!! It will be created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+					);
+
+			_logger->info(__FILEREF__ + "Create directory"
+                + ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+            );
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(m3u8DirectoryPathName,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP |
+				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		}
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey)
+			+ ".liveProxy.log"
+		;
+
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		ffmpegArgumentList.push_back("ffmpeg");
+		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
+		//		as fast as possible. This option will slow down the reading of the input(s)
+		//		to the native frame rate of the input(s). It is useful for real-time output
+		//		(e.g. live streaming).
+		ffmpegArgumentList.push_back("-re");
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(liveURL);
+		ffmpegArgumentList.push_back("-c:v");
+		ffmpegArgumentList.push_back("copy");
+		ffmpegArgumentList.push_back("-c:a");
+		ffmpegArgumentList.push_back("copy");
+		ffmpegArgumentList.push_back("-hls_flags");
+		ffmpegArgumentList.push_back("append_list");
+		ffmpegArgumentList.push_back("-hls_time");
+		ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+		ffmpegArgumentList.push_back(m3u8FilePathName);
+
+		if (!ffmpegArgumentList.empty())
+			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+				ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+		_logger->info(__FILEREF__ + "liveProxy: Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		);
+
+		startFfmpegCommand = chrono::system_clock::now();
+
+		bool redirectionStdOutput = true;
+		bool redirectionStdError = true;
+
+		ProcessUtility::forkAndExec (
+			_ffmpegPath + "/ffmpeg",
+			ffmpegArgumentList,
+			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+			pChildPid, &iReturnedStatus);
+		if (iReturnedStatus != 0)
+		{
+			string errorMessage = __FILEREF__ + "liveProxy: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+           ;            
+           _logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+        
+		endFfmpegCommand = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "liveProxy: Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			+ ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+		);
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+			string errorMessage;
+			if (iReturnedStatus == 9)	// 9 means: SIGKILL
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+			else
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+		if (m3u8DirectoryPathName != "")
+    	{
+        	// get files from file system
+    
+        	FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        	shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+					m3u8DirectoryPathName + "/");
+
+        	bool scanDirectoryFinished = false;
+        	while (!scanDirectoryFinished)
+        	{
+            	string directoryEntry;
+            	try
+            	{
+                	string directoryEntry = FileIO::readDirectory (directory,
+                    	&detDirectoryEntryType);
+                
+                	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    	continue;
+
+					{
+						string segmentPathNameToBeRemoved =
+							m3u8DirectoryPathName + "/" + directoryEntry;
+        				_logger->info(__FILEREF__ + "Remove"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+            				+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+        				FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+					}
+            	}
+            	catch(DirectoryListFinished e)
+            	{
+                	scanDirectoryFinished = true;
+            	}
+            	catch(runtime_error e)
+            	{
+                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+                       	+ ", e.what(): " + e.what()
+                	;
+                	_logger->error(errorMessage);
+
+                	// throw e;
+            	}
+            	catch(exception e)
+            	{
+                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+                	;
+                	_logger->error(errorMessage);
+
+                	// throw e;
+            	}
+        	}
+
+        	FileIO::closeDirectory (directory);
+    	}
+
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 // destinationPathName will end with the new file format
 void FFMpeg::changeFileFormat(
 	int64_t ingestionJobKey,

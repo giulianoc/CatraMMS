@@ -1,0 +1,20 @@
+"Task": {
+	// optional
+	"Label"="My Live Proxy",
+
+	// mandatory
+	"Type": "Live-Proxy",
+
+	"Parameters": {
+
+		// mandatory...
+		"ConfigurationLabel": "",
+
+		// optional, possible values: HLS, CDN. Default: HLS
+		"OutputType": "HLS"
+
+		// optional, Default: 10
+		"SegmentDurationInSeconds": 10
+	}
+}
+

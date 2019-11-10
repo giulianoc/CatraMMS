@@ -132,6 +132,11 @@ public:
 		long long llPhysicalPathKey,    // used only if fileName is ""
 		bool removeLinuxPathIfExist);
 
+	string getDeliveryFreeAssetPathName(
+		string workspaceDirectoryName,
+		string liveProxyAssetName,
+		string assetExtension);
+
     string getEncodingProfilePathName (
 	long long llEncodingProfileKey,
 	string profileFileNameExtension);
@@ -158,6 +163,7 @@ private:
     string                      _streamingRootRepository;
     string                      _stagingRootRepository;
 	string						_transcoderStagingRootRepository;
+	string						_deliveryFreeRootRepository;
     string                      _ingestionRootRepository;
     string                      _profilesRootRepository;
 

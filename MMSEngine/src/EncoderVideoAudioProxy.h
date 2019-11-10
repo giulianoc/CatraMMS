@@ -147,6 +147,7 @@ private:
     string                              _ffmpegGenerateFramesURI;
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
+    string                              _ffmpegLiveProxyURI;
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
 
@@ -236,6 +237,10 @@ private:
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
 	*/
+
+	bool liveProxy();
+	bool liveProxy_through_ffmpeg();
+    void processLiveProxy(bool killedByUser);
 
     pair<string, bool> videoSpeed();
     pair<string, bool> videoSpeed_through_ffmpeg();

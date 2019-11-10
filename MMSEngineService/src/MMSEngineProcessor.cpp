@@ -4117,6 +4117,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
+                        {
+                            try
+                            {
+								manageLiveProxy(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveProxy failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveProxy failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
                         {
                             try
@@ -8421,6 +8522,90 @@ void MMSEngineProcessor::manageLiveRecorder(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageLiveRecorder failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+
+void MMSEngineProcessor::manageLiveProxy(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot
+)
+{
+    try
+    {
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+
+		string configurationLabel;
+		string outputType;
+		int segmentDurationInSeconds;
+        {
+            string field = "ConfigurationLabel";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            configurationLabel = parametersRoot.get(field, "XXX").asString();
+
+            field = "OutputType";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				outputType = "HLS";
+			else
+            	outputType = parametersRoot.get(field, "XXX").asString();
+
+            field = "SegmentDurationInSeconds";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				segmentDurationInSeconds = 10;
+			else
+            	segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+        }
+
+        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
+                workspace->_workspaceKey, configurationLabel);            
+
+		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
+			configurationLabel, liveURL, outputType, segmentDurationInSeconds,
+			encodingPriority);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveProxy failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveProxy failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

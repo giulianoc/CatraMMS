@@ -942,6 +942,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Live-Proxy")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::LiveProxy;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1090,6 +1111,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
     {
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
+    {
+        validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -3480,6 +3506,50 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
     }
 }
 
+void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+	vector<string> mandatoryFields = {
+		"ConfigurationLabel"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "OutputType";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		string liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
+		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN or HLS)"
+                + ", Field: " + field
+                + ", liveProxyOutputType: " + liveProxyOutputType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+}
+
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
@@ -4193,6 +4263,22 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
     for (string outputFormat: outputFormats)
     {
         if (liveRecorderOutputFormat == outputFormat) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
+{
+    vector<string> outputTypes = {
+        "CDN",
+        "HLS"
+    };
+
+    for (string outputType: outputTypes)
+    {
+        if (liveProxyOutputType == outputType) 
             return true;
     }
     

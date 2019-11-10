@@ -3960,6 +3960,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::LiveRecorder
                 || ingestionType == IngestionType::VideoSpeed
                 || ingestionType == IngestionType::PictureInPicture
+                || ingestionType == IngestionType::LiveProxy
                 )
         {
             lastSQLCommand = 

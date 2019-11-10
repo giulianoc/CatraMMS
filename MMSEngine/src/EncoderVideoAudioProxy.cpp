@@ -143,6 +143,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveRecorderURI: " + _ffmpegLiveRecorderURI
     );
+    _ffmpegLiveProxyURI = _configuration["ffmpeg"].get("liveProxyURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->liveProxyURI: " + _ffmpegLiveProxyURI
+    );
     _ffmpegVideoSpeedURI = _configuration["ffmpeg"].get("videoSpeedURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->videoSpeedURI: " + _ffmpegVideoSpeedURI
@@ -290,6 +294,10 @@ void EncoderVideoAudioProxy::operator()()
         {
 			tuple<bool, bool> killedByUserAndMain = liveRecorder();
 			tie(killedByUser, main) = killedByUserAndMain;
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
+        {
+			killedByUser = liveProxy();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed)
         {
@@ -698,6 +706,13 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
         {
             processLiveRecorder(killedByUser);
+            
+            mediaItemKey = -1;
+            encodedPhysicalPathKey = -1;            
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
+        {
+            processLiveProxy(killedByUser);
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;            
@@ -9656,6 +9671,702 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 }
 
 void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
+{
+    try
+    {
+		bool main;
+		bool highAvailability;
+		{
+			string field = "main";
+			main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+			field = "highAvailability";
+			highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
+		}
+
+		/*
+		_logger->info(__FILEREF__ + "remove"
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		);
+		FileIO::remove(stagingEncodedAssetPathName);
+		*/
+
+		if (main)
+		{
+			// in case of highAvailability, the IngestionJob is not updated to Success until all the
+			// main and backup chunks are managed.
+			// This is to avoid the 'on success' task receives input MIKs that are not validated (and that
+			// will be removed soon)
+			if (highAvailability)
+			{
+				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
+				// So in case this is changed, also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA has to be changed too
+				int toleranceMinutes = 5;
+				int sleepTimeInSeconds = 15;	// main and backup management starts: * * * * * * 15,30,45
+
+				_logger->info(__FILEREF__ + "Waiting the finishing of main and backup chunks management"
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				);
+
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				chrono::system_clock::time_point endPoint;
+				bool mainAndBackupChunksManagementCompleted;
+				do
+				{
+					this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
+
+					mainAndBackupChunksManagementCompleted = _mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
+						_encodingItem->_ingestionJobKey);
+					endPoint = chrono::system_clock::now();
+				}
+				while(!mainAndBackupChunksManagementCompleted &&
+					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
+
+				if (mainAndBackupChunksManagementCompleted)
+					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					);
+				else
+					_logger->warn(__FILEREF__ + "Managing of main and backup chunks NOT completed"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					);
+			}
+
+			{
+				string errorMessage;
+				string processorMMS;
+				MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
+					MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);
+				_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+					errorMessage);
+			}
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "IngestionJob does not update because it's backup recording"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			);
+		}
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
+}
+
+bool EncoderVideoAudioProxy::liveProxy()
+{
+
+	bool killedByUser = liveProxy_through_ffmpeg();
+	if (killedByUser)
+	{
+		string errorMessage = __FILEREF__ + "Encoding killed by the User"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            ;
+		_logger->warn(errorMessage);
+        
+		throw EncodingKilledByUser();
+	}
+    
+	return killedByUser;
+}
+
+bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
+{
+
+	string configurationLabel;
+	string liveURL;
+	string outputType;
+	int segmentDurationInSeconds;
+	{
+        string field = "configurationLabel";
+        configurationLabel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "liveURL";
+        liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "outputType";
+        outputType = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "segmentDurationInSeconds";
+        segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, "XXX").asInt();
+	}
+
+	bool killedByUser = false;
+
+	while (!killedByUser)
+	{
+		string ffmpegEncoderURL;
+		string ffmpegURI = _ffmpegLiveProxyURI;
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			string m3u8FilePathName;
+
+			if (_encodingItem->_transcoder == "")
+			{
+				string encoderToSkip;
+				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					_encodingItem->_workspace, encoderToSkip);
+				_logger->info(__FILEREF__ + "Configuration item"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+				);
+				ffmpegEncoderURL = 
+					_ffmpegEncoderProtocol
+					+ "://"
+					+ _currentUsedFFMpegEncoderHost + ":"
+					+ to_string(_ffmpegEncoderPort)
+					+ ffmpegURI
+					+ "/" + to_string(_encodingItem->_encodingJobKey)
+				;
+
+				string body;
+				{
+					m3u8FilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
+						_encodingItem->_workspace->_directoryName,
+						configurationLabel, ".m3u8");
+
+					Json::Value liveProxyMetadata;
+
+					liveProxyMetadata["ingestionJobKey"] =
+						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveProxyMetadata["liveURL"] = liveURL;
+					liveProxyMetadata["outputType"] = outputType;
+					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
+					liveProxyMetadata["m3u8FilePathName"] = m3u8FilePathName;
+
+					{
+						Json::StreamWriterBuilder wbuilder;
+                    
+						body = Json::writeString(wbuilder, liveProxyMetadata);
+					}
+				}
+            
+				list<string> header;
+
+				header.push_back("Content-Type: application/json");
+				{
+					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+					header.push_back(basicAuthorization);
+				}
+            
+				curlpp::Cleanup cleaner;
+				curlpp::Easy request;
+
+				// Setting the URL to retrive.
+				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+				if (_ffmpegEncoderProtocol == "https")
+				{
+					/*
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+					*/
+                                                                                                  
+                
+					/*
+					// cert is stored PEM coded in file... 
+					// since PEM is default, we needn't set it for PEM 
+					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+					curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+					equest.setOpt(sslCertType);
+
+					// set the cert for client authentication
+					// "testcert.pem"
+					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+					curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+					request.setOpt(sslCert);
+					*/
+
+					/*
+					// sorry, for engine we must set the passphrase
+					//   (if the key has one...)
+					// const char *pPassphrase = NULL;
+					if(pPassphrase)
+						curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+					// if we use a key stored in a crypto engine,
+					//   we must set the key type to "ENG"
+					// pKeyType  = "PEM";
+					curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+					// set the private key (file or ID in engine)
+					// pKeyName  = "testkey.pem";
+					curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+					// set the file with the certs vaildating the server
+					// *pCACertFile = "cacert.pem";
+					curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+					*/
+                
+					// disconnect if we can't validate server's cert
+					bool bSslVerifyPeer = false;
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+					request.setOpt(sslVerifyPeer);
+                
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+					request.setOpt(sslVerifyHost);
+                
+					// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+				}
+				request.setOpt(new curlpp::options::HttpHeader(header));
+				request.setOpt(new curlpp::options::PostFields(body));
+				request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+				request.setOpt(new curlpp::options::WriteStream(&response));
+
+				_logger->info(__FILEREF__ + "LiveProxy media file"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+				);
+				responseInitialized = true;
+				request.perform();
+
+				string sResponse = response.str();
+				// LF and CR create problems to the json parser...
+				while (sResponse.back() == 10 || sResponse.back() == 13)
+					sResponse.pop_back();
+
+				Json::Value liveProxyContentResponse;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                        sResponse.c_str() + sResponse.size(), 
+                        &liveProxyContentResponse, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                            + ", errors: " + errors
+                            + ", sResponse: " + sResponse
+                            ;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}               
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                        + ", sResponse: " + sResponse
+                        + ", e.what(): " + e.what()
+                        ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw e;
+				}
+				catch(...)
+				{
+					string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                        + ", sResponse: " + sResponse
+                        ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					string field = "error";
+					if (Validator::isMetadataPresent(liveProxyContentResponse, field))
+					{
+						string error = liveProxyContentResponse.get(field, "XXX").asString();
+                    
+						if (error.find(NoEncodingAvailable().what()) != string::npos)
+						{
+							string errorMessage = string("No Encodings available")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+							_logger->warn(__FILEREF__ + errorMessage);
+
+							throw MaxConcurrentJobsReached();
+						}
+						else
+						{
+							string errorMessage = string("FFMPEGEncoder error")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                                + ", sResponse: " + sResponse
+                                ;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}                        
+					}
+				}
+			}
+			else
+			{
+				_logger->info(__FILEREF__ + "LiveProxy. Selection of the transcoder. The transcoder is already saved (DB), the encoding should be already running"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", transcoder: " + _encodingItem->_transcoder
+				);
+
+				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+				m3u8FilePathName = _encodingItem->_stagingEncodedAssetPathName;
+
+				// we have to reset _encodingItem->_transcoder because in case we will come back
+				// in the above 'while' loop, we have to select another encoder
+				_encodingItem->_transcoder	= "";
+
+				ffmpegEncoderURL = 
+                    _ffmpegEncoderProtocol
+                    + "://"
+                    + _currentUsedFFMpegEncoderHost + ":"
+                    + to_string(_ffmpegEncoderPort)
+                    + ffmpegURI
+                    + "/" + to_string(_encodingItem->_encodingJobKey)
+				;
+			}
+
+			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(
+				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, m3u8FilePathName);
+
+			string m3u8DirectoryPathName;
+			{
+				size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
+				if (m3u8FilePathIndex == string::npos)
+				{
+					string errorMessage = __FILEREF__ + "No m3u8DirectoryPath find in the m3u8 file path name"
+							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", m3u8FilePathName: " + m3u8FilePathName;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+			}
+
+            // loop waiting the end of the encoding
+            bool encodingFinished = false;
+			bool completedWithError = false;
+            int maxEncodingStatusFailures = 10;
+            int encodingStatusFailures = 0;
+			// string lastRecordedAssetFileName;
+
+			// see the comment few lines below (2019-05-03)
+            // while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
+            while(!encodingFinished)
+            {
+				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+
+				try
+				{
+					tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+
+					if (completedWithError)
+					{
+						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+                }
+                catch(...)
+                {
+					encodingStatusFailures++;
+
+					_logger->error(__FILEREF__ + "getEncodingStatus failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+					);
+
+					/*
+					 2019-05-03: commented because we saw the following scenario:
+						1. getEncodingStatus fails because of HTTP call failure (502 Bad Gateway)
+							Really the live recording is still working into the encoder process
+						2. EncoderVideoAudioProxy reached maxEncodingStatusFailures
+						3. since the recording is not finished yet, this code/method activate a new live recording session
+						Result: we have 2 live recording process into the encoder creating problems
+						To avoid that we will exit from this loop ONLY when we are sure the recoridng is finished
+					 2019-07-02: in case the encoder was shutdown or crashed, the Engine has to activate another
+						Encoder, so we increased maxEncodingStatusFailures to be sure the encoder is not working anymore
+						and, in this case we do a break in order to activate another encoder.
+					*/
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+						break;
+                        // throw runtime_error(errorMessage);
+					}
+                }
+
+				try
+				{
+					// clean LiveProxy files from file system
+    
+					FileIO::DirectoryEntryType_t detDirectoryEntryType;
+					shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+							m3u8DirectoryPathName + "/");
+
+					bool scanDirectoryFinished = false;
+					while (!scanDirectoryFinished)
+					{
+						string directoryEntry;
+						try
+						{
+							string directoryEntry = FileIO::readDirectory (directory,
+								&detDirectoryEntryType);
+                
+							if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+								continue;
+
+							{
+								string segmentPathNameToBeRemoved =
+									m3u8DirectoryPathName + "/" + directoryEntry;
+
+								chrono::system_clock::time_point fileLastModification =
+									FileIO::getFileTime (segmentPathNameToBeRemoved);
+								chrono::system_clock::time_point now = chrono::system_clock::now();
+
+								long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+								if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
+										> liveProxyChunkRetentionInSeconds)
+								{
+									bool exceptionInCaseOfError = false;
+									_logger->info(__FILEREF__ + "Remove"
+										+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+									FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+								}
+							}
+						}
+						catch(DirectoryListFinished e)
+						{
+							scanDirectoryFinished = true;
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "listing directory failed"
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "listing directory failed"
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+
+					FileIO::closeDirectory (directory);
+				}
+                catch(...)
+                {
+					_logger->error(__FILEREF__ + "clean LiveProxy files failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+                }
+            }
+            
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+            
+			{
+				_logger->error(__FILEREF__ + "LiveProxy media file completed unexpected"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", encodingFinished: " + to_string(encodingFinished)
+                    + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    + ", killedByUser: " + to_string(killedByUser)
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+				);
+			}
+		}
+		catch(MaxConcurrentJobsReached e)
+		{
+            string errorMessage = string("MaxConcurrentJobsReached")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+                + ", e.what(): " + e.what()
+                ;
+            _logger->warn(__FILEREF__ + errorMessage);
+
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// is finished or not. This task will come back by the MMS system
+            throw e;
+        }
+        catch (curlpp::LogicError& e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+            
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+            // throw e;
+        }
+        catch (curlpp::RuntimeError& e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+            // throw e;
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+            // throw e;
+        }
+        catch (exception e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+            // throw e;
+        }
+	}
+
+    return killedByUser;
+}
+
+void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 {
     try
     {

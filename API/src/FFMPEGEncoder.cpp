@@ -861,6 +861,105 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+    else if (method == "liveProxy")
+    {
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+        
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (!encoding->_running)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+				+ ", " + NoEncodingAvailable().what();
+            
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            // throw runtime_error(noEncodingAvailableMessage);
+            return;
+        }
+        
+        try
+        {            
+            selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
+
+            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+            );
+            thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedEncoding, encodingJobKey, requestBody);
+            liveProxyThread.detach();
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
+            
+            _logger->error(__FILEREF__ + "liveProxyThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "liveProxyThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
     else if (method == "videoSpeed")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -3721,6 +3820,248 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 	return utcCurrentRecordedFileLastModificationTime;
 }
 
+void FFMPEGEncoder::liveProxy(
+	// FCGX_Request& request,
+	shared_ptr<Encoding> encoding,
+	int64_t encodingJobKey,
+	string requestBody)
+{
+    string api = "liveProxy";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value liveProxyMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &liveProxyMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		int64_t ingestionJobKey = liveProxyMetadata.get("ingestionJobKey", -1).asInt64();
+
+		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
+		string outputType = liveProxyMetadata.get("outputType", -1).asString();
+		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", -1).asInt();
+		string m3u8FilePathName = liveProxyMetadata.get("m3u8FilePathName", -1).asString();
+
+		size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
+        if (m3u8FilePathIndex == string::npos)
+        {
+            string errorMessage = string("m3u8FilePathName not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", m3u8FilePathName: " + m3u8FilePathName
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+
+		if (!FileIO::directoryExisting(m3u8DirectoryPathName))
+		{
+			bool noErrorIfExists = true;
+			bool recursive = true;
+
+			_logger->info(__FILEREF__ + "Creating directory (if needed)"
+				+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+			);
+			FileIO::createDirectory(m3u8DirectoryPathName,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		}
+		else
+		{
+			// clean directory removing files
+
+			FileIO::DirectoryEntryType_t detDirectoryEntryType;
+			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+				m3u8DirectoryPathName + "/");
+
+			bool scanDirectoryFinished = false;
+			while (!scanDirectoryFinished)
+			{
+				string directoryEntry;
+				try
+				{
+					string directoryEntry = FileIO::readDirectory (directory,
+						&detDirectoryEntryType);
+
+					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+						continue;
+
+					{
+						bool exceptionInCaseOfError = false;
+
+						string segmentPathNameToBeRemoved =                                                   
+							m3u8DirectoryPathName + "/" + directoryEntry;                                     
+						_logger->info(__FILEREF__ + "Remove"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+						FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+					}
+				}
+				catch(DirectoryListFinished e)
+				{
+					scanDirectoryFinished = true;
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					scanDirectoryFinished = true;
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					scanDirectoryFinished = true;
+
+					// throw e;
+				}
+			}
+
+			FileIO::closeDirectory (directory);
+		}
+
+		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+        encoding->_ffmpeg->liveProxyByHLS(
+				ingestionJobKey,
+				encodingJobKey,
+				liveURL,
+				segmentDurationInSeconds,
+				m3u8FilePathName,
+				&(encoding->_childPid));
+
+        encoding->_running = false;
+        encoding->_childPid = 0;
+        
+        _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHLS finished"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", m3u8FilePathName: " + m3u8FilePathName
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
+    }
+    catch(runtime_error e)
+    {
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+
 void FFMPEGEncoder::videoSpeed(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
@@ -3730,9 +4071,9 @@ void FFMPEGEncoder::videoSpeed(
     string api = "videoSpeed";
 
     _logger->info(__FILEREF__ + "Received " + api
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", requestBody: " + requestBody
+	);
 
     try
     {

@@ -3,6 +3,7 @@
 export CatraMMS_PATH=/opt/catramms
 
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
+oneHourInMinutes=60
 twelveHoursInMinutes=720
 oneDayInMinutes=1440
 twoDaysInMinutes=2880
@@ -82,6 +83,14 @@ else
 		fi
 
 		commandToBeEecuted="find /var/catramms/logs/nginx -mmin +$twoDaysInMinutes -type d -exec rm -rv {} +"
+		timeoutValue="1h"
+	elif [ $commandIndex -eq 13 ]
+	then
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository-free/* -mmin +$oneHourInMinutes -type f -delete"
+		timeoutValue="1h"
+	elif [ $commandIndex -eq 14 ]
+	then
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository-free/* -empty -mmin +$oneHourInMinutes -type d -delete"
 		timeoutValue="1h"
 	else
 		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
