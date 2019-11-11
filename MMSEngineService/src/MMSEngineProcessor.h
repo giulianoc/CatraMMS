@@ -182,7 +182,7 @@ private:
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
-        Json::Value callbackMedatada);
+        Json::Value callbackMedatada, int maxRetries);
 
     void localCopyContentTask(
         int64_t ingestionJobKey,

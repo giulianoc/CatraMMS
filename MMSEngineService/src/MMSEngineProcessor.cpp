@@ -7377,6 +7377,7 @@ void MMSEngineProcessor::httpCallbackTask(
         string httpURLParameters;
         string httpMethod;
         long callbackTimeoutInSeconds;
+		int maxRetries;
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
             string field = "Protocol";
@@ -7476,6 +7477,21 @@ void MMSEngineProcessor::httpCallbackTask(
             {
                 httpHeadersRoot = parametersRoot[field];
             }
+
+            field = "MaxRetries";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+				maxRetries = 2;
+            }
+            else
+			{
+                maxRetries = parametersRoot.get(field, 3).asInt();
+				if (maxRetries == 0)
+					maxRetries = 2;
+			}
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", maxRetries: " + to_string(maxRetries)
+            );
         }
 
         Json::Value callbackMedatada;
@@ -7668,7 +7684,7 @@ void MMSEngineProcessor::httpCallbackTask(
         thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
             _processorsThreadsNumber, ingestionJobKey, httpProtocol, httpHostName, 
             httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeoutInSeconds,
-            httpHeadersRoot, callbackMedatada);
+            httpHeadersRoot, callbackMedatada, maxRetries);
         httpCallbackThread.detach();
     }
     catch(runtime_error e)
@@ -16945,25 +16961,40 @@ void MMSEngineProcessor::userHttpCallbackThread(
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
-        Json::Value callbackMedatada
+        Json::Value callbackMedatada, int maxRetries
         )
 {
-    string userURL;
-    string sResponse;
+	int currentRetries = 0;
+	bool callbackSuccessful = false;
+	string errorMessage;
 
-    try
-    {
-        _logger->info(__FILEREF__ + "userHttpCallbackThread"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", httpProtocol: " + httpProtocol
-            + ", httpHostName: " + httpHostName
-            + ", httpPort: " + to_string(httpPort)
-            + ", httpURI: " + httpURI
-        );
+	while (!callbackSuccessful && currentRetries < maxRetries)
+	{
+		callbackSuccessful = true;
+		errorMessage = "";
+		currentRetries++;
 
-        userURL = httpProtocol
+		string userURL;
+		string sResponse;
+
+		try
+		{
+			userURL		= "";
+			sResponse	= "";
+
+			_logger->info(__FILEREF__ + "userHttpCallbackThread"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", httpProtocol: " + httpProtocol
+				+ ", httpHostName: " + httpHostName
+				+ ", httpPort: " + to_string(httpPort)
+				+ ", httpURI: " + httpURI
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
+			);
+
+			userURL = httpProtocol
                 + "://"
                 + httpHostName
                 + ":"
@@ -16971,51 +17002,51 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + httpURI
                 + httpURLParameters;
 
-        string data;
-        if (callbackMedatada.type() != Json::nullValue)
-        {
-            Json::StreamWriterBuilder wbuilder;
+			string data;
+			if (callbackMedatada.type() != Json::nullValue)
+			{
+				Json::StreamWriterBuilder wbuilder;
 
-            data = Json::writeString(wbuilder, callbackMedatada);
-        }
+				data = Json::writeString(wbuilder, callbackMedatada);
+			}
 
-        list<string> header;
+			list<string> header;
 
-        if (httpMethod == "POST" && data != "")
-            header.push_back("Content-Type: application/json");
+			if (httpMethod == "POST" && data != "")
+				header.push_back("Content-Type: application/json");
 
-        for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
-        {
-            string userHeader = userHeadersRoot[userHeaderIndex].asString();
+			for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
+			{
+				string userHeader = userHeadersRoot[userHeaderIndex].asString();
 
-            header.push_back(userHeader);
-        }
+				header.push_back(userHeader);
+			}
 
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
 
-        if (data != "")
-        {
-            if (httpMethod == "GET")
-            {
-                if (httpURLParameters == "")
-                    userURL += "?";
-                else
-                    userURL += "&";
-                userURL += ("data=" + curlpp::escape(data));
-            }
-            else    // POST
-            {
-                request.setOpt(new curlpp::options::PostFields(data));
-                request.setOpt(new curlpp::options::PostFieldSize(data.length()));
-            }
-        }
+			if (data != "")
+			{
+				if (httpMethod == "GET")
+				{
+					if (httpURLParameters == "")
+						userURL += "?";
+					else
+						userURL += "&";
+					userURL += ("data=" + curlpp::escape(data));
+				}
+				else    // POST
+				{
+					request.setOpt(new curlpp::options::PostFields(data));
+					request.setOpt(new curlpp::options::PostFieldSize(data.length()));
+				}
+			}
 
-        request.setOpt(new curlpp::options::Url(userURL));
-        request.setOpt(new curlpp::options::Timeout(callbackTimeoutInSeconds));
+			request.setOpt(new curlpp::options::Url(userURL));
+			request.setOpt(new curlpp::options::Timeout(callbackTimeoutInSeconds));
 
-        if (httpProtocol == "https")
-        {
+			if (httpProtocol == "https")
+			{
 //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
 //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
 //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
@@ -17031,56 +17062,56 @@ void MMSEngineProcessor::userHttpCallbackThread(
 //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
 
 
-            // cert is stored PEM coded in file... 
-            // since PEM is default, we needn't set it for PEM 
-            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-            // equest.setOpt(sslCertType);
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				// equest.setOpt(sslCertType);
 
-            // set the cert for client authentication
-            // "testcert.pem"
-            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-            // request.setOpt(sslCert);
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				// request.setOpt(sslCert);
 
-            // sorry, for engine we must set the passphrase
-            //   (if the key has one...)
-            // const char *pPassphrase = NULL;
-            // if(pPassphrase)
-            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				// if(pPassphrase)
+				//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
 
-            // if we use a key stored in a crypto engine,
-            //   we must set the key type to "ENG"
-            // pKeyType  = "PEM";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
 
-            // set the private key (file or ID in engine)
-            // pKeyName  = "testkey.pem";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
 
-            // set the file with the certs vaildating the server
-            // *pCACertFile = "cacert.pem";
-            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
 
-            // disconnect if we can't validate server's cert
-            bool bSslVerifyPeer = false;
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-            request.setOpt(sslVerifyPeer);
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
 
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-            request.setOpt(sslVerifyHost);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
 
-            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
-        }
-        request.setOpt(new curlpp::options::HttpHeader(header));
+			}
+			request.setOpt(new curlpp::options::HttpHeader(header));
 
-        ostringstream response;
-        request.setOpt(new curlpp::options::WriteStream(&response));
+			ostringstream response;
+			request.setOpt(new curlpp::options::WriteStream(&response));
 
-        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "Calling user callback"
+			_logger->info(__FILEREF__ + "Calling user callback"
                 + ", userURL: " + userURL
                 + ", httpProtocol: " + httpProtocol
                 + ", httpHostName: " + httpHostName
@@ -17089,59 +17120,241 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + ", httpURLParameters: " + httpURLParameters
                 + ", httpProtocol: " + httpProtocol
                 + ", data: " + data
-        );
-        request.perform();
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
+			);
+			request.perform();
 
-        sResponse = response.str();
-        _logger->info(__FILEREF__ + "Called user callback"
+			sResponse = response.str();
+			_logger->info(__FILEREF__ + "Called user callback"
                 + ", userURL: " + userURL
                 + ", data: " + data
                 + ", sResponse: " + sResponse
-        );        
+				+ ", currentRetries: " + to_string(currentRetries)
+				+ ", maxRetries: " + to_string(maxRetries)
+			);        
 
-		long responseCode = curlpp::infos::ResponseCode::get(request);
-		if (responseCode != 200)
-		{
-			string errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
-                + ", userURL: " + userURL
-				+ ", responseCode: " + to_string(responseCode)
-                + ", data: " + data
-				+ ", sResponse: " + sResponse
-			;
-			_logger->error(errorMessage);
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode != 200)
+			{
+				string errorMessage = __FILEREF__ + "User callback failed (wrong responseCode)"
+					+ ", userURL: " + userURL
+					+ ", responseCode: " + to_string(responseCode)
+					+ ", data: " + data
+					+ ", sResponse: " + sResponse
+					+ ", currentRetries: " + to_string(currentRetries)
+					+ ", maxRetries: " + to_string(maxRetries)
+				;
+				_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
-		}
+				throw runtime_error(errorMessage);
+			}
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_TaskSuccess"
-            + ", errorMessage: " + ""
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			/*
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+			);                            
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
                 "" // errorMessage
-        );
-    }
-    catch (curlpp::LogicError & e) 
-    {
-        _logger->error(__FILEREF__ + "User Callback URL failed (LogicError)"
-            + ", userURL: " + userURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        );
+			);
+			*/
+		}
+		catch (curlpp::LogicError & e) 
+		{
+			_logger->error(__FILEREF__ + "User Callback URL failed (LogicError)"
+				+ ", userURL: " + userURL
+				+ ", exception: " + e.what()
+				+ ", sResponse: " + sResponse
+			);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
+			callbackSuccessful = false;
+			errorMessage = e.what();
+
+			/*
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + e.what()
+			);
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+					e.what());
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+				);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
+			}
+
+			return;
+			*/
+		}
+		catch (curlpp::RuntimeError & e) 
+		{
+			_logger->error(__FILEREF__ + "User Callback URL failed (RuntimeError)"
+				+ ", userURL: " + userURL
+				+ ", exception: " + e.what()
+				+ ", sResponse: " + sResponse
+			);
+
+			callbackSuccessful = false;
+			errorMessage = e.what();
+
+			/*
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + e.what()
+			);                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+					e.what());
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+				);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
+			}
+
+			return;
+			*/
+		}
+		catch (runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "User Callback URL failed (runtime_error)"
+				+ ", userURL: " + userURL
+				+ ", exception: " + e.what()
+				+ ", sResponse: " + sResponse
+			);
+
+			callbackSuccessful = false;
+			errorMessage = e.what();
+
+			/*
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + e.what()
+			);                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+					e.what());
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+				);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
+			}
+
+			return;
+			*/
+		}
+		catch (exception e)
+		{
+			_logger->error(__FILEREF__ + "User Callback URL failed (exception)"
+				+ ", userURL: " + userURL
+				+ ", exception: " + e.what()
+				+ ", sResponse: " + sResponse
+			);
+
+			callbackSuccessful = false;
+			errorMessage = e.what();
+
+			/*
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + e.what()
+			);                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+					e.what());
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+				);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
+			}
+
+			return;
+			*/
+		}
+	}
+
+	if (!callbackSuccessful)
+	{
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", IngestionStatus: " + "End_IngestionFailure"
+			+ ", errorMessage: " + errorMessage
+			+ ", currentRetries: " + to_string(currentRetries)
+			+ ", maxRetries: " + to_string(maxRetries)
+		);
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
+				MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+				errorMessage);
 		}
 		catch(runtime_error& re)
 		{
@@ -17149,7 +17362,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", errorMessage: " + re.what()
-				);
+			);
 		}
 		catch(exception ex)
 		{
@@ -17157,128 +17370,23 @@ void MMSEngineProcessor::userHttpCallbackThread(
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", errorMessage: " + ex.what()
-				);
+			);
 		}
-
-        return;
-    }
-    catch (curlpp::RuntimeError & e) 
-    {
-        _logger->error(__FILEREF__ + "User Callback URL failed (RuntimeError)"
-            + ", userURL: " + userURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
-    catch (runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "User Callback URL failed (runtime_error)"
-            + ", userURL: " + userURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
-    catch (exception e)
-    {
-        _logger->error(__FILEREF__ + "User Callback URL failed (exception)"
-            + ", userURL: " + userURL
-            + ", exception: " + e.what()
-            + ", sResponse: " + sResponse
-        );
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
+	}
+	else
+	{
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", IngestionStatus: " + "End_TaskSuccess"
+			+ ", errorMessage: " + ""
+			+ ", currentRetries: " + to_string(currentRetries)
+			+ ", maxRetries: " + to_string(maxRetries)
+		);                            
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
+	}
 }
 
 
