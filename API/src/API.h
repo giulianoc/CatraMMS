@@ -371,7 +371,8 @@ private:
 
     void liveURLConfList(
         FCGX_Request& request,
-        shared_ptr<Workspace> workspace);
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
 
     void addFTPConf(
         FCGX_Request& request,

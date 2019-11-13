@@ -77,6 +77,8 @@ void FFMpeg::encodeContent(
 {
 	int iReturnedStatus = 0;
 
+	_currentApiName = "encodeContent";
+
     try
     {
         bool segmentFileFormat;    
@@ -1200,6 +1202,8 @@ void FFMpeg::overlayImageOnVideo(
 {
 	int iReturnedStatus = 0;
 
+	_currentApiName = "overlayImageOnVideo";
+
     try
     {
         _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
@@ -1583,6 +1587,8 @@ void FFMpeg::overlayTextOnVideo(
 		pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
+
+	_currentApiName = "overlayTextOnVideo";
 
     try
     {
@@ -1992,6 +1998,8 @@ void FFMpeg::videoSpeed(
 		pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
+
+	_currentApiName = "videoSpeed";
 
     try
     {
@@ -2474,6 +2482,8 @@ void FFMpeg::pictureInPicture(
 		pid_t* pChildPid)
 {
 	int iReturnedStatus = 0;
+
+	_currentApiName = "pictureInPicture";
 
     try
     {
@@ -2958,7 +2968,14 @@ int FFMpeg::getEncodingProgress()
     int encodingPercentage;
 
     try
-    {        
+    {
+		if (_currentApiName == "liveProxyByHLS")
+		{
+			// it's a live
+
+			return -1;
+		}
+
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {
             _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
@@ -3046,7 +3063,7 @@ int FFMpeg::getEncodingProgress()
                 
                 encodingPercentage = 100 * currentTimeInMilliSeconds / (_currentDurationInMilliSeconds * (_twoPasses ? 2 : 1));
 
-				if (encodingPercentage > 100)
+				if (encodingPercentage > 100 || encodingPercentage < 0)
 				{
 					_logger->error(__FILEREF__ + "Encoding status too big"
 						+ ", duration: " + duration
@@ -3106,7 +3123,6 @@ int FFMpeg::getEncodingProgress()
 
         throw e;
     }
-
     
     return encodingPercentage;
 }
@@ -3114,6 +3130,8 @@ int FFMpeg::getEncodingProgress()
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 	FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
+	_currentApiName = "getMediaInfo";
+
 	_logger->info(__FILEREF__ + "getMediaInfo"
 			", mmsAssetPathName: " + mmsAssetPathName
 			);
@@ -3740,6 +3758,8 @@ vector<string> FFMpeg::generateFramesToIngest(
         int64_t videoDurationInMilliSeconds,
 		pid_t* pChildPid)
 {
+	_currentApiName = "generateFramesToIngest";
+
     _logger->info(__FILEREF__ + "generateFramesToIngest"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4061,6 +4081,8 @@ void FFMpeg::generateConcatMediaToIngest(
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName)
 {
+	_currentApiName = "generateConcatMediaToIngest";
+
     string concatenationListPathName =
         _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
@@ -4173,6 +4195,8 @@ void FFMpeg::generateCutMediaToIngest(
         int framesNumber,
         string cutMediaPathName)
 {
+
+	_currentApiName = "generateCutMediaToIngest";
 
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
@@ -4297,6 +4321,8 @@ void FFMpeg::generateSlideshowMediaToIngest(
         string slideshowMediaPathName,
 		pid_t* pChildPid)
 {
+	_currentApiName = "generateSlideshowMediaToIngest";
+
 	int iReturnedStatus = 0;
 
     string slideshowListPathName =
@@ -4500,6 +4526,7 @@ void FFMpeg::extractTrackMediaToIngest(
         vector<pair<string,int>>& tracksToBeExtracted,
         string extractTrackMediaPathName)
 {
+	_currentApiName = "extractTrackMediaToIngest";
 
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
@@ -4622,6 +4649,8 @@ void FFMpeg::liveRecorder(
         string outputFileFormat,
 		pid_t* pChildPid)
 {
+	_currentApiName = "liveRecorder";
+
 #ifdef __EXECUTE__
 	string ffmpegExecuteCommand;
 #else
@@ -5019,6 +5048,8 @@ void FFMpeg::liveProxyByHLS(
 	chrono::system_clock::time_point endFfmpegCommand;
 	time_t utcNow;
 
+	_currentApiName = "liveProxyByHLS";
+
 	string m3u8DirectoryPathName;
     try
     {
@@ -5249,6 +5280,8 @@ void FFMpeg::changeFileFormat(
 	string destinationPathName)
 {
 	string ffmpegExecuteCommand;
+
+	_currentApiName = "changeFileFormat";
 
     try
     {

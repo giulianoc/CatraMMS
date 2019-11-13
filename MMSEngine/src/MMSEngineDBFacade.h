@@ -1671,20 +1671,24 @@ public:
     int64_t addLiveURLConf(
         int64_t workspaceKey,
         string label,
-        string liveURL);
+        string liveURL,
+		string deliveryURL);
 
     void modifyLiveURLConf(
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string liveURL);
+        string liveURL,
+		string deliveryURL);
 
     void removeLiveURLConf(
         int64_t workspaceKey,
         int64_t confKey);
 
     Json::Value getLiveURLConfList (
-        int64_t workspaceKey);
+        int64_t workspaceKey, int64_t liveURLKey,
+		int start, int rows,
+		string label, string labelOrder);
 
     string getLiveURLByConfigurationLabel(
         int64_t workspaceKey, string liveURLConfigurationLabel);

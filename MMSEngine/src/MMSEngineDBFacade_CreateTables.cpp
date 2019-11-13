@@ -1409,6 +1409,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (128) NOT NULL,"
                     "liveURL					VARCHAR (512) NOT NULL,"
+                    "deliveryURL				VARCHAR (512) NULL,"
                     "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

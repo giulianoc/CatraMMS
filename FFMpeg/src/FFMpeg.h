@@ -236,6 +236,8 @@ private:
     string          _outputFfmpegPathFileName;
     bool            _currentlyAtSecondPass;
     
+	string			_currentApiName;
+
     int64_t         _currentDurationInMilliSeconds;
     string          _currentMMSSourceAssetPathName;
     string          _currentStagingEncodedAssetPathName;

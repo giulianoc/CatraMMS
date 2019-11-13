@@ -1178,7 +1178,8 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
 int64_t MMSEngineDBFacade::addLiveURLConf(
     int64_t workspaceKey,
     string label,
-    string liveURL)
+    string liveURL,
+	string deliveryURL)
 {
     string      lastSQLCommand;
     int64_t     confKey;
@@ -1194,14 +1195,18 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL) values ("
-                "?, ?, ?)";
+                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL, deliveryURL) values ("
+                "?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, liveURL);
+			if (deliveryURL == "")
+				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, deliveryURL);
 
             preparedStatement->executeUpdate();
 
@@ -1280,7 +1285,8 @@ void MMSEngineDBFacade::modifyLiveURLConf(
     int64_t confKey,
     int64_t workspaceKey,
     string label,
-    string liveURL)
+    string liveURL,
+	string deliveryURL)
 {
     string      lastSQLCommand;
     
@@ -1295,12 +1301,17 @@ void MMSEngineDBFacade::modifyLiveURLConf(
         
         {
             lastSQLCommand = 
-                "update MMS_Conf_LiveURL set label = ?, liveURL = ? where confKey = ? and workspaceKey = ?";
+                "update MMS_Conf_LiveURL set label = ?, liveURL = ?, deliveryURL = ? "
+				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, liveURL);
+			if (deliveryURL == "")
+				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, deliveryURL);
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -1490,7 +1501,9 @@ void MMSEngineDBFacade::removeLiveURLConf(
 }
 
 Json::Value MMSEngineDBFacade::getLiveURLConfList (
-        int64_t workspaceKey
+	int64_t workspaceKey, int64_t liveURLKey,
+	int start, int rows,
+	string label, string labelOrder	// "" or "asc" or "desc"
 )
 {
     string      lastSQLCommand;
@@ -1504,6 +1517,11 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
         
         _logger->info(__FILEREF__ + "getLiveURLConfList"
             + ", workspaceKey: " + to_string(workspaceKey)
+            + ", liveURLKey: " + to_string(liveURLKey)
+            + ", start: " + to_string(start)
+            + ", rows: " + to_string(rows)
+            + ", label: " + label
+            + ", labelOrder: " + labelOrder
         );
         
         conn = _connectionPool->borrow();	
@@ -1513,18 +1531,50 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 
         {
             Json::Value requestParametersRoot;
+
+			{
+				field = "workspaceKey";
+				requestParametersRoot[field] = workspaceKey;
+			}
             
-            {
-                field = "workspaceKey";
-                requestParametersRoot[field] = workspaceKey;
-            }
+            if (liveURLKey != -1)
+			{
+				field = "liveURLKey";
+				requestParametersRoot[field] = liveURLKey;
+			}
             
+			{
+				field = "start";
+				requestParametersRoot[field] = start;
+			}
+            
+			{
+				field = "rows";
+				requestParametersRoot[field] = rows;
+			}
+            
+            if (label != "")
+			{
+				field = "label";
+				requestParametersRoot[field] = label;
+			}
+            
+            if (labelOrder != "")
+			{
+				field = "labelOrder";
+				requestParametersRoot[field] = labelOrder;
+			}
+
             field = "requestParameters";
             liveURLConfListRoot[field] = requestParametersRoot;
         }
         
         string sqlWhere = string ("where workspaceKey = ? ");
-        
+        if (liveURLKey != -1)
+			sqlWhere += ("and confKey = ? ");
+        if (label != "")
+            sqlWhere += ("and label like ? ");
+
         Json::Value responseRoot;
         {
             lastSQLCommand = 
@@ -1534,6 +1584,10 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (liveURLKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
+            if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (!resultSet->next())
             {
@@ -1549,14 +1603,28 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
         }
 
         Json::Value liveURLRoot(Json::arrayValue);
-        {                    
+        {
+			string orderByCondition;
+			if (labelOrder == "")
+				orderByCondition = " ";
+			else
+				orderByCondition = "order by label " + labelOrder + " ";
+
             lastSQLCommand = 
-                string ("select confKey, label, liveURL from MMS_Conf_LiveURL ") 
-                + sqlWhere;
+                string ("select confKey, label, liveURL, deliveryURL from MMS_Conf_LiveURL ") 
+                + sqlWhere
+				+ orderByCondition
+				+ "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (liveURLKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
+            if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
@@ -1570,6 +1638,12 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 
                 field = "liveURL";
                 liveURLConfRoot[field] = static_cast<string>(resultSet->getString("liveURL"));
+
+                field = "deliveryURL";
+				if (resultSet->isNull("deliveryURL"))
+					liveURLConfRoot[field] = Json::nullValue;
+				else
+					liveURLConfRoot[field] = static_cast<string>(resultSet->getString("deliveryURL"));
 
                 liveURLRoot.append(liveURLConfRoot);
             }

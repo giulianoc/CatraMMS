@@ -14,17 +14,17 @@
 /*
 #include <fstream>
 #include <sstream>
+#include "catralibraries/Convert.h"
+#include "catralibraries/LdapWrapper.h"
+#include "Validator.h"
+#include "EMailSender.h"
+*/
 #include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
-#include "catralibraries/Convert.h"
-#include "catralibraries/LdapWrapper.h"
-#include "Validator.h"
-#include "EMailSender.h"
-*/
 #include "API.h"
 
 
@@ -945,6 +945,7 @@ void API::addLiveURLConf(
     {
         string label;
         string liveURL;
+        string deliveryURL;
         
         try
         {
@@ -993,6 +994,12 @@ void API::addLiveURLConf(
                 throw runtime_error(errorMessage);
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "DeliveryURL";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
+            }
         }
         catch(runtime_error e)
         {
@@ -1018,7 +1025,7 @@ void API::addLiveURLConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
-                workspace->_workspaceKey, label, liveURL);
+                workspace->_workspaceKey, label, liveURL, deliveryURL);
 
             sResponse = (
                     string("{ ") 
@@ -1094,6 +1101,7 @@ void API::modifyLiveURLConf(
     {
         string label;
         string liveURL;
+        string deliveryURL;
         
         try
         {
@@ -1142,6 +1150,12 @@ void API::modifyLiveURLConf(
                 throw runtime_error(errorMessage);
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "DeliveryURL";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
+            }    
         }
         catch(runtime_error e)
         {
@@ -1180,7 +1194,7 @@ void API::modifyLiveURLConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyLiveURLConf(
-                confKey, workspace->_workspaceKey, label, liveURL);
+                confKey, workspace->_workspaceKey, label, liveURL, deliveryURL);
 
             sResponse = (
                     string("{ ") 
@@ -1328,7 +1342,8 @@ void API::removeLiveURLConf(
 
 void API::liveURLConfList(
         FCGX_Request& request,
-        shared_ptr<Workspace> workspace)
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters)
 {
     string api = "liveURLConfList";
 
@@ -1337,10 +1352,79 @@ void API::liveURLConfList(
 
     try
     {
+		int64_t liveURLKey = -1;
+		auto liveURLKeyIt = queryParameters.find("liveURLKey");
+		if (liveURLKeyIt != queryParameters.end() && liveURLKeyIt->second != "")
+		{
+			liveURLKey = stoll(liveURLKeyIt->second);
+			if (liveURLKey == 0)
+				liveURLKey = -1;
+		}
+
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+		{
+			start = stoll(startIt->second);
+		}
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+				rows = _maxPageSize;
+		}
+
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && labelIt->second != "")
+		{
+			label = labelIt->second;
+
+			string labelDecoded = curlpp::unescape(label);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
+
+			/*
+			curl = curl_easy_init();                                                                    
+			if(curl)                                                                                          
+			{                                                                                                 
+				int outLength;                                                                                
+				char *decoded = curl_easy_unescape(curl,                                                      
+				title.c_str(), title.length(), &outLength);                                           
+				if(decoded)                                                                                   
+				{                                                                                             
+					string sDecoded = decoded;                                                                
+					curl_free(decoded);                                                                       
+                                                                                                              
+					// still there is the '+' char                                                            
+					string plus = "\\+";                                                                      
+					string plusDecoded = " ";                                                                 
+					title = regex_replace(sDecoded, regex(plus), plusDecoded);                                
+				}                                                                                             
+			}                                                                                                 
+			*/                     
+		}
+
+		string labelOrder;
+		auto labelOrderIt = queryParameters.find("labelOrder");
+		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
+		{
+			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
+				labelOrder = labelOrderIt->second;
+			else
+				_logger->warn(__FILEREF__ + "liveURLList: 'labelOrder' parameter is unknown"
+					+ ", labelOrder: " + labelOrderIt->second);
+		}
+
         {
             
             Json::Value liveURLConfListRoot = _mmsEngineDBFacade->getLiveURLConfList(
-                    workspace->_workspaceKey);
+                    workspace->_workspaceKey, liveURLKey, start, rows, label, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, liveURLConfListRoot);

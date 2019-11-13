@@ -919,7 +919,7 @@ void API::manageRequestAndResponse(
     }
     else if (method == "liveURLConfList")
     {
-        liveURLConfList(request, workspace);
+        liveURLConfList(request, workspace, queryParameters);
     }
     else if (method == "addFTPConf")
     {
