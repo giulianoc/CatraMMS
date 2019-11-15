@@ -281,6 +281,21 @@ void MMSEngineProcessor::operator ()()
 							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 						);
             
+						/* 2019-11-15: this message and the next one "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+						 *	are causing a file system full.
+						 *	For this reason I added a sleep	
+						*/
+						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
+								+ "just more logs and file system full because of logs "
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
+
 						{
 							shared_ptr<LocalAssetIngestionEvent>    cloneLocalAssetIngestionEvent
 								= _multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(
@@ -324,21 +339,6 @@ void MMSEngineProcessor::operator ()()
 								+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 								+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 						}
-
-						/* 2019-11-15: this message and the next one "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-						 *	are causing a file system full.
-						 *	For this reason I added a sleep	
-						*/
-						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
-								+ "just more logs and file system full because of logs "
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
-							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
-						);
-						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
 					}
 					else
 					{
@@ -457,6 +457,21 @@ void MMSEngineProcessor::operator ()()
 							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
 							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 						);
+
+						/* 2019-11-15: this message and the next one "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+						 *	are causing a file system full.
+						 *	For this reason I added a sleep	
+						*/
+						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
+								+ "just more logs and file system full because of logs "
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
             
 						{
 							shared_ptr<MultiLocalAssetIngestionEvent>    cloneMultiLocalAssetIngestionEvent
@@ -488,21 +503,6 @@ void MMSEngineProcessor::operator ()()
 								+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 								+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 						}
-
-						/* 2019-11-15: this message and the next one "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-						 *	are causing a file system full.
-						 *	For this reason I added a sleep	
-						*/
-						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
-								+ "just more logs and file system full because of logs "
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
-							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
-						);
-						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
 					}
 					else
 					{
