@@ -70,7 +70,6 @@ private:
     int                                 _processorIdentifier;
     int                                 _processorThreads;
     int                                 _maxAdditionalProcessorThreads;
-	int									_secondsWaitingWhenThreadsFinished;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;

@@ -49,11 +49,6 @@ MMSEngineProcessor::MMSEngineProcessor(
     _processorThreads =  configuration["mms"].get("processorThreads", 1).asInt();
     _maxAdditionalProcessorThreads =  configuration["mms"].get("maxAdditionalProcessorThreads", 1).asInt();
 
-    _secondsWaitingWhenThreadsFinished  = configuration["mms"].get("secondsWaitingWhenThreadsFinished", 5).asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
-    );
-
     _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
