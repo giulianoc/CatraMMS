@@ -3040,6 +3040,47 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
         );
     }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			+ ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(mmsAssetPathName)
+                || FileIO::directoryExisting(mmsAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "removeDirectory"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "remove"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+                FileIO::remove(mmsAssetPathName);
+            }
+        }
+
+        throw e;
+    }
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"

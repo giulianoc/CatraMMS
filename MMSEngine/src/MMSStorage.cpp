@@ -11,225 +11,240 @@ MMSStorage::MMSStorage(
         shared_ptr<spdlog::logger> logger) 
 {
 
-    _logger             = logger;
-    _mmsEngineDBFacade  = mmsEngineDBFacade;
+	try
+	{
+		_logger             = logger;
+		_mmsEngineDBFacade  = mmsEngineDBFacade;
 
-    _hostName = System::getHostName();
+		_hostName = System::getHostName();
 
-    _storage = configuration["storage"].get("path", "XXX").asString();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", storage->path: " + _storage
-    );
-    if (_storage.back() != '/')
-        _storage.push_back('/');
+		_storage = configuration["storage"].get("path", "XXX").asString();
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", storage->path: " + _storage
+		);
+		if (_storage.back() != '/')
+			_storage.push_back('/');
 
-    _freeSpaceToLeaveInEachPartitionInMB = configuration["storage"].get("freeSpaceToLeaveInEachPartitionInMB", 5).asInt();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
-    );
+		_freeSpaceToLeaveInEachPartitionInMB = configuration["storage"].get("freeSpaceToLeaveInEachPartitionInMB", 5).asInt();
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
+		);
 
-    _ingestionRootRepository = _storage + "IngestionRepository/users/";
-    _mmsRootRepository = _storage + "MMSRepository/";
-    _downloadRootRepository = _storage + "DownloadRepository/";
-    _streamingRootRepository = _storage + "StreamingRepository/";
+		_ingestionRootRepository = _storage + "IngestionRepository/users/";
+		_mmsRootRepository = _storage + "MMSRepository/";
+		_downloadRootRepository = _storage + "DownloadRepository/";
+		_streamingRootRepository = _storage + "StreamingRepository/";
 
-    _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
-    _transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
-    _deliveryFreeRootRepository = _storage + "MMSRepository-free/";
+		_stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
+		_transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
+		_deliveryFreeRootRepository = _storage + "MMSRepository-free/";
 
-    string ffmpegArea = _storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
+		string ffmpegArea = _storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
     
-    string nginxArea = _storage + "MMSWorkingAreaRepository/nginx/";
+		string nginxArea = _storage + "MMSWorkingAreaRepository/nginx/";
 
-    _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
+		_profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
 
-    bool noErrorIfExists = true;
-    bool recursive = true;
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _ingestionRootRepository: " + _ingestionRootRepository
-    );
-    FileIO::createDirectory(_ingestionRootRepository,
+		bool noErrorIfExists = true;
+		bool recursive = true;
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _ingestionRootRepository: " + _ingestionRootRepository
+		);
+		FileIO::createDirectory(_ingestionRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _mmsRootRepository: " + _mmsRootRepository
-    );
-    FileIO::createDirectory(_mmsRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _mmsRootRepository: " + _mmsRootRepository
+		);
+		FileIO::createDirectory(_mmsRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    // create MMS_0000 in case it does not exist (first running of MMS)
-    {
-        string MMS_0000Path = _mmsRootRepository + "MMS_0000";
+		// create MMS_0000 in case it does not exist (first running of MMS)
+		{
+			string MMS_0000Path = _mmsRootRepository + "MMS_0000";
 
 
-        _logger->info(__FILEREF__ + "Creating directory (if needed)"
-            + ", MMS_0000 Path: " + MMS_0000Path
-        );
-        FileIO::createDirectory(MMS_0000Path,
+			_logger->info(__FILEREF__ + "Creating directory (if needed)"
+				+ ", MMS_0000 Path: " + MMS_0000Path
+			);
+			FileIO::createDirectory(MMS_0000Path,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-    }
+		}
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _downloadRootRepository: " + _downloadRootRepository
-    );
-    FileIO::createDirectory(_downloadRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _downloadRootRepository: " + _downloadRootRepository
+		);
+		FileIO::createDirectory(_downloadRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _streamingRootRepository: " + _streamingRootRepository
-    );
-    FileIO::createDirectory(_streamingRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _streamingRootRepository: " + _streamingRootRepository
+		);
+		FileIO::createDirectory(_streamingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _profilesRootRepository: " + _profilesRootRepository
-    );
-    FileIO::createDirectory(_profilesRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _profilesRootRepository: " + _profilesRootRepository
+		);
+		FileIO::createDirectory(_profilesRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _stagingRootRepository: " + _stagingRootRepository
-    );
-    FileIO::createDirectory(_stagingRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _stagingRootRepository: " + _stagingRootRepository
+		);
+		FileIO::createDirectory(_stagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _transcoderStagingRootRepository: " + _transcoderStagingRootRepository
-    );
-    FileIO::createDirectory(_transcoderStagingRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _transcoderStagingRootRepository: " + _transcoderStagingRootRepository
+		);
+		FileIO::createDirectory(_transcoderStagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _deliveryFreeRootRepository: " + _deliveryFreeRootRepository
-    );
-    FileIO::createDirectory(_deliveryFreeRootRepository,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _deliveryFreeRootRepository: " + _deliveryFreeRootRepository
+		);
+		FileIO::createDirectory(_deliveryFreeRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", ffmpegArea: " + ffmpegArea
-    );
-    FileIO::createDirectory(ffmpegArea,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", ffmpegArea: " + ffmpegArea
+		);
+		FileIO::createDirectory(ffmpegArea,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", nginxArea: " + nginxArea
-    );
-    FileIO::createDirectory(nginxArea,
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", nginxArea: " + nginxArea
+		);
+		FileIO::createDirectory(nginxArea,
             S_IRUSR | S_IWUSR | S_IXUSR 
             | S_IRGRP | S_IWGRP | S_IXGRP
             | S_IROTH | S_IWOTH | S_IXOTH, 
             noErrorIfExists, recursive);
 
-    // Partitions staff
-    {
-        char pMMSPartitionName [64];
+		// Partitions staff
+		{
+			char pMMSPartitionName [64];
 
 
-        lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+			lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-        unsigned long ulMMSPartitionsNumber = 0;
-        bool mmsAvailablePartitions = true;
+			unsigned long ulMMSPartitionsNumber = 0;
+			bool mmsAvailablePartitions = true;
 
-        _ulCurrentMMSPartitionIndex = 0;
+			_ulCurrentMMSPartitionIndex = 0;
 
-        // inizializzare PartitionInfos
-        while (mmsAvailablePartitions) 
-        {
-			string partitionPathName(_mmsRootRepository);
-			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber++);
-			partitionPathName.append(pMMSPartitionName);
-
-			PartitionInfo	partitionInfo;
-
-			partitionInfo._partitionPathName = partitionPathName;
-
-			if (!FileIO::directoryExisting(partitionPathName))
+			// inizializzare PartitionInfos
+			while (mmsAvailablePartitions) 
 			{
-				mmsAvailablePartitions = false;
+				string partitionPathName(_mmsRootRepository);
+				sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber++);
+				partitionPathName.append(pMMSPartitionName);
 
-				continue;
-			}
+				PartitionInfo	partitionInfo;
 
-			string partitionInfoPathName = partitionPathName;
+				partitionInfo._partitionPathName = partitionPathName;
 
-			partitionInfoPathName.append("/partitionInfo.json");
-			_logger->info(__FILEREF__ + "Looking for the Partition info file"
-				+ ", partitionInfoPathName: " + partitionInfoPathName
-			);
-			if (FileIO::fileExisting(partitionInfoPathName))
-			{
-				/*
-				* In case of a partition where only a subset of it is dedicated to MMS,
-				* we cannot use getFileSystemInfo because it will return info about the entire partition.
-				* So this conf file will tell us
-				*	- the max size of this storage to be used
-				*	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
-				*		calculate the usage of any directory/files
-				* Sample of file:
+				if (!FileIO::directoryExisting(partitionPathName))
+				{
+					mmsAvailablePartitions = false;
+
+					continue;
+				}
+
+				string partitionInfoPathName = partitionPathName;
+
+				partitionInfoPathName.append("/partitionInfo.json");
+				_logger->info(__FILEREF__ + "Looking for the Partition info file"
+					+ ", partitionInfoPathName: " + partitionInfoPathName
+				);
+				if (FileIO::fileExisting(partitionInfoPathName))
+				{
+					/*
+					* In case of a partition where only a subset of it is dedicated to MMS,
+					* we cannot use getFileSystemInfo because it will return info about the entire partition.
+					* So this conf file will tell us
+					*	- the max size of this storage to be used
+					*	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
+					*		calculate the usage of any directory/files
+					* Sample of file:
 					{
 						"partitionUsageType": "getDirectoryUsage",
 						"maxStorageUsageInKB": 1500000000
 					}
-				*/
-				Json::Value partitionInfoJson;
+					*/
+					Json::Value partitionInfoJson;
 
-				try
-				{
-					ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
-					partitionInfoFile >> partitionInfoJson;
-
-					// getFileSystemInfo (default and more performant) or getDirectoryUsage
-					string field = "partitionUsageType";
-					if (!_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
-						partitionInfo._partitionUsageType = "getFileSystemInfo";
-					else
+					try
 					{
-						partitionInfo._partitionUsageType	= partitionInfoJson.get(field, "").asString();
-						if (partitionInfo._partitionUsageType != "getDirectoryUsage")
+						ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+						partitionInfoFile >> partitionInfoJson;
+
+						// getFileSystemInfo (default and more performant) or getDirectoryUsage
+						string field = "partitionUsageType";
+						if (!_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
 							partitionInfo._partitionUsageType = "getFileSystemInfo";
+						else
+						{
+							partitionInfo._partitionUsageType	= partitionInfoJson.get(field, "").asString();
+							if (partitionInfo._partitionUsageType != "getDirectoryUsage")
+								partitionInfo._partitionUsageType = "getFileSystemInfo";
+						}
+
+						field = "maxStorageUsageInKB";
+						if (_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
+							partitionInfo._maxStorageUsageInKB       = partitionInfoJson.get(field, -1).asInt64();
+						else
+							partitionInfo._maxStorageUsageInKB       = -1;
 					}
-
-					field = "maxStorageUsageInKB";
-					if (_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
-						partitionInfo._maxStorageUsageInKB       = partitionInfoJson.get(field, -1).asInt64();
-					else
-						partitionInfo._maxStorageUsageInKB       = -1;
+					catch(...)
+					{
+						_logger->error(__FILEREF__ + "wrong json partition info format"
+							+ ", partitionInfoPathName: " + partitionInfoPathName
+						);
+					}
 				}
-				catch(...)
+				else
 				{
-					_logger->error(__FILEREF__ + "wrong json partition info format"
-						+ ", partitionInfoPathName: " + partitionInfoPathName
-					);
+					partitionInfo._partitionUsageType		= "getFileSystemInfo";
+					partitionInfo._maxStorageUsageInKB		= -1;
 				}
+
+				refreshPartitionFreeSizes(partitionInfo);
+
+				_mmsPartitionsInfo.push_back(partitionInfo);
 			}
-			else
+
+			if (_mmsPartitionsInfo.size() == 0)
 			{
-				partitionInfo._partitionUsageType		= "getFileSystemInfo";
-				partitionInfo._maxStorageUsageInKB		= -1;
+				_logger->error(__FILEREF__ + "No partition available");
+
+				throw runtime_error("No MMS partition found");
 			}
-
-			refreshPartitionFreeSizes(partitionInfo);
-
-			_mmsPartitionsInfo.push_back(partitionInfo);
 		}
-
-        if (_mmsPartitionsInfo.size() == 0)
-		{
-			_logger->error(__FILEREF__ + "No partition available");
-
-            throw runtime_error("No MMS partition found");
-        }
-    }
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", e.what(): " + e.what()
+		);
+	}
 }
 
 MMSStorage::~MMSStorage(void) {
@@ -1865,7 +1880,18 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 
 		if (FileIO::directoryExisting(workspacePathName))
 		{
-			ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+			try
+			{
+				ullDirectoryUsageInBytes = FileIO::getDirectorySizeInBytes(workspacePathName);
+			}
+			catch(runtime_error e)
+			{
+				ullDirectoryUsageInBytes		= 0;
+
+				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+					+ ", e.what(): " + e.what()
+				);
+			}
 
 			ullWorkspaceStorageUsageInBytes += ullDirectoryUsageInBytes;
 		}
@@ -1887,7 +1913,22 @@ void MMSStorage::refreshPartitionsFreeSizes()
 		ulMMSPartitionIndex < _mmsPartitionsInfo.size();
 		ulMMSPartitionIndex++) 
 	{
-		refreshPartitionFreeSizes(_mmsPartitionsInfo.at(ulMMSPartitionIndex)); 
+		try
+		{
+			refreshPartitionFreeSizes(_mmsPartitionsInfo.at(ulMMSPartitionIndex)); 
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "refreshPartitionFreeSizes failed"
+				+ ", e.what(): " + e.what()
+			);
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "refreshPartitionFreeSizes failed"
+				+ ", e.what(): " + e.what()
+			);
+		}
 	}
 }
 
@@ -1917,7 +1958,18 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 		{
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-			usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			try
+			{
+				usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			}
+			catch(runtime_error e)
+			{
+				usedInBytes		= 0;
+
+				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+					+ ", e.what(): " + e.what()
+				);
+			}
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
@@ -1946,7 +1998,18 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 		{
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-			usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			try
+			{
+				usedInBytes = FileIO::getDirectorySizeInBytes(partitionInfo._partitionPathName);
+			}
+			catch(runtime_error e)
+			{
+				usedInBytes		= 0;
+
+				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+					+ ", e.what(): " + e.what()
+				);
+			}
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
