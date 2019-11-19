@@ -945,8 +945,13 @@ void API::addLiveURLConf(
     {
         string label;
         string liveURL;
+        string description;
+        string channelName;
+        string channelRegion;
+        string channelCountry;
         string deliveryURL;
-        
+        Json::Value liveURLData;
+
         try
         {
             Json::Value requestBodyRoot;
@@ -995,10 +1000,32 @@ void API::addLiveURLConf(
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
 
+            field = "Description";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				description = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelName";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelName = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelRegion";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelCountry";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
+
             field = "DeliveryURL";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
 				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
+            }
+
+            field = "LiveURLData";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+				liveURLData = requestBodyRoot[field];
             }
         }
         catch(runtime_error e)
@@ -1025,7 +1052,9 @@ void API::addLiveURLConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
-                workspace->_workspaceKey, label, liveURL, deliveryURL);
+                workspace->_workspaceKey, label, liveURL, description,
+				channelName, channelRegion, channelCountry, deliveryURL,
+				liveURLData);
 
             sResponse = (
                     string("{ ") 
@@ -1101,7 +1130,12 @@ void API::modifyLiveURLConf(
     {
         string label;
         string liveURL;
+        string description;
+        string channelName;
+        string channelRegion;
+        string channelCountry;
         string deliveryURL;
+        Json::Value liveURLData;
         
         try
         {
@@ -1151,11 +1185,33 @@ void API::modifyLiveURLConf(
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
 
+            field = "Description";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				description = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelName";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelName = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelRegion";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "ChannelCountry";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
+
             field = "DeliveryURL";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
 				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
             }    
+
+            field = "LiveURLData";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+				liveURLData = requestBodyRoot[field];
+            }
         }
         catch(runtime_error e)
         {
@@ -1194,7 +1250,9 @@ void API::modifyLiveURLConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyLiveURLConf(
-                confKey, workspace->_workspaceKey, label, liveURL, deliveryURL);
+                confKey, workspace->_workspaceKey, label, liveURL, description,
+				channelName, channelRegion, channelCountry, deliveryURL,
+				liveURLData);
 
             sResponse = (
                     string("{ ") 
@@ -1410,6 +1468,58 @@ void API::liveURLConfList(
 			*/                     
 		}
 
+		string liveURL;
+		auto liveURLIt = queryParameters.find("liveURL");
+		if (liveURLIt != queryParameters.end() && liveURLIt->second != "")
+		{
+			liveURL = liveURLIt->second;
+
+			string liveURLDecoded = curlpp::unescape(liveURL);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			liveURL = regex_replace(liveURLDecoded, regex(plus), plusDecoded);
+		}
+
+		string channelName;
+		auto channelNameIt = queryParameters.find("channelName");
+		if (channelNameIt != queryParameters.end() && channelNameIt->second != "")
+		{
+			channelName = channelNameIt->second;
+
+			string channelNameDecoded = curlpp::unescape(channelName);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			channelName = regex_replace(channelNameDecoded, regex(plus), plusDecoded);
+		}
+
+		string channelRegion;
+		auto channelRegionIt = queryParameters.find("channelRegion");
+		if (channelRegionIt != queryParameters.end() && channelRegionIt->second != "")
+		{
+			channelRegion = channelRegionIt->second;
+
+			string channelRegionDecoded = curlpp::unescape(channelRegion);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			channelRegion = regex_replace(channelRegionDecoded, regex(plus), plusDecoded);
+		}
+
+		string channelCountry;
+		auto channelCountryIt = queryParameters.find("channelCountry");
+		if (channelCountryIt != queryParameters.end() && channelCountryIt->second != "")
+		{
+			channelCountry = channelCountryIt->second;
+
+			string channelCountryDecoded = curlpp::unescape(channelCountry);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			channelCountry = regex_replace(channelCountryDecoded, regex(plus), plusDecoded);
+		}
+
 		string labelOrder;
 		auto labelOrderIt = queryParameters.find("labelOrder");
 		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
@@ -1424,7 +1534,9 @@ void API::liveURLConfList(
         {
             
             Json::Value liveURLConfListRoot = _mmsEngineDBFacade->getLiveURLConfList(
-                    workspace->_workspaceKey, liveURLKey, start, rows, label, labelOrder);
+                    workspace->_workspaceKey, liveURLKey, start, rows, label, 
+					liveURL, channelName, channelRegion, channelCountry,
+					labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, liveURLConfListRoot);

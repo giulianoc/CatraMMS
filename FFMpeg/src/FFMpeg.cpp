@@ -4642,7 +4642,7 @@ void FFMpeg::liveRecorder(
         int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
-        string liveURL,
+        string liveURL, string userAgent,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
@@ -4760,6 +4760,7 @@ void FFMpeg::liveRecorder(
 	#ifdef __EXECUTE__
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
+			+ (userAgent == "" ? "" : "-user_agent " + userAgent + " ")
 			+ "-i " + liveURL + " "
 			+ "-t " + to_string(utcRecordingPeriodEnd - utcNow) + " "
 			+ "-c:v copy "
@@ -4787,6 +4788,11 @@ void FFMpeg::liveRecorder(
 
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
+		if (userAgent != "")
+		{
+			ffmpegArgumentList.push_back("-user_agent");
+			ffmpegArgumentList.push_back(userAgent);
+		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-t");
@@ -5035,7 +5041,7 @@ void FFMpeg::liveRecorder(
 void FFMpeg::liveProxyByHLS(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	string liveURL,
+	string liveURL, string userAgent,
 	int segmentDurationInSeconds,
 	string m3u8FilePathName,
 	pid_t* pChildPid)
@@ -5108,6 +5114,12 @@ void FFMpeg::liveProxyByHLS(
 		//		as fast as possible. This option will slow down the reading of the input(s)
 		//		to the native frame rate of the input(s). It is useful for real-time output
 		//		(e.g. live streaming).
+		// -hls_flags append_list: Append new segments into the end of old segment list
+		//		and remove the #EXT-X-ENDLIST from the old segment list
+		// -hls_time seconds: Set the target segment length in seconds. Segment will be cut on the next key frame
+		//		after this time has passed.
+		// -hls_list_size size: Set the maximum number of playlist entries. If set to 0 the list file
+		//		will contain all the segments. Default value is 5.
 		ffmpegArgumentList.push_back("-re");
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);

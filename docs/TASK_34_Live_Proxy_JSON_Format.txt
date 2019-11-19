@@ -14,7 +14,10 @@
 		"OutputType": "HLS"
 
 		// optional, Default: 10
-		"SegmentDurationInSeconds": 10
+		"SegmentDurationInSeconds": 10,
+
+		// optional: user agent to be used when the URL is called
+		"UserAgent": ""
 	}
 }
 

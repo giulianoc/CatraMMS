@@ -192,7 +192,7 @@ public:
         int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
-        string liveURL,
+        string liveURL, string userAgent,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
@@ -202,7 +202,7 @@ public:
 	void liveProxyByHLS(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		string liveURL,
+		string liveURL, string userAgent,
 		int segmentDurationInSeconds,
 		string m3u8FilePathName,
 		pid_t* pChildPid);

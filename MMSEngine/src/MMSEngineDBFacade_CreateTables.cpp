@@ -20,6 +20,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
 
+		bool jsonTypeSupported;
+        try
+        {
+            jsonTypeSupported = isJsonTypeSupported(statement);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
         try
         {
             // This table has to be present before the connection pool is created
@@ -940,8 +958,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            bool jsonTypeSupported = isJsonTypeSupported(statement);
-            
             string userDataDefinition;
             if (jsonTypeSupported)
                 userDataDefinition = "JSON";
@@ -1127,8 +1143,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
-            bool jsonTypeSupported = isJsonTypeSupported(statement);
-
             string deliveryInfoDefinition;
             if (jsonTypeSupported)
                 deliveryInfoDefinition = "JSON";
@@ -1403,13 +1417,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
+            string liveURLDataDefinition;
+            if (jsonTypeSupported)
+                liveURLDataDefinition = "JSON";
+            else
+                liveURLDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                
             lastSQLCommand = 
                 "create table if not exists MMS_Conf_LiveURL ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (128) NOT NULL,"
                     "liveURL					VARCHAR (512) NOT NULL,"
+                    "description				VARCHAR (1024) NULL,"
+                    "channelName				VARCHAR (128) NULL,"
+                    "channelRegion				VARCHAR (128) NULL,"
+                    "channelCountry				VARCHAR (128) NULL,"
                     "deliveryURL				VARCHAR (512) NULL,"
+                    "liveURLData				" + liveURLDataDefinition + ","
                     "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

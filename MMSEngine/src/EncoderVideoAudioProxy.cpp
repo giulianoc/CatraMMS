@@ -8957,6 +8957,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool highAvailability;
 	bool main;
 	string liveURL;
+	string userAgent;
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
 	bool autoRenew;
@@ -8971,6 +8972,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
         field = "liveURL";
         liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "userAgent";
+        userAgent = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
@@ -9225,6 +9229,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					Json::Value liveRecorderMedatada;
                 
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveRecorderMedatada["userAgent"] = userAgent;
 					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
 					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
 					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
@@ -9848,12 +9853,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string liveURL;
 	string outputType;
 	int segmentDurationInSeconds;
+	string userAgent;
 	{
         string field = "configurationLabel";
         configurationLabel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "liveURL";
         liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "userAgent";
+        userAgent = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "outputType";
         outputType = _encodingItem->_parametersRoot.get(field, "XXX").asString();
@@ -9894,15 +9903,33 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string body;
 				{
+					string channelDirectoryName;
+
+					channelDirectoryName.resize(configurationLabel.size());
+
+					transform(
+						configurationLabel.begin(),
+						configurationLabel.end(),
+						channelDirectoryName.begin(),
+						[](unsigned char c)
+						{
+							if (isalpha(c))
+								return c;
+							else
+								return (unsigned char) '_';
+						}
+					);
+
 					m3u8FilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
 						_encodingItem->_workspace->_directoryName,
-						configurationLabel, ".m3u8");
+						channelDirectoryName, ".m3u8");
 
 					Json::Value liveProxyMetadata;
 
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
+					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveProxyMetadata["m3u8FilePathName"] = m3u8FilePathName;

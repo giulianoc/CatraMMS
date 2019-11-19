@@ -2504,6 +2504,7 @@ void FFMPEGEncoder::liveRecorder(
 		// _transcoderStagingContentsPath is a transcoder LOCAL path, this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
         liveRecording->_transcoderStagingContentsPath = liveRecorderMedatada.get("transcoderStagingContentsPath", "XXX").asString();
+        string userAgent = liveRecorderMedatada.get("userAgent", "XXX").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
         liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "XXX").asString();
@@ -2540,7 +2541,7 @@ void FFMPEGEncoder::liveRecorder(
 			encodingJobKey,
 			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
-			liveURL,
+			liveURL, userAgent,
 			utcRecordingPeriodStart,
 			utcRecordingPeriodEnd,
 			segmentDurationInSeconds,
@@ -3876,6 +3877,7 @@ void FFMPEGEncoder::liveProxy(
 		int64_t ingestionJobKey = liveProxyMetadata.get("ingestionJobKey", -1).asInt64();
 
 		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
+		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
 		string outputType = liveProxyMetadata.get("outputType", -1).asString();
 		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", -1).asInt();
 		string m3u8FilePathName = liveProxyMetadata.get("m3u8FilePathName", -1).asString();
@@ -3976,7 +3978,7 @@ void FFMPEGEncoder::liveProxy(
         encoding->_ffmpeg->liveProxyByHLS(
 				ingestionJobKey,
 				encodingJobKey,
-				liveURL,
+				liveURL, userAgent,
 				segmentDurationInSeconds,
 				m3u8FilePathName,
 				&(encoding->_childPid));

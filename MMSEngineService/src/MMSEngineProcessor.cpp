@@ -8368,6 +8368,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		string configurationLabel;
+		string userAgent;
         string recordingPeriodStart;
         string recordingPeriodEnd;
         bool autoRenew;
@@ -8386,6 +8387,10 @@ void MMSEngineProcessor::manageLiveRecorder(
                 throw runtime_error(errorMessage);
             }
             configurationLabel = parametersRoot.get(field, "XXX").asString();
+
+            field = "UserAgent";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				userAgent = parametersRoot.get(field, "XXX").asString();
 
             field = "HighAvailability";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -8547,7 +8552,7 @@ void MMSEngineProcessor::manageLiveRecorder(
                 workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			highAvailability, configurationLabel, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+			highAvailability, configurationLabel, liveURL, userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 
 		/*
@@ -8612,6 +8617,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string configurationLabel;
 		string outputType;
 		int segmentDurationInSeconds;
+		string userAgent;
         {
             string field = "ConfigurationLabel";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -8636,13 +8642,17 @@ void MMSEngineProcessor::manageLiveProxy(
 				segmentDurationInSeconds = 10;
 			else
             	segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+
+            field = "UserAgent";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            	userAgent = parametersRoot.get(field, "XXX").asString();
         }
 
         string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
                 workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			configurationLabel, liveURL, outputType, segmentDurationInSeconds,
+			configurationLabel, liveURL, userAgent, outputType, segmentDurationInSeconds,
 			encodingPriority);
 	}
     catch(runtime_error e)

@@ -6734,7 +6734,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	bool highAvailability,
-	string configurationLabel, string liveURL,
+	string configurationLabel, string liveURL, string userAgent,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
 	bool autoRenew,
@@ -6756,6 +6756,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
+            + ", userAgent: " + userAgent
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
             + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
             + ", autoRenew: " + to_string(autoRenew)
@@ -6791,6 +6792,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + ", \"main\": " + to_string(main) + ""
                 + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
+                + ", \"userAgent\": \"" + userAgent + "\""
                 + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
                 + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
                 + ", \"autoRenew\": " + to_string(autoRenew) + ""
@@ -6866,6 +6868,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + ", \"main\": " + to_string(main) + ""
                 + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
+                + ", \"userAgent\": \"" + userAgent + "\""
                 + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
                 + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
                 + ", \"autoRenew\": " + to_string(autoRenew) + ""
@@ -7167,7 +7170,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string configurationLabel, string liveURL,
+	string configurationLabel, string liveURL, string userAgent,
 	string outputType, int segmentDurationInSeconds,
 	EncodingPriority encodingPriority
 )
@@ -7184,6 +7187,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
+            + ", userAgent: " + userAgent
             + ", outputType: " + outputType
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", encodingPriority: " + toString(encodingPriority)
@@ -7211,6 +7215,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 + "{ "
                 + "\"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
+                + ", \"userAgent\": \"" + userAgent + "\""
                 + ", \"outputType\": \"" + outputType + "\""
                 + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)
                 + "} "
