@@ -8616,8 +8616,9 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		string configurationLabel;
 		string outputType;
-		int segmentDurationInSeconds;
-		string userAgent;
+		// string userAgent;
+		int segmentDurationInSeconds = 0;
+		string cdnURL;
         {
             string field = "ConfigurationLabel";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -8637,22 +8638,42 @@ void MMSEngineProcessor::manageLiveProxy(
 			else
             	outputType = parametersRoot.get(field, "XXX").asString();
 
-            field = "SegmentDurationInSeconds";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-				segmentDurationInSeconds = 10;
-			else
-            	segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+			if (outputType == "HLS")
+			{
+				field = "SegmentDurationInSeconds";
+				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					segmentDurationInSeconds = 10;
+				else
+					segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+			}
+			else if (outputType == "CDN77")
+			{
+				field = "CDN_URL";
+				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
 
+					throw runtime_error(errorMessage);
+				}
+
+				cdnURL = parametersRoot.get(field, "XXX").asString();
+			}
+
+			/*
             field = "UserAgent";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             	userAgent = parametersRoot.get(field, "XXX").asString();
+			*/
         }
 
         string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
-                workspace->_workspaceKey, configurationLabel);            
+			workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			configurationLabel, liveURL, userAgent, outputType, segmentDurationInSeconds,
+			liveURL, outputType, segmentDurationInSeconds, cdnURL,
 			encodingPriority);
 	}
     catch(runtime_error e)

@@ -481,7 +481,7 @@ public:
 		string									_transcoder;
 		string									_stagingEncodedAssetPathName;
         // MMS_EncodingJob -> parameters
-        Json::Value                             _parametersRoot;
+        Json::Value                             _encodingParametersRoot;
 
         shared_ptr<Workspace>                   _workspace;
 
@@ -509,7 +509,7 @@ public:
             string                                  _imageRelativePath;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _overlayParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
         
         struct OverlayTextOnVideoData {
@@ -519,7 +519,7 @@ public:
             int64_t                                 _videoDurationInMilliSeconds;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _overlayTextParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
         struct GenerateFramesData {
@@ -529,27 +529,27 @@ public:
             int64_t                                 _videoDurationInMilliSeconds;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _generateFramesParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
         struct SlideShowData {
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _slideShowParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
         struct FaceRecognitionData {
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _faceRecognitionParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
         struct FaceIdentificationData {
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _faceIdentificationParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
 		struct LiveRecorderData {
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_liveRecorderParametersRoot;
+			Json::Value								_ingestedParametersRoot;
 		};
 
         struct VideoSpeedData {
@@ -559,7 +559,7 @@ public:
             int64_t                                 _videoDurationInMilliSeconds;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _videoSpeedParametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
         struct PictureInPictureData {
@@ -574,12 +574,12 @@ public:
             int64_t                                 _overlayVideoDurationInMilliSeconds;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _parametersRoot;
+            Json::Value                             _ingestedParametersRoot;
         };
 
 		struct LiveProxyData {
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_liveProxyParametersRoot;
+			Json::Value								_ingestedParametersRoot;
 		};
 
         shared_ptr<EncodeData>                      _encodeData;
@@ -1487,8 +1487,7 @@ public:
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string configurationLabel, string liveURL, string userAgent,
-		string outputType, int segmentDurationInSeconds,
+		string liveURL, string outputType, int segmentDurationInSeconds, string cdnURL,
 		EncodingPriority encodingPriority);
 
     int addEncoding_VideoSpeed (

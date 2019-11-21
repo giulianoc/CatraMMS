@@ -2969,7 +2969,8 @@ int FFMpeg::getEncodingProgress()
 
     try
     {
-		if (_currentApiName == "liveProxyByHLS")
+		if (_currentApiName == "liveProxyByHLS"
+				|| _currentApiName == "liveProxyByCDN")
 		{
 			// it's a live
 
@@ -5269,6 +5270,144 @@ void FFMpeg::liveProxyByHLS(
 
         	FileIO::closeDirectory (directory);
     	}
+
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+void FFMpeg::liveProxyByCDN(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string liveURL, string userAgent,
+	string cdnURL,
+	pid_t* pChildPid)
+{
+	vector<string> ffmpegArgumentList;
+	ostringstream ffmpegArgumentListStream;
+	int iReturnedStatus = 0;
+	string segmentListPath;
+	chrono::system_clock::time_point startFfmpegCommand;
+	chrono::system_clock::time_point endFfmpegCommand;
+	time_t utcNow;
+
+	_currentApiName = "liveProxyByCDN";
+
+    try
+    {
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey)
+			+ ".liveProxy.log"
+		;
+
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		ffmpegArgumentList.push_back("ffmpeg");
+		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
+		//		as fast as possible. This option will slow down the reading of the input(s)
+		//		to the native frame rate of the input(s). It is useful for real-time output
+		//		(e.g. live streaming).
+		ffmpegArgumentList.push_back("-re");
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(liveURL);
+		ffmpegArgumentList.push_back("-c:v");
+		ffmpegArgumentList.push_back("copy");
+		ffmpegArgumentList.push_back("-c:a");
+		ffmpegArgumentList.push_back("copy");
+
+		// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
+		ffmpegArgumentList.push_back("-f flv");
+		ffmpegArgumentList.push_back(cdnURL);
+
+		if (!ffmpegArgumentList.empty())
+			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+				ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+		_logger->info(__FILEREF__ + "liveProxy: Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		);
+
+		startFfmpegCommand = chrono::system_clock::now();
+
+		bool redirectionStdOutput = true;
+		bool redirectionStdError = true;
+
+		ProcessUtility::forkAndExec (
+			_ffmpegPath + "/ffmpeg",
+			ffmpegArgumentList,
+			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+			pChildPid, &iReturnedStatus);
+		if (iReturnedStatus != 0)
+		{
+			string errorMessage = __FILEREF__ + "liveProxy: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+           ;            
+           _logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+        
+		endFfmpegCommand = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "liveProxy: Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			+ ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+		);
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+			string errorMessage;
+			if (iReturnedStatus == 9)	// 9 means: SIGKILL
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+			else
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();

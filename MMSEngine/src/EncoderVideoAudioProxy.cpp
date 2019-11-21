@@ -1004,10 +1004,10 @@ string EncoderVideoAudioProxy::encodeContentImage()
 
 			{
 				string field = "sourcePhysicalPathKey";
-				sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+				sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
 				field = "encodingProfileKey";
-				encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+				encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 			}
 
 			extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
@@ -1231,10 +1231,10 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
 
     {
         string field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
     int64_t durationInMilliSeconds = -1;
@@ -1769,10 +1769,10 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
     {
         string field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
 	string stagingEncodedAssetPathName;
@@ -2623,10 +2623,10 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 
     {
         string field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
     int64_t durationInMilliSeconds = -1;
@@ -3196,19 +3196,19 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
     string imagePosition_X_InPixel;
     string imagePosition_Y_InPixel;
 
-    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
+    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
         string field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "sourceImagePhysicalPathKey";
-        sourceImagePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourceImagePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "imagePosition_X_InPixel";
-        imagePosition_X_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        imagePosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "imagePosition_Y_InPixel";
-        imagePosition_Y_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        imagePosition_Y_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
     }
     
 	string ffmpegEncoderURL;
@@ -3754,7 +3754,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_overlayImageOnVideoData->_overlayParametersRoot);
+			_encodingItem->_overlayImageOnVideoData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -3975,7 +3975,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
                     _encodingItem->_ingestionJobKey,
                     true, // ingestionRowToBeUpdatedAsSuccess
                     contentType,
-                    _encodingItem->_overlayImageOnVideoData->_overlayParametersRoot,
+                    _encodingItem->_overlayImageOnVideoData->_ingestedParametersRoot,
                     relativePathToBeUsed,
                     encodedFileName,
                     mmsPartitionIndexUsed,
@@ -4076,40 +4076,40 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
     string boxColor;
     int boxPercentageOpacity;
 
-    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
+    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
     {
         string field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "text";
-        text = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        text = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "textPosition_X_InPixel";
-        textPosition_X_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        textPosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "textPosition_Y_InPixel";
-        textPosition_Y_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        textPosition_Y_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "fontType";
-        fontType = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        fontType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "fontSize";
-        fontSize = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        fontSize = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "fontColor";
-        fontColor = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        fontColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "textPercentageOpacity";
-        textPercentageOpacity = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        textPercentageOpacity = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "boxEnable";
-        boxEnable = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        boxEnable = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "boxColor";
-        boxColor = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        boxColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "boxPercentageOpacity";
-        boxPercentageOpacity = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        boxPercentageOpacity = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
     }
     
 	string ffmpegEncoderURL;
@@ -4668,7 +4668,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot);
+			_encodingItem->_overlayTextOnVideoData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -4888,7 +4888,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
                         _encodingItem->_ingestionJobKey,
                         true, // ingestionRowToBeUpdatedAsSuccess
                         contentType,
-                        _encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot,
+                        _encodingItem->_overlayTextOnVideoData->_ingestedParametersRoot,
                         relativePathToBeUsed,
                         encodedFileName,
                         mmsPartitionIndexUsed,
@@ -4981,16 +4981,16 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
     string videoSpeedType;
     int videoSpeedSize;
 
-    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
+    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
     {
         string field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "videoSpeedType";
-        videoSpeedType = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        videoSpeedType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "videoSpeedSize";
-        videoSpeedSize = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        videoSpeedSize = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
     }
     
 	string ffmpegEncoderURL;
@@ -5542,7 +5542,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_videoSpeedData->_videoSpeedParametersRoot);
+			_encodingItem->_videoSpeedData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -5674,28 +5674,28 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
     string overlay_Height_InPixel;
 	bool soundOfMain;
 
-    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
+    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
         string field = "mainVideoPhysicalPathKey";
-        mainVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        mainVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "overlayVideoPhysicalPathKey";
-        overlayVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        overlayVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "overlayPosition_X_InPixel";
-        overlayPosition_X_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        overlayPosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "overlayPosition_Y_InPixel";
-        overlayPosition_Y_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        overlayPosition_Y_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "overlay_Width_InPixel";
-        overlay_Width_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        overlay_Width_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "overlay_Height_InPixel";
-        overlay_Height_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        overlay_Height_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "soundOfMain";
-        soundOfMain = _encodingItem->_parametersRoot.get(field, true).asBool();
+        soundOfMain = _encodingItem->_encodingParametersRoot.get(field, true).asBool();
     }
 
 	string ffmpegEncoderURL;
@@ -6249,7 +6249,7 @@ void EncoderVideoAudioProxy::processPictureInPicture(string stagingEncodedAssetP
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_pictureInPictureData->_parametersRoot);
+			_encodingItem->_pictureInPictureData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -6386,40 +6386,40 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 	bool killedByUser = false;
 
-    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
+    // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
         string field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "imageDirectory";
-        imageDirectory = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        imageDirectory = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "startTimeInSeconds";
-        startTimeInSeconds = _encodingItem->_parametersRoot.get(field, 0).asDouble();
+        startTimeInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asDouble();
 
         field = "maxFramesNumber";
-        maxFramesNumber = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        maxFramesNumber = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "videoFilter";
-        videoFilter = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        videoFilter = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "periodInSeconds";
-        periodInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        periodInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "mjpeg";
-        mjpeg = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        mjpeg = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "imageWidth";
-        imageWidth = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        imageWidth = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "imageHeight";
-        imageHeight = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        imageHeight = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "ingestionJobKey";
-        ingestionJobKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        ingestionJobKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "videoDurationInMilliSeconds";
-        videoDurationInMilliSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        videoDurationInMilliSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
 	string ffmpegEncoderURL;
@@ -6888,7 +6888,7 @@ void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
     multiLocalAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
     multiLocalAssetIngestionEvent->setEncodingJobKey(_encodingItem->_encodingJobKey);
     multiLocalAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
-    multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_generateFramesData->_generateFramesParametersRoot);
+    multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_generateFramesData->_ingestedParametersRoot);
 
     shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
     _multiEventsSet->addEvent(event);
@@ -6971,13 +6971,13 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
     {
         string field = "durationOfEachSlideInSeconds";
-        durationOfEachSlideInSeconds = _encodingItem->_parametersRoot.get(field, 0).asDouble();
+        durationOfEachSlideInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asDouble();
 
         field = "outputFrameRate";
-        outputFrameRate = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        outputFrameRate = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "sourcePhysicalPaths";
-        sourcePhysicalPathsRoot = _encodingItem->_parametersRoot[field];
+        sourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
     }
     
 	string ffmpegEncoderURL;
@@ -7439,7 +7439,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     {
         int outputFrameRate;  
         string field = "outputFrameRate";
-        outputFrameRate = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        outputFrameRate = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
     
         size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
         if (extensionIndex == string::npos)
@@ -7474,7 +7474,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_slideShowData->_slideShowParametersRoot);
+			_encodingItem->_slideShowData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -7565,23 +7565,23 @@ string EncoderVideoAudioProxy::faceRecognition()
 	bool oneFramePerSecond;
 	{
 		string field = "sourceMediaItemKey";
-		sourceMediaItemKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+		sourceMediaItemKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
 		field = "faceRecognitionCascadeName";
-		faceRecognitionCascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
+		faceRecognitionCascadeName = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 
 		field = "sourcePhysicalPath";
-		sourcePhysicalPath = _encodingItem->_parametersRoot.get(field, 0).asString();
+		sourcePhysicalPath = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 
 		// VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace
 		field = "faceRecognitionOutput";
-		faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
+		faceRecognitionOutput = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 
 		field = "initialFramesNumberToBeSkipped";
-		initialFramesNumberToBeSkipped = _encodingItem->_parametersRoot.get(field, 0).asInt();
+		initialFramesNumberToBeSkipped = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
 		field = "oneFramePerSecond";
-		oneFramePerSecond = _encodingItem->_parametersRoot.get(field, 0).asBool();
+		oneFramePerSecond = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 	}
     
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
@@ -7945,7 +7945,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 						string mediaMetaDataContent = generateMediaMetadataToIngest(
 							_encodingItem->_ingestionJobKey,
 							fileFormat, faceOfVideoMediaItemKey,
-							_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+							_encodingItem->_faceRecognitionData->_ingestedParametersRoot);
     
 						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
 							->getFreeEvent<LocalAssetIngestionEvent>(
@@ -8006,7 +8006,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				int64_t faceOfVideoMediaItemKey = sourceMediaItemKey;
 				string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 					fileFormat, faceOfVideoMediaItemKey,
-					_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+					_encodingItem->_faceRecognitionData->_ingestedParametersRoot);
   
 				shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
 					->getFreeEvent<LocalAssetIngestionEvent>(
@@ -8052,7 +8052,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 			int64_t faceOfVideoMediaItemKey = sourceMediaItemKey;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 				fileFormat, faceOfVideoMediaItemKey,
-				_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+				_encodingItem->_faceRecognitionData->_ingestedParametersRoot);
   
 			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
 				->getFreeEvent<LocalAssetIngestionEvent>(
@@ -8162,7 +8162,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 		{
 			// VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
 			string field = "faceRecognitionOutput";
-			faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
+			faceRecognitionOutput = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 		}
 
 		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel"
@@ -8208,7 +8208,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+			_encodingItem->_faceRecognitionData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(
@@ -8285,7 +8285,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		vector<string> deepLearnedModelTags;
 
 		string field = "deepLearnedModelTags";
-		Json::Value deepLearnedModelTagsRoot = _encodingItem->_parametersRoot[field];
+		Json::Value deepLearnedModelTagsRoot = _encodingItem->_encodingParametersRoot[field];
 		for (int deepLearnedModelTagsIndex = 0;
 				deepLearnedModelTagsIndex < deepLearnedModelTagsRoot.size();
 				deepLearnedModelTagsIndex++)
@@ -8428,10 +8428,10 @@ string EncoderVideoAudioProxy::faceIdentification()
 	string sourcePhysicalPath;
 	{
 		string field = "faceIdentificationCascadeName";
-		faceIdentificationCascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
+		faceIdentificationCascadeName = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 
 		field = "sourcePhysicalPath";
-		sourcePhysicalPath = _encodingItem->_parametersRoot.get(field, 0).asString();
+		sourcePhysicalPath = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 	}
     
 	string cascadePathName = _computerVisionCascadePath + "/"
@@ -8810,7 +8810,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
-			_encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot);
+			_encodingItem->_faceIdentificationData->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
 			_multiEventsSet->getEventsFactory() ->getFreeEvent<LocalAssetIngestionEvent>(
@@ -8879,19 +8879,19 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 	bool autoRenew;
 	{
         string field = "autoRenew";
-        autoRenew = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        autoRenew = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "utcRecordingPeriodStart";
-        utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
 		utcRecordingPeriodStart -= segmentDurationInSeconds;
 
         field = "utcRecordingPeriodEnd";
-        utcRecordingPeriodEnd = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 	}
 
 	time_t utcNow;
@@ -8965,31 +8965,31 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	string outputFileFormat;
 	{
         string field = "highAvailability";
-        highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        highAvailability = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "main";
-        main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        main = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "liveURL";
-        liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        liveURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "userAgent";
-        userAgent = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        userAgent = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "utcRecordingPeriodStart";
-        utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "utcRecordingPeriodEnd";
-        utcRecordingPeriodEnd = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "autoRenew";
-        autoRenew = _encodingItem->_parametersRoot.get(field, 0).asBool();
+        autoRenew = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
+        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
 
         field = "outputFileFormat";
-        outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        outputFileFormat = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 	}
 
 	bool killedByUser = false;
@@ -9234,8 +9234,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
 					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
 					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
-					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_parametersRoot;
-					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot;
+					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
+					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_ingestedParametersRoot;
 
 					{
 						Json::StreamWriterBuilder wbuilder;
@@ -9601,10 +9601,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					// next update is important because the JSON is used in the getEncodingProgress method 
 					{
 						string field = "utcRecordingPeriodStart";
-						_encodingItem->_parametersRoot[field] = utcRecordingPeriodStart;
+						_encodingItem->_encodingParametersRoot[field] = utcRecordingPeriodStart;
 
 						field = "utcRecordingPeriodEnd";
-						_encodingItem->_parametersRoot[field] = utcRecordingPeriodEnd;
+						_encodingItem->_encodingParametersRoot[field] = utcRecordingPeriodEnd;
 					}
 				}
 			}
@@ -9724,10 +9724,10 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 		bool highAvailability;
 		{
 			string field = "main";
-			main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+			main = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
 			field = "highAvailability";
-			highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
+			highAvailability = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 		}
 
 		/*
@@ -9854,21 +9854,27 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string outputType;
 	int segmentDurationInSeconds;
 	string userAgent;
+	string cdnURL;
 	{
-        string field = "configurationLabel";
-        configurationLabel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        string field = "ConfigurationLabel";
+        // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
+        configurationLabel = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
 
         field = "liveURL";
-        liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        liveURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
-        field = "userAgent";
-        userAgent = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        field = "UserAgent";
+		if (_mmsEngineDBFacade->isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
+			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
 
         field = "outputType";
-        outputType = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, "XXX").asInt();
+        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, "XXX").asInt();
+
+        field = "cdnURL";
+        cdnURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 	}
 
 	bool killedByUser = false;
@@ -9903,26 +9909,29 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string body;
 				{
-					string channelDirectoryName;
+					if (outputType == "HLS")
+					{
+						string channelDirectoryName;
 
-					channelDirectoryName.resize(configurationLabel.size());
+						channelDirectoryName.resize(configurationLabel.size());
 
-					transform(
-						configurationLabel.begin(),
-						configurationLabel.end(),
-						channelDirectoryName.begin(),
-						[](unsigned char c)
-						{
-							if (isalpha(c))
-								return c;
-							else
-								return (unsigned char) '_';
-						}
-					);
+						transform(
+							configurationLabel.begin(),
+							configurationLabel.end(),
+							channelDirectoryName.begin(),
+							[](unsigned char c)
+							{
+								if (isalpha(c))
+									return c;
+								else
+									return (unsigned char) '_';
+							}
+						);
 
-					m3u8FilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
-						_encodingItem->_workspace->_directoryName,
-						channelDirectoryName, ".m3u8");
+						m3u8FilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
+							_encodingItem->_workspace->_directoryName,
+							channelDirectoryName, ".m3u8");
+					}
 
 					Json::Value liveProxyMetadata;
 
@@ -9932,11 +9941,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
+					liveProxyMetadata["cdnURL"] = cdnURL;
 					liveProxyMetadata["m3u8FilePathName"] = m3u8FilePathName;
 
 					{
 						Json::StreamWriterBuilder wbuilder;
-                    
+
 						body = Json::writeString(wbuilder, liveProxyMetadata);
 					}
 				}
@@ -10167,6 +10177,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, m3u8FilePathName);
 
 			string m3u8DirectoryPathName;
+			if (outputType == "HLS")
 			{
 				size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
 				if (m3u8FilePathIndex == string::npos)
@@ -10250,88 +10261,91 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					}
                 }
 
-				try
+				if (outputType == "HLS")
 				{
-					// clean LiveProxy files from file system
+					try
+					{
+						// clean LiveProxy files from file system
     
-					FileIO::DirectoryEntryType_t detDirectoryEntryType;
-					shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+						FileIO::DirectoryEntryType_t detDirectoryEntryType;
+						shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
 							m3u8DirectoryPathName + "/");
 
-					bool scanDirectoryFinished = false;
-					while (!scanDirectoryFinished)
-					{
-						string directoryEntry;
-						try
+						bool scanDirectoryFinished = false;
+						while (!scanDirectoryFinished)
 						{
-							string directoryEntry = FileIO::readDirectory (directory,
-								&detDirectoryEntryType);
-                
-							if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-								continue;
-
+							string directoryEntry;
+							try
 							{
-								string segmentPathNameToBeRemoved =
-									m3u8DirectoryPathName + "/" + directoryEntry;
+								string directoryEntry = FileIO::readDirectory (directory,
+									&detDirectoryEntryType);
+                
+								if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+									continue;
 
-								chrono::system_clock::time_point fileLastModification =
-									FileIO::getFileTime (segmentPathNameToBeRemoved);
-								chrono::system_clock::time_point now = chrono::system_clock::now();
-
-								long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
-								if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-										> liveProxyChunkRetentionInSeconds)
 								{
-									bool exceptionInCaseOfError = false;
-									_logger->info(__FILEREF__ + "Remove"
-										+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-									FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+									string segmentPathNameToBeRemoved =
+										m3u8DirectoryPathName + "/" + directoryEntry;
+
+									chrono::system_clock::time_point fileLastModification =
+										FileIO::getFileTime (segmentPathNameToBeRemoved);
+									chrono::system_clock::time_point now = chrono::system_clock::now();
+
+									long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+									if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
+										> liveProxyChunkRetentionInSeconds)
+									{
+										bool exceptionInCaseOfError = false;
+										_logger->info(__FILEREF__ + "Remove"
+											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+										FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+									}
 								}
 							}
-						}
-						catch(DirectoryListFinished e)
-						{
-							scanDirectoryFinished = true;
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = __FILEREF__ + "listing directory failed"
-								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
+							catch(DirectoryListFinished e)
+							{
+								scanDirectoryFinished = true;
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__ + "listing directory failed"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+								_logger->error(errorMessage);
 
-							// throw e;
-						}
-						catch(exception e)
-						{
-							string errorMessage = __FILEREF__ + "listing directory failed"
-								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
+								// throw e;
+							}
+							catch(exception e)
+							{
+								string errorMessage = __FILEREF__ + "listing directory failed"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", e.what(): " + e.what()
+								;
+								_logger->error(errorMessage);
 
-							// throw e;
+								// throw e;
+							}
 						}
+
+						FileIO::closeDirectory (directory);
 					}
-
-					FileIO::closeDirectory (directory);
+					catch(...)
+					{
+						_logger->error(__FILEREF__ + "clean LiveProxy files failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
-                catch(...)
-                {
-					_logger->error(__FILEREF__ + "clean LiveProxy files failed"
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					);
-                }
             }
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-            
+
 			{
 				_logger->error(__FILEREF__ + "LiveProxy media file completed unexpected"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -10438,89 +10452,12 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 {
     try
     {
-		bool main;
-		bool highAvailability;
-		{
-			string field = "main";
-			main = _encodingItem->_parametersRoot.get(field, 0).asBool();
-
-			field = "highAvailability";
-			highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
-		}
-
-		/*
-		_logger->info(__FILEREF__ + "remove"
-			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-		);
-		FileIO::remove(stagingEncodedAssetPathName);
-		*/
-
-		if (main)
-		{
-			// in case of highAvailability, the IngestionJob is not updated to Success until all the
-			// main and backup chunks are managed.
-			// This is to avoid the 'on success' task receives input MIKs that are not validated (and that
-			// will be removed soon)
-			if (highAvailability)
-			{
-				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
-				// So in case this is changed, also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA has to be changed too
-				int toleranceMinutes = 5;
-				int sleepTimeInSeconds = 15;	// main and backup management starts: * * * * * * 15,30,45
-
-				_logger->info(__FILEREF__ + "Waiting the finishing of main and backup chunks management"
-					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				);
-
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				chrono::system_clock::time_point endPoint;
-				bool mainAndBackupChunksManagementCompleted;
-				do
-				{
-					this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
-
-					mainAndBackupChunksManagementCompleted = _mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
-						_encodingItem->_ingestionJobKey);
-					endPoint = chrono::system_clock::now();
-				}
-				while(!mainAndBackupChunksManagementCompleted &&
-					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
-
-				if (mainAndBackupChunksManagementCompleted)
-					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
-						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					);
-				else
-					_logger->warn(__FILEREF__ + "Managing of main and backup chunks NOT completed"
-						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					);
-			}
-
-			{
-				string errorMessage;
-				string processorMMS;
-				MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
-					MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
-				_logger->info(__FILEREF__ + "Update IngestionJob"
-					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-					+ ", errorMessage: " + errorMessage
-					+ ", processorMMS: " + processorMMS
-				);
-				_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
-					errorMessage);
-			}
-		}
-		else
-		{
-			_logger->info(__FILEREF__ + "IngestionJob does not update because it's backup recording"
-				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			);
-		}
+		// This method should never be called because 
+		// the only way for the LiveProxy Task to exit is if killed by User/API
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+        _logger->error(__FILEREF__ + "processLiveProxy failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10533,7 +10470,7 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+        _logger->error(__FILEREF__ + "processLiveProxy failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10591,10 +10528,10 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 			time_t utcRecordingPeriodEnd;
 			{
 				string field = "utcRecordingPeriodStart";
-				utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+				utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
 				field = "utcRecordingPeriodEnd";
-				utcRecordingPeriodEnd = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+				utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 			}
 
 			time_t utcNow;

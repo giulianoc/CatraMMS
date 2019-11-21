@@ -3533,12 +3533,13 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
     }
 
     string field = "OutputType";
+	string liveProxyOutputType;
 	if (isMetadataPresent(parametersRoot, field))
 	{
-		string liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
+		liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN or HLS)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS)"
                 + ", Field: " + field
                 + ", liveProxyOutputType: " + liveProxyOutputType
                 + ", label: " + label
@@ -3546,6 +3547,30 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 			_logger->error(__FILEREF__ + errorMessage);
         
 			throw runtime_error(errorMessage);
+		}
+	}
+
+	if (liveProxyOutputType == "CDN77")
+	{
+		vector<string> mandatoryFields = {
+			"CDN_URL"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 	}
 }
@@ -4272,7 +4297,7 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
 bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
-        "CDN",
+        "CDN77",
         "HLS"
     };
 

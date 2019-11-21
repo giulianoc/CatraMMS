@@ -3880,108 +3880,121 @@ void FFMPEGEncoder::liveProxy(
 		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
 		string outputType = liveProxyMetadata.get("outputType", -1).asString();
 		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", -1).asInt();
+		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
 		string m3u8FilePathName = liveProxyMetadata.get("m3u8FilePathName", -1).asString();
 
-		size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
-        if (m3u8FilePathIndex == string::npos)
-        {
-            string errorMessage = string("m3u8FilePathName not well format")
+		if (outputType == "HLS")
+		{
+			size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
+			if (m3u8FilePathIndex == string::npos)
+			{
+				string errorMessage = string("m3u8FilePathName not well format")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", m3u8FilePathName: " + m3u8FilePathName
                     ;
-            _logger->error(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        string m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+				throw runtime_error(errorMessage);
+			}
+			string m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
 
-		if (!FileIO::directoryExisting(m3u8DirectoryPathName))
-		{
-			bool noErrorIfExists = true;
-			bool recursive = true;
-
-			_logger->info(__FILEREF__ + "Creating directory (if needed)"
-				+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
-			);
-			FileIO::createDirectory(m3u8DirectoryPathName,
-				S_IRUSR | S_IWUSR | S_IXUSR |
-				S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-		}
-		else
-		{
-			// clean directory removing files
-
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-				m3u8DirectoryPathName + "/");
-
-			bool scanDirectoryFinished = false;
-			while (!scanDirectoryFinished)
+			if (!FileIO::directoryExisting(m3u8DirectoryPathName))
 			{
-				string directoryEntry;
-				try
+				bool noErrorIfExists = true;
+				bool recursive = true;
+
+				_logger->info(__FILEREF__ + "Creating directory (if needed)"
+					+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+				);
+				FileIO::createDirectory(m3u8DirectoryPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			}
+			else
+			{
+				// clean directory removing files
+
+				FileIO::DirectoryEntryType_t detDirectoryEntryType;
+				shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+					m3u8DirectoryPathName + "/");
+
+				bool scanDirectoryFinished = false;
+				while (!scanDirectoryFinished)
 				{
-					string directoryEntry = FileIO::readDirectory (directory,
-						&detDirectoryEntryType);
-
-					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-						continue;
-
+					string directoryEntry;
+					try
 					{
-						bool exceptionInCaseOfError = false;
+						string directoryEntry = FileIO::readDirectory (directory,
+							&detDirectoryEntryType);
 
-						string segmentPathNameToBeRemoved =                                                   
-							m3u8DirectoryPathName + "/" + directoryEntry;                                     
-						_logger->info(__FILEREF__ + "Remove"
+						if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+							continue;
+
+						{
+							bool exceptionInCaseOfError = false;
+
+							string segmentPathNameToBeRemoved =                                                   
+								m3u8DirectoryPathName + "/" + directoryEntry;                                     
+							_logger->info(__FILEREF__ + "Remove"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+							FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+						}
+					}
+					catch(DirectoryListFinished e)
+					{
+						scanDirectoryFinished = true;
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "listing directory failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-						FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						scanDirectoryFinished = true;
+
+						// throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "listing directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						scanDirectoryFinished = true;
+
+						// throw e;
 					}
 				}
-				catch(DirectoryListFinished e)
-				{
-					scanDirectoryFinished = true;
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
 
-					scanDirectoryFinished = true;
-
-					// throw e;
-				}
-				catch(exception e)
-				{
-					string errorMessage = __FILEREF__ + "listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					scanDirectoryFinished = true;
-
-					// throw e;
-				}
+				FileIO::closeDirectory (directory);
 			}
 
-			FileIO::closeDirectory (directory);
-		}
-
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        encoding->_ffmpeg->liveProxyByHLS(
+			// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+			encoding->_ffmpeg->liveProxyByHLS(
 				ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent,
 				segmentDurationInSeconds,
 				m3u8FilePathName,
 				&(encoding->_childPid));
+		}
+		else
+		{
+			encoding->_ffmpeg->liveProxyByCDN(
+				ingestionJobKey,
+				encodingJobKey,
+				liveURL, userAgent,
+				cdnURL,
+				&(encoding->_childPid));
+		}
 
         encoding->_running = false;
         encoding->_childPid = 0;

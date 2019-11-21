@@ -138,7 +138,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     bool parsingSuccessful = reader->parse((encodingItem->_encodingParameters).c_str(),
                             (encodingItem->_encodingParameters).c_str() + (encodingItem->_encodingParameters).size(), 
-                            &(encodingItem->_parametersRoot), &errors);
+                            &(encodingItem->_encodingParametersRoot), &errors);
                     delete reader;
 
                     if (!parsingSuccessful)
@@ -232,10 +232,10 @@ void MMSEngineDBFacade::getEncodingJobs(
                     encodingItem->_encodeData = make_shared<EncodingItem::EncodeData>();
                             
                     string field = "sourcePhysicalPathKey";
-                    int64_t sourcePhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                    int64_t sourcePhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                                         
                     field = "encodingProfileKey";
-                    int64_t encodingProfileKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                    int64_t encodingProfileKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
                     {
                         lastSQLCommand = 
@@ -421,10 +421,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
                         field = "sourceImagePhysicalPathKey";
-                        sourceImagePhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        sourceImagePhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                     }
 
                     int64_t videoMediaItemKey;
@@ -581,7 +581,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(overlayParameters.c_str(),
                                         overlayParameters.c_str() + overlayParameters.size(), 
-                                        &(encodingItem->_overlayImageOnVideoData->_overlayParametersRoot), &errors);
+                                        &(encodingItem->_overlayImageOnVideoData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -652,7 +652,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                     }
 
                     int64_t videoMediaItemKey;
@@ -764,7 +764,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(overlayTextParameters.c_str(),
                                         overlayTextParameters.c_str() + overlayTextParameters.size(), 
-                                        &(encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot), &errors);
+                                        &(encodingItem->_overlayTextOnVideoData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -835,7 +835,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                     }
 
                     int64_t videoMediaItemKey;
@@ -947,7 +947,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(generateFramesParameters.c_str(),
                                         generateFramesParameters.c_str() + generateFramesParameters.size(), 
-                                        &(encodingItem->_generateFramesData->_generateFramesParametersRoot), &errors);
+                                        &(encodingItem->_generateFramesData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1034,7 +1034,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(slideShowParameters.c_str(),
                                         slideShowParameters.c_str() + slideShowParameters.size(), 
-                                        &(encodingItem->_slideShowData->_slideShowParametersRoot), &errors);
+                                        &(encodingItem->_slideShowData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1121,7 +1121,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(faceRecognitionParameters.c_str(),
                                         faceRecognitionParameters.c_str() + faceRecognitionParameters.size(), 
-                                        &(encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot), &errors);
+                                        &(encodingItem->_faceRecognitionData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1213,7 +1213,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(faceIdentificationParameters.c_str(),
                                         faceIdentificationParameters.c_str() + faceIdentificationParameters.size(), 
-                                        &(encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot),
+                                        &(encodingItem->_faceIdentificationData->_ingestedParametersRoot),
 										&errors);
                                 delete reader;
 
@@ -1306,7 +1306,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(liveRecorderParameters.c_str(),
                                         liveRecorderParameters.c_str() + liveRecorderParameters.size(), 
-                                        &(encodingItem->_liveRecorderData->_liveRecorderParametersRoot), &errors);
+                                        &(encodingItem->_liveRecorderData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1377,7 +1377,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                     }
 
                     int64_t videoMediaItemKey;
@@ -1489,7 +1489,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(videoSpeedParameters.c_str(),
                                         videoSpeedParameters.c_str() + videoSpeedParameters.size(), 
-                                        &(encodingItem->_videoSpeedData->_videoSpeedParametersRoot), &errors);
+                                        &(encodingItem->_videoSpeedData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1561,10 +1561,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "mainVideoPhysicalPathKey";
-                        mainVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        mainVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
                         field = "overlayVideoPhysicalPathKey";
-                        overlayVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                        overlayVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
                     }
 
 					{
@@ -1798,7 +1798,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(parameters.c_str(),
                                         parameters.c_str() + parameters.size(), 
-                                        &(encodingItem->_pictureInPictureData->_parametersRoot), &errors);
+                                        &(encodingItem->_pictureInPictureData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -1888,7 +1888,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(liveProxyParameters.c_str(),
                                         liveProxyParameters.c_str() + liveProxyParameters.size(), 
-                                        &(encodingItem->_liveProxyData->_liveProxyParametersRoot), &errors);
+                                        &(encodingItem->_liveProxyData->_ingestedParametersRoot), &errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -7170,8 +7170,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string configurationLabel, string liveURL, string userAgent,
-	string outputType, int segmentDurationInSeconds,
+	string liveURL, string outputType, int segmentDurationInSeconds, string cdnURL,
 	EncodingPriority encodingPriority
 )
 {
@@ -7185,11 +7184,10 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
-            + ", userAgent: " + userAgent
             + ", outputType: " + outputType
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+            + ", cdnURL: " + cdnURL
             + ", encodingPriority: " + toString(encodingPriority)
         );
 
@@ -7213,11 +7211,10 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
         
 			string parameters = string()
                 + "{ "
-                + "\"configurationLabel\": \"" + configurationLabel + "\""
-                + ", \"liveURL\": \"" + liveURL + "\""
-                + ", \"userAgent\": \"" + userAgent + "\""
+                + "\"liveURL\": \"" + liveURL + "\""
                 + ", \"outputType\": \"" + outputType + "\""
                 + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)
+                + ", \"cdnURL\": \"" + cdnURL + "\""
                 + "} "
                 ;
 

@@ -10,11 +10,14 @@
 		// mandatory...
 		"ConfigurationLabel": "",
 
-		// optional, possible values: HLS, CDN. Default: HLS
+		// optional, possible values: HLS, CDN77. Default: HLS
 		"OutputType": "HLS"
 
-		// optional, Default: 10
+		// optional, used only in case of HLS, Default: 10
 		"SegmentDurationInSeconds": 10,
+
+		// mandatory only in case of CDN77
+		"CDN_URL": "...",
 
 		// optional: user agent to be used when the URL is called
 		"UserAgent": ""

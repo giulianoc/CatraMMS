@@ -207,6 +207,13 @@ public:
 		string m3u8FilePathName,
 		pid_t* pChildPid);
 
+	void liveProxyByCDN(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string liveURL, string userAgent,
+		string cdnURL,
+		pid_t* pChildPid);
+
 	void changeFileFormat(
 		int64_t ingestionJobKey,
 		int64_t sourceKey,
