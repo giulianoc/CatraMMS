@@ -8390,7 +8390,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
             field = "UserAgent";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-				userAgent = parametersRoot.get(field, "XXX").asString();
+				userAgent = parametersRoot.get(field, "").asString();
 
             field = "HighAvailability";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))

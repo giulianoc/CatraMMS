@@ -8971,10 +8971,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         main = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "liveURL";
-        liveURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
+        liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "userAgent";
-        userAgent = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
+        userAgent = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
@@ -9865,7 +9865,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
         field = "UserAgent";
 		if (_mmsEngineDBFacade->isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
-			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
+			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
