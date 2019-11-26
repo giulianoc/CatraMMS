@@ -1487,7 +1487,9 @@ public:
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string liveURL, string outputType, int segmentDurationInSeconds, string cdnURL,
+		string configurationLabel, string liveURL,
+		string outputType, int segmentDurationInSeconds, string cdnURL,
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		EncodingPriority encodingPriority);
 
     int addEncoding_VideoSpeed (
@@ -1530,6 +1532,10 @@ public:
     void updateEncodingJobProgress (
         int64_t encodingJobKey,
         int encodingPercentage);
+
+	long updateEncodingJobFailuresNumber (
+        int64_t encodingJobKey,
+        long failuresNumber);
 
     void updateEncodingJobTranscoder (
 		int64_t encodingJobKey,

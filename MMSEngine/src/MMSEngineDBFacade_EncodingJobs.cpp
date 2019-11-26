@@ -3753,6 +3753,154 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     }
 }
 
+// this method is used in case of LiveProxy:
+// - it is always running except when it is killed by User
+// - failuresNumber > 0 means it is failing
+// - failuresNumber == 0 means it is running successful
+long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
+        int64_t encodingJobKey,
+        long failuresNumber)
+{
+    
+    string      lastSQLCommand;
+	long		previousFailuresNumber;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "select failuresNumber from MMS_EncodingJob where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+				previousFailuresNumber = resultSet->getInt("failuresNumber");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        {
+			_logger->info(__FILEREF__ + "EncodingJob update"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", failuresNumber: " + to_string(failuresNumber)
+				);
+            lastSQLCommand = 
+                "update MMS_EncodingJob set failuresNumber = ? where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, failuresNumber);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                // in case it is alyways failing, it will be already 1
+				/*
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", encodingPercentage: " + to_string(encodingPercentage)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+				*/
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+
+	return previousFailuresNumber;
+}
+
 void MMSEngineDBFacade::updateEncodingJobTranscoder (
 	int64_t encodingJobKey,
 	string transcoder,
@@ -6790,9 +6938,11 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + "{ "
                 + "\"highAvailability\": " + to_string(highAvailability) + ""
                 + ", \"main\": " + to_string(main) + ""
+				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
                 + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"userAgent\": \"" + userAgent + "\""
+				// utcRecordingPeriodStart/utcRecordingPeriodEnd is used by the GUI (encodingJobs.java to calculate and display the duration)
                 + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
                 + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
                 + ", \"autoRenew\": " + to_string(autoRenew) + ""
@@ -6866,9 +7016,11 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + "{ "
                 + "\"highAvailability\": " + to_string(highAvailability) + ""
                 + ", \"main\": " + to_string(main) + ""
+				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
                 + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"userAgent\": \"" + userAgent + "\""
+				// utcRecordingPeriodStart/utcRecordingPeriodEnd is used by the GUI (encodingJobs.java to calculate and display the duration)
                 + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
                 + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
                 + ", \"autoRenew\": " + to_string(autoRenew) + ""
@@ -7170,7 +7322,9 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string liveURL, string outputType, int segmentDurationInSeconds, string cdnURL,
+	string configurationLabel, string liveURL,
+	string outputType, int segmentDurationInSeconds, string cdnURL,
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	EncodingPriority encodingPriority
 )
 {
@@ -7184,9 +7338,12 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
             + ", outputType: " + outputType
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+            + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
             + ", cdnURL: " + cdnURL
             + ", encodingPriority: " + toString(encodingPriority)
         );
@@ -7211,9 +7368,13 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
         
 			string parameters = string()
                 + "{ "
-                + "\"liveURL\": \"" + liveURL + "\""
+				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
+                + "\"configurationLabel\": \"" + configurationLabel + "\""
+                + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"outputType\": \"" + outputType + "\""
                 + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)
+                + ", \"maxAttemptsNumberInCaseOfErrors\": " + to_string(maxAttemptsNumberInCaseOfErrors)
+                + ", \"waitingSecondsBetweenAttemptsInCaseOfErrors\": " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
                 + ", \"cdnURL\": \"" + cdnURL + "\""
                 + "} "
                 ;

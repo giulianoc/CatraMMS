@@ -8618,6 +8618,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		string outputType;
 		// string userAgent;
 		int segmentDurationInSeconds = 0;
+		long waitingSecondsBetweenAttemptsInCaseOfErrors;
+		long maxAttemptsNumberInCaseOfErrors;
 		string cdnURL;
         {
             string field = "ConfigurationLabel";
@@ -8662,19 +8664,25 @@ void MMSEngineProcessor::manageLiveProxy(
 				cdnURL = parametersRoot.get(field, "XXX").asString();
 			}
 
-			/*
-            field = "UserAgent";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            	userAgent = parametersRoot.get(field, "XXX").asString();
-			*/
+			field = "MaxAttemptsNumberInCaseOfErrors";
+			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				maxAttemptsNumberInCaseOfErrors = 2;
+			else
+				maxAttemptsNumberInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
+
+			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
+			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 600;
+			else
+				waitingSecondsBetweenAttemptsInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
         }
 
         string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
 			workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			liveURL, outputType, segmentDurationInSeconds, cdnURL,
-			encodingPriority);
+			configurationLabel, liveURL, outputType, segmentDurationInSeconds, cdnURL,
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors, encodingPriority);
 	}
     catch(runtime_error e)
     {

@@ -9853,6 +9853,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string liveURL;
 	string outputType;
 	int segmentDurationInSeconds;
+	long waitingSecondsBetweenAttemptsInCaseOfErrors;
+	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
 	string cdnURL;
 	{
@@ -9871,15 +9873,24 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, "XXX").asInt();
+        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 10).asInt();
+
+        field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+        waitingSecondsBetweenAttemptsInCaseOfErrors = _encodingItem->_encodingParametersRoot.get(field, 600).asInt();
+
+        field = "maxAttemptsNumberInCaseOfErrors";
+        maxAttemptsNumberInCaseOfErrors = _encodingItem->_encodingParametersRoot.get(field, 2).asInt();
 
         field = "cdnURL";
         cdnURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 	}
 
 	bool killedByUser = false;
+	long encodingStatusFailures = 0;
 
-	while (!killedByUser)
+	long currentAttemptsNumberInCaseOfErrors = 0;
+
+	while (!killedByUser && currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 	{
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveProxyURI;
@@ -10196,8 +10207,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
-            int maxEncodingStatusFailures = 10;
-            int encodingStatusFailures = 0;
 			// string lastRecordedAssetFileName;
 
 			// see the comment few lines below (2019-05-03)
@@ -10213,52 +10222,121 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					if (completedWithError)
 					{
+						currentAttemptsNumberInCaseOfErrors++;
+
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
 						_logger->error(errorMessage);
 
+						encodingStatusFailures++;
+
+						// in this scenario encodingFinished is true
+
+						_logger->info(__FILEREF__ + "Start waiting for the next call"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+
+						chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+						chrono::system_clock::time_point now;
+						do
+						{
+							// update EncodingJob failures number to notify the GUI EncodingJob is failing
+							try
+							{
+								_logger->info(__FILEREF__ + "check and update encodingJob FailuresNumber"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+
+								long previousEncodingStatusFailures =
+									_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+										_encodingItem->_encodingJobKey, 
+										encodingStatusFailures);
+								if (previousEncodingStatusFailures < 0)
+								{
+									_logger->info(__FILEREF__ + "LiveProxy Killed by user during waiting loop"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+									);
+
+									// when previousEncodingStatusFailures is < 0 means:
+									// 1. the live proxy is not starting (ffmpeg is generating continuously an error)
+									// 2. User killed the encoding through MMS GUI or API
+									// 3. the kill procedure (in API module) was not able to kill the ffmpeg process,
+									//		because it does not exist the process and set the failuresNumber DB field
+									//		to a negative value in order to communicate with this thread 
+									// 4. This thread, when it finds a negative failuresNumber, knows the encoding
+									//		was killed and exit from the loop
+									encodingFinished = true;
+									killedByUser = true;
+								}
+							}
+							catch(...)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+
+							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+
+							now = chrono::system_clock::now();
+						}
+						while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
+								< chrono::seconds(waitingSecondsBetweenAttemptsInCaseOfErrors)
+								&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
+								&& !killedByUser);
+
 						throw runtime_error(errorMessage);
+					}
+					else
+					{
+						// ffmpeg is running successful, we will make sure currentAttemptsNumberInCaseOfErrors is reset
+						currentAttemptsNumberInCaseOfErrors = 0;
+
+						if (encodingStatusFailures > 0)
+						{
+							try
+							{
+								// update EncodingJob failures number to notify the GUI encodingJob is successful
+								encodingStatusFailures = 0;
+
+								_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+
+								int64_t mediaItemKey = -1;
+								int64_t encodedPhysicalPathKey = -1;
+								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+										_encodingItem->_encodingJobKey, 
+										encodingStatusFailures);
+							}
+							catch(...)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+						}
 					}
                 }
                 catch(...)
                 {
-					encodingStatusFailures++;
-
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
 					);
-
-					/*
-					 2019-05-03: commented because we saw the following scenario:
-						1. getEncodingStatus fails because of HTTP call failure (502 Bad Gateway)
-							Really the live recording is still working into the encoder process
-						2. EncoderVideoAudioProxy reached maxEncodingStatusFailures
-						3. since the recording is not finished yet, this code/method activate a new live recording session
-						Result: we have 2 live recording process into the encoder creating problems
-						To avoid that we will exit from this loop ONLY when we are sure the recoridng is finished
-					 2019-07-02: in case the encoder was shutdown or crashed, the Engine has to activate another
-						Encoder, so we increased maxEncodingStatusFailures to be sure the encoder is not working anymore
-						and, in this case we do a break in order to activate another encoder.
-					*/
-            		if(encodingStatusFailures >= maxEncodingStatusFailures)
-					{
-                        string errorMessage = string("getEncodingStatus too many failures")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    			+ ", encodingFinished: " + to_string(encodingFinished)
-                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
-                                ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-						break;
-                        // throw runtime_error(errorMessage);
-					}
                 }
 
 				if (outputType == "HLS")
@@ -10354,7 +10432,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                    + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
@@ -10386,6 +10463,32 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
             
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
 			// sleep a bit and try again
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
@@ -10402,6 +10505,32 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                 + ", exception: " + e.what()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
 
 			// sleep a bit and try again
 			int sleepTime = 30;
@@ -10420,6 +10549,32 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
 			// sleep a bit and try again
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
@@ -10437,12 +10592,50 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ ", response.str(): " + (responseInitialized ? response.str() : "")
             );
 
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
 			// sleep a bit and try again
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
 
             // throw e;
         }
+	}
+
+	if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
+	{
+		string errorMessage = __FILEREF__ + "Reached the max number of attempts to the URL"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            ;
+		_logger->warn(errorMessage);
+        
+		throw EncoderError();
 	}
 
     return killedByUser;
@@ -10452,8 +10645,10 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 {
     try
     {
-		// This method should never be called because 
-		// the only way for the LiveProxy Task to exit is if killed by User/API
+		// This method is never called because in both the scenarios below an exception
+		// by EncoderVideoAudioProxy::liveProxy is raised:
+		// - transcoding killed by the user 
+		// - The max number of calls to the URL were all done and all failed
     }
     catch(runtime_error e)
     {

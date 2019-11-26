@@ -119,6 +119,11 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
+    _maxLiveProxiesCapability =  _configuration["ffmpeg"].get("maxLiveProxiesCapability", 0).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
+    );
+
     _maxLiveRecordingsCapability =  _configuration["ffmpeg"].get("maxLiveRecordingsCapability", 0).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
@@ -169,6 +174,16 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         encoding->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 
         _encodingsCapability.push_back(encoding);
+    }
+
+    for (int liveProxyIndex = 0; liveProxyIndex < _maxLiveProxiesCapability; liveProxyIndex++)
+    {
+        shared_ptr<LiveProxy>    liveProxy = make_shared<LiveProxy>();
+        liveProxy->_running   = false;
+        liveProxy->_childPid		= 0;
+        liveProxy->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
+
+        _liveProxiesCapability.push_back(liveProxy);
     }
 
     for (int liveRecordingIndex = 0; liveRecordingIndex < _maxLiveRecordingsCapability; liveRecordingIndex++)
@@ -876,22 +891,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(_liveProxyMutex);
 
-        shared_ptr<Encoding>    selectedEncoding;
-        bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        shared_ptr<LiveProxy>    selectedLiveProxy;
+        bool                    liveProxyFound = false;
+        for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
         {
-            if (!encoding->_running)
+            if (!liveProxy->_running)
             {
-                encodingFound = true;
-                selectedEncoding = encoding;
+                liveProxyFound = true;
+                selectedLiveProxy = liveProxy;
                 
                 break;
             }
         }
 
-        if (!encodingFound)
+        if (!liveProxyFound)
         {
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 				+ ", " + NoEncodingAvailable().what();
@@ -906,23 +921,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         try
         {            
-            selectedEncoding->_running = true;
-            selectedEncoding->_childPid = 0;
+            selectedLiveProxy->_running = true;
+            selectedLiveProxy->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating encodeContent thread"
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+            _logger->info(__FILEREF__ + "Creating liveProxy thread"
+                + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedEncoding, encodingJobKey, requestBody);
+            thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedLiveProxy, encodingJobKey, requestBody);
             liveProxyThread.detach();
         }
         catch(exception e)
         {
-            selectedEncoding->_running = false;
-            selectedEncoding->_childPid = 0;
+            selectedLiveProxy->_running = false;
+            selectedLiveProxy->_childPid = 0;
             
             _logger->error(__FILEREF__ + "liveProxyThread failed"
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
             );
@@ -947,7 +962,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "liveProxyThread failed"
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
             );
@@ -1176,6 +1191,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool                    encodingFound = false;
 		shared_ptr<Encoding>    selectedEncoding;
 
+		bool                    liveProxyFound = false;
+		shared_ptr<LiveProxy>	selectedLiveProxy;
+
 		bool                    liveRecordingFound = false;
 		shared_ptr<LiveRecording>    selectedLiveRecording;
 
@@ -1211,16 +1229,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				lock_guard<mutex> locker(_liveRecordingMutex);
+				lock_guard<mutex> locker(_liveProxyMutex);
 
-				for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+				for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
 				{
-					if (liveRecording->_encodingJobKey == encodingJobKey)
+					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
-						liveRecordingFound = true;
-						selectedLiveRecording = liveRecording;
+						liveProxyFound = true;
+						selectedLiveProxy = liveProxy;
                 
 						break;
+					}
+				}
+
+				if (!liveProxyFound)
+				{
+					lock_guard<mutex> locker(_liveRecordingMutex);
+
+					for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+					{
+						if (liveRecording->_encodingJobKey == encodingJobKey)
+						{
+							liveRecordingFound = true;
+							selectedLiveRecording = liveRecording;
+                
+							break;
+						}
 					}
 				}
 			}
@@ -1229,11 +1263,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		_logger->info(__FILEREF__ + "Encoding Status"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", encodingFound: " + to_string(encodingFound)
+				+ ", liveProxyFound: " + to_string(liveProxyFound)
 				+ ", liveRecordingFound: " + to_string(liveRecordingFound)
 				+ ", encodingCompleted: " + to_string(encodingCompleted)
 				);
         string responseBody;
-        if (!encodingFound && !liveRecordingFound && !encodingCompleted)
+        if (!encodingFound && !liveProxyFound && !liveRecordingFound && !encodingCompleted)
         {
 			// it should never happen
             responseBody = string("{ ")
@@ -1272,6 +1307,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
 					+ ", \"killedByUser\": false"
 					+ ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
+					+ "}";
+			else if (liveProxyFound)
+				responseBody = string("{ ")
+					+ "\"encodingJobKey\": " + to_string(selectedLiveProxy->_encodingJobKey)
+					+ ", \"pid\": " + to_string(selectedLiveProxy->_childPid)
+					+ ", \"killedByUser\": false"
+					+ ", \"encodingFinished\": " + (selectedLiveProxy->_running ? "false " : "true ")
 					+ "}";
 			else // if (liveRecording)
 				responseBody = string("{ ")
@@ -1320,6 +1362,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		shared_ptr<Encoding>    selectedEncoding;
 		bool                    encodingFound = false;
 
+		shared_ptr<LiveProxy>	selectedLiveProxy;
+		bool					liveProxyFound = false;
+
 		{
 			lock_guard<mutex> locker(_encodingCompletedMutex);
 
@@ -1346,9 +1391,25 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
+
+			if (!encodingFound)
+			{
+				lock_guard<mutex> locker(_liveProxyMutex);
+
+				for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+				{
+					if (liveProxy->_encodingJobKey == encodingJobKey)
+					{
+						liveProxyFound = true;
+						selectedLiveProxy = liveProxy;
+
+						break;
+					}
+				}
+			}
 		}
 
-        if (!encodingCompleted && !encodingFound)
+        if (!encodingCompleted && !encodingFound && !liveProxyFound)
         {
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 				+ ", " + NoEncodingJobKeyFound().what();
@@ -1398,6 +1459,48 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			string responseBody = string("{ ")
 				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
 				+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+				+ ", \"encodingProgress\": " + to_string(encodingProgress) + " "
+				+ "}";
+
+			sendSuccess(request, 200, responseBody);
+		}
+		else if (liveProxyFound)
+		{
+			int encodingProgress;
+			try
+			{
+				encodingProgress = selectedLiveProxy->_ffmpeg->getEncodingProgress();
+			}
+			catch(FFMpegEncodingStatusNotAvailable e)
+			{
+				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+						;
+				_logger->info(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				// throw e;
+				return;
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+                    ;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				// throw e;
+				return;
+			}
+        
+			string responseBody = string("{ ")
+				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+				+ ", \"pid\": " + to_string(selectedLiveProxy->_childPid)
 				+ ", \"encodingProgress\": " + to_string(encodingProgress) + " "
 				+ "}";
 
@@ -1469,7 +1572,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
+
 		_logger->info(__FILEREF__ + "Received killEncodingJob"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				);
@@ -1486,6 +1589,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				{
 					encodingFound = true;
 					pidToBeKilled = encoding->_childPid;
+               
+					break;
+				}
+			}
+		}
+
+		if (!encodingFound)
+		{
+			lock_guard<mutex> locker(_liveProxyMutex);
+
+			for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+			{
+				if (liveProxy->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = liveProxy->_childPid;
                
 					break;
 				}
@@ -3823,7 +3942,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 
 void FFMPEGEncoder::liveProxy(
 	// FCGX_Request& request,
-	shared_ptr<Encoding> encoding,
+	shared_ptr<LiveProxy> liveProxy,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -3836,7 +3955,7 @@ void FFMPEGEncoder::liveProxy(
 
     try
     {
-        encoding->_encodingJobKey = encodingJobKey;
+        liveProxy->_encodingJobKey = encodingJobKey;
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value liveProxyMetadata;
@@ -3978,26 +4097,26 @@ void FFMPEGEncoder::liveProxy(
 			}
 
 			// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-			encoding->_ffmpeg->liveProxyByHLS(
+			liveProxy->_ffmpeg->liveProxyByHLS(
 				ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent,
 				segmentDurationInSeconds,
 				m3u8FilePathName,
-				&(encoding->_childPid));
+				&(liveProxy->_childPid));
 		}
 		else
 		{
-			encoding->_ffmpeg->liveProxyByCDN(
+			liveProxy->_ffmpeg->liveProxyByCDN(
 				ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent,
 				cdnURL,
-				&(encoding->_childPid));
+				&(liveProxy->_childPid));
 		}
 
-        encoding->_running = false;
-        encoding->_childPid = 0;
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
         
         _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHLS finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4012,8 +4131,8 @@ void FFMPEGEncoder::liveProxy(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
-        encoding->_running = false;
-        encoding->_childPid = 0;
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4026,13 +4145,13 @@ void FFMPEGEncoder::liveProxy(
 
 		bool completedWithError			= false;
 		bool killedByUser				= true;
-		addEncodingCompleted(encoding->_encodingJobKey,
+		addEncodingCompleted(liveProxy->_encodingJobKey,
 				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4054,8 +4173,8 @@ void FFMPEGEncoder::liveProxy(
     }
     catch(exception e)
     {
-        encoding->_running = false;
-        encoding->_childPid = 0;
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)

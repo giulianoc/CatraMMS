@@ -512,6 +512,53 @@ void API::killOrCancelEncodingJob(
 					}
 				}
 			}
+			else if (type == "LiveProxy")
+			{
+				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+				{
+					// In this case we may have 2 scenarios:
+					// 1. process (ffmpeg) is running
+					// 2. process (ffmpeg) fails to run and we have the Task in the loop
+					//		within EncoderVideoAudioProxy trying to make ffmpeg starting calling the Transcoder.
+					//
+					// In case 1, the below killEncodingJob works fine and this is the solution
+					// In case 2, killEncodingJob will fail because there is no ffmpeg process running.
+					//		For this reason we call updateEncodingJobFailuresNumber and set failuresNumber
+					//		to a negative value. This is a 'aggreement' with EncoderVideoAudioProxy making
+					//		the EncoderVideoAudioProxy thread to terminate his loop 
+
+					try
+					{
+						_logger->info(__FILEREF__ + "killEncodingJob"
+							+ ", transcoder: " + transcoder
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						);
+						killEncodingJob(transcoder, encodingJobKey);
+					}
+					catch(runtime_error e)
+					{
+						// this is the case 2
+						long newFailuresNumber = -100;
+
+						_logger->info(__FILEREF__ + "Making FailuresNumber negative"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", newFailuresNumber: " + to_string(newFailuresNumber)
+						);
+						_mmsEngineDBFacade->updateEncodingJobFailuresNumber(
+							encodingJobKey, newFailuresNumber);
+					}
+				}
+				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
+				{
+					MMSEngineDBFacade::EncodingError encodingError
+						= MMSEngineDBFacade::EncodingError::CanceledByUser;
+					int64_t mediaItemKey = 0;
+					int64_t encodedPhysicalPathKey = 0;
+					_mmsEngineDBFacade->updateEncodingJob(
+							encodingJobKey, encodingError, mediaItemKey, encodedPhysicalPathKey,
+							ingestionJobKey);
+				}
+			}
 			else
 			{
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)

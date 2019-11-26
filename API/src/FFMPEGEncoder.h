@@ -58,6 +58,14 @@ private:
 		pid_t					_childPid;
     };
 
+    struct LiveProxy
+    {
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>		_ffmpeg;
+		pid_t					_childPid;
+    };
+
 	// no encoding, just copying the video/audio tracks
     struct LiveRecording
     {
@@ -88,6 +96,10 @@ private:
     mutex                       _encodingMutex;
     int                         _maxEncodingsCapability;
     vector<shared_ptr<Encoding>>    _encodingsCapability;
+
+    mutex						_liveProxyMutex;
+    int							_maxLiveProxiesCapability;
+    vector<shared_ptr<LiveProxy>>	_liveProxiesCapability;
 
     mutex                       _liveRecordingMutex;
     int                         _maxLiveRecordingsCapability;
@@ -171,7 +183,7 @@ private:
 
 	void liveProxy(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<LiveProxy> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 
