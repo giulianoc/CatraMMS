@@ -11109,7 +11109,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
             throw runtime_error(errorMessage);
         }
-        
+
         MMSEngineDBFacade::ContentType concatContentType;
         bool concatContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
@@ -11246,7 +11246,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                 + "_concat"
                 + "." + fileFormat // + "_source"
                 ;
-        
+
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
             workspace);
         string concatenatedMediaPathName = workspaceIngestionRepository + "/" 
@@ -11276,16 +11276,16 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             + ", concatenatedMediaPathName: " + concatenatedMediaPathName
         );
 
-        double maxDurationInSeconds = -1.0;
+        double maxDurationInSeconds = 0.0;
         string field = "MaxDurationInSeconds";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-			maxDurationInSeconds = parametersRoot.get(field, -1.0).asDouble();
+			maxDurationInSeconds = parametersRoot.get(field, 0.0).asDouble();
 		_logger->info(__FILEREF__ + "duration check"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", maxDurationInSeconds: " + to_string(maxDurationInSeconds)
 		);
-		if (maxDurationInSeconds > 0)
+		if (maxDurationInSeconds != 0.0)
 		{
 			int64_t durationInMilliSeconds;
 
@@ -11322,8 +11322,18 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ localCutSourceFileName;
 
 				bool keyFrameSeeking = false;
-				double startTimeInSeconds = 0.0;
-				double endTimeInSeconds = maxDurationInSeconds;
+				double startTimeInSeconds;
+				double endTimeInSeconds;
+				if (maxDurationInSeconds < 0.0)
+				{
+					startTimeInSeconds = ((durationInMilliSeconds / 1000) - maxDurationInSeconds);
+					endTimeInSeconds = durationInMilliSeconds / 1000;
+				}
+				else
+				{
+					startTimeInSeconds = 0.0;
+					endTimeInSeconds = maxDurationInSeconds;
+				}
 				int framesNumber = -1;
 
 				_logger->info(__FILEREF__ + "Calling ffmpeg.generateCutMediaToIngest"
