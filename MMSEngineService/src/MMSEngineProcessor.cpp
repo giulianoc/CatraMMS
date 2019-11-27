@@ -11326,7 +11326,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				double endTimeInSeconds;
 				if (maxDurationInSeconds < 0.0)
 				{
-					startTimeInSeconds = ((durationInMilliSeconds / 1000) - maxDurationInSeconds);
+					startTimeInSeconds = ((durationInMilliSeconds / 1000) - abs(maxDurationInSeconds));
 					endTimeInSeconds = durationInMilliSeconds / 1000;
 				}
 				else
