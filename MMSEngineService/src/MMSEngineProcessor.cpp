@@ -11309,7 +11309,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", maxDurationInSeconds: " + to_string(maxDurationInSeconds)
 			);
-			if (durationInMilliSeconds > maxDurationInSeconds * 1000)
+			if (durationInMilliSeconds > abs(maxDurationInSeconds) * 1000)
 			{
 				string localCutSourceFileName = to_string(ingestionJobKey)
 					+ "_concat_cut"
