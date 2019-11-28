@@ -38,10 +38,16 @@
 		// Optional: it is possible to specify the max duration of the file. It means,
 		// in case the duration of the concat is longer than MaxDurationInSeconds, the content is truncated
 		// Here follow the options:
-		// - 0: no MaxDuration is applied
-		// - positive value, i.e.: 60, the cut is done starting at the begginning of the media
-		// - negative value, i.e.: -60, the cut is done at the end of the media
-		"MaxDurationInSeconds": 0,
+		// - 0.0: no MaxDuration is applied (default)
+		// - positive value, i.e.: 60.0, the cut is done starting at the begginning of the media
+		// - negative value, i.e.: -60.0, the cut is done at the end of the media
+		"MaxDurationInSeconds": 0.0,
+
+		// Optional: extra seconds to cut when max duration is reached.
+		//		The new duration of the media will be (abs(MaxDurationInSeconds) - ExtraSecondsToCutWhenMaxDurationIsReached)
+		//		ExtraSecondsToCutWhenMaxDurationIsReached has to be < abs(MaxDurationInSeconds)
+		//		Default: 0.0
+		"ExtraSecondsToCutWhenMaxDurationIsReached": 0.0,
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
