@@ -54,10 +54,10 @@ then
 	#2. run mmsEngineService as nodaemon with '&' to run as background
 	#3. waiting the core
 	#ulimit -c unlimited
-	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS $CatraMMS_PATH/CatraMMS/conf/mms.cfg
+	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS ~/mms/conf/mms.cfg
 elif [ "$command" == "resetdata" ]
 then
-	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService --resetdata $CatraMMS_PATH/CatraMMS/conf/mms.cfg
+	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService --resetdata ~/mms/conf/mms.cfg
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status

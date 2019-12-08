@@ -39,9 +39,9 @@ public:
 
     string getMMSRootRepository (void);
 
-    string getStreamingRootRepository (void);
+    // string getStreamingRootRepository (void);
 
-    string getDownloadRootRepository (void);
+    // string getDownloadRootRepository (void);
 
     string getIngestionRootRepository (void);
     
@@ -101,20 +101,22 @@ public:
 		string relativePath,		// using '/'
 		string fileName);
 
+	/*
     string getDownloadLinkPathName (
-	unsigned long ulPartitionNumber,
-	string workspaceDirectoryName,
-	string territoryName,
-	string relativePath,
-	string fileName,
-	bool downloadRepositoryToo);
+		unsigned long ulPartitionNumber,
+		string workspaceDirectoryName,
+		string territoryName,
+		string relativePath,
+		string fileName,
+		bool downloadRepositoryToo);
 
     string getStreamingLinkPathName (
-	unsigned long ulPartitionNumber,	// IN
-	string workspaceDirectoryName,	// IN
-	string territoryName,	// IN
-	string relativePath,	// IN
-	string fileName);	// IN
+		unsigned long ulPartitionNumber,	// IN
+		string workspaceDirectoryName,	// IN
+		string territoryName,	// IN
+		string relativePath,	// IN
+		string fileName);	// IN
+	*/
 
     // bRemoveLinuxPathIfExist: often this method is called 
     // to get the path where the encoder put his output
@@ -137,13 +139,15 @@ public:
 		string liveProxyAssetName,
 		string assetExtension);
 
+	/*
     string getEncodingProfilePathName (
-	long long llEncodingProfileKey,
-	string profileFileNameExtension);
+		long long llEncodingProfileKey,
+		string profileFileNameExtension);
 
     string getFFMPEGEncodingProfilePathName(
         MMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey);
+	*/
 
     unsigned long getWorkspaceStorageUsage (
 		string workspaceDirectoryName);
@@ -159,13 +163,13 @@ private:
 
     string                      _storage;
     string                      _mmsRootRepository;
-    string                      _downloadRootRepository;
-    string                      _streamingRootRepository;
+    // string                      _downloadRootRepository;
+    // string                      _streamingRootRepository;
     string                      _stagingRootRepository;
 	string						_transcoderStagingRootRepository;
 	string						_deliveryFreeRootRepository;
     string                      _ingestionRootRepository;
-    string                      _profilesRootRepository;
+    // string                      _profilesRootRepository;
 
 	unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
 
@@ -200,11 +204,11 @@ private:
     string getRepository(RepositoryType rtRepositoryType);
 
     string creatingDirsUsingTerritories (
-	unsigned long ulCurrentMMSPartitionIndex,
-	string relativePath,
-	string workspaceDirectoryName,
-	bool deliveryRepositoriesToo,
-	Workspace::TerritoriesHashMap& phmTerritories);
+		unsigned long ulCurrentMMSPartitionIndex,
+		string relativePath,
+		string workspaceDirectoryName,
+		bool deliveryRepositoriesToo,
+		Workspace::TerritoriesHashMap& phmTerritories);
 
 	void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
 

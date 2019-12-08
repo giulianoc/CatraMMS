@@ -32,8 +32,8 @@ MMSStorage::MMSStorage(
 
 		_ingestionRootRepository = _storage + "IngestionRepository/users/";
 		_mmsRootRepository = _storage + "MMSRepository/";
-		_downloadRootRepository = _storage + "DownloadRepository/";
-		_streamingRootRepository = _storage + "StreamingRepository/";
+		// _downloadRootRepository = _storage + "DownloadRepository/";
+		// _streamingRootRepository = _storage + "StreamingRepository/";
 
 		_stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
 		_transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
@@ -43,7 +43,7 @@ MMSStorage::MMSStorage(
     
 		string nginxArea = _storage + "MMSWorkingAreaRepository/nginx/";
 
-		_profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
+		// _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
 
 		bool noErrorIfExists = true;
 		bool recursive = true;
@@ -74,6 +74,7 @@ MMSStorage::MMSStorage(
                 S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 		}
 
+		/*
 		_logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", _downloadRootRepository: " + _downloadRootRepository
 		);
@@ -87,13 +88,16 @@ MMSStorage::MMSStorage(
 		FileIO::createDirectory(_streamingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		*/
 
+		/*
 		_logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", _profilesRootRepository: " + _profilesRootRepository
 		);
 		FileIO::createDirectory(_profilesRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		*/
 
 		_logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", _stagingRootRepository: " + _stagingRootRepository
@@ -254,6 +258,7 @@ string MMSStorage::getMMSRootRepository(void) {
     return _mmsRootRepository;
 }
 
+/*
 string MMSStorage::getStreamingRootRepository(void) {
     return _streamingRootRepository;
 }
@@ -261,6 +266,7 @@ string MMSStorage::getStreamingRootRepository(void) {
 string MMSStorage::getDownloadRootRepository(void) {
     return _downloadRootRepository;
 }
+*/
 
 string MMSStorage::getIngestionRootRepository(void) {
     return _ingestionRootRepository;
@@ -644,6 +650,7 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         {
             return _mmsRootRepository;
         }
+		/*
         case RepositoryType::MMSREP_REPOSITORYTYPE_DOWNLOAD:
         {
             return _downloadRootRepository;
@@ -652,6 +659,7 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         {
             return _streamingRootRepository;
         }
+		*/
         case RepositoryType::MMSREP_REPOSITORYTYPE_STAGING:
         {
             return _stagingRootRepository;
@@ -700,6 +708,7 @@ string MMSStorage::getMMSAssetPathName(
     return assetPathName;
 }
 
+/*
 string MMSStorage::getDownloadLinkPathName(
         unsigned long ulPartitionNumber,
         string workspaceDirectoryName,
@@ -767,6 +776,7 @@ string MMSStorage::getStreamingLinkPathName(
 
     return linkPathName;
 }
+*/
 
 string MMSStorage::getStagingAssetPathName(
 		// neededForTranscoder=true uses a faster file system i.e. for recording
@@ -931,6 +941,7 @@ string MMSStorage::getDeliveryFreeAssetPathName(
     return deliveryFreeAssetPathName;
 }
 
+/*
 string MMSStorage::getEncodingProfilePathName(
         long long llEncodingProfileKey,
         string profileFileNameExtension)
@@ -982,6 +993,7 @@ string MMSStorage::getFFMPEGEncodingProfilePathName(
 
     return encodingProfilePathName;
 }
+*/
 
 string MMSStorage::creatingDirsUsingTerritories(
         unsigned long ulCurrentMMSPartitionIndex,
@@ -1019,6 +1031,8 @@ string MMSStorage::creatingDirsUsingTerritories(
     if (mmsAssetPathName.back() != '/')
         mmsAssetPathName.append("/");
 
+	/*
+	 * commented because currently we do not have territories 
     if (deliveryRepositoriesToo) 
     {
         Workspace::TerritoriesHashMap::iterator it;
@@ -1073,6 +1087,7 @@ string MMSStorage::creatingDirsUsingTerritories(
             }
         }
     }
+	*/
 
 
     return mmsAssetPathName;

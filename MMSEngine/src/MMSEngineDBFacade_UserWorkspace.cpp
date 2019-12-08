@@ -1030,16 +1030,6 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
     try
     {
-		if (trim(userName) == "")
-		{
-			string errorMessage = string("userName is not well formed.")                             
-				+ ", userName: " + userName                                                     
-			;                                                                                             
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1085,6 +1075,16 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         }
         else
         {
+			if (trim(userName) == "")
+			{
+				string errorMessage = string("userName is not well formed.")                             
+					+ ", userName: " + userName                                                     
+				;                                                                                             
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("

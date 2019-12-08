@@ -11321,6 +11321,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", maxDurationInSeconds: " + to_string(maxDurationInSeconds)
+				+ ", extraSecondsToCutWhenMaxDurationIsReached: " + to_string(extraSecondsToCutWhenMaxDurationIsReached)
 			);
 			if (durationInMilliSeconds > abs(maxDurationInSeconds) * 1000)
 			{

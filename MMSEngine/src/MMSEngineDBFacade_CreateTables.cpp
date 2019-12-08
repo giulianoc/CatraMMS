@@ -291,7 +291,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "isOwner            TINYINT (1) NOT NULL,"
                     "isDefault			TINYINT (1) NOT NULL,"
                     // same in MMS_ConfirmationCode
-                    "flags              SET('ADMIN', 'CREATEREMOVE_WORKSPACE', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA', 'EDIT_CONFIGURATION', 'KILL_ENCODING', 'CANCEL_INGESTIONJOB') NOT NULL,"
+                    "flags              SET("
+						"'ADMIN', "
+						"'CREATEREMOVE_WORKSPACE', "
+						"'INGEST_WORKFLOW', "
+						"'CREATE_PROFILES', "
+						"'DELIVERY_AUTHORIZATION', "
+						"'SHARE_WORKSPACE', "
+						"'EDIT_MEDIA', "
+						"'EDIT_CONFIGURATION', "
+						"'KILL_ENCODING', "
+						"'CANCEL_INGESTIONJOB'"
+						") NOT NULL,"
                     "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate		DATETIME NOT NULL,"
                     "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
@@ -340,7 +351,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_ConfirmationCode ("
                     "userKey                        BIGINT UNSIGNED NOT NULL,"
                     // same in MMS_APIKey
-                    "flags              SET('ADMIN', 'CREATEREMOVE_WORKSPACE', 'INGEST_WORKFLOW', 'CREATE_PROFILES', 'DELIVERY_AUTHORIZATION', 'SHARE_WORKSPACE', 'EDIT_MEDIA', 'EDIT_CONFIGURATION', 'KILL_ENCODING', 'CANCEL_INGESTIONJOB') NOT NULL,"
+                    "flags              SET("
+						"'ADMIN', "
+						"'CREATEREMOVE_WORKSPACE', "
+						"'INGEST_WORKFLOW', "
+						"'CREATE_PROFILES', "
+						"'DELIVERY_AUTHORIZATION', "
+						"'SHARE_WORKSPACE', "
+						"'EDIT_MEDIA', "
+						"'EDIT_CONFIGURATION', "
+						"'KILL_ENCODING', "
+						"'CANCEL_INGESTIONJOB'"
+						") NOT NULL,"
                     "workspaceKey                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "isSharedWorkspace              TINYINT (1) NOT NULL,"
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -874,36 +896,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
-
-        try
-        {
-			/*
-			 * 2019-10-27: removed MMS_IngestionJobOutput_FK2 on mediaItemKey (MMS_MediaItem)
-			 *	because causes errors
-			*/
-            lastSQLCommand = 
-                "create table if not exists MMS_IngestionJobOutput ("
-                    "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
-                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
-                    "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
-                    "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
-                    "constraint MMS_IngestionJobOutput_FK foreign key (physicalPathKey) "
-                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
         }
 
         try
@@ -1222,6 +1214,36 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // that index is important for the periodical select done by 'checkPublishing'
             lastSQLCommand = 
                 "create index MMS_PhysicalPath_idx3 on MMS_PhysicalPath (relativePath, fileName)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+			/*
+			 * 2019-10-27: removed MMS_IngestionJobOutput_FK2 on mediaItemKey (MMS_MediaItem)
+			 *	because causes errors
+			*/
+            lastSQLCommand = 
+                "create table if not exists MMS_IngestionJobOutput ("
+                    "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
+                    "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
+                    "constraint MMS_IngestionJobOutput_FK foreign key (physicalPathKey) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

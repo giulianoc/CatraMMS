@@ -785,7 +785,7 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-                
+
         addEncodingProfilesSet(request, workspace,
             queryParameters, requestBody);
     }

@@ -82,7 +82,7 @@ else
 			sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
 		fi
 
-		commandToBeEecuted="find /var/catramms/logs/nginx -mmin +$twoDaysInMinutes -type d -exec rm -rv {} +"
+		commandToBeExecuted="find /var/catramms/logs/nginx -mmin +$twoDaysInMinutes -type d -exec rm -rv {} +"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 13 ]
 	then
@@ -104,7 +104,7 @@ else
 		echo "$(date): $commandToBeExecuted TIMED OUT" >> /tmp/crontab.log
 	elif [ $? -eq 126 ]
 	then
-		echo "$(date): $commandToBeEecuted FAILED (Argument list too long)" >> /tmp/crontab.log
+		echo "$(date): $commandToBeExecuted FAILED (Argument list too long)" >> /tmp/crontab.log
 	fi
 fi
 
