@@ -39,7 +39,7 @@ public:
 
     virtual ~EncodersLoadBalancer();
 
-    string getEncoderHost(shared_ptr<Workspace> workspace, string encoderToSkip);
+    string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string encoderToSkip);
     
 private:
     struct EncodersPoolDetails {

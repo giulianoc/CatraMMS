@@ -1764,6 +1764,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
     
+	string encodersPool;
     int64_t sourcePhysicalPathKey;
     int64_t encodingProfileKey;    
 
@@ -1785,7 +1786,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "getEncoderHost"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3191,6 +3193,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
 pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 {
     
+	string encodersPool;
     int64_t sourceVideoPhysicalPathKey;
     int64_t sourceImagePhysicalPathKey;  
     string imagePosition_X_InPixel;
@@ -3198,7 +3201,11 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
     // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
-        string field = "sourceVideoPhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_overlayImageOnVideoData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "sourceVideoPhysicalPathKey";
         sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "sourceImagePhysicalPathKey";
@@ -3223,8 +3230,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
-					encoderToSkip);
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace, encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -4064,6 +4071,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo()
 pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 {
     
+	string encodersPool;
     int64_t sourceVideoPhysicalPathKey;
     string text;
     string textPosition_X_InPixel;
@@ -4078,7 +4086,11 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
     // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
     {
-        string field = "sourceVideoPhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_overlayTextOnVideoData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "sourceVideoPhysicalPathKey";
         sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "text";
@@ -4123,7 +4135,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4977,13 +4990,18 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed()
 pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 {
     
+	string encodersPool;
     int64_t sourceVideoPhysicalPathKey;
     string videoSpeedType;
     int videoSpeedSize;
 
     // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayTextOnVideoJob
     {
-        string field = "sourceVideoPhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_videoSpeedData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "sourceVideoPhysicalPathKey";
         sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "videoSpeedType";
@@ -5004,7 +5022,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5666,6 +5685,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture()
 pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 {
 
+	string encodersPool;
     int64_t mainVideoPhysicalPathKey;
     int64_t overlayVideoPhysicalPathKey;
     string overlayPosition_X_InPixel;
@@ -5676,7 +5696,11 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
     // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
-        string field = "mainVideoPhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_pictureInPictureData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "mainVideoPhysicalPathKey";
         mainVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "overlayVideoPhysicalPathKey";
@@ -5710,7 +5734,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6372,6 +6397,7 @@ bool EncoderVideoAudioProxy::generateFrames()
 bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 {
     
+	string encodersPool;
 	int64_t sourceVideoPhysicalPathKey;
     string imageDirectory;
     double startTimeInSeconds;
@@ -6388,7 +6414,11 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
     // _encodingItem->_encodingParametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
-        string field = "sourceVideoPhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_generateFramesData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "sourceVideoPhysicalPathKey";
         sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "imageDirectory";
@@ -6431,7 +6461,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		if (_encodingItem->_transcoder == "") // || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6965,12 +6996,17 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
 pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 {
     
+	string encodersPool;
     double durationOfEachSlideInSeconds;
     int outputFrameRate;  
     Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
 
     {
-        string field = "durationOfEachSlideInSeconds";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_slideShowData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "durationOfEachSlideInSeconds";
         durationOfEachSlideInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asDouble();
 
         field = "outputFrameRate";
@@ -6991,7 +7027,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			string encoderToSkip;
-            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace,
 					encoderToSkip);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -8954,6 +8991,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
+	string encodersPool;
 	bool highAvailability;
 	bool main;
 	string liveURL;
@@ -8964,7 +9002,11 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	int segmentDurationInSeconds;
 	string outputFileFormat;
 	{
-        string field = "highAvailability";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_liveRecorderData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "highAvailability";
         highAvailability = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
 
         field = "main";
@@ -9035,8 +9077,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								);
 
 							string transcoderToSKip;
-							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
-								transcoderToSKip);
+							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+									encodersPool, _encodingItem->_workspace, transcoderToSKip);
 						}
 						else
 						{
@@ -9049,8 +9091,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								);
 
 							string transcoderToSKip = backupTranscoder;
-							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
-								transcoderToSKip);
+							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+									encodersPool, _encodingItem->_workspace, transcoderToSKip);
 						}
 					}
 					else
@@ -9084,7 +9126,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 									string transcoderToSKip;
 									_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-										_encodingItem->_workspace, transcoderToSKip);
+										encodersPool, _encodingItem->_workspace, transcoderToSKip);
 
 									transcoderFound = true;
 								}
@@ -9115,7 +9157,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 								string transcoderToSKip = mainTranscoder;
 								_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-									_encodingItem->_workspace, transcoderToSKip);
+									encodersPool, _encodingItem->_workspace, transcoderToSKip);
 
 								transcoderFound = true;
 							}
@@ -9134,8 +9176,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						);
 
 					string encoderToSKip;
-					_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace,
-						encoderToSKip);
+					_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+							encodersPool, _encodingItem->_workspace, encoderToSKip);
 				}
 
 				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
@@ -9849,6 +9891,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 {
 
+	string encodersPool;
 	string configurationLabel;
 	string liveURL;
 	string outputType;
@@ -9858,7 +9901,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string userAgent;
 	string cdnURL;
 	{
-        string field = "ConfigurationLabel";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_liveProxyData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "ConfigurationLabel";
         // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
         configurationLabel = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
 
@@ -9904,7 +9951,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			{
 				string encoderToSkip;
 				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-					_encodingItem->_workspace, encoderToSkip);
+					encodersPool, _encodingItem->_workspace, encoderToSkip);
 				_logger->info(__FILEREF__ + "Configuration item"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost

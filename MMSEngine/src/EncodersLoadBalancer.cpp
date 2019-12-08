@@ -32,6 +32,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(
         
         encodersPoolDetails._lastEncoderUsed = -1;
         
+		// encodersPool will be "common" or "workspaceKey"
         Json::Value encodersPool = encodersPools[encodersPoolName];
         
         for (int encoderPoolIndex = 0; encoderPoolIndex < encodersPool.size(); encoderPoolIndex++)
@@ -52,13 +53,20 @@ EncodersLoadBalancer::EncodersLoadBalancer(
 EncodersLoadBalancer::~EncodersLoadBalancer() {
 }
 
-string EncodersLoadBalancer::getEncoderHost(shared_ptr<Workspace> workspace, string transcoderToSkip) 
+string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string transcoderToSkip) 
 {
     string defaultEncodersPool = "common";
 
-    map<string, EncodersPoolDetails>::iterator it = _encodersPools.find(workspace->_directoryName);
-    if (it == _encodersPools.end())
-        it = _encodersPools.find(defaultEncodersPool);
+	map<string, EncodersPoolDetails>::iterator it = _encodersPools.end();
+	// Priority 1: encodersPool
+	if (encodersPool != "")
+		it = _encodersPools.find(encodersPool);
+	// Priority 2: workspace
+	if (it == _encodersPools.end())
+		it = _encodersPools.find(workspace->_directoryName);
+	// Priority 3: default encoders pool (common)
+	if (it == _encodersPools.end())
+		it = _encodersPools.find(defaultEncodersPool);
 
     if (it == _encodersPools.end())
     {
