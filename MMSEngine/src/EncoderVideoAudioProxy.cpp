@@ -1769,7 +1769,11 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
     int64_t encodingProfileKey;    
 
     {
-        string field = "sourcePhysicalPathKey";
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_encodeData->
+			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "sourcePhysicalPathKey";
         sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "encodingProfileKey";

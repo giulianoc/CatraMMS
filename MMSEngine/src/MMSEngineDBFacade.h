@@ -496,6 +496,9 @@ public:
             ContentType                             _contentType;
             MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
             string                                  _jsonProfile;
+
+            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_ingestedParametersRoot;
         };
 
         struct OverlayImageOnVideoData {

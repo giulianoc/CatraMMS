@@ -41,6 +41,9 @@
 		//		Default value is 'ts'.
 		"OutputFileFormat": "ts",
 
+		// optional. To be set only in case a specific encoders pool has to be used
+		"EncodersPool": "",
+
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [
 			{

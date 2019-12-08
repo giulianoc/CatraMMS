@@ -28,6 +28,9 @@
 		// optional. It may be a decimal number (i.e.: 0.5). Default is 2 
 		"DurationOfEachSlideInSeconds": 5,
 
+		// optional. To be set only in case a specific encoders pool has to be used
+		"EncodersPool": "",
+
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [
 			{

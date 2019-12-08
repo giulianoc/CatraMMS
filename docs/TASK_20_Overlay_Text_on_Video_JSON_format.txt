@@ -74,6 +74,9 @@
 		//   the MaxEncodingPriority of the Workspace will be used.
 		"EncodingPriority": "Low",
 
+		// optional. To be set only in case a specific encoders pool has to be used
+		"EncodersPool": "",
+
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [
 			{
