@@ -18,6 +18,7 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/FileIO.h"
 #include "FFMPEGEncoder.h"
+#include "MMSStorage.h"
 
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -92,6 +93,15 @@ int main(int argc, char** argv)
             );
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, dbPoolSize, logger);
+
+	{
+		// here the MMSStorage is instantiated just because it will create
+		// the local directories of the transcoder
+		logger->info(__FILEREF__ + "Creating MMSStorage"
+			);
+		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
+			configuration, mmsEngineDBFacade, logger);
+	}
 
     FCGX_Init();
 

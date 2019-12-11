@@ -13,6 +13,9 @@
 		// optional, possible values: HLS, CDN77. Default: HLS
 		"OutputType": "HLS"
 
+		// optional. To be set only in case a specific encoders pool has to be used
+		"EncodersPool": "",
+
 		// optional, used only in case of HLS, Default: 10
 		"SegmentDurationInSeconds": 10,
 
