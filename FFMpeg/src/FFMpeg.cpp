@@ -5316,6 +5316,8 @@ void FFMpeg::liveProxyByCDN(
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
+		// sample: ffmpeg -re -i http://80.211.238.33/restream/fiera.m3u8 -c copy -bsf:a aac_adtstoasc -vcodec copy -f flv rtmp://1.s.cdn77.eu:1936/static/LS-PRG-43330-22?password=hrpiTIFmsK3R
+
 		ffmpegArgumentList.push_back("ffmpeg");
 		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
 		//		as fast as possible. This option will slow down the reading of the input(s)
@@ -5328,9 +5330,14 @@ void FFMpeg::liveProxyByCDN(
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-c:a");
 		ffmpegArgumentList.push_back("copy");
+		ffmpegArgumentList.push_back("-bsf:a");
+		ffmpegArgumentList.push_back("aac_adtstoasc");
+		ffmpegArgumentList.push_back("-vcodec");
+		ffmpegArgumentList.push_back("copy");
 
 		// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
-		ffmpegArgumentList.push_back("-f flv");
+		ffmpegArgumentList.push_back("-f");
+		ffmpegArgumentList.push_back("flv");
 		ffmpegArgumentList.push_back(cdnURL);
 
 		if (!ffmpegArgumentList.empty())

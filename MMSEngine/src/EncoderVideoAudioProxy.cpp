@@ -10099,7 +10099,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				request.setOpt(new curlpp::options::WriteStream(&response));
 
-				_logger->info(__FILEREF__ + "LiveProxy media file"
+				_logger->info(__FILEREF__ + "Calling transcoder for LiveProxy media file"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
@@ -10284,7 +10284,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 						// in this scenario encodingFinished is true
 
-						_logger->info(__FILEREF__ + "Start waiting for the next call"
+						_logger->info(__FILEREF__ + "Start waiting loop for the next call"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
