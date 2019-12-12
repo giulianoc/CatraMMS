@@ -1119,6 +1119,8 @@ public:
 		int64_t liveRecordingIngestionJobKey
 	);
 
+	long getIngestionJobOutputsCount(int64_t ingestionJobKey);
+
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 

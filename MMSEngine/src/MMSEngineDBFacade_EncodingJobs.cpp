@@ -2392,9 +2392,10 @@ int MMSEngineDBFacade::updateEncodingJob (
         EncodingStatus newEncodingStatus;
         if (encodingError == EncodingError::PunctualError)
         {
+			string type;
             {
                 lastSQLCommand = 
-                    "select failuresNumber from MMS_EncodingJob "
+                    "select type, failuresNumber from MMS_EncodingJob "
 					"where encodingJobKey = ?";
 					// "where encodingJobKey = ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2405,7 +2406,8 @@ int MMSEngineDBFacade::updateEncodingJob (
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 if (resultSet->next())
                 {
-                    encodingFailureNumber = resultSet->getInt(1);
+                    type = resultSet->getString("type");
+                    encodingFailureNumber = resultSet->getInt("failuresNumber");
                 }
                 else
                 {
@@ -2420,7 +2422,10 @@ int MMSEngineDBFacade::updateEncodingJob (
             }
             
 			string transcoderUpdate;
-            if (encodingFailureNumber + 1 >= _maxEncodingFailures)
+			// in case of LiveRecorder there is no more retries since it already run up
+			//		to the end of the recording
+            if (type == "LiveRecorder"
+					|| encodingFailureNumber + 1 >= _maxEncodingFailures)
 			{
                 newEncodingStatus          = EncodingStatus::End_Failed;
 
@@ -4907,7 +4912,8 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
         }

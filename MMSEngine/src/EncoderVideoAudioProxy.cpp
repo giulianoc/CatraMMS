@@ -9759,6 +9759,28 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         }
 	}
 
+	// Ingestion/Encoding Status will be success if at least one Chunk was generated
+	// otherwise it will be set as failed
+	if (main)
+	{
+		long ingestionJobOutputsCount = _mmsEngineDBFacade->getIngestionJobOutputsCount(
+				_encodingItem->_ingestionJobKey);
+		if (ingestionJobOutputsCount <= 0)
+		{
+			string errorMessage = __FILEREF__ + "LiveRecorder: no chunks were generated"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+				+ ", ingestionJobOutputsCount: " + to_string(ingestionJobOutputsCount)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
     return make_tuple(killedByUser, main);
 }
 
@@ -9824,11 +9846,13 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					);
 			}
 
+			// Status will be success if at least one Chunk was generated, otherwise it will be failed
 			{
 				string errorMessage;
 				string processorMMS;
-				MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
-					MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+				MMSEngineDBFacade::IngestionStatus	newIngestionStatus
+					= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+
 				_logger->info(__FILEREF__ + "Update IngestionJob"
 					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
