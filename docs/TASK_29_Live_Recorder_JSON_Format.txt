@@ -57,7 +57,7 @@
 		// The UserData are involved in searches as well
 		"UserData": { },
 
-		// optional: it specifies the retention of the content.
+		// optional: it specifies the retention of the content (chunk).
 		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
 		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
 		// By default it is 60m

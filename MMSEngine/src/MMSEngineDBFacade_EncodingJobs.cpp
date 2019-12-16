@@ -40,56 +40,40 @@ void MMSEngineDBFacade::getEncodingJobs(
             statement->execute(lastSQLCommand);
         }
 
-		bool stillRows = true;
-		int startRow = 0;
-		while(encodingItems.size() < maxEncodingsNumber && stillRows)
+		// 2019-12-14: we have a long list of encodings to be done (113 encodings) and
+		//	among these we have some live recordings. These has to be managed before the others encodings
         {
-			_logger->info(__FILEREF__ + "getEncodingJobs"
-				+ ", startRow: " + to_string(startRow)
-			);
-            lastSQLCommand = 
+			_logger->info(__FILEREF__ + "getEncodingJobs for LiveRecorder");
+
+            lastSQLCommand =
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.transcoder, ej.stagingEncodedAssetPathName "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
-				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null and "
-				"ej.status = ? and ej.encodingJobStart <= NOW() "
-				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
-				"limit ? offset ?"
-
-				/*
-                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
-				"transcoder, stagingEncodedAssetPathName from MMS_EncodingJob " 
-                "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
-                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
-				"limit ? offset ?"
-				*/
-				// "limit ? for update"
+				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ej.status = ? and ej.encodingJobStart <= NOW() "
+				"and ij.ingestionType = 'Live-Recorder' "
+				"order by JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') "
 				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++,
 				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
-            preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
-            preparedStatementEncoding->setInt(queryParameterIndex++, startRow);
-
-			startRow += maxEncodingsNumber;
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
-			if (encodingResultSet->rowsCount() != maxEncodingsNumber)
-				stillRows = false;
 
             while (encodingResultSet->next())
             {
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
-                
+
                 encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
                 encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
                 encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
-                encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("encodingPriority"));
+                encodingItem->_encodingPriority = static_cast<EncodingPriority>(
+						encodingResultSet->getInt("encodingPriority"));
 				if (encodingResultSet->isNull("transcoder"))
 					encodingItem->_transcoder = "";
 				else
@@ -137,7 +121,8 @@ void MMSEngineDBFacade::getEncodingJobs(
                     string errors;
 
                     bool parsingSuccessful = reader->parse((encodingItem->_encodingParameters).c_str(),
-                            (encodingItem->_encodingParameters).c_str() + (encodingItem->_encodingParameters).size(), 
+                            (encodingItem->_encodingParameters).c_str()
+							+ (encodingItem->_encodingParameters).size(), 
                             &(encodingItem->_encodingParametersRoot), &errors);
                     delete reader;
 
@@ -164,7 +149,324 @@ void MMSEngineDBFacade::getEncodingJobs(
                             int queryParameterIndex = 1;
                             preparedStatementUpdate->setString(queryParameterIndex++,
 									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                            preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                        }
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
+                }
+                
+                int64_t workspaceKey;
+                {
+                    lastSQLCommand = 
+                        "select ir.workspaceKey "
+                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                        "where ir.ingestionRootKey = ij.ingestionRootKey "
+                        "and ij.ingestionJobKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementWorkspace (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementWorkspace->setInt64(queryParameterIndex++,
+							encodingItem->_ingestionJobKey);
+
+                    shared_ptr<sql::ResultSet> workspaceResultSet (
+							preparedStatementWorkspace->executeQuery());
+                    if (workspaceResultSet->next())
+                    {
+                        encodingItem->_workspace = getWorkspace(workspaceResultSet->getInt64("workspaceKey"));
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                + ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
+                        {
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                        }
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
+                }
+                
+                // if (encodingItem->_encodingType == EncodingType::LiveRecorder)
+                {
+                    encodingItem->_liveRecorderData = make_shared<EncodingItem::LiveRecorderData>();
+                    
+                    {
+                        lastSQLCommand = 
+                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+
+                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+                        if (imgestionResultSet->next())
+                        {
+                            string liveRecorderParameters = imgestionResultSet->getString("metaDataContent");
+                            
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(liveRecorderParameters.c_str(),
+                                        liveRecorderParameters.c_str() + liveRecorderParameters.size(), 
+                                        &(encodingItem->_liveRecorderData->_ingestedParametersRoot), &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                            + ", errors: " + errors
+                                            + ", liveRecorderParameters: " + liveRecorderParameters
+                                            ;
+                                    _logger->error(errorMessage);
+
+                                    // in case an encoding job row generate an error, we have to make it to Failed
+                                    // otherwise we will indefinitely get this error
+                                    {
+										_logger->info(__FILEREF__ + "EncodingJob update"
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											);
+                                        lastSQLCommand = 
+                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        int queryParameterIndex = 1;
+                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                                    }
+
+                                    continue;
+                                    // throw runtime_error(errorMessage);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+								_logger->info(__FILEREF__ + "EncodingJob update"
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									);
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                }
+
+                encodingItems.push_back(encodingItem);
+
+                {
+					_logger->info(__FILEREF__ + "EncodingJob update"
+						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+						+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", processorMMS: " + processorMMS
+						+ ", encodingJobStart: " + "NULL"
+						);
+                    lastSQLCommand = 
+                        "update MMS_EncodingJob set status = ?, processorMMS = ?, encodingJobStart = NULL "
+						"where encodingJobKey = ? and processorMMS is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++,
+							MMSEngineDBFacade::toString(EncodingStatus::Processing));
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
+                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++,
+							encodingItem->_encodingJobKey);
+
+                    int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+                    if (rowsUpdated != 1)
+                    {
+                        string errorMessage = __FILEREF__ + "no update was done"
+                                + ", processorMMS: " + processorMMS
+                                + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                                + ", rowsUpdated: " + to_string(rowsUpdated)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+            }
+        }
+
+		bool stillRows = true;
+		int startRow = 0;
+		while(encodingItems.size() < maxEncodingsNumber && stillRows)
+        {
+			_logger->info(__FILEREF__ + "getEncodingJobs"
+				+ ", startRow: " + to_string(startRow)
+			);
+            lastSQLCommand = 
+				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
+				"ej.encodingPriority, ej.transcoder, ej.stagingEncodedAssetPathName "
+				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
+				"where ir.ingestionRootKey = ij.ingestionRootKey "
+				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ej.status = ? and ej.encodingJobStart <= NOW() "
+				"and ij.ingestionType != 'Live-Recorder' "
+				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
+				"limit ? offset ?"
+
+				/*
+                "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
+				"transcoder, stagingEncodedAssetPathName from MMS_EncodingJob " 
+                "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
+                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc "
+				"limit ? offset ?"
+				*/
+				// "limit ? for update"
+				;
+            shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatementEncoding->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
+            preparedStatementEncoding->setInt(queryParameterIndex++, startRow);
+
+			startRow += maxEncodingsNumber;
+
+            shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+			if (encodingResultSet->rowsCount() != maxEncodingsNumber)
+				stillRows = false;
+
+            while (encodingResultSet->next())
+            {
+                shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
+                        make_shared<MMSEngineDBFacade::EncodingItem>();
+                
+                encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+                encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
+                encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
+                encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
+                encodingItem->_encodingPriority = static_cast<EncodingPriority>(
+						encodingResultSet->getInt("encodingPriority"));
+				if (encodingResultSet->isNull("transcoder"))
+					encodingItem->_transcoder = "";
+				else
+					encodingItem->_transcoder = encodingResultSet->getString("transcoder");
+				if (encodingResultSet->isNull("stagingEncodedAssetPathName"))
+					encodingItem->_stagingEncodedAssetPathName = "";
+				else
+					encodingItem->_stagingEncodedAssetPathName =
+						encodingResultSet->getString("stagingEncodedAssetPathName");
+
+                if (encodingItem->_encodingParameters == "")
+                {
+                    string errorMessage = __FILEREF__ + "encodingItem->_encodingParameters is empty"
+                            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+                            ;
+                    _logger->error(errorMessage);
+
+                    // in case an encoding job row generate an error, we have to make it to Failed
+                    // otherwise we will indefinitely get this error
+                    {
+						_logger->info(__FILEREF__ + "EncodingJob update"
+                            + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                            + ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+						);
+                        lastSQLCommand = 
+                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementUpdate->setString(queryParameterIndex++,
+							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                    }
+                    
+                    continue;
+                    // throw runtime_error(errorMessage);
+                }
+                
+                {
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+                    string errors;
+
+                    bool parsingSuccessful = reader->parse((encodingItem->_encodingParameters).c_str(),
+                            (encodingItem->_encodingParameters).c_str()
+							+ (encodingItem->_encodingParameters).size(), 
+                            &(encodingItem->_encodingParametersRoot), &errors);
+                    delete reader;
+
+                    if (!parsingSuccessful)
+                    {
+                        string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                                + ", errors: " + errors
+                                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+                                ;
+                        _logger->error(errorMessage);
+
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
+                        {
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
 
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
                         }
@@ -240,19 +542,25 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
-                            "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey "
+							"and p.physicalPathKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
 
-                        shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+                        shared_ptr<sql::ResultSet> physicalPathResultSet (
+								preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(physicalPathResultSet->getString("contentType"));
+                            encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(
+									physicalPathResultSet->getString("contentType"));
                             // encodingItem->_encodeData->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
-                            encodingItem->_encodeData->_mediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
+                            encodingItem->_encodeData->_mediaItemKey =
+								physicalPathResultSet->getInt64("mediaItemKey");
                             encodingItem->_encodeData->_fileName = physicalPathResultSet->getString("fileName");
-                            encodingItem->_encodeData->_relativePath = physicalPathResultSet->getString("relativePath");
+                            encodingItem->_encodeData->_relativePath =
+								physicalPathResultSet->getString("relativePath");
                         }
                         else
                         {
@@ -288,14 +596,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementVideo->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
 
                         shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
                         if (videoResultSet->next())
                         {
-                            encodingItem->_encodeData->_durationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
+                            encodingItem->_encodeData->_durationInMilliSeconds =
+								videoResultSet->getInt64("durationInMilliSeconds");
                         }
                         else
                         {
@@ -314,10 +624,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -330,14 +643,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_AudioItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementAudio (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementAudio (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementAudio->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
 
                         shared_ptr<sql::ResultSet> audioResultSet (preparedStatementAudio->executeQuery());
                         if (audioResultSet->next())
                         {
-                            encodingItem->_encodeData->_durationInMilliSeconds = audioResultSet->getInt64("durationInMilliSeconds");
+                            encodingItem->_encodeData->_durationInMilliSeconds =
+								audioResultSet->getInt64("durationInMilliSeconds");
                         }
                         else
                         {
@@ -356,10 +671,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -372,15 +690,19 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select technology, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
 
-                        shared_ptr<sql::ResultSet> encodingProfilesResultSet (preparedStatementEncodingProfile->executeQuery());
+                        shared_ptr<sql::ResultSet> encodingProfilesResultSet (
+								preparedStatementEncodingProfile->executeQuery());
                         if (encodingProfilesResultSet->next())
                         {
-                            encodingItem->_encodeData->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("technology"));
-                            encodingItem->_encodeData->_jsonProfile = encodingProfilesResultSet->getString("jsonProfile");
+                            encodingItem->_encodeData->_encodingProfileTechnology =
+								static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("technology"));
+                            encodingItem->_encodeData->_jsonProfile =
+								encodingProfilesResultSet->getString("jsonProfile");
                         }
                         else
                         {
@@ -399,10 +721,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -418,9 +743,11 @@ void MMSEngineDBFacade::getEncodingJobs(
                         shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
-                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+                        preparedStatementIngestion->setInt64(queryParameterIndex++,
+								encodingItem->_ingestionJobKey);
 
-                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+                        shared_ptr<sql::ResultSet> imgestionResultSet (
+								preparedStatementIngestion->executeQuery());
                         if (imgestionResultSet->next())
                         {
                             string ingestionParameters = imgestionResultSet->getString("metaDataContent");
@@ -503,7 +830,8 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
                 else if (encodingItem->_encodingType == EncodingType::OverlayImageOnVideo)
                 {
-                    encodingItem->_overlayImageOnVideoData = make_shared<EncodingItem::OverlayImageOnVideoData>();
+                    encodingItem->_overlayImageOnVideoData =
+						make_shared<EncodingItem::OverlayImageOnVideoData>();
                     
                     int64_t sourceVideoPhysicalPathKey;
                     int64_t sourceImagePhysicalPathKey;    
@@ -521,16 +849,20 @@ void MMSEngineDBFacade::getEncodingJobs(
                         lastSQLCommand = 
                             "select partitionNumber, mediaItemKey, fileName, relativePath "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
-                        shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+                        shared_ptr<sql::ResultSet> physicalPathResultSet (
+								preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_overlayImageOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
-                            encodingItem->_overlayImageOnVideoData->_videoFileName = physicalPathResultSet->getString("fileName");
-                            encodingItem->_overlayImageOnVideoData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
+                            encodingItem->_overlayImageOnVideoData->_videoFileName =
+								physicalPathResultSet->getString("fileName");
+                            encodingItem->_overlayImageOnVideoData->_videoRelativePath =
+								physicalPathResultSet->getString("relativePath");
                             
                             videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         }
@@ -551,10 +883,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -567,14 +902,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
                         shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
                         if (videoResultSet->next())
                         {
-                            encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
+                            encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds =
+								videoResultSet->getInt64("durationInMilliSeconds");
                         }
                         else
                         {
@@ -593,10 +930,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -610,16 +950,21 @@ void MMSEngineDBFacade::getEncodingJobs(
                         lastSQLCommand = 
                             "select partitionNumber, fileName, relativePath "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
-                        preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceImagePhysicalPathKey);
+                        preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
+								sourceImagePhysicalPathKey);
 
-                        shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+                        shared_ptr<sql::ResultSet> physicalPathResultSet (
+								preparedStatementPhysicalPath->executeQuery());
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_overlayImageOnVideoData->_mmsImagePartitionNumber = physicalPathResultSet->getInt("partitionNumber");
-                            encodingItem->_overlayImageOnVideoData->_imageFileName = physicalPathResultSet->getString("fileName");
-                            encodingItem->_overlayImageOnVideoData->_imageRelativePath = physicalPathResultSet->getString("relativePath");                            
+                            encodingItem->_overlayImageOnVideoData->_imageFileName =
+								physicalPathResultSet->getString("fileName");
+                            encodingItem->_overlayImageOnVideoData->_imageRelativePath =
+								physicalPathResultSet->getString("relativePath");                            
                         }
                         else
                         {
@@ -638,10 +983,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -654,9 +1002,11 @@ void MMSEngineDBFacade::getEncodingJobs(
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
-                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+                        preparedStatementIngestion->setInt64(queryParameterIndex++,
+								encodingItem->_ingestionJobKey);
 
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
                         if (imgestionResultSet->next())
@@ -670,7 +1020,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                                 bool parsingSuccessful = reader->parse(overlayParameters.c_str(),
                                         overlayParameters.c_str() + overlayParameters.size(), 
-                                        &(encodingItem->_overlayImageOnVideoData->_ingestedParametersRoot), &errors);
+                                        &(encodingItem->_overlayImageOnVideoData->_ingestedParametersRoot),
+										&errors);
                                 delete reader;
 
                                 if (!parsingSuccessful)
@@ -690,10 +1041,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 											);
                                         lastSQLCommand = 
                                             "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+												conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                         int queryParameterIndex = 1;
-                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                        preparedStatementUpdate->setString(queryParameterIndex++,
+												MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++,
+												encodingItem->_encodingJobKey);
 
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
                                     }
@@ -720,10 +1074,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 									);
                                 lastSQLCommand = 
                                     "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
 
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
                             }
@@ -1371,6 +1728,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+				/* Live-Recorder are managed in the previous loop
                 else if (encodingItem->_encodingType == EncodingType::LiveRecorder)
                 {
                     encodingItem->_liveRecorderData = make_shared<EncodingItem::LiveRecorderData>();
@@ -1458,6 +1816,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+				*/
                 else if (encodingItem->_encodingType == EncodingType::VideoSpeed)
                 {
                     encodingItem->_videoSpeedData = make_shared<EncodingItem::VideoSpeedData>();
@@ -2352,7 +2711,8 @@ int MMSEngineDBFacade::updateEncodingJob (
         EncodingError encodingError,
         int64_t mediaItemKey,
         int64_t encodedPhysicalPathKey,
-        int64_t ingestionJobKey)
+        int64_t ingestionJobKey,
+		string ingestionErrorMessage)
 {
     
     string      lastSQLCommand;
@@ -2693,7 +3053,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         else if (newEncodingStatus == EncodingStatus::End_Failed && ingestionJobKey != -1)
         {
             IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
-            string errorMessage;
+            // string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
 
@@ -2701,10 +3061,10 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", IngestionStatus: " + toString(ingestionStatus)
                 + ", physicalPathKey: " + to_string(physicalPathKey)
-                + ", errorMessage: " + errorMessage
+                + ", errorMessage: " + ingestionErrorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
+            updateIngestionJob (ingestionJobKey, ingestionStatus, ingestionErrorMessage);
         }
         else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
         {

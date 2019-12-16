@@ -90,6 +90,8 @@ private:
 		int64_t					_encodingJobKey;
 		bool					_completedWithError;
 		bool					_killedByUser;
+		bool					_urlForbidden;
+		bool					_urlNotFound;
 		chrono::system_clock::time_point	_timestamp;
     };
 
@@ -201,7 +203,7 @@ private:
 
 	void addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,
-		bool killedByUser);
+		bool killedByUser, bool urlForbidden, bool urlNotFound);
 
 	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);
 

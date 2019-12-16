@@ -427,7 +427,7 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -483,11 +483,129 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::KilledByUser, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
 			_logger->error(__FILEREF__ + "updateEncodingJob KilledByUser FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        // throw e;
+        return;
+    }
+	catch(FFMpegURLForbidden e)
+    {
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		);
+
+		try
+		{
+			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+                _encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                mediaItemKey, encodedPhysicalPathKey,
+                main ? _encodingItem->_ingestionJobKey : -1,
+				e.what());
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        // throw e;
+        return;
+    }
+	catch(FFMpegURLNotFound e)
+    {
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		);
+
+		try
+		{
+			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+
+			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+			// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+			// 'no update is done'
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			// PunctualError is used because, in case it always happens, the encoding will never reach a final state
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+                _encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                mediaItemKey, encodedPhysicalPathKey,
+                main ? _encodingItem->_ingestionJobKey : -1,
+				e.what());
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -541,7 +659,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -599,7 +717,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -802,7 +920,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -890,7 +1008,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -2355,14 +2473,16 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		bool killedByUser = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -3601,6 +3721,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -3609,8 +3731,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -4503,6 +4625,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -4511,8 +4635,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -5383,6 +5507,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -5391,8 +5517,8 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -6114,6 +6240,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -6122,8 +6250,8 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -6779,6 +6907,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -6787,8 +6917,8 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -7346,6 +7476,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
 		bool completedWithError = false;
+		bool urlForbidden = false;
+		bool urlNotFound = false;
 		int maxEncodingStatusFailures = 1;
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -7354,8 +7486,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-				tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+				tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 				if (completedWithError)
 				{
@@ -9039,9 +9171,12 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	}
 
 	bool killedByUser = false;
+	bool urlForbidden = false;
+	bool urlNotFound = false;
 
 	time_t utcNow = 0;
-	while (!killedByUser && utcNow < utcRecordingPeriodEnd)
+	while (!killedByUser && !urlForbidden && !urlNotFound
+			&& utcNow < utcRecordingPeriodEnd)
 	{
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveRecorderURI;
@@ -9529,8 +9664,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                 try
                 {
-                    tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+					tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 					if (completedWithError)
 					{
@@ -9763,21 +9898,50 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	// otherwise it will be set as failed
 	if (main)
 	{
-		long ingestionJobOutputsCount = _mmsEngineDBFacade->getIngestionJobOutputsCount(
-				_encodingItem->_ingestionJobKey);
-		if (ingestionJobOutputsCount <= 0)
+		if (urlForbidden)
 		{
-			string errorMessage = __FILEREF__ + "LiveRecorder: no chunks were generated"
+			string errorMessage = __FILEREF__ + "LiveRecorder: URL forbidden"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-				+ ", ingestionJobOutputsCount: " + to_string(ingestionJobOutputsCount)
 			;
 			_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
+			throw FFMpegURLForbidden();
+		}
+		else if (urlNotFound)
+		{
+			string errorMessage = __FILEREF__ + "LiveRecorder: URL Not Found"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+			;
+			_logger->error(errorMessage);
+
+			throw FFMpegURLNotFound();
+		}
+		else
+		{
+			long ingestionJobOutputsCount = _mmsEngineDBFacade->getIngestionJobOutputsCount(
+				_encodingItem->_ingestionJobKey);
+			if (ingestionJobOutputsCount <= 0)
+			{
+				string errorMessage = __FILEREF__ + "LiveRecorder: no chunks were generated"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+					+ ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+					+ ", ingestionJobOutputsCount: " + to_string(ingestionJobOutputsCount)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 	}
 
@@ -9837,13 +10001,39 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
 
 				if (mainAndBackupChunksManagementCompleted)
+				{
+					// scenario:
+					//	1. the manageMainAndBackupOfRunnungLiveRecordingHA method validated all the chunks
+					//		and set validated = false and retentionInMinutes = 0 for the others chunks.
+					//	2. the retention algorithm has still to process the retention and may be one content
+					//		is not removed yet
+					//	3. the LiveRecording->OnSuccess task starts, Validator gets all the IngestionJobOutput contents
+					//		containing also the content having retentionInMinutes = 0
+					//	4. the retention algorithm starts and remove the content
+					//	5. the OnSuccess Task starts processing the content and, when it will process the removed content fails
+					//
+					//	To solve this issue we still wait the period of the retention in order to minimize the above issue
+					//
+					//	Another solution would be that the Validator gets only the contents having validated = true
+					//	for the LiveRecorder output!!! This should be a bit difficult to be done, actually Validator
+					//	calls MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey where there are no information
+					//	about the source Task generating the content!!!
+
+					int secondsToWaitTheRetentionAlgorithm = 60;
+
 					_logger->info(__FILEREF__ + "Managing of main and backup chunks completed"
+						+ ", still wait a bit the retention algorithm"
 						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					);
+
+					this_thread::sleep_for(chrono::milliseconds(secondsToWaitTheRetentionAlgorithm));
+				}
 				else
+				{
 					_logger->warn(__FILEREF__ + "Managing of main and backup chunks NOT completed"
 						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					);
+				}
 			}
 
 			// Status will be success if at least one Chunk was generated, otherwise it will be failed
@@ -10282,6 +10472,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
+			bool urlForbidden = false;
+			bool urlNotFound = false;
 			// string lastRecordedAssetFileName;
 
 			// see the comment few lines below (2019-05-03)
@@ -10292,8 +10484,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				try
 				{
-					tuple<bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser, completedWithError) = encodingStatus;
+					tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 					if (completedWithError)
 					{
@@ -11136,11 +11328,13 @@ int EncoderVideoAudioProxy::getEncodingProgress()
     return encodingProgress;
 }
 
-tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
+tuple<bool,bool,bool, bool, bool> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;
 	bool completedWithError;
+	bool urlNotFound;
+	bool urlForbidden;
     
     string ffmpegEncoderURL;
     ostringstream response;
@@ -11159,7 +11353,8 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
         list<string> header;
 
         {
-            string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+            string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
+					+ _ffmpegEncoderPassword);
             string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
             header.push_back(basicAuthorization);
@@ -11260,7 +11455,8 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                 + ", sResponse: " + sResponse
-                + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                + ", encodingDuration (secs): " + to_string(
+					chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
         );
 
         try
@@ -11294,8 +11490,29 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 			else
 				completedWithError = false;
 
-            encodingFinished = encodeStatusResponse.get("encodingFinished", "XXX").asBool();
-            killedByUser = encodeStatusResponse.get("killedByUser", "XXX").asBool();
+			field = "encodingFinished";
+			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
+				encodingFinished = encodeStatusResponse.get(field, false).asBool();
+			else
+				encodingFinished = false;
+
+			field = "killedByUser";
+			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
+				killedByUser = encodeStatusResponse.get(field, false).asBool();
+			else
+				killedByUser = false;
+
+			field = "urlForbidden";
+			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
+				urlForbidden = encodeStatusResponse.get(field, false).asBool();
+			else
+				urlForbidden = false;
+
+			field = "urlNotFound";
+			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
+				urlNotFound = encodeStatusResponse.get(field, false).asBool();
+			else
+				urlNotFound = false;
         }
         catch(...)
         {
@@ -11359,7 +11576,7 @@ tuple<bool,bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
         throw e;
     }
 
-    return make_tuple(encodingFinished, killedByUser, completedWithError);
+    return make_tuple(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound);
 }
 
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(

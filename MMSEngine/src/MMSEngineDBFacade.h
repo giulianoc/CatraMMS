@@ -1523,7 +1523,8 @@ public:
         EncodingError encodingError,
         int64_t mediaItemKey,
         int64_t encodedPhysicalPathKey,
-        int64_t ingestionJobKey);
+        int64_t ingestionJobKey,
+		string ingestionErrorMessage = "");
 
     void updateEncodingJobPriority (
         shared_ptr<Workspace> workspace,

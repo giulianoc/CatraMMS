@@ -1030,7 +1030,8 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             int64_t encodedPhysicalPathKey = -1;
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
-                mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey);
+                mediaItemKey, encodedPhysicalPathKey,
+				encodingItem->_ingestionJobKey, "addEncodingItem failed");
         }
 
 		encodingItemIndex++;

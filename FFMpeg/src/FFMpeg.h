@@ -42,6 +42,20 @@ struct FFMpegEncodingKilledByUser: public exception {
     }; 
 };
 
+struct FFMpegURLForbidden: public exception {
+    char const* what() const throw() 
+    {
+        return "URL Forbidden";
+    }; 
+};
+
+struct FFMpegURLNotFound: public exception {
+    char const* what() const throw() 
+    {
+        return "URL Not Found";
+    }; 
+};
+
 struct NoEncodingJobKeyFound: public exception {
     char const* what() const throw() 
     {

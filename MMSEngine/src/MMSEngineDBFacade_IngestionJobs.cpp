@@ -65,6 +65,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
 			//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
 			{
+				// the last condition (and UNIX_TIMESTAMP(....) specifies that, if a Live Recorder has to start in one hour,
+				// it has not to be considered. It means the select has to return only the Live-Recorder close to start.
+				int minutesAheadToConsiderLiveRecorder = 15;
+
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType, "
 						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
@@ -72,6 +76,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Recorder' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						"and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0"
 						// "for update "
 						;
 						// "limit ? offset ?"
@@ -89,6 +94,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 				preparedStatement->setString(queryParameterIndexIngestionJob++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+				preparedStatement->setInt(queryParameterIndexIngestionJob++, minutesAheadToConsiderLiveRecorder);
 
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);

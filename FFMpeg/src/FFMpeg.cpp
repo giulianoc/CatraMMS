@@ -4715,10 +4715,13 @@ void FFMpeg::liveRecorder(
 			{
 				time_t sleepTime = utcRecordingPeriodStart - utcNow;
 
-				_logger->info(__FILEREF__ + "Too early to start the LiveRecorder, just sleep "
+				_logger->info(__FILEREF__ + "LiveRecorder timing. "
+						+ "Too early to start the LiveRecorder, just sleep "
 					+ to_string(sleepTime) + " seconds"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 					);
 
 				this_thread::sleep_for(chrono::seconds(sleepTime));
@@ -4731,7 +4734,8 @@ void FFMpeg::liveRecorder(
 		}
 		else if (utcRecordingPeriodEnd <= utcNow)
         {
-            string errorMessage = __FILEREF__ + "Too late to start the LiveRecorder"
+            string errorMessage = __FILEREF__ + "LiveRecorder timing. "
+				+ "Too late to start the LiveRecorder"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -4742,6 +4746,20 @@ void FFMpeg::liveRecorder(
 
             throw runtime_error(errorMessage);
         }
+		else
+		{
+            string errorMessage = __FILEREF__ + "LiveRecorder timing. "
+				+ "We are a bit late to start the LiveRecorder, let's start it"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", delay: " + to_string(utcNow - utcRecordingPeriodStart)
+                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+            ;
+
+            _logger->warn(errorMessage);
+		}
 
 		_outputFfmpegPathFileName =
 			_ffmpegTempDir + "/"
@@ -4995,6 +5013,10 @@ void FFMpeg::liveRecorder(
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
+		else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
+			throw FFMpegURLForbidden();
+		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
+			throw FFMpegURLNotFound();
 		else
 			throw e;
     }
