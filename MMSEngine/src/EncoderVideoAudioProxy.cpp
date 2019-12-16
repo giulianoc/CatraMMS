@@ -10151,11 +10151,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	}
 
 	bool killedByUser = false;
+	bool urlForbidden = false;
+	bool urlNotFound = false;
 	long encodingStatusFailures = 0;
 
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
-	while (!killedByUser && currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+	while (!killedByUser && !urlForbidden && !urlNotFound
+		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 	{
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveProxyURI;
@@ -10197,7 +10200,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							channelDirectoryName.begin(),
 							[](unsigned char c)
 							{
-								if (isalpha(c))
+								if (isalnum(c))
 									return c;
 								else
 									return (unsigned char) '_';
@@ -10472,8 +10475,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
-			bool urlForbidden = false;
-			bool urlNotFound = false;
 			// string lastRecordedAssetFileName;
 
 			// see the comment few lines below (2019-05-03)
@@ -10489,6 +10490,17 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					if (completedWithError)
 					{
+						if (urlForbidden || urlNotFound)
+						{
+							string errorMessage =
+								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
 						currentAttemptsNumberInCaseOfErrors++;
 
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
@@ -10893,14 +10905,38 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         }
 	}
 
-	if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
+	if (urlForbidden)
+	{
+		string errorMessage = __FILEREF__ + "LiveProxy: URL forbidden"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+            ;
+		_logger->error(errorMessage);
+        
+		throw FFMpegURLForbidden();
+	}
+	else if (urlNotFound)
+	{
+		string errorMessage = __FILEREF__ + "LiveProxy: URL Not Found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+			+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+            ;
+		_logger->error(errorMessage);
+        
+		throw FFMpegURLNotFound();
+	}
+	else if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
 	{
 		string errorMessage = __FILEREF__ + "Reached the max number of attempts to the URL"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             ;
-		_logger->warn(errorMessage);
+		_logger->error(errorMessage);
         
 		throw EncoderError();
 	}

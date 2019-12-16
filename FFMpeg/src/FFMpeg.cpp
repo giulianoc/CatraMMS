@@ -5202,27 +5202,27 @@ void FFMpeg::liveProxyByHLS(
     }
     catch(runtime_error e)
     {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-			string errorMessage;
-			if (iReturnedStatus == 9)	// 9 means: SIGKILL
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
-			else
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
+		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
@@ -5295,6 +5295,10 @@ void FFMpeg::liveProxyByHLS(
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
+		else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
+			throw FFMpegURLForbidden();
+		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
+			throw FFMpegURLNotFound();
 		else
 			throw e;
     }
@@ -5409,26 +5413,26 @@ void FFMpeg::liveProxyByCDN(
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-			string errorMessage;
-			if (iReturnedStatus == 9)	// 9 means: SIGKILL
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
-			else
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-					+ ", e.what(): " + e.what()
-				;
+			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
@@ -5440,6 +5444,10 @@ void FFMpeg::liveProxyByCDN(
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
+		else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
+			throw FFMpegURLForbidden();
+		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
+			throw FFMpegURLNotFound();
 		else
 			throw e;
     }

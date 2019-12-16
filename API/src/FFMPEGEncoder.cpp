@@ -4320,6 +4320,58 @@ void FFMPEGEncoder::liveProxy(
 				completedWithError, killedByUser,
 				urlForbidden, urlNotFound);
     }
+    catch(FFMpegURLForbidden e)
+    {
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= true;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(FFMpegURLNotFound e)
+    {
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
     catch(runtime_error e)
     {
         liveProxy->_running = false;
