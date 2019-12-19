@@ -2731,7 +2731,10 @@ void FFMPEGEncoder::liveRecorder(
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
 		// In case of autorenew, when it is renewed, we will lose the first chunk
-		utcRecordingPeriodStart -= segmentDurationInSeconds;
+		// utcRecordingPeriodStart -= segmentDurationInSeconds;
+		// 2019-12-19: the above problem is managed inside _ffmpeg->liveRecorder
+		//		(see the secondsToStartEarly variable inside _ffmpeg->liveRecorder)
+		//		For this reason the above decrement was commented
 
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
