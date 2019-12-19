@@ -8618,6 +8618,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string outputType;
 		// string userAgent;
 		int segmentDurationInSeconds = 0;
+		int playlistEntriesNumber = 0;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
 		string cdnURL;
@@ -8647,6 +8648,12 @@ void MMSEngineProcessor::manageLiveProxy(
 					segmentDurationInSeconds = 10;
 				else
 					segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+
+				field = "PlaylistEntriesNumber";
+				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+					playlistEntriesNumber = 6;
+				else
+					playlistEntriesNumber = parametersRoot.get(field, "XXX").asInt();
 			}
 			else if (outputType == "CDN77")
 			{
@@ -8681,7 +8688,8 @@ void MMSEngineProcessor::manageLiveProxy(
 			workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			configurationLabel, liveURL, outputType, segmentDurationInSeconds, cdnURL,
+			configurationLabel, liveURL, outputType, segmentDurationInSeconds, playlistEntriesNumber,
+			cdnURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors, encodingPriority);
 	}
     catch(runtime_error e)

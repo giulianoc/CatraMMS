@@ -10114,6 +10114,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string liveURL;
 	string outputType;
 	int segmentDurationInSeconds;
+	int playlistEntriesNumber;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
@@ -10139,6 +10140,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
         field = "segmentDurationInSeconds";
         segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 10).asInt();
+
+        field = "playlistEntriesNumber";
+        playlistEntriesNumber = _encodingItem->_encodingParametersRoot.get(field, 10).asInt();
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
         waitingSecondsBetweenAttemptsInCaseOfErrors = _encodingItem->_encodingParametersRoot.get(field, 600).asInt();
@@ -10220,6 +10224,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
+					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;
 					liveProxyMetadata["cdnURL"] = cdnURL;
 					liveProxyMetadata["m3u8FilePathName"] = m3u8FilePathName;
 
@@ -10648,7 +10653,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 										FileIO::getFileTime (segmentPathNameToBeRemoved);
 									chrono::system_clock::time_point now = chrono::system_clock::now();
 
-									long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+									// chunks will be removed 10 minutes after the "capacity" of the playlist
+									long liveProxyChunkRetentionInSeconds =
+										(segmentDurationInSeconds * playlistEntriesNumber)
+										+ 10 * 60;	// 10 minutes
 									if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
 										> liveProxyChunkRetentionInSeconds)
 									{

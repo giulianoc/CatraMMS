@@ -4164,7 +4164,8 @@ void FFMPEGEncoder::liveProxy(
 		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
 		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
 		string outputType = liveProxyMetadata.get("outputType", -1).asString();
-		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", -1).asInt();
+		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", 10).asInt();
+		int playlistEntriesNumber = liveProxyMetadata.get("playlistEntriesNumber", 6).asInt();
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
 		string m3u8FilePathName = liveProxyMetadata.get("m3u8FilePathName", -1).asString();
 
@@ -4268,6 +4269,7 @@ void FFMPEGEncoder::liveProxy(
 				encodingJobKey,
 				liveURL, userAgent,
 				segmentDurationInSeconds,
+				playlistEntriesNumber,
 				m3u8FilePathName,
 				&(liveProxy->_childPid));
 		}

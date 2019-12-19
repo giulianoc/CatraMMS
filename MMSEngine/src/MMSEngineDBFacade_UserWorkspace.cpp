@@ -4427,6 +4427,9 @@ Json::Value MMSEngineDBFacade::updateUser (
         field = "country";
         loginDetailsRoot[field] = country;
                 
+        field = "ldapEnabled";
+        loginDetailsRoot[field] = ldapEnabled;
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );

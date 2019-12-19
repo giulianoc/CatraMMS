@@ -19,6 +19,9 @@
 		// optional, used only in case of HLS, Default: 10
 		"SegmentDurationInSeconds": 10,
 
+		// optional, used only in case of HLS, Default: 6
+		"PlaylistEntriesNumber": 6,
+
 		// mandatory only in case of CDN77
 		"CDN_URL": "...",
 

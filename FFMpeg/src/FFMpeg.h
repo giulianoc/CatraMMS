@@ -218,6 +218,7 @@ public:
 		int64_t encodingJobKey,
 		string liveURL, string userAgent,
 		int segmentDurationInSeconds,
+		int playlistEntriesNumber,
 		string m3u8FilePathName,
 		pid_t* pChildPid);
 

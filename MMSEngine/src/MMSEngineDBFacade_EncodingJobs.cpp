@@ -7778,7 +7778,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string configurationLabel, string liveURL,
-	string outputType, int segmentDurationInSeconds, string cdnURL,
+	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	EncodingPriority encodingPriority
 )
@@ -7797,6 +7797,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
             + ", liveURL: " + liveURL
             + ", outputType: " + outputType
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+            + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
             + ", cdnURL: " + cdnURL
@@ -7828,6 +7829,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"outputType\": \"" + outputType + "\""
                 + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)
+                + ", \"playlistEntriesNumber\": " + to_string(playlistEntriesNumber)
                 + ", \"maxAttemptsNumberInCaseOfErrors\": " + to_string(maxAttemptsNumberInCaseOfErrors)
                 + ", \"waitingSecondsBetweenAttemptsInCaseOfErrors\": " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
                 + ", \"cdnURL\": \"" + cdnURL + "\""

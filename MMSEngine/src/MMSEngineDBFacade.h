@@ -1493,7 +1493,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string configurationLabel, string liveURL,
-		string outputType, int segmentDurationInSeconds, string cdnURL,
+		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		EncodingPriority encodingPriority);
 

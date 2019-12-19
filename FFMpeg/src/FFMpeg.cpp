@@ -4711,9 +4711,14 @@ void FFMpeg::liveRecorder(
 
 		if (utcNow < utcRecordingPeriodStart)
 		{
-			while (utcNow < utcRecordingPeriodStart)
+			// 2019-12-19: since the first chunk is removed, we will start a bit early
+			// than utcRecordingPeriodStart (50% less than segmentDurationInSeconds)
+			long secondsToStartEarly =
+				segmentDurationInSeconds * 50 / 100;
+
+			while (utcNow + secondsToStartEarly < utcRecordingPeriodStart)
 			{
-				time_t sleepTime = utcRecordingPeriodStart - utcNow;
+				time_t sleepTime = utcRecordingPeriodStart - (utcNow + secondsToStartEarly);
 
 				_logger->info(__FILEREF__ + "LiveRecorder timing. "
 						+ "Too early to start the LiveRecorder, just sleep "
@@ -4721,6 +4726,7 @@ void FFMpeg::liveRecorder(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", utcNow: " + to_string(utcNow)
+                    + ", secondsToStartEarly: " + to_string(secondsToStartEarly)
                     + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 					);
 
@@ -5066,6 +5072,7 @@ void FFMpeg::liveProxyByHLS(
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
 	int segmentDurationInSeconds,
+	int playlistEntriesNumber,
 	string m3u8FilePathName,
 	pid_t* pChildPid)
 {
@@ -5154,6 +5161,8 @@ void FFMpeg::liveProxyByHLS(
 		ffmpegArgumentList.push_back("append_list");
 		ffmpegArgumentList.push_back("-hls_time");
 		ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+		ffmpegArgumentList.push_back("-hls_list_size");
+		ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 		ffmpegArgumentList.push_back(m3u8FilePathName);
 
 		if (!ffmpegArgumentList.empty())
