@@ -141,6 +141,7 @@ private:
     string                              _ffmpegEncoderPassword;
     string                              _ffmpegEncoderProgressURI;
     string                              _ffmpegEncoderStatusURI;
+    string								_ffmpegEncoderKillEncodingURI;
     string                              _ffmpegEncodeURI;
     string                              _ffmpegOverlayImageOnVideoURI;
     string                              _ffmpegOverlayTextOnVideoURI;
@@ -257,6 +258,8 @@ private:
         string fileFormat,
 		int64_t faceOfVideoMediaItemKey,
         Json::Value parametersRoot);
+
+	void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
 };
 
 #endif

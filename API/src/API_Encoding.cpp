@@ -1325,6 +1325,7 @@ void API::removeEncodingProfilesSet(
     }
 }
 
+// same method is duplicated in EncoderVideoAudioProxy.cpp
 void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 {
 	string ffmpegEncoderURL;

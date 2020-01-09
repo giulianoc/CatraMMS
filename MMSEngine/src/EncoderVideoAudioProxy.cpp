@@ -119,6 +119,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI
     );
+    _ffmpegEncoderKillEncodingURI = _configuration["ffmpeg"].get("encoderKillEncodingURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
+    );
     _ffmpegEncodeURI = _configuration["ffmpeg"].get("encodeURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodeURI: " + _ffmpegEncodeURI
@@ -155,7 +159,8 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->pictureInPictureURI: " + _ffmpegPictureInPictureURI
     );
-            
+
+
     _computerVisionCascadePath             = configuration["computerVision"].get("cascadePath", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->cascadePath: " + _computerVisionCascadePath
@@ -10190,6 +10195,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					+ "/" + to_string(_encodingItem->_encodingJobKey)
 				;
 
+				_logger->info(__FILEREF__ + "LiveProxy. Selection of the transcoder. The transcoder is selected by load balancer"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+				);
+
 				string body;
 				{
 					if (outputType == "HLS")
@@ -10481,6 +10493,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
             bool encodingFinished = false;
 			bool completedWithError = false;
 			// string lastRecordedAssetFileName;
+			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
 			// see the comment few lines below (2019-05-03)
             // while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -10493,7 +10506,152 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
-					if (completedWithError)
+					vector<string>	chunksTooOldToBeRemoved;
+					bool chunksWereNotGenerated = false;
+
+					// next statements, in case of HLS and LiveProxy task started at least since 5*segmentDurationInSeconds, will:
+					// 1. get the timestamp of the last generated file
+					// 2. fill the vector with the chunks (pathname) to be removed because too old
+					//		(10 minutes after the "capacity" of the playlist)
+					if (outputType == "HLS" && chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startCheckingEncodingStatus).count()
+							> 5 * segmentDurationInSeconds)
+					{
+						chrono::system_clock::time_point lastChunkTimestamp;
+						bool firstChunkRead = false;
+
+						try
+						{
+							if (FileIO::directoryExisting(m3u8DirectoryPathName))
+							{
+								FileIO::DirectoryEntryType_t detDirectoryEntryType;
+								shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+									m3u8DirectoryPathName + "/");
+
+								// chunks will be removed 10 minutes after the "capacity" of the playlist
+								long liveProxyChunkRetentionInSeconds =
+									(segmentDurationInSeconds * playlistEntriesNumber)
+									+ 10 * 60;	// 10 minutes
+
+								bool scanDirectoryFinished = false;
+								while (!scanDirectoryFinished)
+								{
+									string directoryEntry;
+									try
+									{
+										string directoryEntry = FileIO::readDirectory (directory,
+											&detDirectoryEntryType);
+                
+										if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+											continue;
+
+										{
+											string segmentPathNameToBeRemoved =
+												m3u8DirectoryPathName + "/" + directoryEntry;
+
+											chrono::system_clock::time_point fileLastModification =
+												FileIO::getFileTime (segmentPathNameToBeRemoved);
+											chrono::system_clock::time_point now = chrono::system_clock::now();
+
+											if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
+												> liveProxyChunkRetentionInSeconds)
+											{
+												chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
+											}
+
+											if (!firstChunkRead
+													|| fileLastModification > lastChunkTimestamp)
+												lastChunkTimestamp = fileLastModification;
+
+											firstChunkRead = true;
+										}
+									}
+									catch(DirectoryListFinished e)
+									{
+										scanDirectoryFinished = true;
+									}
+									catch(runtime_error e)
+									{
+										string errorMessage = __FILEREF__ + "listing directory failed"
+											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+											+ ", e.what(): " + e.what()
+										;
+										_logger->error(errorMessage);
+
+										// throw e;
+									}
+									catch(exception e)
+									{
+										string errorMessage = __FILEREF__ + "listing directory failed"
+											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+											+ ", e.what(): " + e.what()
+										;
+										_logger->error(errorMessage);
+
+										// throw e;
+									}
+								}
+
+								FileIO::closeDirectory (directory);
+							}
+
+							if (!firstChunkRead
+									|| lastChunkTimestamp <
+										chrono::system_clock::now() - chrono::seconds(20 * segmentDurationInSeconds))
+							{
+								// if we are here, it means the ffmpeg command is not generating the ts files
+
+								_logger->error(__FILEREF__ + "Chunks were not generated"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+									+ ", firstChunkRead: " + to_string(firstChunkRead)
+								);
+
+								chunksWereNotGenerated = true;
+
+								// 1. kill it in case it is still running
+								// 2. manage the error (this is done below)
+
+								try
+								{
+									killEncodingJob(_currentUsedFFMpegEncoderHost,
+										_encodingItem->_encodingJobKey);
+								}
+								catch(...)
+								{
+									_logger->error(__FILEREF__ + "killEncodingJob failed"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+									);
+								}
+							}
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(...)
+						{
+							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+							);
+						}
+					}
+					
+					if (completedWithError || chunksWereNotGenerated)
 					{
 						if (urlForbidden || urlNotFound)
 						{
@@ -10510,7 +10668,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
+						;
 						_logger->error(errorMessage);
 
 						encodingStatusFailures++;
@@ -10577,6 +10737,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
 								&& !killedByUser);
 
+						if (chunksWereNotGenerated)
+							encodingFinished = true;
+
 						throw runtime_error(errorMessage);
 					}
 					else
@@ -10613,6 +10776,32 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 						}
 					}
+
+					if (outputType == "HLS")
+					{
+						bool exceptionInCaseOfError = false;
+
+						for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "Remove chunk because too old"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+								FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "remove failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+									+ ", e.what(): " + e.what()
+								);
+							}
+						}
+					}
                 }
                 catch(...)
                 {
@@ -10622,91 +10811,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 					);
                 }
-
-				if (outputType == "HLS")
-				{
-					try
-					{
-						// clean LiveProxy files from file system
-    
-						FileIO::DirectoryEntryType_t detDirectoryEntryType;
-						shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-							m3u8DirectoryPathName + "/");
-
-						bool scanDirectoryFinished = false;
-						while (!scanDirectoryFinished)
-						{
-							string directoryEntry;
-							try
-							{
-								string directoryEntry = FileIO::readDirectory (directory,
-									&detDirectoryEntryType);
-                
-								if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-									continue;
-
-								{
-									string segmentPathNameToBeRemoved =
-										m3u8DirectoryPathName + "/" + directoryEntry;
-
-									chrono::system_clock::time_point fileLastModification =
-										FileIO::getFileTime (segmentPathNameToBeRemoved);
-									chrono::system_clock::time_point now = chrono::system_clock::now();
-
-									// chunks will be removed 10 minutes after the "capacity" of the playlist
-									long liveProxyChunkRetentionInSeconds =
-										(segmentDurationInSeconds * playlistEntriesNumber)
-										+ 10 * 60;	// 10 minutes
-									if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-										> liveProxyChunkRetentionInSeconds)
-									{
-										bool exceptionInCaseOfError = false;
-										_logger->info(__FILEREF__ + "Remove"
-											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-										FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-									}
-								}
-							}
-							catch(DirectoryListFinished e)
-							{
-								scanDirectoryFinished = true;
-							}
-							catch(runtime_error e)
-							{
-								string errorMessage = __FILEREF__ + "listing directory failed"
-									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-							catch(exception e)
-							{
-								string errorMessage = __FILEREF__ + "listing directory failed"
-									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-						}
-
-						FileIO::closeDirectory (directory);
-					}
-					catch(...)
-					{
-						_logger->error(__FILEREF__ + "clean LiveProxy files failed"
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						);
-					}
-				}
             }
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
@@ -11861,5 +11965,194 @@ Magick::InterlaceType EncoderVideoAudioProxy::encodingImageInterlaceTypeValidati
     }
     
     return interlaceType;
+}
+
+// same method is duplicated in API_Encoding.cpp
+void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
+{
+	string ffmpegEncoderURL;
+	ostringstream response;
+	try
+	{
+		ffmpegEncoderURL = _ffmpegEncoderProtocol
+			+ "://"
+			+ transcoderHost + ":"
+			+ to_string(_ffmpegEncoderPort)
+			+ _ffmpegEncoderKillEncodingURI
+			+ "/" + to_string(encodingJobKey)
+		;
+            
+		list<string> header;
+
+		{
+			string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+            
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+		request.setOpt(new curlpp::options::CustomRequest("DELETE"));
+
+		if (_ffmpegEncoderProtocol == "https")
+		{
+			/*
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                  typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                  typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+			*/
+                                                                                                
+              
+			/*
+			// cert is stored PEM coded in file... 
+			// since PEM is default, we needn't set it for PEM 
+			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			equest.setOpt(sslCertType);
+
+			// set the cert for client authentication
+			// "testcert.pem"
+			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			request.setOpt(sslCert);
+			*/
+
+			/*
+			// sorry, for engine we must set the passphrase
+			//   (if the key has one...)
+			// const char *pPassphrase = NULL;
+			if(pPassphrase)
+			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+			// if we use a key stored in a crypto engine,
+			//   we must set the key type to "ENG"
+			// pKeyType  = "PEM";
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+			// set the private key (file or ID in engine)
+			// pKeyName  = "testkey.pem";
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+			// set the file with the certs vaildating the server
+			// *pCACertFile = "cacert.pem";
+			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+			*/
+              
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+              
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+              
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "killEncodingJob"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+		);
+		request.perform();
+		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "killEncodingJob"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", response.str: " + response.str()
+		);
+
+		string sResponse = response.str();
+
+		// LF and CR create problems to the json parser...                                                    
+		while (sResponse.back() == 10 || sResponse.back() == 13)                                              
+			sResponse.pop_back();                                                                             
+
+		{
+			string message = __FILEREF__ + "Kill encoding response"                                       
+				+ ", encodingJobKey: " + to_string(encodingJobKey)          
+				+ ", sResponse: " + sResponse                                                                 
+			;                                                                                             
+			_logger->info(message);
+		}
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);                                        
+		if (responseCode != 200)
+		{
+			string errorMessage = __FILEREF__ + "Kill encoding URL failed"                                       
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sResponse: " + sResponse                                                                 
+				+ ", responseCode: " + to_string(responseCode)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (curlpp::LogicError & e) 
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (LogicError)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+            
+		throw e;
+	}
+	catch (curlpp::RuntimeError & e) 
+	{ 
+		string errorMessage = string("killEncoding URL failed (RuntimeError)")
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+          
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
 }
 
