@@ -1683,6 +1683,7 @@ public:
         int64_t workspaceKey,
         string label,
         string liveURL,
+        string type,
         string description,
         string channelName,
         string channelRegion,
@@ -1695,6 +1696,7 @@ public:
         int64_t workspaceKey,
         string label,
         string liveURL,
+        string type,
         string description,
         string channelName,
         string channelRegion,
@@ -1709,7 +1711,7 @@ public:
     Json::Value getLiveURLConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
-		string label, string channelName, string channelRegion, string channelCountry, string liveURL,
+		string label, string type, string channelName, string channelRegion, string channelCountry, string liveURL,
 		string labelOrder);
 
     string getLiveURLByConfigurationLabel(

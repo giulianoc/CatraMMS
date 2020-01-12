@@ -945,6 +945,7 @@ void API::addLiveURLConf(
     {
         string label;
         string liveURL;
+        string type;
         string description;
         string channelName;
         string channelRegion;
@@ -1000,6 +1001,10 @@ void API::addLiveURLConf(
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
 
+            field = "Type";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				type = requestBodyRoot.get(field, "XXX").asString();            
+
             field = "Description";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
 				description = requestBodyRoot.get(field, "XXX").asString();            
@@ -1052,7 +1057,7 @@ void API::addLiveURLConf(
         try
         {
             int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
-                workspace->_workspaceKey, label, liveURL, description,
+                workspace->_workspaceKey, label, liveURL, type, description,
 				channelName, channelRegion, channelCountry, deliveryURL,
 				liveURLData);
 
@@ -1130,6 +1135,7 @@ void API::modifyLiveURLConf(
     {
         string label;
         string liveURL;
+        string type;
         string description;
         string channelName;
         string channelRegion;
@@ -1184,6 +1190,10 @@ void API::modifyLiveURLConf(
                 throw runtime_error(errorMessage);
             }    
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "Type";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+				type = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Description";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
@@ -1250,7 +1260,7 @@ void API::modifyLiveURLConf(
             confKey = stoll(confKeyIt->second);
 
             _mmsEngineDBFacade->modifyLiveURLConf(
-                confKey, workspace->_workspaceKey, label, liveURL, description,
+                confKey, workspace->_workspaceKey, label, liveURL, type, description,
 				channelName, channelRegion, channelCountry, deliveryURL,
 				liveURLData);
 
@@ -1481,6 +1491,19 @@ void API::liveURLConfList(
 			liveURL = regex_replace(liveURLDecoded, regex(plus), plusDecoded);
 		}
 
+		string type;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			type = typeIt->second;
+
+			string typeDecoded = curlpp::unescape(type);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			type = regex_replace(typeDecoded, regex(plus), plusDecoded);
+		}
+
 		string channelName;
 		auto channelNameIt = queryParameters.find("channelName");
 		if (channelNameIt != queryParameters.end() && channelNameIt->second != "")
@@ -1535,7 +1558,7 @@ void API::liveURLConfList(
             
             Json::Value liveURLConfListRoot = _mmsEngineDBFacade->getLiveURLConfList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, 
-					liveURL, channelName, channelRegion, channelCountry,
+					liveURL, type, channelName, channelRegion, channelCountry,
 					labelOrder);
 
             Json::StreamWriterBuilder wbuilder;

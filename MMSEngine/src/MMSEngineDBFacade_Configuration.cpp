@@ -1179,6 +1179,7 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
     int64_t workspaceKey,
     string label,
     string liveURL,
+	string type,
 	string description,
 	string channelName,
 	string channelRegion,
@@ -1206,15 +1207,19 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL, description, "
+                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL, type, description, "
 				"channelName, channelRegion, channelCountry, deliveryURL, liveURLData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, liveURL);
+			if (type == "")
+				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, type);
 			if (description == "")
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1318,6 +1323,7 @@ void MMSEngineDBFacade::modifyLiveURLConf(
     int64_t workspaceKey,
     string label,
     string liveURL,
+	string type,
 	string description,
 	string channelName,
 	string channelRegion,
@@ -1344,7 +1350,7 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 			}
 
             lastSQLCommand = 
-                "update MMS_Conf_LiveURL set label = ?, liveURL = ?, description = ?, "
+                "update MMS_Conf_LiveURL set label = ?, liveURL = ?, type = ?, description = ?, "
 				"channelName = ?, channelRegion = ?, channelCountry = ?, deliveryURL = ?, liveURLData = ? "
 				"where confKey = ? and workspaceKey = ?";
 
@@ -1352,6 +1358,10 @@ void MMSEngineDBFacade::modifyLiveURLConf(
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, liveURL);
+			if (type == "")
+				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, type);
 			if (description == "")
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1567,7 +1577,7 @@ void MMSEngineDBFacade::removeLiveURLConf(
 Json::Value MMSEngineDBFacade::getLiveURLConfList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
-	string label, string liveURL, string channelName, string channelRegion, string channelCountry,
+	string label, string liveURL, string type, string channelName, string channelRegion, string channelCountry,
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
@@ -1587,6 +1597,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             + ", rows: " + to_string(rows)
             + ", label: " + label
             + ", liveURL: " + liveURL
+            + ", type: " + type
             + ", channelName: " + channelName
             + ", channelRegion: " + channelRegion
             + ", channelCountry: " + channelCountry
@@ -1634,6 +1645,12 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				requestParametersRoot[field] = liveURL;
 			}
 
+            if (type != "")
+			{
+				field = "type";
+				requestParametersRoot[field] = type;
+			}
+
             if (channelName != "")
 			{
 				field = "channelName";
@@ -1669,6 +1686,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             sqlWhere += ("and label like ? ");
         if (liveURL != "")
             sqlWhere += ("and liveURL like ? ");
+        if (type != "")
+            sqlWhere += ("and type like ? ");
         if (channelName != "")
             sqlWhere += ("and channelName like ? ");
         if (channelRegion != "")
@@ -1691,6 +1710,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (liveURL != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
+            if (type != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + type + "%");
             if (channelName != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelName + "%");
             if (channelRegion != "")
@@ -1720,7 +1741,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string ("select confKey, label, liveURL, description, channelName, channelRegion, channelCountry, "
+                string ("select confKey, label, liveURL, type, description, channelName, channelRegion, channelCountry, "
 						"deliveryURL, liveURLData from MMS_Conf_LiveURL ") 
                 + sqlWhere
 				+ orderByCondition
@@ -1735,6 +1756,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             if (liveURL != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
+            if (type != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + type + "%");
             if (channelName != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelName + "%");
             if (channelRegion != "")
@@ -1756,6 +1779,12 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 
                 field = "liveURL";
                 liveURLConfRoot[field] = static_cast<string>(resultSet->getString("liveURL"));
+
+                field = "type";
+				if (resultSet->isNull("type"))
+					liveURLConfRoot[field] = Json::nullValue;
+				else
+					liveURLConfRoot[field] = static_cast<string>(resultSet->getString("type"));
 
                 field = "description";
 				if (resultSet->isNull("description"))

@@ -1451,6 +1451,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (128) NOT NULL,"
                     "liveURL					VARCHAR (512) NOT NULL,"
+                    "type						VARCHAR (128) NULL,"
                     "description				VARCHAR (1024) NULL,"
                     "channelName				VARCHAR (128) NULL,"
                     "channelRegion				VARCHAR (128) NULL,"
