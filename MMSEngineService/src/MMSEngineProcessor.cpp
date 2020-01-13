@@ -11741,7 +11741,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         }
 
         if (durationInMilliSeconds < startTimeInSeconds * 1000
-                || (endTimeInSeconds != -1 && durationInMilliSeconds < endTimeInSeconds * 1000))
+			|| (endTimeInSeconds != -1 && durationInMilliSeconds < endTimeInSeconds * 1000))
         {
             string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds or endTimeInSeconds is bigger than the video duration"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

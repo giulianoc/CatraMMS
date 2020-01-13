@@ -3643,7 +3643,12 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
         else
         {
             string duration = formatRoot.get(field, "XXX").asString();
-            durationInMilliSeconds = atoll(duration.c_str()) * 1000;
+
+			// 2020-01-13: atoll remove the milliseconds and this is wrong
+            // durationInMilliSeconds = atoll(duration.c_str()) * 1000;
+
+            double dDurationInMilliSeconds = stod(duration);
+            durationInMilliSeconds = dDurationInMilliSeconds * 1000;
         }
 
         field = "bit_rate";
