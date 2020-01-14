@@ -1189,7 +1189,7 @@ void API::login(
 
 					LdapWrapper ldapWrapper;
 
-					ldapWrapper.init(_ldapURL, _ldapManagerUserName, _ldapManagerPassword);
+					ldapWrapper.init(_ldapURL, _ldapCertificatePathName, _ldapManagerUserName, _ldapManagerPassword);
 
 					pair<bool, string> testCredentialsSuccessfulAndEmail =
 						ldapWrapper.testCredentials(userName, password, _ldapBaseDn);

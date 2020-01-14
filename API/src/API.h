@@ -111,6 +111,7 @@ private:
     
 	bool				_ldapEnabled;
     string				_ldapURL;
+    string				_ldapCertificatePathName;
     string				_ldapManagerUserName;
     string				_ldapManagerPassword;
     string				_ldapBaseDn;

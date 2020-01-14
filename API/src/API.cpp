@@ -303,6 +303,10 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->ldapURL: " + _ldapURL
     );
+    _ldapCertificatePathName  = api["activeDirectory"].get("certificatePathName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->activeDirectory->certificatePathName: " + _ldapCertificatePathName
+    );
     _ldapManagerUserName  = api["activeDirectory"].get("managerUserName", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->managerUserName: " + _ldapManagerUserName
