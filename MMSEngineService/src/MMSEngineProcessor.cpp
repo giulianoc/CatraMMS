@@ -8641,7 +8641,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			else
             	outputType = parametersRoot.get(field, "XXX").asString();
 
-			if (outputType == "HLS")
+			if (outputType == "HLS" || outputType == "DASH")
 			{
 				field = "SegmentDurationInSeconds";
 				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))

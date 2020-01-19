@@ -4170,32 +4170,32 @@ void FFMPEGEncoder::liveProxy(
 		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", 10).asInt();
 		int playlistEntriesNumber = liveProxyMetadata.get("playlistEntriesNumber", 6).asInt();
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
-		string m3u8FilePathName = liveProxyMetadata.get("m3u8FilePathName", -1).asString();
+		string manifestFilePathName = liveProxyMetadata.get("manifestFilePathName", -1).asString();
 
-		if (outputType == "HLS")
+		if (outputType == "HLS" || outputType == "DASH")
 		{
-			size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
-			if (m3u8FilePathIndex == string::npos)
+			size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+			if (manifestFilePathIndex == string::npos)
 			{
-				string errorMessage = string("m3u8FilePathName not well format")
+				string errorMessage = string("manifestFilePathName not well format")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", m3u8FilePathName: " + m3u8FilePathName
+                    + ", manifestFilePathName: " + manifestFilePathName
                     ;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+			string manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 
-			if (!FileIO::directoryExisting(m3u8DirectoryPathName))
+			if (!FileIO::directoryExisting(manifestDirectoryPathName))
 			{
 				bool noErrorIfExists = true;
 				bool recursive = true;
 
 				_logger->info(__FILEREF__ + "Creating directory (if needed)"
-					+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 				);
-				FileIO::createDirectory(m3u8DirectoryPathName,
+				FileIO::createDirectory(manifestDirectoryPathName,
 					S_IRUSR | S_IWUSR | S_IXUSR |
 					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 			}
@@ -4205,7 +4205,7 @@ void FFMPEGEncoder::liveProxy(
 
 				FileIO::DirectoryEntryType_t detDirectoryEntryType;
 				shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-					m3u8DirectoryPathName + "/");
+					manifestDirectoryPathName + "/");
 
 				bool scanDirectoryFinished = false;
 				while (!scanDirectoryFinished)
@@ -4223,7 +4223,7 @@ void FFMPEGEncoder::liveProxy(
 							bool exceptionInCaseOfError = false;
 
 							string segmentPathNameToBeRemoved =                                                   
-								m3u8DirectoryPathName + "/" + directoryEntry;                                     
+								manifestDirectoryPathName + "/" + directoryEntry;                                     
 							_logger->info(__FILEREF__ + "Remove"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4267,13 +4267,14 @@ void FFMPEGEncoder::liveProxy(
 			}
 
 			// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-			liveProxy->_ffmpeg->liveProxyByHLS(
+			liveProxy->_ffmpeg->liveProxyByHTTPStreaming(
 				ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent,
+				outputType,
 				segmentDurationInSeconds,
 				playlistEntriesNumber,
-				m3u8FilePathName,
+				manifestFilePathName,
 				&(liveProxy->_childPid));
 		}
 		else
@@ -4289,10 +4290,10 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_running = false;
         liveProxy->_childPid = 0;
         
-        _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHLS finished"
+        _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHTTPStreaming finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", m3u8FilePathName: " + m3u8FilePathName
+            + ", manifestFilePathName: " + manifestFilePathName
         );
 
 		bool completedWithError			= false;

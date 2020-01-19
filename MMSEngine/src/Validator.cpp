@@ -3539,7 +3539,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS or DASH)"
                 + ", Field: " + field
                 + ", liveProxyOutputType: " + liveProxyOutputType
                 + ", label: " + label
@@ -4298,7 +4298,8 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
         "CDN77",
-        "HLS"
+        "HLS",
+        "DASH"
     };
 
     for (string outputType: outputTypes)

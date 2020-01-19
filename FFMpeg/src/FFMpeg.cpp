@@ -82,6 +82,8 @@ void FFMpeg::encodeContent(
     try
     {
         bool segmentFileFormat;    
+		string ffmpegHttpStreamingParameter = "";
+
         string ffmpegFileFormatParameter = "";
 
         string ffmpegVideoCodecParameter = "";
@@ -120,6 +122,8 @@ void FFMpeg::encodeContent(
             isVideo,
 
             segmentFileFormat,
+			ffmpegHttpStreamingParameter,
+
             ffmpegFileFormatParameter,
 
             ffmpegVideoCodecParameter,
@@ -138,266 +142,30 @@ void FFMpeg::encodeContent(
             ffmpegAudioOtherParameters,
             ffmpegAudioChannelsParameter,
             ffmpegAudioSampleRateParameter
-
         );
 
-        /*
-        string stagingEncodedAssetPath;
-        {
-            size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
-            if (fileNameIndex == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            
-            stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
-        }
-        _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
-                + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + ".ffmpegoutput";
-        */
         _outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
-        /*
-        _outputFfmpegPathFileName = _mmsStorage->getStagingAssetPathName (
-            customerDirectoryName,
-            relativePath,
-            ffmpegoutputPathName,
-            -1,         // long long llMediaItemKey,
-            -1,         // long long llPhysicalPathKey,
-            true // removeLinuxPathIfExist
-        );
-         */
 
         if (segmentFileFormat)
         {
-            string stagingEncodedSegmentAssetPathName =
-                    stagingEncodedAssetPathName 
-                    + "/"
-                    + to_string(_currentIngestionJobKey)
-                    + "_"
-                    + to_string(_currentEncodingJobKey)
-                    + "_%04d.ts"
-            ;
-
-		#ifdef __EXECUTE__
-            string ffmpegExecuteCommand =
-                    _ffmpegPath + "/ffmpeg "
-                    + "-y -i " + mmsSourceAssetPathName + " "
-                    + ffmpegVideoCodecParameter
-                    + ffmpegVideoProfileParameter
-                    + ffmpegVideoBitRateParameter
-                    + ffmpegVideoOtherParameters
-                    + ffmpegVideoMaxRateParameter
-                    + ffmpegVideoBufSizeParameter
-                    + ffmpegVideoFrameRateParameter
-                    + ffmpegVideoKeyFramesRateParameter
-                    + ffmpegVideoResolutionParameter
-                    + "-threads 0 "
-
-                    + ffmpegAudioCodecParameter
-                    + ffmpegAudioBitRateParameter
-                    + ffmpegAudioOtherParameters
-                    + ffmpegAudioChannelsParameter
-                    + ffmpegAudioSampleRateParameter
-
-                    + ffmpegFileFormatParameter
-                    + stagingEncodedSegmentAssetPathName + " "
-                    + "> " + _outputFfmpegPathFileName + " "
-                    + "2>&1"
-            ;
-
-            #ifdef __APPLE__
-                ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-            #endif
-		#else
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
 
-			ffmpegArgumentList.push_back("ffmpeg");
-			// global options
-			ffmpegArgumentList.push_back("-y");
-			// input options
-			ffmpegArgumentList.push_back("-i");
-			ffmpegArgumentList.push_back(mmsSourceAssetPathName);
-			// output options
-			addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
-			addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
-			ffmpegArgumentList.push_back("-threads");
-			ffmpegArgumentList.push_back("0");
-			addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-			addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-			addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-			addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-			addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-			ffmpegArgumentList.push_back(stagingEncodedSegmentAssetPathName);
-
-		#endif
-
-            try
-            {
-                chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
-
-			#ifdef __EXECUTE__
-                _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
-
-                int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                if (executeCommandStatus != 0)
-                {
-                    string errorMessage = __FILEREF__ + "encodeContent: ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-			#else
-				if (!ffmpegArgumentList.empty())
-					copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
-						ostream_iterator<string>(ffmpegArgumentListStream, " "));
-
-                _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                );
-
-				bool redirectionStdOutput = true;
-				bool redirectionStdError = true;
-
-				ProcessUtility::forkAndExec (
-					_ffmpegPath + "/ffmpeg",
-					ffmpegArgumentList,
-					_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
-					pChildPid, &iReturnedStatus);
-				if (iReturnedStatus != 0)
-                {
-					string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", iReturnedStatus: " + to_string(iReturnedStatus)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                    ;            
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-			#endif
-
-                chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
-
-			#ifdef __EXECUTE__
-                _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-                );
-			#else
-                _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                    + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-                );
-			#endif
-            }
-            catch(runtime_error e)
-            {
-                string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-			#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                        + ", e.what(): " + e.what()
-                ;
-			#else
-				string errorMessage;
-				if (iReturnedStatus == 9)	// 9 means: SIGKILL
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-						+ ", e.what(): " + e.what()
-					;
-				else
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-						+ ", e.what(): " + e.what()
-					;
-			#endif
-                _logger->error(errorMessage);
-
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-				if (iReturnedStatus == 9)	// 9 means: SIGKILL
-					throw FFMpegEncodingKilledByUser();
-				else
-					throw e;
-            }
-
-            _logger->info(__FILEREF__ + "Remove"
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-            bool exceptionInCaseOfError = false;
-            FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-            _logger->info(__FILEREF__ + "Encoded file generated"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", stagingEncodedSegmentAssetPathName: " + stagingEncodedSegmentAssetPathName
-            );
-
-            // changes to be done to the manifest, see EncoderThread.cpp
-        }
-        else
-        {
-			#ifdef __EXECUTE__
-            string ffmpegExecuteCommand;
-			#else
-			vector<string> ffmpegArgumentList;
-			ostringstream ffmpegArgumentListStream;
-			#endif
+			{
+				bool noErrorIfExists = true;
+				bool recursive = true;
+				_logger->info(__FILEREF__ + "Creating directory (if needed)"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
+				FileIO::createDirectory(stagingEncodedAssetPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			}
 
             if (_twoPasses)
             {
@@ -411,53 +179,456 @@ void FFMpeg::encodeContent(
                     ;
 
                 // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-			#ifdef __EXECUTE__
-                string globalOptions = "-y ";
-                string inputOptions = "";
-                string outputOptions =
-                        ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoOtherParameters
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        + "-pass 1 -passlogfile " + ffmpegPassLogPathFileName + " "
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+				// output options
+				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-threads");
+				ffmpegArgumentList.push_back("0");
+				ffmpegArgumentList.push_back("-pass");
+				ffmpegArgumentList.push_back("1");
+				ffmpegArgumentList.push_back("-passlogfile");
+				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+				// It should be useless to add the audio parameters in phase 1 but,
+				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+				//  So, this is the reason, I'm adding phase 2 as well
+				// + "-an "    // disable audio
+				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
-						// It should be useless to add the audio parameters in phase 1 but,
-						// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
-						//	it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
-						//	So, this is the reason, I'm adding phase 2 as well
-                        // + "-an "    // disable audio
+				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-                        + ffmpegAudioCodecParameter
-                        + ffmpegAudioBitRateParameter
-                        + ffmpegAudioOtherParameters
-                        + ffmpegAudioChannelsParameter
-                        + ffmpegAudioSampleRateParameter
+				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("/dev/null");
 
-                        + ffmpegFileFormatParameter
-                        ;
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions
-                        + "-i " + mmsSourceAssetPathName + " "
-                        + outputOptions
-                        + "/dev/null "
-                        + "> " + _outputFfmpegPathFileName + " "
-                        + "2>&1"
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;            
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (first step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				string segmentPathFileName =
+					stagingEncodedAssetPathName 
+					+ "/"
+					+ to_string(_currentIngestionJobKey)
+					+ "_"
+					+ to_string(_currentEncodingJobKey)
+					+ "_%04d.ts"
+				;
+
+				string stagingManifestAssetPathName =
+					stagingEncodedAssetPathName
+					+ "/index.m3u8";
+
+				ffmpegArgumentList.clear();
+
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+				// output options
+				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-threads");
+				ffmpegArgumentList.push_back("0");
+				ffmpegArgumentList.push_back("-pass");
+				ffmpegArgumentList.push_back("2");
+				ffmpegArgumentList.push_back("-passlogfile");
+				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+				ffmpegArgumentList.push_back("-hls_segment_filename ");
+				ffmpegArgumentList.push_back(segmentPathFileName);
+
+				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;            
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			}
+			else
+            {
+				string segmentPathFileName =
+					stagingEncodedAssetPathName 
+					+ "/"
+					+ to_string(_currentIngestionJobKey)
+					+ "_"
+					+ to_string(_currentEncodingJobKey)
+					+ "_%04d.ts"
+				;
+
+				string stagingManifestAssetPathName =
+					stagingEncodedAssetPathName
+					+ "/index.m3u8";
+
+				ffmpegArgumentList.clear();
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
+				// output options
+				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-threads");
+				ffmpegArgumentList.push_back("0");
+				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+				ffmpegArgumentList.push_back("-hls_segment_filename ");
+				ffmpegArgumentList.push_back(segmentPathFileName);
+
+				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					);
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+					{
+						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						;            
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+					_logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+					);
+				}
+				catch(runtime_error e)
+				{
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					_logger->error(errorMessage);
+
+					bool exceptionInCaseOfError = false;
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+				}
+
+				bool exceptionInCaseOfError = false;
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+			}
+
+			long long llDirSize = -1;
+			// if (FileIO::fileExisting(stagingEncodedAssetPathName))
+			{
+				llDirSize = FileIO::getDirectorySizeInBytes (
+					stagingEncodedAssetPathName);
+			}
+
+            _logger->info(__FILEREF__ + "Encoded file generated"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", llDirSize: " + to_string(llDirSize)
+				+ ", _twoPasses: " + to_string(_twoPasses)
+            );
+
+            if (llDirSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded dir size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
 
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
+                _logger->error(errorMessage);
 
-			#else
+                throw runtime_error(errorMessage);
+            }
+
+            // changes to be done to the manifest, see EncoderThread.cpp
+        }
+        else
+        {
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+
+            if (_twoPasses)
+            {
+                string passlogFileName = 
+                    to_string(_currentIngestionJobKey)
+                    + "_"
+                    + to_string(_currentEncodingJobKey) + ".passlog";
+                string ffmpegPassLogPathFileName = _ffmpegTempDir // string(stagingEncodedAssetPath)
+                    + "/"
+                    + passlogFileName
+                    ;
+
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -493,33 +664,11 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("/dev/null");
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
                     
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -552,18 +701,9 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-                    );
-				#else
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -571,21 +711,11 @@ void FFMpeg::encodeContent(
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -605,7 +735,6 @@ void FFMpeg::encodeContent(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
@@ -619,49 +748,6 @@ void FFMpeg::encodeContent(
 					else
 						throw e;
                 }
-
-			#ifdef __EXECUTE__
-                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-                globalOptions = "-y ";
-                inputOptions = "";
-                outputOptions =
-                        ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoOtherParameters
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        + "-pass 2 -passlogfile " + ffmpegPassLogPathFileName + " "
-                        
-                        + ffmpegAudioCodecParameter
-                        + ffmpegAudioBitRateParameter
-                        + ffmpegAudioOtherParameters
-                        + ffmpegAudioChannelsParameter
-                        + ffmpegAudioSampleRateParameter
-                        
-                        + ffmpegFileFormatParameter
-                        ;
-                
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions
-                        + "-i " + mmsSourceAssetPathName + " "
-                        + outputOptions
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-
-			#else
 
 				ffmpegArgumentList.clear();
 				ffmpegArgumentList.push_back("ffmpeg");
@@ -693,35 +779,12 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 _currentlyAtSecondPass = true;
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed (second step)"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -754,18 +817,9 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
                     
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-                    );
-				#else
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -773,21 +827,11 @@ void FFMpeg::encodeContent(
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                        + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -807,7 +851,6 @@ void FFMpeg::encodeContent(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
@@ -830,48 +873,6 @@ void FFMpeg::encodeContent(
             }
             else
             {
-			#ifdef __EXECUTE__
-                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-                string globalOptions = "-y ";
-                string inputOptions = "";
-                string outputOptions =
-                        ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoOtherParameters
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        
-                        + ffmpegAudioCodecParameter
-                        + ffmpegAudioBitRateParameter
-                        + ffmpegAudioOtherParameters
-                        + ffmpegAudioChannelsParameter
-                        + ffmpegAudioSampleRateParameter
-                        
-                        + ffmpegFileFormatParameter
-                        ;
-                
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions
-                        + "-i " + mmsSourceAssetPathName + " "
-                        + outputOptions                        
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-
-			#else
-
 				ffmpegArgumentList.clear();
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -898,33 +899,11 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-                    
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -957,17 +936,8 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
-                    );
-				#else
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -975,21 +945,11 @@ void FFMpeg::encodeContent(
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -1009,7 +969,6 @@ void FFMpeg::encodeContent(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
@@ -1047,19 +1006,11 @@ void FFMpeg::encodeContent(
 
             if (llFileSize == 0)
             {
-				#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-				#else
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-				#endif
 
                 _logger->error(errorMessage);
 
@@ -1079,7 +1030,7 @@ void FFMpeg::encodeContent(
         );
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName)
-                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
         {
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
@@ -2969,7 +2920,7 @@ int FFMpeg::getEncodingProgress()
 
     try
     {
-		if (_currentApiName == "liveProxyByHLS"
+		if (_currentApiName == "liveProxyByHTTPStreaming"
 				|| _currentApiName == "liveProxyByCDN")
 		{
 			// it's a live
@@ -5072,13 +5023,17 @@ void FFMpeg::liveRecorder(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::liveProxyByHLS(
+void FFMpeg::liveProxyByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
+
+	string outputType,	// HLS or DASH
+
+	// next are parameters for the output
 	int segmentDurationInSeconds,
 	int playlistEntriesNumber,
-	string m3u8FilePathName,
+	string manifestFilePathName,
 	pid_t* pChildPid)
 {
 	vector<string> ffmpegArgumentList;
@@ -5089,23 +5044,38 @@ void FFMpeg::liveProxyByHLS(
 	chrono::system_clock::time_point endFfmpegCommand;
 	time_t utcNow;
 
-	_currentApiName = "liveProxyByHLS";
+	_currentApiName = "liveProxyByHTTPStreaming";
 
-	string m3u8DirectoryPathName;
+	string manifestDirectoryPathName;
     try
     {
-		size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
-		if (m3u8FilePathIndex == string::npos)
+		string outputTypeLowerCase;
+		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
+				[](unsigned char c){return tolower(c); } );
+
+		if (outputTypeLowerCase != "hls" && outputTypeLowerCase != "dash")
 		{
-			string errorMessage = __FILEREF__ + "No m3u8DirectoryPath find in the m3u8 file path name"
+			string errorMessage = __FILEREF__ + "liveProxyByHTTPStreaming. Wrong output type (it has to be HLS or DASH)"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", m3u8FilePathName: " + m3u8FilePathName;
+					+ ", outputType: " + outputType;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+
+		size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+		if (manifestFilePathIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the manifest file path name"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestFilePathName: " + manifestFilePathName;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 
 		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
 		// I saw just once that the directory was not created and the liveencoder remains in the loop
@@ -5113,20 +5083,20 @@ void FFMpeg::liveProxyByHLS(
 		//	1. the encoder returns an error becaise of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (!FileIO::directoryExisting(m3u8DirectoryPathName))
+		if (!FileIO::directoryExisting(manifestDirectoryPathName))
 		{
-			_logger->warn(__FILEREF__ + "m3u8DirectoryPathName does not exist!!! It will be created"
+			_logger->warn(__FILEREF__ + "manifestDirectoryPathName does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 					);
 
 			_logger->info(__FILEREF__ + "Create directory"
-                + ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+                + ", manifestDirectoryPathName: " + manifestDirectoryPathName
             );
 			bool noErrorIfExists = true;
 			bool recursive = true;
-			FileIO::createDirectory(m3u8DirectoryPathName,
+			FileIO::createDirectory(manifestDirectoryPathName,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP |
 				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
@@ -5162,13 +5132,23 @@ void FFMpeg::liveProxyByHLS(
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-c:a");
 		ffmpegArgumentList.push_back("copy");
-		ffmpegArgumentList.push_back("-hls_flags");
-		ffmpegArgumentList.push_back("append_list");
-		ffmpegArgumentList.push_back("-hls_time");
-		ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
-		ffmpegArgumentList.push_back("-hls_list_size");
-		ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
-		ffmpegArgumentList.push_back(m3u8FilePathName);
+		if (outputTypeLowerCase == "hls")
+		{
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("append_list");
+			ffmpegArgumentList.push_back("-hls_time");
+			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+			ffmpegArgumentList.push_back("-hls_list_size");
+			ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+		}
+		else if (outputTypeLowerCase == "dash")
+		{
+			ffmpegArgumentList.push_back("-seg_duration");
+			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+			ffmpegArgumentList.push_back("-window_size");
+			ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+		}
+		ffmpegArgumentList.push_back(manifestFilePathName);
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -5246,13 +5226,13 @@ void FFMpeg::liveProxyByHLS(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		if (m3u8DirectoryPathName != "")
+		if (manifestDirectoryPathName != "")
     	{
         	// get files from file system
     
         	FileIO::DirectoryEntryType_t detDirectoryEntryType;
         	shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-					m3u8DirectoryPathName + "/");
+					manifestDirectoryPathName + "/");
 
         	bool scanDirectoryFinished = false;
         	while (!scanDirectoryFinished)
@@ -5268,7 +5248,7 @@ void FFMpeg::liveProxyByHLS(
 
 					{
 						string segmentPathNameToBeRemoved =
-							m3u8DirectoryPathName + "/" + directoryEntry;
+							manifestDirectoryPathName + "/" + directoryEntry;
         				_logger->info(__FILEREF__ + "Remove"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5575,6 +5555,8 @@ void FFMpeg::settingFfmpegParameters(
         bool isVideo,   // if false it means is audio
         
         bool& segmentFileFormat,
+        string& ffmpegHttpStreamingParameter,
+
         string& ffmpegFileFormatParameter,
 
         string& ffmpegVideoCodecParameter,
@@ -5628,12 +5610,15 @@ void FFMpeg::settingFfmpegParameters(
 
     // fileFormat
     string fileFormat;
+	string fileFormatLowerCase;
+	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+			[](unsigned char c){return tolower(c); } );
     {
-        field = "FileFormat";
-        if (!isMetadataPresent(encodingProfileRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", Field: " + field;
+		field = "FileFormat";
+		if (!isMetadataPresent(encodingProfileRoot, field))
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+				+ ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -5642,32 +5627,36 @@ void FFMpeg::settingFfmpegParameters(
         fileFormat = encodingProfileRoot.get(field, "XXX").asString();
 
         FFMpeg::encodingFileFormatValidation(fileFormat, _logger);
-        
-        if (fileFormat == "segment")
+
+        if (fileFormatLowerCase == "hls")
         {
-            segmentFileFormat = true;
-            
-            string stagingManifestAssetPathName =
-                    stagingEncodedAssetPathName
-                    + "/index.m3u8";
-            
-			// to be added too: -segment_format mpegts -segment_list_type m3u8
-            ffmpegFileFormatParameter =
-                    "-vbsf h264_mp4toannexb "
-                    "-flags "
-                    "-global_header "
-                    "-map 0 "
-                    "-f segment "
-                    "-segment_time 10 "
-                    "-segment_list " + stagingManifestAssetPathName + " "
-            ;
-        }
+			segmentFileFormat = true;
+
+            ffmpegFileFormatParameter = 
+				+ "-f hls "
+			;
+
+			long segmentDurationInSeconds = 10;
+
+			field = "HLS";
+			if (isMetadataPresent(encodingProfileRoot, field))
+			{
+				Json::Value hlsRoot = encodingProfileRoot[field]; 
+
+				field = "SegmentDuration";
+				if (isMetadataPresent(hlsRoot, field))
+					segmentDurationInSeconds = hlsRoot.get(field, 10).asInt();
+			}
+
+            ffmpegHttpStreamingParameter = 
+				"-hls_time " + to_string(segmentDurationInSeconds) + " ";
+		}
         else
         {
             segmentFileFormat = false;
 
             ffmpegFileFormatParameter =
-                    " -f " + fileFormat + " "
+				" -f " + fileFormatLowerCase + " "
             ;
         }
     }

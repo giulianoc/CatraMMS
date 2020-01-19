@@ -213,13 +213,17 @@ public:
         string outputFileFormat,
 		pid_t* pChildPid);
 
-	void liveProxyByHLS(
+	void liveProxyByHTTPStreaming(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		string liveURL, string userAgent,
+
+		string outputType,	// HLS or DASH
+
+		// next are parameters for the output
 		int segmentDurationInSeconds,
 		int playlistEntriesNumber,
-		string m3u8FilePathName,
+		string manifestFilePathName,
 		pid_t* pChildPid);
 
 	void liveProxyByCDN(
@@ -276,6 +280,8 @@ private:
         bool isVideo,   // if false it means is audio
         
         bool& segmentFileFormat,
+		string& ffmpegHttpStreamingParameter,
+
         string& ffmpegFileFormatParameter,
 
         string& ffmpegVideoCodecParameter,

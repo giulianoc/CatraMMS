@@ -10175,7 +10175,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
-			string m3u8FilePathName;
+			string manifestFilePathName;
 
 			if (_encodingItem->_transcoder == "")
 			{
@@ -10204,7 +10204,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string body;
 				{
-					if (outputType == "HLS")
+					if (outputType == "HLS" || outputType == "DASH")
 					{
 						string channelDirectoryName;
 
@@ -10223,9 +10223,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 						);
 
-						m3u8FilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
+						string manifestExtension;
+						if (outputType == "HLS")
+							manifestExtension = ".m3u8";
+						else if (outputType == "DASH")
+							manifestExtension = ".mpd";
+
+						manifestFilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
 							_encodingItem->_workspace->_directoryName,
-							channelDirectoryName, ".m3u8");
+							channelDirectoryName, manifestExtension);
 					}
 
 					Json::Value liveProxyMetadata;
@@ -10238,7 +10244,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;
 					liveProxyMetadata["cdnURL"] = cdnURL;
-					liveProxyMetadata["m3u8FilePathName"] = m3u8FilePathName;
+					liveProxyMetadata["manifestFilePathName"] = manifestFilePathName;
 
 					{
 						Json::StreamWriterBuilder wbuilder;
@@ -10246,7 +10252,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						body = Json::writeString(wbuilder, liveProxyMetadata);
 					}
 				}
-            
+
 				list<string> header;
 
 				header.push_back("Content-Type: application/json");
@@ -10441,7 +10447,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				);
 
 				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
-				m3u8FilePathName = _encodingItem->_stagingEncodedAssetPathName;
+				manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
 
 				// we have to reset _encodingItem->_transcoder because in case we will come back
 				// in the above 'while' loop, we have to select another encoder
@@ -10470,23 +10476,23 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
 			);
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(
-				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, m3u8FilePathName);
+				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, manifestFilePathName);
 
-			string m3u8DirectoryPathName;
-			if (outputType == "HLS")
+			string manifestDirectoryPathName;
+			if (outputType == "HLS" || outputType == "DASH")
 			{
-				size_t m3u8FilePathIndex = m3u8FilePathName.find_last_of("/");
-				if (m3u8FilePathIndex == string::npos)
+				size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+				if (manifestFilePathIndex == string::npos)
 				{
-					string errorMessage = __FILEREF__ + "No m3u8DirectoryPath find in the m3u8 file path name"
+					string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8 file path name"
 							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", m3u8FilePathName: " + m3u8FilePathName;
+							+ ", manifestFilePathName: " + manifestFilePathName;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				m3u8DirectoryPathName = m3u8FilePathName.substr(0, m3u8FilePathIndex);
+				manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 			}
 
             // loop waiting the end of the encoding
@@ -10513,7 +10519,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					// 1. get the timestamp of the last generated file
 					// 2. fill the vector with the chunks (pathname) to be removed because too old
 					//		(10 minutes after the "capacity" of the playlist)
-					if (outputType == "HLS" && chrono::duration_cast<chrono::seconds>(
+					if ((outputType == "HLS" || outputType == "DASH")
+							&& chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startCheckingEncodingStatus).count()
 							> 5 * segmentDurationInSeconds)
 					{
@@ -10522,11 +10529,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 						try
 						{
-							if (FileIO::directoryExisting(m3u8DirectoryPathName))
+							if (FileIO::directoryExisting(manifestDirectoryPathName))
 							{
 								FileIO::DirectoryEntryType_t detDirectoryEntryType;
 								shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-									m3u8DirectoryPathName + "/");
+									manifestDirectoryPathName + "/");
 
 								// chunks will be removed 10 minutes after the "capacity" of the playlist
 								long liveProxyChunkRetentionInSeconds =
@@ -10547,7 +10554,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 										{
 											string segmentPathNameToBeRemoved =
-												m3u8DirectoryPathName + "/" + directoryEntry;
+												manifestDirectoryPathName + "/" + directoryEntry;
 
 											chrono::system_clock::time_point fileLastModification =
 												FileIO::getFileTime (segmentPathNameToBeRemoved);
@@ -10575,7 +10582,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 										string errorMessage = __FILEREF__ + "listing directory failed"
 											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 											+ ", e.what(): " + e.what()
 										;
 										_logger->error(errorMessage);
@@ -10587,7 +10594,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 										string errorMessage = __FILEREF__ + "listing directory failed"
 											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 											+ ", e.what(): " + e.what()
 										;
 										_logger->error(errorMessage);
@@ -10608,7 +10615,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								_logger->error(__FILEREF__ + "Chunks were not generated"
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+									+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 									+ ", firstChunkRead: " + to_string(firstChunkRead)
 								);
 
@@ -10627,7 +10634,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									_logger->error(__FILEREF__ + "killEncodingJob failed"
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+										+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 									);
 								}
 							}
@@ -10637,7 +10644,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+								+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 								+ ", e.what(): " + e.what()
 							);
 						}
@@ -10646,7 +10653,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", m3u8DirectoryPathName: " + m3u8DirectoryPathName
+								+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
 							);
 						}
 					}
@@ -10777,7 +10784,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 					}
 
-					if (outputType == "HLS")
+					if (outputType == "HLS" || outputType == "DASH")
 					{
 						bool exceptionInCaseOfError = false;
 
