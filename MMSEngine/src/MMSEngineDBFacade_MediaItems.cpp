@@ -1158,9 +1158,30 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         field = "encodingProfileKey";
                         if (resultSetProfiles->isNull("encodingProfileKey"))
+						{
                             profileRoot[field] = Json::nullValue;
+
+							field = "encodingTechnology";
+                            profileRoot[field] = Json::nullValue;
+						}
                         else
-                            profileRoot[field] = resultSetProfiles->getInt64("encodingProfileKey");
+						{
+							int64_t encodingProfileKey = resultSetProfiles->getInt64("encodingProfileKey");
+
+                            profileRoot[field] = encodingProfileKey;
+
+							string label;
+							MMSEngineDBFacade::ContentType contentType;
+							MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+
+                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology>
+                                encodingProfileDetails = getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
+
+                            tie(label, contentType, encodingTechnology) = encodingProfileDetails;
+
+							field = "encodingTechnology";
+                            profileRoot[field] = MMSEngineDBFacade::toString(encodingTechnology);
+						}
 
                         field = "sizeInBytes";
                         profileRoot[field] = resultSetProfiles->getInt64("sizeInBytes");

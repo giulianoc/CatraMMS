@@ -1,6 +1,10 @@
 {
-	"Label" : "MMS_HLS_H264_veryfast_360p25_AAC_92",
+	"Label" : "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
 	"FileFormat" : "hls",
+	"HLS" : 
+	{
+		"SegmentDuration" : 10
+	},
 	"Video" : 
 	{
 		"Codec" : "libx264",

@@ -277,10 +277,11 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 {
     try
     {
-		tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
 			_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
 		int64_t physicalPathKey;
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
 		int mmsPartitionNumber;
 		shared_ptr<Workspace> workspace;
 		string relativePath;
@@ -289,7 +290,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 		string deliveryFileName;
 		string title;
 		bool externalReadOnlyStorage;
-		tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, 
+		tie(physicalPathKey, encodingTechnology, mmsPartitionNumber, workspace, relativePath, 
             fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
 		_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
@@ -350,9 +351,10 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 {
     try
     {
-		tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
 			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
 		int mmsPartitionNumber;
 		shared_ptr<Workspace> workspace;
 		string relativePath;
@@ -361,7 +363,7 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 		string title;
 		int64_t sizeInBytes;
 		bool externalReadOnlyStorage;
-		tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
+		tie(ignore, encodingTechnology, mmsPartitionNumber, workspace, relativePath, fileName, 
             deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
 		_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
@@ -418,9 +420,10 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
 {
     try
     {
-		tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
 			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
 		int mmsPartitionNumber;
 		shared_ptr<Workspace> contentWorkspace;
 		string relativePath;
@@ -428,7 +431,7 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
 		string deliveryFileName;
 		string title;
 		bool externalReadOnlyStorage;
-		tie(ignore, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
+		tie(ignore, encodingTechnology, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
             deliveryFileName, title, ignore, externalReadOnlyStorage) = storageDetails;
 
 		if (save)
@@ -522,10 +525,11 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
 {
 	try
 	{
-		tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
 			_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
 		int64_t physicalPathKey;
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
 		int mmsPartitionNumber;
 		shared_ptr<Workspace> contentWorkspace;
 		string relativePath;
@@ -533,7 +537,7 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
 		string deliveryFileName;
 		string title;
 		bool externalReadOnlyStorage;
-		tie(physicalPathKey, mmsPartitionNumber, contentWorkspace, relativePath, fileName,
+		tie(physicalPathKey, encodingTechnology, mmsPartitionNumber, contentWorkspace, relativePath, fileName,
                     deliveryFileName, title, ignore, externalReadOnlyStorage) = storageDetails;
 
 		if (save)
@@ -1102,9 +1106,10 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+        tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
             _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
         int mmsPartitionNumber;
         shared_ptr<Workspace> workspace;
         string relativePath;
@@ -1114,8 +1119,14 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         int64_t sizeInBytes;
 		bool externalReadOnlyStorage;
 
-        tie(ignore, mmsPartitionNumber, workspace, relativePath, fileName, 
+        tie(ignore, encodingTechnology, mmsPartitionNumber, workspace, relativePath, fileName, 
                 deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
+
+		if (encodingTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+		{
+			// in this case we have to removed the directory and not just the m3u8 file
+			fileName = "";
+		}
 
         _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
             + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
@@ -1222,11 +1233,12 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
 
-        vector<tuple<int, string, string, string, int64_t, bool>> allStorageDetails;
+        vector<tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
         _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-        for (tuple<int, string, string, string, int64_t, bool>& storageDetails: allStorageDetails)
+        for (tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool>& storageDetails: allStorageDetails)
         {
+			MMSEngineDBFacade::EncodingTechnology encodingTechnology;
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
@@ -1234,13 +1246,19 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 			bool externalReadOnlyStorage;
 			int64_t sizeInBytes;
 
-            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath,
+            tie(encodingTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath,
 					fileName, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
 			if (externalReadOnlyStorage)
 				continue;
 
             {
+				if (encodingTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+				{
+					// in this case we have to removed the directory and not just the m3u8 file
+					fileName = "";
+				}
+
 				_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
 					+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
 					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)

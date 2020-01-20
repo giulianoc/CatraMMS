@@ -389,14 +389,53 @@ public:
 
     
     enum class EncodingTechnology {
-        Image      = 0,    // (Download),
+        Image		= 0,    // (Download),
         MP4,                // (Streaming+Download),
         MPEG2_TS,           // (IPhone Streaming),
         WEBM,               // (VP8 and Vorbis)
-        WindowsMedia,
-        Adobe
+        WindowsMedia
     };
-    
+    static const char* toString(const EncodingTechnology& encodingTechnology)
+    {
+        switch (encodingTechnology)
+        {
+            case EncodingTechnology::Image:
+                return "Image";
+            case EncodingTechnology::MP4:
+                return "MP4";
+            case EncodingTechnology::MPEG2_TS:
+                return "MPEG2_TS";
+            case EncodingTechnology::WEBM:
+                return "WEBM";
+            case EncodingTechnology::WindowsMedia:
+                return "WindowsMedia";
+            default:
+				throw runtime_error(string("Wrong EncodingTechnology"));
+        }
+    }
+    static EncodingTechnology toEncodingTechnology(const string& encodingTechnology)
+    {
+        string lowerCase;
+        lowerCase.resize(encodingTechnology.size());
+        transform(encodingTechnology.begin(), encodingTechnology.end(),
+				lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "image")
+            return EncodingTechnology::Image;
+		else if (lowerCase == "mp4")
+            return EncodingTechnology::MP4;
+		else if (lowerCase == "mpeg2_ts")
+            return EncodingTechnology::MPEG2_TS;
+		else if (lowerCase == "webm")
+            return EncodingTechnology::WEBM;
+		else if (lowerCase == "windowsmedia")
+            return EncodingTechnology::WindowsMedia;
+        else
+            throw runtime_error(string("Wrong EncodingTechnology")
+                    + ", encodingTechnology: " + encodingTechnology
+                    );
+    }
+
     enum class EncodingPeriod {
         Daily		= 0,
 	Weekly		= 1,
@@ -1367,17 +1406,21 @@ public:
     vector<int64_t> getEncodingProfileKeysBySetLabel(
         int64_t workspaceKey,
         string label);
-    
-    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
+
+    tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology> getEncodingProfileDetailsByKey(
+		int64_t workspaceKey,
+		int64_t encodingProfileKey);
+
+    tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
+    tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
 
     void getAllStorageDetails(int64_t mediaItemKey,
-        vector<tuple<int, string, string, string, int64_t, bool>>& allStorageDetails);
+        vector<tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails);
     
     int64_t createDeliveryAuthorization(
         int64_t userKey,

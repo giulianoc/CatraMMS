@@ -492,7 +492,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //      2: MPEG2-TS (IPhone Streaming),
             //      3: WEBM (VP8 and Vorbis)
             //      4: WindowsMedia,
-            //      5: Adobe
             // workspaceKey NULL means predefined encoding profile
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfile ("
@@ -500,7 +499,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey  			BIGINT UNSIGNED NULL,"
                     "label				VARCHAR (64) NOT NULL,"
                     "contentType			VARCHAR (32) NOT NULL,"
-                    "technology         		TINYINT NOT NULL,"
+                    "technology					TINYINT NOT NULL,"
+                    "sTechnology				VARCHAR (32) NOT NULL,"
                     "jsonProfile    			VARCHAR (512) NOT NULL,"
                     "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
                     "constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
@@ -536,28 +536,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             for (string predefinedProfileDirectoryPath: predefinedProfilesDirectoryPath)
             {
                 MMSEngineDBFacade::ContentType contentType;
-                MMSEngineDBFacade::EncodingTechnology encodingTechnology;
-                
+
                 if (predefinedProfileDirectoryPath.size() >= videoSuffix.size() 
                         && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(), 
                             videoSuffix.size(), videoSuffix))
                 {
                     contentType = MMSEngineDBFacade::ContentType::Video;
-                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
                 }
                 else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
                         && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
                             audioSuffix.size(), audioSuffix))
                 {
                     contentType = MMSEngineDBFacade::ContentType::Audio;
-                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
                 }
                 else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() 
                         && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-imageSuffix.size(), 
                             imageSuffix.size(), imageSuffix))
                 {
                     contentType = MMSEngineDBFacade::ContentType::Image;
-                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
                 }
                 else
                 {
@@ -610,8 +606,114 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             );                            
                         }
 
-                        string label = directoryEntry.substr(0, extensionIndex);
-                        {                               
+						Json::Value encodingMedatada;
+						try
+						{
+							Json::CharReaderBuilder builder;
+							Json::CharReader* reader = builder.newCharReader();
+							string errors;
+
+							bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
+								jsonProfile.c_str() + jsonProfile.size(), 
+								&encodingMedatada, &errors);
+							delete reader;
+
+							if (!parsingSuccessful)
+							{
+								string errorMessage = __FILEREF__ + "failed to parse the jsonProfile"
+									+ ", errors: " + errors
+									+ ", jsonProfile: " + jsonProfile
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						catch(...)
+						{
+							string errorMessage = string("jsonProfile json is not well format")
+								+ ", jsonProfile: " + jsonProfile
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						string label = encodingMedatada.get("Label", "XXX").asString();
+						string fileFormat = encodingMedatada.get("FileFormat", "XXX").asString();
+
+						string fileFormatLowerCase;
+						fileFormatLowerCase.resize(fileFormat.size());
+						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+							[](unsigned char c){return tolower(c); } );
+
+						MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+						{
+							if (predefinedProfileDirectoryPath.size() >= videoSuffix.size() 
+								&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(), 
+								videoSuffix.size(), videoSuffix))
+							{
+								if (fileFormatLowerCase == "mp4")
+									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+								else if (fileFormatLowerCase == "hls")
+									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MPEG2_TS;
+								else
+								{
+									string errorMessage = __FILEREF__ + "Wrong fileFormat"
+										+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
+										+ ", fileFormat: " + fileFormat
+									;
+									_logger->error(errorMessage);
+
+									continue;
+								}
+							}
+							else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
+									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
+										audioSuffix.size(), audioSuffix))
+							{
+								if (fileFormatLowerCase == "mp4")
+									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+								else if (fileFormatLowerCase == "hls")
+									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MPEG2_TS;
+								else
+								{
+									string errorMessage = __FILEREF__ + "Wrong fileFormat"
+										+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
+										+ ", fileFormat: " + fileFormat
+									;
+									_logger->error(errorMessage);
+
+									continue;
+								}
+							}
+							else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() 
+									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-imageSuffix.size(), 
+										imageSuffix.size(), imageSuffix))
+							{
+								encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
+							}
+							else
+							{
+								string errorMessage = __FILEREF__ + "Wrong predefinedProfileDirectoryPath"
+									+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
+								;
+								_logger->error(errorMessage);
+
+								continue;
+							}
+						}
+						_logger->info(__FILEREF__ + "Encoding technology"
+							+ ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
+							+ ", label: " + label
+							+ ", fileFormat: " + fileFormat
+							+ ", fileFormatLowerCase: " + fileFormatLowerCase
+							+ ", encodingTechnology: " + toString(encodingTechnology)
+						);
+
+
+                        // string label = directoryEntry.substr(0, extensionIndex);
+                        {
                             lastSQLCommand = 
                                 "select encodingProfileKey from MMS_EncodingProfile where workspaceKey is null and contentType = ? and label = ?";
                             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -624,11 +726,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                                 int64_t encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
 
                                 lastSQLCommand = 
-                                    "update MMS_EncodingProfile set technology = ?, jsonProfile = ? where encodingProfileKey = ?";
+                                    "update MMS_EncodingProfile set sTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
 
                                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, toString(encodingTechnology));
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
@@ -638,14 +740,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             {
                                 lastSQLCommand = 
                                     "insert into MMS_EncodingProfile ("
-                                    "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
-                                    "NULL, NULL, ?, ?, ?, ?)";
+                                    "encodingProfileKey, workspaceKey, label, contentType, technology, sTechnology, jsonProfile) values ("
+                                    "NULL, NULL, ?, ?, ?, ?, ?)";
 
                                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
                                     preparedStatement->setString(queryParameterIndex++, label);
-                                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+                                preparedStatement->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(contentType));
                                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, toString(encodingTechnology));
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
                                 preparedStatement->executeUpdate();

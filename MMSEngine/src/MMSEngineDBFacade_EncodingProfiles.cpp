@@ -203,11 +203,12 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
                 
                 lastSQLCommand = 
-                    "update MMS_EncodingProfile set technology = ?, jsonProfile = ? where encodingProfileKey = ?";
+                    "update MMS_EncodingProfile set sTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(encodingTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
@@ -217,7 +218,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             {
                 lastSQLCommand = 
                     "insert into MMS_EncodingProfile ("
-                    "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
+                    "encodingProfileKey, workspaceKey, label, contentType, sTechnology, jsonProfile) values ("
                     "NULL, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -225,7 +226,8 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
                     preparedStatement->setString(queryParameterIndex++, label);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                preparedStatement->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(encodingTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
                 preparedStatement->executeUpdate();
@@ -760,7 +762,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 Json::Value encodingProfilesRoot(Json::arrayValue);
                 {                    
                     lastSQLCommand = 
-                        "select ep.encodingProfileKey, ep.contentType, ep.label, ep.technology, ep.jsonProfile "
+                        "select ep.encodingProfileKey, ep.contentType, ep.label, ep.sTechnology, ep.jsonProfile "
                         "from MMS_EncodingProfilesSetMapping epsm, MMS_EncodingProfile ep "
                         "where epsm.encodingProfileKey = ep.encodingProfileKey and "
                         "epsm.encodingProfilesSetKey = ?";
@@ -783,7 +785,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                         encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("contentType"));
                         
                         field = "technology";
-                        encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("technology"));
+                        encodingProfileRoot[field] = static_cast<string>(
+								resultSetProfile->getString("sTechnology"));
 
                         {
                             string jsonProfile = resultSetProfile->getString("jsonProfile");
@@ -993,7 +996,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         Json::Value encodingProfilesRoot(Json::arrayValue);
         {                    
             lastSQLCommand = 
-                string ("select workspaceKey, encodingProfileKey, label, contentType, technology, jsonProfile from MMS_EncodingProfile ") 
+                string ("select workspaceKey, encodingProfileKey, label, contentType, sTechnology, jsonProfile from MMS_EncodingProfile ") 
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1024,7 +1027,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 encodingProfileRoot[field] = static_cast<string>(resultSet->getString("contentType"));
 
                 field = "technology";
-                encodingProfileRoot[field] = static_cast<string>(resultSet->getString("technology"));
+                encodingProfileRoot[field] = static_cast<string>(
+						resultSet->getString("sTechnology"));
 
                 {
                     string jsonProfile = resultSet->getString("jsonProfile");
@@ -1516,5 +1520,125 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
     }
 
 	return encodingProfileKey;
+}
+
+tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology>
+	MMSEngineDBFacade::getEncodingProfileDetailsByKey(
+    int64_t workspaceKey, int64_t encodingProfileKey
+)
+{
+
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string label;
+		MMSEngineDBFacade::ContentType contentType;
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+        {
+            lastSQLCommand = 
+                "select label, contentType, sTechnology from MMS_EncodingProfile where "
+				"(workspaceKey = ? or workspaceKey is null) and encodingProfileKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                label = resultSet->getString("label");
+				contentType = MMSEngineDBFacade::toContentType(
+					resultSet->getString("contentType"));
+				encodingTechnology = MMSEngineDBFacade::toEncodingTechnology(
+					resultSet->getString("sTechnology"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "encodingProfileKey not found "
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return make_tuple(label, contentType, encodingTechnology);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 

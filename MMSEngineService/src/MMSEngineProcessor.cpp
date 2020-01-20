@@ -6584,7 +6584,7 @@ void MMSEngineProcessor::removeContentTask(
 						bool warningIfMissing = false;
 						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
 							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
-							_mmsEngineDBFacade->getMediaItemKeyDetails(                       
+							_mmsEngineDBFacade->getMediaItemKeyDetails(
 								workspace->_workspaceKey, key, warningIfMissing);
 
 						MMSEngineDBFacade::ContentType localContentType;

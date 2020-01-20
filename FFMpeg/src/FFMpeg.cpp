@@ -167,6 +167,10 @@ void FFMpeg::encodeContent(
 					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 			}
 
+			// the manifestFileName naming convention is used also in EncoderVideoAudioProxy.cpp
+			string manifestFileName = to_string(ingestionJobKey) +
+				"_" + to_string(encodingJobKey) + ".m3u8";
+
             if (_twoPasses)
             {
                 string passlogFileName = 
@@ -212,9 +216,15 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
 				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
-				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+				// 2020-01-20: I removed the hls file format parameter because it was not working
+				//	and added -f mp4. At the end it has to generate just the log file
+				//	to be used in the second step
+				// addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+				//
+				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("mp4");
 
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("/dev/null");
 
 				try
@@ -313,7 +323,7 @@ void FFMpeg::encodeContent(
 
 				string stagingManifestAssetPathName =
 					stagingEncodedAssetPathName
-					+ "/index.m3u8";
+					+ "/" + manifestFileName;
 
 				ffmpegArgumentList.clear();
 
@@ -347,7 +357,7 @@ void FFMpeg::encodeContent(
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				ffmpegArgumentList.push_back("-hls_segment_filename ");
+				ffmpegArgumentList.push_back("-hls_segment_filename");
 				ffmpegArgumentList.push_back(segmentPathFileName);
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
@@ -458,9 +468,8 @@ void FFMpeg::encodeContent(
 
 				string stagingManifestAssetPathName =
 					stagingEncodedAssetPathName
-					+ "/index.m3u8";
+					+ "/" + manifestFileName;
 
-				ffmpegArgumentList.clear();
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -487,7 +496,7 @@ void FFMpeg::encodeContent(
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				ffmpegArgumentList.push_back("-hls_segment_filename ");
+				ffmpegArgumentList.push_back("-hls_segment_filename");
 				ffmpegArgumentList.push_back(segmentPathFileName);
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
@@ -5050,6 +5059,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
     try
     {
 		string outputTypeLowerCase;
+		outputTypeLowerCase.resize(outputType.size());
 		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
 				[](unsigned char c){return tolower(c); } );
 
@@ -5611,8 +5621,6 @@ void FFMpeg::settingFfmpegParameters(
     // fileFormat
     string fileFormat;
 	string fileFormatLowerCase;
-	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
-			[](unsigned char c){return tolower(c); } );
     {
 		field = "FileFormat";
 		if (!isMetadataPresent(encodingProfileRoot, field))
@@ -5625,6 +5633,9 @@ void FFMpeg::settingFfmpegParameters(
         }
 
         fileFormat = encodingProfileRoot.get(field, "XXX").asString();
+		fileFormatLowerCase.resize(fileFormat.size());
+		transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+			[](unsigned char c){return tolower(c); } );
 
         FFMpeg::encodingFileFormatValidation(fileFormat, _logger);
 
@@ -5650,6 +5661,10 @@ void FFMpeg::settingFfmpegParameters(
 
             ffmpegHttpStreamingParameter = 
 				"-hls_time " + to_string(segmentDurationInSeconds) + " ";
+
+			// hls_list_size: set the maximum number of playlist entries. If set to 0 the list file
+			//	will contain all the segments. Default value is 5.
+            ffmpegHttpStreamingParameter += "-hls_list_size 0 ";
 		}
         else
         {
@@ -6024,15 +6039,20 @@ string FFMpeg::getLastPartOfFile(
 
 void FFMpeg::encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger)
-{    
-    if (fileFormat != "3gp" 
-            && fileFormat != "mp4" 
-            && fileFormat != "webm" 
-            && fileFormat != "segment"
-            )
+{
+	string fileFormatLowerCase;
+	fileFormatLowerCase.resize(fileFormat.size());
+	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+		[](unsigned char c){return tolower(c); } );
+
+    if (fileFormatLowerCase != "3gp" 
+		&& fileFormatLowerCase != "mp4" 
+		&& fileFormatLowerCase != "webm" 
+		&& fileFormatLowerCase != "hls"
+	)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
-                + ", fileFormat: " + fileFormat;
+                + ", fileFormatLowerCase: " + fileFormatLowerCase;
 
         logger->error(errorMessage);
         

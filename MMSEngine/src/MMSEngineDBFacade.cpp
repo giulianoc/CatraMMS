@@ -1361,7 +1361,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     return relativePathToBeUsed;
 }
 
-tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t physicalPathKey
 )
@@ -1380,6 +1380,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
         int64_t workspaceKey;
         bool externalReadOnlyStorage;
+        int64_t encodingProfileKey;
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
@@ -1389,7 +1390,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
         {
             lastSQLCommand = string("") +
                 "select mi.workspaceKey, mi.title, mi.deliveryFileName, pp.externalReadOnlyStorage, "
-				"pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
+				"pp.encodingProfileKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and pp.physicalPathKey = ? ";
 
@@ -1405,6 +1406,10 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
                 if (!resultSet->isNull("deliveryFileName"))
                     deliveryFileName = resultSet->getString("deliveryFileName");
                 externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
+                if (resultSet->isNull("encodingProfileKey"))
+                    encodingProfileKey = -1;
+				else
+                    encodingProfileKey = resultSet->getInt64("encodingProfileKey");
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
@@ -1422,7 +1427,39 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
             }
         }
 
+		// default will be set as MP4
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology = EncodingTechnology::MP4;
+
+		if (encodingProfileKey != -1)
+        {
+            lastSQLCommand = string("") +
+                "select technology from MMS_EncodingProfile "
+                "where encodingProfileKey = ? ";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingTechnology = static_cast<EncodingTechnology>(resultSet->getInt("technology"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "encodingProfileKey is not present"
+                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
 		_logger->info(__FILEREF__ + "getStorageDetails"
+			+ ", encodingTechnology: " + to_string(static_cast<int>(encodingTechnology))
 			+ ", physicalPathKey: " + to_string(physicalPathKey)
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
@@ -1442,7 +1479,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
+        return make_tuple(physicalPathKey, encodingTechnology, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
     catch(sql::SQLException se)
@@ -1502,10 +1539,10 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
         }
 
         throw e;
-    }        
+    }
 }
 
-tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t mediaItemKey,
 		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
@@ -1523,6 +1560,9 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
+
+		// default will be set as MP4
+		MMSEngineDBFacade::EncodingTechnology encodingTechnology = EncodingTechnology::MP4;
 
         int64_t workspaceKey = -1;
         int64_t physicalPathKey = -1;
@@ -1573,6 +1613,33 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
                 throw MediaItemKeyNotFound(errorMessage);                    
             }
+
+			{
+				lastSQLCommand = string("") +
+					"select technology from MMS_EncodingProfile "
+					"where encodingProfileKey = ? ";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				if (resultSet->next())
+				{
+					encodingTechnology = static_cast<EncodingTechnology>(resultSet->getInt("technology"));
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "encodingProfileKey is not present"
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
         }
 		else
 		{
@@ -1620,7 +1687,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 
         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath,
+        return make_tuple(physicalPathKey, encodingTechnology, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
     catch(sql::SQLException se)
@@ -1703,7 +1770,7 @@ tuple<int64_t, int, shared_ptr<Workspace>, string, string, string, string, int64
 }
 
 void MMSEngineDBFacade::getAllStorageDetails(
-        int64_t mediaItemKey, vector<tuple<int, string, string, string, int64_t, bool>>& allStorageDetails
+        int64_t mediaItemKey, vector<tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails
 )
 {
 
@@ -1719,6 +1786,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         );
 
         int64_t workspaceKey;
+		int64_t encodingProfileKey;
         int mmsPartitionNumber;
         int64_t sizeInBytes;
         int externalReadOnlyStorage;
@@ -1726,7 +1794,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         string fileName;
         {
 			lastSQLCommand =
-				"select mi.workspaceKey, pp.externalReadOnlyStorage, pp.partitionNumber, "
+				"select mi.workspaceKey, pp.externalReadOnlyStorage, pp.encodingProfileKey, pp.partitionNumber, "
 				"pp.relativePath, pp.fileName, pp.sizeInBytes "
 				"from MMS_MediaItem mi, MMS_PhysicalPath pp "
 				"where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? ";
@@ -1740,6 +1808,10 @@ void MMSEngineDBFacade::getAllStorageDetails(
             {
                 workspaceKey = resultSet->getInt64("workspaceKey");
                 externalReadOnlyStorage = resultSet->getInt("externalReadOnlyStorage") == 0 ? false : true;
+                if (resultSet->isNull("encodingProfileKey"))
+                    encodingProfileKey = -1;
+				else
+                    encodingProfileKey = resultSet->getInt64("encodingProfileKey");
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
@@ -1747,8 +1819,39 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
                 shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
         
-                tuple<int, string, string, string, int64_t, bool> storageDetails =
-                    make_tuple(mmsPartitionNumber, workspace->_directoryName,
+				// default will be set as MP4
+				MMSEngineDBFacade::EncodingTechnology encodingTechnology = EncodingTechnology::MP4;
+
+				if (encodingProfileKey != -1)
+				{
+					lastSQLCommand = string("") +
+						"select technology from MMS_EncodingProfile "
+						"where encodingProfileKey = ? ";
+
+					shared_ptr<sql::PreparedStatement> technologyPreparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					technologyPreparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            
+					shared_ptr<sql::ResultSet> technologyResultSet (technologyPreparedStatement->executeQuery());
+					if (technologyResultSet->next())
+					{
+						encodingTechnology = static_cast<EncodingTechnology>(technologyResultSet->getInt("technology"));
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "encodingProfileKey is not present"
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);                    
+					}
+				}
+
+                tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool> storageDetails =
+                    make_tuple(encodingTechnology, mmsPartitionNumber, workspace->_directoryName,
 							relativePath, fileName, sizeInBytes, externalReadOnlyStorage);
                 
                 allStorageDetails.push_back(storageDetails);

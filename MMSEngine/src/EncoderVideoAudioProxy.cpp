@@ -1840,9 +1840,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
             _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
-            _mpeg2TSEncoder == "FFMPEG")
+        _encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
     )
     {
         stagingEncodedAssetPathNameAndKilledByUser = encodeContent_VideoAudio_through_ffmpeg();
@@ -2034,8 +2032,7 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 */
 					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
 						encodedFileName.append(".mp4");
-					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-							_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
+					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
 						;
 					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM)
 						encodedFileName.append(".webm");
@@ -2075,8 +2072,7 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 						removeLinuxPathIfExist);
 
-					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-						_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
+					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
 					{
 						// In this case, the path is a directory where to place the segments
 
@@ -2746,8 +2742,8 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
 }
 
 int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
-		string stagingEncodedAssetPathName,
-		bool killedByUser)
+	string stagingEncodedAssetPathName,
+	bool killedByUser)
 {
     int64_t sourcePhysicalPathKey;
     int64_t encodingProfileKey;    
@@ -2760,6 +2756,11 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
+	// manifestFileName is used in case of MMSEngineDBFacade::EncodingTechnology::MPEG2_TS
+	// the manifestFileName naming convention is used also in FFMpeg.cpp
+	string manifestFileName = to_string(_encodingItem->_ingestionJobKey) + "_"
+		+ to_string(_encodingItem->_encodingJobKey) + ".m3u8";
+
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -2786,8 +2787,15 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
         FFMpeg ffmpeg (_configuration, _logger);
-        tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-            ffmpeg.getMediaInfo(stagingEncodedAssetPathName);
+		tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
+		if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+		{
+			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName);
+		}
+		else
+		{
+			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName);
+		}
 
         tie(durationInMilliSeconds, bitRate, 
             videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -2931,31 +2939,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             throw runtime_error(errorMessage);
         }
 
-        encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-
-        /*
-        encodedFileName = _encodingItem->_fileName
-                + "_" 
-                + to_string(_encodingItem->_encodingProfileKey);
-        if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
-            encodedFileName.append(".mp4");
-        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-                _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
-            ;
-        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM)
-            encodedFileName.append(".webm");
-        else
-        {
-            string errorMessage = __FILEREF__ + "Unknown technology"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */        
+		encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
         bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;
@@ -3125,6 +3109,31 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             }
         }
 
+		string relativePath = _encodingItem->_encodeData->_relativePath;
+
+		if (_encodingItem->_encodeData->_encodingProfileTechnology ==
+				MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+		{
+			size_t segmentsDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (segmentsDirectoryIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No segmentsDirectory find in the asset path name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+				_logger->error(errorMessage);
+
+	            throw runtime_error(errorMessage);
+			}
+
+			// in case of MPEG2_TS next 'stagingEncodedAssetPathName.substr' extract the directory name
+			// containing manifest and ts files. So relativePath has to be extended with this directory
+			relativePath += (stagingEncodedAssetPathName.substr(segmentsDirectoryIndex + 1) + "/");
+
+			// in case of MPEG2_TS, encodedFileName is the manifestFileName
+			encodedFileName = manifestFileName;
+		}
 
 		bool externalReadOnlyStorage = false;
 		string externalDeliveryTechnology;
@@ -3139,7 +3148,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 			externalDeliveryTechnology,
 			externalDeliveryURL,
             encodedFileName,
-            _encodingItem->_encodeData->_relativePath,
+            relativePath,
             mmsPartitionIndexUsed,
             mmsAssetSizeInBytes,
             encodingProfileKey,
@@ -3169,6 +3178,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+            + ", relativePath: " + relativePath
+            + ", encodedFileName: " + encodedFileName
         );
     }
     catch(runtime_error e)
@@ -3272,9 +3283,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
             _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
-            _mpeg2TSEncoder == "FFMPEG")
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
     )
     {
     */
@@ -5770,9 +5779,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture()
             _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
-            _mpeg2TSEncoder == "FFMPEG")
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
     )
     {
     */
@@ -6484,9 +6491,7 @@ bool EncoderVideoAudioProxy::generateFrames()
             _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
-            _mpeg2TSEncoder == "FFMPEG")
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
     )
     {
     */
@@ -7085,9 +7090,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
             _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
-            _mpeg2TSEncoder == "FFMPEG")
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
     )
     {
     */
