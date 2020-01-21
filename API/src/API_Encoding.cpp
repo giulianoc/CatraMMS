@@ -1089,12 +1089,7 @@ void API::addEncodingProfile(
             }
             string profileLabel = encodingProfileRoot.get(field, "XXX").asString();
 
-            MMSEngineDBFacade::EncodingTechnology encodingTechnology;
-
-            if (contentType == MMSEngineDBFacade::ContentType::Image)
-                encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
-            else
-                encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+            MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 
             string jsonEncodingProfile;
             {
@@ -1105,7 +1100,7 @@ void API::addEncodingProfile(
             
             int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(
                 workspace->_workspaceKey, profileLabel,
-                contentType, encodingTechnology, jsonEncodingProfile);
+                contentType, deliveryTechnology, jsonEncodingProfile);
 
             responseBody = (
                     string("{ ") 

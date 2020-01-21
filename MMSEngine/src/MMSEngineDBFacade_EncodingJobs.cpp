@@ -689,7 +689,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         lastSQLCommand = 
-                            "select technology, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
+                            "select deliveryTechnology, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
@@ -699,8 +699,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 								preparedStatementEncodingProfile->executeQuery());
                         if (encodingProfilesResultSet->next())
                         {
-                            encodingItem->_encodeData->_encodingProfileTechnology =
-								static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("technology"));
+                            encodingItem->_encodeData->_deliveryTechnology =
+								toDeliveryTechnology(encodingProfilesResultSet->getString("deliveryTechnology"));
                             encodingItem->_encodeData->_jsonProfile =
 								encodingProfilesResultSet->getString("jsonProfile");
                         }

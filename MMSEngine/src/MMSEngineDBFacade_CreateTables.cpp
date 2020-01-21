@@ -499,8 +499,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey  			BIGINT UNSIGNED NULL,"
                     "label				VARCHAR (64) NOT NULL,"
                     "contentType			VARCHAR (32) NOT NULL,"
-                    "technology					TINYINT NOT NULL,"
-                    "sTechnology				VARCHAR (32) NOT NULL,"
+                    "deliveryTechnology			VARCHAR (32) NOT NULL,"
                     "jsonProfile    			VARCHAR (512) NOT NULL,"
                     "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
                     "constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
@@ -647,16 +646,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
 
-						MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 						{
 							if (predefinedProfileDirectoryPath.size() >= videoSuffix.size() 
 								&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(), 
 								videoSuffix.size(), videoSuffix))
 							{
 								if (fileFormatLowerCase == "mp4")
-									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "hls")
-									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MPEG2_TS;
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming;
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"
@@ -673,9 +672,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 										audioSuffix.size(), audioSuffix))
 							{
 								if (fileFormatLowerCase == "mp4")
-									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "hls")
-									encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MPEG2_TS;
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming;
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"
@@ -691,7 +690,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-imageSuffix.size(), 
 										imageSuffix.size(), imageSuffix))
 							{
-								encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
+								deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 							}
 							else
 							{
@@ -708,7 +707,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							+ ", label: " + label
 							+ ", fileFormat: " + fileFormat
 							+ ", fileFormatLowerCase: " + fileFormatLowerCase
-							+ ", encodingTechnology: " + toString(encodingTechnology)
+							+ ", deliveryTechnology: " + toString(deliveryTechnology)
 						);
 
 
@@ -726,11 +725,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                                 int64_t encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
 
                                 lastSQLCommand = 
-                                    "update MMS_EncodingProfile set sTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
+                                    "update MMS_EncodingProfile set deliveryTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
 
                                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
-                                preparedStatement->setString(queryParameterIndex++, toString(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, toString(deliveryTechnology));
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
@@ -740,16 +739,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             {
                                 lastSQLCommand = 
                                     "insert into MMS_EncodingProfile ("
-                                    "encodingProfileKey, workspaceKey, label, contentType, technology, sTechnology, jsonProfile) values ("
-                                    "NULL, NULL, ?, ?, ?, ?, ?)";
+                                    "encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+                                    "NULL, NULL, ?, ?, ?, ?)";
 
                                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                                 int queryParameterIndex = 1;
                                     preparedStatement->setString(queryParameterIndex++, label);
                                 preparedStatement->setString(queryParameterIndex++,
 										MMSEngineDBFacade::toString(contentType));
-                                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
-                                preparedStatement->setString(queryParameterIndex++, toString(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, toString(deliveryTechnology));
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
                                 preparedStatement->executeUpdate();

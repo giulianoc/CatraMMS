@@ -1122,12 +1122,16 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         field = "fileFormat";
                         string fileName = resultSetProfiles->getString("fileName");
                         size_t extensionIndex = fileName.find_last_of(".");
+						string fileFormat;
                         if (extensionIndex == string::npos)
                         {
                             profileRoot[field] = Json::nullValue;
                         }
                         else
-                            profileRoot[field] = fileName.substr(extensionIndex + 1);
+						{
+							fileFormat = fileName.substr(extensionIndex + 1);
+							profileRoot[field] = fileFormat;
+						}
 
 						if (admin)
 						{
@@ -1161,8 +1165,23 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						{
                             profileRoot[field] = Json::nullValue;
 
-							field = "encodingTechnology";
-                            profileRoot[field] = Json::nullValue;
+							field = "deliveryTechnology";
+							{
+								string fileFormatLowerCase;
+								fileFormatLowerCase.resize(fileFormat.size());
+								transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+									[](unsigned char c){return tolower(c); } );
+
+								if (fileFormatLowerCase == "mp4" || fileFormatLowerCase == "mov"
+										|| fileFormatLowerCase == "webm")
+									profileRoot[field] =
+										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming);
+								else if (fileFormatLowerCase == "m3u8")
+									profileRoot[field] =
+										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming);
+								else
+									profileRoot[field] = Json::nullValue;
+							}
 						}
                         else
 						{
@@ -1172,15 +1191,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 							string label;
 							MMSEngineDBFacade::ContentType contentType;
-							MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+							MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 
-                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology>
+                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology>
                                 encodingProfileDetails = getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
 
-                            tie(label, contentType, encodingTechnology) = encodingProfileDetails;
+                            tie(label, contentType, deliveryTechnology) = encodingProfileDetails;
 
-							field = "encodingTechnology";
-                            profileRoot[field] = MMSEngineDBFacade::toString(encodingTechnology);
+							field = "deliveryTechnology";
+                            profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
 						}
 
                         field = "sizeInBytes";

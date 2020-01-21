@@ -78,7 +78,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
-        EncodingTechnology encodingTechnology,
+        DeliveryTechnology deliveryTechnology,
         string jsonEncodingProfile
 )
 {    
@@ -101,7 +101,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             workspaceKey,
             label,
             contentType, 
-            encodingTechnology,
+            deliveryTechnology,
             jsonEncodingProfile,
             encodingProfilesSetKey);        
 
@@ -178,7 +178,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
-        EncodingTechnology encodingTechnology,
+        DeliveryTechnology deliveryTechnology,
         string jsonProfile,
         int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
 )
@@ -203,12 +203,12 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
                 
                 lastSQLCommand = 
-                    "update MMS_EncodingProfile set sTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
+                    "update MMS_EncodingProfile set deliveryTechnology = ?, jsonProfile = ? where encodingProfileKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(encodingTechnology));
+						MMSEngineDBFacade::toString(deliveryTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
@@ -218,7 +218,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             {
                 lastSQLCommand = 
                     "insert into MMS_EncodingProfile ("
-                    "encodingProfileKey, workspaceKey, label, contentType, sTechnology, jsonProfile) values ("
+                    "encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
                     "NULL, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -227,7 +227,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                     preparedStatement->setString(queryParameterIndex++, label);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 preparedStatement->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(encodingTechnology));
+						MMSEngineDBFacade::toString(deliveryTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
                 preparedStatement->executeUpdate();
@@ -762,7 +762,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 Json::Value encodingProfilesRoot(Json::arrayValue);
                 {                    
                     lastSQLCommand = 
-                        "select ep.encodingProfileKey, ep.contentType, ep.label, ep.sTechnology, ep.jsonProfile "
+                        "select ep.encodingProfileKey, ep.contentType, ep.label, ep.deliveryTechnology, ep.jsonProfile "
                         "from MMS_EncodingProfilesSetMapping epsm, MMS_EncodingProfile ep "
                         "where epsm.encodingProfileKey = ep.encodingProfileKey and "
                         "epsm.encodingProfilesSetKey = ?";
@@ -784,9 +784,9 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                         field = "contentType";
                         encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("contentType"));
                         
-                        field = "technology";
+                        field = "deliveryTechnology";
                         encodingProfileRoot[field] = static_cast<string>(
-								resultSetProfile->getString("sTechnology"));
+								resultSetProfile->getString("deliveryTechnology"));
 
                         {
                             string jsonProfile = resultSetProfile->getString("jsonProfile");
@@ -996,7 +996,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         Json::Value encodingProfilesRoot(Json::arrayValue);
         {                    
             lastSQLCommand = 
-                string ("select workspaceKey, encodingProfileKey, label, contentType, sTechnology, jsonProfile from MMS_EncodingProfile ") 
+                string ("select workspaceKey, encodingProfileKey, label, contentType, deliveryTechnology, jsonProfile from MMS_EncodingProfile ") 
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1026,9 +1026,9 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 field = "contentType";
                 encodingProfileRoot[field] = static_cast<string>(resultSet->getString("contentType"));
 
-                field = "technology";
+                field = "deliveryTechnology";
                 encodingProfileRoot[field] = static_cast<string>(
-						resultSet->getString("sTechnology"));
+						resultSet->getString("deliveryTechnology"));
 
                 {
                     string jsonProfile = resultSet->getString("jsonProfile");
@@ -1522,7 +1522,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 	return encodingProfileKey;
 }
 
-tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology>
+tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology>
 	MMSEngineDBFacade::getEncodingProfileDetailsByKey(
     int64_t workspaceKey, int64_t encodingProfileKey
 )
@@ -1541,10 +1541,10 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnol
 
 		string label;
 		MMSEngineDBFacade::ContentType contentType;
-		MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
         {
             lastSQLCommand = 
-                "select label, contentType, sTechnology from MMS_EncodingProfile where "
+                "select label, contentType, deliveryTechnology from MMS_EncodingProfile where "
 				"(workspaceKey = ? or workspaceKey is null) and encodingProfileKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1558,8 +1558,8 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnol
                 label = resultSet->getString("label");
 				contentType = MMSEngineDBFacade::toContentType(
 					resultSet->getString("contentType"));
-				encodingTechnology = MMSEngineDBFacade::toEncodingTechnology(
-					resultSet->getString("sTechnology"));
+				deliveryTechnology = MMSEngineDBFacade::toDeliveryTechnology(
+					resultSet->getString("deliveryTechnology"));
             }
             else
             {
@@ -1580,7 +1580,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnol
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(label, contentType, encodingTechnology);
+		return make_tuple(label, contentType, deliveryTechnology);
     }
     catch(sql::SQLException se)
     {

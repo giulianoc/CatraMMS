@@ -388,51 +388,44 @@ public:
     }
 
     
-    enum class EncodingTechnology {
-        Image		= 0,    // (Download),
-        MP4,                // (Streaming+Download),
-        MPEG2_TS,           // (IPhone Streaming),
-        WEBM,               // (VP8 and Vorbis)
-        WindowsMedia
+    enum class DeliveryTechnology {
+        Download,				// image
+        DownloadAndStreaming,	// MP4,
+        IPhoneStreaming			// MPEG2_TS
+        // WEBM,               // (VP8 and Vorbis)
+        // WindowsMedia,
+        // MP3					// (Download),
     };
-    static const char* toString(const EncodingTechnology& encodingTechnology)
+    static const char* toString(const DeliveryTechnology& deliveryTechnology)
     {
-        switch (encodingTechnology)
+        switch (deliveryTechnology)
         {
-            case EncodingTechnology::Image:
-                return "Image";
-            case EncodingTechnology::MP4:
-                return "MP4";
-            case EncodingTechnology::MPEG2_TS:
-                return "MPEG2_TS";
-            case EncodingTechnology::WEBM:
-                return "WEBM";
-            case EncodingTechnology::WindowsMedia:
-                return "WindowsMedia";
+            case DeliveryTechnology::Download:
+                return "Download";
+            case DeliveryTechnology::DownloadAndStreaming:
+                return "DownloadAndStreaming";
+            case DeliveryTechnology::IPhoneStreaming:
+                return "IPhoneStreaming";
             default:
-				throw runtime_error(string("Wrong EncodingTechnology"));
+				throw runtime_error(string("Wrong deliveryTechnology"));
         }
     }
-    static EncodingTechnology toEncodingTechnology(const string& encodingTechnology)
+    static DeliveryTechnology toDeliveryTechnology(const string& deliveryTechnology)
     {
         string lowerCase;
-        lowerCase.resize(encodingTechnology.size());
-        transform(encodingTechnology.begin(), encodingTechnology.end(),
+        lowerCase.resize(deliveryTechnology.size());
+        transform(deliveryTechnology.begin(), deliveryTechnology.end(),
 				lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "image")
-            return EncodingTechnology::Image;
-		else if (lowerCase == "mp4")
-            return EncodingTechnology::MP4;
-		else if (lowerCase == "mpeg2_ts")
-            return EncodingTechnology::MPEG2_TS;
-		else if (lowerCase == "webm")
-            return EncodingTechnology::WEBM;
-		else if (lowerCase == "windowsmedia")
-            return EncodingTechnology::WindowsMedia;
+        if (lowerCase == "download")
+            return DeliveryTechnology::Download;
+		else if (lowerCase == "downloadandstreaming")
+            return DeliveryTechnology::DownloadAndStreaming;
+		else if (lowerCase == "iphonestreaming")
+            return DeliveryTechnology::IPhoneStreaming;
         else
-            throw runtime_error(string("Wrong EncodingTechnology")
-                    + ", encodingTechnology: " + encodingTechnology
+            throw runtime_error(string("Wrong DeliveryTechnology")
+                    + ", deliveryTechnology: " + deliveryTechnology
                     );
     }
 
@@ -533,7 +526,7 @@ public:
             long long                               _mediaItemKey;
             int64_t                                 _durationInMilliSeconds;
             ContentType                             _contentType;
-            MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
+            MMSEngineDBFacade::DeliveryTechnology   _deliveryTechnology;
             string                                  _jsonProfile;
 
             // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
@@ -1170,7 +1163,7 @@ public:
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
-        EncodingTechnology encodingTechnology,
+        DeliveryTechnology deliveryTechnology,
         string jsonProfile,
         int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
     );
@@ -1179,7 +1172,7 @@ public:
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
-        EncodingTechnology encodingTechnology,
+        DeliveryTechnology deliveryTechnology,
         string jsonEncodingProfile);
 
     void removeEncodingProfile(
@@ -1407,20 +1400,20 @@ public:
         int64_t workspaceKey,
         string label);
 
-    tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::EncodingTechnology> getEncodingProfileDetailsByKey(
+    tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology> getEncodingProfileDetailsByKey(
 		int64_t workspaceKey,
 		int64_t encodingProfileKey);
 
-    tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
+    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int64_t, MMSEngineDBFacade::EncodingTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
+    tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
 
     void getAllStorageDetails(int64_t mediaItemKey,
-        vector<tuple<MMSEngineDBFacade::EncodingTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails);
+        vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails);
     
     int64_t createDeliveryAuthorization(
         int64_t userKey,

@@ -1830,18 +1830,11 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 
 	_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
 		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-		+ ", _encodeData->_encodingProfileTechnology: "
-			+ to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+		+ ", _encodeData->_deliveryTechnology: "
+			+ MMSEngineDBFacade::toString(_encodingItem->_encodeData->_deliveryTechnology)
 		+ ", _mp4Encoder: " + _mp4Encoder
 	);
 
-    if (
-        (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _mp4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
-            _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
-    )
     {
         stagingEncodedAssetPathNameAndKilledByUser = encodeContent_VideoAudio_through_ffmpeg();
 		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
@@ -1856,29 +1849,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 			throw EncodingKilledByUser();
 		}
     }
-    else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
-    {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    
+
     return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
@@ -1940,7 +1911,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
 					+ ", _fileName: " + _encodingItem->_encodeData->_fileName
-					+ ", _encodingProfileTechnology: " + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+					+ ", _deliveryTechnology: " + MMSEngineDBFacade::toString(_encodingItem->_encodeData->_deliveryTechnology)
 					+ ", _directoryName: " + _encodingItem->_workspace->_directoryName
 					+ ", _durationInMilliSeconds: " + to_string(_encodingItem->_encodeData->_durationInMilliSeconds)
 					+ ", _contentType: " + to_string(static_cast<int>(_encodingItem->_encodeData->_contentType))
@@ -1949,169 +1920,6 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					+ ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
 				);
 
-				// stagingEncodedAssetPathName preparation
-				{
-					/*
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-+ ", 1: "
-);
-// 2019-09-14: crashed after the above message
-*/
-					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-					tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
-						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-/*
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", 2: "
-);
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-+ ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
-);
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", 3: "
-);
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-+ ", _encodingItem->_encodeData->_fileName: " + _encodingItem->_encodeData->_fileName
-);
-*/
-					size_t extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
-					if (extensionIndex == string::npos)
-					{
-						string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", _encodeData->_fileName: " + _encodingItem->_encodeData->_fileName;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-/*
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", 4: "
-);
-*/
-					encodedFileName =
-						to_string(_encodingItem->_ingestionJobKey)
-						+ "_"
-						+ to_string(_encodingItem->_encodingJobKey)
-						+ "_" 
-						+ to_string(encodingProfileKey);
-/*
-_logger->info(__FILEREF__ + "building body for encoder 2"
-+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-+ ", 5: "
-);
-*/
-					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
-						encodedFileName.append(".mp4");
-					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
-						;
-					else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM)
-						encodedFileName.append(".webm");
-					else
-					{
-						string errorMessage = __FILEREF__ + "Unknown technology"
-							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-/*
-				_logger->info(__FILEREF__ + "building body for encoder 3"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-					+ ", encodedFileName: " + encodedFileName
-
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-				);
-*/
-
-
-					bool removeLinuxPathIfExist = true;
-					bool neededForTranscoder = false;
-					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-						neededForTranscoder,
-						_encodingItem->_workspace->_directoryName,
-						to_string(_encodingItem->_encodingJobKey),
-						"/",    // _encodingItem->_relativePath,
-						encodedFileName,
-						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-						removeLinuxPathIfExist);
-
-					if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
-					{
-						// In this case, the path is a directory where to place the segments
-
-						if (!FileIO::directoryExisting(stagingEncodedAssetPathName)) 
-						{
-							_logger->info(__FILEREF__ + "Create directory"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-							);
-
-							bool noErrorIfExists = true;
-							bool recursive = true;
-							FileIO::createDirectory(
-									stagingEncodedAssetPathName,
-									S_IRUSR | S_IWUSR | S_IXUSR |
-									S_IRGRP | S_IXGRP |
-									S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-						}        
-					}
-				}
-
-				_logger->info(__FILEREF__ + "building body for encoder 2"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-					+ ", encodedFileName: " + encodedFileName
-
-					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-				);
-
-                Json::Value encodingMedatada;
-                
-                encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
-                encodingMedatada["durationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_encodeData->_durationInMilliSeconds);
-                // encodingMedatada["encodedFileName"] = encodedFileName;
-                encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 Json::Value encodingDetails;
                 {
                     try
@@ -2152,6 +1960,109 @@ _logger->info(__FILEREF__ + "building body for encoder 2"
                         throw runtime_error(errorMessage);
                     }
                 }
+
+				// stagingEncodedAssetPathName preparation
+				{
+					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+					tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+					size_t extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
+					if (extensionIndex == string::npos)
+					{
+						string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", _encodeData->_fileName: " + _encodingItem->_encodeData->_fileName;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					{
+						encodedFileName =
+							to_string(_encodingItem->_ingestionJobKey)
+							+ "_"
+							+ to_string(_encodingItem->_encodingJobKey)
+							+ "_" 
+							+ to_string(encodingProfileKey);
+
+						string fileFormat = encodingDetails.get("FileFormat", "XXX").asString();
+
+						if (fileFormat == "mp4")
+							encodedFileName.append(".mp4");
+						else if (fileFormat == "hls")
+							;
+						else if (fileFormat == "webm")
+							encodedFileName.append(".webm");
+						else
+						{
+							string errorMessage = __FILEREF__ + "Unknown fileFormat"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", fileFormat: " + fileFormat
+								;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+
+					bool removeLinuxPathIfExist = true;
+					bool neededForTranscoder = false;
+					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
+						neededForTranscoder,
+						_encodingItem->_workspace->_directoryName,
+						to_string(_encodingItem->_encodingJobKey),
+						"/",    // _encodingItem->_relativePath,
+						encodedFileName,
+						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+						removeLinuxPathIfExist);
+
+					if (_encodingItem->_encodeData->_deliveryTechnology ==
+							MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+					{
+						// In this case, the path is a directory where to place the segments
+
+						if (!FileIO::directoryExisting(stagingEncodedAssetPathName)) 
+						{
+							_logger->info(__FILEREF__ + "Create directory"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+							);
+
+							bool noErrorIfExists = true;
+							bool recursive = true;
+							FileIO::createDirectory(
+									stagingEncodedAssetPathName,
+									S_IRUSR | S_IWUSR | S_IXUSR |
+									S_IRGRP | S_IXGRP |
+									S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+						}        
+					}
+				}
+
+				_logger->info(__FILEREF__ + "building body for encoder 2"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+					+ ", encodedFileName: " + encodedFileName
+
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				);
+
+                Json::Value encodingMedatada;
+                
+                encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
+                encodingMedatada["durationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_encodeData->_durationInMilliSeconds);
+                // encodingMedatada["encodedFileName"] = encodedFileName;
+                encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 encodingMedatada["encodingProfileDetails"] = encodingDetails;
                 encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_encodeData->_contentType);
                 encodingMedatada["physicalPathKey"] = (Json::LargestUInt) (sourcePhysicalPathKey);
@@ -2788,7 +2699,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         );
         FFMpeg ffmpeg (_configuration, _logger);
 		tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
-		if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+		if (_encodingItem->_encodeData->_deliveryTechnology ==
+				MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
 		{
 			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName);
 		}
@@ -3111,8 +3023,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 
 		string relativePath = _encodingItem->_encodeData->_relativePath;
 
-		if (_encodingItem->_encodeData->_encodingProfileTechnology ==
-				MMSEngineDBFacade::EncodingTechnology::MPEG2_TS)
+		if (_encodingItem->_encodeData->_deliveryTechnology ==
+				MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
 		{
 			size_t segmentsDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
 			if (segmentsDirectoryIndex == string::npos)
@@ -3271,22 +3183,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
 {
     pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
-    /*
-    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
-        + ", _mp4Encoder: " + _mp4Encoder
-    );
-
-    if (
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _mp4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
-            _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
-    )
-    {
-    */
         stagingEncodedAssetPathNameAndKilledByUser = overlayImageOnVideo_through_ffmpeg();
 		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
 		{
@@ -3299,31 +3195,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
         
 			throw EncodingKilledByUser();
 		}
-    /*
-    }
-    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
-    {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    */
     
     return stagingEncodedAssetPathNameAndKilledByUser;
 }
@@ -5767,22 +5638,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture()
 {
     pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
-    /*
-    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
-        + ", _mp4Encoder: " + _mp4Encoder
-    );
-
-    if (
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _mp4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
-            _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
-    )
-    {
-    */
         stagingEncodedAssetPathNameAndKilledByUser = pictureInPicture_through_ffmpeg();
 		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
 		{
@@ -5795,31 +5650,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture()
         
 			throw EncodingKilledByUser();
 		}
-    /*
-    }
-    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
-    {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    */
     
     return stagingEncodedAssetPathNameAndKilledByUser;
 }
@@ -6479,22 +6309,6 @@ void EncoderVideoAudioProxy::processPictureInPicture(string stagingEncodedAssetP
 
 bool EncoderVideoAudioProxy::generateFrames()
 {    
-    /*
-    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
-        + ", _mp4Encoder: " + _mp4Encoder
-    );
-
-    if (
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _mp4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
-            _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
-    )
-    {
-    */
         bool killedByUser = generateFrames_through_ffmpeg();
 		if (killedByUser)
 		{
@@ -6509,31 +6323,6 @@ bool EncoderVideoAudioProxy::generateFrames()
 		}
 
 		return killedByUser;
-    /*
-    }
-    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
-    {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    */    
 }
 
 bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
@@ -7078,22 +6867,6 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
 {
     pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
-    /*
-    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
-        + ", _mp4Encoder: " + _mp4Encoder
-    );
-
-    if (
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _mp4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
-            _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM
-    )
-    {
-    */
         stagingEncodedAssetPathNameAndKilledByUser = slideShow_through_ffmpeg();
 		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
 		{
@@ -7106,31 +6879,6 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow()
         
 			throw EncodingKilledByUser();
 		}
-    /*
-    }
-    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
-    {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                ;
-        _logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    */
     
     return stagingEncodedAssetPathNameAndKilledByUser;
 }
