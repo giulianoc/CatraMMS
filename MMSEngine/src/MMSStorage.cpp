@@ -37,7 +37,10 @@ MMSStorage::MMSStorage(
 
 		_stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
 		_transcoderStagingRootRepository = _storage + "MMSTranscoderWorkingAreaRepository/Staging/";
-		_deliveryFreeRootRepository = _storage + "MMSRepository-free/";
+		// _deliveryFreeRootRepository = _storage + "MMSRepository-free/";
+
+		_directoryForLiveContents = "MMSLive";
+		_liveRootRepository = _storage + "MMSRepository/" + _directoryForLiveContents + "/";
 
 		string ffmpegArea = _storage + "MMSTranscoderWorkingAreaRepository/ffmpeg/";
     
@@ -113,10 +116,18 @@ MMSStorage::MMSStorage(
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+		/*
 		_logger->info(__FILEREF__ + "Creating directory (if needed)"
 			+ ", _deliveryFreeRootRepository: " + _deliveryFreeRootRepository
 		);
 		FileIO::createDirectory(_deliveryFreeRootRepository,
+            S_IRUSR | S_IWUSR | S_IXUSR |
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		*/
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", _liveRootRepository: " + _liveRootRepository
+		);
+		FileIO::createDirectory(_liveRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -415,7 +426,7 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
     }
 }
 
-pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool save,
+pair<string, string> MMSStorage::getVODDeliveryURI(int64_t physicalPathKey, bool save,
 		shared_ptr<Workspace> requestWorkspace)
 {
     try
@@ -519,7 +530,7 @@ pair<string, string> MMSStorage::getDeliveryURI(int64_t physicalPathKey, bool sa
     }
 }
 
-tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
+tuple<int64_t, string, string> MMSStorage::getVODDeliveryURI(
 		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace)
 {
@@ -617,6 +628,77 @@ tuple<int64_t, string, string> MMSStorage::getDeliveryURI(
         
         throw e;
     }
+}
+
+/*
+string MMSStorage::getDeliveryFreeAssetPathName(
+	string workspaceDirectoryName,
+	string liveProxyAssetName,
+	string assetExtension
+)
+{
+
+	string deliveryFreeAssetPathName = _deliveryFreeRootRepository
+		+ workspaceDirectoryName + "/" + liveProxyAssetName + "/"
+		+ liveProxyAssetName + assetExtension;
+
+
+    return deliveryFreeAssetPathName;
+}
+*/
+
+string MMSStorage::getLiveDeliveryAssetPathName(int64_t liveURLConfKey,
+	string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+{
+	pair<string, string> deliveryFileNameAndDeliveryURI = getLiveDeliveryURI(liveURLConfKey,
+		liveFileExtension, requestWorkspace);
+
+	string deliveryFileName;
+	string deliveryURI;
+
+	tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
+
+	string deliveryAssetPathName = _mmsRootRepository + deliveryURI.substr(1);
+
+	return deliveryAssetPathName;
+}
+
+pair<string, string> MMSStorage::getLiveDeliveryURI(int64_t liveURLConfKey,
+	string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+{
+	string deliveryFileName;
+	string deliveryURI;
+
+	try
+	{
+		deliveryFileName = to_string(liveURLConfKey) + "." + liveFileExtension;
+
+		deliveryURI = "/" + _directoryForLiveContents + "/" + requestWorkspace->_directoryName
+			+ "/" + to_string(liveURLConfKey) + "/" + deliveryFileName;
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("getLiveDeliveryURI failed")
+            + ", liveURLConfKey: " + to_string(liveURLConfKey)
+			+ ", e.what(): " + e.what()
+        ;
+        
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("getLiveDeliveryURI failed")
+            + ", liveURLConfKey: " + to_string(liveURLConfKey)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw e;
+    }
+
+	return make_pair(deliveryFileName, deliveryURI);
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
@@ -928,21 +1010,6 @@ string MMSStorage::getStagingAssetPathName(
 
 
     return assetPathName;
-}
-
-string MMSStorage::getDeliveryFreeAssetPathName(
-	string workspaceDirectoryName,
-	string liveProxyAssetName,
-	string assetExtension
-)
-{
-
-	string deliveryFreeAssetPathName = _deliveryFreeRootRepository
-		+ workspaceDirectoryName + "/" + liveProxyAssetName + "/"
-		+ liveProxyAssetName + assetExtension;
-
-
-    return deliveryFreeAssetPathName;
 }
 
 /*

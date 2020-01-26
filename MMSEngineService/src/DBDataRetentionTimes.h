@@ -1,16 +1,16 @@
 
-#ifndef IngestionDataRetentionTimes_h
-#define IngestionDataRetentionTimes_h
+#ifndef DBDataRetentionTimes_h
+#define DBDataRetentionTimes_h
 
 #include <memory>
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
 #include "catralibraries/Times2.h"
 
-#define MMSENGINE_INGESTIONDATARETENTIONTIMES_CLASSNAME      "IngestionDataRetentionTimes"
-#define MMSENGINE_INGESTIONDATARETENTIONTIMES_SOURCE		"IngestionDataRetentionTimes"
+#define MMSENGINE_DBDATARETENTIONTIMES_CLASSNAME      "DBDataRetentionTimes"
+#define MMSENGINE_DBDATARETENTIONTIMES_SOURCE		"DBDataRetentionTimes"
 
-#define MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT	7
+#define MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT	7
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
@@ -22,18 +22,18 @@
     #endif
 #endif
 
-class IngestionDataRetentionTimes: public Times2
+class DBDataRetentionTimes: public Times2
 {
 protected:
     shared_ptr<MultiEventsSet>              _multiEventsSet;
     shared_ptr<spdlog::logger>              _logger;
 
 public:
-    IngestionDataRetentionTimes (string ingestionDataRetentionTimesSchedule,
+    DBDataRetentionTimes (string dbDataRetentionTimesSchedule,
         shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<spdlog::logger> logger);
 
-    virtual ~IngestionDataRetentionTimes (void);
+    virtual ~DBDataRetentionTimes (void);
 
     virtual void handleTimeOut (void);
 

@@ -1558,7 +1558,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "channelName				VARCHAR (128) NULL,"
                     "channelRegion				VARCHAR (128) NULL,"
                     "channelCountry				VARCHAR (128) NULL,"
-                    "deliveryURL				VARCHAR (512) NULL,"
                     "liveURLData				" + liveURLDataDefinition + ","
                     "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
@@ -1866,12 +1865,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // ToBeContinued. 0 or 1
             // ForceHTTPRedirection. 0: HTML page, 1: HTTP Redirection
             // TimeToLive is measured in seconds
+			//
+			// Just one between physicalPathKey and liveURLConfKey has to be != NULL.
+			// if physicalPathKey != NULL --> means the authorization is for the VOD content
+			// if liveURLConfKey != NULL --> means the authorization is for the live content
             lastSQLCommand = 
                 "create table if not exists MMS_DeliveryAuthorization ("
                     "deliveryAuthorizationKey	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "userKey    				BIGINT UNSIGNED NOT NULL,"
                     "clientIPAddress			VARCHAR (16) NULL,"
-                    "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
+					// contentType: vod or live
+                    "contentType				VARCHAR (16) NOT NULL,"
+					// contentKey: physicalPathKey or liveURLConfKey
+                    "contentKey					BIGINT UNSIGNED NOT NULL,"
                     "deliveryURI    			VARCHAR (1024) NOT NULL,"
                     "ttlInSeconds               INT NOT NULL,"
                     "currentRetriesNumber       INT NOT NULL,"
@@ -1879,9 +1885,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "authorizationTimestamp		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "constraint MMS_DeliveryAuthorization_PK PRIMARY KEY (deliveryAuthorizationKey), "
                     "constraint MMS_DeliveryAuthorization_FK foreign key (userKey) "
-                        "references MMS_User (userKey) on delete cascade, "
-                    "constraint MMS_DeliveryAuthorization_FK2 foreign key (physicalPathKey) "
-                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                        "references MMS_User (userKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

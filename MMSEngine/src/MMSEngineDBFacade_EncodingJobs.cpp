@@ -7777,7 +7777,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string configurationLabel, string liveURL,
+	int64_t liveURLConfKey, string configurationLabel, string liveURL,
 	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	EncodingPriority encodingPriority
@@ -7793,6 +7793,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", liveURL: " + liveURL
             + ", outputType: " + outputType
@@ -7825,7 +7826,8 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			string parameters = string()
                 + "{ "
 				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
-                + "\"configurationLabel\": \"" + configurationLabel + "\""
+                + "\"liveURLConfKey\": " + to_string(liveURLConfKey)
+                + ", \"configurationLabel\": \"" + configurationLabel + "\""
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"outputType\": \"" + outputType + "\""
                 + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)

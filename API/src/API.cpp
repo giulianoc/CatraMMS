@@ -565,8 +565,8 @@ void API::manageRequestAndResponse(
         {
             auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
             auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-            if (tokenIt != requestDetails.end() && originalURIIt != requestDetails.end()
-                    )
+            if (tokenIt != requestDetails.end()
+				&& originalURIIt != requestDetails.end())
             {
                 int64_t token = stoll(tokenIt->second);
 
@@ -602,14 +602,40 @@ void API::manageRequestAndResponse(
                     string responseBody;
                     sendError(request, 403, errorMessage);
                 }
-            }        
+            }
             else
             {
-                string errorMessage = string("Not authorized: token parameter not present")
-                        ;
-                _logger->info(__FILEREF__ + errorMessage);
+				string tsExtension(".ts");
+				if (tokenIt == requestDetails.end()
+						&& originalURIIt != requestDetails.end() && 
+						// end with
+						(originalURIIt->second).size() >= tsExtension.size() &&
+							0 == (originalURIIt->second).compare((originalURIIt->second).size()-tsExtension.size(), tsExtension.size(), tsExtension)
+							)
+				{
+					_logger->info(__FILEREF__ + "segment authorized"
+						+ ", originalURIIt->second: " + originalURIIt->second
+					);
 
-                sendError(request, 500, errorMessage);
+					string responseBody;
+					sendSuccess(request, 200, responseBody);
+				}
+				else
+				{
+					{
+						string errorMessage = string("Not authorized: token/originalURI parameter not present")
+							+ ", token: " + (tokenIt != requestDetails.end() ? tokenIt->second : "")
+							+ ", originalURI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "")
+							;
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+
+					string errorMessage = string("Not authorized: token parameter not present")
+                        ;
+					_logger->warn(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+				}
             }
         }
         catch(exception e)
@@ -714,7 +740,7 @@ void API::manageRequestAndResponse(
         auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
-            
+
         createDeliveryAuthorization(request, userKey, workspace,
                 clientIPAddress, queryParameters);
     }
@@ -1007,9 +1033,17 @@ void API::createDeliveryAuthorization(
 			encodingProfileKey = stoll(encodingProfileKeyIt->second);
         }
 
-		if (physicalPathKey == -1 && (mediaItemKey == -1 || encodingProfileKey == -1))
+        int64_t liveURLConfKey = -1;
+        auto liveURLConfKeyIt = queryParameters.find("liveURLConfKey");
+        if (liveURLConfKeyIt != queryParameters.end())
+        {
+			liveURLConfKey = stoll(liveURLConfKeyIt->second);
+        }
+
+		if (physicalPathKey == -1 && (mediaItemKey == -1 || encodingProfileKey == -1)
+				&& liveURLConfKey == -1)
 		{
-            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey parameters have to be present");
+            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey or liveURLConfKey parameters have to be present");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
@@ -1053,112 +1087,84 @@ void API::createDeliveryAuthorization(
 
         try
         {
-			/*
-            tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails;
-
-			if (physicalPathKey != -1)
-                storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
-			else
-                storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
-
-            int mmsPartitionNumber;
-            shared_ptr<Workspace> contentWorkspace;
-            string relativePath;
-            string fileName;
-            string deliveryFileName;
-            string title;
-            int64_t sizeInBytes;
-			if (physicalPathKey != -1)
-				tie(ignore, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
-                    deliveryFileName, title, sizeInBytes) = storageDetails;
-			else
-				tie(physicalPathKey, mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
-                    deliveryFileName, title, sizeInBytes) = storageDetails;
-
-            if (save)
-            {
-                if (deliveryFileName == "")
-                    deliveryFileName = title;
-
-                if (deliveryFileName != "")
-                {
-                    // use the extension of fileName
-                    size_t extensionIndex = fileName.find_last_of(".");
-                    if (extensionIndex != string::npos)
-                        deliveryFileName.append(fileName.substr(extensionIndex));
-                }
-            }
-            
-            if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
-            {
-                string errorMessage = string ("Workspace of the content and Workspace of the requester is different")
-                        + ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey)
-                        + ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey)
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-                
-                throw runtime_error(errorMessage);
-            }
-            
-            string deliveryURI;
-            {
-                char pMMSPartitionName [64];
-
-
-                // .../storage/MMSRepository/MMS_0000/CatraSoft/000/000/550/815_source.jpg 
-
-                sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
-
-                deliveryURI = 
-                    + pMMSPartitionName
-                    + contentWorkspace->_directoryName
-                    + relativePath
-                    + fileName
-                ;
-            }
-			*/
-
-			string deliveryURI;
+			string deliveryURL;
 			string deliveryFileName;
+			int64_t authorizationKey;
 
-			if (physicalPathKey != -1)
+			if (liveURLConfKey == -1)
 			{
-				pair<string, string> deliveryFileNameAndDeliveryURI =
-					_mmsStorage->getDeliveryURI(physicalPathKey, save, requestWorkspace);
+				string deliveryURI;
 
-				tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
+				if (physicalPathKey != -1)
+				{
+					pair<string, string> deliveryFileNameAndDeliveryURI =
+						_mmsStorage->getVODDeliveryURI(physicalPathKey, save, requestWorkspace);
+
+					tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
+				}
+				else
+				{
+					tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
+						_mmsStorage->getVODDeliveryURI(mediaItemKey, encodingProfileKey, save,
+						requestWorkspace);
+					tie(physicalPathKey, deliveryFileName, deliveryURI) =
+						physicalPathKeyDeliveryFileNameAndDeliveryURI;
+				}
+
+				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+					userKey,
+					clientIPAddress,
+					physicalPathKey,
+					liveURLConfKey,
+					deliveryURI,
+					ttlInSeconds,
+					maxRetries);
+
+				deliveryURL = 
+					_deliveryProtocol
+					+ "://" 
+					+ _deliveryHost
+					+ deliveryURI
+					+ "?token=" + to_string(authorizationKey)
+				;
+
+				if (save && deliveryFileName != "")
+					deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 			}
 			else
 			{
-				tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
-					_mmsStorage->getDeliveryURI(mediaItemKey, encodingProfileKey, save,
-						requestWorkspace);
-				tie(physicalPathKey, deliveryFileName, deliveryURI) =
-					physicalPathKeyDeliveryFileNameAndDeliveryURI;
+				// create authorization for a live request
+
+				string deliveryURI;
+				// we have to manage when the extension is not m3u8
+				string liveFileExtension = "m3u8";
+				pair<string, string> deliveryFileNameAndDeliveryURI
+					= _mmsStorage->getLiveDeliveryURI(
+						liveURLConfKey, liveFileExtension, requestWorkspace);
+				tie(deliveryFileName, deliveryURI) =
+					deliveryFileNameAndDeliveryURI;
+
+				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+					userKey,
+					clientIPAddress,
+					physicalPathKey,
+					liveURLConfKey,
+					deliveryURI,
+					ttlInSeconds,
+					maxRetries);
+
+				deliveryURL = 
+					_deliveryProtocol
+					+ "://" 
+					+ _deliveryHost
+					+ deliveryURI
+					+ "?token=" + to_string(authorizationKey)
+				;
 			}
 
-            int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-                userKey,
-                clientIPAddress,
-                physicalPathKey,
-                deliveryURI,
-                ttlInSeconds,
-                maxRetries);
-
-            string deliveryURL = 
-                    _deliveryProtocol
-                    + "://" 
-                    + _deliveryHost
-                    + deliveryURI
-                    + "?token=" + to_string(authorizationKey)
-            ;
-
-            if (save && deliveryFileName != "")
-                deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
-            
             if (redirect)
             {
-                sendRedirect(request, deliveryURL);
+				sendRedirect(request, deliveryURL);
             }
             else
             {

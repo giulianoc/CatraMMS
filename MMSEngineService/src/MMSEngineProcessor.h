@@ -136,7 +136,7 @@ private:
 
     void handleContentRetentionEventThread (shared_ptr<long> processorsThreadsNumber);
 
-    void handleIngestionDataRetentionEventThread ();
+    void handleDBDataRetentionEventThread ();
 
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 

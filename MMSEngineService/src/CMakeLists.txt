@@ -27,7 +27,7 @@ SET (SOURCES
 	CheckEncodingTimes.cpp
 	CheckRefreshPartitionFreeSizeTimes.cpp
 	ContentRetentionTimes.cpp
-	IngestionDataRetentionTimes.cpp
+	DBDataRetentionTimes.cpp
 	MainAndBackupRunningHALiveRecordingEvent.cpp
 )
 
@@ -37,7 +37,7 @@ SET (HEADERS
 	CheckEncodingTimes.h
 	CheckRefreshPartitionFreeSizeTimes.h
 	ContentRetentionTimes.h
-	IngestionDataRetentionTimes.h
+	DBDataRetentionTimes.h
 	MainAndBackupRunningHALiveRecordingEvent.h
 )
 

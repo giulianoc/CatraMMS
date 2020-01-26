@@ -950,7 +950,6 @@ void API::addLiveURLConf(
         string channelName;
         string channelRegion;
         string channelCountry;
-        string deliveryURL;
         Json::Value liveURLData;
 
         try
@@ -1021,12 +1020,6 @@ void API::addLiveURLConf(
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
 				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "DeliveryURL";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
-            }
-
             field = "LiveURLData";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
@@ -1058,7 +1051,7 @@ void API::addLiveURLConf(
         {
             int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
                 workspace->_workspaceKey, label, liveURL, type, description,
-				channelName, channelRegion, channelCountry, deliveryURL,
+				channelName, channelRegion, channelCountry,
 				liveURLData);
 
             sResponse = (
@@ -1140,7 +1133,6 @@ void API::modifyLiveURLConf(
         string channelName;
         string channelRegion;
         string channelCountry;
-        string deliveryURL;
         Json::Value liveURLData;
         
         try
@@ -1211,12 +1203,6 @@ void API::modifyLiveURLConf(
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
 				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "DeliveryURL";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-				deliveryURL = requestBodyRoot.get(field, "XXX").asString();            
-            }    
-
             field = "LiveURLData";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
@@ -1261,7 +1247,7 @@ void API::modifyLiveURLConf(
 
             _mmsEngineDBFacade->modifyLiveURLConf(
                 confKey, workspace->_workspaceKey, label, liveURL, type, description,
-				channelName, channelRegion, channelCountry, deliveryURL,
+				channelName, channelRegion, channelCountry,
 				liveURLData);
 
             sResponse = (

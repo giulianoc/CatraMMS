@@ -141,8 +141,9 @@ server {
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&liveURLConfKey=$2 last;
 		}
 
 		if ($request_method = POST) {
@@ -306,7 +307,7 @@ server {
 
 	root /var/catramms/storage/MMSRepository/;
 
-	location ~ ^/(MMS_|ExternalStorage_) {
+	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
 		if ($arg_token) {
 			set $token $arg_token;
 		}
@@ -316,6 +317,12 @@ server {
 
 		auth_request /catramms/delivery/checkAuthorization;
 
+		if ($request_method = 'GET') {
+			add_header 'Access-Control-Allow-Origin' '*';
+			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+			add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
+		}
 	}
 
 	location = /catramms/delivery/checkAuthorization {

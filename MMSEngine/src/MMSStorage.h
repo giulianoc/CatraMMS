@@ -57,11 +57,18 @@ public:
 	tuple<string, string, string, int64_t, string> getPhysicalPath(
 		int64_t physicalPathKey);
 
-	pair<string, string> getDeliveryURI(int64_t physicalPathKey, bool save,
+	pair<string, string> getVODDeliveryURI(int64_t physicalPathKey, bool save,
 			shared_ptr<Workspace> requestWorkspace);
 
-	tuple<int64_t, string, string> getDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
-			shared_ptr<Workspace> requestWorkspace);
+	tuple<int64_t, string, string> getVODDeliveryURI(
+		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+		shared_ptr<Workspace> requestWorkspace);
+
+	string getLiveDeliveryAssetPathName(int64_t liveURLConfKey,
+		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
+
+	pair<string, string> getLiveDeliveryURI(int64_t liveURLConfKey,
+		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
     void removePhysicalPath(int64_t physicalPathKey);
     
@@ -134,10 +141,12 @@ public:
 		long long llPhysicalPathKey,    // used only if fileName is ""
 		bool removeLinuxPathIfExist);
 
+	/*
 	string getDeliveryFreeAssetPathName(
 		string workspaceDirectoryName,
 		string liveProxyAssetName,
 		string assetExtension);
+	*/
 
 	/*
     string getEncodingProfilePathName (
@@ -167,7 +176,9 @@ private:
     // string                      _streamingRootRepository;
     string                      _stagingRootRepository;
 	string						_transcoderStagingRootRepository;
-	string						_deliveryFreeRootRepository;
+	// string						_deliveryFreeRootRepository;
+	string						_directoryForLiveContents;
+	string						_liveRootRepository;
     string                      _ingestionRootRepository;
     // string                      _profilesRootRepository;
 

@@ -1,23 +1,23 @@
 
-#include "IngestionDataRetentionTimes.h"
+#include "DBDataRetentionTimes.h"
 #include "catralibraries/Event2.h"
 
 
-IngestionDataRetentionTimes:: IngestionDataRetentionTimes (string ingestionDataRetentionTimesSchedule,
+DBDataRetentionTimes:: DBDataRetentionTimes (string dbDataRetentionTimesSchedule,
 	shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger): 
-    Times2 (ingestionDataRetentionTimesSchedule, MMSENGINE_INGESTIONDATARETENTIONTIMES_CLASSNAME)
+    Times2 (dbDataRetentionTimesSchedule, MMSENGINE_DBDATARETENTIONTIMES_CLASSNAME)
 
 {
     _multiEventsSet     = multiEventsSet;
     _logger             = logger;
 }
 
-IngestionDataRetentionTimes::~IngestionDataRetentionTimes (void)
+DBDataRetentionTimes::~DBDataRetentionTimes (void)
 {
     
 }
 
-void IngestionDataRetentionTimes:: handleTimeOut (void)
+void DBDataRetentionTimes:: handleTimeOut (void)
 {
 
     lock_guard<mutex>   locker(_mtTimesMutex);
@@ -28,9 +28,9 @@ void IngestionDataRetentionTimes:: handleTimeOut (void)
     }
 
     shared_ptr<Event2>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event2>(
-            MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT);
+            MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT);
 
-    event->setSource(MMSENGINE_INGESTIONDATARETENTIONTIMES_SOURCE);
+    event->setSource(MMSENGINE_DBDATARETENTIONTIMES_SOURCE);
     event->setDestination(MMSENGINEPROCESSORNAME);
     event->setExpirationTimePoint(chrono::system_clock::now());
 

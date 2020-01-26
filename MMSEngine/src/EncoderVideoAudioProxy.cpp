@@ -9866,6 +9866,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 {
 
 	string encodersPool;
+	int64_t liveURLConfKey;
 	string configurationLabel;
 	string liveURL;
 	string outputType;
@@ -9879,6 +9880,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         string field = "EncodersPool";
         encodersPool = _encodingItem->_liveProxyData->
 			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "liveURLConfKey";
+        liveURLConfKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
 
         field = "ConfigurationLabel";
         // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -9957,6 +9961,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				{
 					if (outputType == "HLS" || outputType == "DASH")
 					{
+						/*
 						string channelDirectoryName;
 
 						channelDirectoryName.resize(configurationLabel.size());
@@ -9973,16 +9978,21 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									return (unsigned char) '_';
 							}
 						);
+						*/
 
 						string manifestExtension;
 						if (outputType == "HLS")
-							manifestExtension = ".m3u8";
+							manifestExtension = "m3u8";
 						else if (outputType == "DASH")
-							manifestExtension = ".mpd";
+							manifestExtension = "mpd";
 
+						/*
 						manifestFilePathName = _mmsStorage->getDeliveryFreeAssetPathName(
 							_encodingItem->_workspace->_directoryName,
 							channelDirectoryName, manifestExtension);
+						*/
+						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
+							liveURLConfKey, manifestExtension, _encodingItem->_workspace);
 					}
 
 					Json::Value liveProxyMetadata;

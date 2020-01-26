@@ -15,7 +15,7 @@
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
 #include "ContentRetentionTimes.h"
-#include "IngestionDataRetentionTimes.h"
+#include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "catralibraries/md5.h"
@@ -578,9 +578,9 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
-            case MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT:	// 7
+            case MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT:	// 7
             {
-                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT"
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
 
@@ -600,13 +600,13 @@ void MMSEngineProcessor::operator ()()
                     else
 					*/
                     {
-                        thread ingestionDataRetention(&MMSEngineProcessor::handleIngestionDataRetentionEventThread, this);
-                        ingestionDataRetention.detach();
+                        thread dbDataRetention(&MMSEngineProcessor::handleDBDataRetentionEventThread, this);
+                        dbDataRetention.detach();
                     }
                 }
                 catch(exception e)
                 {
-                    _logger->error(__FILEREF__ + "handleIngestionDataRetentionEventThread failed"
+                    _logger->error(__FILEREF__ + "handleDBDataRetentionEventThread failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                     );
@@ -614,7 +614,7 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_INGESTIONDATARETENTIONEVENT"
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -8548,8 +8548,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
-        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getDetailsByConfLiveLabel(
                 workspace->_workspaceKey, configurationLabel);            
+		string liveURL;
+		tie(ignore, liveURL) = confKeyAndLiveURL;
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			highAvailability, configurationLabel, liveURL, userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
@@ -8684,11 +8686,16 @@ void MMSEngineProcessor::manageLiveProxy(
 				waitingSecondsBetweenAttemptsInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
         }
 
-        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getDetailsByConfLiveLabel(
 			workspace->_workspaceKey, configurationLabel);            
 
+		int64_t liveURLConfKey;
+        string liveURL;
+		tie(liveURLConfKey, liveURL) = confKeyAndLiveURL;
+
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			configurationLabel, liveURL, outputType, segmentDurationInSeconds, playlistEntriesNumber,
+			liveURLConfKey, configurationLabel, liveURL, outputType,
+			segmentDurationInSeconds, playlistEntriesNumber,
 			cdnURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors, encodingPriority);
 	}
@@ -13894,12 +13901,12 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
 }
 
-void MMSEngineProcessor::handleIngestionDataRetentionEventThread ()
+void MMSEngineProcessor::handleDBDataRetentionEventThread()
 {
 
-	chrono::system_clock::time_point start = chrono::system_clock::now();
-
     {
+		chrono::system_clock::time_point start = chrono::system_clock::now();
+
         _logger->info(__FILEREF__ + "Ingestion Data Retention started"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
         );
@@ -13931,6 +13938,45 @@ void MMSEngineProcessor::handleIngestionDataRetentionEventThread ()
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+		);
+    }
+
+    {
+		chrono::system_clock::time_point start = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Delivery Autorization Retention started"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        );
+
+		try
+		{
+			_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "retentionOfDeliveryAuthorization failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "retentionOfDeliveryAuthorization failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "Delivery Authorization retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
 		);

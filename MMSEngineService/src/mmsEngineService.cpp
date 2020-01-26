@@ -12,7 +12,7 @@
 #include "CheckEncodingTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
-#include "IngestionDataRetentionTimes.h"
+#include "DBDataRetentionTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
@@ -251,15 +251,15 @@ int main (int iArgc, char *pArgv [])
     contentRetentionTimes->start();
     scheduler.activeTimes(contentRetentionTimes);
 
-    string           ingestionDataRetentionTimesSchedule =
-		configuration["scheduler"].get("ingestionDataRetentionTimesSchedule", "").asString();
-    logger->info(__FILEREF__ + "Creating and Starting IngestionDataRetentionTimes"
-        + ", ingestionDataRetentionTimesSchedule: " + ingestionDataRetentionTimesSchedule
+    string           dbDataRetentionTimesSchedule =
+		configuration["scheduler"].get("dbDataRetentionTimesSchedule", "").asString();
+    logger->info(__FILEREF__ + "Creating and Starting DBDataRetentionTimes"
+        + ", dbDataRetentionTimesSchedule: " + dbDataRetentionTimesSchedule
             );
-    shared_ptr<IngestionDataRetentionTimes>     ingestionDataRetentionTimes =
-            make_shared<IngestionDataRetentionTimes>(ingestionDataRetentionTimesSchedule, multiEventsSet, logger);
-    ingestionDataRetentionTimes->start();
-    scheduler.activeTimes(ingestionDataRetentionTimes);
+    shared_ptr<DBDataRetentionTimes>     dbDataRetentionTimes =
+            make_shared<DBDataRetentionTimes>(dbDataRetentionTimesSchedule, multiEventsSet, logger);
+    dbDataRetentionTimes->start();
+    scheduler.activeTimes(dbDataRetentionTimes);
 
     string			checkRefreshPartitionFreeSizeTimesSchedule =
 		configuration["scheduler"].get("checkRefreshPartitionFreeSizeTimesSchedule", "").asString();

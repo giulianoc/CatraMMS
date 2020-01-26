@@ -1184,7 +1184,6 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 	string channelName,
 	string channelRegion,
 	string channelCountry,
-	string deliveryURL,
 	Json::Value liveURLData)
 {
     string      lastSQLCommand;
@@ -1208,8 +1207,8 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 
             lastSQLCommand = 
                 "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL, type, description, "
-				"channelName, channelRegion, channelCountry, deliveryURL, liveURLData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				"channelName, channelRegion, channelCountry, liveURLData) values ("
+                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1236,10 +1235,6 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
 				preparedStatement->setString(queryParameterIndex++, channelCountry);
-			if (deliveryURL == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, deliveryURL);
 			if (sLiveURLData == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1328,7 +1323,6 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 	string channelName,
 	string channelRegion,
 	string channelCountry,
-	string deliveryURL,
 	Json::Value liveURLData)
 {
     string      lastSQLCommand;
@@ -1351,7 +1345,7 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 
             lastSQLCommand = 
                 "update MMS_Conf_LiveURL set label = ?, liveURL = ?, type = ?, description = ?, "
-				"channelName = ?, channelRegion = ?, channelCountry = ?, deliveryURL = ?, liveURLData = ? "
+				"channelName = ?, channelRegion = ?, channelCountry = ?, liveURLData = ? "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1378,10 +1372,6 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
 				preparedStatement->setString(queryParameterIndex++, channelCountry);
-			if (deliveryURL == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, deliveryURL);
 			if (sLiveURLData == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1742,7 +1732,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 
             lastSQLCommand = 
                 string ("select confKey, label, liveURL, type, description, channelName, channelRegion, channelCountry, "
-						"deliveryURL, liveURLData from MMS_Conf_LiveURL ") 
+						"liveURLData from MMS_Conf_LiveURL ") 
                 + sqlWhere
 				+ orderByCondition
 				+ "limit ? offset ?";
@@ -1809,12 +1799,6 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 					liveURLConfRoot[field] = Json::nullValue;
 				else
 					liveURLConfRoot[field] = static_cast<string>(resultSet->getString("channelCountry"));
-
-                field = "deliveryURL";
-				if (resultSet->isNull("deliveryURL"))
-					liveURLConfRoot[field] = Json::nullValue;
-				else
-					liveURLConfRoot[field] = static_cast<string>(resultSet->getString("deliveryURL"));
 
                 field = "liveURLData";
 				if (resultSet->isNull("liveURLData"))
@@ -1900,11 +1884,12 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
     return liveURLConfListRoot;
 }
 
-string MMSEngineDBFacade::getLiveURLByConfigurationLabel(
+pair<int64_t, string> MMSEngineDBFacade::getDetailsByConfLiveLabel(
     int64_t workspaceKey, string label
 )
 {
     string      lastSQLCommand;
+	int64_t		confKey;
     string      liveURL;
     
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -1922,8 +1907,8 @@ string MMSEngineDBFacade::getLiveURLByConfigurationLabel(
         );
         
         {
-            lastSQLCommand = 
-                string("select liveURL from MMS_Conf_LiveURL where workspaceKey = ? and label = ?");
+            lastSQLCommand = string("select confKey, liveURL from MMS_Conf_LiveURL ")
+				+ "where workspaceKey = ? and label = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1942,6 +1927,7 @@ string MMSEngineDBFacade::getLiveURLByConfigurationLabel(
                 throw runtime_error(errorMessage);
             }
 
+            confKey = resultSet->getInt64("confKey");
             liveURL = resultSet->getString("liveURL");
         }
 
@@ -2010,7 +1996,121 @@ string MMSEngineDBFacade::getLiveURLByConfigurationLabel(
         throw e;
     } 
     
-    return liveURL;
+    return make_pair(confKey, liveURL);
+}
+
+string MMSEngineDBFacade::getDetailsByConfLiveKey(
+    int64_t workspaceKey, int64_t confKey
+)
+{
+    string      lastSQLCommand;
+    string      channelName;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {        
+        _logger->info(__FILEREF__ + "getDetailsByConfLiveKey"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", confKey: " + to_string(confKey)
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = string("select channelName from MMS_Conf_LiveURL ")
+				+ "where workspaceKey = ? and confKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (!resultSet->next())
+            {
+                string errorMessage = __FILEREF__ + "select from MMS_Conf_LiveURL failed"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", confKey: " + to_string(confKey)
+                ;
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            channelName = resultSet->getString("channelName");
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return channelName;
 }
 
 int64_t MMSEngineDBFacade::addFTPConf(

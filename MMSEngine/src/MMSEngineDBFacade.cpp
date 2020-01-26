@@ -1953,10 +1953,12 @@ void MMSEngineDBFacade::getAllStorageDetails(
     }        
 }
 
+// at least one between physicalPathKey and liveURLConfKey has to be -1
 int64_t MMSEngineDBFacade::createDeliveryAuthorization(
     int64_t userKey,
     string clientIPAddress,
-    int64_t physicalPathKey,
+    int64_t physicalPathKey,	// vod key
+	int64_t liveURLConfKey,		// live key
     string deliveryURI,
     int ttlInSeconds,
     int maxRetries)
@@ -1974,9 +1976,21 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
         );
         
         {
+			string contentType;
+			int64_t contentKey;
+			if (physicalPathKey == -1)
+			{
+				contentType = "live";
+				contentKey = liveURLConfKey;
+			}
+			else
+			{
+				contentType = "vod";
+				contentKey = physicalPathKey;
+			}
             lastSQLCommand = 
-                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, physicalPathKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
-                "NULL, ?, ?, ?, ?, ?, 0, ?)";
+                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, 0, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1985,7 +1999,8 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, clientIPAddress);
-            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+			preparedStatement->setString(queryParameterIndex++, contentType);
+			preparedStatement->setInt64(queryParameterIndex++, contentKey);
             preparedStatement->setString(queryParameterIndex++, deliveryURI);
             preparedStatement->setInt(queryParameterIndex++, ttlInSeconds);
             preparedStatement->setInt(queryParameterIndex++, maxRetries);
@@ -2086,10 +2101,11 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
                 "from MMS_DeliveryAuthorization "
                 "where deliveryAuthorizationKey = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, deliveryAuthorizationKey);
-            
+
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -2097,7 +2113,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
                 int currentRetriesNumber = resultSet->getInt("currentRetriesNumber");
                 int maxRetries = resultSet->getInt("maxRetries");
                 int timeToLiveAvailable = resultSet->getInt("timeToLiveAvailable");
-                
+
                 if (contentURI != deliveryURI)
                 {
                     string errorMessage = __FILEREF__ + "contentURI and deliveryURI are different"
@@ -2224,6 +2240,110 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
     }        
 
     return authorizationOK;
+}
+
+void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	_logger->info(__FILEREF__ + "retentionOfDeliveryAuthorization"
+			);
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+			// Once authorization is expired, we will still take it for 1 day
+			int retention = 3600 * 24;
+
+            lastSQLCommand = 
+                "delete from MMS_DeliveryAuthorization "
+				"where DATE_ADD(authorizationTimestamp, INTERVAL (ttlInSeconds + ?) SECOND) < NOW()";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, retention);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Deletion obsolete DeliveryAuthorization"
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
 }
 
 bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)

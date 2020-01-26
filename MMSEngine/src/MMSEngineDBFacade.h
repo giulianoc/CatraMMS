@@ -1419,6 +1419,7 @@ public:
         int64_t userKey,
         string clientIPAddress,
         int64_t physicalPathKey,
+		int64_t liveURLConfKey,
         string deliveryURI,
         int ttlInSeconds,
         int maxRetries);
@@ -1430,6 +1431,8 @@ public:
     void resetProcessingJobsIfNeeded(string processorMMS);
 
 	void retentionOfIngestionData();
+
+	void retentionOfDeliveryAuthorization();
 
     void getEncodingJobs(
         string processorMMS,
@@ -1528,7 +1531,7 @@ public:
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string configurationLabel, string liveURL,
+		int64_t liveURLConfKey, string configurationLabel, string liveURL,
 		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		EncodingPriority encodingPriority);
@@ -1724,7 +1727,6 @@ public:
         string channelName,
         string channelRegion,
         string channelCountry,
-		string deliveryURL,
 		Json::Value liveURLData);
 
     void modifyLiveURLConf(
@@ -1737,7 +1739,6 @@ public:
         string channelName,
         string channelRegion,
         string channelCountry,
-		string deliveryURL,
 		Json::Value liveURLData);
 
     void removeLiveURLConf(
@@ -1750,9 +1751,12 @@ public:
 		string label, string type, string channelName, string channelRegion, string channelCountry, string liveURL,
 		string labelOrder);
 
-    string getLiveURLByConfigurationLabel(
+    pair<int64_t, string> getDetailsByConfLiveLabel(
         int64_t workspaceKey, string liveURLConfigurationLabel);
-    
+
+	string getDetailsByConfLiveKey(
+		int64_t workspaceKey, int64_t confKey);
+
     int64_t addFTPConf(
         int64_t workspaceKey,
         string label,
