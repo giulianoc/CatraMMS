@@ -307,6 +307,12 @@ server {
 
 	root /var/catramms/storage/MMSRepository/;
 
+	location ~ .(m3u8)$ {
+		if ($request_method = GET) {
+			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;
+		}
+	}
+
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
 		if ($arg_token) {
 			set $token $arg_token;

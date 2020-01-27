@@ -450,6 +450,7 @@ void API::manageRequestAndResponse(
             + ", requestURI: " + requestURI
             + ", requestMethod: " + requestMethod
             + ", contentLength: " + to_string(contentLength)
+            + ", method: " + method
 			// next is to avoid to log the password
             + (method == "login" ? ", requestBody: ..." : (", requestBody: " + requestBody))
         );
@@ -637,6 +638,142 @@ void API::manageRequestAndResponse(
 					sendError(request, 500, errorMessage);
 				}
             }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Not authorized: exception retrieving the token");
+            _logger->info(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+        }
+    }
+    else if (method == "manageHTTPStreamingManifest")
+    {
+        try
+        {
+            auto tokenIt = queryParameters.find("token");
+            if (tokenIt == queryParameters.end())
+			{
+				string errorMessage = string("Not authorized: token parameter not present")
+					;
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+			}
+			else
+			{
+                int64_t token = stoll(tokenIt->second);
+
+				// cookie parameter is added inside catramms.nginx
+				string mmsInfoCookie;
+				auto cookieIt = queryParameters.find("cookie");
+				if (cookieIt != queryParameters.end())
+					mmsInfoCookie = cookieIt->second;
+
+				_logger->info(__FILEREF__ + "manageHTTPStreamingManifest"
+					+ ", token: " + to_string(token)
+					+ ", mmsInfoCookie: " + mmsInfoCookie
+				);
+
+				bool manifestToBeDelivered = false;
+
+				size_t endOfURIIndex = requestURI.find_last_of("?");
+				if (endOfURIIndex == string::npos)
+				{
+					string errorMessage = string("Wrong URI format")
+						+ ", requestURI: " + requestURI
+                           ;
+					_logger->info(__FILEREF__ + errorMessage);
+
+					sendError(request, 500, errorMessage);
+				}
+				string contentURI = requestURI.substr(0, endOfURIIndex);
+
+				if (mmsInfoCookie == "")
+				{
+					if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
+					{
+						_logger->info(__FILEREF__ + "token authorized"
+							+ ", token: " + to_string(token)
+						);
+
+						manifestToBeDelivered = true;
+					}
+					else
+					{
+						string errorMessage = string("Not authorized: token invalid")
+							+ ", token: " + to_string(token)
+                            ;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						string responseBody;
+						sendError(request, 403, errorMessage);
+					}
+				}
+				else
+				{
+					if (mmsInfoCookie == "ciao")
+					{
+						_logger->info(__FILEREF__ + "cookie authorized"
+							+ ", mmsInfoCookie: " + mmsInfoCookie
+						);
+
+						manifestToBeDelivered = true;
+					}
+					else
+					{
+						string errorMessage = string("Not authorized: cookie invalid")
+							+ ", mmsInfoCookie: " + mmsInfoCookie
+                            ;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						string responseBody;
+						sendError(request, 403, errorMessage);
+					}
+				}
+
+				if (manifestToBeDelivered)
+				{
+					string contentType = "Content-type: application/x-mpegURL";
+					string cookieName = "mmsInfo";
+
+					string responseBody;
+					{
+						string manifestPathFileName = _mmsStorage->getMMSRootRepository()
+							+ contentURI.substr(1);
+
+						_logger->info(__FILEREF__ + "Reading manifest file"
+							+ ", manifestPathFileName: " + manifestPathFileName
+						);
+
+						std::ifstream manifestFile(manifestPathFileName);
+						std::stringstream buffer;
+						buffer << manifestFile.rdbuf();
+
+						responseBody = buffer.str();
+					}
+
+					string cookieValue = "ciao";
+					string cookiePath;
+					{
+						size_t cookiePathIndex = contentURI.find_last_of("/");
+						if (cookiePathIndex == string::npos)
+						{
+							string errorMessage = string("Wrong URI format")
+								+ ", contentURI: " + contentURI
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							sendError(request, 500, errorMessage);
+						}
+						cookiePath = contentURI.substr(0, cookiePathIndex);
+					}
+					bool enableCorsGETHeader = true;
+					sendSuccess(request, 200, responseBody,
+						contentType, cookieName, cookieValue, cookiePath,
+						enableCorsGETHeader);
+				}
+			}
         }
         catch(exception e)
         {

@@ -77,7 +77,11 @@ protected:
 
     unsigned long long   _maxBinaryContentLength;
 
-    void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
+    // void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
+	void sendSuccess(FCGX_Request& request, int htmlResponseCode,
+        string responseBody, string contentType = "",
+        string cookieName = "", string cookieValue = "", string cookiePath = "",
+		bool enableCorsGETHeader = false);
     void sendSuccess(int htmlResponseCode, string responseBody);
     void sendRedirect(FCGX_Request& request, string locationURL);
     void sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize);

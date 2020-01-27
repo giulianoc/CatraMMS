@@ -463,13 +463,14 @@ bool APICommon::basicAuthenticationRequired(
     if (method == "registerUser"
             || method == "confirmRegistration"
             || method == "login"
+            || method == "manageHTTPStreamingManifest"
             )
     {
         basicAuthenticationRequired = false;
     }
     
-    // This is the authorization asked when the deliveryURL is received by nginx
-    // Here the token is checked and it is not needed any basic authorization
+	// This is the authorization asked when the deliveryURL is received by nginx
+	// Here the token is checked and it is not needed any basic authorization
     if (requestURI == "/catramms/delivery/authorization")
     {
         basicAuthenticationRequired = false;
@@ -719,6 +720,7 @@ bool APICommon::requestToUploadBinary(unordered_map<string, string>& queryParame
 }
  */
 
+/*
 void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody)
 {
     string endLine = "\r\n";
@@ -748,11 +750,77 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string 
             + endLine
             + responseBody;
 
-	/*
+    _logger->debug(__FILEREF__ + "HTTP Success"
+        + ", response: " + completeHttpResponse
+    );
+
+    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+    
+//    cout << completeHttpResponse;
+}
+*/
+
+void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
+		string responseBody, string contentType,
+		string cookieName, string cookieValue, string cookiePath,
+		bool enableCorsGETHeader)
+{
+    string endLine = "\r\n";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+
+    string httpStatus =
+            string("Status: ")
+            + to_string(htmlResponseCode) + " "
+            + getHtmlStandardMessage(htmlResponseCode)
+            + endLine;
+
+    string localContentType;
+    if (responseBody != "")
+	{
+		if (contentType == "")
+			localContentType = string("Content-Type: application/json; charset=utf-8") + endLine;
+		else
+			localContentType = contentType + endLine;
+	}
+
+	string cookieHeader;
+	if (cookieName != "" && cookieValue != "")
+	{
+		cookieHeader = "Set-Cookie: " + cookieName + "=" + cookieValue;
+
+		if (cookiePath != "")
+			cookieHeader += ("; Path=" + cookiePath);
+
+		cookieHeader += endLine;
+	}
+
+	string corsGETHeader;
+	if (enableCorsGETHeader)
+	{
+		corsGETHeader = "Access-Control-Allow-Origin: *" + endLine
+			+ "Access-Control-Allow-Methods: GET, POST, OPTIONS" + endLine
+			+ "Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range" + endLine
+			+ "Access-Control-Expose-Headers: Content-Length,Content-Range" + endLine
+			;
+	}
+
+    string completeHttpResponse =
+            httpStatus
+            + localContentType
+            + (cookieHeader == "" ? "" : cookieHeader)
+            + (corsGETHeader == "" ? "" : corsGETHeader)
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
+            + responseBody;
+
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
     );
-	*/
     _logger->debug(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
     );
