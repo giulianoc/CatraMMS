@@ -45,6 +45,19 @@ APICommon::APICommon(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
     );
+
+    _guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiProtocol: " + _guiProtocol
+    );
+    _guiHostname =  _configuration["mms"].get("guiHostname", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiHostname: " + _guiHostname
+    );
+    _guiPort = _configuration["mms"].get("guiPort", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiPort: " + to_string(_guiPort)
+    );
 }
 
 APICommon::~APICommon() {
@@ -802,8 +815,11 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
 	string corsGETHeader;
 	if (enableCorsGETHeader)
 	{
-		corsGETHeader = "Access-Control-Allow-Origin: *" + endLine
+		// Access-Control-Allow-Origin with the GUI hostname and Access-Control-Allow-Credentials: true
+		// are important to allow the player to manage the cookies
+		corsGETHeader = "Access-Control-Allow-Origin: " + _guiProtocol + "://" + _guiHostname + endLine
 			+ "Access-Control-Allow-Methods: GET, POST, OPTIONS" + endLine
+			+ "Access-Control-Allow-Credentials: true" + endLine
 			+ "Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range" + endLine
 			+ "Access-Control-Expose-Headers: Content-Length,Content-Range" + endLine
 			;

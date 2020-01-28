@@ -23,6 +23,7 @@
 #include "catralibraries/LdapWrapper.h"
 #include "Validator.h"
 #include "EMailSender.h"
+#include "catralibraries/Encrypt.h"
 #include "API.h"
 
 int main(int argc, char** argv) 
@@ -234,19 +235,6 @@ API::API(Json::Value configuration,
     _apiPort = _configuration["api"].get("port", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_apiPort)
-    );
-
-    _guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->guiProtocol: " + _guiProtocol
-    );
-    _guiHostname =  _configuration["mms"].get("guiHostname", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->guiHostname: " + _guiHostname
-    );
-    _guiPort = _configuration["mms"].get("guiPort", "XXX").asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->guiPort: " + to_string(_guiPort)
     );
 
     Json::Value api = _configuration["api"];
@@ -569,7 +557,10 @@ void API::manageRequestAndResponse(
             if (tokenIt != requestDetails.end()
 				&& originalURIIt != requestDetails.end())
             {
-                int64_t token = stoll(tokenIt->second);
+				_logger->info(__FILEREF__ + "deliveryAuthorization, received"
+					+ ", originalURIIt: " + originalURIIt->second
+					+ ", tokenIt->second: " + tokenIt->second
+				);
 
                 string contentURI = originalURIIt->second;
                 size_t endOfURIIndex = contentURI.find_last_of("?");
@@ -578,44 +569,88 @@ void API::manageRequestAndResponse(
                     string errorMessage = string("Wrong URI format")
                         + ", contentURI: " + contentURI
                             ;
-                    _logger->info(__FILEREF__ + errorMessage);
+                    _logger->warn(__FILEREF__ + errorMessage);
 
-                    sendError(request, 500, errorMessage);
+					throw runtime_error(errorMessage);
                 }
                 contentURI = contentURI.substr(0, endOfURIIndex);
 
-                if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
-                {
-                    _logger->info(__FILEREF__ + "token authorized"
-                        + ", token: " + to_string(token)
-                    );
-
-                    string responseBody;
-                    sendSuccess(request, 200, responseBody);
-                }
-                else
-                {
-                    string errorMessage = string("Not authorized: token invalid")
-                        + ", token: " + to_string(token)
-                            ;
-                    _logger->info(__FILEREF__ + errorMessage);
-
-                    string responseBody;
-                    sendError(request, 403, errorMessage);
-                }
-            }
-            else
-            {
-				string tsExtension(".ts");
-				if (tokenIt == requestDetails.end()
-						&& originalURIIt != requestDetails.end() && 
-						// end with
-						(originalURIIt->second).size() >= tsExtension.size() &&
-							0 == (originalURIIt->second).compare((originalURIIt->second).size()-tsExtension.size(), tsExtension.size(), tsExtension)
-							)
+				string firstPartOfToken;
+				string secondPartOfToken;
 				{
-					_logger->info(__FILEREF__ + "segment authorized"
-						+ ", originalURIIt->second: " + originalURIIt->second
+					// token formats:
+					// scenario in case of .ts delivery: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+					//		both encryption were built in 'manageHTTPStreamingManifest'
+					// scenario in case of any other delivery: <token>---
+
+					string separator = "---";
+					string tokenParameter = tokenIt->second;
+					size_t endOfTokenIndex = tokenParameter.rfind(separator);
+					if (endOfTokenIndex == string::npos)
+					{
+						string errorMessage = string("Wrong token format")
+							+ ", contentURI: " + contentURI
+							+ ", tokenParameter: " + tokenParameter
+						;
+						_logger->warn(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					firstPartOfToken = tokenParameter.substr(0, endOfTokenIndex);
+					secondPartOfToken = tokenParameter.substr(endOfTokenIndex + separator.length());
+				}
+
+				// end with
+				string tsExtension(".ts");
+				if (contentURI.size() >= tsExtension.size() &&
+					0 == contentURI.compare(contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension)
+				)
+				{
+					string encryptedToken = firstPartOfToken;
+					string cookie = secondPartOfToken;
+
+					// manifestLineAndToken comes from ts URL
+					string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
+					string manifestLine;
+					int64_t tokenComingFromURL;
+					{
+						string separator = "+++";
+						size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
+						if (beginOfTokenIndex == string::npos)
+						{
+							string errorMessage = string("Wrong parameter format")
+								+ ", contentURI: " + contentURI
+								+ ", manifestLineAndToken: " + manifestLineAndToken
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						manifestLine = manifestLineAndToken.substr(0, beginOfTokenIndex);
+						string sTokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
+						tokenComingFromURL = stoll(sTokenComingFromURL);
+					}
+
+					string sTokenComingFromCookie = Encrypt::decrypt(cookie);
+					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
+
+					if (tokenComingFromCookie != tokenComingFromURL)
+					{
+						string errorMessage = string("Wrong parameter format")
+							+ ", contentURI: " + contentURI
+							+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+							;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					_logger->info(__FILEREF__ + "token authorized"
+						+ ", contentURI: " + contentURI
+						+ ", manifestLine: " + manifestLine
+						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+						+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
 					);
 
 					string responseBody;
@@ -623,26 +658,48 @@ void API::manageRequestAndResponse(
 				}
 				else
 				{
+					int64_t token = stoll(firstPartOfToken);
+					if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
 					{
-						string errorMessage = string("Not authorized: token/originalURI parameter not present")
-							+ ", token: " + (tokenIt != requestDetails.end() ? tokenIt->second : "")
-							+ ", originalURI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "")
-							;
-						_logger->warn(__FILEREF__ + errorMessage);
+						_logger->info(__FILEREF__ + "token authorized"
+							+ ", token: " + to_string(token)
+						);
+
+						string responseBody;
+						sendSuccess(request, 200, responseBody);
 					}
+					else
+					{
+						string errorMessage = string("Not authorized: token invalid")
+							+ ", token: " + to_string(token)
+                            ;
+						_logger->warn(__FILEREF__ + errorMessage);
 
-					string errorMessage = string("Not authorized: token parameter not present")
-                        ;
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 500, errorMessage);
+						throw runtime_error(errorMessage);
+					}
 				}
             }
+			else
+			{
+				string errorMessage = string("Not authorized: parameter not present")
+                       ;
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("Not authorized");
+            _logger->warn(__FILEREF__ + errorMessage);
+
+			string responseBody;
+			sendError(request, 403, errorMessage);
         }
         catch(exception e)
         {
-            string errorMessage = string("Not authorized: exception retrieving the token");
-            _logger->info(__FILEREF__ + errorMessage);
+            string errorMessage = string("Not authorized: exception managing token");
+            _logger->warn(__FILEREF__ + errorMessage);
 
             sendError(request, 500, errorMessage);
         }
@@ -658,127 +715,171 @@ void API::manageRequestAndResponse(
 					;
 				_logger->warn(__FILEREF__ + errorMessage);
 
-				sendError(request, 500, errorMessage);
+				throw runtime_error(errorMessage);
+			}
+
+			int64_t tokenComingFromURL = stoll(tokenIt->second);
+
+			// cookie parameter is added inside catramms.nginx
+			string mmsInfoCookie;
+			auto cookieIt = queryParameters.find("cookie");
+			if (cookieIt != queryParameters.end())
+				mmsInfoCookie = cookieIt->second;
+
+			_logger->info(__FILEREF__ + "manageHTTPStreamingManifest"
+				+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+				+ ", mmsInfoCookie: " + mmsInfoCookie
+			);
+
+			size_t endOfURIIndex = requestURI.find_last_of("?");
+			if (endOfURIIndex == string::npos)
+			{
+				string errorMessage = string("Wrong URI format")
+					+ ", requestURI: " + requestURI
+				;
+				_logger->info(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string contentURI = requestURI.substr(0, endOfURIIndex);
+
+			if (mmsInfoCookie == "")
+			{
+				if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
+				{
+					string errorMessage = string("Not authorized: token invalid")
+						+ ", contentURI: " + contentURI
+						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+					;
+					_logger->info(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				_logger->info(__FILEREF__ + "token authorized"
+					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+				);
 			}
 			else
 			{
-                int64_t token = stoll(tokenIt->second);
+				string sTokenComingFromCookie = Encrypt::decrypt(mmsInfoCookie);
+				int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-				// cookie parameter is added inside catramms.nginx
-				string mmsInfoCookie;
-				auto cookieIt = queryParameters.find("cookie");
-				if (cookieIt != queryParameters.end())
-					mmsInfoCookie = cookieIt->second;
-
-				_logger->info(__FILEREF__ + "manageHTTPStreamingManifest"
-					+ ", token: " + to_string(token)
-					+ ", mmsInfoCookie: " + mmsInfoCookie
-				);
-
-				bool manifestToBeDelivered = false;
-
-				size_t endOfURIIndex = requestURI.find_last_of("?");
-				if (endOfURIIndex == string::npos)
+				if (tokenComingFromCookie != tokenComingFromURL)
 				{
-					string errorMessage = string("Wrong URI format")
-						+ ", requestURI: " + requestURI
-                           ;
+					string errorMessage = string("Not authorized: cookie invalid")
+						+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+					;
 					_logger->info(__FILEREF__ + errorMessage);
 
-					sendError(request, 500, errorMessage);
-				}
-				string contentURI = requestURI.substr(0, endOfURIIndex);
-
-				if (mmsInfoCookie == "")
-				{
-					if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
-					{
-						_logger->info(__FILEREF__ + "token authorized"
-							+ ", token: " + to_string(token)
-						);
-
-						manifestToBeDelivered = true;
-					}
-					else
-					{
-						string errorMessage = string("Not authorized: token invalid")
-							+ ", token: " + to_string(token)
-                            ;
-						_logger->info(__FILEREF__ + errorMessage);
-
-						string responseBody;
-						sendError(request, 403, errorMessage);
-					}
-				}
-				else
-				{
-					if (mmsInfoCookie == "ciao")
-					{
-						_logger->info(__FILEREF__ + "cookie authorized"
-							+ ", mmsInfoCookie: " + mmsInfoCookie
-						);
-
-						manifestToBeDelivered = true;
-					}
-					else
-					{
-						string errorMessage = string("Not authorized: cookie invalid")
-							+ ", mmsInfoCookie: " + mmsInfoCookie
-                            ;
-						_logger->info(__FILEREF__ + errorMessage);
-
-						string responseBody;
-						sendError(request, 403, errorMessage);
-					}
+					throw runtime_error(errorMessage);
 				}
 
-				if (manifestToBeDelivered)
-				{
-					string contentType = "Content-type: application/x-mpegURL";
-					string cookieName = "mmsInfo";
-
-					string responseBody;
-					{
-						string manifestPathFileName = _mmsStorage->getMMSRootRepository()
-							+ contentURI.substr(1);
-
-						_logger->info(__FILEREF__ + "Reading manifest file"
-							+ ", manifestPathFileName: " + manifestPathFileName
-						);
-
-						std::ifstream manifestFile(manifestPathFileName);
-						std::stringstream buffer;
-						buffer << manifestFile.rdbuf();
-
-						responseBody = buffer.str();
-					}
-
-					string cookieValue = "ciao";
-					string cookiePath;
-					{
-						size_t cookiePathIndex = contentURI.find_last_of("/");
-						if (cookiePathIndex == string::npos)
-						{
-							string errorMessage = string("Wrong URI format")
-								+ ", contentURI: " + contentURI
-								;
-							_logger->info(__FILEREF__ + errorMessage);
-
-							sendError(request, 500, errorMessage);
-						}
-						cookiePath = contentURI.substr(0, cookiePathIndex);
-					}
-					bool enableCorsGETHeader = true;
-					sendSuccess(request, 200, responseBody,
-						contentType, cookieName, cookieValue, cookiePath,
-						enableCorsGETHeader);
-				}
+				_logger->info(__FILEREF__ + "cookie authorized"
+					+ ", mmsInfoCookie: " + mmsInfoCookie
+				);
 			}
+
+			{
+				string contentType = "Content-type: application/x-mpegURL";
+				string cookieName = "mmsInfo";
+
+				string responseBody;
+				{
+					string manifestPathFileName = _mmsStorage->getMMSRootRepository()
+						+ contentURI.substr(1);
+
+					_logger->info(__FILEREF__ + "Reading manifest file"
+						+ ", manifestPathFileName: " + manifestPathFileName
+					);
+
+					/*
+					std::ifstream manifestFile(manifestPathFileName);
+					std::stringstream buffer;
+					buffer << manifestFile.rdbuf();
+
+					responseBody = buffer.str();
+					*/
+					if (!FileIO::isFileExisting (manifestPathFileName.c_str()))
+					{
+						string errorMessage = string("manifest file not existing")
+							+ ", manifestPathFileName: " + manifestPathFileName
+							;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					std::ifstream manifestFile;
+
+					manifestFile.open(manifestPathFileName, ios::in);
+					if (!manifestFile.is_open())
+					{
+						string errorMessage = string("Not authorized: manifest file not opened")
+							+ ", manifestPathFileName: " + manifestPathFileName
+							;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string manifestLine;
+					string tsExtension = ".ts";
+					string endLine = "\n";
+					while(getline(manifestFile, manifestLine))
+					{
+						if (manifestLine[0] != '#' &&
+							// end with
+							manifestLine.size() >= tsExtension.size()
+							&& 0 == manifestLine.compare(manifestLine.size()-tsExtension.size(),
+								tsExtension.size(), tsExtension)
+						)
+						{
+							string auth = Encrypt::encrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+							responseBody += (manifestLine + "?token=" + auth + endLine);
+						}
+						else
+						{
+							responseBody += (manifestLine + endLine);
+						}
+					}
+					manifestFile.close();
+				}
+
+				string cookieValue = Encrypt::encrypt(to_string(tokenComingFromURL));
+				string cookiePath;
+				{
+					size_t cookiePathIndex = contentURI.find_last_of("/");
+					if (cookiePathIndex == string::npos)
+					{
+						string errorMessage = string("Wrong URI format")
+							+ ", contentURI: " + contentURI
+							;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					cookiePath = contentURI.substr(0, cookiePathIndex);
+				}
+				bool enableCorsGETHeader = true;
+				sendSuccess(request, 200, responseBody,
+					contentType, cookieName, cookieValue, cookiePath,
+					enableCorsGETHeader);
+			}
+		}
+        catch(runtime_error e)
+        {
+            string errorMessage = string("Not authorized");
+            _logger->warn(__FILEREF__ + errorMessage);
+
+			string responseBody;
+			sendError(request, 403, errorMessage);
         }
         catch(exception e)
         {
-            string errorMessage = string("Not authorized: exception retrieving the token");
-            _logger->info(__FILEREF__ + errorMessage);
+            string errorMessage = string("Not authorized: exception managing token");
+            _logger->warn(__FILEREF__ + errorMessage);
 
             sendError(request, 500, errorMessage);
         }

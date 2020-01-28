@@ -91,10 +91,6 @@ private:
     string              _apiHostname;
     int                 _apiPort;
     
-    string				_guiProtocol;
-    string				_guiHostname;
-    int					_guiPort;
-
     string				_ffmpegEncoderProtocol;
     int					_ffmpegEncoderPort;
     string				_ffmpegEncoderUser;

@@ -315,7 +315,7 @@ server {
 
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
 		if ($arg_token) {
-			set $token $arg_token;
+			set $token "$arg_token---$cookie_mmsInfo";
 		}
 		if ($arg_deliveryFileName) {
 			add_header Content-Disposition 'attachment; filename="$arg_deliveryFileName"';

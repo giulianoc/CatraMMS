@@ -70,6 +70,11 @@ public:
     
 protected:
     Json::Value                     _configuration;
+
+    string							_guiProtocol;
+    string							_guiHostname;
+    int								_guiPort;
+
 	string							_hostName;
     shared_ptr<spdlog::logger>      _logger;
     mutex*                          _fcgiAcceptMutex;
