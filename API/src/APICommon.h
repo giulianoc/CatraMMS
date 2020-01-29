@@ -31,10 +31,18 @@ struct WrongBasicAuthentication: public exception {
 
 class APICommon {
 public:
-    APICommon(Json::Value configuration, 
+    APICommon(Json::Value configuration,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger);
+
+    APICommon(Json::Value configuration,
+            mutex* fcgiAcceptMutex,
+            shared_ptr<spdlog::logger> logger);
+    
+	void init(Json::Value configuration,
+		mutex* fcgiAcceptMutex,                                                                           
+		shared_ptr<spdlog::logger> logger);
     
     virtual ~APICommon();
     
@@ -78,6 +86,7 @@ protected:
 	string							_hostName;
     shared_ptr<spdlog::logger>      _logger;
     mutex*                          _fcgiAcceptMutex;
+	bool							_accessToDBAllowed;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
 
     unsigned long long   _maxBinaryContentLength;
@@ -95,9 +104,13 @@ protected:
     void sendError(int htmlResponseCode, string errorMessage);
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
+    bool isMetadataPresent(Json::Value root, string field);
+
 private:
     int             _managedRequestsNumber;
     unsigned long   _maxAPIContentLength;
+	string			_encoderUser;
+	string			_encoderPassword;
     
     void fillEnvironmentDetails(
         const char * const * envp, 

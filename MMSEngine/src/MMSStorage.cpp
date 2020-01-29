@@ -7,14 +7,12 @@
 
 MMSStorage::MMSStorage(
         Json::Value configuration,
-        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<spdlog::logger> logger) 
 {
 
 	try
 	{
 		_logger             = logger;
-		_mmsEngineDBFacade  = mmsEngineDBFacade;
 
 		_hostName = System::getHostName();
 
@@ -207,7 +205,7 @@ MMSStorage::MMSStorage(
 
 						// getFileSystemInfo (default and more performant) or getDirectoryUsage
 						string field = "partitionUsageType";
-						if (!_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
+						if (!isMetadataPresent(partitionInfoJson, field))
 							partitionInfo._partitionUsageType = "getFileSystemInfo";
 						else
 						{
@@ -217,7 +215,7 @@ MMSStorage::MMSStorage(
 						}
 
 						field = "maxStorageUsageInKB";
-						if (_mmsEngineDBFacade->isMetadataPresent(partitionInfoJson, field))
+						if (isMetadataPresent(partitionInfoJson, field))
 							partitionInfo._maxStorageUsageInKB       = partitionInfoJson.get(field, -1).asInt64();
 						else
 							partitionInfo._maxStorageUsageInKB       = -1;
@@ -284,12 +282,12 @@ string MMSStorage::getIngestionRootRepository(void) {
 }
 
 tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
-	int64_t mediaItemKey, int64_t encodingProfileKey)
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -358,12 +356,12 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 }
 
 tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
-	int64_t physicalPathKey)
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+			mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
@@ -426,13 +424,14 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
     }
 }
 
-pair<string, string> MMSStorage::getVODDeliveryURI(int64_t physicalPathKey, bool save,
-		shared_ptr<Workspace> requestWorkspace)
+pair<string, string> MMSStorage::getVODDeliveryURI(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+			mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
@@ -531,13 +530,14 @@ pair<string, string> MMSStorage::getVODDeliveryURI(int64_t physicalPathKey, bool
 }
 
 tuple<int64_t, string, string> MMSStorage::getVODDeliveryURI(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace)
 {
 	try
 	{
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
-			_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -1164,8 +1164,8 @@ string MMSStorage::creatingDirsUsingTerritories(
     return mmsAssetPathName;
 }
 
-void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
-{    
+void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey)
+{
 
     try
     {
@@ -1174,7 +1174,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         );
         
         tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
-            _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+            mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
         int mmsPartitionNumber;
@@ -1212,7 +1212,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
 
-        _mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
+        mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
 
         {
             FileIO::DirectoryEntryType_t detSourceFileType;
@@ -1292,7 +1292,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
     }    
 }
 
-void MMSStorage::removeMediaItem(int64_t mediaItemKey)
+void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey)
 {
     try
     {
@@ -1301,7 +1301,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
         );
 
         vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
-        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
+        mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
         for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>& storageDetails: allStorageDetails)
         {
@@ -1500,7 +1500,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
         _logger->info(__FILEREF__ + "removeMediaItem ..."
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
-        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
+        mmsEngineDBFacade->removeMediaItem(mediaItemKey);
     }
     catch(runtime_error e)
     {
@@ -2142,5 +2142,14 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", elapsed (secs): "
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
 	);
+}
+
+bool MMSStorage::isMetadataPresent(Json::Value root, string field)
+{
+    if (root.isObject() && root.isMember(field) && !root[field].isNull()
+)
+        return true;
+    else
+        return false;
 }
 

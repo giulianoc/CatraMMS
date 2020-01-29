@@ -165,7 +165,7 @@ int main (int iArgc, char *pArgv [])
     logger->info(__FILEREF__ + "Creating MMSStorage"
             );
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
-            configuration, mmsEngineDBFacade, logger);
+            configuration, logger);
     
     logger->info(__FILEREF__ + "Creating MultiEventsSet"
         + ", addDestination: " + MMSENGINEPROCESSORNAME

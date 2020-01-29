@@ -20,7 +20,6 @@
 class FFMPEGEncoder: public APICommon {
 public:
     FFMPEGEncoder(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger);
     

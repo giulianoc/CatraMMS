@@ -85,7 +85,10 @@ int main(int argc, char** argv)
     // spdlog::register_logger(logger);
      */
 
-    size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();
+	/*
+	 * FFMPEGEncoder has not to have access to DB
+	 *
+	size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();                    
     logger->info(__FILEREF__ + "Configuration item"
         + ", database->poolSize: " + to_string(dbPoolSize)
     );
@@ -93,6 +96,7 @@ int main(int argc, char** argv)
             );
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, dbPoolSize, logger);
+	*/
 
 	{
 		// here the MMSStorage is instantiated just because it will create
@@ -100,7 +104,7 @@ int main(int argc, char** argv)
 		logger->info(__FILEREF__ + "Creating MMSStorage"
 			);
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			configuration, mmsEngineDBFacade, logger);
+			configuration, logger);
 	}
 
     FCGX_Init();
@@ -108,7 +112,6 @@ int main(int argc, char** argv)
     mutex fcgiAcceptMutex;
 
     FFMPEGEncoder ffmpegEncoder(configuration, 
-            mmsEngineDBFacade,
             &fcgiAcceptMutex,
             logger);
 
@@ -116,11 +119,9 @@ int main(int argc, char** argv)
 }
 
 FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration, 
-        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         mutex* fcgiAcceptMutex,
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
-        mmsEngineDBFacade,
         fcgiAcceptMutex,
         logger) 
 {
@@ -2149,47 +2150,47 @@ void FFMPEGEncoder::overlayTextOnVideo(
         
         string textPosition_X_InPixel;
         string field = "textPosition_X_InPixel";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             textPosition_X_InPixel = overlayTextMedatada.get(field, "XXX").asString();
         
         string textPosition_Y_InPixel;
         field = "textPosition_Y_InPixel";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             textPosition_Y_InPixel = overlayTextMedatada.get(field, "XXX").asString();
         
         string fontType;
         field = "fontType";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             fontType = overlayTextMedatada.get(field, "XXX").asString();
 
         int fontSize = -1;
         field = "fontSize";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             fontSize = overlayTextMedatada.get(field, -1).asInt();
 
         string fontColor;
         field = "fontColor";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             fontColor = overlayTextMedatada.get(field, "XXX").asString();
 
         int textPercentageOpacity = -1;
         field = "textPercentageOpacity";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             textPercentageOpacity = overlayTextMedatada.get(field, -1).asInt();
 
         bool boxEnable = false;
         field = "boxEnable";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             boxEnable = overlayTextMedatada.get(field, 0).asBool();
 
         string boxColor;
         field = "boxColor";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             boxColor = overlayTextMedatada.get(field, "XXX").asString();
         
         int boxPercentageOpacity = -1;
         field = "boxPercentageOpacity";
-        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+        if (isMetadataPresent(overlayTextMedatada, field))
             boxPercentageOpacity = overlayTextMedatada.get("boxPercentageOpacity", -1).asInt();
 
         // string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
@@ -3244,7 +3245,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// UserData
 			Json::Value userDataRoot;
 			{
-				if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, "UserData"))
+				if (isMetadataPresent(liveRecorderParametersRoot, "UserData"))
 				{
 					userDataRoot = liveRecorderParametersRoot["UserData"];
 				}
@@ -3539,7 +3540,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		string apiKey;
 		{
 			field = "InternalMMS";
-    		if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+    		if (isMetadataPresent(liveRecorderParametersRoot, field))
 			{
 				// internalMMSRootPresent = true;
 
@@ -3552,15 +3553,15 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				apiKey = internalMMSRoot.get(field, "").asString();
 
 				field = "OnSuccess";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+    			if (isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 
 				field = "OnError";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+    			if (isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 
 				field = "OnComplete";
-    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+    			if (isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 			}
 		}

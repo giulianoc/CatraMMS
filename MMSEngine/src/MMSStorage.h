@@ -28,7 +28,6 @@ public:
 public:
     MMSStorage (
             Json::Value configuration,
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<spdlog::logger> logger);
 
     ~MMSStorage (void);
@@ -52,16 +51,17 @@ public:
     string getDoneRootRepository (void);
 
 	tuple<int64_t,string, string, string, int64_t, string> getPhysicalPath(
-		int64_t mediaItemKey, int64_t encodingProfileKey);
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey);
     
 	tuple<string, string, string, int64_t, string> getPhysicalPath(
-		int64_t physicalPathKey);
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);
 
-	pair<string, string> getVODDeliveryURI(int64_t physicalPathKey, bool save,
-			shared_ptr<Workspace> requestWorkspace);
+	pair<string, string> getVODDeliveryURI(
+			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+			int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
 
 	tuple<int64_t, string, string> getVODDeliveryURI(
-		int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace);
 
 	string getLiveDeliveryAssetPathName(int64_t liveURLConfKey,
@@ -70,9 +70,9 @@ public:
 	pair<string, string> getLiveDeliveryURI(int64_t liveURLConfKey,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
-    void removePhysicalPath(int64_t physicalPathKey);
+    void removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);
     
-    void removeMediaItem(int64_t mediaItemKey);
+    void removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey);
 
     void refreshPartitionsFreeSizes();
 
@@ -166,7 +166,6 @@ public:
 
 private:
     shared_ptr<spdlog::logger>  _logger;
-    shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
 
     string                      _hostName;
 
@@ -205,6 +204,8 @@ private:
     unsigned long                   _ulCurrentMMSPartitionIndex;
 
     
+    bool isMetadataPresent(Json::Value root, string field);
+
     void contentInRepository (
 	unsigned long ulIsCopyOrMove,
 	string contentPathName,

@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 		logger->info(__FILEREF__ + "Creating MMSStorage"
 			);
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			configuration, mmsEngineDBFacade, logger);
+			configuration, logger);
 
 		FCGX_Init();
 
@@ -606,6 +606,8 @@ void API::manageRequestAndResponse(
 					0 == contentURI.compare(contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension)
 				)
 				{
+					// .ts content to be authorized
+
 					string encryptedToken = firstPartOfToken;
 					string cookie = secondPartOfToken;
 
@@ -634,10 +636,14 @@ void API::manageRequestAndResponse(
 					string sTokenComingFromCookie = Encrypt::decrypt(cookie);
 					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-					if (tokenComingFromCookie != tokenComingFromURL)
+					if (tokenComingFromCookie != tokenComingFromURL
+
+							// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
+							|| contentURI.find(manifestLine) == string::npos)
 					{
 						string errorMessage = string("Wrong parameter format")
 							+ ", contentURI: " + contentURI
+							+ ", manifestLine: " + manifestLine
 							+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
 							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 							;
@@ -767,18 +773,33 @@ void API::manageRequestAndResponse(
 
 				if (tokenComingFromCookie != tokenComingFromURL)
 				{
-					string errorMessage = string("Not authorized: cookie invalid")
+					string errorMessage = string("cookie invalid, let's check the token")
 						+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
 						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 					;
 					_logger->info(__FILEREF__ + errorMessage);
 
-					throw runtime_error(errorMessage);
-				}
+					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
+					{
+						string errorMessage = string("Not authorized: token invalid")
+							+ ", contentURI: " + contentURI
+							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+						;
+						_logger->info(__FILEREF__ + errorMessage);
 
-				_logger->info(__FILEREF__ + "cookie authorized"
-					+ ", mmsInfoCookie: " + mmsInfoCookie
-				);
+						throw runtime_error(errorMessage);
+					}
+
+					_logger->info(__FILEREF__ + "token authorized"
+						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+					);
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "cookie authorized"
+						+ ", mmsInfoCookie: " + mmsInfoCookie
+					);
+				}
 			}
 
 			{
@@ -1336,14 +1357,14 @@ void API::createDeliveryAuthorization(
 				if (physicalPathKey != -1)
 				{
 					pair<string, string> deliveryFileNameAndDeliveryURI =
-						_mmsStorage->getVODDeliveryURI(physicalPathKey, save, requestWorkspace);
+						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, physicalPathKey, save, requestWorkspace);
 
 					tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
 				}
 				else
 				{
 					tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
-						_mmsStorage->getVODDeliveryURI(mediaItemKey, encodingProfileKey, save,
+						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, mediaItemKey, encodingProfileKey, save,
 						requestWorkspace);
 					tie(physicalPathKey, deliveryFileName, deliveryURI) =
 						physicalPathKeyDeliveryFileNameAndDeliveryURI;

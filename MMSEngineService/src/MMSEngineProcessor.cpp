@@ -6649,7 +6649,7 @@ void MMSEngineProcessor::removeContentTask(
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", mediaItemKey: " + to_string(key)
 					);
-					_mmsStorage->removeMediaItem(key);
+					_mmsStorage->removeMediaItem(_mmsEngineDBFacade, key);
 				}
 				else
 				{
@@ -6657,7 +6657,7 @@ void MMSEngineProcessor::removeContentTask(
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", physicalPathKey: " + to_string(key)
 					);
-					_mmsStorage->removePhysicalPath(key);
+					_mmsStorage->removePhysicalPath(_mmsEngineDBFacade, key);
 				}
 			}
 			catch(runtime_error e)
@@ -6839,7 +6839,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(physicalPathKey, mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -6859,7 +6859,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -7008,7 +7008,7 @@ void MMSEngineProcessor::postOnFacebookTask(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7040,7 +7040,7 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7246,7 +7246,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7277,7 +7277,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7603,7 +7603,7 @@ void MMSEngineProcessor::httpCallbackTask(
 					{
 						int64_t encodingProfileKey = -1;
 						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(key, encodingProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 
 						string physicalPath;
 						string fileName;
@@ -7672,7 +7672,7 @@ void MMSEngineProcessor::httpCallbackTask(
 					{
 						int64_t encodingProfileKey = -1;
 						tuple<string, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(physicalPathKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
 
 						string physicalPath;
 						string fileName;
@@ -7849,7 +7849,7 @@ void MMSEngineProcessor::localCopyContentTask(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7871,7 +7871,7 @@ void MMSEngineProcessor::localCopyContentTask(
 
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8043,7 +8043,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -8076,7 +8076,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -8244,7 +8244,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8275,7 +8275,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8789,7 +8789,7 @@ void MMSEngineProcessor::changeFileFormatThread(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -8797,7 +8797,7 @@ void MMSEngineProcessor::changeFileFormatThread(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -9657,7 +9657,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                 
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -9679,7 +9679,7 @@ void MMSEngineProcessor::extractTracksContentThread(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -10787,7 +10787,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
             int64_t encodingProfileKey = -1;
 			tuple<int64_t, string, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
             tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -10797,7 +10797,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         {
 			tuple<string, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
-				_mmsStorage->getPhysicalPath(key);
+				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -10985,7 +10985,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 				int64_t encodingProfileKey = -1;
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -10995,7 +10995,7 @@ void MMSEngineProcessor::manageSlideShowTask(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11147,7 +11147,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				int64_t encodingProfileKey = -1;
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11157,7 +11157,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             {
 				tuple<string, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(key);
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11577,7 +11577,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			int64_t encodingProfileKey = -1;
 			tuple<int64_t, string, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPath(key, encodingProfileKey);
+				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -11587,7 +11587,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         {
 			tuple<string, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
-				_mmsStorage->getPhysicalPath(key);
+				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
 			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -13670,7 +13670,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
                 try
                 {
-                    _mmsStorage->removeMediaItem(workspaceAndMediaItemKey.second);
+                    _mmsStorage->removeMediaItem(_mmsEngineDBFacade, workspaceAndMediaItemKey.second);
                 }
                 catch(runtime_error e)
                 {

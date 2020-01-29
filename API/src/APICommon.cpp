@@ -28,8 +28,29 @@ APICommon::APICommon(Json::Value configuration,
             mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger)
 {
-    _configuration      = configuration;
+	_accessToDBAllowed = true;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
+
+	init(configuration, fcgiAcceptMutex, logger);
+}
+
+APICommon::APICommon(Json::Value configuration, 
+            mutex* fcgiAcceptMutex,
+            shared_ptr<spdlog::logger> logger)
+{
+	_accessToDBAllowed = false;
+
+	init(configuration, fcgiAcceptMutex, logger);
+}
+
+APICommon::~APICommon() {
+}
+
+void APICommon::init(Json::Value configuration, 
+            mutex* fcgiAcceptMutex,
+            shared_ptr<spdlog::logger> logger)
+{
+    _configuration      = configuration;
     _fcgiAcceptMutex    = fcgiAcceptMutex;
     _logger             = logger;
 
@@ -58,13 +79,19 @@ APICommon::APICommon(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->guiPort: " + to_string(_guiPort)
     );
-}
 
-APICommon::~APICommon() {
+	_encoderUser =  _configuration["ffmpeg"].get("encoderUser", 0).asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->encoderUser: " + _encoderUser
+	);
+	_encoderPassword =  _configuration["ffmpeg"].get("encoderPassword", 0).asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->encoderPassword: " + _encoderPassword
+	);
 }
 
 int APICommon::operator()()
-{    
+{
     // Backup the stdio streambufs
 //    streambuf* cin_streambuf  = cin.rdbuf();
 //    streambuf* cout_streambuf = cout.rdbuf();
@@ -316,21 +343,35 @@ int APICommon::operator()()
                 string userKey = usernameAndPassword.substr(0, userNameSeparator);
                 apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-                // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
-                userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+				if (_accessToDBAllowed)
+				{
+					userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-                if (get<0>(userKeyWorkspaceAndFlags) != stoll(userKey))
-                {
-                    _logger->error(__FILEREF__ + "Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
-                        + ", username of basic authorization (userKey): " + userKey
-                        + ", userKey associated to the APIKey: " + to_string(get<0>(userKeyWorkspaceAndFlags))
-                        + ", apiKey: " + apiKey
-                    );
+					if (get<0>(userKeyWorkspaceAndFlags) != stoll(userKey))
+					{
+						_logger->error(__FILEREF__ + "Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+							+ ", username of basic authorization (userKey): " + userKey
+							+ ", userKey associated to the APIKey: " + to_string(get<0>(userKeyWorkspaceAndFlags))
+							+ ", apiKey: " + apiKey
+						);
 
-                    throw WrongBasicAuthentication();
-                }        
+						throw WrongBasicAuthentication();
+					}        
+				}
+				else
+				{
+					if (userKey != _encoderUser || apiKey != _encoderPassword)
+					{
+						_logger->error(__FILEREF__ + "Username/password of the basic authorization are wrong"
+							+ ", userKey: " + userKey
+							+ ", apiKey: " + apiKey
+						);
 
-                _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
+						throw WrongBasicAuthentication();
+					}
+				}
+
+				_logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
             }
             catch(WrongBasicAuthentication e)
             {
@@ -1276,3 +1317,13 @@ Json::Value APICommon::loadConfigurationFile(const char* configurationPathName)
 
     return configurationJson;
 }
+
+bool APICommon::isMetadataPresent(Json::Value root, string field)
+{
+    if (root.isObject() && root.isMember(field) && !root[field].isNull()
+)
+        return true;
+    else
+        return false;
+}
+
