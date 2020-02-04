@@ -647,34 +647,42 @@ string MMSStorage::getDeliveryFreeAssetPathName(
 }
 */
 
-string MMSStorage::getLiveDeliveryAssetPathName(int64_t liveURLConfKey,
-	string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+string MMSStorage::getLiveDeliveryAssetPathName(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t liveURLConfKey,
+		string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
 {
-	pair<string, string> deliveryFileNameAndDeliveryURI = getLiveDeliveryURI(liveURLConfKey,
-		liveFileExtension, requestWorkspace);
+	pair<string, string> deliveryURIAndDeliveryFileName = getLiveDeliveryURI(
+			mmsEngineDBFacade, liveURLConfKey,
+			liveFileExtension, requestWorkspace);
 
-	string deliveryFileName;
 	string deliveryURI;
+	string deliveryFileName;
 
-	tie(deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
+	tie(deliveryURI, deliveryFileName) = deliveryURIAndDeliveryFileName;
 
 	string deliveryAssetPathName = _mmsRootRepository + deliveryURI.substr(1);
 
 	return deliveryAssetPathName;
 }
 
-pair<string, string> MMSStorage::getLiveDeliveryURI(int64_t liveURLConfKey,
-	string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+pair<string, string> MMSStorage::getLiveDeliveryURI(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t liveURLConfKey, string liveFileExtension,
+		shared_ptr<Workspace> requestWorkspace)
 {
-	string deliveryFileName;
 	string deliveryURI;
+	string deliveryFileName;
 
 	try
 	{
-		deliveryFileName = to_string(liveURLConfKey) + "." + liveFileExtension;
+		// if (liveURLType == "LiveProxy")
+		{
+			deliveryFileName = to_string(liveURLConfKey) + "." + liveFileExtension;
 
-		deliveryURI = "/" + _directoryForLiveContents + "/" + requestWorkspace->_directoryName
-			+ "/" + to_string(liveURLConfKey) + "/" + deliveryFileName;
+			deliveryURI = "/" + _directoryForLiveContents + "/" + requestWorkspace->_directoryName
+				+ "/" + to_string(liveURLConfKey) + "/" + deliveryFileName;
+		}
     }
     catch(runtime_error e)
     {
@@ -698,7 +706,7 @@ pair<string, string> MMSStorage::getLiveDeliveryURI(int64_t liveURLConfKey,
         throw e;
     }
 
-	return make_pair(deliveryFileName, deliveryURI);
+	return make_pair(deliveryURI, deliveryFileName);
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
@@ -1189,9 +1197,9 @@ void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFac
         tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, 
                 deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
-		if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+		if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming)
 		{
-			// in this case we have to removed the directory and not just the m3u8 file
+			// in this case we have to removed the directory and not just the m3u8/mpd file
 			fileName = "";
 		}
 
@@ -1320,9 +1328,9 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
 				continue;
 
             {
-				if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+				if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming)
 				{
-					// in this case we have to removed the directory and not just the m3u8 file
+					// in this case we have to removed the directory and not just the m3u8/mpd file
 					fileName = "";
 				}
 

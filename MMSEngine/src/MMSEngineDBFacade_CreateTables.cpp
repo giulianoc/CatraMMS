@@ -654,8 +654,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							{
 								if (fileFormatLowerCase == "mp4")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "hls")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming;
+								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"
@@ -673,8 +673,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							{
 								if (fileFormatLowerCase == "mp4")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
-								else if (fileFormatLowerCase == "hls")
-									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming;
+								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"
@@ -1552,7 +1552,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (128) NOT NULL,"
-                    "liveURL					VARCHAR (512) NOT NULL,"
+                    "liveURL					VARCHAR (1024) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				VARCHAR (1024) NULL,"
                     "channelName				VARCHAR (128) NULL,"

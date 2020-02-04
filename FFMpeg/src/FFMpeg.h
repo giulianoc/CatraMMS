@@ -279,7 +279,7 @@ private:
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
         
-        bool& segmentFileFormat,
+		string& httpStreamingFileFormat,
 		string& ffmpegHttpStreamingParameter,
 
         string& ffmpegFileFormatParameter,

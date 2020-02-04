@@ -2811,9 +2811,9 @@ void API::cancelIngestionJob(
 
 		MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
-			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (ingestionJobKey);
-		tie(ignore, ignore, ingestionStatus, ignore) = ingestionJobDetails;
+		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
+			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
 
 		if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 		{

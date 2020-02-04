@@ -1855,7 +1855,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 
 pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
-    
+
 	string encodersPool;
     int64_t sourcePhysicalPathKey;
     int64_t encodingProfileKey;    
@@ -1961,6 +1961,12 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     }
                 }
 
+				string fileFormat = encodingDetails.get("FileFormat", "XXX").asString();
+				string fileFormatLowerCase;
+				fileFormatLowerCase.resize(fileFormat.size());
+				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+					[](unsigned char c){return tolower(c); } );
+
 				// stagingEncodedAssetPathName preparation
 				{
 					tuple<string, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
@@ -1988,13 +1994,12 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							+ "_" 
 							+ to_string(encodingProfileKey);
 
-						string fileFormat = encodingDetails.get("FileFormat", "XXX").asString();
-
-						if (fileFormat == "mp4")
+						if (fileFormatLowerCase == "mp4")
 							encodedFileName.append(".mp4");
-						else if (fileFormat == "hls")
+						else if (fileFormatLowerCase == "hls"
+							|| fileFormatLowerCase == "dash")
 							;
-						else if (fileFormat == "webm")
+						else if (fileFormatLowerCase == "webm")
 							encodedFileName.append(".webm");
 						else
 						{
@@ -2022,8 +2027,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
 						removeLinuxPathIfExist);
 
-					if (_encodingItem->_encodeData->_deliveryTechnology ==
-							MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+					if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 					{
 						// In this case, the path is a directory where to place the segments
 
@@ -2667,10 +2671,60 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
     }
     
+	Json::Value encodingDetails;
+	{
+		try
+		{
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
+
+			bool parsingSuccessful = reader->parse(_encodingItem->_encodeData->_jsonProfile.c_str(),
+				_encodingItem->_encodeData->_jsonProfile.c_str() + _encodingItem->_encodeData->_jsonProfile.size(), 
+				&encodingDetails, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", errors: " + errors
+					+ ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		catch(...)
+		{
+			string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodeData->_jsonProfile: " + _encodingItem->_encodeData->_jsonProfile
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	string fileFormat = encodingDetails.get("FileFormat", "XXX").asString();
+	string fileFormatLowerCase;
+	fileFormatLowerCase.resize(fileFormat.size());
+	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+		[](unsigned char c){return tolower(c); } );
+
 	// manifestFileName is used in case of MMSEngineDBFacade::EncodingTechnology::MPEG2_TS
 	// the manifestFileName naming convention is used also in FFMpeg.cpp
 	string manifestFileName = to_string(_encodingItem->_ingestionJobKey) + "_"
-		+ to_string(_encodingItem->_encodingJobKey) + ".m3u8";
+			+ to_string(_encodingItem->_encodingJobKey);
+	if (fileFormatLowerCase == "hls")
+		manifestFileName += ".m3u8";
+	else if (fileFormatLowerCase == "dash")
+		manifestFileName += ".mpd";
 
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
@@ -2699,8 +2753,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         );
         FFMpeg ffmpeg (_configuration, _logger);
 		tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
-		if (_encodingItem->_encodeData->_deliveryTechnology ==
-				MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName);
 		}
@@ -3023,8 +3076,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 
 		string relativePath = _encodingItem->_encodeData->_relativePath;
 
-		if (_encodingItem->_encodeData->_deliveryTechnology ==
-				MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming)
+		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			size_t segmentsDirectoryIndex = stagingEncodedAssetPathName.find_last_of("/");
 			if (segmentsDirectoryIndex == string::npos)
@@ -9992,7 +10044,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							channelDirectoryName, manifestExtension);
 						*/
 						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
-							liveURLConfKey, manifestExtension, _encodingItem->_workspace);
+								_mmsEngineDBFacade, liveURLConfKey,
+								manifestExtension, _encodingItem->_workspace);
 					}
 
 					Json::Value liveProxyMetadata;
@@ -10245,7 +10298,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
 				if (manifestFilePathIndex == string::npos)
 				{
-					string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8 file path name"
+					string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
 							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", manifestFilePathName: " + manifestFilePathName;
@@ -10311,6 +10364,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 											&detDirectoryEntryType);
                 
 										if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+											continue;
+
+										string dashPrefixInitFiles ("init-stream");
+										if (outputType == "DASH"
+												&&
+											directoryEntry.size() >= dashPrefixInitFiles.size()
+												&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
+										)
 											continue;
 
 										{

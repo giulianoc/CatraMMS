@@ -391,7 +391,7 @@ public:
     enum class DeliveryTechnology {
         Download,				// image
         DownloadAndStreaming,	// MP4,
-        IPhoneStreaming			// MPEG2_TS
+        HTTPStreaming			// HLS/DASH
         // WEBM,               // (VP8 and Vorbis)
         // WindowsMedia,
         // MP3					// (Download),
@@ -404,8 +404,8 @@ public:
                 return "Download";
             case DeliveryTechnology::DownloadAndStreaming:
                 return "DownloadAndStreaming";
-            case DeliveryTechnology::IPhoneStreaming:
-                return "IPhoneStreaming";
+            case DeliveryTechnology::HTTPStreaming:
+                return "HTTPStreaming";
             default:
 				throw runtime_error(string("Wrong deliveryTechnology"));
         }
@@ -421,8 +421,8 @@ public:
             return DeliveryTechnology::Download;
 		else if (lowerCase == "downloadandstreaming")
             return DeliveryTechnology::DownloadAndStreaming;
-		else if (lowerCase == "iphonestreaming")
-            return DeliveryTechnology::IPhoneStreaming;
+		else if (lowerCase == "httpstreaming")
+            return DeliveryTechnology::HTTPStreaming;
         else
             throw runtime_error(string("Wrong DeliveryTechnology")
                     + ", deliveryTechnology: " + deliveryTechnology
@@ -1304,7 +1304,7 @@ public:
 	string getIngestionRootMetaDataContent (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
 
-	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
+	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 		getIngestionJobDetails(int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
@@ -1751,10 +1751,10 @@ public:
 		string label, string type, string channelName, string channelRegion, string channelCountry, string liveURL,
 		string labelOrder);
 
-    pair<int64_t, string> getDetailsByConfLiveLabel(
+    pair<int64_t, string> getLiveURLConfDetails(
         int64_t workspaceKey, string liveURLConfigurationLabel);
 
-	string getDetailsByConfLiveKey(
+	pair<string, string> getLiveURLConfDetails(
 		int64_t workspaceKey, int64_t confKey);
 
     int64_t addFTPConf(

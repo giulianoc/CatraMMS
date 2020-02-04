@@ -1411,8 +1411,10 @@ void API::liveURLConfList(
 		if (liveURLKeyIt != queryParameters.end() && liveURLKeyIt->second != "")
 		{
 			liveURLKey = stoll(liveURLKeyIt->second);
-			if (liveURLKey == 0)
-				liveURLKey = -1;
+			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
+			//	it is changed to -1, the return is all the rows. Because of that it was commented
+			// if (liveURLKey == 0)
+			// 	liveURLKey = -1;
 		}
 
 		int start = 0;

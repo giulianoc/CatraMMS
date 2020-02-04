@@ -1677,7 +1677,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
         if (liveURL != "")
             sqlWhere += ("and liveURL like ? ");
         if (type != "")
-            sqlWhere += ("and type like ? ");
+            sqlWhere += ("and type = ? ");
         if (channelName != "")
             sqlWhere += ("and channelName like ? ");
         if (channelRegion != "")
@@ -1701,7 +1701,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             if (liveURL != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
             if (type != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + type + "%");
+                preparedStatement->setString(queryParameterIndex++, type);
             if (channelName != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelName + "%");
             if (channelRegion != "")
@@ -1747,7 +1747,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             if (liveURL != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
             if (type != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + type + "%");
+                preparedStatement->setString(queryParameterIndex++, type);
             if (channelName != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelName + "%");
             if (channelRegion != "")
@@ -1884,7 +1884,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
     return liveURLConfListRoot;
 }
 
-pair<int64_t, string> MMSEngineDBFacade::getDetailsByConfLiveLabel(
+pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
     int64_t workspaceKey, string label
 )
 {
@@ -1895,7 +1895,7 @@ pair<int64_t, string> MMSEngineDBFacade::getDetailsByConfLiveLabel(
     shared_ptr<MySQLConnection> conn = nullptr;
 
     try
-    {        
+    {
         _logger->info(__FILEREF__ + "getLiveURLByConfigurationLabel"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", label: " + label
@@ -1999,12 +1999,13 @@ pair<int64_t, string> MMSEngineDBFacade::getDetailsByConfLiveLabel(
     return make_pair(confKey, liveURL);
 }
 
-string MMSEngineDBFacade::getDetailsByConfLiveKey(
+pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
     int64_t workspaceKey, int64_t confKey
 )
 {
     string      lastSQLCommand;
-    string      channelName;
+    string		liveURL;
+    string		channelName;
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2021,7 +2022,7 @@ string MMSEngineDBFacade::getDetailsByConfLiveKey(
         );
         
         {
-            lastSQLCommand = string("select channelName from MMS_Conf_LiveURL ")
+            lastSQLCommand = string("select liveURL, channelName from MMS_Conf_LiveURL ")
 				+ "where workspaceKey = ? and confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2042,6 +2043,7 @@ string MMSEngineDBFacade::getDetailsByConfLiveKey(
                 throw runtime_error(errorMessage);
             }
 
+            liveURL = resultSet->getString("liveURL");
             channelName = resultSet->getString("channelName");
         }
 
@@ -2110,7 +2112,7 @@ string MMSEngineDBFacade::getDetailsByConfLiveKey(
         throw e;
     } 
     
-    return channelName;
+    return make_pair(liveURL, channelName);
 }
 
 int64_t MMSEngineDBFacade::addFTPConf(

@@ -143,7 +143,7 @@ server {
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
-			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&liveURLConfKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
 		}
 
 		if ($request_method = POST) {
@@ -307,7 +307,7 @@ server {
 
 	root /var/catramms/storage/MMSRepository/;
 
-	location ~ .(m3u8)$ {
+	location ~ .(m3u8|mpd)$ {
 		if ($request_method = GET) {
 			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;
 		}

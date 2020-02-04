@@ -81,7 +81,7 @@ void FFMpeg::encodeContent(
 
     try
     {
-        bool segmentFileFormat;    
+        string httpStreamingFileFormat;    
 		string ffmpegHttpStreamingParameter = "";
 
         string ffmpegFileFormatParameter = "";
@@ -121,7 +121,7 @@ void FFMpeg::encodeContent(
             encodingProfileDetails,
             isVideo,
 
-            segmentFileFormat,
+            httpStreamingFileFormat,
 			ffmpegHttpStreamingParameter,
 
             ffmpegFileFormatParameter,
@@ -151,8 +151,10 @@ void FFMpeg::encodeContent(
                 + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
 
-        if (segmentFileFormat)
+        if (httpStreamingFileFormat != "")
         {
+			// hls or dash
+
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
 
@@ -169,7 +171,11 @@ void FFMpeg::encodeContent(
 
 			// the manifestFileName naming convention is used also in EncoderVideoAudioProxy.cpp
 			string manifestFileName = to_string(ingestionJobKey) +
-				"_" + to_string(encodingJobKey) + ".m3u8";
+				"_" + to_string(encodingJobKey);
+			if (httpStreamingFileFormat == "hls")
+				manifestFileName += ".m3u8";
+			else	// if (httpStreamingFileFormat == "dash")
+				manifestFileName += ".mpd";
 
             if (_twoPasses)
             {
@@ -312,14 +318,16 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				string segmentPathFileName =
-					stagingEncodedAssetPathName 
-					+ "/"
-					+ to_string(_currentIngestionJobKey)
-					+ "_"
-					+ to_string(_currentEncodingJobKey)
-					+ "_%04d.ts"
-				;
+				string segmentPathFileName;
+				if (httpStreamingFileFormat == "hls")
+					segmentPathFileName =
+						stagingEncodedAssetPathName 
+						+ "/"
+						+ to_string(_currentIngestionJobKey)
+						+ "_"
+						+ to_string(_currentEncodingJobKey)
+						+ "_%04d.ts"
+					;
 
 				string stagingManifestAssetPathName =
 					stagingEncodedAssetPathName
@@ -357,8 +365,11 @@ void FFMpeg::encodeContent(
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				ffmpegArgumentList.push_back("-hls_segment_filename");
-				ffmpegArgumentList.push_back(segmentPathFileName);
+				if (httpStreamingFileFormat == "hls")
+				{
+					ffmpegArgumentList.push_back("-hls_segment_filename");
+					ffmpegArgumentList.push_back(segmentPathFileName);
+				}
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
@@ -457,14 +468,16 @@ void FFMpeg::encodeContent(
 			}
 			else
             {
-				string segmentPathFileName =
-					stagingEncodedAssetPathName 
-					+ "/"
-					+ to_string(_currentIngestionJobKey)
-					+ "_"
-					+ to_string(_currentEncodingJobKey)
-					+ "_%04d.ts"
-				;
+				string segmentPathFileName;
+				if (httpStreamingFileFormat == "hls")
+					segmentPathFileName =
+						stagingEncodedAssetPathName 
+						+ "/"
+						+ to_string(_currentIngestionJobKey)
+						+ "_"
+						+ to_string(_currentEncodingJobKey)
+						+ "_%04d.ts"
+					;
 
 				string stagingManifestAssetPathName =
 					stagingEncodedAssetPathName
@@ -496,8 +509,11 @@ void FFMpeg::encodeContent(
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				ffmpegArgumentList.push_back("-hls_segment_filename");
-				ffmpegArgumentList.push_back(segmentPathFileName);
+				if (httpStreamingFileFormat == "hls")
+				{
+					ffmpegArgumentList.push_back("-hls_segment_filename");
+					ffmpegArgumentList.push_back(segmentPathFileName);
+				}
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
@@ -5135,6 +5151,11 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		//		after this time has passed.
 		// -hls_list_size size: Set the maximum number of playlist entries. If set to 0 the list file
 		//		will contain all the segments. Default value is 5.
+		if (userAgent != "")
+		{
+			ffmpegArgumentList.push_back("-user_agent");
+			ffmpegArgumentList.push_back(userAgent);
+		}
 		ffmpegArgumentList.push_back("-re");
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
@@ -5157,6 +5178,13 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
 			ffmpegArgumentList.push_back("-window_size");
 			ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+			// the only difference with the ffmpeg default is that default is $Number%05d$
+			// We had to change to $Number%01d$ because otherwise the generated file containing
+			// 00001 00002 ... but the videojs player generates file name like 1 2 ...
+			// and the streaming did not work
+			ffmpegArgumentList.push_back("-media_seg_name");
+			ffmpegArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.m4s");
 		}
 		ffmpegArgumentList.push_back(manifestFilePathName);
 
@@ -5564,7 +5592,7 @@ void FFMpeg::settingFfmpegParameters(
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
         
-        bool& segmentFileFormat,
+        string& httpStreamingFileFormat,
         string& ffmpegHttpStreamingParameter,
 
         string& ffmpegFileFormatParameter,
@@ -5641,7 +5669,7 @@ void FFMpeg::settingFfmpegParameters(
 
         if (fileFormatLowerCase == "hls")
         {
-			segmentFileFormat = true;
+			httpStreamingFileFormat = "hls";
 
             ffmpegFileFormatParameter = 
 				+ "-f hls "
@@ -5666,9 +5694,36 @@ void FFMpeg::settingFfmpegParameters(
 			//	will contain all the segments. Default value is 5.
             ffmpegHttpStreamingParameter += "-hls_list_size 0 ";
 		}
+		else if (fileFormatLowerCase == "dash")
+        {
+			httpStreamingFileFormat = "dash";
+
+            ffmpegFileFormatParameter = 
+				+ "-f dash "
+			;
+
+			long segmentDurationInSeconds = 10;
+
+			field = "DASH";
+			if (isMetadataPresent(encodingProfileRoot, field))
+			{
+				Json::Value dashRoot = encodingProfileRoot[field]; 
+
+				field = "SegmentDuration";
+				if (isMetadataPresent(dashRoot, field))
+					segmentDurationInSeconds = dashRoot.get(field, 10).asInt();
+			}
+
+            ffmpegHttpStreamingParameter = 
+				"-seg_duration " + to_string(segmentDurationInSeconds) + " ";
+
+			// hls_list_size: set the maximum number of playlist entries. If set to 0 the list file
+			//	will contain all the segments. Default value is 5.
+            // ffmpegHttpStreamingParameter += "-hls_list_size 0 ";
+		}
         else
         {
-            segmentFileFormat = false;
+            httpStreamingFileFormat = "";
 
             ffmpegFileFormatParameter =
 				" -f " + fileFormatLowerCase + " "

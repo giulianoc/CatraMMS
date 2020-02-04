@@ -8548,7 +8548,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getDetailsByConfLiveLabel(
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
                 workspace->_workspaceKey, configurationLabel);            
 		string liveURL;
 		tie(ignore, liveURL) = confKeyAndLiveURL;
@@ -8686,7 +8686,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				waitingSecondsBetweenAttemptsInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
         }
 
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getDetailsByConfLiveLabel(
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
 			workspace->_workspaceKey, configurationLabel);            
 
 		int64_t liveURLConfKey;
@@ -12969,10 +12969,10 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
 						referenceIngestionJobKey = referenceRoot.get(field, 0).asInt64();
 
-						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
-							labelIngestionTypeAndErrorMessage =
+						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+							string, string> labelIngestionTypeAndErrorMessage =
 							_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
-						tie(referenceLabel, ingestionType, ignore, referenceErrorMessage);
+						tie(referenceLabel, ingestionType, ignore, ignore, referenceErrorMessage);
 
 						break;
 					}

@@ -3724,10 +3724,10 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 						{
 							MMSEngineDBFacade::IngestionType ingestionType;
 
-							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string>
+							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 								labelIngestionTypeAndErrorMessage =
 								_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
-							tie(ignore, ingestionType, ignore, ignore) = labelIngestionTypeAndErrorMessage;
+							tie(ignore, ingestionType, ignore, ignore, ignore) = labelIngestionTypeAndErrorMessage;
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
 								isIngestionTaskGeneratingAProfile = true;

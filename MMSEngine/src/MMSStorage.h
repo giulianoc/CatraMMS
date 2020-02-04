@@ -64,11 +64,15 @@ public:
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
 		shared_ptr<Workspace> requestWorkspace);
 
-	string getLiveDeliveryAssetPathName(int64_t liveURLConfKey,
+	string getLiveDeliveryAssetPathName(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t liveURLConfKey,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
-	pair<string, string> getLiveDeliveryURI(int64_t liveURLConfKey,
-		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
+	pair<string, string> getLiveDeliveryURI(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t liveURLConfKey, string liveFileExtension,
+		shared_ptr<Workspace> requestWorkspace);
 
     void removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);
     

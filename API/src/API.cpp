@@ -24,6 +24,12 @@
 #include "Validator.h"
 #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
+
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+
 #include "API.h"
 
 int main(int argc, char** argv) 
@@ -31,6 +37,12 @@ int main(int argc, char** argv)
 
 	try
 	{
+		// Init libxml
+		{
+			xmlInitParser();
+			LIBXML_TEST_VERSION
+		}
+
 		const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
 		if (configurationPathName == nullptr)
 		{
@@ -139,6 +151,15 @@ int main(int argc, char** argv)
 		}
 
 		logger->info(__FILEREF__ + "API shutdown");
+
+		// libxml
+		{
+			// Shutdown libxml
+			xmlCleanupParser();
+
+			// this is to debug memory for regression tests
+			xmlMemoryDump();
+		}
 	}
     catch(sql::SQLException se)
     {
@@ -579,7 +600,8 @@ void API::manageRequestAndResponse(
 				string secondPartOfToken;
 				{
 					// token formats:
-					// scenario in case of .ts delivery: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+					// scenario in case of .ts (hls) delivery: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+					// scenario in case of .m4s (dash) delivery: ---<cookie: encription of 'token'>
 					//		both encryption were built in 'manageHTTPStreamingManifest'
 					// scenario in case of any other delivery: <token>---
 
@@ -601,16 +623,31 @@ void API::manageRequestAndResponse(
 				}
 
 				// end with
-				string tsExtension(".ts");
-				if (contentURI.size() >= tsExtension.size() &&
-					0 == contentURI.compare(contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension)
+				string tsExtension(".ts");		// hls
+				string m4sExtension(".m4s");	// dash
+				if (
+					(contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
+					contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
+					||
+					(contentURI.size() >= m4sExtension.size() && 0 == contentURI.compare(
+					contentURI.size()-m4sExtension.size(), m4sExtension.size(), m4sExtension))
 				)
 				{
-					// .ts content to be authorized
+					// .ts/m4s content to be authorized
 
 					string encryptedToken = firstPartOfToken;
 					string cookie = secondPartOfToken;
 
+					if (cookie == "")
+					{
+						string errorMessage = string("cookie is wrong")
+							+ ", contentURI: " + contentURI
+							+ ", cookie: " + cookie
+							;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
 					// manifestLineAndToken comes from ts URL
 					string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
 					string manifestLine;
@@ -639,7 +676,11 @@ void API::manageRequestAndResponse(
 					if (tokenComingFromCookie != tokenComingFromURL
 
 							// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
-							|| contentURI.find(manifestLine) == string::npos)
+							// 2020-02-04: commented because it does not work in case of dash
+							// contentURI: /MMSLive/1/109/init-stream0.m4s
+							// manifestLine: chunk-stream$RepresentationID$-$Number%05d$.m4s
+							// || contentURI.find(manifestLine) == string::npos
+					)
 					{
 						string errorMessage = string("Wrong parameter format")
 							+ ", contentURI: " + contentURI
@@ -662,6 +703,69 @@ void API::manageRequestAndResponse(
 					string responseBody;
 					sendSuccess(request, 200, responseBody);
 				}
+				/*
+				else if (
+					(contentURI.size() >= m4sExtension.size() && 0 == contentURI.compare(
+					contentURI.size()-m4sExtension.size(), m4sExtension.size(), m4sExtension))
+				)
+				{
+					// .m4s content to be authorized
+
+					string encryptedToken = firstPartOfToken;
+					string cookie = secondPartOfToken;
+
+					// manifestLineAndToken comes from ts URL
+					//string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
+					//string manifestLine;
+					//int64_t tokenComingFromURL;
+					//{
+					//	string separator = "+++";
+					//	size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
+					//	if (beginOfTokenIndex == string::npos)
+					//	{
+					//		string errorMessage = string("Wrong parameter format")
+					//			+ ", contentURI: " + contentURI
+					//			+ ", manifestLineAndToken: " + manifestLineAndToken
+					//			;
+					//		_logger->info(__FILEREF__ + errorMessage);
+//
+//							throw runtime_error(errorMessage);
+//						}
+//						manifestLine = manifestLineAndToken.substr(0, beginOfTokenIndex);
+//						string sTokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
+//						tokenComingFromURL = stoll(sTokenComingFromURL);
+//					}
+
+					string sTokenComingFromCookie = Encrypt::decrypt(cookie);
+					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
+
+//					if (tokenComingFromCookie != tokenComingFromURL
+//
+//							// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
+//							|| contentURI.find(manifestLine) == string::npos)
+//					{
+//						string errorMessage = string("Wrong parameter format")
+//							+ ", contentURI: " + contentURI
+//							+ ", manifestLine: " + manifestLine
+//							+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+//							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+//							;
+//						_logger->info(__FILEREF__ + errorMessage);
+//
+//						throw runtime_error(errorMessage);
+//					}
+
+					_logger->info(__FILEREF__ + "token authorized"
+						+ ", contentURI: " + contentURI
+						// + ", manifestLine: " + manifestLine
+						// + ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+						+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+					);
+
+					string responseBody;
+					sendSuccess(request, 200, responseBody);
+				}
+				*/
 				else
 				{
 					int64_t token = stoll(firstPartOfToken);
@@ -687,7 +791,15 @@ void API::manageRequestAndResponse(
             }
 			else
 			{
-				string errorMessage = string("Not authorized: parameter not present")
+				{
+					string errorMessage = string("deliveryAuthorization")
+						+ ", token: " + (tokenIt != requestDetails.end() ? tokenIt->second : "null")
+						+ ", URI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+                           ;
+					_logger->warn(__FILEREF__ + errorMessage);
+				}
+
+				string errorMessage = string("deliveryAuthorization, not authorized: parameter not present")
                        ;
 				_logger->warn(__FILEREF__ + errorMessage);
 
@@ -802,8 +914,17 @@ void API::manageRequestAndResponse(
 				}
 			}
 
+			// manifest authorized
+
 			{
-				string contentType = "Content-type: application/x-mpegURL";
+				string contentType;
+
+				string tsExtension(".ts");
+				if (contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
+					contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
+					contentType = "Content-type: application/x-mpegURL";
+				else	// dash
+					contentType = "Content-type: application/dash+xml";
 				string cookieName = "mmsInfo";
 
 				string responseBody;
@@ -815,13 +936,6 @@ void API::manageRequestAndResponse(
 						+ ", manifestPathFileName: " + manifestPathFileName
 					);
 
-					/*
-					std::ifstream manifestFile(manifestPathFileName);
-					std::stringstream buffer;
-					buffer << manifestFile.rdbuf();
-
-					responseBody = buffer.str();
-					*/
 					if (!FileIO::isFileExisting (manifestPathFileName.c_str()))
 					{
 						string errorMessage = string("manifest file not existing")
@@ -832,40 +946,297 @@ void API::manageRequestAndResponse(
 						throw runtime_error(errorMessage);
 					}
 
-					std::ifstream manifestFile;
-
-					manifestFile.open(manifestPathFileName, ios::in);
-					if (!manifestFile.is_open())
+					if (contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
+						contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
 					{
-						string errorMessage = string("Not authorized: manifest file not opened")
+						std::ifstream manifestFile;
+
+						manifestFile.open(manifestPathFileName, ios::in);
+						if (!manifestFile.is_open())
+						{
+							string errorMessage = string("Not authorized: manifest file not opened")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						string manifestLine;
+						string tsExtension = ".ts";
+						string endLine = "\n";
+						while(getline(manifestFile, manifestLine))
+						{
+							if (manifestLine[0] != '#' &&
+								// end with
+								manifestLine.size() >= tsExtension.size()
+								&& 0 == manifestLine.compare(manifestLine.size()-tsExtension.size(),
+									tsExtension.size(), tsExtension)
+							)
+							{
+								string auth = Encrypt::encrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+								responseBody += (manifestLine + "?token=" + auth + endLine);
+							}
+							else
+							{
+								responseBody += (manifestLine + endLine);
+							}
+						}
+						manifestFile.close();
+					}
+					else	// dash
+					{
+#if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && \
+defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
+	_logger->info(__FILEREF__ + "libxml define OK");
+#else
+	_logger->info(__FILEREF__ + "libxml define KO");
+#endif
+
+/*
+<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:mpeg:dash:schema:mpd:2011"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+        profiles="urn:mpeg:dash:profile:isoff-live:2011"
+        type="dynamic"
+        minimumUpdatePeriod="PT10S"
+        suggestedPresentationDelay="PT10S"
+        availabilityStartTime="2020-02-03T15:11:56Z"
+        publishTime="2020-02-04T08:54:57Z"
+        timeShiftBufferDepth="PT1M0.0S"
+        minBufferTime="PT20.0S">
+        <ProgramInformation>
+        </ProgramInformation>
+        <Period id="0" start="PT0.0S">
+                <AdaptationSet id="0" contentType="video" segmentAlignment="true" bitstreamSwitching="true">
+                        <Representation id="0" mimeType="video/mp4" codecs="avc1.640029" bandwidth="1494920" width="1024" height="576" frameRate="25/1">
+                                <SegmentTemplate timescale="12800" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373">
+                                        <SegmentTimeline>
+                                                <S t="815616000" d="128000" r="5" />
+                                        </SegmentTimeline>
+                                </SegmentTemplate>
+                        </Representation>
+                </AdaptationSet>
+                <AdaptationSet id="1" contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
+                        <Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.5" bandwidth="95545" audioSamplingRate="48000">
+                                <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2" />
+                                <SegmentTemplate timescale="48000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373">
+                                        <SegmentTimeline>
+                                                <S t="3058557246" d="479232" />
+                                                <S d="481280" />
+                                                <S d="479232" r="1" />
+                                                <S d="481280" />
+                                                <S d="479232" />
+                                        </SegmentTimeline>
+                                </SegmentTemplate>
+                        </Representation>
+                </AdaptationSet>
+        </Period>
+</MPD>
+*/
+						xmlDocPtr doc = xmlParseFile(manifestPathFileName.c_str());
+						if (doc == NULL)
+						{
+							string errorMessage = string("xmlParseFile failed")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						// xmlNode* rootElement = xmlDocGetRootElement(doc);
+
+						/* Create xpath evaluation context */
+						xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+						if(xpathCtx == NULL)
+						{
+							xmlFreeDoc(doc);
+
+							string errorMessage = string("xmlXPathNewContext failed")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						if(xmlXPathRegisterNs(xpathCtx,
+							BAD_CAST "xmlns",
+							BAD_CAST "urn:mpeg:dash:schema:mpd:2011") != 0)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = string("xmlXPathRegisterNs xmlns:xsi")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						/*
+						if(xmlXPathRegisterNs(xpathCtx,
+							BAD_CAST "xmlns:xlink",
+							BAD_CAST "http://www.w3.org/1999/xlink") != 0)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						if(xmlXPathRegisterNs(xpathCtx,
+							BAD_CAST "xsi:schemaLocation",
+							BAD_CAST "http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd") != 0)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						*/
+
+						// Evaluate xpath expression
+						const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
+						xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
+						if(xpathObj == NULL)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = string("xmlXPathEvalExpression failed")
+								+ ", manifestPathFileName: " + manifestPathFileName
+								;
+							_logger->info(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						xmlNodeSetPtr nodes = xpathObj->nodesetval;
+						_logger->info(__FILEREF__ + "processing mpd manifest file"
 							+ ", manifestPathFileName: " + manifestPathFileName
-							;
-						_logger->info(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					string manifestLine;
-					string tsExtension = ".ts";
-					string endLine = "\n";
-					while(getline(manifestFile, manifestLine))
-					{
-						if (manifestLine[0] != '#' &&
-							// end with
-							manifestLine.size() >= tsExtension.size()
-							&& 0 == manifestLine.compare(manifestLine.size()-tsExtension.size(),
-								tsExtension.size(), tsExtension)
-						)
+							+ ", nodesNumber: " + to_string(nodes->nodeNr)
+						);
+						for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
 						{
-							string auth = Encrypt::encrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
-							responseBody += (manifestLine + "?token=" + auth + endLine);
+							if (nodes->nodeTab[nodeIndex] == NULL)
+							{
+								xmlXPathFreeContext(xpathCtx);
+								xmlFreeDoc(doc);
+
+								string errorMessage = string("nodes->nodeTab[nodeIndex] is null")
+									+ ", manifestPathFileName: " + manifestPathFileName
+									+ ", nodeIndex: " + to_string(nodeIndex)
+								;
+								_logger->info(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							const char* mediaAttributeName = "media";
+							const char* initializationAttributeName = "initialization";
+							xmlChar* mediaValue = xmlGetProp(nodes->nodeTab[nodeIndex],
+									BAD_CAST mediaAttributeName);
+							xmlChar* initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex],
+									BAD_CAST initializationAttributeName);
+							if (mediaValue == (xmlChar*) NULL
+									|| initializationValue == (xmlChar*) NULL)
+							{
+								xmlXPathFreeContext(xpathCtx);
+								xmlFreeDoc(doc);
+
+								string errorMessage = string("xmlGetProp failed")
+									+ ", manifestPathFileName: " + manifestPathFileName
+								;
+								_logger->info(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							string auth = Encrypt::encrypt(string((char*) mediaValue)
+								+ "+++" + to_string(tokenComingFromURL));
+							string newMediaAttributeValue = string((char*) mediaValue)
+								+ "?token=" + auth;
+							// xmlAttrPtr
+							xmlSetProp (nodes->nodeTab[nodeIndex],
+								BAD_CAST mediaAttributeName,
+								BAD_CAST newMediaAttributeValue.c_str());
+
+							string newInitializationAttributeValue =
+								string((char*) initializationValue)
+								+ "?token=" + auth;
+							// xmlAttrPtr
+							xmlSetProp (nodes->nodeTab[nodeIndex],
+								BAD_CAST initializationAttributeName,
+								BAD_CAST newInitializationAttributeValue.c_str());
+
+							// const char *value = "ssss";
+							// xmlNodeSetContent(nodes->nodeTab[nodeIndex], BAD_CAST value);
+
+							/*
+							* All the elements returned by an XPath query are pointers to
+							* elements from the tree *except* namespace nodes where the XPath
+							* semantic is different from the implementation in libxml2 tree.
+							* As a result when a returned node set is freed when
+							* xmlXPathFreeObject() is called, that routine must check the
+							* element type. But node from the returned set may have been removed
+							* by xmlNodeSetContent() resulting in access to freed data.
+							* This can be exercised by running
+							*       valgrind xpath2 test3.xml '//discarded' discarded
+							* There is 2 ways around it:
+							*   - make a copy of the pointers to the nodes from the result set
+							*     then call xmlXPathFreeObject() and then modify the nodes
+							* or
+							*   - remove the reference to the modified nodes from the node set
+							*     as they are processed, if they are not namespace nodes.
+							*/
+							// if (nodes->nodeTab[nodeIndex]->type != XML_NAMESPACE_DECL)
+							// 	nodes->nodeTab[nodeIndex] = NULL;
 						}
-						else
+
+						/* Cleanup of XPath data */
+						xmlXPathFreeObject(xpathObj);
+						xmlXPathFreeContext(xpathCtx);
+
+						/* dump the resulting document */
 						{
-							responseBody += (manifestLine + endLine);
+							xmlChar *xmlbuff;
+							int buffersize;
+							xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
+							_logger->info(__FILEREF__ + "dumping mpd manifest file"
+								+ ", manifestPathFileName: " + manifestPathFileName
+								+ ", buffersize: " + to_string(buffersize)
+							);
+
+							responseBody = (char*) xmlbuff;
+
+							xmlFree(xmlbuff);
+							// xmlDocDump(stdout, doc);
 						}
+
+						/* free the document */
+						xmlFreeDoc(doc);
+
+						/*
+						std::ifstream manifestFile(manifestPathFileName);
+						std::stringstream buffer;
+						buffer << manifestFile.rdbuf();
+
+						responseBody = buffer.str();
+						*/
 					}
-					manifestFile.close();
 				}
 
 				string cookieValue = Encrypt::encrypt(to_string(tokenComingFromURL));
@@ -1292,17 +1663,18 @@ void API::createDeliveryAuthorization(
 			encodingProfileKey = stoll(encodingProfileKeyIt->second);
         }
 
-        int64_t liveURLConfKey = -1;
-        auto liveURLConfKeyIt = queryParameters.find("liveURLConfKey");
-        if (liveURLConfKeyIt != queryParameters.end())
+		// this is for live authorization
+        int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt != queryParameters.end())
         {
-			liveURLConfKey = stoll(liveURLConfKeyIt->second);
+			ingestionJobKey = stoll(ingestionJobKeyIt->second);
         }
 
 		if (physicalPathKey == -1 && (mediaItemKey == -1 || encodingProfileKey == -1)
-				&& liveURLConfKey == -1)
+				&& ingestionJobKey == -1)
 		{
-            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey or liveURLConfKey parameters have to be present");
+            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey or ingestionJobKey parameters have to be present");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
@@ -1350,7 +1722,7 @@ void API::createDeliveryAuthorization(
 			string deliveryFileName;
 			int64_t authorizationKey;
 
-			if (liveURLConfKey == -1)
+			if (ingestionJobKey == -1)
 			{
 				string deliveryURI;
 
@@ -1370,6 +1742,7 @@ void API::createDeliveryAuthorization(
 						physicalPathKeyDeliveryFileNameAndDeliveryURI;
 				}
 
+				int64_t liveURLConfKey = -1;
 				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey,
 					clientIPAddress,
@@ -1394,14 +1767,80 @@ void API::createDeliveryAuthorization(
 			{
 				// create authorization for a live request
 
+				tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
+					ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+				MMSEngineDBFacade::IngestionType ingestionType;
+				string metaDataContent;
+				tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
+
+				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
+				{
+					string errorMessage = string("ingestionJob is not a LiveProxy")
+						+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				Json::Value ingestionJobRoot;
+				string errors;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+
+					bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
+						metaDataContent.c_str() + metaDataContent.size(), 
+						&ingestionJobRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = string("metadata ingestionJob parsing failed")
+							+ ", errors: " + errors
+							+ ", json metaDataContent: " + metaDataContent
+                        ;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(exception e)
+				{
+					string errorMessage = string("metadata ingestionJob parsing failed")
+						+ ", errors: " + errors
+						+ ", json metaDataContent: " + metaDataContent
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				string field = "ConfigurationLabel";
+				string configurationLabel = ingestionJobRoot.get(field, "").asString();
+				field = "OutputType";
+				string outputType = ingestionJobRoot.get(field, "").asString();
+				if (outputType == "")
+					outputType = "HLS";
+
+				int64_t liveURLConfKey;
+				pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
+					requestWorkspace->_workspaceKey, configurationLabel);
+				tie(liveURLConfKey, ignore) = liveURLConfDetails;
+
 				string deliveryURI;
-				// we have to manage when the extension is not m3u8
-				string liveFileExtension = "m3u8";
-				pair<string, string> deliveryFileNameAndDeliveryURI
+				string liveFileExtension;
+				if (outputType == "HLS")
+					liveFileExtension = "m3u8";
+				else
+					liveFileExtension = "mpd";
+				pair<string, string> deliveryURIAndDeliveryFileName
 					= _mmsStorage->getLiveDeliveryURI(
-						liveURLConfKey, liveFileExtension, requestWorkspace);
-				tie(deliveryFileName, deliveryURI) =
-					deliveryFileNameAndDeliveryURI;
+					_mmsEngineDBFacade, liveURLConfKey,
+					liveFileExtension, requestWorkspace);
+				tie(deliveryURI, deliveryFileName) =
+					deliveryURIAndDeliveryFileName;
 
 				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey,

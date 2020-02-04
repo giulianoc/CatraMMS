@@ -1122,15 +1122,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         field = "fileFormat";
                         string fileName = resultSetProfiles->getString("fileName");
                         size_t extensionIndex = fileName.find_last_of(".");
-						string fileFormat;
+						string fileExtension;
                         if (extensionIndex == string::npos)
                         {
                             profileRoot[field] = Json::nullValue;
                         }
                         else
 						{
-							fileFormat = fileName.substr(extensionIndex + 1);
-							profileRoot[field] = fileFormat;
+							fileExtension = fileName.substr(extensionIndex + 1);
+							profileRoot[field] = fileExtension;
 						}
 
 						if (admin)
@@ -1167,18 +1167,18 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 							field = "deliveryTechnology";
 							{
-								string fileFormatLowerCase;
-								fileFormatLowerCase.resize(fileFormat.size());
-								transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+								string fileExtensionLowerCase;
+								fileExtensionLowerCase.resize(fileExtension.size());
+								transform(fileExtension.begin(), fileExtension.end(), fileExtensionLowerCase.begin(),
 									[](unsigned char c){return tolower(c); } );
 
-								if (fileFormatLowerCase == "mp4" || fileFormatLowerCase == "mov"
-										|| fileFormatLowerCase == "webm")
+								if (fileExtensionLowerCase == "mp4" || fileExtensionLowerCase == "mov"
+										|| fileExtensionLowerCase == "webm")
 									profileRoot[field] =
 										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming);
-								else if (fileFormatLowerCase == "m3u8")
+								else if (fileExtensionLowerCase == "m3u8" || fileExtensionLowerCase == "hls")
 									profileRoot[field] =
-										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::IPhoneStreaming);
+										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
 								else
 									profileRoot[field] = Json::nullValue;
 							}
