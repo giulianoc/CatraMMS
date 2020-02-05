@@ -919,9 +919,9 @@ void API::manageRequestAndResponse(
 			{
 				string contentType;
 
-				string tsExtension(".ts");
-				if (contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
-					contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
+				string m3u8Extension(".m3u8");
+				if (contentURI.size() >= m3u8Extension.size() && 0 == contentURI.compare(
+					contentURI.size()-m3u8Extension.size(), m3u8Extension.size(), m3u8Extension))
 					contentType = "Content-type: application/x-mpegURL";
 				else	// dash
 					contentType = "Content-type: application/dash+xml";
@@ -946,8 +946,8 @@ void API::manageRequestAndResponse(
 						throw runtime_error(errorMessage);
 					}
 
-					if (contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
-						contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
+					if (contentURI.size() >= m3u8Extension.size() && 0 == contentURI.compare(
+						contentURI.size()-m3u8Extension.size(), m3u8Extension.size(), m3u8Extension))
 					{
 						std::ifstream manifestFile;
 

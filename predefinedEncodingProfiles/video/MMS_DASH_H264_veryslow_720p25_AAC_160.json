@@ -1,7 +1,7 @@
 {
-	"Label" : "MMS_HLS_H264_veryslow_720p25_AAC_160",
-	"FileFormat" : "hls",
-	"HLS" : 
+	"Label" : "MMS_DASH_H264_veryslow_720p25_AAC_160",
+	"FileFormat" : "dash",
+	"DASH" : 
 	{
 		"SegmentDuration" : 10
 	},
