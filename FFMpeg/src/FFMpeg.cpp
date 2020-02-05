@@ -2941,7 +2941,7 @@ void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileN
 
 int FFMpeg::getEncodingProgress()
 {
-    int encodingPercentage;
+    int encodingPercentage = 0;
 
     try
     {
