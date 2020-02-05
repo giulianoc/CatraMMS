@@ -2,8 +2,8 @@
 
 export CatraMMS_PATH=/opt/catramms
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ffmpeg-4.1.3/lib:$CatraMMS_PATH/ffmpeg-4.1.3/lib64
-export PATH=$PATH:$CatraMMS_PATH/ffmpeg-4.1.3/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ffmpeg-4.2.2/lib:$CatraMMS_PATH/ffmpeg-4.2.2/lib64
+export PATH=$PATH:$CatraMMS_PATH/ffmpeg-4.2.2/bin
 
 
 #$CatraMMS_PATH/ffmpeg-3.4.2/bin/ffmpeg -formats

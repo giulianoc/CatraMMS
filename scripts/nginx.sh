@@ -21,7 +21,7 @@ export CatraMMS_PATH=/opt/catramms
 if [ "$command" == "start" ]
 then
 	#LD_LIBRARY_PATH with ffmpeg was set because I guess it could be used by nginx-vod-module
-	sudo sh -c 'export CatraMMS_PATH=/opt/catramms && export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg-4.1.3/lib:$CatraMMS_PATH/ffmpeg-4.1.3/lib64 && $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx'
+	sudo sh -c 'export CatraMMS_PATH=/opt/catramms && export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg-4.2.2/lib:$CatraMMS_PATH/ffmpeg-4.2.2/lib64 && $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx'
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep nginx | grep -v grep | grep -v status
