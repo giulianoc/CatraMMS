@@ -5729,14 +5729,14 @@ void FFMpeg::settingFfmpegParameters(
 			// it is important to specify -init_seg_name because those files
 			// will not be removed in EncoderVideoAudioProxy.cpp
             ffmpegHttpStreamingParameter +=
-				"-init_seg_name init-stream$RepresentationID$.$ext$";
+				"-init_seg_name init-stream$RepresentationID$.$ext$ ";
 
 			// the only difference with the ffmpeg default is that default is $Number%05d$
 			// We had to change it to $Number%01d$ because otherwise the generated file containing
 			// 00001 00002 ... but the videojs player generates file name like 1 2 ...
 			// and the streaming was not working
             ffmpegHttpStreamingParameter +=
-				"-media_seg_name chunk-stream$RepresentationID$-$Number%01d$.$ext$";
+				"-media_seg_name chunk-stream$RepresentationID$-$Number%01d$.$ext$ ";
 		}
         else
         {
@@ -6121,6 +6121,7 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
 		&& fileFormatLowerCase != "mp4" 
 		&& fileFormatLowerCase != "webm" 
 		&& fileFormatLowerCase != "hls"
+		&& fileFormatLowerCase != "dash"
 	)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
