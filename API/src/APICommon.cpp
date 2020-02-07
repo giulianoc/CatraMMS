@@ -20,6 +20,7 @@
 #include "catralibraries/System.h"
 #include "catralibraries/Encrypt.h"
 #include "APICommon.h"
+#include <regex>
 
 extern char** environ;
 
@@ -866,7 +867,28 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
 			;
 	}
 
-    string completeHttpResponse =
+    string completeHttpResponse;
+
+	// responseBody cannot have the '%' char because FCGX_FPrintF will not work
+	if (responseBody.find("%") != string::npos)
+	{
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		string newResponseBody = regex_replace(
+			responseBody, regex(toBeSearched), replacedWith);
+
+		completeHttpResponse =
+            httpStatus
+            + localContentType
+            + (cookieHeader == "" ? "" : cookieHeader)
+            + (corsGETHeader == "" ? "" : corsGETHeader)
+            + "Content-Length: " + to_string(newResponseBody.length()) + endLine
+            + endLine
+            + newResponseBody;
+	}
+	else
+	{
+		completeHttpResponse =
             httpStatus
             + localContentType
             + (cookieHeader == "" ? "" : cookieHeader)
@@ -874,6 +896,7 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
             + "Content-Length: " + to_string(responseBody.length()) + endLine
             + endLine
             + responseBody;
+	}
 
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
@@ -907,12 +930,31 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
     if (responseBody != "")
         contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
     
-    string completeHttpResponse =
+    string completeHttpResponse;
+	// responseBody cannot have the '%' char because FCGX_FPrintF will not work
+	if (responseBody.find("%") != string::npos)
+	{
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		string newResponseBody = regex_replace(
+			responseBody, regex(toBeSearched), replacedWith);
+
+		completeHttpResponse =
+            httpStatus
+            + contentType
+            + "Content-Length: " + to_string(newResponseBody.length()) + endLine
+            + endLine
+            + newResponseBody;
+	}
+	else
+	{
+		completeHttpResponse =
             httpStatus
             + contentType
             + "Content-Length: " + to_string(responseBody.length()) + endLine
             + endLine
             + responseBody;
+	}
 
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
@@ -1002,11 +1044,29 @@ void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string er
 {
     string endLine = "\r\n";
 
-    string responseBody =
+    string responseBody;
+	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
+	if (errorMessage.find("%") != string::npos)
+	{
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		string newErrorMessage = regex_replace(
+			errorMessage, regex(toBeSearched), replacedWith);
+
+		responseBody =
+            string("{ ")
+            + "\"status\": " + to_string(htmlResponseCode) + ", "
+            + "\"error\": " + "\"" + newErrorMessage + "\"" + " "
+            + "}";
+	}
+	else
+	{
+		responseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+	}
     
 //    string httpStatus =
 //            string("HTTP/1.1 ")
@@ -1040,11 +1100,29 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
 {
     string endLine = "\r\n";
 
-    string responseBody =
+    string responseBody;
+	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
+	if (errorMessage.find("%") != string::npos)
+	{
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		string newErrorMessage = regex_replace(
+			errorMessage, regex(toBeSearched), replacedWith);
+
+		responseBody =
+            string("{ ")
+            + "\"status\": " + to_string(htmlResponseCode) + ", "
+            + "\"error\": " + "\"" + newErrorMessage + "\"" + " "
+            + "}";
+	}
+	else
+	{
+		responseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+	}
     
 //    string httpStatus =
 //            string("HTTP/1.1 ")
