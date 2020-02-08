@@ -869,6 +869,10 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
 
     string completeHttpResponse;
 
+	// 2020-02-08: content length has to be calculated before the substitution from % to %%
+	// because for FCGX_FPrintF (below used) %% is just one character
+	long contentLength = responseBody.length();
+
 	// responseBody cannot have the '%' char because FCGX_FPrintF will not work
 	if (responseBody.find("%") != string::npos)
 	{
@@ -882,7 +886,7 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
             + localContentType
             + (cookieHeader == "" ? "" : cookieHeader)
             + (corsGETHeader == "" ? "" : corsGETHeader)
-            + "Content-Length: " + to_string(newResponseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + newResponseBody;
 	}
@@ -893,7 +897,7 @@ void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode,
             + localContentType
             + (cookieHeader == "" ? "" : cookieHeader)
             + (corsGETHeader == "" ? "" : corsGETHeader)
-            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + responseBody;
 	}
@@ -929,7 +933,11 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
     string contentType;
     if (responseBody != "")
         contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
-    
+
+	// 2020-02-08: content length has to be calculated before the substitution from % to %%
+	// because for FCGX_FPrintF (below used) %% is just one character
+	long contentLength = responseBody.length();
+
     string completeHttpResponse;
 	// responseBody cannot have the '%' char because FCGX_FPrintF will not work
 	if (responseBody.find("%") != string::npos)
@@ -942,7 +950,7 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 		completeHttpResponse =
             httpStatus
             + contentType
-            + "Content-Length: " + to_string(newResponseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + newResponseBody;
 	}
@@ -951,7 +959,7 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 		completeHttpResponse =
             httpStatus
             + contentType
-            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + responseBody;
 	}
@@ -1044,20 +1052,26 @@ void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string er
 {
     string endLine = "\r\n";
 
+	long contentLength;
+
     string responseBody;
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
-		string toBeSearched = "%";
-		string replacedWith = "%%";
-		string newErrorMessage = regex_replace(
-			errorMessage, regex(toBeSearched), replacedWith);
-
-		responseBody =
+		string temporaryResponseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
-            + "\"error\": " + "\"" + newErrorMessage + "\"" + " "
+            + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+
+		// 2020-02-08: content length has to be calculated before the substitution from % to %%
+		// because for FCGX_FPrintF (below used) %% is just one character
+		contentLength = temporaryResponseBody.length();
+
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		responseBody = regex_replace(
+			temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
@@ -1066,6 +1080,10 @@ void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string er
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+
+		// 2020-02-08: content length has to be calculated before the substitution from % to %%
+		// because for FCGX_FPrintF (below used) %% is just one character
+		contentLength = responseBody.length();
 	}
     
 //    string httpStatus =
@@ -1082,7 +1100,7 @@ void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string er
     string completeHttpResponse =
             httpStatus
             + "Content-Type: application/json; charset=utf-8" + endLine
-            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + responseBody
             ;
@@ -1100,20 +1118,26 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
 {
     string endLine = "\r\n";
 
+	long contentLength;
+
     string responseBody;
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
-		string toBeSearched = "%";
-		string replacedWith = "%%";
-		string newErrorMessage = regex_replace(
-			errorMessage, regex(toBeSearched), replacedWith);
-
-		responseBody =
+		string temporaryResponseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
-            + "\"error\": " + "\"" + newErrorMessage + "\"" + " "
+            + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+
+		// 2020-02-08: content length has to be calculated before the substitution from % to %%
+		// because for FCGX_FPrintF (below used) %% is just one character
+		contentLength = temporaryResponseBody.length();
+
+		string toBeSearched = "%";
+		string replacedWith = "%%";
+		responseBody = regex_replace(
+			temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
@@ -1122,7 +1146,12 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
+
+		// 2020-02-08: content length has to be calculated before the substitution from % to %%
+		// because for FCGX_FPrintF (below used) %% is just one character
+		contentLength = responseBody.length();
 	}
+    
     
 //    string httpStatus =
 //            string("HTTP/1.1 ")
@@ -1138,7 +1167,7 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
     string completeHttpResponse =
             httpStatus
             + "Content-Type: application/json; charset=utf-8" + endLine
-            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + "Content-Length: " + to_string(contentLength) + endLine
             + endLine
             + responseBody
             ;

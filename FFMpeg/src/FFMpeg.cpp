@@ -4739,7 +4739,7 @@ void FFMpeg::liveRecorder(
 				+ "We are a bit late to start the LiveRecorder, let's start it"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", delay: " + to_string(utcNow - utcRecordingPeriodStart)
+                    + ", delay (secs): " + to_string(utcNow - utcRecordingPeriodStart)
                     + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
                     + ", utcNow: " + to_string(utcNow)
                     + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
