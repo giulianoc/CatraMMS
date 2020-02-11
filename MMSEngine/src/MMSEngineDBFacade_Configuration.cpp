@@ -1673,13 +1673,13 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
         if (liveURLKey != -1)
 			sqlWhere += ("and confKey = ? ");
         if (label != "")
-            sqlWhere += ("and label like ? ");
+            sqlWhere += ("and LOWER(label) like LOWER(?) ");
         if (liveURL != "")
             sqlWhere += ("and liveURL like ? ");
         if (type != "")
             sqlWhere += ("and type = ? ");
         if (channelName != "")
-            sqlWhere += ("and channelName like ? ");
+            sqlWhere += ("and LOWER(channelName) like LOWER(?) ");
         if (channelRegion != "")
             sqlWhere += ("and channelRegion like ? ");
         if (channelCountry != "")

@@ -20,24 +20,9 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
-SET (SCRIPTs
-	mmsApi.sh
-	mmsEncoder.sh
-	mmsEnv.sh
-	mmsEngineService.sh
-	ffmpegHelper.sh
-	imageMagickHelper.sh
-	nginx.sh
-	tomcat.sh
-	setupALL.sh
-	mmsStatusALL.sh
-	mmsStartALL.sh
-	mmsStopALL.sh
-	mmsTail.sh
-	printLogFileName.sh
-	crontab.sh
-	sqlQueries.txt
+SET (WORKFLOWs
+	aaa.txt
 )
 
-install (FILES ${SCRIPTs} DESTINATION scripts PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ)
+install (FILES ${WORKFLOWs} DESTINATION predefinedWorkflowLibrary)
 

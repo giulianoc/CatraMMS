@@ -149,6 +149,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath
     );
 
+    _predefinedWorkflowLibraryDirectoryPath = configuration["mms"].get("predefinedWorkflowLibraryDir", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath
+    );
+
     _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
 	bool reconnect = true;
 	string defaultCharacterSet = "utf8";

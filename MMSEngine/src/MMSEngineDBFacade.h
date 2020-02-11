@@ -1349,6 +1349,19 @@ public:
         string processorMMSForRetention
         );
 
+	int64_t createWorkflowLibrary(
+		int64_t workspaceKey,
+		string label,
+		string jsonWorkflow);
+
+	void removeWorkflowLibrary(                                                                
+		int64_t workspaceKey,
+		int64_t workflowLibraryKey);
+
+	Json::Value getWorkflowsLibraryList (
+		int64_t workspaceKey,
+		int64_t workflowLibraryKey);
+
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
         bool contentTypePresent, ContentType contentType);
@@ -1843,6 +1856,8 @@ private:
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
 
+	string			_predefinedWorkflowLibraryDirectoryPath;
+
     string          _predefinedVideoProfilesDirectoryPath;
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
@@ -1964,7 +1979,13 @@ private:
         string imageFormat,
         int imageQuality
     );
-    
+
+	int64_t addUpdateWorkflowLibrary(                                                          
+		shared_ptr<MySQLConnection> conn,                                                                         
+		int64_t workspaceKey,                                                                                     
+		string label,                                                                                             
+		string jsonWorkflow);
+
 	void addCrossReference (
         shared_ptr<MySQLConnection> conn,
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,

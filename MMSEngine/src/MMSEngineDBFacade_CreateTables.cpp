@@ -795,7 +795,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }    
-        
+
         try
         {
             // workspaceKey and name
@@ -923,7 +923,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
 
         try
         {
@@ -1036,6 +1036,158 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create index MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
             statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_WorkflowLibrary ("
+                    "workflowLibraryKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey  			BIGINT UNSIGNED NULL,"
+                    "label					VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "thumbnailMediaItemKey	BIGINT UNSIGNED NULL,"
+                    "jsonWorkflow			MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "constraint MMS_WorkflowLibrary_PK PRIMARY KEY (workflowLibraryKey), "
+                    "constraint MMS_WorkflowLibrary_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            {
+                FileIO::DirectoryEntryType_t detDirectoryEntryType;
+                shared_ptr<FileIO::Directory> directory =
+					FileIO::openDirectory(_predefinedWorkflowLibraryDirectoryPath + "/");
+
+                bool scanDirectoryFinished = false;
+                while (!scanDirectoryFinished)
+                {
+                    string directoryEntry;
+                    try
+                    {
+                        string directoryEntry = FileIO::readDirectory (directory,
+                            &detDirectoryEntryType);
+
+                        if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                            continue;
+
+                        size_t extensionIndex = directoryEntry.find_last_of(".");
+                        if (extensionIndex == string::npos
+                                || directoryEntry.substr(extensionIndex) != ".json")
+                        {
+                            string errorMessage = __FILEREF__ + "Wrong filename (workflow) extention"
+								+ ", directoryEntry: " + directoryEntry
+                            ;
+                            _logger->error(errorMessage);
+
+                            continue;
+                        }
+
+						string jsonWorkflow;
+                        {        
+                            ifstream profileFile(_predefinedWorkflowLibraryDirectoryPath + "/" + directoryEntry);
+                            stringstream buffer;
+                            buffer << profileFile.rdbuf();
+
+                            jsonWorkflow = buffer.str();
+
+                            _logger->info(__FILEREF__ + "Reading workflow"
+                                + ", workflow pathname: " + (_predefinedWorkflowLibraryDirectoryPath + "/" + directoryEntry)
+                                + ", workflow: " + jsonWorkflow
+                            );
+                        }
+
+						Json::Value workflowRoot;
+						try
+						{
+							Json::CharReaderBuilder builder;
+							Json::CharReader* reader = builder.newCharReader();
+							string errors;
+
+							bool parsingSuccessful = reader->parse(jsonWorkflow.c_str(),
+								jsonWorkflow.c_str() + jsonWorkflow.size(), 
+								&workflowRoot, &errors);
+							delete reader;
+
+							if (!parsingSuccessful)
+							{
+								string errorMessage = __FILEREF__ + "failed to parse the jsonWorkflow"
+									+ ", errors: " + errors
+									+ ", jsonWorkflow: " + jsonWorkflow
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						catch(...)
+						{
+							string errorMessage = string("jsonWorkflow json is not well format")
+								+ ", jsonWorkflow: " + jsonWorkflow
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						string label = workflowRoot.get("Label", "XXX").asString();
+
+						int64_t workspaceKey = -1;
+						addUpdateWorkflowLibrary(conn, workspaceKey, label, jsonWorkflow);
+                    }
+                    catch(DirectoryListFinished e)
+                    {
+                        scanDirectoryFinished = true;
+                    }
+                    catch(runtime_error e)
+                    {
+                        string errorMessage = __FILEREF__ + "listing directory failed"
+                               + ", e.what(): " + e.what()
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw e;
+                    }
+                    catch(exception e)
+                    {
+                        string errorMessage = __FILEREF__ + "listing directory failed"
+                               + ", e.what(): " + e.what()
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw e;
+                    }
+                }
+
+                FileIO::closeDirectory (directory);
+            }
         }
         catch(sql::SQLException se)
         {

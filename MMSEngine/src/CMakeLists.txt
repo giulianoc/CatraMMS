@@ -32,6 +32,7 @@ SET (SOURCES
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
+	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
