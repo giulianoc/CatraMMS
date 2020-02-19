@@ -1,6 +1,7 @@
 
 #include <fstream>
 #include "MMSStorage.h"
+#include "JSONUtils.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
 #include "catralibraries/DateTime.h"
@@ -23,7 +24,7 @@ MMSStorage::MMSStorage(
 		if (_storage.back() != '/')
 			_storage.push_back('/');
 
-		_freeSpaceToLeaveInEachPartitionInMB = configuration["storage"].get("freeSpaceToLeaveInEachPartitionInMB", 5).asInt();
+		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 5);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
 		);
@@ -205,7 +206,7 @@ MMSStorage::MMSStorage(
 
 						// getFileSystemInfo (default and more performant) or getDirectoryUsage
 						string field = "partitionUsageType";
-						if (!isMetadataPresent(partitionInfoJson, field))
+						if (!JSONUtils::isMetadataPresent(partitionInfoJson, field))
 							partitionInfo._partitionUsageType = "getFileSystemInfo";
 						else
 						{
@@ -215,8 +216,8 @@ MMSStorage::MMSStorage(
 						}
 
 						field = "maxStorageUsageInKB";
-						if (isMetadataPresent(partitionInfoJson, field))
-							partitionInfo._maxStorageUsageInKB       = partitionInfoJson.get(field, -1).asInt64();
+						if (JSONUtils::isMetadataPresent(partitionInfoJson, field))
+							partitionInfo._maxStorageUsageInKB       = JSONUtils::asInt64(partitionInfoJson, field, -1);
 						else
 							partitionInfo._maxStorageUsageInKB       = -1;
 					}
@@ -2150,14 +2151,5 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", elapsed (secs): "
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
 	);
-}
-
-bool MMSStorage::isMetadataPresent(Json::Value root, string field)
-{
-    if (root.isObject() && root.isMember(field) && !root[field].isNull()
-)
-        return true;
-    else
-        return false;
 }
 

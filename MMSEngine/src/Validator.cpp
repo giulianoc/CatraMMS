@@ -11,6 +11,7 @@
  * Created on March 29, 2018, 6:27 AM
  */
 
+#include "JSONUtils.h"
 #include "Validator.h"
 
 Validator::Validator(
@@ -37,7 +38,7 @@ Validator::~Validator() {
 void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root)
 {
     string field = "Type";
-    if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
+    if (!JSONUtils::isMetadataPresent(root, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sRoot = Json::writeString(wbuilder, root);
@@ -61,7 +62,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     }
     
     field = "Task";
-    if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
+    if (!JSONUtils::isMetadataPresent(root, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sRoot = Json::writeString(wbuilder, root);
@@ -76,7 +77,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     Json::Value taskRoot = root[field];                        
 
     field = "Type";
-    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sRoot = Json::writeString(wbuilder, root);
@@ -108,7 +109,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 	Json::Value groupOfTasksRoot, bool validateDependenciesToo)
 {
     string field = "Parameters";
-    if (!isMetadataPresent(groupOfTasksRoot, field))
+    if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
@@ -125,7 +126,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
     field = "Tasks";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -152,7 +153,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         Json::Value taskRoot = tasksRoot[taskIndex];
         
         field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
 			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -183,7 +184,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 	Json::Value parametersRoot)
 {
     string field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -211,12 +212,12 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot, bool validateDependenciesToo)
 {
     string field = "OnSuccess";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, field))
+        if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -231,7 +232,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         Json::Value taskRoot = onSuccessRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -256,12 +257,12 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     }
 
     field = "OnError";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, field))
+        if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -276,7 +277,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         Json::Value taskRoot = onErrorRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -301,12 +302,12 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     }    
     
     field = "OnComplete";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, field))
+        if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -321,7 +322,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         Json::Value taskRoot = onCompleteRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
@@ -354,7 +355,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>           dependencies;
 
     string field = "Type";
-    if (!isMetadataPresent(taskRoot, field))
+    if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -369,7 +370,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
 
     string label;
     field = "Label";
-    if (isMetadataPresent(taskRoot, field))
+    if (JSONUtils::isMetadataPresent(taskRoot, field))
         label = taskRoot.get(field, "").asString();
 
     string type = taskRoot.get("Type", "XXX").asString();
@@ -378,7 +379,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -399,7 +400,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::RemoveContent;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -420,7 +421,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::Encode;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -441,7 +442,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::Frame;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -462,7 +463,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::PeriodicalFrames;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -483,7 +484,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -504,7 +505,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::IFrames;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -525,7 +526,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -546,7 +547,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::Slideshow;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -567,7 +568,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::ConcatDemuxer;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -588,7 +589,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::Cut;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -609,7 +610,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::OverlayImageOnVideo;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -630,7 +631,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::OverlayTextOnVideo;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -651,7 +652,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::EmailNotification;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -673,7 +674,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::MediaCrossReference;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -695,7 +696,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::FTPDelivery;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -716,7 +717,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::HTTPCallback;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -737,7 +738,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::LocalCopy;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -758,7 +759,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::ExtractTracks;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -779,7 +780,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnFacebook;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -800,7 +801,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnYouTube;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -821,7 +822,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::FaceRecognition;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -842,7 +843,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::FaceIdentification;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -863,7 +864,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::LiveRecorder;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -884,7 +885,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::ChangeFileFormat;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -905,7 +906,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -926,7 +927,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -947,7 +948,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         ingestionType = MMSEngineDBFacade::IngestionType::LiveProxy;
         
         field = "Parameters";
-        if (!isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTaskRoot = Json::writeString(wbuilder, taskRoot);
@@ -1140,7 +1141,7 @@ void Validator::validateAddContentMetadata(
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -1173,7 +1174,7 @@ void Validator::validateAddContentMetadata(
 	// in case of externalContent, it cannot be inside mms storage
 	{
         field = "SourceURL";
-        if (isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			string sourceURL = parametersRoot.get(field, "XXX").asString();
 
@@ -1199,7 +1200,7 @@ void Validator::validateAddContentMetadata(
 	}
 
     field = "CrossReference";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		Json::Value crossReferenceRoot = parametersRoot[field];
 
@@ -1212,7 +1213,7 @@ void Validator::validateAddContentMetadata(
     // Territories
     {
         field = "Territories";
-        if (isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             const Json::Value territories = parametersRoot[field];
             
@@ -1232,7 +1233,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
@@ -1259,7 +1260,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
 	string field = "EncodingPriority";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = parametersRoot.get(field, "XXX").asString();
         try
@@ -1283,10 +1284,10 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
     string encodingProfileKeyField = "EncodingProfileKey";
     string encodingProfileLabelField = "EncodingProfileLabel";
-    if (!isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
-            && !isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
-            && !isMetadataPresent(parametersRoot, encodingProfileLabelField)
-            && !isMetadataPresent(parametersRoot, encodingProfileKeyField))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+            && !JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
+            && !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
+            && !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
     {
         string errorMessage = __FILEREF__ + "Neither of the following fields are present"
                 + ", Field: " + encodingProfilesSetKeyField
@@ -1303,7 +1304,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
@@ -1336,7 +1337,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
@@ -1392,7 +1393,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -1411,7 +1412,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
@@ -1466,7 +1467,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
@@ -1519,7 +1520,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
@@ -1574,7 +1575,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         /*
         Json::Value referencesRoot = parametersRoot[field];
@@ -1668,7 +1669,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     // see sample in directory samples
         
     string field = "StartTimeInSeconds";
-    if (!isMetadataPresent(parametersRoot, field))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
         string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -1685,8 +1686,8 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 
     string endTimeInSecondsField = "EndTimeInSeconds";
     string framesNumberField = "FramesNumber";
-    if (!isMetadataPresent(parametersRoot, endTimeInSecondsField)
-            && !isMetadataPresent(parametersRoot, framesNumberField))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField)
+            && !JSONUtils::isMetadataPresent(parametersRoot, framesNumberField))
     {
         string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
                 + ", Field: " + endTimeInSecondsField
@@ -1701,7 +1702,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         /*
         Json::Value referencesRoot = parametersRoot[field];
@@ -1766,7 +1767,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
 		// before the check was
@@ -1844,7 +1845,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -1861,7 +1862,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     string field = "FontType";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fontType = parametersRoot.get(field, "XXX").asString();
                         
@@ -1878,7 +1879,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     field = "FontColor";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fontColor = parametersRoot.get(field, "XXX").asString();
                         
@@ -1895,9 +1896,9 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     field = "TextPercentageOpacity";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        int textPercentageOpacity = parametersRoot.get(field, 200).asInt();
+        int textPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
                         
         if (textPercentageOpacity > 100)
         {
@@ -1912,15 +1913,15 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     field = "BoxEnable";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        bool boxEnable = parametersRoot.get(field, true).asBool();                        
+        bool boxEnable = JSONUtils::asBool(parametersRoot, field, true);                        
     }
 
     field = "BoxPercentageOpacity";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        int boxPercentageOpacity = parametersRoot.get(field, 200).asInt();
+        int boxPercentageOpacity = JSONUtils::asInt(parametersRoot, field, 200);
                         
         if (boxPercentageOpacity > 100)
         {
@@ -1935,7 +1936,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     field = "EncodingPriority";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = parametersRoot.get(field, "XXX").asString();
         try
@@ -1955,7 +1956,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
     field = "BoxColor";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string boxColor = parametersRoot.get(field, "XXX").asString();
                         
@@ -1974,7 +1975,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
@@ -2031,7 +2032,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2050,7 +2051,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		/*
@@ -2082,10 +2083,10 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 bool referenceLabel = false;
 
                 field = "ReferenceIngestionJobKey";
-                if (!isMetadataPresent(referenceRoot, field))
+                if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
                     field = "ReferenceLabel";
-                    if (!isMetadataPresent(referenceRoot, field))
+                    if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         Json::StreamWriterBuilder wbuilder;
                         string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2134,7 +2135,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		// before the check was
@@ -2187,7 +2188,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2206,7 +2207,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -2244,7 +2245,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2261,7 +2262,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     }
     
     string field = "Method";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string method = parametersRoot.get(field, "XXX").asString();
                         
@@ -2278,7 +2279,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     }
 
     field = "Headers";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value headersRoot = parametersRoot[field];
         
@@ -2311,7 +2312,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -2348,7 +2349,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2381,7 +2382,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -2419,7 +2420,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2452,7 +2453,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
         Json::Value trackRoot = tracksToot[trackIndex];
         
         field = "TrackType";
-        if (!isMetadataPresent(trackRoot, field))
+        if (!JSONUtils::isMetadataPresent(trackRoot, field))
         {
             Json::StreamWriterBuilder wbuilder;
             string sTrackRoot = Json::writeString(wbuilder, trackRoot);
@@ -2497,7 +2498,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() == 0)
@@ -2555,7 +2556,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2574,7 +2575,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -2631,7 +2632,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2648,7 +2649,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     }
 
     string field = "Privacy";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string youTubePrivacy = parametersRoot.get(field, "XXX").asString();
 
@@ -2668,7 +2669,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -2726,7 +2727,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2778,7 +2779,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
@@ -2849,7 +2850,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2898,7 +2899,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
@@ -2970,7 +2971,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -2987,7 +2988,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     }
 
     string field = "SegmentDuration";
-	int segmentDuration = parametersRoot.get(field, 1).asInt();
+	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
 		Json::StreamWriterBuilder wbuilder;
@@ -3005,7 +3006,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 
     field = "UniqueName";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3023,7 +3024,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "RecordingPeriod";
 	Json::Value recordingPeriodRoot = parametersRoot[field];
     field = "Start";
-	if (!isMetadataPresent(recordingPeriodRoot, field))
+	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3092,7 +3093,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 
     field = "End";
-	if (!isMetadataPresent(recordingPeriodRoot, field))
+	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3177,7 +3178,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 
     field = "OutputFormat";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string liveRecorderOutputFormat = parametersRoot.get(field, "XXX").asString();
 		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
@@ -3205,7 +3206,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3245,7 +3246,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
@@ -3321,7 +3322,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3339,7 +3340,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 	*/
 
     string field = "SpeedType";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string speedType = parametersRoot.get(field, "XXX").asString();
 		if (!isVideoSpeedTypeValid(speedType))
@@ -3358,9 +3359,9 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 	}
 
     field = "SpeedSize";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		int speedSize = parametersRoot.get(field, 3).asInt();
+		int speedSize = JSONUtils::asInt(parametersRoot, field, 3);
 		if (speedSize < 1 || speedSize > 10)
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be between 1 and 10)"
@@ -3377,7 +3378,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "References";
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::Value referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
@@ -3446,7 +3447,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
 		// before the check was
@@ -3516,7 +3517,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3534,7 +3535,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
     string field = "OutputType";
 	string liveProxyOutputType;
-	if (isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
@@ -3557,7 +3558,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
-			if (!isMetadataPresent(parametersRoot, mandatoryField))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3575,14 +3576,6 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	}
 }
 
-bool Validator::isMetadataPresent(Json::Value root, string field)
-{
-    if (root.isObject() && root.isMember(field) && !root[field].isNull())
-        return true;
-    else
-        return false;
-}
-
 void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value parametersRoot, 
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
@@ -3597,8 +3590,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 		bool errorIfContentNotFound = true;
         field = "ErrorIfContentNotFound";
-        if (isMetadataPresent(referenceRoot, field))
-			errorIfContentNotFound = referenceRoot.get(field, true).asBool();
+        if (JSONUtils::isMetadataPresent(referenceRoot, field))
+			errorIfContentNotFound = JSONUtils::asBool(referenceRoot, field, true);
 
         int64_t referenceMediaItemKey = -1;
         int64_t referencePhysicalPathKey = -1;
@@ -3607,19 +3600,19 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         bool referenceLabel = false;
 
         field = "ReferenceMediaItemKey";
-        if (!isMetadataPresent(referenceRoot, field))
+        if (!JSONUtils::isMetadataPresent(referenceRoot, field))
         {
             field = "ReferencePhysicalPathKey";
-            if (!isMetadataPresent(referenceRoot, field))
+            if (!JSONUtils::isMetadataPresent(referenceRoot, field))
             {
                 field = "ReferenceIngestionJobKey";
-                if (!isMetadataPresent(referenceRoot, field))
+                if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
                     field = "ReferenceUniqueName";
-                    if (!isMetadataPresent(referenceRoot, field))
+                    if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         field = "ReferenceLabel";
-                        if (!isMetadataPresent(referenceRoot, field))
+                        if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
                             Json::StreamWriterBuilder wbuilder;
                             string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3644,17 +3637,17 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+                    referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
                 }
             }
             else
             {
-                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+                referencePhysicalPathKey = JSONUtils::asInt64(referenceRoot, field, 0);
             }
         }
         else
         {
-            referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
+            referenceMediaItemKey = JSONUtils::asInt64(referenceRoot, field, 0);    
         }
 
         MMSEngineDBFacade::ContentType	referenceContentType;
@@ -3861,9 +3854,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     int64_t encodingProfileKey = -1;
 
                     field = "EncodingProfileKey";
-                    if (isMetadataPresent(referenceRoot, field))
+                    if (JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
-                        int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+                        int64_t encodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);
 
 						bool warningIfMissing = false;
                         referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
@@ -3872,7 +3865,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     else
                     {
                         field = "EncodingProfileLabel";
-                        if (isMetadataPresent(referenceRoot, field))
+                        if (JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
                             string encodingProfileLabel = referenceRoot.get(field, "0").asString();
 
@@ -3918,7 +3911,7 @@ void Validator::fillReferencesOutput(
 {
 
     string field = "ReferencesOutput";
-	if (!isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		Json::StreamWriterBuilder wbuilder;
 		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3943,16 +3936,16 @@ void Validator::fillReferencesOutput(
         string referenceUniqueName = "";
 
         field = "ReferenceMediaItemKey";
-        if (!isMetadataPresent(referenceOutputRoot, field))
+        if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
         {
             field = "ReferencePhysicalPathKey";
-            if (!isMetadataPresent(referenceOutputRoot, field))
+            if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
             {
                 field = "ReferenceIngestionJobKey";
-                if (!isMetadataPresent(referenceOutputRoot, field))
+                if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
                 {
                     field = "ReferenceUniqueName";
-                    if (!isMetadataPresent(referenceOutputRoot, field))
+                    if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
                     {
 						Json::StreamWriterBuilder wbuilder;
 						string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3972,17 +3965,17 @@ void Validator::fillReferencesOutput(
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceOutputRoot.get(field, "XXX").asInt64();
+                    referenceIngestionJobKey = JSONUtils::asInt64(referenceOutputRoot, field, 0);
                 }
             }
             else
             {
-                referencePhysicalPathKey = referenceOutputRoot.get(field, "XXX").asInt64();
+                referencePhysicalPathKey = JSONUtils::asInt64(referenceOutputRoot, field, 0);
             }
         }
         else
         {
-            referenceMediaItemKey = referenceOutputRoot.get(field, "XXX").asInt64();    
+            referenceMediaItemKey = JSONUtils::asInt64(referenceOutputRoot, field, 0);    
         }
 
         try
@@ -4342,7 +4335,7 @@ void Validator::validateCrossReference(
 		};
 		for (string mandatoryField: crossReferenceMandatoryFields)
 		{
-			if (!isMetadataPresent(crossReferenceRoot, mandatoryField))
+			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
@@ -4365,7 +4358,7 @@ void Validator::validateCrossReference(
 		};
 		for (string mandatoryField: crossReferenceMandatoryFields)
 		{
-			if (!isMetadataPresent(crossReferenceRoot, mandatoryField))
+			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
@@ -4408,7 +4401,7 @@ void Validator::validateCrossReference(
 		|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfAudio)
 	{
 		field = "Parameters";
-		if (!_mmsEngineDBFacade->isMetadataPresent(crossReferenceRoot, field))
+		if (!JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 		{
 			Json::StreamWriterBuilder wbuilder;
 			string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
@@ -4429,7 +4422,7 @@ void Validator::validateCrossReference(
 		};
 		for (string mandatoryField: crossReferenceCutMandatoryFields)
 		{
-			if (!isMetadataPresent(crossReferenceParameters, mandatoryField))
+			if (!JSONUtils::isMetadataPresent(crossReferenceParameters, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sCrossReferenceRoot = Json::writeString(wbuilder, crossReferenceRoot);
@@ -4457,7 +4450,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
+        if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
         {
             Json::StreamWriterBuilder wbuilder;
             string sEncodingProfilesSetRoot = Json::writeString(wbuilder, encodingProfilesSetRoot);
@@ -4474,7 +4467,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
 
     /*
     string field = "Profiles";
-    if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+    if (JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
     {
         Json::Value profilesRoot = encodingProfilesSetRoot[field];
 
@@ -4512,7 +4505,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4553,7 +4546,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4577,7 +4570,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4604,7 +4597,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4642,7 +4635,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4669,7 +4662,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
@@ -4710,7 +4703,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
         };
         for (string mandatoryField: mandatoryFields)
         {
-            if (!isMetadataPresent(encodingProfileImageRoot, mandatoryField))
+            if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, mandatoryField))
             {
                 Json::StreamWriterBuilder wbuilder;
                 string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);

@@ -2,9 +2,9 @@
 	"Type": "Workflow",
 	"Label": "1",
 	"Variables": {
-		"TitleOfVideo_1": "My Title of the video_1 content",
-		"TitleOfVideo_2": "My Title of the video_2 content",
-		"TitleOfConcatVideo": "My Title of the concat video content"
+		"TitleOfVideo_1": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
+		"TitleOfVideo_2": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
+		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
 		"Type": "GroupOfTasks",

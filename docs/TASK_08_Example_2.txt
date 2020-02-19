@@ -2,8 +2,8 @@
 	"Type": "Workflow",
 	"Label": "1",
 	"Variables": {
-		"TitleOfVideo": "My Title of the video content",
-		"TitleOfCut": "My Title of the cut content"
+		"TitleOfVideo": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
+		"TitleOfCut": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
 		"Label": "...",

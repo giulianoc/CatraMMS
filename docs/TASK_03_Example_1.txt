@@ -2,7 +2,7 @@
 	"Type": "Workflow",
 	"Label": "Workflow n. X",
 	"Variables": {
-		"Title": "My Title of the content"
+		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
 		"Label": "Task n. Y",

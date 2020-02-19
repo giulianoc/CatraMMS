@@ -80,17 +80,15 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/workspace/usage/?$ /api?version=$1&method=workspaceUsage last;
 		}
 
-#		if ($request_method = POST) {
-#			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=createWorkflowLibrary last;
-#		}
-#		if ($request_method = PUT) {
-#			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=updateWorkflowLibrary last;
-#		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=saveWorkflowLibrary last;
+		}
 #		if ($request_method = DELETE) {
-#			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=deleteWorkflowLibrary last;
+#			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=deleteWorkflow last;
 #		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=workflowLibraryList last;
+			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=workflowsLibraryList last;
+			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/([0-9]*)/?$ /api?version=$1&method=workflowContent&workflowLibraryKey=$2 last;
 		}
 
 		if ($request_method = GET) {

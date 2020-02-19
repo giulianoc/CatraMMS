@@ -11,6 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
+#include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
 #include "catralibraries/ProcessUtility.h"
@@ -41,7 +42,7 @@ int main(int argc, char** argv)
     Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
     string logPathName =  configuration["log"]["encoder"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"]["encoder"].get("stdout", "XXX").asBool();
+    bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
     
     std::vector<spdlog::sink_ptr> sinks;
     auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -125,27 +126,27 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         fcgiAcceptMutex,
         logger) 
 {
-    _maxEncodingsCapability =  _configuration["ffmpeg"].get("maxEncodingsCapability", 0).asInt();
+    _maxEncodingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxEncodingsCapability", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
-    _maxLiveProxiesCapability =  _configuration["ffmpeg"].get("maxLiveProxiesCapability", 0).asInt();
+    _maxLiveProxiesCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveProxiesCapability", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
     );
 
-    _maxLiveRecordingsCapability =  _configuration["ffmpeg"].get("maxLiveRecordingsCapability", 0).asInt();
+    _maxLiveRecordingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
-    _liveRecorderChunksIngestionCheckInSeconds =  _configuration["ffmpeg"].get("liveRecorderChunksIngestionCheckInSeconds", 5).asInt();
+    _liveRecorderChunksIngestionCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
     );
 
-    _encodingCompletedRetentionInSeconds = _configuration["ffmpeg"].get("encodingCompletedRetentionInSeconds", 0).asInt();
+    _encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
     );
@@ -158,7 +159,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->hostname: " + _mmsAPIHostname
     );
-    _mmsAPIPort = _configuration["api"].get("port", "").asInt();
+    _mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_mmsAPIPort)
     );
@@ -1780,7 +1781,7 @@ void FFMPEGEncoder::encodeContent(
         }
 
         string mmsSourceAssetPathName = encodingMedatada.get("mmsSourceAssetPathName", "XXX").asString();
-        int64_t durationInMilliSeconds = encodingMedatada.get("durationInMilliSeconds", -1).asInt64();
+        int64_t durationInMilliSeconds = JSONUtils::asInt64(encodingMedatada, "durationInMilliSeconds", -1);
         // string encodedFileName = encodingMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = encodingMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
         string encodingProfileDetails;
@@ -1790,11 +1791,11 @@ void FFMPEGEncoder::encodeContent(
             encodingProfileDetails = Json::writeString(wbuilder, encodingMedatada["encodingProfileDetails"]);
         }
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(encodingMedatada.get("contentType", "XXX").asString());
-        int64_t physicalPathKey = encodingMedatada.get("physicalPathKey", -1).asInt64();
+        int64_t physicalPathKey = JSONUtils::asInt64(encodingMedatada, "physicalPathKey", -1);
         string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "XXX").asString();
         string relativePath = encodingMedatada.get("relativePath", "XXX").asString();
-        int64_t encodingJobKey = encodingMedatada.get("encodingJobKey", -1).asInt64();
-        int64_t ingestionJobKey = encodingMedatada.get("ingestionJobKey", -1).asInt64();
+        int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->encodeContent(
@@ -1966,15 +1967,15 @@ void FFMPEGEncoder::overlayImageOnVideo(
         }
         
         string mmsSourceVideoAssetPathName = overlayMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = overlayMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(overlayMedatada, "videoDurationInMilliSeconds", -1);
         string mmsSourceImageAssetPathName = overlayMedatada.get("mmsSourceImageAssetPathName", "XXX").asString();
         string imagePosition_X_InPixel = overlayMedatada.get("imagePosition_X_InPixel", "XXX").asString();
         string imagePosition_Y_InPixel = overlayMedatada.get("imagePosition_Y_InPixel", "XXX").asString();
 
         // string encodedFileName = overlayMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = overlayMedatada.get("encodingJobKey", -1).asInt64();
-        int64_t ingestionJobKey = overlayMedatada.get("ingestionJobKey", -1).asInt64();
+        int64_t encodingJobKey = JSONUtils::asInt64(overlayMedatada, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(overlayMedatada, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->overlayImageOnVideo(
@@ -2144,59 +2145,59 @@ void FFMPEGEncoder::overlayTextOnVideo(
         }
         
         string mmsSourceVideoAssetPathName = overlayTextMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = overlayTextMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(overlayTextMedatada, "videoDurationInMilliSeconds", -1);
 
         string text = overlayTextMedatada.get("text", "XXX").asString();
         
         string textPosition_X_InPixel;
         string field = "textPosition_X_InPixel";
-        if (isMetadataPresent(overlayTextMedatada, field))
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
             textPosition_X_InPixel = overlayTextMedatada.get(field, "XXX").asString();
         
         string textPosition_Y_InPixel;
         field = "textPosition_Y_InPixel";
-        if (isMetadataPresent(overlayTextMedatada, field))
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
             textPosition_Y_InPixel = overlayTextMedatada.get(field, "XXX").asString();
         
         string fontType;
         field = "fontType";
-        if (isMetadataPresent(overlayTextMedatada, field))
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
             fontType = overlayTextMedatada.get(field, "XXX").asString();
 
         int fontSize = -1;
         field = "fontSize";
-        if (isMetadataPresent(overlayTextMedatada, field))
-            fontSize = overlayTextMedatada.get(field, -1).asInt();
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
+            fontSize = JSONUtils::asInt(overlayTextMedatada, field, -1);
 
         string fontColor;
         field = "fontColor";
-        if (isMetadataPresent(overlayTextMedatada, field))
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
             fontColor = overlayTextMedatada.get(field, "XXX").asString();
 
         int textPercentageOpacity = -1;
         field = "textPercentageOpacity";
-        if (isMetadataPresent(overlayTextMedatada, field))
-            textPercentageOpacity = overlayTextMedatada.get(field, -1).asInt();
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
+            textPercentageOpacity = JSONUtils::asInt(overlayTextMedatada, field, -1);
 
         bool boxEnable = false;
         field = "boxEnable";
-        if (isMetadataPresent(overlayTextMedatada, field))
-            boxEnable = overlayTextMedatada.get(field, 0).asBool();
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
+            boxEnable = JSONUtils::asBool(overlayTextMedatada, field, false);
 
         string boxColor;
         field = "boxColor";
-        if (isMetadataPresent(overlayTextMedatada, field))
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
             boxColor = overlayTextMedatada.get(field, "XXX").asString();
         
         int boxPercentageOpacity = -1;
         field = "boxPercentageOpacity";
-        if (isMetadataPresent(overlayTextMedatada, field))
-            boxPercentageOpacity = overlayTextMedatada.get("boxPercentageOpacity", -1).asInt();
+        if (JSONUtils::isMetadataPresent(overlayTextMedatada, field))
+            boxPercentageOpacity = JSONUtils::asInt(overlayTextMedatada, "boxPercentageOpacity", -1);
 
         // string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayTextMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = overlayTextMedatada.get("encodingJobKey", -1).asInt64();
-        int64_t ingestionJobKey = overlayTextMedatada.get("ingestionJobKey", -1).asInt64();
+        int64_t encodingJobKey = JSONUtils::asInt64(overlayTextMedatada, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(overlayTextMedatada, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->overlayTextOnVideo(
@@ -2375,16 +2376,16 @@ void FFMPEGEncoder::generateFrames(
         }
         
         string imageDirectory = generateFramesMedatada.get("imageDirectory", "XXX").asString();
-        double startTimeInSeconds = generateFramesMedatada.get("startTimeInSeconds", -1).asDouble();
-        int maxFramesNumber = generateFramesMedatada.get("maxFramesNumber", -1).asInt();
+        double startTimeInSeconds = JSONUtils::asDouble(generateFramesMedatada, "startTimeInSeconds", 0);
+        int maxFramesNumber = JSONUtils::asInt(generateFramesMedatada, "maxFramesNumber", -1);
         string videoFilter = generateFramesMedatada.get("videoFilter", "XXX").asString();
-        int periodInSeconds = generateFramesMedatada.get("periodInSeconds", -1).asInt();
-        bool mjpeg = generateFramesMedatada.get("mjpeg", -1).asBool();
-        int imageWidth = generateFramesMedatada.get("imageWidth", -1).asInt();
-        int imageHeight = generateFramesMedatada.get("imageHeight", -1).asInt();
-        int64_t ingestionJobKey = generateFramesMedatada.get("ingestionJobKey", -1).asInt64();
+        int periodInSeconds = JSONUtils::asInt(generateFramesMedatada, "periodInSeconds", -1);
+        bool mjpeg = JSONUtils::asBool(generateFramesMedatada, "mjpeg", false);
+        int imageWidth = JSONUtils::asInt(generateFramesMedatada, "imageWidth", -1);
+        int imageHeight = JSONUtils::asInt(generateFramesMedatada, "imageHeight", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(generateFramesMedatada, "ingestionJobKey", -1);
         string mmsSourceVideoAssetPathName = generateFramesMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = generateFramesMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(generateFramesMedatada, "videoDurationInMilliSeconds", -1);
 
         vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
                 ingestionJobKey,
@@ -2540,9 +2541,9 @@ void FFMPEGEncoder::slideShow(
             throw runtime_error(errorMessage);
         }
         
-        int64_t ingestionJobKey = slideShowMedatada.get("ingestionJobKey", -1).asInt64();
-        double durationOfEachSlideInSeconds = slideShowMedatada.get("durationOfEachSlideInSeconds", -1).asDouble();
-        int outputFrameRate = slideShowMedatada.get("outputFrameRate", -1).asInt();
+        int64_t ingestionJobKey = JSONUtils::asInt64(slideShowMedatada, "ingestionJobKey", -1);
+        double durationOfEachSlideInSeconds = JSONUtils::asDouble(slideShowMedatada, "durationOfEachSlideInSeconds", 0);
+        int outputFrameRate = JSONUtils::asInt(slideShowMedatada, "outputFrameRate", -1);
         string slideShowMediaPathName = slideShowMedatada.get("slideShowMediaPathName", "XXX").asString();
         
         vector<string> sourcePhysicalPaths;
@@ -2697,7 +2698,7 @@ void FFMPEGEncoder::liveRecorder(
             throw runtime_error(errorMessage);
         }
 
-        liveRecording->_ingestionJobKey = liveRecorderMedatada.get("ingestionJobKey", -1).asInt64();
+        liveRecording->_ingestionJobKey = JSONUtils::asInt64(liveRecorderMedatada, "ingestionJobKey", -1);
 
 		// _transcoderStagingContentsPath is a transcoder LOCAL path, this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
@@ -2715,9 +2716,9 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 
         string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
-        time_t utcRecordingPeriodStart = liveRecording->_encodingParametersRoot.get("utcRecordingPeriodStart", -1).asInt64();
-        time_t utcRecordingPeriodEnd = liveRecording->_encodingParametersRoot.get("utcRecordingPeriodEnd", -1).asInt64();
-        int segmentDurationInSeconds = liveRecording->_encodingParametersRoot.get("segmentDurationInSeconds", -1).asInt();
+        time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodStart", -1);
+        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodEnd", -1);
+        int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "segmentDurationInSeconds", -1);
         string outputFileFormat = liveRecording->_encodingParametersRoot.get("outputFileFormat", "XXX").asString();
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
@@ -2991,13 +2992,13 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 							string outputFileFormat;
 							{
 								string field = "highAvailability";
-								highAvailability = liveRecording->_encodingParametersRoot.get(field, 0).asBool();
+								highAvailability = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
 
 								field = "main";
-								main = liveRecording->_encodingParametersRoot.get(field, 0).asBool();
+								main = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
 
 								field = "segmentDurationInSeconds";
-								segmentDurationInSeconds = liveRecording->_encodingParametersRoot.get(field, 0).asInt();
+								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, field, 0);
 
 								field = "outputFileFormat";                                                                
 								outputFileFormat = liveRecording->_encodingParametersRoot.get(field, "XXX").asString();                   
@@ -3245,7 +3246,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// UserData
 			Json::Value userDataRoot;
 			{
-				if (isMetadataPresent(liveRecorderParametersRoot, "UserData"))
+				if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, "UserData"))
 				{
 					userDataRoot = liveRecorderParametersRoot["UserData"];
 				}
@@ -3523,9 +3524,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		}
 		*/
 		Json::Value mmsDataRoot = userDataRoot["mmsData"];
-		int64_t utcPreviousChunkStartTime = mmsDataRoot.get("utcPreviousChunkStartTime", -1).asInt64();
-		int64_t utcChunkStartTime = mmsDataRoot.get("utcChunkStartTime", -1).asInt64();
-		int64_t utcChunkEndTime = mmsDataRoot.get("utcChunkEndTime", -1).asInt64();
+		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
+		int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
+		int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
 
 		Json::Value addContentRoot;
 
@@ -3540,28 +3541,28 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		string apiKey;
 		{
 			field = "InternalMMS";
-    		if (isMetadataPresent(liveRecorderParametersRoot, field))
+    		if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, field))
 			{
 				// internalMMSRootPresent = true;
 
 				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
 
 				field = "userKey";
-				userKey = internalMMSRoot.get(field, -1).asInt64();
+				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
 
 				field = "apiKey";
 				apiKey = internalMMSRoot.get(field, "").asString();
 
 				field = "OnSuccess";
-    			if (isMetadataPresent(internalMMSRoot, field))
+    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 
 				field = "OnError";
-    			if (isMetadataPresent(internalMMSRoot, field))
+    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 
 				field = "OnComplete";
-    			if (isMetadataPresent(internalMMSRoot, field))
+    			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 					addContentRoot[field] = internalMMSRoot[field];
 			}
 		}
@@ -3605,8 +3606,19 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			Json::Value variablesWorkflowRoot;
 
-			field = "CurrentUtcChunkStartTime";
-			variablesWorkflowRoot[field] = utcChunkStartTime;
+			{
+				Json::Value variableWorkflowRoot;
+
+				field = "Type";
+				variableWorkflowRoot[field] = "int";
+
+				field = "Value";
+				variableWorkflowRoot[field] = utcChunkStartTime;
+
+				// name of the variable
+				field = "CurrentUtcChunkStartTime";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
 
 			char	currentUtcChunkStartTime_HHMISS [64];
 			{
@@ -3622,11 +3634,37 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 					tmDateTime. tm_sec);
 
 			}
-			field = "CurrentUtcChunkStartTime_HHMISS";
-			variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
+			// field = "CurrentUtcChunkStartTime_HHMISS";
+			// variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
+			{
+				Json::Value variableWorkflowRoot;
 
-			field = "PreviousUtcChunkStartTime";
-			variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
+				field = "Type";
+				variableWorkflowRoot[field] = "string";
+
+				field = "Value";
+				variableWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
+
+				// name of the variable
+				field = "CurrentUtcChunkStartTime_HHMISS";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
+
+			// field = "PreviousUtcChunkStartTime";
+			// variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
+			{
+				Json::Value variableWorkflowRoot;
+
+				field = "Type";
+				variableWorkflowRoot[field] = "int";
+
+				field = "Value";
+				variableWorkflowRoot[field] = utcPreviousChunkStartTime;
+
+				// name of the variable
+				field = "PreviousUtcChunkStartTime";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
 
 			field = "Variables";
 			workflowRoot[field] = variablesWorkflowRoot;
@@ -4163,13 +4201,13 @@ void FFMPEGEncoder::liveProxy(
             throw runtime_error(errorMessage);
         }
 
-		int64_t ingestionJobKey = liveProxyMetadata.get("ingestionJobKey", -1).asInt64();
+		int64_t ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
 
 		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
 		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
 		string outputType = liveProxyMetadata.get("outputType", -1).asString();
-		int segmentDurationInSeconds = liveProxyMetadata.get("segmentDurationInSeconds", 10).asInt();
-		int playlistEntriesNumber = liveProxyMetadata.get("playlistEntriesNumber", 6).asInt();
+		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
+		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
 		string manifestFilePathName = liveProxyMetadata.get("manifestFilePathName", -1).asString();
 
@@ -4487,14 +4525,14 @@ void FFMPEGEncoder::videoSpeed(
         }
         
         string mmsSourceVideoAssetPathName = videoSpeedMetadata.get("mmsSourceVideoAssetPathName", "XXX").asString();
-        int64_t videoDurationInMilliSeconds = videoSpeedMetadata.get("videoDurationInMilliSeconds", -1).asInt64();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(videoSpeedMetadata, "videoDurationInMilliSeconds", -1);
 
         string videoSpeedType = videoSpeedMetadata.get("videoSpeedType", "XXX").asString();
-        int videoSpeedSize = videoSpeedMetadata.get("videoSpeedSize", 3).asInt();
+        int videoSpeedSize = JSONUtils::asInt(videoSpeedMetadata, "videoSpeedSize", 3);
         
         string stagingEncodedAssetPathName = videoSpeedMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = videoSpeedMetadata.get("encodingJobKey", -1).asInt64();
-        int64_t ingestionJobKey = videoSpeedMetadata.get("ingestionJobKey", -1).asInt64();
+        int64_t encodingJobKey = JSONUtils::asInt64(videoSpeedMetadata, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(videoSpeedMetadata, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->videoSpeed(
@@ -4665,12 +4703,12 @@ void FFMPEGEncoder::pictureInPicture(
         }
         
         string mmsMainVideoAssetPathName = pictureInPictureMetadata.get("mmsMainVideoAssetPathName", "XXX").asString();
-        int64_t mainVideoDurationInMilliSeconds = pictureInPictureMetadata.get("mainVideoDurationInMilliSeconds", -1).asInt64();
+        int64_t mainVideoDurationInMilliSeconds = JSONUtils::asInt64(pictureInPictureMetadata, "mainVideoDurationInMilliSeconds", -1);
 
         string mmsOverlayVideoAssetPathName = pictureInPictureMetadata.get("mmsOverlayVideoAssetPathName", "XXX").asString();
-        int64_t overlayVideoDurationInMilliSeconds = pictureInPictureMetadata.get("overlayVideoDurationInMilliSeconds", -1).asInt64();
+        int64_t overlayVideoDurationInMilliSeconds = JSONUtils::asInt64(pictureInPictureMetadata, "overlayVideoDurationInMilliSeconds", -1);
 
-        bool soundOfMain = pictureInPictureMetadata.get("soundOfMain", -1).asBool();
+        bool soundOfMain = JSONUtils::asBool(pictureInPictureMetadata, "soundOfMain", false);
 
         string overlayPosition_X_InPixel = pictureInPictureMetadata.get("overlayPosition_X_InPixel", "XXX").asString();
         string overlayPosition_Y_InPixel = pictureInPictureMetadata.get("overlayPosition_Y_InPixel", "XXX").asString();
@@ -4678,8 +4716,8 @@ void FFMPEGEncoder::pictureInPicture(
         string overlay_Height_InPixel = pictureInPictureMetadata.get("overlay_Height_InPixel", "XXX").asString();
         
         string stagingEncodedAssetPathName = pictureInPictureMetadata.get("stagingEncodedAssetPathName", "XXX").asString();
-        int64_t encodingJobKey = pictureInPictureMetadata.get("encodingJobKey", -1).asInt64();
-        int64_t ingestionJobKey = pictureInPictureMetadata.get("ingestionJobKey", -1).asInt64();
+        int64_t encodingJobKey = JSONUtils::asInt64(pictureInPictureMetadata, "encodingJobKey", -1);
+        int64_t ingestionJobKey = JSONUtils::asInt64(pictureInPictureMetadata, "ingestionJobKey", -1);
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->pictureInPicture(

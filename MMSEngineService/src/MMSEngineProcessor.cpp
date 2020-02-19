@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 
+#include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
 #include <curlpp/cURLpp.hpp>
@@ -46,42 +47,42 @@ MMSEngineProcessor::MMSEngineProcessor(
 
     _processorMMS                   = System::getHostName();
     
-    _processorThreads =  configuration["mms"].get("processorThreads", 1).asInt();
-    _maxAdditionalProcessorThreads =  configuration["mms"].get("maxAdditionalProcessorThreads", 1).asInt();
+    _processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
+    _maxAdditionalProcessorThreads =  JSONUtils::asInt(configuration["mms"], "maxAdditionalProcessorThreads", 1);
 
-    _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
+    _maxDownloadAttemptNumber       = JSONUtils::asInt(configuration["download"], "maxDownloadAttemptNumber", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
     );
-    _progressUpdatePeriodInSeconds  = configuration["download"].get("progressUpdatePeriodInSeconds", 5).asInt();
+    _progressUpdatePeriodInSeconds  = JSONUtils::asInt(configuration["download"], "progressUpdatePeriodInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
     );
-    _secondsWaitingAmongDownloadingAttempt  = configuration["download"].get("secondsWaitingAmongDownloadingAttempt", 5).asInt();
+    _secondsWaitingAmongDownloadingAttempt  = JSONUtils::asInt(configuration["download"], "secondsWaitingAmongDownloadingAttempt", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
     );
     
-    _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
+    _maxIngestionJobsPerEvent       = JSONUtils::asInt(configuration["mms"], "maxIngestionJobsPerEvent", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent)
     );
-    _maxEncodingJobsPerEvent       = configuration["mms"].get("maxEncodingJobsPerEvent", 5).asInt();
+    _maxEncodingJobsPerEvent       = JSONUtils::asInt(configuration["mms"], "maxEncodingJobsPerEvent", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
     );
 
-    _maxEventManagementTimeInSeconds       = configuration["mms"].get("maxEventManagementTimeInSeconds", 5).asInt();
+    _maxEventManagementTimeInSeconds       = JSONUtils::asInt(configuration["mms"], "maxEventManagementTimeInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds)
     );
 
-    _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
+    _dependencyExpirationInHours        = JSONUtils::asInt(configuration["mms"], "dependencyExpirationInHours", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
     );
 
-    _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
+    _downloadChunkSizeInMegaBytes       = JSONUtils::asInt(configuration["download"], "downloadChunkSizeInMegaBytes", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
     );
@@ -94,7 +95,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->server: " + _emailServer
     );
-    _emailPort                          = _configuration["EmailNotification"].get("port", "XXX").asInt();
+    _emailPort                          = JSONUtils::asInt(_configuration["EmailNotification"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->port: " + to_string(_emailPort)
     );
@@ -120,7 +121,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName
     );
-    _facebookGraphAPIPort               = _configuration["FacebookGraphAPI"].get("port", 0).asInt();
+    _facebookGraphAPIPort               = JSONUtils::asInt(_configuration["FacebookGraphAPI"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort)
     );
@@ -128,7 +129,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion
     );
-    _facebookGraphAPITimeoutInSeconds   = _configuration["FacebookGraphAPI"].get("timeout", 0).asInt();
+    _facebookGraphAPITimeoutInSeconds   = JSONUtils::asInt(_configuration["FacebookGraphAPI"], "timeout", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds)
     );
@@ -141,7 +142,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName
     );
-    _youTubeDataAPIPort               = _configuration["YouTubeDataAPI"].get("port", 0).asInt();
+    _youTubeDataAPIPort               = JSONUtils::asInt(_configuration["YouTubeDataAPI"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort)
     );
@@ -153,7 +154,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI
     );
-    _youTubeDataAPITimeoutInSeconds   = _configuration["YouTubeDataAPI"].get("timeout", 0).asInt();
+    _youTubeDataAPITimeoutInSeconds   = JSONUtils::asInt(_configuration["YouTubeDataAPI"], "timeout", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds)
     );
@@ -166,7 +167,7 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret
     );
 
-    _localCopyTaskEnabled               =  _configuration["mms"].get("localCopyTaskEnabled", "XXX").asBool();
+    _localCopyTaskEnabled               =  JSONUtils::asBool(_configuration["mms"], "localCopyTaskEnabled", false);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
     );
@@ -1082,8 +1083,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								{
 									string mmsDataField = "mmsData";
 									string dataTypeField = "dataType";
-									if (_mmsEngineDBFacade->isMetadataPresent(userDataRoot, mmsDataField)
-											&& _mmsEngineDBFacade->isMetadataPresent(userDataRoot[mmsDataField], dataTypeField)
+									if (JSONUtils::isMetadataPresent(userDataRoot, mmsDataField)
+											&& JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], dataTypeField)
 											)
 									{
 										string dataType = (userDataRoot[mmsDataField]).get(dataTypeField, "XXX").asString();
@@ -1091,9 +1092,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										if (dataType == "liveRecordingChunk")
 										{
 											string validatedField = "validated";
-											if (_mmsEngineDBFacade->isMetadataPresent(userDataRoot[mmsDataField], validatedField))
+											if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], validatedField))
 											{
-												bool validated = (userDataRoot[mmsDataField]).get(validatedField, "XXX").asBool();
+												bool validated = JSONUtils::asBool((userDataRoot[mmsDataField]), validatedField, false);
 
 												if (!validated)
 												{
@@ -5992,13 +5993,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		{
 			string variantOfMediaItemKeyField = "VariantOfMediaItemKey";
 			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
-			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
+			if (JSONUtils::isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
 			{
-				variantOfMediaItemKey = parametersRoot.get(variantOfMediaItemKeyField, -1).asInt64();
+				variantOfMediaItemKey = JSONUtils::asInt64(parametersRoot, variantOfMediaItemKeyField, -1);
 			}
-			else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
+			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
 			{
-				int64_t variantOfIngestionJobKey = parametersRoot.get(variantOfIngestionJobKeyField, -1).asInt64();
+				int64_t variantOfIngestionJobKey = JSONUtils::asInt64(parametersRoot, variantOfIngestionJobKeyField, -1);
 				vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 				bool warningIfMissing = false;
 
@@ -6108,11 +6109,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			string externalDeliveryURL;
 			{
 				string field = "ExternalDeliveryTechnology";
-				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					externalDeliveryTechnology = parametersRoot.get(field, "").asString();
 
 				field = "ExternalDeliveryURL";
-				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					externalDeliveryURL = parametersRoot.get(field, "").asString();
 			}
 
@@ -6562,8 +6563,8 @@ void MMSEngineProcessor::removeContentTask(
 
 		bool multipleInput_ReturnErrorInCaseOfOneFailure = false;
 		string field = "MultipleInput_ReturnErrorInCaseOfOneFailure";
-		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-			multipleInput_ReturnErrorInCaseOfOneFailure = parametersRoot.get(field, false).asBool();
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			multipleInput_ReturnErrorInCaseOfOneFailure = JSONUtils::asBool(parametersRoot, field, false);
 
 		int dependencyIndex = 0;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
@@ -6789,7 +6790,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
         string configurationLabel;
         {
             string field = "ConfigurationLabel";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6958,7 +6959,7 @@ void MMSEngineProcessor::postOnFacebookTask(
         string facebookNodeId;
         {
             string field = "ConfigurationLabel";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6970,7 +6971,7 @@ void MMSEngineProcessor::postOnFacebookTask(
             facebookConfigurationLabel = parametersRoot.get(field, "XXX").asString();
 
             field = "NodeId";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7185,7 +7186,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
         string youTubePrivacy;
         {
             string field = "ConfigurationLabel";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7197,23 +7198,23 @@ void MMSEngineProcessor::postOnYouTubeTask(
             youTubeConfigurationLabel = parametersRoot.get(field, "XXX").asString();
 
             field = "Title";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeTitle = parametersRoot.get(field, "XXX").asString();
 
             field = "Description";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeDescription = parametersRoot.get(field, "XXX").asString();
             
             field = "Tags";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeTags = parametersRoot[field];
             
             field = "CategoryId";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-                youTubeCategoryId = parametersRoot.get(field, "XXX").asInt();
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, 0);
 
             field = "Privacy";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubePrivacy = parametersRoot.get(field, "XXX").asString();
             else
                 youTubePrivacy = "private";
@@ -7419,7 +7420,7 @@ void MMSEngineProcessor::httpCallbackTask(
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
             string field = "Protocol";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 httpProtocol = "http";
             }
@@ -7434,7 +7435,7 @@ void MMSEngineProcessor::httpCallbackTask(
             );
 
             field = "HostName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7449,7 +7450,7 @@ void MMSEngineProcessor::httpCallbackTask(
             );
 
             field = "Port";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 if (httpProtocol == "http")
                     httpPort = 80;
@@ -7457,22 +7458,22 @@ void MMSEngineProcessor::httpCallbackTask(
                     httpPort = 443;
             }
             else
-                httpPort = parametersRoot.get(field, "XXX").asInt();
+                httpPort = JSONUtils::asInt(parametersRoot, field, 0);
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", httpPort: " + to_string(httpPort)
             );
 
             field = "Timeout";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
                 callbackTimeoutInSeconds = 120;
             else
-                callbackTimeoutInSeconds = parametersRoot.get(field, "XXX").asInt();
+                callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", callbackTimeoutInSeconds: " + to_string(callbackTimeoutInSeconds)
             );
             
             field = "URI";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7487,7 +7488,7 @@ void MMSEngineProcessor::httpCallbackTask(
             );
 
             field = "Parameters";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 httpURLParameters = parametersRoot.get(field, "XXX").asString();
             }
@@ -7496,7 +7497,7 @@ void MMSEngineProcessor::httpCallbackTask(
             );
 
             field = "Method";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 httpMethod = "POST";
             }
@@ -7511,19 +7512,19 @@ void MMSEngineProcessor::httpCallbackTask(
             );
             
             field = "Headers";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 httpHeadersRoot = parametersRoot[field];
             }
 
             field = "MaxRetries";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				maxRetries = 2;
             }
             else
 			{
-                maxRetries = parametersRoot.get(field, 3).asInt();
+                maxRetries = JSONUtils::asInt(parametersRoot, field, 3);
 				if (maxRetries == 0)
 					maxRetries = 2;
 			}
@@ -7804,7 +7805,7 @@ void MMSEngineProcessor::localCopyContentTask(
         string localFileName;
         {
             string field = "LocalPath";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7816,7 +7817,7 @@ void MMSEngineProcessor::localCopyContentTask(
             localPath = parametersRoot.get(field, "XXX").asString();
 
             field = "LocalFileName";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 localFileName = parametersRoot.get(field, "XXX").asString();
             }
@@ -7958,7 +7959,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
-		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
 				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -7975,7 +7976,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		bool oneFramePerSecond;
         {
             string field = "CascadeName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7987,7 +7988,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             faceRecognitionCascadeName = parametersRoot.get(field, "XXX").asString();
 
             field = "Output";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8003,12 +8004,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			if (faceRecognitionOutput == "FrameContainingFace")
 			{
 				field = "InitialFramesNumberToBeSkipped";
-				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-					initialFramesNumberToBeSkipped = parametersRoot.get(field, 0).asInt();
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
 
 				field = "OneFramePerSecond";
-				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-					oneFramePerSecond = parametersRoot.get(field, 0).asBool();
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, false);
 			}
         }
         
@@ -8174,7 +8175,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
-		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
 				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -8189,7 +8190,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         string jsonDeepLearnedModelTags;
         {
             string field = "CascadeName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8201,7 +8202,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             faceIdentificationCascadeName = parametersRoot.get(field, "XXX").asString();
 
             field = "DeepLearnedModelTags";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8356,7 +8357,7 @@ void MMSEngineProcessor::manageLiveRecorder(
     {
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
-		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
 				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -8377,7 +8378,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		bool highAvailability = false;
         {
             string field = "ConfigurationLabel";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8389,20 +8390,20 @@ void MMSEngineProcessor::manageLiveRecorder(
             configurationLabel = parametersRoot.get(field, "XXX").asString();
 
             field = "UserAgent";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				userAgent = parametersRoot.get(field, "").asString();
 
             field = "HighAvailability";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-				highAvailability = parametersRoot.get(field, "XXX").asBool();
+				highAvailability = JSONUtils::asBool(parametersRoot, field, false);
             }
 
             field = "RecordingPeriod";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
 
             field = "Start";
-            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+            if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8414,7 +8415,7 @@ void MMSEngineProcessor::manageLiveRecorder(
             recordingPeriodStart = recordingPeriodRoot.get(field, "XXX").asString();
 
             field = "End";
-            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+            if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8426,13 +8427,13 @@ void MMSEngineProcessor::manageLiveRecorder(
             recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
 
             field = "AutoRenew";
-            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+            if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 				autoRenew = false;
 			else
-				autoRenew = recordingPeriodRoot.get(field, "XXX").asBool();
+				autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
             field = "SegmentDuration";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8441,10 +8442,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            segmentDurationInSeconds = parametersRoot.get(field, 0).asInt();
+            segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
 
             field = "OutputFileFormat";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputFileFormat = "ts";
 			else
             	outputFileFormat = parametersRoot.get(field, "XXX").asString();
@@ -8605,7 +8606,7 @@ void MMSEngineProcessor::manageLiveProxy(
     {
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
-		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
 				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -8626,7 +8627,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string cdnURL;
         {
             string field = "ConfigurationLabel";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8638,7 +8639,7 @@ void MMSEngineProcessor::manageLiveProxy(
             configurationLabel = parametersRoot.get(field, "XXX").asString();
 
             field = "OutputType";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputType = "HLS";
 			else
             	outputType = parametersRoot.get(field, "XXX").asString();
@@ -8646,21 +8647,21 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (outputType == "HLS" || outputType == "DASH")
 			{
 				field = "SegmentDurationInSeconds";
-				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					segmentDurationInSeconds = 10;
 				else
-					segmentDurationInSeconds = parametersRoot.get(field, "XXX").asInt();
+					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
 
 				field = "PlaylistEntriesNumber";
-				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					playlistEntriesNumber = 6;
 				else
-					playlistEntriesNumber = parametersRoot.get(field, "XXX").asInt();
+					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
 			}
 			else if (outputType == "CDN77")
 			{
 				field = "CDN_URL";
-				if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8674,16 +8675,16 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
-			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				maxAttemptsNumberInCaseOfErrors = 2;
 			else
-				maxAttemptsNumberInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
+				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(parametersRoot, field, 0);
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
-			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				waitingSecondsBetweenAttemptsInCaseOfErrors = 600;
 			else
-				waitingSecondsBetweenAttemptsInCaseOfErrors = parametersRoot.get(field, "XXX").asInt();
+				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }
 
         pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
@@ -8754,7 +8755,7 @@ void MMSEngineProcessor::changeFileFormatThread(
         string outputFileFormat;
         {
             string field = "OutputFileFormat";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9594,7 +9595,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                     Json::Value trackRoot = tracksToot[trackIndex];
 
                     field = "TrackType";
-                    if (!_mmsEngineDBFacade->isMetadataPresent(trackRoot, field))
+                    if (!JSONUtils::isMetadataPresent(trackRoot, field))
                     {
                         Json::StreamWriterBuilder wbuilder;
                         string sTrackRoot = Json::writeString(wbuilder, trackRoot);
@@ -9611,15 +9612,15 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                     int trackNumber = 0;
                     field = "TrackNumber";
-                    if (_mmsEngineDBFacade->isMetadataPresent(trackRoot, field))
-                        trackNumber = trackRoot.get(field, "XXX").asInt();
+                    if (JSONUtils::isMetadataPresent(trackRoot, field))
+                        trackNumber = JSONUtils::asInt(trackRoot, field, 0);
 
                     tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
                 }
             }
 
             string field = "OutputFileFormat";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10002,7 +10003,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                 string title;
                 {
                     string field = "Title";
-                    if (_mmsEngineDBFacade->isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
+                    if (JSONUtils::isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
                         title = multiLocalAssetIngestionEvent.getParametersRoot().get(field, "XXX").asString();                    
                     title += (
                             " (" 
@@ -10581,7 +10582,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -10682,7 +10683,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
         {
             field = "PeriodInSeconds";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10691,7 +10692,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
                 throw runtime_error(errorMessage);
             }
-            periodInSeconds = parametersRoot.get(field, "XXX").asInt();
+            periodInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
         }
         else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
@@ -10702,9 +10703,9 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
             field = "InstantInSeconds";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+                startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
             }
         }
         else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
@@ -10713,9 +10714,9 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
             field = "StartTimeInSeconds";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+                startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
             }
         }
 
@@ -10730,9 +10731,9 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
             field = "MaxFramesNumber";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                maxFramesNumber = parametersRoot.get(field, "XXX").asInt();
+                maxFramesNumber = JSONUtils::asInt(parametersRoot, field, 0);
             }
         }
 
@@ -10760,16 +10761,16 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
         int width = -1;
         field = "Width";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            width = parametersRoot.get(field, "XXX").asInt();
+            width = JSONUtils::asInt64(parametersRoot, field, 0);
         }
 
         int height = -1;
         field = "Height";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            height = parametersRoot.get(field, "XXX").asInt();
+            height = JSONUtils::asInt(parametersRoot, field, 0);
         }
 
         // int64_t sourcePhysicalPathKey;
@@ -10892,7 +10893,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         /*
         string sourceFileName;
         field = "SourceFileName";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
@@ -10950,7 +10951,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -11062,9 +11063,9 @@ void MMSEngineProcessor::manageSlideShowTask(
 
         double durationOfEachSlideInSeconds = 2;
         field = "DurationOfEachSlideInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            durationOfEachSlideInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
         }
 
         int outputFrameRate = 25;
@@ -11294,14 +11295,14 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         double maxDurationInSeconds = 0.0;
         double extraSecondsToCutWhenMaxDurationIsReached = 0.0;
         string field = "MaxDurationInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			maxDurationInSeconds = parametersRoot.get(field, 0.0).asDouble();
+			maxDurationInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
 			field = "ExtraSecondsToCutWhenMaxDurationIsReached";
-			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				extraSecondsToCutWhenMaxDurationIsReached = parametersRoot.get(field, 0.0).asDouble();
+				extraSecondsToCutWhenMaxDurationIsReached = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
 				if (extraSecondsToCutWhenMaxDurationIsReached >= abs(maxDurationInSeconds))
 					extraSecondsToCutWhenMaxDurationIsReached = 0.0;
@@ -11632,14 +11633,14 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		bool keyFrameSeeking = true;
         string field = "KeyFrameSeeking";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-			keyFrameSeeking = parametersRoot.get(field, true).asBool();
+			keyFrameSeeking = JSONUtils::asBool(parametersRoot, field, true);
         }
 
         double startTimeInSeconds;
         field = "StartTimeInSeconds";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11649,20 +11650,20 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
             throw runtime_error(errorMessage);
         }
-        startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+        startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
         double endTimeInSeconds = -1;
         field = "EndTimeInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            endTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
         }
         
         int framesNumber = -1;
         field = "FramesNumber";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            framesNumber = parametersRoot.get(field, "XXX").asInt();
+            framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
         }
         
         if (endTimeInSeconds == -1 && framesNumber == -1)
@@ -11677,7 +11678,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
         string outputFileFormat;
         field = "OutputFileFormat";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
@@ -11963,7 +11964,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
 				workspace->_maxEncodingPriority);
@@ -12026,9 +12027,9 @@ void MMSEngineProcessor::manageEncodeTask(
         string keyField = "EncodingProfileKey";
         int64_t encodingProfileKey = -1;
         string labelField = "EncodingProfileLabel";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, keyField))
+        if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
         {
-            encodingProfileKey = parametersRoot.get(keyField, "XXX").asInt64();
+            encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
 
 			// check if the profile is already present for the source content
 			{
@@ -12052,7 +12053,7 @@ void MMSEngineProcessor::manageEncodeTask(
 				}
 			}
         }
-        else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, labelField))
+        else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
         {
 			string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
 
@@ -12145,7 +12146,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
         MMSEngineDBFacade::VideoSpeedType videoSpeedType;
         string field = "SpeedType";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             videoSpeedType = MMSEngineDBFacade::VideoSpeedType::SlowDown;
         }
@@ -12157,14 +12158,14 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
 		int videoSpeedSize = 3;
         field = "SpeedSize";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            videoSpeedSize = parametersRoot.get(field, "SpeedSize").asInt();
+            videoSpeedSize = JSONUtils::asInt(parametersRoot, field, 3);
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
 				workspace->_maxEncodingPriority);
@@ -12272,7 +12273,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -12285,25 +12286,25 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         bool secondVideoOverlayedOnFirst;
         field = "SecondVideoOverlayedOnFirst";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			secondVideoOverlayedOnFirst = true;
         }
 		else
-			secondVideoOverlayedOnFirst = parametersRoot.get(field, "XXX").asBool();
+			secondVideoOverlayedOnFirst = JSONUtils::asBool(parametersRoot, field, false);
 
         bool soundOfFirstVideo;
         field = "SoundOfFirstVideo";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			soundOfFirstVideo = true;
         }
 		else
-			soundOfFirstVideo = parametersRoot.get(field, "XXX").asBool();
+			soundOfFirstVideo = JSONUtils::asBool(parametersRoot, field, false);
 
         string overlayPosition_X_InPixel;
         field = "OverlayPosition_X_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			overlayPosition_X_InPixel = "0";
         }
@@ -12312,7 +12313,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         string overlayPosition_Y_InPixel;
         field = "OverlayPosition_Y_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			overlayPosition_Y_InPixel = "0";
         }
@@ -12321,7 +12322,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         string overlay_Width_InPixel;
         field = "Overlay_Width_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			overlay_Width_InPixel = "100";
         }
@@ -12330,7 +12331,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         string overlay_Height_InPixel;
         field = "Overlay_Height_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			overlay_Height_InPixel = "100";
         }
@@ -12500,7 +12501,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -12513,7 +12514,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         string imagePosition_X_InPixel;
         field = "ImagePosition_X_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			/*
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12530,7 +12531,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         string imagePosition_Y_InPixel;
         field = "ImagePosition_Y_InPixel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			/*
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12690,7 +12691,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -12702,7 +12703,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         }
 
         field = "Text";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -12715,65 +12716,65 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         string textPosition_X_InPixel;
         field = "TextPosition_X_InPixel";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             textPosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
         }
 
         string textPosition_Y_InPixel;
         field = "TextPosition_Y_InPixel";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             textPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
         }
 
         string fontType;
         field = "FontType";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             fontType = parametersRoot.get(field, "XXX").asString();
         }
 
         int fontSize = -1;
         field = "FontSize";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            fontSize = parametersRoot.get(field, -1).asInt();
+            fontSize = JSONUtils::asInt(parametersRoot, field, -1);
         }
 
         string fontColor;
         field = "FontColor";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             fontColor = parametersRoot.get(field, "XXX").asString();
         }
 
         int textPercentageOpacity = -1;
         field = "TextPercentageOpacity";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            textPercentageOpacity = parametersRoot.get(field, -1).asInt();
+            textPercentageOpacity = JSONUtils::asInt64(parametersRoot, field, -1);
         }
 
         bool boxEnable = false;
         field = "BoxEnable";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            boxEnable = parametersRoot.get(field, -1).asBool();
+            boxEnable = JSONUtils::asBool(parametersRoot, field, false);
         }
 
         string boxColor;
         field = "BoxColor";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             boxColor = parametersRoot.get(field, "XXX").asString();
         }
 
         int boxPercentageOpacity = -1;
         field = "BoxPercentageOpacity";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            boxPercentageOpacity = parametersRoot.get(field, -1).asInt();
+            boxPercentageOpacity = JSONUtils::asInt64(parametersRoot, field, -1);
         }
 
         int64_t sourceMediaItemKey;
@@ -12956,18 +12957,18 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 			// We will retrieve the error associated to ReferenceIngestionJobKey
 
 			string field = "References";
-			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value referencesRoot = parametersRoot[field];
 				for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
 				{
 					Json::Value referenceRoot = referencesRoot[referenceIndex];
 					field = "ReferenceIngestionJobKey";
-					if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
+					if (JSONUtils::isMetadataPresent(referenceRoot, field))
 					{
 						MMSEngineDBFacade::IngestionType ingestionType;
 
-						referenceIngestionJobKey = referenceRoot.get(field, 0).asInt64();
+						referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
 
 						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 							string, string> labelIngestionTypeAndErrorMessage =
@@ -12981,7 +12982,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 		}
 
         string field = "ConfigurationLabel";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -13118,7 +13119,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         }
         
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -13302,7 +13303,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 
 			field = "Parameters";
-			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13344,7 +13345,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 
 			field = "Parameters";
-			if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13428,7 +13429,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 )
 {
     string field = "FileFormat";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fileFormatSpecifiedByUser = parametersRoot.get(field, "XXX").asString();
         if (fileFormatSpecifiedByUser != fileFormat)
@@ -14107,7 +14108,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 	externalReadOnlyStorage = false;
     {
         field = "SourceURL";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
             mediaSourceURL = parametersRoot.get(field, "XXX").asString();
         
         field = "FileFormat";
@@ -14155,7 +14156,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 
     string md5FileCheckSum;
     field = "MD5FileCheckSum";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
@@ -14165,8 +14166,8 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 
     int fileSizeInBytes = -1;
     field = "FileSizeInBytes";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        fileSizeInBytes = parametersRoot.get(field, 3).asInt();
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        fileSizeInBytes = JSONUtils::asInt(parametersRoot, field, 3);
 
 	/*
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
@@ -15418,7 +15419,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             }
             
             string field = "upload_session_id";
-            if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
@@ -15431,7 +15432,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             uploadSessionId = facebookResponseRoot.get(field, "XXX").asString();
 
             field = "video_id";
-            if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
@@ -15444,7 +15445,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             videoId = facebookResponseRoot.get(field, "XXX").asString();
             
             field = "start_offset";
-            if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
@@ -15458,7 +15459,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             startOffset = stoll(sStartOffset);
             
             field = "end_offset";
-            if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
@@ -15680,7 +15681,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 }
 
                 string field = "start_offset";
-                if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
                             + ", Field: " + field
@@ -15694,7 +15695,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 startOffset = stoll(sStartOffset);
 
                 field = "end_offset";
-                if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+                if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
                             + ", Field: " + field
@@ -15882,7 +15883,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             }
             
             string field = "success";
-            if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
+            if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field
@@ -15892,7 +15893,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
 
                 throw runtime_error(errorMessage);
             }
-            success = facebookResponseRoot.get(field, "XXX").asBool();
+            success = JSONUtils::asBool(facebookResponseRoot, field, false);
 
             if (!success)
             {
@@ -17077,7 +17078,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
         */
         
         string field = "access_token";
-        if (!_mmsEngineDBFacade->isMetadataPresent(youTubeResponseRoot, field))
+        if (!JSONUtils::isMetadataPresent(youTubeResponseRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;

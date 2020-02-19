@@ -11,6 +11,7 @@
  * Created on March 29, 2018, 6:27 AM
  */
 
+#include "JSONUtils.h"
 #include "EMailSender.h"
 #include <sstream>
 #include <curl/curl.h>
@@ -40,7 +41,7 @@ void EMailSender:: sendEmail(string tosCommaSeparated, string subject, vector<st
     // string emailServerURL = "smtp://smtp.gmail.com:587";
     string emailProtocol = _configuration["EmailNotification"].get("protocol", "XXX").asString();
     string emailServer = _configuration["EmailNotification"].get("server", "XXX").asString();
-    int emailPort = _configuration["EmailNotification"].get("port", "XXX").asInt();
+    int emailPort = JSONUtils::asInt(_configuration["EmailNotification"], "port", 0);
     string userName = _configuration["EmailNotification"].get("userName", "XXX").asString();
     string password;
     {

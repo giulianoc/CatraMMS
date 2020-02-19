@@ -308,6 +308,14 @@ private:
     
     bool isMetadataPresent(Json::Value root, string field);
 
+	int asInt(Json::Value root, string field = "", int defaultValue = 0);
+
+	int64_t asInt64(Json::Value root, string field = "", int64_t defaultValue = 0);
+
+	double asDouble(Json::Value root, string field = "", double defaultValue = 0.0);
+
+	bool asBool(Json::Value root, string field, bool defaultValue);
+
     void removeHavingPrefixFileName(string directoryName, string prefixFileName);
 };
 

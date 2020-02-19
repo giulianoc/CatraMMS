@@ -16,6 +16,7 @@
 #include "catralibraries/LdapWrapper.h"
 #include "EMailSender.h"
 */
+#include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -46,128 +47,7 @@ void API::ingestion(
     {
 		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-        Json::Value requestBodyRoot;
-        try
-        {
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
-            string field = "Variables";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-                Json::Value variablesRoot = requestBodyRoot[field];
-                if (variablesRoot.begin() != variablesRoot.end())
-                {
-                    string localRequestBody = requestBody;
-                    
-                    _logger->info(__FILEREF__ + "variables processing...");
-                    
-                    for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
-                    {
-                        Json::Value key = it.key();
-                        Json::Value value = (*it);
-                        
-                        Json::StreamWriterBuilder wbuilder;
-                        string sKey = Json::writeString(wbuilder, key);
-                        if (sKey.length() > 2)
-                            sKey = sKey.substr(1, sKey.length() - 2);
-
-                        string sValue = Json::writeString(wbuilder, value);        
-						/* The value could be a string (in this case we have to remove the " at the beginning
-						 * and at the end) or could be a integer (in this case we do not have to remove anythink)
-						 */
-                        if (sValue.length() > 2 && sValue.front() == '"' && sValue.back() == '"')
-                            sValue = sValue.substr(1, sValue.length() - 2);
-                        
-                        // string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
-                        // localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
-                        string variableToBeReplaced = string("${") + sKey + "}";
-                        _logger->info(__FILEREF__ + "requestBody, replace"
-                            + ", variableToBeReplaced: " + variableToBeReplaced
-                            + ", sValue: " + sValue
-                        );
-                        size_t index = 0;
-                        while (true) 
-                        {
-                             // Locate the substring to replace.
-                             index = localRequestBody.find(variableToBeReplaced, index);
-                             if (index == string::npos) 
-                                 break;
-
-                             // Make the replacement.
-                             localRequestBody.replace(index, variableToBeReplaced.length(), sValue);
-
-                             // Advance index forward so the next iteration doesn't pick it up as well.
-                             index += sValue.length();
-                        }
-                    }
-                    
-                    _logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
-                        + ", localRequestBody: " + localRequestBody
-                    );
-                    
-                    {
-                        Json::CharReaderBuilder builder;
-                        Json::CharReader* reader = builder.newCharReader();
-                        string errors;
-
-                        bool parsingSuccessful = reader->parse(localRequestBody.c_str(),
-                                localRequestBody.c_str() + localRequestBody.size(), 
-                                &requestBodyRoot, &errors);
-                        delete reader;
-
-                        if (!parsingSuccessful)
-                        {
-                            string errorMessage = __FILEREF__ + "failed to parse the localRequestBody"
-                                    + ", errors: " + errors
-                                    + ", localRequestBody: " + localRequestBody
-                                    ;
-                            _logger->error(errorMessage);
-
-                            throw runtime_error(errorMessage);
-                        }
-                    }
-                }
-            }
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        Json::Value requestBodyRoot = manageWorkflowVariables(requestBody);
 
         string responseBody;    
         shared_ptr<MySQLConnection> conn;
@@ -198,7 +78,7 @@ void API::ingestion(
                     requestBodyRoot);
         
             string field = "Type";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -210,7 +90,7 @@ void API::ingestion(
 
             string rootLabel;
             field = "Label";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 rootLabel = requestBodyRoot.get(field, "XXX").asString();
             }    
@@ -219,7 +99,7 @@ void API::ingestion(
                 workspace->_workspaceKey, rootType, rootLabel, requestBody.c_str());
     
             field = "Task";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -230,7 +110,7 @@ void API::ingestion(
             Json::Value taskRoot = requestBodyRoot[field];                        
             
             field = "Type";
-            if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+            if (!JSONUtils::isMetadataPresent(taskRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -378,6 +258,163 @@ void API::ingestion(
     }
 }
 
+Json::Value API::manageWorkflowVariables(string requestBody)
+{
+	Json::Value requestBodyRoot;
+
+	try
+	{
+		{
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
+
+			bool parsingSuccessful = reader->parse(requestBody.c_str(),
+				requestBody.c_str() + requestBody.size(), 
+				&requestBodyRoot, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+					+ ", errors: " + errors
+					+ ", requestBody: " + requestBody
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errors);
+			}
+		}
+
+		/*
+		"Variables": {
+			"var n. 1": {
+				"Type": "int",	// or string
+				"Value": 10,
+				"Description": "..."
+			},
+			"var n. 2": {
+				"Type": "string",
+				"Value": "...",
+				"Description": "..."
+			}
+		}
+		 */
+		string field = "Variables";
+		if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+		{
+			Json::Value variablesRoot = requestBodyRoot[field];
+			if (variablesRoot.begin() != variablesRoot.end())
+			// if (variablesRoot.size() > 0)
+			{
+				string localRequestBody = requestBody;
+
+				_logger->info(__FILEREF__ + "variables processing...");
+
+				for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
+				{
+					Json::Value key = it.key();
+					Json::Value variableDetails = (*it);
+				// for (int variableIndex = 0; variableIndex < variablesRoot.size();
+				// 	variableIndex++)
+				// {
+				//	Json::Value variableRoot = variablesRoot[variableIndex];
+
+				//	field = "Name";
+				//	string sKey = variableRoot.get(field, "XXX").asString();
+				//	field = "Value";
+				//	string sValue = variableRoot.get(field, "XXX").asString();
+
+						Json::StreamWriterBuilder wbuilder;
+						string sKey = Json::writeString(wbuilder, key);
+						if (sKey.length() > 2)
+							sKey = sKey.substr(1, sKey.length() - 2);
+
+					/*
+						string sValue = Json::writeString(wbuilder, value);        
+						// The value could be a string (in this case we have to remove the " at the beginning
+						// and at the end) or could be a integer (in this case we do not have to remove anythink)
+						if (sValue.length() > 2 && sValue.front() == '"' && sValue.back() == '"')
+							sValue = sValue.substr(1, sValue.length() - 2);
+					*/
+
+					field = "Value";
+					string sValue = variableDetails.get(field, "XXX").asString();
+
+					// string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
+					// localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
+					string variableToBeReplaced = string("${") + sKey + "}";
+					_logger->info(__FILEREF__ + "requestBody, replace"
+						+ ", variableToBeReplaced: " + variableToBeReplaced
+						+ ", sValue: " + sValue
+					);
+					size_t index = 0;
+					while (true) 
+					{
+						// Locate the substring to replace.
+						index = localRequestBody.find(variableToBeReplaced, index);
+						if (index == string::npos) 
+							break;
+
+						// Make the replacement.
+						localRequestBody.replace(index, variableToBeReplaced.length(), sValue);
+
+						// Advance index forward so the next iteration doesn't pick it up as well.
+						index += sValue.length();
+					}
+				}
+                    
+				_logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
+					+ ", localRequestBody: " + localRequestBody
+				);
+                    
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(localRequestBody.c_str(),
+						localRequestBody.c_str() + localRequestBody.size(), 
+						&requestBodyRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the localRequestBody"
+							+ ", errors: " + errors
+							+ ", localRequestBody: " + localRequestBody
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("requestBody json is not well format")
+			+ ", requestBody: " + requestBody
+			+ ", e.what(): " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("requestBody json is not well format")
+			+ ", requestBody: " + requestBody
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	return requestBodyRoot;
+}
+
 // return: ingestionJobKey associated to this task
 vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
@@ -400,7 +437,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     string taskLabel;
     field = "Label";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    if (JSONUtils::isMetadataPresent(taskRoot, field))
     {
         taskLabel = taskRoot.get(field, "XXX").asString();
     }
@@ -414,7 +451,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     field = "Parameters";
     Json::Value parametersRoot;
     bool parametersSectionPresent = false;
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    if (JSONUtils::isMetadataPresent(taskRoot, field))
     {
         parametersRoot = taskRoot[field];
         
@@ -427,8 +464,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
 
 		if (parametersSectionPresent && 
-            (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
-				|| _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
+            (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+				|| JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
             )
 		)
 		{
@@ -438,9 +475,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			string encodingProfilesSetReference;
         
 			vector<int64_t> encodingProfilesSetKeys;
-			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+			if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
 			{
-				int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
+				int64_t encodingProfilesSetKey = JSONUtils::asInt64(parametersRoot, encodingProfilesSetKeyField, 0);
         
 				encodingProfilesSetReference = to_string(encodingProfilesSetKey);
             
@@ -448,7 +485,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					_mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
 					workspace->_workspaceKey, encodingProfilesSetKey);
 			}
-			else // if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
+			else // if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
 			{
 				string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "XXX").asString();
         
@@ -470,7 +507,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
 			string encodingPriority;
 			field = "EncodingPriority";
-			if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				encodingPriority = parametersRoot.get(field, "XXX").asString();
 				/*
@@ -506,7 +543,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value newParametersRoot;
             
 				field = "References";
-				if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					newParametersRoot[field] = parametersRoot[field];
 				}
@@ -543,19 +580,19 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
 			field = "OnSuccess";
-			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
 			field = "OnError";
-			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
 			field = "OnComplete";
-			if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
@@ -591,12 +628,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		string onSuccessField = "OnSuccess";
 		string onErrorField = "OnError";
 		string onCompleteField = "OnComplete";
-    	if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onSuccessField)
-			|| _mmsEngineDBFacade->isMetadataPresent(taskRoot, onErrorField)
-			|| _mmsEngineDBFacade->isMetadataPresent(taskRoot, onCompleteField)
+    	if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
+			|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
+			|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
 		)
     	{
-    		if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onSuccessField))
+    		if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
 			{
         		Json::Value onSuccessRoot = taskRoot[onSuccessField];
 
@@ -605,7 +642,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value removed;
 				taskRoot.removeMember(onSuccessField, &removed);
 			}
-    		if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onErrorField))
+    		if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
 			{
         		Json::Value onErrorRoot = taskRoot[onErrorField];
 
@@ -614,7 +651,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value removed;
 				taskRoot.removeMember(onErrorField, &removed);
 			}
-    		if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onCompleteField))
+    		if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
 			{
         		Json::Value onCompleteRoot = taskRoot[onCompleteField];
 
@@ -638,7 +675,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// In this last case, we have to add the VariantOfIngestionJobKey parameter using VariantOfReferencedLabel
 
 		string field = "VariantOfReferencedLabel";
-    	if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    	if (JSONUtils::isMetadataPresent(parametersRoot, field))
     	{
 			string referenceLabel = parametersRoot.get(field, "").asString();
 
@@ -690,7 +727,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     string dependenciesToBeAddedToReferences;
     field = "DependenciesToBeAddedToReferences";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		dependenciesToBeAddedToReferences = parametersRoot.get(field, "").asString();
 		if (dependenciesToBeAddedToReferences != atTheBeginning
@@ -704,7 +741,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     if (parametersSectionPresent)
     {
         field = "References";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             referencesRoot = parametersRoot[field];
 
@@ -723,7 +760,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             Json::Value referenceRoot = referencesRoot[referenceIndex];
 
             field = "ReferenceLabel";
-            if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
+            if (JSONUtils::isMetadataPresent(referenceRoot, field))
             {
                 string referenceLabel = referenceRoot.get(field, "XXX").asString();
 
@@ -891,7 +928,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	vector<int64_t> waitForGlobalIngestionJobKeys;
 	{
 		field = "WaitFor";
-		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			Json::Value waitForRoot = parametersRoot[field];
 
@@ -900,7 +937,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value waitForLabelRoot = waitForRoot[waitForIndex];
 
 				field = "GlobalIngestionLabel";
-				if (_mmsEngineDBFacade->isMetadataPresent(waitForLabelRoot, field))
+				if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
 				{
 					string waitForGlobalIngestionLabel = waitForLabelRoot.get(field, "XXX").asString();
 
@@ -984,7 +1021,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 	string groupOfTaskLabel;
 	string field = "Label";
-	if (_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+	if (JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
 	{
 		groupOfTaskLabel = groupOfTasksRoot.get(field, "XXX").asString();
 	}
@@ -997,7 +1034,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	// initialize parametersRoot
     field = "Parameters";
     Json::Value parametersRoot;
-    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
@@ -1010,7 +1047,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     bool parallelTasks;
     
     field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
@@ -1033,7 +1070,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     }
 
     field = "Tasks";
-    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
@@ -1070,7 +1107,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = tasksRoot[taskIndex];
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1173,7 +1210,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		Json::Value referencesOutputRoot(Json::arrayValue);
 
 		field = "ReferencesOutput";
-		if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			referencesOutputRoot = parametersRoot[field];
 
@@ -1192,7 +1229,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 				Json::Value referenceOutputRoot = referencesOutputRoot[referenceIndex];
 
 				field = "ReferenceLabel";
-				if (_mmsEngineDBFacade->isMetadataPresent(referenceOutputRoot, field))
+				if (JSONUtils::isMetadataPresent(referenceOutputRoot, field))
 				{
 					string referenceLabel = referenceOutputRoot.get(field, "XXX").asString();
 
@@ -1402,12 +1439,12 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 {
 
     string field = "OnSuccess";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, field))
+        if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1418,7 +1455,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = onSuccessRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1467,12 +1504,12 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     }
 
     field = "OnError";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, field))
+        if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1483,7 +1520,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = onErrorRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1532,12 +1569,12 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     }    
 
     field = "OnComplete";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
-        if (!_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, field))
+        if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1548,7 +1585,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = onCompleteRoot[field];                        
 
         string field = "Type";
-        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -2254,11 +2291,11 @@ void API::fileUploadProgressCheck()
                     }
                     else if (state == "uploading")
                     {
-                        int64_t relativeReceived = uploadProgressResponse.get("received", "XXX").asInt64();
+                        int64_t relativeReceived = JSONUtils::asInt64(uploadProgressResponse, "received", 0);
                         int64_t absoluteReceived = -1;
                         if (itr->_contentRangePresent)
                             absoluteReceived    = relativeReceived + itr->_contentRangeStart;
-                        int64_t relativeSize = uploadProgressResponse.get("size", "XXX").asInt64();
+                        int64_t relativeSize = JSONUtils::asInt64(uploadProgressResponse, "size", 0);
                         int64_t absoluteSize = -1;
                         if (itr->_contentRangePresent)
                             absoluteSize    = itr->_contentRangeSize;

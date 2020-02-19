@@ -1670,7 +1670,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
 
         throw e;
-    }    
+    }
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"

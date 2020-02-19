@@ -2,8 +2,8 @@
 	"Type": "Workflow",
 	"Label": "1",
 	"Variables": {
-		"TitleOfVideo": "My Title of the video content",
-		"TitleOfOverlayVideo": "My Title of the overlay video content"
+		"TitleOfVideo": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
+		"TitleOfOverlayVideo": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
 		"Label": "My video",

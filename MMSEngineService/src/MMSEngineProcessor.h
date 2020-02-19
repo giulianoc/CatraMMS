@@ -353,8 +353,6 @@ private:
         string mediaSourcePathName,
         string md5FileCheckSum, int fileSizeInBytes);
 
-    bool isMetadataPresent(Json::Value root, string field);
-
     void downloadMediaSourceFileThread(
         shared_ptr<long> processorsThreadsNumber,
         string sourceReferenceURL,

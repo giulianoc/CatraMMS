@@ -27,16 +27,16 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
     _ffmpegTtfFontDir = configuration["ffmpeg"].get("ttfFontDir", "").asString();
 
-    _waitingNFSSync_attemptNumber = configuration["storage"].
-		get("waitingNFSSync_attemptNumber", 1).asInt();
+    _waitingNFSSync_attemptNumber = asInt(configuration["storage"],
+		"waitingNFSSync_attemptNumber", 1);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_attemptNumber: "
 		+ to_string(_waitingNFSSync_attemptNumber)
     );
 	*/
-    _waitingNFSSync_sleepTimeInSeconds = configuration["storage"].
-		get("waitingNFSSync_sleepTimeInSeconds", 3).asInt();
+    _waitingNFSSync_sleepTimeInSeconds = asInt(configuration["storage"],
+		"waitingNFSSync_sleepTimeInSeconds", 3);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_sleepTimeInSeconds: "
@@ -3488,7 +3488,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
                     throw runtime_error(errorMessage);
                 }
-                videoWidth = streamRoot.get(field, "XXX").asInt();
+                videoWidth = asInt(streamRoot, field, 0);
 
                 field = "height";
                 if (!isMetadataPresent(streamRoot, field))
@@ -3500,7 +3500,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
                     throw runtime_error(errorMessage);
                 }
-                videoHeight = streamRoot.get(field, "XXX").asInt();
+                videoHeight = asInt(streamRoot, field, 0);
                 
                 field = "avg_frame_rate";
                 if (!isMetadataPresent(streamRoot, field))
@@ -3570,7 +3570,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
                     throw runtime_error(errorMessage);
                 }
-                audioChannels = streamRoot.get(field, "XXX").asInt();
+                audioChannels = asInt(streamRoot, field, 0);
                 
                 field = "bit_rate";
                 if (!isMetadataPresent(streamRoot, field))
@@ -5689,7 +5689,7 @@ void FFMpeg::settingFfmpegParameters(
 
 				field = "SegmentDuration";
 				if (isMetadataPresent(hlsRoot, field))
-					segmentDurationInSeconds = hlsRoot.get(field, 10).asInt();
+					segmentDurationInSeconds = asInt(hlsRoot, field, 10);
 			}
 
             ffmpegHttpStreamingParameter = 
@@ -5716,7 +5716,7 @@ void FFMpeg::settingFfmpegParameters(
 
 				field = "SegmentDuration";
 				if (isMetadataPresent(dashRoot, field))
-					segmentDurationInSeconds = dashRoot.get(field, 10).asInt();
+					segmentDurationInSeconds = asInt(dashRoot, field, 10);
 			}
 
             ffmpegHttpStreamingParameter =
@@ -5826,7 +5826,7 @@ void FFMpeg::settingFfmpegParameters(
 
                 throw runtime_error(errorMessage);
             }
-            int width = videoRoot.get(field, "XXX").asInt();
+            int width = asInt(videoRoot, field, 0);
             if (width == -1 && codec == "libx264")
                 width   = -2;     // h264 requires always a even width/height
         
@@ -5839,7 +5839,7 @@ void FFMpeg::settingFfmpegParameters(
 
                 throw runtime_error(errorMessage);
             }
-            int height = videoRoot.get(field, "XXX").asInt();
+            int height = asInt(videoRoot, field, 0);
             if (height == -1 && codec == "libx264")
                 height   = -2;     // h264 requires always a even width/height
 
@@ -5853,7 +5853,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "KBitRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                int bitRate = videoRoot.get(field, "XXX").asInt();
+                int bitRate = asInt(videoRoot, field, 0);
 
                 ffmpegVideoBitRateParameter =
                         "-b:v " + to_string(bitRate) + "k "
@@ -5873,12 +5873,11 @@ void FFMpeg::settingFfmpegParameters(
                 ;
             }
         }
-        
+
         // twoPasses
         {
             field = "TwoPasses";
-            if (!isMetadataPresent(videoRoot, field) 
-                    && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
+            if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
@@ -5886,9 +5885,7 @@ void FFMpeg::settingFfmpegParameters(
 
                 throw runtime_error(errorMessage);
             }
-
-            if (fileFormat != "segment")
-                twoPasses = videoRoot.get(field, "XXX").asBool();
+			twoPasses = asBool(videoRoot, field, false);
         }
 
         // maxRate
@@ -5896,7 +5893,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "MaxRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                int maxRate = videoRoot.get(field, "XXX").asInt();
+                int maxRate = asInt(videoRoot, field, 0);
 
                 ffmpegVideoMaxRateParameter =
                         "-maxrate " + to_string(maxRate) + "k "
@@ -5909,7 +5906,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "BufSize";
             if (isMetadataPresent(videoRoot, field))
             {
-                int bufSize = videoRoot.get(field, "XXX").asInt();
+                int bufSize = asInt(videoRoot, field, 0);
 
                 ffmpegVideoBufSizeParameter =
                         "-bufsize " + to_string(bufSize) + "k "
@@ -5922,7 +5919,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "FrameRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                int frameRate = videoRoot.get(field, "XXX").asInt();
+                int frameRate = asInt(videoRoot, field, 0);
 
                 ffmpegVideoFrameRateParameter =
                         "-r " + to_string(frameRate) + " "
@@ -5933,7 +5930,7 @@ void FFMpeg::settingFfmpegParameters(
                     field = "KeyFrameIntervalInSeconds";
                     if (isMetadataPresent(videoRoot, field))
                     {
-                        int keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asInt();
+                        int keyFrameIntervalInSeconds = asInt(videoRoot, field, 0);
 
                         // -g specifies the number of frames in a GOP
                         ffmpegVideoKeyFramesRateParameter =
@@ -5984,7 +5981,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "KBitRate";
             if (isMetadataPresent(audioRoot, field))
             {
-                int bitRate = audioRoot.get(field, "XXX").asInt();
+                int bitRate = asInt(audioRoot, field, 0);
 
                 ffmpegAudioBitRateParameter =
                         "-b:a " + to_string(bitRate) + "k "
@@ -6010,7 +6007,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "ChannelsNumber";
             if (isMetadataPresent(audioRoot, field))
             {
-                int channelsNumber = audioRoot.get(field, "XXX").asInt();
+                int channelsNumber = asInt(audioRoot, field, 0);
 
                 ffmpegAudioChannelsParameter =
                         "-ac " + to_string(channelsNumber) + " "
@@ -6023,7 +6020,7 @@ void FFMpeg::settingFfmpegParameters(
             field = "SampleRate";
             if (isMetadataPresent(audioRoot, field))
             {
-                int sampleRate = audioRoot.get(field, "XXX").asInt();
+                int sampleRate = asInt(audioRoot, field, 0);
 
                 ffmpegAudioSampleRateParameter =
                         "-ar " + to_string(sampleRate) + " "
@@ -6217,3 +6214,92 @@ bool FFMpeg::isMetadataPresent(Json::Value root, string field)
     else
         return false;
 }
+
+int FFMpeg::asInt(Json::Value root, string field, int defaultValue)
+{
+	if (field == "")
+	{
+		if (root.type() == Json::stringValue)
+			return strtol(root.asString().c_str(), nullptr, 10);
+		else
+			return root.asInt();
+	}
+	else
+	{
+		if (root.get(field, defaultValue).type() == Json::stringValue)
+			return strtol(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
+		else
+			return root.get(field, defaultValue).asInt();
+	}
+}
+
+int64_t FFMpeg::asInt64(Json::Value root, string field, int64_t defaultValue)
+{
+	if (field == "")
+	{
+		if (root.type() == Json::stringValue)
+			return strtoll(root.asString().c_str(), nullptr, 10);
+		else
+			return root.asInt64();
+	}
+	else
+	{
+		if (root.get(field, defaultValue).type() == Json::stringValue)
+			return strtoll(root.get(field, defaultValue).asString().c_str(), nullptr, 10);
+		else
+			return root.get(field, defaultValue).asInt64();
+	}
+}
+
+double FFMpeg::asDouble(Json::Value root, string field, double defaultValue)
+{
+	if (field == "")
+	{
+		if (root.type() == Json::stringValue)
+			return stod(root.asString(), nullptr);
+		else
+			return root.asDouble();
+	}
+	else
+	{
+		if (root.get(field, defaultValue).type() == Json::stringValue)
+			return stod(root.get(field, defaultValue).asString(), nullptr);
+		else
+			return root.get(field, defaultValue).asDouble();
+	}
+}
+
+bool FFMpeg::asBool(Json::Value root, string field, bool defaultValue)
+{
+	if (field == "")
+	{
+		if (root.type() == Json::stringValue)
+		{
+			string sTrue = "true";
+
+			bool isEqual = root.asString().length() != sTrue.length() ? false :
+				equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
+						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+
+			return isEqual ? true : false;
+		}
+		else
+			return root.asBool();
+	}
+	else
+	{
+		if (root.get(field, defaultValue).type() == Json::stringValue)
+		{
+			string sTrue = "true";
+
+			bool isEqual = root.asString().length() != sTrue.length() ? false :
+				equal(root.asString().begin(), root.asString().end(), sTrue.begin(),
+						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+
+			return isEqual ? true : false;
+		}
+		else
+			return root.get(field, defaultValue).asBool();
+	}
+}
+

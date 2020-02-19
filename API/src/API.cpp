@@ -11,6 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
+#include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
 		string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
-		bool stdout =  configuration["log"]["api"].get("stdout", "XXX").asBool();
+		bool stdout =  JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
     
 		std::vector<spdlog::sink_ptr> sinks;
 		auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -97,7 +98,7 @@ int main(int argc, char** argv)
 		// spdlog::register_logger(logger);
 		*/
 
-		size_t dbPoolSize = configuration["database"].get("apiPoolSize", 5).asInt();
+		size_t dbPoolSize = JSONUtils::asInt(configuration["database"], "apiPoolSize", 5);
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", database->poolSize: " + to_string(dbPoolSize)
 		);
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
 
 		FCGX_Init();
 
-		int threadsNumber = configuration["api"].get("threadsNumber", 1).asInt();
+		int threadsNumber = JSONUtils::asInt(configuration["api"], "threadsNumber", 1);
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", api->threadsNumber: " + to_string(threadsNumber)
 		);
@@ -222,7 +223,7 @@ API::API(Json::Value configuration,
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     }
 
-	_maxPageSize = configuration["database"].get("maxPageSize", 5).asInt();
+	_maxPageSize = JSONUtils::asInt(configuration["database"], "maxPageSize", 5);
 	logger->info(__FILEREF__ + "Configuration item"
 		+ ", database->maxPageSize: " + to_string(_maxPageSize)
 	);
@@ -236,11 +237,11 @@ API::API(Json::Value configuration,
     else
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-    _maxIngestionsNumberWorkspaceDefaultValue = _configuration["api"].get("maxIngestionsNumberWorkspaceDefaultValue", "XXX").asInt();
+    _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"], "maxIngestionsNumberWorkspaceDefaultValue", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
     );
-    _maxStorageInMBWorkspaceDefaultValue = _configuration["api"].get("maxStorageInMBWorkspaceDefaultValue", "XXX").asInt();
+    _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"], "maxStorageInMBWorkspaceDefaultValue", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
     );
@@ -253,7 +254,7 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->hostname: " + _apiHostname
     );
-    _apiPort = _configuration["api"].get("port", "XXX").asInt();
+    _apiPort = JSONUtils::asInt(_configuration["api"], "port", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->port: " + to_string(_apiPort)
     );
@@ -263,15 +264,15 @@ API::API(Json::Value configuration,
     // _logger->info(__FILEREF__ + "Configuration item"
     //    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
     // );
-    _progressUpdatePeriodInSeconds  = api["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
+    _progressUpdatePeriodInSeconds  = JSONUtils::asInt(api["binary"], "progressUpdatePeriodInSeconds", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
     );
-    _webServerPort  = api["binary"].get("webServerPort", "XXX").asInt();
+    _webServerPort  = JSONUtils::asInt(api["binary"], "webServerPort", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->webServerPort: " + to_string(_webServerPort)
     );
-    _maxProgressCallFailures  = api["binary"].get("maxProgressCallFailures", "XXX").asInt();
+    _maxProgressCallFailures  = JSONUtils::asInt(api["binary"], "maxProgressCallFailures", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
     );
@@ -280,17 +281,17 @@ API::API(Json::Value configuration,
         + ", api->binary->progressURI: " + _progressURI
     );
     
-    _defaultTTLInSeconds  = api["delivery"].get("defaultTTLInSeconds", 60).asInt();
+    _defaultTTLInSeconds  = JSONUtils::asInt(api["delivery"], "defaultTTLInSeconds", 60);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->defaultTTLInSeconds: " + to_string(_defaultTTLInSeconds)
     );
 
-    _defaultMaxRetries  = api["delivery"].get("defaultMaxRetries", 60).asInt();
+    _defaultMaxRetries  = JSONUtils::asInt(api["delivery"], "defaultMaxRetries", 60);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->defaultMaxRetries: " + to_string(_defaultMaxRetries)
     );
 
-    _defaultRedirect  = api["delivery"].get("defaultRedirect", 60).asBool();
+    _defaultRedirect  = JSONUtils::asBool(api["delivery"], "defaultRedirect", true);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->defaultRedirect: " + to_string(_defaultRedirect)
     );
@@ -304,7 +305,7 @@ API::API(Json::Value configuration,
         + ", api->delivery->deliveryHost: " + _deliveryHost
     );
 
-    _ldapEnabled  = api["activeDirectory"].get("enabled", false).asBool();
+    _ldapEnabled  = JSONUtils::asBool(api["activeDirectory"], "enabled", false);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->activeDirectory->enabled: " + to_string(_ldapEnabled)
     );
@@ -339,7 +340,7 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
     );
-    _ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+    _ffmpegEncoderPort = JSONUtils::asInt(_configuration["ffmpeg"], "encoderPort", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
@@ -356,7 +357,7 @@ API::API(Json::Value configuration,
         + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
     );
 
-	_maxSecondsToWaitAPIIngestionLock  = _configuration["mms"]["locks"].get("maxSecondsToWaitAPIIngestionLock", 0).asInt();
+	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->locks->maxSecondsToWaitAPIIngestionLock: " + to_string(_maxSecondsToWaitAPIIngestionLock)
 	);
@@ -1508,6 +1509,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         encodingProfilesList(request, workspace, queryParameters);
     }
+    else if (method == "workflowsLibraryList")
+    {
+        workflowsLibraryList(request, workspace, queryParameters);
+    }
+    else if (method == "workflowContent")
+    {
+        workflowLibraryContent(request, workspace, queryParameters);
+    }
+    else if (method == "saveWorkflowLibrary")
+    {
+        saveWorkflowLibrary(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "testEmail")
     {
         if (!admin)
@@ -1948,6 +1961,8 @@ void API::mediaItemsList(
         if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
         {
             mediaItemKey = stoll(mediaItemKeyIt->second);
+			// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
+			// but other parameters
             if (mediaItemKey == 0)
                 mediaItemKey = -1;
         }
@@ -2096,7 +2111,7 @@ void API::mediaItemsList(
 			}
 
 			string field = "tagsIn";
-            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
+            if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
 				Json::Value tagsInRoot = otherInputsRoot[field];
 
@@ -2107,7 +2122,7 @@ void API::mediaItemsList(
 			}
 
 			field = "tagsNotIn";
-            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
+            if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
 				Json::Value tagsNotInRoot = otherInputsRoot[field];
 
@@ -2118,13 +2133,13 @@ void API::mediaItemsList(
 			}
 
 			field = "otherMediaItemsKey";
-            if (_mmsEngineDBFacade->isMetadataPresent(otherInputsRoot, field))
+            if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
 				Json::Value otherMediaItemsKeyRoot = otherInputsRoot[field];
 
 				for (int mediaItemsIndex = 0; mediaItemsIndex < otherMediaItemsKeyRoot.size(); ++mediaItemsIndex)
 				{
-					otherMediaItemsKey.push_back (otherMediaItemsKeyRoot[mediaItemsIndex].asInt64());
+					otherMediaItemsKey.push_back (JSONUtils::asInt64(otherMediaItemsKeyRoot[mediaItemsIndex]));
 				}
 			}
 		}

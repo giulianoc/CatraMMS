@@ -1,12 +1,12 @@
 {
     "Type": "Workflow",
     "Label": "My workflow",
-    "Variables": {
-        "TitleOfVideo_1": "My Title of the video_1 content",
-        "TitleOfVideo_2": "My Title of the video_2 content",
-        "TitleOfConcatVideo": "My Title of the concat video content",
-        "TitleOfCutVideo": "My Title of the concat video content"
-    },  
+	"Variables": [
+		{ "Name": "TitleOfVideo_1", "Value": "My Title of the video_1 content" },
+		{ "Name": "TitleOfVideo_2", "Value": "My Title of the video_2 content" },
+		{ "Name": "TitleOfConcatVideo", "Value": "My Title of the concat video content" },
+		{ "Name": "TitleOfCutVideo", "Value": "My Title of the concat video content" }
+	],
     "Task": {
         "Type": "GroupOfTasks",
         "Parameters": { 

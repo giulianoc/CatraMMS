@@ -1,5 +1,6 @@
 
 #include "MMSEngineDBFacade.h"
+#include "JSONUtils.h"
 
 string& ltrim(string& s)
 {
@@ -3663,7 +3664,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string contentProviderName;
             
-            if (isMetadataPresent(parametersRoot, "ContentProviderName"))
+            if (JSONUtils::isMetadataPresent(parametersRoot, "ContentProviderName"))
                 contentProviderName = parametersRoot.get("ContentProviderName", "").asString();
             else
                 contentProviderName = _defaultContentProviderName;
@@ -3708,11 +3709,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             title = parametersRoot.get(field, "").asString();
             
             field = "Ingester";
-            if (isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 ingester = parametersRoot.get(field, "").asString();
 
             field = "UserData";
-            if (isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 Json::StreamWriterBuilder wbuilder;
 
@@ -3720,11 +3721,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             }
 
             field = "DeliveryFileName";
-            if (isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 deliveryFileName = parametersRoot.get(field, "").asString();
 
             field = "Retention";
-            if (isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string retention = parametersRoot.get(field, "1d").asString();
                 if (retention == "0")
@@ -3765,16 +3766,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string endPublishing = "FOREVER";
             {
                 field = "Publishing";
-                if (isMetadataPresent(parametersRoot, field))
+                if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value publishingRoot = parametersRoot[field];
 
                     field = "startPublishing";
-                    if (isMetadataPresent(publishingRoot, field))
+                    if (JSONUtils::isMetadataPresent(publishingRoot, field))
                         startPublishing = publishingRoot.get(field, "").asString();
 
                     field = "endPublishing";
-                    if (isMetadataPresent(publishingRoot, field))
+                    if (JSONUtils::isMetadataPresent(publishingRoot, field))
                         endPublishing = publishingRoot.get(field, "").asString();
                 }
                 
@@ -3863,7 +3864,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		// tags
         {
 			string field = "Tags";
-			if (isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
 				{
@@ -3889,14 +3890,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
         {
             string uniqueName;
-            if (isMetadataPresent(parametersRoot, "UniqueName"))
+            if (JSONUtils::isMetadataPresent(parametersRoot, "UniqueName"))
                 uniqueName = parametersRoot.get("UniqueName", "").asString();
 
             if (uniqueName != "")
             {
 				bool allowUniqueNameOverride = false;
-				if (isMetadataPresent(parametersRoot, "AllowUniqueNameOverride"))
-					allowUniqueNameOverride = parametersRoot.get("AllowUniqueNameOverride", false).asBool();
+				if (JSONUtils::isMetadataPresent(parametersRoot, "AllowUniqueNameOverride"))
+					allowUniqueNameOverride = JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
 
 				if (allowUniqueNameOverride)
 				{
@@ -3929,7 +3930,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		// cross references
 		{
 			string field = "CrossReference";
-			if (isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
                 Json::Value crossReferenceRoot = parametersRoot[field];
 
@@ -3938,11 +3939,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					MMSEngineDBFacade::toCrossReferenceType(crossReferenceRoot.get(field, "").asString());
 
 				field = "MediaItemKey";
-				int64_t targetMediaItemKey = crossReferenceRoot.get(field, "").asInt64();
+				int64_t targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 
                 Json::Value crossReferenceParametersRoot;
 				field = "Parameters";
-				if (isMetadataPresent(crossReferenceRoot, field))
+				if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 				{
 					crossReferenceParametersRoot = crossReferenceRoot[field];
 				}
@@ -3956,7 +3957,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         // territories
         {
             string field = "Territories";
-            if (isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 const Json::Value territories = parametersRoot[field];
                 
@@ -3974,16 +3975,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
                     string startPublishing = "NOW";
                     string endPublishing = "FOREVER";
-                    if (isMetadataPresent(territories, territoryName))
+                    if (JSONUtils::isMetadataPresent(territories, territoryName))
                     {
                         Json::Value territory = territories[territoryName];
                         
                         field = "startPublishing";
-                        if (isMetadataPresent(territory, field))
+                        if (JSONUtils::isMetadataPresent(territory, field))
                             startPublishing = territory.get(field, "XXX").asString();
 
                         field = "endPublishing";
-                        if (isMetadataPresent(territory, field))
+                        if (JSONUtils::isMetadataPresent(territory, field))
                             endPublishing = territory.get(field, "XXX").asString();
                     }
                     
@@ -4053,11 +4054,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		string externalDeliveryURL;
 		{
             string field = "ExternalDeliveryTechnology";
-			if (isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				externalDeliveryTechnology = parametersRoot.get(field, "").asString();
 
             field = "ExternalDeliveryURL";
-			if (isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				externalDeliveryURL = parametersRoot.get(field, "").asString();
 		}
 
@@ -4069,25 +4070,25 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			// of the live recording ingestion job
 			{
                 string field = "UserData";
-                if (isMetadataPresent(parametersRoot, field))
+                if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value userDataRoot = parametersRoot[field];
 
                     field = "mmsData";
-                    if (isMetadataPresent(userDataRoot, field))
+                    if (JSONUtils::isMetadataPresent(userDataRoot, field))
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
 						field = "dataType";
-						if (isMetadataPresent(mmsDataRoot, field))
+						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
 							string dataType = mmsDataRoot.get(field, "").asString();
 							if (dataType == "liveRecordingChunk")
 							{
 								field = "ingestionJobKey";
-								if (isMetadataPresent(mmsDataRoot, field))
+								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 								{
-									liveRecordingIngestionJobKey = mmsDataRoot.get(field, "").asInt64();
+									liveRecordingIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, 0);
 
 									/*
 									addIngestionJobOutput(conn, liveRecordingIngestionJobKey, mediaItemKey,
@@ -4277,23 +4278,23 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			// of the live recording ingestion job
 			{
                 string field = "UserData";
-                if (isMetadataPresent(parametersRoot, field))
+                if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value userDataRoot = parametersRoot[field];
 
                     field = "mmsData";
-                    if (isMetadataPresent(userDataRoot, field))
+                    if (JSONUtils::isMetadataPresent(userDataRoot, field))
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
 						field = "dataType";
-						if (isMetadataPresent(mmsDataRoot, field))
+						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 						{
 							string dataType = mmsDataRoot.get(field, "").asString();
 							if (dataType == "liveRecordingChunk")
 							{
 								field = "ingestionJobKey";
-								if (isMetadataPresent(mmsDataRoot, field))
+								if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 								{
 									int64_t liveRecordingIngestionJobKey = mmsDataRoot.get(field, "").asInt64();
 

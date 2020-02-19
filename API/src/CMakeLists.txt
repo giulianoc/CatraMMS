@@ -30,6 +30,7 @@ SET (SOURCES_API
 	API.cpp
 	API_Encoding.cpp
 	API_Ingestion.cpp
+	API_WorkflowLibrary.cpp
 	API_UserWorkspace.cpp
 	API_Configuration.cpp
 )

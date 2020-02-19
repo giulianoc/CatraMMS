@@ -11,6 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "JSONUtils.h"
 #include <fstream>
 // #include <sstream>
 #ifdef __LOCALENCODER__
@@ -86,11 +87,13 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->mpeg2TSEncoder: " + _mpeg2TSEncoder
     );
     
-    _intervalInSecondsToCheckEncodingFinished         = _configuration["encoding"].get("intervalInSecondsToCheckEncodingFinished", "").asInt();
+    _intervalInSecondsToCheckEncodingFinished         = JSONUtils::asInt(_configuration["encoding"],
+			"intervalInSecondsToCheckEncodingFinished", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
     );        
-    _maxSecondsToWaitUpdateEncodingJobLock         = _configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 30).asInt();
+    _maxSecondsToWaitUpdateEncodingJobLock         = JSONUtils::asInt(_configuration["mms"]["locks"],
+			"maxSecondsToWaitUpdateEncodingJobLock", 30);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
@@ -99,7 +102,7 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
     );
-    _ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+    _ffmpegEncoderPort = JSONUtils::asInt(_configuration["ffmpeg"], "encoderPort", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
@@ -167,31 +170,33 @@ void EncoderVideoAudioProxy::init(
     );
 	if (_computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
-    _computerVisionDefaultScale				= configuration["computerVision"].get("defaultScale", 1.1).asDouble();
+    _computerVisionDefaultScale				= JSONUtils::asDouble(configuration["computerVision"], "defaultScale", 1.1);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultScale: " + to_string(_computerVisionDefaultScale)
     );
-    _computerVisionDefaultMinNeighbors		= configuration["computerVision"].get("defaultMinNeighbors", 2).asInt();
+    _computerVisionDefaultMinNeighbors		= JSONUtils::asInt(configuration["computerVision"],
+			"defaultMinNeighbors", 2);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultMinNeighbors: " + to_string(_computerVisionDefaultMinNeighbors)
     );
-    _computerVisionDefaultTryFlip		= configuration["computerVision"].get("defaultTryFlip", 2).asBool();
+    _computerVisionDefaultTryFlip		= JSONUtils::asBool(configuration["computerVision"], "defaultTryFlip", false);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->defaultTryFlip: " + to_string(_computerVisionDefaultTryFlip)
     );
 
-	_timeBeforeToPrepareResourcesInMinutes		= configuration["mms"].get("liveRecording_timeBeforeToPrepareResourcesInMinutes", 2).asInt();
+	_timeBeforeToPrepareResourcesInMinutes		= JSONUtils::asInt(configuration["mms"],
+			"liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
 	);
 
-    _waitingNFSSync_attemptNumber = configuration["storage"].
-		get("waitingNFSSync_attemptNumber", 1).asInt();
+    _waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_attemptNumber", 1);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_attemptNumber: " + to_string(_waitingNFSSync_attemptNumber)
     );
-    _waitingNFSSync_sleepTimeInSeconds = configuration["storage"].
-		get("waitingNFSSync_sleepTimeInSeconds", 3).asInt();
+    _waitingNFSSync_sleepTimeInSeconds = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_sleepTimeInSeconds", 3);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_sleepTimeInSeconds: "
 			+ to_string(_waitingNFSSync_sleepTimeInSeconds)
@@ -1127,10 +1132,11 @@ string EncoderVideoAudioProxy::encodeContentImage()
 
 			{
 				string field = "sourcePhysicalPathKey";
-				sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+				sourcePhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+						field, 0);
 
 				field = "encodingProfileKey";
-				encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+				encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 			}
 
 			extensionIndex = _encodingItem->_encodeData->_fileName.find_last_of(".");
@@ -1354,10 +1360,12 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
 
     {
         string field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
     }
     
     int64_t durationInMilliSeconds = -1;
@@ -1866,10 +1874,12 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
     }
     
 	string stagingEncodedAssetPathName;
@@ -2241,7 +2251,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(encodeContentResponse, field))
+                if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                 {
                     // remove the staging directory created just for this encoding
 					/* 2019-05-24: Commented because the remove is already done in the exception generated
@@ -2315,7 +2325,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -2665,10 +2675,12 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 
     {
         string field = "sourcePhysicalPathKey";
-        sourcePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourcePhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
 
         field = "encodingProfileKey";
-        encodingProfileKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
     }
     
 	Json::Value encodingDetails;
@@ -3267,10 +3279,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
 
         field = "sourceImagePhysicalPathKey";
-        sourceImagePhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourceImagePhysicalPathKey = JSONUtils::asInt64(
+				_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "imagePosition_X_InPixel";
         imagePosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -3555,7 +3569,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(overlayContentResponse, field))
+                if (JSONUtils::isMetadataPresent(overlayContentResponse, field))
                 {
                     string error = overlayContentResponse.get(field, "XXX").asString();
                     
@@ -3587,7 +3601,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -4154,7 +4168,8 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
+				field, 0);
 
         field = "text";
         text = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -4169,22 +4184,22 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         fontType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "fontSize";
-        fontSize = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        fontSize = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "fontColor";
         fontColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "textPercentageOpacity";
-        textPercentageOpacity = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        textPercentageOpacity = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "boxEnable";
-        boxEnable = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        boxEnable = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "boxColor";
         boxColor = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "boxPercentageOpacity";
-        boxPercentageOpacity = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        boxPercentageOpacity = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -4458,7 +4473,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(overlayTextContentResponse, field))
+                if (JSONUtils::isMetadataPresent(overlayTextContentResponse, field))
                 {
                     string error = overlayTextContentResponse.get(field, "XXX").asString();
 
@@ -4490,7 +4505,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -5067,13 +5082,13 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "videoSpeedType";
         videoSpeedType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "videoSpeedSize";
-        videoSpeedSize = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        videoSpeedSize = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -5339,7 +5354,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(videoSpeedContentResponse, field))
+                if (JSONUtils::isMetadataPresent(videoSpeedContentResponse, field))
                 {
                     string error = videoSpeedContentResponse.get(field, "XXX").asString();
 
@@ -5371,7 +5386,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -5725,10 +5740,10 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "mainVideoPhysicalPathKey";
-        mainVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        mainVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "overlayVideoPhysicalPathKey";
-        overlayVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        overlayVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "overlayPosition_X_InPixel";
         overlayPosition_X_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -5743,7 +5758,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
         overlay_Height_InPixel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "soundOfMain";
-        soundOfMain = _encodingItem->_encodingParametersRoot.get(field, true).asBool();
+        soundOfMain = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, true);
     }
 
 	string ffmpegEncoderURL;
@@ -6031,7 +6046,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(pictureInPictureContentResponse, field))
+                if (JSONUtils::isMetadataPresent(pictureInPictureContentResponse, field))
                 {
                     string error = pictureInPictureContentResponse.get(field, "XXX").asString();
                     
@@ -6063,7 +6078,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -6402,37 +6417,37 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "sourceVideoPhysicalPathKey";
-        sourceVideoPhysicalPathKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        sourceVideoPhysicalPathKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "imageDirectory";
         imageDirectory = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "startTimeInSeconds";
-        startTimeInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asDouble();
+        startTimeInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "maxFramesNumber";
-        maxFramesNumber = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        maxFramesNumber = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "videoFilter";
         videoFilter = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "periodInSeconds";
-        periodInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        periodInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "mjpeg";
-        mjpeg = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        mjpeg = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "imageWidth";
-        imageWidth = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        imageWidth = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "imageHeight";
-        imageHeight = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        imageHeight = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "ingestionJobKey";
-        ingestionJobKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        ingestionJobKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "videoDurationInMilliSeconds";
-        videoDurationInMilliSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        videoDurationInMilliSeconds = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -6655,7 +6670,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(generateFramesContentResponse, field))
+                if (JSONUtils::isMetadataPresent(generateFramesContentResponse, field))
                 {
                     string error = generateFramesContentResponse.get(field, "XXX").asString();
                     
@@ -6687,7 +6702,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -6949,10 +6964,10 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "durationOfEachSlideInSeconds";
-        durationOfEachSlideInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asDouble();
+        durationOfEachSlideInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "outputFrameRate";
-        outputFrameRate = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        outputFrameRate = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "sourcePhysicalPaths";
         sourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
@@ -7179,7 +7194,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
             {
                 string field = "error";
-                if (Validator::isMetadataPresent(slideShowContentResponse, field))
+                if (JSONUtils::isMetadataPresent(slideShowContentResponse, field))
                 {
                     string error = slideShowContentResponse.get(field, "XXX").asString();
                     
@@ -7211,7 +7226,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 else
                 {
                     string field = "ffmpegEncoderHost";
-                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
@@ -7420,7 +7435,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
     {
         int outputFrameRate;  
         string field = "outputFrameRate";
-        outputFrameRate = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        outputFrameRate = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
     
         size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
         if (extensionIndex == string::npos)
@@ -7546,7 +7561,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	bool oneFramePerSecond;
 	{
 		string field = "sourceMediaItemKey";
-		sourceMediaItemKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+		sourceMediaItemKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "faceRecognitionCascadeName";
 		faceRecognitionCascadeName = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
@@ -7559,10 +7574,10 @@ string EncoderVideoAudioProxy::faceRecognition()
 		faceRecognitionOutput = _encodingItem->_encodingParametersRoot.get(field, 0).asString();
 
 		field = "initialFramesNumberToBeSkipped";
-		initialFramesNumberToBeSkipped = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+		initialFramesNumberToBeSkipped = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "oneFramePerSecond";
-		oneFramePerSecond = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+		oneFramePerSecond = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 	}
     
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
@@ -8315,7 +8330,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 			if (totalImagesNumber == -1)
 			{
 				field = "numFound";
-				totalImagesNumber = responseRoot.get(field, 0).asInt();
+				totalImagesNumber = JSONUtils::asInt(responseRoot, field, 0);
 			}
 			
 			field = "mediaItems";
@@ -8370,7 +8385,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 					Json::Value physicalPathRoot = physicalPathsArrayRoot[0];
 
 					field = "physicalPathKey";
-					int64_t physicalPathKey = physicalPathRoot.get(field, 0).asInt64();
+					int64_t physicalPathKey = JSONUtils::asInt64(physicalPathRoot, field, 0);
 
 					tuple<string, string, string, int64_t, string>
 						physicalPathFileNameSizeInBytesAndDeliveryFileName =
@@ -8860,19 +8875,19 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 	bool autoRenew;
 	{
         string field = "autoRenew";
-        autoRenew = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        autoRenew = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "utcRecordingPeriodStart";
-        utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
 		utcRecordingPeriodStart -= segmentDurationInSeconds;
 
         field = "utcRecordingPeriodEnd";
-        utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 	}
 
 	time_t utcNow;
@@ -8951,10 +8966,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "highAvailability";
-        highAvailability = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "main";
-        main = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "liveURL";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -8963,16 +8978,16 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         userAgent = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "utcRecordingPeriodStart";
-        utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "utcRecordingPeriodEnd";
-        utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        utcRecordingPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "autoRenew";
-        autoRenew = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+        autoRenew = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 0).asInt();
+        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "outputFileFormat";
         outputFileFormat = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -9387,7 +9402,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				{
 					string field = "error";
-					if (Validator::isMetadataPresent(liveRecorderContentResponse, field))
+					if (JSONUtils::isMetadataPresent(liveRecorderContentResponse, field))
 					{
 						string error = liveRecorderContentResponse.get(field, "XXX").asString();
                     
@@ -9764,10 +9779,10 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 		bool highAvailability;
 		{
 			string field = "main";
-			main = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+			main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
 			field = "highAvailability";
-			highAvailability = _encodingItem->_encodingParametersRoot.get(field, 0).asBool();
+			highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 		}
 
 		/*
@@ -9934,7 +9949,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 
         field = "liveURLConfKey";
-        liveURLConfKey = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+        liveURLConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "ConfigurationLabel";
         // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -9944,23 +9959,23 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "UserAgent";
-		if (_mmsEngineDBFacade->isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
+		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 
         field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = _encodingItem->_encodingParametersRoot.get(field, 10).asInt();
+        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 10);
 
         field = "playlistEntriesNumber";
-        playlistEntriesNumber = _encodingItem->_encodingParametersRoot.get(field, 10).asInt();
+        playlistEntriesNumber = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 10);
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-        waitingSecondsBetweenAttemptsInCaseOfErrors = _encodingItem->_encodingParametersRoot.get(field, 600).asInt();
+        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 600);
 
         field = "maxAttemptsNumberInCaseOfErrors";
-        maxAttemptsNumberInCaseOfErrors = _encodingItem->_encodingParametersRoot.get(field, 2).asInt();
+        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
 
         field = "cdnURL";
         cdnURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -10221,7 +10236,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				{
 					string field = "error";
-					if (Validator::isMetadataPresent(liveProxyContentResponse, field))
+					if (JSONUtils::isMetadataPresent(liveProxyContentResponse, field))
 					{
 						string error = liveProxyContentResponse.get(field, "XXX").asString();
                     
@@ -10967,10 +10982,10 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 			time_t utcRecordingPeriodEnd;
 			{
 				string field = "utcRecordingPeriodStart";
-				utcRecordingPeriodStart = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+				utcRecordingPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
 				field = "utcRecordingPeriodEnd";
-				utcRecordingPeriodEnd = _encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+				utcRecordingPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 			}
 
 			time_t utcNow;
@@ -11152,7 +11167,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					}
                 
 					string field = "error";
-					if (Validator::isMetadataPresent(encodeProgressResponse, field))
+					if (JSONUtils::isMetadataPresent(encodeProgressResponse, field))
 					{
 						string error = encodeProgressResponse.get(field, "XXX").asString();
                     
@@ -11182,9 +11197,9 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					else
 					{
 						string field = "encodingProgress";
-						if (Validator::isMetadataPresent(encodeProgressResponse, field))
+						if (JSONUtils::isMetadataPresent(encodeProgressResponse, field))
 						{
-							encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+							encodingProgress = JSONUtils::asInt(encodeProgressResponse, "encodingProgress", 0);
                         
 							_logger->info(__FILEREF__ + "Retrieving encodingProgress"
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -11462,32 +11477,32 @@ tuple<bool,bool,bool, bool, bool> EncoderVideoAudioProxy::getEncodingStatus()
             }
 
 			string field = "completedWithError";
-			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
-				completedWithError = encodeStatusResponse.get(field, false).asBool();
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				completedWithError = false;
 
 			field = "encodingFinished";
-			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
-				encodingFinished = encodeStatusResponse.get(field, false).asBool();
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				encodingFinished = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				encodingFinished = false;
 
 			field = "killedByUser";
-			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
-				killedByUser = encodeStatusResponse.get(field, false).asBool();
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				killedByUser = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				killedByUser = false;
 
 			field = "urlForbidden";
-			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
-				urlForbidden = encodeStatusResponse.get(field, false).asBool();
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				urlForbidden = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				urlForbidden = false;
 
 			field = "urlNotFound";
-			if (_mmsEngineDBFacade->isMetadataPresent(encodeStatusResponse, field))
-				urlNotFound = encodeStatusResponse.get(field, false).asBool();
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				urlNotFound = false;
         }
@@ -11564,7 +11579,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 )
 {
     string field = "FileFormat";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fileFormatSpecifiedByUser = parametersRoot.get(field, "XXX").asString();
         if (fileFormatSpecifiedByUser != fileFormat)
@@ -11661,7 +11676,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
     // FileFormat
     {
         field = "FileFormat";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -11678,7 +11693,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
     Json::Value encodingProfileImageRoot;
     {
         field = "Image";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -11693,7 +11708,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
     // Width
     {
         field = "Width";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -11702,13 +11717,13 @@ void EncoderVideoAudioProxy::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newWidth = encodingProfileImageRoot.get(field, "XXX").asInt();
+        newWidth = JSONUtils::asInt(encodingProfileImageRoot, field, 0);
     }
 
     // Height
     {
         field = "Height";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -11717,13 +11732,13 @@ void EncoderVideoAudioProxy::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newHeight = encodingProfileImageRoot.get(field, "XXX").asInt();
+        newHeight = JSONUtils::asInt(encodingProfileImageRoot, field, 0);
     }
 
     // Aspect
     {
         field = "AspectRatio";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -11732,13 +11747,13 @@ void EncoderVideoAudioProxy::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newAspectRatio = encodingProfileImageRoot.get(field, "XXX").asBool();
+        newAspectRatio = JSONUtils::asBool(encodingProfileImageRoot, field, false);
     }
 
     // Interlace
     {
         field = "InterlaceType";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;

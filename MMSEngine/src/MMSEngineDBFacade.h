@@ -1041,8 +1041,6 @@ public:
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
 
-    bool isMetadataPresent(Json::Value root, string field);
-
     tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
         string userEmailAddress,
@@ -1349,7 +1347,7 @@ public:
         string processorMMSForRetention
         );
 
-	int64_t createWorkflowLibrary(
+	int64_t addUpdateWorkflowLibrary(
 		int64_t workspaceKey,
 		string label,
 		string jsonWorkflow);
@@ -1359,6 +1357,9 @@ public:
 		int64_t workflowLibraryKey);
 
 	Json::Value getWorkflowsLibraryList (
+		int64_t workspaceKey);
+
+	string getWorkflowLibraryContent (
 		int64_t workspaceKey,
 		int64_t workflowLibraryKey);
 

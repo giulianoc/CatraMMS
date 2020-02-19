@@ -2,8 +2,8 @@
 	"Type": "Workflow",
 	"Label": "GroupOfTasks example",
 	"Variables": {
-		"TitleOfVideo_1": "My Title of the video_1 content",
-		"TitleOfVideo_2": "My Title of the video_2 content"
+		"TitleOfVideo_1": { "Value": "My Title of the video_1 content", "Type": "string", "Description": "..." },
+		"TitleOfVideo_2": { "Value": "My Title of the video_2 content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
 		"Type": "GroupOfTasks",

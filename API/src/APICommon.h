@@ -104,8 +104,6 @@ protected:
     void sendError(int htmlResponseCode, string errorMessage);
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
-    bool isMetadataPresent(Json::Value root, string field);
-
 private:
     int             _managedRequestsNumber;
     unsigned long   _maxAPIContentLength;

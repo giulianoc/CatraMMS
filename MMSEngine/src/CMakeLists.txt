@@ -34,6 +34,7 @@ SET (SOURCES
 	MMSEngineDBFacade_UserWorkspace.cpp
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp
+	JSONUtils.cpp
 	Validator.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
@@ -45,6 +46,7 @@ SET (HEADERS
 	MMSStorage.h
 	MMSEngineDBFacade.h
 	PersistenceLock.h
+	JSONUtils.h
 	Validator.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h

@@ -19,6 +19,7 @@
 #include "Validator.h"
 #include "EMailSender.h"
 */
+#include "JSONUtils.h"
 #include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -73,7 +74,7 @@ void API::addYouTubeConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -84,7 +85,7 @@ void API::addYouTubeConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "RefreshToken";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -222,7 +223,7 @@ void API::modifyYouTubeConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -233,7 +234,7 @@ void API::modifyYouTubeConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "RefreshToken";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -523,7 +524,7 @@ void API::addFacebookConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -534,7 +535,7 @@ void API::addFacebookConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "PageToken";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -672,7 +673,7 @@ void API::modifyFacebookConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -683,7 +684,7 @@ void API::modifyFacebookConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "PageToken";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -979,7 +980,7 @@ void API::addLiveURLConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -990,7 +991,7 @@ void API::addLiveURLConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "LiveURL";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1001,27 +1002,27 @@ void API::addLiveURLConf(
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Type";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				type = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Description";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				description = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelName";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelName = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelRegion";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelCountry";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "LiveURLData";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				liveURLData = requestBodyRoot[field];
             }
@@ -1162,7 +1163,7 @@ void API::modifyLiveURLConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1173,7 +1174,7 @@ void API::modifyLiveURLConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "LiveURL";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1184,27 +1185,27 @@ void API::modifyLiveURLConf(
             liveURL = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Type";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				type = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Description";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				description = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelName";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelName = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelRegion";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "ChannelCountry";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "LiveURLData";
-            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
 				liveURLData = requestBodyRoot[field];
             }
@@ -1634,7 +1635,7 @@ void API::addFTPConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1645,7 +1646,7 @@ void API::addFTPConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Server";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1656,7 +1657,7 @@ void API::addFTPConf(
             server = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Port";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1664,10 +1665,10 @@ void API::addFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            port = requestBodyRoot.get(field, 0).asInt();            
+            port = JSONUtils::asInt(requestBodyRoot, field, 0);            
 
             field = "UserName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1678,7 +1679,7 @@ void API::addFTPConf(
             userName = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Password";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1689,7 +1690,7 @@ void API::addFTPConf(
             password = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "RemoteDirectory";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1832,7 +1833,7 @@ void API::modifyFTPConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1843,7 +1844,7 @@ void API::modifyFTPConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Server";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1854,7 +1855,7 @@ void API::modifyFTPConf(
             server = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Port";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1862,10 +1863,10 @@ void API::modifyFTPConf(
 
                 throw runtime_error(errorMessage);
             }    
-            port = requestBodyRoot.get(field, 0).asInt();            
+            port = JSONUtils::asInt(requestBodyRoot, field, 0);            
 
             field = "UserName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1876,7 +1877,7 @@ void API::modifyFTPConf(
             userName = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Password";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1887,7 +1888,7 @@ void API::modifyFTPConf(
             password = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "RemoteDirectory";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2180,7 +2181,7 @@ void API::addEMailConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2191,7 +2192,7 @@ void API::addEMailConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Addresses";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2202,7 +2203,7 @@ void API::addEMailConf(
             addresses = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Subject";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2213,7 +2214,7 @@ void API::addEMailConf(
             subject = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Message";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2353,7 +2354,7 @@ void API::modifyEMailConf(
             }
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2364,7 +2365,7 @@ void API::modifyEMailConf(
             label = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Addresses";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2375,7 +2376,7 @@ void API::modifyEMailConf(
             addresses = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Subject";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -2386,7 +2387,7 @@ void API::modifyEMailConf(
             subject = requestBodyRoot.get(field, "XXX").asString();            
 
             field = "Message";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;

@@ -11,6 +11,7 @@
  * Created on February 17, 2018, 6:59 PM
  */
 
+#include "JSONUtils.h"
 #include <deque>
 #include <vector>
 #include <sstream>
@@ -58,12 +59,12 @@ void APICommon::init(Json::Value configuration,
 	_hostName			= System::getHostName();                                                  
 
     _managedRequestsNumber = 0;
-    _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();
+    _maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
     );
     Json::Value api = _configuration["api"];
-    _maxBinaryContentLength = api["binary"].get("maxContentLength", "XXX").asInt64();
+    _maxBinaryContentLength = JSONUtils::asInt64(api["binary"], "maxContentLength", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
     );
@@ -76,7 +77,7 @@ void APICommon::init(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->guiHostname: " + _guiHostname
     );
-    _guiPort = _configuration["mms"].get("guiPort", "XXX").asInt();
+    _guiPort = JSONUtils::asInt(_configuration["mms"], "guiPort", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->guiPort: " + to_string(_guiPort)
     );
@@ -1423,14 +1424,5 @@ Json::Value APICommon::loadConfigurationFile(const char* configurationPathName)
     }
 
     return configurationJson;
-}
-
-bool APICommon::isMetadataPresent(Json::Value root, string field)
-{
-    if (root.isObject() && root.isMember(field) && !root[field].isNull()
-)
-        return true;
-    else
-        return false;
 }
 

@@ -11,6 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "JSONUtils.h"
 #include "ActiveEncodingsManager.h"
 #include "catralibraries/System.h"
 #include "FFMpeg.h"
@@ -31,7 +32,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 	_hostName				= System::getHostName();
 
-	_maxSecondsToWaitUpdateEncodingJobLock  = _configuration["mms"]["locks"].get("maxSecondsToWaitUpdateEncodingJobLock", 0).asInt();
+	_maxSecondsToWaitUpdateEncodingJobLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
@@ -42,7 +43,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
     {
 		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
-		int maxFaceRecognitionNumber = _configuration["mms"].get("maxFaceRecognitionNumber", 0).asInt();
+		int maxFaceRecognitionNumber = JSONUtils::asInt(_configuration["mms"], "maxFaceRecognitionNumber", 0);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", mms->maxFaceRecognitionNumber: " + to_string(maxFaceRecognitionNumber)
 		);
@@ -217,6 +218,12 @@ void ActiveEncodingsManager::operator()()
 							_logger->error(__FILEREF__ + "EncodingJob is not finishing"
 								+ ", elapsed (hours): " + to_string(chrono::duration_cast<chrono::hours>(
 									chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
+								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+								+ ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+								+ ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+								+ ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
 								+ ", encodingJob->_status: " + EncoderVideoAudioProxy::toString(encodingJob->_status)
 							);
 						}

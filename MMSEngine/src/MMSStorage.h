@@ -208,8 +208,6 @@ private:
     unsigned long                   _ulCurrentMMSPartitionIndex;
 
     
-    bool isMetadataPresent(Json::Value root, string field);
-
     void contentInRepository (
 	unsigned long ulIsCopyOrMove,
 	string contentPathName,

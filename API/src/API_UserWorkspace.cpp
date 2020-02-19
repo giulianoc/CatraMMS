@@ -23,6 +23,7 @@
 #include "catralibraries/Convert.h"
 #include "Validator.h"
 */
+#include "JSONUtils.h"
 #include "catralibraries/LdapWrapper.h"
 #include "EMailSender.h"
 #include "API.h"
@@ -97,7 +98,7 @@ void API::registerUser(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -121,7 +122,7 @@ void API::registerUser(
         // encodingPriority
         {
             string field = "EncodingPriority";
-            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value"
                     + ", _encodingPriorityWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPriorityWorkspaceDefaultValue)
@@ -158,7 +159,7 @@ void API::registerUser(
         // EncodingPeriod
         {
             string field = "EncodingPeriod";
-            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value"
                     + ", _encodingPeriodWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPeriodWorkspaceDefaultValue)
@@ -191,7 +192,7 @@ void API::registerUser(
         // MaxIngestionsNumber
         {
             string field = "MaxIngestionsNumber";
-            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value"
                     + ", _maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
@@ -227,7 +228,7 @@ void API::registerUser(
         // MaxStorageInGB
         {
             string field = "MaxStorageInGB";
-            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!JSONUtils::isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value"
                     + ", _maxStorageInGBWorkspaceDefaultValue: " + to_string(_maxStorageInGBWorkspaceDefaultValue)
@@ -438,7 +439,7 @@ void API::createWorkspace(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -765,7 +766,7 @@ void API::shareWorkspace_(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -789,7 +790,7 @@ void API::shareWorkspace_(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1081,7 +1082,7 @@ void API::login(
 				};
 				for (string field: mandatoryFields)
 				{
-					if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 					{
 						string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1111,7 +1112,7 @@ void API::login(
 					loginDetailsRoot[field] = _ldapEnabled;
 
 					field = "userKey";
-					userKey = loginDetailsRoot.get(field, 0).asInt64();
+					userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
             
 					_logger->info(__FILEREF__ + "Login User"
 						+ ", userKey: " + to_string(userKey)
@@ -1166,7 +1167,7 @@ void API::login(
 				};
 				for (string field: mandatoryFields)
 				{
-					if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 					{
 						string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1223,7 +1224,7 @@ void API::login(
 						loginDetailsRoot[field] = _ldapEnabled;
 
 						field = "userKey";
-						userKey = loginDetailsRoot.get(field, 0).asInt64();
+						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
             
 						_logger->info(__FILEREF__ + "Login User"
 							+ ", userKey: " + to_string(userKey)
@@ -1309,7 +1310,7 @@ void API::login(
 						loginDetailsRoot[field] = _ldapEnabled;
 
 						field = "userKey";
-						userKey = loginDetailsRoot.get(field, 0).asInt64();
+						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
             
 						_logger->info(__FILEREF__ + "Login User"
 							+ ", userKey: " + to_string(userKey)
@@ -1496,7 +1497,7 @@ void API::updateUser(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1512,8 +1513,8 @@ void API::updateUser(
             email = metadataRoot.get("EMail", "XXX").asString();
             country = metadataRoot.get("Country", "XXX").asString();
 
-			if (_mmsEngineDBFacade->isMetadataPresent(metadataRoot, "NewPassword")
-					&& _mmsEngineDBFacade->isMetadataPresent(metadataRoot, "OldPassword"))
+			if (JSONUtils::isMetadataPresent(metadataRoot, "NewPassword")
+					&& JSONUtils::isMetadataPresent(metadataRoot, "OldPassword"))
 			{
 				passwordChanged = true;
 				newPassword = metadataRoot.get("NewPassword", "").asString();
@@ -1527,7 +1528,7 @@ void API::updateUser(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1714,7 +1715,7 @@ void API::updateWorkspace(
             };
             for (string field: mandatoryFields)
             {
-                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Json field: " + field;
@@ -1726,22 +1727,22 @@ void API::updateWorkspace(
                 }
             }
 
-            newEnabled = metadataRoot.get("Enabled", "XXX").asBool();
+            newEnabled = JSONUtils::asBool(metadataRoot, "Enabled", false);
             newName = metadataRoot.get("Name", "XXX").asString();
             newMaxEncodingPriority = metadataRoot.get("MaxEncodingPriority", "XXX").asString();
             newEncodingPeriod = metadataRoot.get("EncodingPeriod", "XXX").asString();
-            newMaxIngestionsNumber = metadataRoot.get("MaxIngestionsNumber", "XXX").asInt64();
-            newMaxStorageInMB = metadataRoot.get("MaxStorageInMB", "XXX").asInt64();
+            newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, "MaxIngestionsNumber", 0);
+            newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, "MaxStorageInMB", 0);
             newLanguageCode = metadataRoot.get("LanguageCode", "XXX").asString();
-            newCreateRemoveWorkspace = metadataRoot.get("CreateRemoveWorkspace", "XXX").asBool();
-            newIngestWorkflow = metadataRoot.get("IngestWorkflow", "XXX").asBool();
-            newCreateProfiles = metadataRoot.get("CreateProfiles", "XXX").asBool();
-            newDeliveryAuthorization = metadataRoot.get("DeliveryAuthorization", "XXX").asBool();
-            newShareWorkspace = metadataRoot.get("ShareWorkspace", "XXX").asBool();
-            newEditMedia = metadataRoot.get("EditMedia", "XXX").asBool();
-            newEditConfiguration = metadataRoot.get("EditConfiguration", "XXX").asBool();
-            newKillEncoding = metadataRoot.get("KillEncoding", "XXX").asBool();
-            newCancelIngestionJob = metadataRoot.get("CancelIngestionJob", "XXX").asBool();
+            newCreateRemoveWorkspace = JSONUtils::asBool(metadataRoot, "CreateRemoveWorkspace", false);
+            newIngestWorkflow = JSONUtils::asBool(metadataRoot, "IngestWorkflow", false);
+            newCreateProfiles = JSONUtils::asBool(metadataRoot, "CreateProfiles", false);
+            newDeliveryAuthorization = JSONUtils::asBool(metadataRoot, "DeliveryAuthorization", false);
+            newShareWorkspace = JSONUtils::asBool(metadataRoot, "ShareWorkspace", false);
+            newEditMedia = JSONUtils::asBool(metadataRoot, "EditMedia", false);
+            newEditConfiguration = JSONUtils::asBool(metadataRoot, "EditConfiguration", false);
+            newKillEncoding = JSONUtils::asBool(metadataRoot, "KillEncoding", false);
+            newCancelIngestionJob = JSONUtils::asBool(metadataRoot, "CancelIngestionJob", false);
         }
 
         try

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <csignal>
 
+#include "JSONUtils.h"
 #include "catralibraries/System.h"
 #include "catralibraries/Service.h"
 #include "catralibraries/Scheduler2.h"
@@ -87,7 +88,7 @@ int main (int iArgc, char *pArgv [])
     Json::Value configuration = loadConfigurationFile(configPathName);
 
     string logPathName =  configuration["log"]["mms"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"]["mms"].get("stdout", "XXX").asBool();
+    bool stdout =  JSONUtils::asBool(configuration["log"]["mms"], "stdout", false);
     
     std::vector<spdlog::sink_ptr> sinks;
     auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -124,7 +125,7 @@ int main (int iArgc, char *pArgv [])
     signal(SIGABRT, signalHandler);
     // signal(SIGBUS, signalHandler);
 
-    size_t dbPoolSize = configuration["database"].get("enginePoolSize", 5).asInt();
+    size_t dbPoolSize = JSONUtils::asInt(configuration["database"], "enginePoolSize", 5);
     logger->info(__FILEREF__ + "Configuration item"
         + ", database->poolSize: " + to_string(dbPoolSize)
     );
@@ -181,7 +182,7 @@ int main (int iArgc, char *pArgv [])
 //            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
     vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
     {
-        int processorThreads =  configuration["mms"].get("processorThreads", 1).asInt();
+        int processorThreads =  JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
         shared_ptr<long> processorsThreadsNumber = make_shared<long>(0);
 
         for (int processorThreadIndex = 0; processorThreadIndex < processorThreads; processorThreadIndex++)
@@ -197,7 +198,7 @@ int main (int iArgc, char *pArgv [])
         }
     }    
     
-    unsigned long           ulThreadSleepInMilliSecs = configuration["scheduler"].get("threadSleepInMilliSecs", 5).asInt();
+    unsigned long           ulThreadSleepInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "threadSleepInMilliSecs", 5);
     logger->info(__FILEREF__ + "Creating Scheduler2"
         + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
             );
@@ -224,7 +225,7 @@ int main (int iArgc, char *pArgv [])
             );
     thread schedulerThread (ref(scheduler));
 
-    unsigned long           checkIngestionTimesPeriodInMilliSecs = configuration["scheduler"].get("checkIngestionTimesPeriodInMilliSecs", 2000).asInt();
+    unsigned long           checkIngestionTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "checkIngestionTimesPeriodInMilliSecs", 2000);
     logger->info(__FILEREF__ + "Creating and Starting CheckIngestionTimes"
         + ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
             );
@@ -233,7 +234,7 @@ int main (int iArgc, char *pArgv [])
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
-    unsigned long           checkEncodingTimesPeriodInMilliSecs = configuration["scheduler"].get("checkEncodingTimesPeriodInMilliSecs", 10000).asInt();
+    unsigned long           checkEncodingTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "checkEncodingTimesPeriodInMilliSecs", 10000);
     logger->info(__FILEREF__ + "Creating and Starting CheckEncodingTimes"
         + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
             );

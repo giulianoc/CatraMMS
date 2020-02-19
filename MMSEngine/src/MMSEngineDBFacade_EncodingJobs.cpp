@@ -1,4 +1,5 @@
 
+#include "JSONUtils.h"
 #include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 
@@ -53,7 +54,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and ij.ingestionType = 'Live-Recorder' "
-				"order by JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') "
+				"order by JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') asc"
 				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -534,10 +535,10 @@ void MMSEngineDBFacade::getEncodingJobs(
                     encodingItem->_encodeData = make_shared<EncodingItem::EncodeData>();
                             
                     string field = "sourcePhysicalPathKey";
-                    int64_t sourcePhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                    int64_t sourcePhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                                         
                     field = "encodingProfileKey";
-                    int64_t encodingProfileKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                    int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
 
                     {
                         lastSQLCommand = 
@@ -838,10 +839,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
 
                         field = "sourceImagePhysicalPathKey";
-                        sourceImagePhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        sourceImagePhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                     }
 
                     int64_t videoMediaItemKey;
@@ -1098,7 +1099,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                     }
 
                     int64_t videoMediaItemKey;
@@ -1281,7 +1282,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                     }
 
                     int64_t videoMediaItemKey;
@@ -1825,7 +1826,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "sourceVideoPhysicalPathKey";
-                        sourceVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        sourceVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                     }
 
                     int64_t videoMediaItemKey;
@@ -2009,10 +2010,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         string field = "mainVideoPhysicalPathKey";
-                        mainVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        mainVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
 
                         field = "overlayVideoPhysicalPathKey";
-                        overlayVideoPhysicalPathKey = encodingItem->_encodingParametersRoot.get(field, 0).asInt64();
+                        overlayVideoPhysicalPathKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
                     }
 
 					{

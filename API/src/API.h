@@ -241,6 +241,8 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+	Json::Value manageWorkflowVariables(string requestBody);
+
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -296,6 +298,27 @@ private:
         unordered_map<string, string> queryParameters);
 
     void removeEncodingProfilesSet(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+	void workflowsLibraryList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+	void workflowLibraryContent(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+	void saveWorkflowLibrary(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+	void removeWorkflowLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);

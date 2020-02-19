@@ -11,6 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
+#include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
 #include <curlpp/cURLpp.hpp>
@@ -845,7 +846,7 @@ void API::addEncodingProfilesSet(
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+            if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -880,7 +881,7 @@ void API::addEncodingProfilesSet(
             }
             
             /*            
-            if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+            if (JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 Json::Value profilesRoot = encodingProfilesSetRoot[field];
 
@@ -889,7 +890,7 @@ void API::addEncodingProfilesSet(
                     Json::Value profileRoot = profilesRoot[profileIndex];
 
                     string field = "Label";
-                    if (!_mmsEngineDBFacade->isMetadataPresent(profileRoot, field))
+                    if (!JSONUtils::isMetadataPresent(profileRoot, field))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                                 + ", Field: " + field;
@@ -1079,7 +1080,7 @@ void API::addEncodingProfile(
             validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
             string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+            if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
