@@ -8187,7 +8187,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		}
 
 		string faceIdentificationCascadeName;
-        string jsonDeepLearnedModelTags;
+        string deepLearnedModelTagsCommaSeparated;
         {
             string field = "CascadeName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -8211,9 +8211,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-
-            Json::StreamWriterBuilder wbuilder;
-            jsonDeepLearnedModelTags = Json::writeString(wbuilder, parametersRoot[field]);
+            deepLearnedModelTagsCommaSeparated = parametersRoot.get(field, "XXX").asString();
         }
         
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -8317,7 +8315,8 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			*/
 
 			_mmsEngineDBFacade->addEncoding_FaceIdentificationJob(workspace, ingestionJobKey,
-                mmsAssetPathName, faceIdentificationCascadeName, jsonDeepLearnedModelTags, encodingPriority);
+                mmsAssetPathName, faceIdentificationCascadeName, deepLearnedModelTagsCommaSeparated,
+				encodingPriority);
         }
     }
     catch(runtime_error e)

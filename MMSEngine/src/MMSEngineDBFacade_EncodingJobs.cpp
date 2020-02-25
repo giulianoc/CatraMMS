@@ -7069,7 +7069,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
 	string faceIdentificationCascadeName,
-	string jsonDeepLearnedModelTags,
+	string deepLearnedModelTagsCommaSeparated,
 	EncodingPriority encodingPriority
 )
 {
@@ -7102,7 +7102,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 + "{ "
                 + "\"sourcePhysicalPath\": \"" + sourcePhysicalPath + "\""
                 + ", \"faceIdentificationCascadeName\": \"" + faceIdentificationCascadeName + "\""
-                + ", \"deepLearnedModelTags\": " + jsonDeepLearnedModelTags + ""
+                + ", \"deepLearnedModelTagsCommaSeparated\": " + deepLearnedModelTagsCommaSeparated + ""
                 + "} "
                 ;
 

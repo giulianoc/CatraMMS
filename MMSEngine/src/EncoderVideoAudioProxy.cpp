@@ -8280,14 +8280,14 @@ string EncoderVideoAudioProxy::faceIdentification()
 	{
 		vector<string> deepLearnedModelTags;
 
-		string field = "deepLearnedModelTags";
-		Json::Value deepLearnedModelTagsRoot = _encodingItem->_encodingParametersRoot[field];
-		for (int deepLearnedModelTagsIndex = 0;
-				deepLearnedModelTagsIndex < deepLearnedModelTagsRoot.size();
-				deepLearnedModelTagsIndex++)
+		string field = "deepLearnedModelTagsCommaSeparated";
+		stringstream ssDeepLearnedModelTagsCommaSeparated (_encodingItem->_encodingParametersRoot.get(field, "").asString());
+		while (ssDeepLearnedModelTagsCommaSeparated.good())
 		{
-			deepLearnedModelTags.push_back(
-					deepLearnedModelTagsRoot[deepLearnedModelTagsIndex].asString());
+			string tag;
+			getline(ssDeepLearnedModelTagsCommaSeparated, tag, ',');
+
+			deepLearnedModelTags.push_back(tag);
 		}
 
 		int64_t mediaItemKey = -1;
@@ -10341,6 +10341,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					tuple<bool, bool, bool, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
+					// health check and retention is done by ffmpegEncoder.cpp
+					/*
 					vector<string>	chunksTooOldToBeRemoved;
 					bool chunksWereNotGenerated = false;
 
@@ -10494,8 +10496,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							);
 						}
 					}
+					*/
 					
-					if (completedWithError || chunksWereNotGenerated)
+					if (completedWithError) // || chunksWereNotGenerated)
 					{
 						if (urlForbidden || urlNotFound)
 						{
@@ -10513,7 +10516,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)"             
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
+							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
 						;
 						_logger->error(errorMessage);
 
@@ -10581,8 +10584,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
 								&& !killedByUser);
 
-						if (chunksWereNotGenerated)
-							encodingFinished = true;
+						// if (chunksWereNotGenerated)
+						// 	encodingFinished = true;
 
 						throw runtime_error(errorMessage);
 					}
@@ -10621,6 +10624,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 					}
 
+					/*
 					if (outputType == "HLS" || outputType == "DASH")
 					{
 						bool exceptionInCaseOfError = false;
@@ -10646,6 +10650,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							}
 						}
 					}
+					*/
                 }
                 catch(...)
                 {

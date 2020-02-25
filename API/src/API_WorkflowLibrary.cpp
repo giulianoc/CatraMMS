@@ -89,7 +89,7 @@ void API::workflowLibraryContent(
     {
 		int64_t workflowLibraryKey = -1;
 		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
-		if (workflowLibraryKeyIt != queryParameters.end() && workflowLibraryKeyIt->second != "")
+		if (workflowLibraryKeyIt == queryParameters.end())
 		{
 			string errorMessage = string("'workflowLibraryKey' URI parameter is missing");
 			_logger->error(__FILEREF__ + errorMessage);
@@ -172,9 +172,14 @@ void API::saveWorkflowLibrary(
             }
             string workflowLabel = requestBodyRoot.get(field, "XXX").asString();
 
+			int64_t thumbnailMediaItemKey = -1;
+			auto thumbnailMediaItemKeyIt = queryParameters.find("thumbnailMediaItemKey");
+			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
+				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
+
             int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowLibrary(
                 workspace->_workspaceKey, workflowLabel,
-                requestBody);
+                thumbnailMediaItemKey, requestBody);
 
             responseBody = (
                     string("{ ") 

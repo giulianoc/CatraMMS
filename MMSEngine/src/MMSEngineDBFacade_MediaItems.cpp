@@ -3866,9 +3866,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string field = "Tags";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
+				stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
+				while (ssTagsCommaSeparated.good())
 				{
-					string tag = parametersRoot[field][tagIndex].asString();
+					string tag;
+					getline(ssTagsCommaSeparated, tag, ',');
+
 					trim(tag);
 
 					if (tag == "")

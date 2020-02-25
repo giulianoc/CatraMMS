@@ -63,6 +63,11 @@ private:
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>		_ffmpeg;
 		pid_t					_childPid;
+
+		int64_t					_ingestionJobKey;
+		string					_manifestFilePathName;
+		string					_outputType;
+		chrono::system_clock::time_point	_proxyStart;
     };
 
 	// no encoding, just copying the video/audio tracks
@@ -101,6 +106,8 @@ private:
     mutex						_liveProxyMutex;
     int							_maxLiveProxiesCapability;
     vector<shared_ptr<LiveProxy>>	_liveProxiesCapability;
+	int							_liveProxyHealthCheckInSeconds;
+	bool						_liveProxyMonitorThreadShutdown;
 
     mutex                       _liveRecordingMutex;
     int                         _maxLiveRecordingsCapability;
@@ -187,6 +194,7 @@ private:
         shared_ptr<LiveProxy> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
+	void liveProxyMonitorThread();
 
 	void videoSpeed(
         // FCGX_Request& request,

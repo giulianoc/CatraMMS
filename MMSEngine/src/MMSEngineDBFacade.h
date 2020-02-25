@@ -1350,6 +1350,7 @@ public:
 	int64_t addUpdateWorkflowLibrary(
 		int64_t workspaceKey,
 		string label,
+		int64_t thumbnailMediaItemKey,
 		string jsonWorkflow);
 
 	void removeWorkflowLibrary(                                                                
@@ -1527,7 +1528,7 @@ public:
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
 		string faceIdentificationCascadeName,
-		string jsonDeepLearnedModelTags,
+		string deepLearnedModelTagsCommaSeparated,
         EncodingPriority encodingPriority);
 
 	int addEncoding_LiveRecorderJob (
@@ -1985,6 +1986,7 @@ private:
 		shared_ptr<MySQLConnection> conn,                                                                         
 		int64_t workspaceKey,                                                                                     
 		string label,                                                                                             
+		int64_t thumbnailMediaItemKey,
 		string jsonWorkflow);
 
 	void addCrossReference (

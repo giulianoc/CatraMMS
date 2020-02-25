@@ -8,6 +8,7 @@
 int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
 	int64_t workspaceKey,
 	string label,
+	int64_t thumbnailMediaItemKey,
 	string jsonWorkflow
 )
 {
@@ -27,6 +28,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
 			conn,
 			workspaceKey,
 			label,
+			thumbnailMediaItemKey,
 			jsonWorkflow);
 
 		_logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -101,6 +103,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
 	shared_ptr<MySQLConnection> conn,
 	int64_t workspaceKey,
 	string label,
+	int64_t thumbnailMediaItemKey,
 	string jsonWorkflow
 )
 {
@@ -124,10 +127,15 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
                 workflowLibraryKey     = resultSet->getInt64("workflowLibraryKey");
 
                 lastSQLCommand =
-                    "update MMS_WorkflowyLibrary set jsonWorkflow = ? where workflowLibraryKey = ?";
+                    "update MMS_WorkflowLibrary set thumbnailMediaItemKey = ?, jsonWorkflow = ? "
+					"where workflowLibraryKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
+				if (thumbnailMediaItemKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, thumbnailMediaItemKey);
                 preparedStatement->setString(queryParameterIndex++, jsonWorkflow);
                 preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
 
@@ -137,13 +145,18 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
             {
                 lastSQLCommand = 
 					"insert into MMS_WorkflowLibrary ("
-						"workflowLibraryKey, workspaceKey, label, jsonWorkflow) values ("
-						"NULL, ?, ?, ?)";
+						"workflowLibraryKey, workspaceKey, label, thumbnailMediaItemKey, jsonWorkflow) values ("
+						"NULL, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-                    preparedStatement->setString(queryParameterIndex++, label);
+				preparedStatement->setString(queryParameterIndex++, label);
+				if (thumbnailMediaItemKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, thumbnailMediaItemKey);
+
                 preparedStatement->setString(queryParameterIndex++, jsonWorkflow);
 
                 preparedStatement->executeUpdate();
@@ -347,14 +360,15 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
             }
         }
 
-        Json::Value workflowsLibraryRoot(Json::arrayValue);
-        {                    
+        Json::Value workflowsRoot(Json::arrayValue);
+        {
             lastSQLCommand = 
                 string ("select workspaceKey, workflowLibraryKey, label, "
 					"thumbnailMediaItemKey, jsonWorkflow from MMS_WorkflowLibrary ") 
                 + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -374,8 +388,11 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
                 field = "label";
                 workflowLibraryRoot[field] = static_cast<string>(resultSet->getString("label"));
 
-                field = "thumbnailMediaItemKey";
-                workflowLibraryRoot[field] = resultSet->getInt64("thumbnailMediaItemKey");
+				field = "thumbnailMediaItemKey";
+				if (resultSet->isNull("thumbnailMediaItemKey"))
+					workflowLibraryRoot[field] = Json::nullValue;
+				else
+					workflowLibraryRoot[field] = resultSet->getInt64("thumbnailMediaItemKey");
 
                 {
                     string jsonWorkflow = resultSet->getString("jsonWorkflow");
@@ -420,12 +437,12 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
 						workflowLibraryRoot["variables"] = workflowRoot[field];
                 }
 
-                workflowsLibraryRoot.append(workflowLibraryRoot);
+                workflowsRoot.append(workflowLibraryRoot);
             }
         }
 
         field = "workflowsLibrary";
-        responseRoot[field] = workflowsLibraryRoot;
+        responseRoot[field] = workflowsRoot;
 
         field = "response";
         workflowsLibraryRoot[field] = responseRoot;
@@ -475,7 +492,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
         }
 
         throw e;
-    } 
+    }
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
