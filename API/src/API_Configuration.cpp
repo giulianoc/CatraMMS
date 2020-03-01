@@ -951,7 +951,7 @@ void API::addLiveURLConf(
         string channelName;
         string channelRegion;
         string channelCountry;
-        Json::Value liveURLData;
+        Json::Value liveURLData = Json::nullValue;
 
         try
         {

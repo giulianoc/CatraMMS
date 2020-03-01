@@ -1200,6 +1200,7 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
         
         {
 			string sLiveURLData;
+			if (liveURLData != Json::nullValue)
 			{
 				Json::StreamWriterBuilder wbuilder;
 				sLiveURLData = Json::writeString(wbuilder, liveURLData);

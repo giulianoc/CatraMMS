@@ -5,7 +5,7 @@
 #include "MMSEngineDBFacade.h"
 
 
-int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
+int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	int64_t workspaceKey,
 	string label,
 	int64_t thumbnailMediaItemKey,
@@ -24,7 +24,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
 			+ ", getConnectionId: " + to_string(conn->getConnectionId())
 		);
 
-		workflowLibraryKey = addUpdateWorkflowLibrary(
+		workflowLibraryKey = addUpdateWorkflowAsLibrary(
 			conn,
 			workspaceKey,
 			label,
@@ -99,7 +99,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
     return workflowLibraryKey;
 }
 
-int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
+int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	shared_ptr<MySQLConnection> conn,
 	int64_t workspaceKey,
 	string label,
@@ -198,7 +198,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowLibrary(
 }
 
 
-void MMSEngineDBFacade::removeWorkflowLibrary(
+void MMSEngineDBFacade::removeWorkflowAsLibrary(
     int64_t workspaceKey, int64_t workflowLibraryKey)
 {
     string      lastSQLCommand;
@@ -304,7 +304,7 @@ void MMSEngineDBFacade::removeWorkflowLibrary(
 }
 
 
-Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
+Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 	int64_t workspaceKey
 )
 {
@@ -317,7 +317,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getWorkflowsLibraryList"
+        _logger->info(__FILEREF__ + "getWorkflowsAsLibraryList"
             + ", workspaceKey: " + to_string(workspaceKey)
         );
 
@@ -516,7 +516,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsLibraryList (
 }
 
 
-string MMSEngineDBFacade::getWorkflowLibraryContent (
+string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 	int64_t workspaceKey,
 	int64_t workflowLibraryKey
 )
@@ -530,7 +530,7 @@ string MMSEngineDBFacade::getWorkflowLibraryContent (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getWorkflowLibraryContent"
+        _logger->info(__FILEREF__ + "getWorkflowAsLibraryContent"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", workflowLibraryKey: " + to_string(workflowLibraryKey)
         );
@@ -552,10 +552,140 @@ string MMSEngineDBFacade::getWorkflowLibraryContent (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
+            if (!resultSet->next())
             {
-				workflowLibraryContent = resultSet->getString("jsonWorkflow");
+				string errorMessage = __FILEREF__ + "WorkflowLibrary was not found"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
+				;
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
             }
+
+			workflowLibraryContent = resultSet->getString("jsonWorkflow");
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return workflowLibraryContent;
+}
+
+string MMSEngineDBFacade::getWorkflowAsLibraryContent (
+	int64_t workspaceKey,
+	string label
+)
+{
+    string      lastSQLCommand;
+    string		workflowLibraryContent;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getWorkflowAsLibraryContent"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", label: " + label
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+
+        {                    
+            lastSQLCommand = "select jsonWorkflow from MMS_WorkflowLibrary "
+					"where workspaceKey = ? and label = ?"
+					;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			if (workspaceKey == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setString(queryParameterIndex++, label);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (!resultSet->next())
+            {
+				string errorMessage = __FILEREF__ + "WorkflowLibrary was not found"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", label: " + label
+				;
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+            }
+
+			workflowLibraryContent = resultSet->getString("jsonWorkflow");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"

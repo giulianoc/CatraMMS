@@ -3623,7 +3623,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				Json::Value variableWorkflowRoot;
 
 				field = "Type";
-				variableWorkflowRoot[field] = "int";
+				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
 				variableWorkflowRoot[field] = utcChunkStartTime;
@@ -3669,7 +3669,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				Json::Value variableWorkflowRoot;
 
 				field = "Type";
-				variableWorkflowRoot[field] = "int";
+				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
 				variableWorkflowRoot[field] = utcPreviousChunkStartTime;

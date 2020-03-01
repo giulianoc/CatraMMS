@@ -241,7 +241,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-	Json::Value manageWorkflowVariables(string requestBody);
+	Json::Value manageWorkflowVariables(string requestBody, Json::Value variablesValuesToBeUsedRoot);
 
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
@@ -302,23 +302,23 @@ private:
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-	void workflowsLibraryList(
+	void workflowsAsLibraryList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-	void workflowLibraryContent(
+	void workflowAsLibraryContent(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-	void saveWorkflowLibrary(
+	void saveWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-	void removeWorkflowLibrary(
+	void removeWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);

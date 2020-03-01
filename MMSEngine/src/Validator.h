@@ -36,6 +36,8 @@ public:
     
     bool isVideoAudioFileFormat(string fileFormat);
     
+	bool isWorkflowAsLibraryTypeValid(string workflowAsLibraryType);
+
     bool isImageFileFormat(string fileFormat);
 
     bool isFontTypeValid(string fontType);
@@ -174,6 +176,10 @@ public:
     void validateEncodingProfileRootMetadata(
         MMSEngineDBFacade::ContentType contentType,
         Json::Value encodingProfileRoot);
+
+    void validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
 	void fillReferencesOutput(
 		int64_t workspaceKey, Json::Value parametersRoot,

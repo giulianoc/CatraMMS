@@ -667,6 +667,7 @@ public:
 
         EmailNotification       = 30,
         MediaCrossReference		= 31,
+        WorkflowAsLibrary		= 32,
         ContentUpdate           = 50,
         ContentRemove           = 60,
         GroupOfTasks			= 70
@@ -734,6 +735,8 @@ public:
                 return "Email-Notification";
             case IngestionType::MediaCrossReference:
                 return "Media-Cross-Reference";
+            case IngestionType::WorkflowAsLibrary:
+                return "Workflow-As-Library";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -809,6 +812,8 @@ public:
             return IngestionType::EmailNotification;
         else if (lowerCase == "media-cross-reference")
             return IngestionType::MediaCrossReference;
+        else if (lowerCase == "workflow-as-library")
+            return IngestionType::WorkflowAsLibrary;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
@@ -1347,22 +1352,26 @@ public:
         string processorMMSForRetention
         );
 
-	int64_t addUpdateWorkflowLibrary(
+	int64_t addUpdateWorkflowAsLibrary(
 		int64_t workspaceKey,
 		string label,
 		int64_t thumbnailMediaItemKey,
 		string jsonWorkflow);
 
-	void removeWorkflowLibrary(                                                                
+	void removeWorkflowAsLibrary(                                                                
 		int64_t workspaceKey,
 		int64_t workflowLibraryKey);
 
-	Json::Value getWorkflowsLibraryList (
+	Json::Value getWorkflowsAsLibraryList (
 		int64_t workspaceKey);
 
-	string getWorkflowLibraryContent (
+	string getWorkflowAsLibraryContent (
 		int64_t workspaceKey,
 		int64_t workflowLibraryKey);
+
+	string getWorkflowAsLibraryContent (
+		int64_t workspaceKey,
+		string label);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
@@ -1982,7 +1991,7 @@ private:
         int imageQuality
     );
 
-	int64_t addUpdateWorkflowLibrary(                                                          
+	int64_t addUpdateWorkflowAsLibrary(                                                          
 		shared_ptr<MySQLConnection> conn,                                                                         
 		int64_t workspaceKey,                                                                                     
 		string label,                                                                                             

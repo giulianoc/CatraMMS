@@ -1509,17 +1509,21 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         encodingProfilesList(request, workspace, queryParameters);
     }
-    else if (method == "workflowsLibraryList")
+    else if (method == "workflowsAsLibraryList")
     {
-        workflowsLibraryList(request, workspace, queryParameters);
+        workflowsAsLibraryList(request, workspace, queryParameters);
     }
-    else if (method == "workflowContent")
+    else if (method == "workflowAsLibraryContent")
     {
-        workflowLibraryContent(request, workspace, queryParameters);
+        workflowAsLibraryContent(request, workspace, queryParameters);
     }
-    else if (method == "saveWorkflowLibrary")
+    else if (method == "saveWorkflowAsLibrary")
     {
-        saveWorkflowLibrary(request, workspace, queryParameters, requestBody);
+        saveWorkflowAsLibrary(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeWorkflowAsLibrary")
+    {
+        removeWorkflowAsLibrary(request, workspace, queryParameters);
     }
     else if (method == "testEmail")
     {

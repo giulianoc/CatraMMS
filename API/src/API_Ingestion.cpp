@@ -47,7 +47,7 @@ void API::ingestion(
     {
 		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-        Json::Value requestBodyRoot = manageWorkflowVariables(requestBody);
+        Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
 
         string responseBody;    
         shared_ptr<MySQLConnection> conn;
@@ -258,7 +258,7 @@ void API::ingestion(
     }
 }
 
-Json::Value API::manageWorkflowVariables(string requestBody)
+Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variablesValuesToBeUsedRoot)
 {
 	Json::Value requestBodyRoot;
 
@@ -314,21 +314,63 @@ Json::Value API::manageWorkflowVariables(string requestBody)
 				for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
 				{
 					Json::Value key = it.key();
-					Json::Value variableDetails = (*it);
-				// for (int variableIndex = 0; variableIndex < variablesRoot.size();
-				// 	variableIndex++)
-				// {
-				//	Json::Value variableRoot = variablesRoot[variableIndex];
 
-				//	field = "Name";
-				//	string sKey = variableRoot.get(field, "XXX").asString();
-				//	field = "Value";
-				//	string sValue = variableRoot.get(field, "XXX").asString();
+					Json::StreamWriterBuilder wbuilder;
+					string sKey = Json::writeString(wbuilder, key);
+					if (sKey.length() > 2)
+						sKey = sKey.substr(1, sKey.length() - 2);
 
-						Json::StreamWriterBuilder wbuilder;
-						string sKey = Json::writeString(wbuilder, key);
-						if (sKey.length() > 2)
-							sKey = sKey.substr(1, sKey.length() - 2);
+					string sValue;
+					{
+						Json::Value variableDetails = (*it);
+
+						field = "Type";
+						string variableType = variableDetails.get(field, "XXX").asString();
+
+						if (variablesValuesToBeUsedRoot == Json::nullValue)
+						{
+							field = "Value";
+							if (variableType == "string")
+								sValue = variableDetails.get(field, "").asString();
+							else if (variableType == "integer")
+								sValue = to_string(JSONUtils::asInt64(variableDetails, field, 0));
+							else if (variableType == "decimal")
+								sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
+							else if (variableType == "boolean")
+								sValue = to_string(JSONUtils::asBool(variableDetails, field, false));
+							else
+							{
+								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
+									+ ", variableType: " + variableType
+									+ ", requestBody: " + requestBody
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						else
+						{
+							if (variableType == "string")
+								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+							else if (variableType == "integer")
+								sValue = to_string(JSONUtils::asInt64(variablesValuesToBeUsedRoot, sKey, 0));
+							else if (variableType == "decimal")
+								sValue = to_string(JSONUtils::asDouble(variablesValuesToBeUsedRoot, sKey, 0.0));
+							else if (variableType == "boolean")
+								sValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
+							else
+							{
+								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
+									+ ", variableType: " + variableType
+									+ ", requestBody: " + requestBody
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+					}
 
 					/*
 						string sValue = Json::writeString(wbuilder, value);        
@@ -337,9 +379,6 @@ Json::Value API::manageWorkflowVariables(string requestBody)
 						if (sValue.length() > 2 && sValue.front() == '"' && sValue.back() == '"')
 							sValue = sValue.substr(1, sValue.length() - 2);
 					*/
-
-					field = "Value";
-					string sValue = variableDetails.get(field, "XXX").asString();
 
 					// string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
 					// localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
@@ -499,7 +538,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			if (encodingProfilesSetKeys.size() == 0)
 			{
 				string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
-                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference;
+                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
+				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -682,7 +725,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			if (referenceLabel == "")
 			{
 				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
-					+ ", processing label: " + taskLabel
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
 					+ ", referenceLabel: " + referenceLabel;
 				_logger->error(errorMessage);
 
@@ -694,7 +739,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			if (ingestionJobKeys.size() == 0)
 			{
 				string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
-					+ ", processing label: " + taskLabel
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
 					+ ", referenceLabel: " + referenceLabel;
 				_logger->error(errorMessage);
 
@@ -703,6 +750,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			else if (ingestionJobKeys.size() > 1)
 			{
 				string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
 					+ ", referenceLabel: " + referenceLabel
 					+ ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
 				;
@@ -715,6 +765,109 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			parametersRoot[field] = ingestionJobKeys.back();
 		}
 	}
+	else if (type == "Workflow-As-Library")
+    {
+		// read the WorkflowAsLibrary
+		string workflowLibraryContent;
+		{
+			string workflowAsLibraryTypeField = "WorkflowAsLibraryType";
+			string workflowAsLibraryLabelField = "WorkflowAsLibraryLabel";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryTypeField)
+				|| !JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryLabelField)
+			)
+			{
+				string errorMessage = __FILEREF__ + "No WorkflowAsLibraryType/WorkflowAsLibraryLabel parameters into the Workflow-As-Library Task"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string workflowAsLibraryType = parametersRoot.get(workflowAsLibraryTypeField, "").asString();
+			string workflowAsLibraryLabel = parametersRoot.get(workflowAsLibraryLabelField, "").asString();
+
+			int workspaceKey;
+			if (workflowAsLibraryType == "MMS")
+				workspaceKey = -1;
+			else
+				workspaceKey = workspace->_workspaceKey;
+
+			workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(
+				workspaceKey, workflowAsLibraryLabel);
+		}
+
+		Json::Value workflowLibraryRoot = manageWorkflowVariables(workflowLibraryContent,
+				parametersRoot);
+
+		// create a GroupOfTasks and add the Root Task of the Library to the newGroupOfTasks
+
+		Json::Value workflowLibraryTaskRoot;
+		{
+			string workflowRootTaskField = "Task";
+			if (!JSONUtils::isMetadataPresent(workflowLibraryRoot, workflowRootTaskField))
+			{
+				string errorMessage = __FILEREF__ + "Wrong Workflow-As-Library format. Root Task was not found"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", type: " + type
+					+ ", taskLabel: " + taskLabel
+					+ ", workflowLibraryContent: " + workflowLibraryContent
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			workflowLibraryTaskRoot = workflowLibraryRoot[workflowRootTaskField];
+		}
+
+		Json::Value newGroupOfTasksRoot;
+		{
+			Json::Value newGroupOfTasksParametersRoot;
+
+			field = "ExecutionType";
+			newGroupOfTasksParametersRoot[field] = "parallel";
+
+			{
+				Json::Value newTasksRoot(Json::arrayValue);
+				newTasksRoot.append(workflowLibraryTaskRoot);
+
+				field = "Tasks";
+				newGroupOfTasksParametersRoot[field] = newTasksRoot;
+			}
+        
+			field = "Type";
+			newGroupOfTasksRoot[field] = "GroupOfTasks";
+
+			field = "Parameters";
+			newGroupOfTasksRoot[field] = newGroupOfTasksParametersRoot;
+        
+			field = "OnSuccess";
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			{
+				newGroupOfTasksRoot[field] = taskRoot[field];
+			}
+
+			field = "OnError";
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			{
+				newGroupOfTasksRoot[field] = taskRoot[field];
+			}
+
+			field = "OnComplete";
+			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			{
+				newGroupOfTasksRoot[field] = taskRoot[field];
+			}
+		}
+
+		return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, 
+			dependOnIngestionJobKeysForStarting, dependOnSuccess,
+			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+			responseBody); 
+    }
 
 	// Generally if the References tag is present, these will be used as references for the Task
 	// In case the References tag is NOT present, inherited references are used

@@ -24,19 +24,19 @@
 #include "API.h"
 
 
-void API::workflowsLibraryList(
+void API::workflowsAsLibraryList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "workflowsLibraryList";
+    string api = "workflowsAsLibraryList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
 
     try
     {
-		Json::Value workflowListRoot = _mmsEngineDBFacade->getWorkflowsLibraryList(
+		Json::Value workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(
 			workspace->_workspaceKey);
 
 		Json::StreamWriterBuilder wbuilder;
@@ -75,12 +75,12 @@ void API::workflowsLibraryList(
 }
 
 
-void API::workflowLibraryContent(
+void API::workflowAsLibraryContent(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-	string api = "workflowLibraryContent";
+	string api = "workflowAsLibraryContent";
 
 	_logger->info(__FILEREF__ + "Received " + api
 	);
@@ -100,7 +100,7 @@ void API::workflowLibraryContent(
 		}
 		workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
 
-		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowLibraryContent(
+		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(
 			workspace->_workspaceKey, workflowLibraryKey);
 
 		sendSuccess(request, 200, workflowLibraryContent);
@@ -136,13 +136,13 @@ void API::workflowLibraryContent(
 }
 
 
-void API::saveWorkflowLibrary(
+void API::saveWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "saveWorkflow";
+    string api = "saveWorkflowAsLibrary";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -150,34 +150,38 @@ void API::saveWorkflowLibrary(
 
     try
     {
-        Json::Value requestBodyRoot = manageWorkflowVariables(requestBody);
-
         string responseBody;    
 
         try
         {
-			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-            // it starts from the root and validate recursively the entire body
-            validator.validateIngestedRootMetadata(workspace->_workspaceKey,
+			// validation and retrieving of the Label
+			string workflowLabel;
+			{
+				Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
+
+				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+				// it starts from the root and validate recursively the entire body
+				validator.validateIngestedRootMetadata(workspace->_workspaceKey,
                     requestBodyRoot);
 
-            string field = "Label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				string field = "Label";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
-                _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            string workflowLabel = requestBodyRoot.get(field, "XXX").asString();
+					throw runtime_error(errorMessage);
+				}
+				workflowLabel = requestBodyRoot.get(field, "XXX").asString();
+			}
 
 			int64_t thumbnailMediaItemKey = -1;
 			auto thumbnailMediaItemKeyIt = queryParameters.find("thumbnailMediaItemKey");
 			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
 				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
 
-            int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowLibrary(
+            int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
                 workspace->_workspaceKey, workflowLabel,
                 thumbnailMediaItemKey, requestBody);
 
@@ -190,7 +194,7 @@ void API::saveWorkflowLibrary(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addUpdateWorkflowLibrary failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addUpdateWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -198,7 +202,7 @@ void API::saveWorkflowLibrary(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addUpdateWorkflowLibrary failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addUpdateWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -239,12 +243,12 @@ void API::saveWorkflowLibrary(
     }
 }
 
-void API::removeWorkflowLibrary(
+void API::removeWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeWorkflow";
+    string api = "removeWorkflowAsLibrary";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -265,12 +269,12 @@ void API::removeWorkflowLibrary(
         
         try
         {
-            _mmsEngineDBFacade->removeWorkflowLibrary(
+            _mmsEngineDBFacade->removeWorkflowAsLibrary(
                 workspace->_workspaceKey, workflowLibraryKey);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowLibrary failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -278,7 +282,7 @@ void API::removeWorkflowLibrary(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowLibrary failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
                 + ", e.what(): " + e.what()
             );
 

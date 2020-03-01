@@ -81,14 +81,14 @@ server {
 		}
 
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=saveWorkflowLibrary last;
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=saveWorkflowAsLibrary last;
 		}
-#		if ($request_method = DELETE) {
-#			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=deleteWorkflow last;
-#		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=removeWorkflowAsLibrary&workflowLibraryKey=$2 last;
+		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/?$ /api?version=$1&method=workflowsLibraryList last;
-			rewrite ^/catramms/(v[0-9]+)/workflowLibrary/([0-9]*)/?$ /api?version=$1&method=workflowContent&workflowLibraryKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=workflowsAsLibraryList last;
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=workflowAsLibraryContent&workflowLibraryKey=$2 last;
 		}
 
 		if ($request_method = GET) {

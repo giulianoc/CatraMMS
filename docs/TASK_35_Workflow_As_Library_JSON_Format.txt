@@ -1,0 +1,20 @@
+"Task": {
+	// optional
+	"Label"="My Workflow Library label",
+
+	// mandatory
+	"Type": "Workflow-As-Library",
+
+	"Parameters": {
+
+		// mandatory. Options: MMS or User
+		"WorkflowLibraryType": "",
+
+		// mandatory.
+		"WorkflowLibraryLabel": "",
+
+		// optional, here follows all the parameters of the WorkflowLibrary.
+		//		The default value is used in case a parameter is not present
+	}
+}
+

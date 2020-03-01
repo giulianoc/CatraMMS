@@ -1160,7 +1160,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						string label = workflowRoot.get("Label", "XXX").asString();
 
 						int64_t workspaceKey = -1;
-						addUpdateWorkflowLibrary(conn, workspaceKey, label, -1, jsonWorkflow);
+						addUpdateWorkflowAsLibrary(conn, workspaceKey, label, -1, jsonWorkflow);
                     }
                     catch(DirectoryListFinished e)
                     {

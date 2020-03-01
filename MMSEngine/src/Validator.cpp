@@ -359,7 +359,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     {
         Json::StreamWriterBuilder wbuilder;
         string sTaskRoot = Json::writeString(wbuilder, taskRoot);
-            
+
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
                 + ", sTaskRoot: " + sTaskRoot;
@@ -964,6 +964,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Workflow-As-Library")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::WorkflowAsLibrary;
+
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1117,6 +1138,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::WorkflowAsLibrary)
+    {
+        validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -3197,10 +3223,51 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 }
 
+void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    vector<string> mandatoryFields = {
+        "WorkflowAsLibraryType",
+        "WorkflowAsLibraryLabel"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "WorkflowAsLibraryType";
+    string workflowAsLibraryType = parametersRoot.get(field, "XXX").asString();
+
+    if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
+    {
+        string errorMessage = string("Unknown WorkflowAsLibraryType")
+            + ", workflowAsLibraryType: " + workflowAsLibraryType
+            + ", label: " + label
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+}
+
 void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, 
 	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
-{     
+{
     vector<string> mandatoryFields = {
         "OutputFileFormat"
     };
@@ -4317,6 +4384,22 @@ bool Validator::isVideoSpeedTypeValid(string speedType)
     for (string suffix: suffixes)
     {
         if (lowerCaseFileFormat == suffix) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isWorkflowAsLibraryTypeValid(string workflowAsLibraryType)
+{
+    vector<string> types = {
+		"MMS",
+		"User"
+    };
+
+    for (string type: types)
+    {
+        if (workflowAsLibraryType == type) 
             return true;
     }
     
