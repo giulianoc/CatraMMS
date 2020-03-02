@@ -140,7 +140,7 @@ void API::saveWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
-        string requestBody)
+        string requestBody, bool admin)
 {
     string api = "saveWorkflowAsLibrary";
 
@@ -156,6 +156,7 @@ void API::saveWorkflowAsLibrary(
         {
 			// validation and retrieving of the Label
 			string workflowLabel;
+			string workflowAsLibraryType;
 			{
 				Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
 
@@ -174,6 +175,31 @@ void API::saveWorkflowAsLibrary(
 					throw runtime_error(errorMessage);
 				}
 				workflowLabel = requestBodyRoot.get(field, "XXX").asString();
+
+				string workflowAsLibraryType;
+				auto workflowAsLibraryTypeIt = queryParameters.find("type");
+				if (workflowAsLibraryTypeIt == queryParameters.end())
+				{
+					string errorMessage = string("'type' URI parameter is missing");
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 400, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				workflowAsLibraryType = workflowAsLibraryTypeIt->second;
+
+				if (workflowAsLibraryType == "MMS" && !admin)
+				{
+					string errorMessage = string("APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
+						", admin: " + to_string(admin)
+					);
+					_logger->error(__FILEREF__ + errorMessage);
+
+					sendError(request, 403, errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
 
 			int64_t thumbnailMediaItemKey = -1;
@@ -181,9 +207,9 @@ void API::saveWorkflowAsLibrary(
 			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
 				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
 
-            int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
-                workspace->_workspaceKey, workflowLabel,
-                thumbnailMediaItemKey, requestBody);
+				int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
+					workflowAsLibraryType == "MMS" ? -1 : workspace->_workspaceKey,
+					workflowLabel, thumbnailMediaItemKey, requestBody);
 
             responseBody = (
                     string("{ ") 
@@ -246,7 +272,7 @@ void API::saveWorkflowAsLibrary(
 void API::removeWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters)
+        unordered_map<string, string> queryParameters, bool admin)
 {
     string api = "removeWorkflowAsLibrary";
 
@@ -266,11 +292,37 @@ void API::removeWorkflowAsLibrary(
             throw runtime_error(errorMessage);            
         }
         int64_t workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
-        
+
+		string workflowAsLibraryType;
+		auto workflowAsLibraryTypeIt = queryParameters.find("type");
+		if (workflowAsLibraryTypeIt == queryParameters.end())
+		{
+			string errorMessage = string("'type' URI parameter is missing");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		workflowAsLibraryType = workflowAsLibraryTypeIt->second;
+
+		if (workflowAsLibraryType == "MMS" && !admin)
+		{
+			string errorMessage = string("APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
+				", admin: " + to_string(admin)
+			);
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 403, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         try
         {
-            _mmsEngineDBFacade->removeWorkflowAsLibrary(
-                workspace->_workspaceKey, workflowLibraryKey);
+			_mmsEngineDBFacade->removeWorkflowAsLibrary(
+				workflowAsLibraryType == "MMS" ? -1 : workspace->_workspaceKey,
+				workflowLibraryKey);
         }
         catch(runtime_error e)
         {

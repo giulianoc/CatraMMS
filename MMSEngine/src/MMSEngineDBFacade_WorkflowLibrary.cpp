@@ -114,12 +114,19 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
     try
     {
         {
-            lastSQLCommand = 
-                "select workflowLibraryKey from MMS_WorkflowLibrary "
-				"where (workspaceKey = ? or workspaceKey is null) and label = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			if (workspaceKey == -1)
+				lastSQLCommand = 
+					"select workflowLibraryKey from MMS_WorkflowLibrary "
+					"where workspaceKey is null and label = ?";
+			else
+				lastSQLCommand = 
+					"select workflowLibraryKey from MMS_WorkflowLibrary "
+					"where workspaceKey = ? and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (workspaceKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -148,9 +155,13 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 						"workflowLibraryKey, workspaceKey, label, thumbnailMediaItemKey, jsonWorkflow) values ("
 						"NULL, ?, ?, ?, ?)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				if (workspaceKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 				preparedStatement->setString(queryParameterIndex++, label);
 				if (thumbnailMediaItemKey == -1)
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
@@ -197,7 +208,6 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	return workflowLibraryKey;
 }
 
-
 void MMSEngineDBFacade::removeWorkflowAsLibrary(
     int64_t workspaceKey, int64_t workflowLibraryKey)
 {
@@ -213,14 +223,21 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
         );
 
         {
-            lastSQLCommand = 
-                "delete from MMS_WorkflowLibrary where workflowLibraryKey = ? and workspaceKey = ?";
+			if (workspaceKey == -1)
+				lastSQLCommand = 
+					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
+					"and workspaceKey is null";
+			else
+				lastSQLCommand = 
+					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
+					"and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			if (workspaceKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated == 0)
@@ -302,7 +319,6 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
         throw e;
     }    
 }
-
 
 Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 	int64_t workspaceKey
@@ -515,7 +531,6 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
     return workflowsLibraryRoot;
 }
 
-
 string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 	int64_t workspaceKey,
 	int64_t workflowLibraryKey
@@ -660,16 +675,20 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
         );
 
 
-        {                    
-            lastSQLCommand = "select jsonWorkflow from MMS_WorkflowLibrary "
+        {
+			if (workspaceKey == -1)
+				lastSQLCommand = "select jsonWorkflow from MMS_WorkflowLibrary "
+					"where workspaceKey is null and label = ?"
+					;
+			else
+				lastSQLCommand = "select jsonWorkflow from MMS_WorkflowLibrary "
 					"where workspaceKey = ? and label = ?"
 					;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-			if (workspaceKey == -1)
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-			else
+			if (workspaceKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatement->setString(queryParameterIndex++, label);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());

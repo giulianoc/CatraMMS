@@ -316,12 +316,12 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
-        string requestBody);
+        string requestBody, bool admin);
 
 	void removeWorkflowAsLibrary(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters);
+        unordered_map<string, string> queryParameters, bool admin);
 
     void createDeliveryAuthorization(
         FCGX_Request& request,

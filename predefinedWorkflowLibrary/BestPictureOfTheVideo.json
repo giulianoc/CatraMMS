@@ -1,0 +1,97 @@
+{
+  "Variables": {
+    "ImageRetention": {
+      "Type": "string",
+      "Value": "1d"
+    },
+    "ImageTags": {
+      "Description": "Comma separated tags",
+      "Type": "string",
+      "Value": "FACE"
+    },
+    "Ingester": {
+      "Type": "string",
+      "Value": "Admin"
+    },
+    "InitialFramesNumberToBeSkipped": {
+      "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
+      "Type": "integer",
+      "Value": 1500
+    },
+    "InstantInSeconds": {
+      "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
+      "Type": "decimal",
+      "Value": 60
+    },
+    "Label": {
+      "Type": "string",
+      "Value": "Image label"
+    },
+    "Title": {
+      "Description": "Title of the Picture",
+      "Type": "string",
+      "Value": "My Title"
+    }
+  },
+  "Label": "Best Picture of the Video",
+  "Type": "Workflow",
+  "Task": {
+    "Label": "${Label}",
+    "Type": "GroupOfTasks",
+    "Parameters": {
+      "ExecutionType": "parallel",
+      "ReferencesOutput": [
+        {"ReferenceLabel": "Frame Containing Face: ${Title}"},
+        {"ReferenceLabel": "Frame: ${Title}"}
+      ],
+      "Tasks": [{
+        "Label": "Frame Containing Face: ${Title}",
+        "Type": "Face-Recognition",
+        "OnError": {"Task": {
+          "Label": "Frame: ${Title}",
+          "Type": "Frame",
+          "OnSuccess": {"Task": {
+            "Label": "Encode image (Frame): ${title}",
+            "Parameters": {
+              "ContentType": "image",
+              "EncodingPriority": "High",
+              "EncodingProfileLabel": "MMS_JPG_240"
+            },
+            "Type": "Encode"
+          }},
+          "Parameters": {
+            "AllowUniqueNameOverride": false,
+            "Height": 480,
+            "Ingester": "Giuliano",
+            "InstantInSeconds": "${InstantInSeconds}",
+            "Retention": "${ImageRetention}",
+            "Tags": "${ImageTags}",
+            "Title": "${Title}",
+            "Width": 640
+          }
+        }},
+        "OnSuccess": {"Task": {
+          "Label": "Encode image (FrameContainingFace): ${Title}",
+          "Parameters": {
+            "ContentType": "image",
+            "EncodingPriority": "High",
+            "EncodingProfileLabel": "MMS_JPG_240"
+          },
+          "Type": "Encode"
+        }},
+        "Parameters": {
+          "AllowUniqueNameOverride": false,
+          "CascadeName": "haarcascade_frontalface_alt_tree",
+          "EncodingPriority": "High",
+          "Ingester": "Giuliano",
+          "InitialFramesNumberToBeSkipped": "${InitialFramesNumberToBeSkipped}",
+          "OneFramePerSecond": true,
+          "Output": "FrameContainingFace",
+          "Retention": "${ImageRetention}",
+          "Tags": "${ImageTags}",
+          "Title": "${Title}"
+        }
+      }]
+    }
+  }
+}

@@ -21,7 +21,7 @@
 # with the authors.
 
 SET (WORKFLOWs
-	aaa.txt
+	BestPictureOfTheVideo.json
 )
 
 install (FILES ${WORKFLOWs} DESTINATION predefinedWorkflowLibrary)
