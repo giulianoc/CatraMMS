@@ -338,6 +338,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 								sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
 							else if (variableType == "boolean")
 								sValue = to_string(JSONUtils::asBool(variableDetails, field, false));
+							else if (variableType == "datetime")
+								sValue = variableDetails.get(field, "").asString();
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
@@ -359,6 +361,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 								sValue = to_string(JSONUtils::asDouble(variablesValuesToBeUsedRoot, sKey, 0.0));
 							else if (variableType == "boolean")
 								sValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
+							else if (variableType == "datetime")
+								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"

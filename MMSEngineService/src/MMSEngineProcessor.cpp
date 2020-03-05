@@ -11637,44 +11637,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			keyFrameSeeking = JSONUtils::asBool(parametersRoot, field, true);
         }
 
-        double startTimeInSeconds;
-        field = "StartTimeInSeconds";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
-
-        double endTimeInSeconds = -1;
-        field = "EndTimeInSeconds";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
-        }
-        
-        int framesNumber = -1;
-        field = "FramesNumber";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-        }
-        
-        if (endTimeInSeconds == -1 && framesNumber == -1)
-        {
-            string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
         string outputFileFormat;
         field = "OutputFileFormat";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -11747,10 +11709,70 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             throw runtime_error(errorMessage);
         }
 
-        if (durationInMilliSeconds < startTimeInSeconds * 1000
-			|| (endTimeInSeconds != -1 && durationInMilliSeconds < endTimeInSeconds * 1000))
+        double startTimeInSeconds;
+        field = "StartTimeInSeconds";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds or endTimeInSeconds is bigger than the video duration"
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+
+        double endTimeInSeconds = 0.0;
+        field = "EndTimeInSeconds";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+			endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+        }
+
+        int framesNumber = -1;
+        field = "FramesNumber";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+        }
+
+		/*
+        if (endTimeInSeconds == -1 && framesNumber == -1)
+        {
+            string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+		*/
+
+		if (framesNumber == -1)
+		{
+			if (endTimeInSeconds < 0)
+			{
+				// if negative, it has to be subtract by the durationInMilliSeconds
+				double newEndTimeInSeconds  = (durationInMilliSeconds - (endTimeInSeconds * -1000)) / 1000;
+
+				_logger->error(__FILEREF__ + "endTimeInSeconds was changed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+                    + ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+                    + ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds)
+                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				);
+
+				endTimeInSeconds = newEndTimeInSeconds;
+			}
+		}
+
+        if (startTimeInSeconds > endTimeInSeconds)
+        {
+            string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
@@ -11762,6 +11784,26 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
             throw runtime_error(errorMessage);
         }
+		else
+		{
+			if (framesNumber == -1)
+			{
+				if (durationInMilliSeconds < endTimeInSeconds * 1000)
+				{
+					string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+						+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
 
         // this is a cut so destination file name shall have the same
         // extension as the source file name
