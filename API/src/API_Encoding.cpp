@@ -1321,17 +1321,18 @@ void API::removeEncodingProfilesSet(
     }
 }
 
-// same method is duplicated in EncoderVideoAudioProxy.cpp
 void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;
 	try
 	{
-		ffmpegEncoderURL = _ffmpegEncoderProtocol
-			+ "://"
-			+ transcoderHost + ":"
-			+ to_string(_ffmpegEncoderPort)
+		// ffmpegEncoderURL = _ffmpegEncoderProtocol
+		// 	+ "://"
+		// 	+ transcoderHost + ":"
+		// 	+ to_string(_ffmpegEncoderPort)
+		ffmpegEncoderURL = 
+			transcoderHost
 			+ _ffmpegEncoderKillEncodingURI
 			+ "/" + to_string(encodingJobKey)
 		;
@@ -1352,7 +1353,10 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 		request.setOpt(new curlpp::options::CustomRequest("DELETE"));
 
-		if (_ffmpegEncoderProtocol == "https")
+		// if (_ffmpegEncoderProtocol == "https")
+		string httpsPrefix("https");
+		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 		{
 			/*
                   typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            

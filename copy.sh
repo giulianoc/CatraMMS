@@ -28,6 +28,9 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-transcoder-ita-2"
 	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-ita-2:/opt/catramms
+
+	echo "cibortv-mms-transcoder-itaita-1"
+	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-itaita-1:/opt/catramms
 fi
 
 echo -n "deploy su mms cloud? " 

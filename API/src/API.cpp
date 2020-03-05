@@ -335,7 +335,7 @@ API::API(Json::Value configuration,
 	);
 
 
-
+	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
@@ -344,6 +344,7 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
+	*/
     _ffmpegEncoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser

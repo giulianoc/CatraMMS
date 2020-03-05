@@ -91,8 +91,8 @@ private:
     string              _apiHostname;
     int                 _apiPort;
     
-    string				_ffmpegEncoderProtocol;
-    int					_ffmpegEncoderPort;
+    // string				_ffmpegEncoderProtocol;
+    // int					_ffmpegEncoderPort;
     string				_ffmpegEncoderUser;
     string				_ffmpegEncoderPassword;
     string				_ffmpegEncoderKillEncodingURI;

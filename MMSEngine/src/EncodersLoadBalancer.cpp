@@ -53,7 +53,8 @@ EncodersLoadBalancer::EncodersLoadBalancer(
 EncodersLoadBalancer::~EncodersLoadBalancer() {
 }
 
-string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string transcoderToSkip) 
+string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace,
+	string transcoderToSkip) 
 {
     string defaultEncodersPool = "common";
 

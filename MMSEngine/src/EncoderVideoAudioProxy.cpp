@@ -98,6 +98,7 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
     
+	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
@@ -106,6 +107,7 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
+	*/
     _ffmpegEncoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
@@ -1901,14 +1903,16 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
-            ;
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
+			;
             string body;
             {
 				string encodedFileName;
@@ -2108,7 +2112,10 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -2368,13 +2375,15 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
 
@@ -3311,13 +3320,15 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -3430,7 +3441,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -3644,13 +3658,15 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
             
@@ -4220,13 +4236,15 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -4334,7 +4352,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -4548,13 +4569,15 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
 
@@ -5109,13 +5132,15 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -5214,7 +5239,10 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -5429,13 +5457,15 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
 
@@ -5780,13 +5810,15 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -5907,7 +5939,10 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -6121,13 +6156,15 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
             
@@ -6466,13 +6503,15 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -6531,7 +6570,10 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -6745,13 +6787,15 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
 
@@ -6991,13 +7035,15 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
-            ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
-                    + ffmpegURI
-                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            // ffmpegEncoderURL = 
+            //         _ffmpegEncoderProtocol
+            //         + "://"
+            //         + _currentUsedFFMpegEncoderHost + ":"
+            //         + to_string(_ffmpegEncoderPort)
+            ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
@@ -7055,7 +7101,10 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            if (_ffmpegEncoderProtocol == "https")
+            // if (_ffmpegEncoderProtocol == "https")
+			string httpsPrefix("https");
+			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+				&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
             {
                 /*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -7269,13 +7318,15 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			// in the above 'while' loop, we have to select another encoder
 			_encodingItem->_transcoder	= "";
 
-			ffmpegEncoderURL = 
-                   _ffmpegEncoderProtocol
-                   + "://"
-                   + _currentUsedFFMpegEncoderHost + ":"
-                   + to_string(_ffmpegEncoderPort)
-                   + ffmpegURI
-                   + "/" + to_string(_encodingItem->_encodingJobKey)
+			// ffmpegEncoderURL = 
+            //        _ffmpegEncoderProtocol
+            //        + "://"
+            //        + _currentUsedFFMpegEncoderHost + ":"
+            //        + to_string(_ffmpegEncoderPort)
+			ffmpegEncoderURL =
+				_currentUsedFFMpegEncoderHost
+				+ ffmpegURI
+				+ "/" + to_string(_encodingItem->_encodingJobKey)
 			;
 		}
 
@@ -9149,11 +9200,13 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 				);
 
-				ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
+				// ffmpegEncoderURL = 
+                //     _ffmpegEncoderProtocol
+                //     + "://"
+                //     + _currentUsedFFMpegEncoderHost + ":"
+                //     + to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
 				;
@@ -9264,7 +9317,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-				if (_ffmpegEncoderProtocol == "https")
+				// if (_ffmpegEncoderProtocol == "https")
+				string httpsPrefix("https");
+				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
 					/*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -9447,11 +9503,13 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				// in the above 'while' loop, we have to select another encoder
 				_encodingItem->_transcoder	= "";
 
-				ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
+				// ffmpegEncoderURL = 
+                //     _ffmpegEncoderProtocol
+                //     + "://"
+                //     + _currentUsedFFMpegEncoderHost + ":"
+                //     + to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
 				;
@@ -10008,11 +10066,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 				);
-				ffmpegEncoderURL = 
-					_ffmpegEncoderProtocol
-					+ "://"
-					+ _currentUsedFFMpegEncoderHost + ":"
-					+ to_string(_ffmpegEncoderPort)
+				// ffmpegEncoderURL = 
+				// 	_ffmpegEncoderProtocol
+				// 	+ "://"
+				// 	+ _currentUsedFFMpegEncoderHost + ":"
+				// 	+ to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
 					+ ffmpegURI
 					+ "/" + to_string(_encodingItem->_encodingJobKey)
 				;
@@ -10098,7 +10158,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-				if (_ffmpegEncoderProtocol == "https")
+				// if (_ffmpegEncoderProtocol == "https")
+				string httpsPrefix("https");
+				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
 					/*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -10282,11 +10345,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				// in the above 'while' loop, we have to select another encoder
 				_encodingItem->_transcoder	= "";
 
-				ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
+				// ffmpegEncoderURL = 
+                //     _ffmpegEncoderProtocol
+                //     + "://"
+                //     + _currentUsedFFMpegEncoderHost + ":"
+                //     + to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
                     + ffmpegURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
 				;
@@ -11032,11 +11097,13 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					throw runtime_error(errorMessage);
 				}
             
-				ffmpegEncoderURL = 
-                    _ffmpegEncoderProtocol
-                    + "://"
-                    + _currentUsedFFMpegEncoderHost + ":"
-                    + to_string(_ffmpegEncoderPort)
+				// ffmpegEncoderURL = 
+                //     _ffmpegEncoderProtocol
+                //     + "://"
+                //     + _currentUsedFFMpegEncoderHost + ":"
+                //     + to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
                     + _ffmpegEncoderProgressURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
 				;
@@ -11055,7 +11122,10 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-				if (_ffmpegEncoderProtocol == "https")
+				// if (_ffmpegEncoderProtocol == "https")
+				string httpsPrefix("https");
+				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
 					/*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -11338,13 +11408,15 @@ tuple<bool,bool,bool, bool, bool> EncoderVideoAudioProxy::getEncodingStatus()
 	bool responseInitialized = false;
     try
     {
-        ffmpegEncoderURL = 
-                _ffmpegEncoderProtocol
-                + "://"                
-                + _currentUsedFFMpegEncoderHost + ":"
-                + to_string(_ffmpegEncoderPort)
-                + _ffmpegEncoderStatusURI
-                + "/" + to_string(_encodingItem->_encodingJobKey)
+        // ffmpegEncoderURL = 
+        //         _ffmpegEncoderProtocol
+        //         + "://"                
+        //         + _currentUsedFFMpegEncoderHost + ":"
+        //         + to_string(_ffmpegEncoderPort)
+        ffmpegEncoderURL =
+			_currentUsedFFMpegEncoderHost
+            + _ffmpegEncoderStatusURI
+            + "/" + to_string(_encodingItem->_encodingJobKey)
         ;
 
         list<string> header;
@@ -11363,7 +11435,10 @@ tuple<bool,bool,bool, bool, bool> EncoderVideoAudioProxy::getEncodingStatus()
         // Setting the URL to retrive.
         request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-        if (_ffmpegEncoderProtocol == "https")
+        // if (_ffmpegEncoderProtocol == "https")
+		string httpsPrefix("https");
+		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
         {
             /*
                 typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
@@ -11816,6 +11891,7 @@ Magick::InterlaceType EncoderVideoAudioProxy::encodingImageInterlaceTypeValidati
     return interlaceType;
 }
 
+/*
 // same method is duplicated in API_Encoding.cpp
 void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 {
@@ -11849,57 +11925,51 @@ void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t enco
 
 		if (_ffmpegEncoderProtocol == "https")
 		{
-			/*
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                  typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                  typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                  typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-			*/
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                  // typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                  // typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                  // typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
                                                                                                 
               
-			/*
 			// cert is stored PEM coded in file... 
 			// since PEM is default, we needn't set it for PEM 
 			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-			equest.setOpt(sslCertType);
+			// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			// equest.setOpt(sslCertType);
 
 			// set the cert for client authentication
 			// "testcert.pem"
 			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-			request.setOpt(sslCert);
-			*/
+			// curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			// request.setOpt(sslCert);
 
-			/*
 			// sorry, for engine we must set the passphrase
 			//   (if the key has one...)
 			// const char *pPassphrase = NULL;
-			if(pPassphrase)
-			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+			// if(pPassphrase)
+			// curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
 
 			// if we use a key stored in a crypto engine,
 			//   we must set the key type to "ENG"
 			// pKeyType  = "PEM";
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+			// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
 
 			// set the private key (file or ID in engine)
 			// pKeyName  = "testkey.pem";
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+			// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
 
 			// set the file with the certs vaildating the server
 			// *pCACertFile = "cacert.pem";
-			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-			*/
+			// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
               
 			// disconnect if we can't validate server's cert
 			bool bSslVerifyPeer = false;
@@ -12004,4 +12074,5 @@ void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t enco
 		throw e;
 	}
 }
+*/
 

@@ -135,8 +135,8 @@ private:
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;
     
-    string                              _ffmpegEncoderProtocol;
-    int                                 _ffmpegEncoderPort;
+    // string                              _ffmpegEncoderProtocol;
+    // int                                 _ffmpegEncoderPort;
     string                              _ffmpegEncoderUser;
     string                              _ffmpegEncoderPassword;
     string                              _ffmpegEncoderProgressURI;
@@ -259,7 +259,7 @@ private:
 		int64_t faceOfVideoMediaItemKey,
         Json::Value parametersRoot);
 
-	void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
+	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
 };
 
 #endif
