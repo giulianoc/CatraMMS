@@ -2304,6 +2304,8 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
         }
     }
 
+	/*
+	 * 2020-03-07: headers is now a semicolon string
     field = "Headers";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
@@ -2334,6 +2336,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
             }
         }
     }   
+	*/
         
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)

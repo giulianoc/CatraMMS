@@ -7382,7 +7382,8 @@ void MMSEngineProcessor::httpCallbackTask(
 
         if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
         {
-            _logger->warn(__FILEREF__ + "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
+            _logger->warn(__FILEREF__
+				+ "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -7514,7 +7515,16 @@ void MMSEngineProcessor::httpCallbackTask(
             field = "Headers";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                httpHeadersRoot = parametersRoot[field];
+				// semicolon as separator
+				stringstream ss(parametersRoot.get(field, "XXX").asString());
+				string token;
+				char delim = ';';
+				while (getline(ss, token, delim))
+				{
+					if (!token.empty())
+						httpHeadersRoot.append(token);
+				}
+                // httpHeadersRoot = parametersRoot[field];
             }
 
             field = "MaxRetries";

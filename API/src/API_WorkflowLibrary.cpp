@@ -176,7 +176,6 @@ void API::saveWorkflowAsLibrary(
 				}
 				workflowLabel = requestBodyRoot.get(field, "XXX").asString();
 
-				string workflowAsLibraryType;
 				auto workflowAsLibraryTypeIt = queryParameters.find("type");
 				if (workflowAsLibraryTypeIt == queryParameters.end())
 				{
@@ -207,14 +206,15 @@ void API::saveWorkflowAsLibrary(
 			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
 				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
 
-				int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
-					workflowAsLibraryType == "MMS" ? -1 : workspace->_workspaceKey,
-					workflowLabel, thumbnailMediaItemKey, requestBody);
+			int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
+				workflowAsLibraryType == "MMS" ? -1 : workspace->_workspaceKey,
+				workflowLabel, thumbnailMediaItemKey, requestBody);
 
             responseBody = (
                     string("{ ") 
                     + "\"workflowLibraryKey\": " + to_string(workflowLibraryKey)
-                    + ", \"label\": \"" + workflowLabel + "\" "
+                    + ", \"label\": \"" + workflowLabel + "\""
+                    + ", \"type\": \"" + workflowAsLibraryType + "\" "
                     + "}"
                     );            
         }

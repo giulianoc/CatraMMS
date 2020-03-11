@@ -52,8 +52,8 @@
 		// optional. Default is POST. It could be GET or POST
 		"Method": "POST",
 
-		// optional, json array of strings
-		"Headers": [],
+		// optional, headers semicolon separated
+		"Headers": "",
 		
 		// optional, set maximum time in seconds the request is allowed to take, default is 120 seconds
 		"Timeout": 120,

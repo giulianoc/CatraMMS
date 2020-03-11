@@ -25,7 +25,7 @@
 		"SpeedType": "SlowDown",
 
 		// optional. Range: 1..10. Default: 3. Bigger means more SlowDown or SpeedUp.
-		"SpeedSize": 3,
+		"SpeedSize": "3",
 
 		// optional. Possible values: Low, Medium, High
 		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
