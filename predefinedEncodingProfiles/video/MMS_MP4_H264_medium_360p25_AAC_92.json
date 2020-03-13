@@ -4,7 +4,7 @@
 	"Video" : 
 	{
 		"Codec" : "libx264",
-		"Profile" : "baseline",
+		"Profile" : "high422",
 		"Width" : 640,
 		"Height" : 360,
 		"FrameRate": 25,

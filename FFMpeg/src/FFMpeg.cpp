@@ -5386,7 +5386,10 @@ void FFMpeg::liveProxyByCDN(
 		//		as fast as possible. This option will slow down the reading of the input(s)
 		//		to the native frame rate of the input(s). It is useful for real-time output
 		//		(e.g. live streaming).
+		ffmpegArgumentList.push_back("-nostdin");
 		ffmpegArgumentList.push_back("-re");
+		ffmpegArgumentList.push_back("-itsoffset");
+		ffmpegArgumentList.push_back("-0.5");
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-c:v");
