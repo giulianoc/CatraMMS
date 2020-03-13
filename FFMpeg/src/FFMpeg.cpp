@@ -374,6 +374,7 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 
+                _currentlyAtSecondPass = true;
 				try
 				{
 					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -2956,11 +2957,11 @@ int FFMpeg::getEncodingProgress()
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {
             _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                 + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
                 + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
             );
 
             throw FFMpegEncodingStatusNotAvailable();
@@ -2976,11 +2977,11 @@ int FFMpeg::getEncodingProgress()
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                 + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
                 + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
             );
 
             throw FFMpegEncodingStatusNotAvailable();
@@ -3043,6 +3044,8 @@ int FFMpeg::getEncodingProgress()
 				if (encodingPercentage > 100 || encodingPercentage < 0)
 				{
 					_logger->error(__FILEREF__ + "Encoding status too big"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 						+ ", duration: " + duration
 						+ ", encodingSeconds: " + to_string(encodingSeconds)
 						+ ", _twoPasses: " + to_string(_twoPasses)
@@ -3052,8 +3055,6 @@ int FFMpeg::getEncodingProgress()
 						+ ", encodingPercentage: " + to_string(encodingPercentage)
 						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
 						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					);
 
 					encodingPercentage		= 0;
@@ -3061,6 +3062,8 @@ int FFMpeg::getEncodingProgress()
 				else
 				{
 					_logger->info(__FILEREF__ + "Encoding status"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 						+ ", duration: " + duration
 						+ ", encodingSeconds: " + to_string(encodingSeconds)
 						+ ", _twoPasses: " + to_string(_twoPasses)
@@ -3070,8 +3073,6 @@ int FFMpeg::getEncodingProgress()
 						+ ", encodingPercentage: " + to_string(encodingPercentage)
 						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
 						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					);
 				}
             }
@@ -3080,10 +3081,10 @@ int FFMpeg::getEncodingProgress()
     catch(FFMpegEncodingStatusNotAvailable e)
     {
         _logger->info(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
             + ", e.what(): " + e.what()
         );
 
@@ -3092,10 +3093,10 @@ int FFMpeg::getEncodingProgress()
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
         );
 
         throw e;
