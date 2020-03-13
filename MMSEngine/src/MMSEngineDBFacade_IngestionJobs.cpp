@@ -61,6 +61,89 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
+			// first Live-Proxy (because if we have many many Live-Recorder, Live-Proxy will never start
+			{
+				lastSQLCommand = 
+					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType, "
+						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+						"and ij.ingestionType = 'Live-Proxy' "
+						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						// "for update "
+						;
+						// "limit ? offset ?"
+						// "limit ? offset ? for update"
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndexIngestionJob = 1;
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+				preparedStatement->setString(queryParameterIndexIngestionJob++,
+				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
+
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+				while (resultSet->next())
+				{
+					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
+					string metaDataContent      = resultSet->getString("metaDataContent");
+					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
+						resultSet->getString("status"));
+					IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(
+						resultSet->getString("ingestionType"));
+					string ingestionDate      = resultSet->getString("ingestionDate");
+
+					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
+						ingestionJobToBeManagedInfo = isIngestionJobToBeManaged(
+						ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, conn);
+
+					bool ingestionJobToBeManaged;
+					int64_t dependOnIngestionJobKey;
+					int dependOnSuccess;
+					IngestionStatus ingestionStatusDependency;
+
+					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
+						= ingestionJobToBeManagedInfo;
+
+					if (ingestionJobToBeManaged)
+					{
+						_logger->info(__FILEREF__ + "Adding jobs to be processed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ingestionStatus: " + toString(ingestionStatus)
+						);
+                       
+						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+						tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                               = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
+									   ingestionType, ingestionStatus);
+
+						ingestionsToBeManaged.push_back(ingestionToBeManaged);
+					}
+					else
+					{
+						_logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ingestionStatus: " + toString(ingestionStatus)
+							+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+							+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+							+ ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+						);
+					}
+				}
+            }
+
 			// 2019-03-31: scenario: we have a long list of encodings to be done (113 encodings) and among these we have 2 live recordings.
 			//	The Live-Recorder started after about 60 minutes. This is becasue the select returns all the other encodings and at the end
 			//	the Live Recorder. To avoid this problem we force to have first the Live-Recorder and after all the others
@@ -171,7 +254,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-							"and ij.ingestionType != 'Live-Recorder' "
+							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"and ir.ingestionDate >= DATE_SUB(NOW(), INTERVAL ? DAY) "
 							"order by ir.ingestionDate asc "

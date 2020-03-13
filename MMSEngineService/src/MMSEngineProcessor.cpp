@@ -8685,13 +8685,13 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				maxAttemptsNumberInCaseOfErrors = 2;
+				maxAttemptsNumberInCaseOfErrors = 3;
 			else
 				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(parametersRoot, field, 0);
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 600;
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 120;
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }

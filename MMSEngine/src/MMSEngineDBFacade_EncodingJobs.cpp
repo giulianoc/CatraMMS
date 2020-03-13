@@ -41,6 +41,302 @@ void MMSEngineDBFacade::getEncodingJobs(
             statement->execute(lastSQLCommand);
         }
 
+		// first Live-Proxy because if we have many Live-Recording, Live-Proxy will never start
+        {
+			_logger->info(__FILEREF__ + "getEncodingJobs for LiveProxy");
+
+            lastSQLCommand =
+				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
+				"ej.encodingPriority, ej.transcoder, ej.stagingEncodedAssetPathName "
+				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
+				"where ir.ingestionRootKey = ij.ingestionRootKey "
+				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ej.status = ? and ej.encodingJobStart <= NOW() "
+				"and ij.ingestionType = 'Live-Proxy' "
+				;
+            shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatementEncoding->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+            shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+
+            while (encodingResultSet->next())
+            {
+                shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
+                        make_shared<MMSEngineDBFacade::EncodingItem>();
+
+                encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+                encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
+                encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
+                encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
+                encodingItem->_encodingPriority = static_cast<EncodingPriority>(
+						encodingResultSet->getInt("encodingPriority"));
+				if (encodingResultSet->isNull("transcoder"))
+					encodingItem->_transcoder = "";
+				else
+					encodingItem->_transcoder = encodingResultSet->getString("transcoder");
+				if (encodingResultSet->isNull("stagingEncodedAssetPathName"))
+					encodingItem->_stagingEncodedAssetPathName = "";
+				else
+					encodingItem->_stagingEncodedAssetPathName =
+						encodingResultSet->getString("stagingEncodedAssetPathName");
+
+                if (encodingItem->_encodingParameters == "")
+                {
+                    string errorMessage = __FILEREF__ + "encodingItem->_encodingParameters is empty"
+                            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+                            ;
+                    _logger->error(errorMessage);
+
+                    // in case an encoding job row generate an error, we have to make it to Failed
+                    // otherwise we will indefinitely get this error
+                    {
+						_logger->info(__FILEREF__ + "EncodingJob update"
+                            + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                            + ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+						);
+                        lastSQLCommand = 
+                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementUpdate->setString(queryParameterIndex++,
+							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                    }
+                    
+                    continue;
+                    // throw runtime_error(errorMessage);
+                }
+                
+                {
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+                    string errors;
+
+                    bool parsingSuccessful = reader->parse((encodingItem->_encodingParameters).c_str(),
+                            (encodingItem->_encodingParameters).c_str()
+							+ (encodingItem->_encodingParameters).size(), 
+                            &(encodingItem->_encodingParametersRoot), &errors);
+                    delete reader;
+
+                    if (!parsingSuccessful)
+                    {
+                        string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                                + ", errors: " + errors
+                                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+                                ;
+                        _logger->error(errorMessage);
+
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
+                        {
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                        }
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
+                }
+                
+                int64_t workspaceKey;
+                {
+                    lastSQLCommand = 
+                        "select ir.workspaceKey "
+                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                        "where ir.ingestionRootKey = ij.ingestionRootKey "
+                        "and ij.ingestionJobKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementWorkspace (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementWorkspace->setInt64(queryParameterIndex++,
+							encodingItem->_ingestionJobKey);
+
+                    shared_ptr<sql::ResultSet> workspaceResultSet (
+							preparedStatementWorkspace->executeQuery());
+                    if (workspaceResultSet->next())
+                    {
+                        encodingItem->_workspace = getWorkspace(workspaceResultSet->getInt64("workspaceKey"));
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                + ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
+                        {
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                        }
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
+                }
+                
+                // if (encodingItem->_encodingType == EncodingType::LiveProxy)
+                {
+                    encodingItem->_liveProxyData = make_shared<EncodingItem::LiveProxyData>();
+                    
+                    {
+                        lastSQLCommand = 
+                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+
+                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+                        if (imgestionResultSet->next())
+                        {
+                            string liveProxyParameters = imgestionResultSet->getString("metaDataContent");
+                            
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(liveProxyParameters.c_str(),
+                                        liveProxyParameters.c_str() + liveProxyParameters.size(), 
+                                        &(encodingItem->_liveProxyData->_ingestedParametersRoot), &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                            + ", errors: " + errors
+                                            + ", liveProxyParameters: " + liveProxyParameters
+                                            ;
+                                    _logger->error(errorMessage);
+
+                                    // in case an encoding job row generate an error, we have to make it to Failed
+                                    // otherwise we will indefinitely get this error
+                                    {
+										_logger->info(__FILEREF__ + "EncodingJob update"
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											);
+                                        lastSQLCommand = 
+                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        int queryParameterIndex = 1;
+                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                                    }
+
+                                    continue;
+                                    // throw runtime_error(errorMessage);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+								_logger->info(__FILEREF__ + "EncodingJob update"
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									);
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                }
+
+                encodingItems.push_back(encodingItem);
+
+                {
+					_logger->info(__FILEREF__ + "EncodingJob update"
+						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+						+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", processorMMS: " + processorMMS
+						+ ", encodingJobStart: " + "NULL"
+						);
+                    lastSQLCommand = 
+                        "update MMS_EncodingJob set status = ?, processorMMS = ?, encodingJobStart = NULL "
+						"where encodingJobKey = ? and processorMMS is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++,
+							MMSEngineDBFacade::toString(EncodingStatus::Processing));
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
+                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++,
+							encodingItem->_encodingJobKey);
+
+                    int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+                    if (rowsUpdated != 1)
+                    {
+                        string errorMessage = __FILEREF__ + "no update was done"
+                                + ", processorMMS: " + processorMMS
+                                + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                                + ", rowsUpdated: " + to_string(rowsUpdated)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+            }
+        }
+
 		// 2019-12-14: we have a long list of encodings to be done (113 encodings) and
 		//	among these we have some live recordings. These has to be managed before the others encodings
         {
@@ -353,7 +649,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
-				"and ij.ingestionType != 'Live-Recorder' "
+				"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
 				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "
 				"limit ? offset ?"
 
@@ -2313,6 +2609,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+				/*
                 else if (encodingItem->_encodingType == EncodingType::LiveProxy)
                 {
                     encodingItem->_liveProxyData = make_shared<EncodingItem::LiveProxyData>();
@@ -2400,6 +2697,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+				*/
                 else
                 {
                     string errorMessage = __FILEREF__ + "EncodingType is wrong"

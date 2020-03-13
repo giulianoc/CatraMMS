@@ -10046,6 +10046,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
+	// 2020-03-11: we saw the following scenarios:
+	//	1. ffmpeg was running
+	//	2. after several hours it failed (1:34 am)
+	//	3. our below loop tried again and this new attempt returned 404 URL NOT FOUND
+	//	4. we exit from this loop
+	//	5. crontab started again it after 15 minutes
+	//	In this scenarios, we have to retry again without waiting the crontab check
+	// 2020-03-12: Removing the urlNotFound management generated duplication of ffmpeg process
+	//	For this reason we rollbacked as it was before
 	while (!killedByUser && !urlForbidden && !urlNotFound
 		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 	{
@@ -10407,165 +10416,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					tie(encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound) = encodingStatus;
 
 					// health check and retention is done by ffmpegEncoder.cpp
-					/*
-					vector<string>	chunksTooOldToBeRemoved;
-					bool chunksWereNotGenerated = false;
-
-					// next statements, in case of HLS and LiveProxy task started at least since 5*segmentDurationInSeconds, will:
-					// 1. get the timestamp of the last generated file
-					// 2. fill the vector with the chunks (pathname) to be removed because too old
-					//		(10 minutes after the "capacity" of the playlist)
-					if ((outputType == "HLS" || outputType == "DASH")
-							&& chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startCheckingEncodingStatus).count()
-							> 5 * segmentDurationInSeconds)
-					{
-						chrono::system_clock::time_point lastChunkTimestamp;
-						bool firstChunkRead = false;
-
-						try
-						{
-							if (FileIO::directoryExisting(manifestDirectoryPathName))
-							{
-								FileIO::DirectoryEntryType_t detDirectoryEntryType;
-								shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-									manifestDirectoryPathName + "/");
-
-								// chunks will be removed 10 minutes after the "capacity" of the playlist
-								long liveProxyChunkRetentionInSeconds =
-									(segmentDurationInSeconds * playlistEntriesNumber)
-									+ 10 * 60;	// 10 minutes
-
-								bool scanDirectoryFinished = false;
-								while (!scanDirectoryFinished)
-								{
-									string directoryEntry;
-									try
-									{
-										string directoryEntry = FileIO::readDirectory (directory,
-											&detDirectoryEntryType);
-                
-										if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-											continue;
-
-										string dashPrefixInitFiles ("init-stream");
-										if (outputType == "DASH"
-												&&
-											directoryEntry.size() >= dashPrefixInitFiles.size()
-												&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
-										)
-											continue;
-
-										{
-											string segmentPathNameToBeRemoved =
-												manifestDirectoryPathName + "/" + directoryEntry;
-
-											chrono::system_clock::time_point fileLastModification =
-												FileIO::getFileTime (segmentPathNameToBeRemoved);
-											chrono::system_clock::time_point now = chrono::system_clock::now();
-
-											if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-												> liveProxyChunkRetentionInSeconds)
-											{
-												chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
-											}
-
-											if (!firstChunkRead
-													|| fileLastModification > lastChunkTimestamp)
-												lastChunkTimestamp = fileLastModification;
-
-											firstChunkRead = true;
-										}
-									}
-									catch(DirectoryListFinished e)
-									{
-										scanDirectoryFinished = true;
-									}
-									catch(runtime_error e)
-									{
-										string errorMessage = __FILEREF__ + "listing directory failed"
-											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-											+ ", e.what(): " + e.what()
-										;
-										_logger->error(errorMessage);
-
-										// throw e;
-									}
-									catch(exception e)
-									{
-										string errorMessage = __FILEREF__ + "listing directory failed"
-											+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-											+ ", e.what(): " + e.what()
-										;
-										_logger->error(errorMessage);
-
-										// throw e;
-									}
-								}
-
-								FileIO::closeDirectory (directory);
-							}
-
-							if (!firstChunkRead
-									|| lastChunkTimestamp <
-										chrono::system_clock::now() - chrono::seconds(20 * segmentDurationInSeconds))
-							{
-								// if we are here, it means the ffmpeg command is not generating the ts files
-
-								_logger->error(__FILEREF__ + "Chunks were not generated"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-									+ ", firstChunkRead: " + to_string(firstChunkRead)
-								);
-
-								chunksWereNotGenerated = true;
-
-								// 1. kill it in case it is still running
-								// 2. manage the error (this is done below)
-
-								try
-								{
-									killEncodingJob(_currentUsedFFMpegEncoderHost,
-										_encodingItem->_encodingJobKey);
-								}
-								catch(...)
-								{
-									_logger->error(__FILEREF__ + "killEncodingJob failed"
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-									);
-								}
-							}
-						}
-						catch(runtime_error e)
-						{
-							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-								+ ", e.what(): " + e.what()
-							);
-						}
-						catch(...)
-						{
-							_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-							);
-						}
-					}
-					*/
 					
 					if (completedWithError) // || chunksWereNotGenerated)
 					{
-						if (urlForbidden || urlNotFound)
+						if (urlForbidden || urlNotFound)	// see my comment at the beginning of the while loop
 						{
 							string errorMessage =
 								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
