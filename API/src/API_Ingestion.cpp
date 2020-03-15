@@ -338,8 +338,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 								sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
 							else if (variableType == "boolean")
 							{
-								bool bValue = to_string(JSONUtils::asBool(variableDetails, field, false));
-								sValue = bValue ? "true" : "false";
+								sValue = to_string(JSONUtils::asBool(variableDetails, field, false));
+								_logger->error(__FILEREF__ + "BBBBBBB boool sValue: " + sValue + ", field: " + field);
 							}
 							else if (variableType == "datetime")
 								sValue = variableDetails.get(field, "").asString();
@@ -364,8 +364,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 								sValue = to_string(JSONUtils::asDouble(variablesValuesToBeUsedRoot, sKey, 0.0));
 							else if (variableType == "boolean")
 							{
-								bool bValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
-								sValue = bValue ? "true" : "false";
+								sValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
+								_logger->error(__FILEREF__ + "BBBBBBB boool sValue: " + sValue + ", sKey: " + sKey);
 							}
 							else if (variableType == "datetime")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
