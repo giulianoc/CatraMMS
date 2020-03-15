@@ -3715,9 +3715,25 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             field = "UserData";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
-                Json::StreamWriterBuilder wbuilder;
+				// 2020-03-15: when it is set by the GUI it arrive here as a string
+				if ((parametersRoot[field]).type() == Json::stringValue)
+				{
+					userData = parametersRoot.get(field, "").asString();
 
-                userData = Json::writeString(wbuilder, parametersRoot[field]);                        
+					_logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
+						+ ", userData: " + userData
+					);
+				}
+				else
+				{
+					Json::StreamWriterBuilder wbuilder;
+
+					userData = Json::writeString(wbuilder, parametersRoot[field]);                        
+
+					_logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
+						+ ", userData: " + userData
+					);
+				}
             }
 
             field = "DeliveryFileName";

@@ -3260,9 +3260,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			Json::Value userDataRoot;
 			{
 				if (JSONUtils::isMetadataPresent(liveRecorderParametersRoot, "UserData"))
-				{
 					userDataRoot = liveRecorderParametersRoot["UserData"];
-				}
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
