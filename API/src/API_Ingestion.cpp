@@ -337,7 +337,10 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 							else if (variableType == "decimal")
 								sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
 							else if (variableType == "boolean")
-								sValue = to_string(JSONUtils::asBool(variableDetails, field, false));
+							{
+								bool bValue = to_string(JSONUtils::asBool(variableDetails, field, false));
+								sValue = bValue ? "true" : "false";
+							}
 							else if (variableType == "datetime")
 								sValue = variableDetails.get(field, "").asString();
 							else
@@ -360,7 +363,10 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 							else if (variableType == "decimal")
 								sValue = to_string(JSONUtils::asDouble(variablesValuesToBeUsedRoot, sKey, 0.0));
 							else if (variableType == "boolean")
-								sValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
+							{
+								bool bValue = to_string(JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false));
+								sValue = bValue ? "true" : "false";
+							}
 							else if (variableType == "datetime")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else
