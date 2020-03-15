@@ -3716,7 +3716,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
-				/*
 				if ((parametersRoot[field]).type() == Json::stringValue)
 				{
 					userData = parametersRoot.get(field, "").asString();
@@ -3726,15 +3725,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					);
 				}
 				else
-				*/
 				{
 					Json::StreamWriterBuilder wbuilder;
 
 					userData = Json::writeString(wbuilder, parametersRoot[field]);                        
 
-					// _logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
-					// 	+ ", userData: " + userData
-					// );
+					_logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
+						+ ", userData: " + userData
+					);
 				}
             }
 
