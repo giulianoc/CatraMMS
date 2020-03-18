@@ -24,7 +24,7 @@ class MMSEngineProcessor
 public:
     struct CurlDownloadData {
         int         currentChunkNumber;
-        string      workspaceIngestionBinaryPathName;
+        string      destBinaryPathName;
         ofstream    mediaSourceFileStream;
         size_t      currentTotalSize;
         size_t      maxChunkFileSize;
@@ -350,19 +350,25 @@ private:
 			MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot);
 
     void validateMediaSourceFile (int64_t ingestionJobKey,
-        string mediaSourcePathName,
+        string mediaSourcePathName, string mediaFileFormat,
         string md5FileCheckSum, int fileSizeInBytes);
 
     void downloadMediaSourceFileThread(
         shared_ptr<long> processorsThreadsNumber,
-        string sourceReferenceURL,
+        string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
     void moveMediaSourceFileThread(shared_ptr<long> processorsThreadsNumber,
-        string sourceReferenceURL,
+        string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
     void copyMediaSourceFileThread(shared_ptr<long> processorsThreadsNumber,
-        string sourceReferenceURL,
+        string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
+
+	void manageTarFileInCaseOfIngestionOfSegments(
+		int64_t ingestionJobKey,
+		string tarBinaryPathName, string workspaceIngestionRepository,
+		string sourcePathName
+		);
 
     int progressDownloadCallback(
         int64_t ingestionJobKey,

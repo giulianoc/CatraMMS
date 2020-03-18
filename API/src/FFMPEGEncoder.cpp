@@ -137,9 +137,9 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
     );
 
-    _liveProxyHealthCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "liveProxyHealthCheckInSeconds", 5);
+    _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->liveProxyHealthCheckInSeconds: " + to_string(_liveProxyHealthCheckInSeconds)
+        + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
     );
 
     _maxLiveRecordingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
@@ -224,9 +224,9 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 	}
 
 	{
-		_liveProxyMonitorThreadShutdown = false;
-		thread liveProxyMonitor(&FFMPEGEncoder::liveProxyMonitorThread, this);
-		liveProxyMonitor.detach();
+		_monitorThreadShutdown = false;
+		thread monitor(&FFMPEGEncoder::monitorThread, this);
+		monitor.detach();
 	}
 
 	_lastEncodingCompletedCheck = chrono::system_clock::now();
@@ -1673,7 +1673,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			return;
         }
 
-		_logger->info(__FILEREF__ + "Found Encoding to kill"
+		_logger->info(__FILEREF__ + "ProcessUtility::killProcess. Found Encoding to kill"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
 				);
@@ -4505,10 +4505,10 @@ void FFMPEGEncoder::liveProxy(
     }
 }
 
-void FFMPEGEncoder::liveProxyMonitorThread()
+void FFMPEGEncoder::monitorThread()
 {
 
-	while(!_liveProxyMonitorThreadShutdown)
+	while(!_monitorThreadShutdown)
 	{
 		try
 		{
@@ -4525,11 +4525,13 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 
-					// First health check looking the manifest path name timestamp
+					// First health check
 					try
 					{
 						if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 						{
+							// First health check (HLS/DASH) looking the manifest path name timestamp
+
 							if (liveProxy->_manifestFilePathName != "")
 							{
 								chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -4584,7 +4586,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 
 									if (!liveProxyWorking)
 									{
-										_logger->error(__FILEREF__ + "liveProxyMonitor. Live Proxy is not working (manifest file is missing or was not updated). LiveProxy (ffmpeg) is killed in order to be started again"
+										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (manifest file is missing or was not updated). LiveProxy (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 											+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
@@ -4617,10 +4619,39 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 								);
 							}
 						}
+						else
+						{
+							// First health check (CDN), looks the log and check there is no message like
+							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+							//	This message causes proxy not working
+							if (liveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								try
+								{
+									ProcessUtility::killProcess(liveProxy->_childPid);
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = string("ProcessUtility::killProcess failed")
+										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+										+ ", e.what(): " + e.what()
+											;
+									_logger->error(__FILEREF__ + errorMessage);
+								}
+							}
+						}
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveMonitorCheck on manifest path name failed")
+						string errorMessage = string ("liveProxyMonitorCheck on manifest path name/Non-monotonous DTS failed")
 							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -4630,7 +4661,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveMonitorCheck on manifest path name failed")
+						string errorMessage = string ("liveProxyMonitorCheck on manifest path name/Non-monotonous DTS failed")
 							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -4800,7 +4831,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 
 									chunksWereNotGenerated = true;
 
-									_logger->error(__FILEREF__ + "liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+									_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 										+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
@@ -4852,7 +4883,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 					}
 					catch(runtime_error e)
 					{
-						string errorMessage = string ("liveMonitorCheck on segments (and retention) failed")
+						string errorMessage = string ("liveProxyMonitorCheck on segments (and retention) failed")
 							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -4862,7 +4893,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 					}
 					catch(exception e)
 					{
-						string errorMessage = string ("liveMonitorCheck on segments (and retention) failed")
+						string errorMessage = string ("liveProxyMonitorCheck on segments (and retention) failed")
 							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -4871,7 +4902,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 
-					_logger->info(__FILEREF__ + "liveMonitorCheck"
+					_logger->info(__FILEREF__ + "liveProxyMonitorCheck"
 						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 						+ ", elapsed time: " + to_string(
@@ -4883,7 +4914,7 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 		}
 		catch(runtime_error e)
 		{
-			string errorMessage = string ("liveProxyMonitor failed")
+			string errorMessage = string ("monitor failed")
 				+ ", e.what(): " + e.what()
 			;
 
@@ -4891,14 +4922,14 @@ void FFMPEGEncoder::liveProxyMonitorThread()
 		}
 		catch(exception e)
 		{
-			string errorMessage = string ("liveProxyMonitor failed")
+			string errorMessage = string ("monitor failed")
 				+ ", e.what(): " + e.what()
 			;
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
 
-		this_thread::sleep_for(chrono::seconds(_liveProxyHealthCheckInSeconds));
+		this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
 	}
 }
 

@@ -154,6 +154,8 @@ public:
 
     int getEncodingProgress();
 
+	bool nonMonotonousDTSInOutputLog();
+
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
     vector<string> generateFramesToIngest(

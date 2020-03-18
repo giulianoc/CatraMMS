@@ -3720,9 +3720,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				{
 					userData = parametersRoot.get(field, "").asString();
 
-					_logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
-						+ ", userData: " + userData
-					);
+					// _logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
+					// 	+ ", userData: " + userData
+					// );
 				}
 				else
 				{
@@ -3730,9 +3730,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 					userData = Json::writeString(wbuilder, parametersRoot[field]);                        
 
-					_logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
-						+ ", userData: " + userData
-					);
+					// _logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
+					// 	+ ", userData: " + userData
+					// );
 				}
             }
 

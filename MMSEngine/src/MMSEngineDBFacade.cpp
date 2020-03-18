@@ -1799,7 +1799,9 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 }
 
 void MMSEngineDBFacade::getAllStorageDetails(
-        int64_t mediaItemKey, vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>& allStorageDetails
+        int64_t mediaItemKey,
+		vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>&
+		allStorageDetails
 )
 {
 
@@ -1824,8 +1826,8 @@ void MMSEngineDBFacade::getAllStorageDetails(
 		ContentType contentType;
         {
 			lastSQLCommand =
-				"select mi.workspaceKey, mi.contentType, pp.externalReadOnlyStorage, pp.encodingProfileKey, pp.partitionNumber, "
-				"pp.relativePath, pp.fileName, pp.sizeInBytes "
+				"select mi.workspaceKey, mi.contentType, pp.externalReadOnlyStorage, pp.encodingProfileKey, "
+				"pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
 				"from MMS_MediaItem mi, MMS_PhysicalPath pp "
 				"where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? ";
 

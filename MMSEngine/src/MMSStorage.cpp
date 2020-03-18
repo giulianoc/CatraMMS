@@ -1309,10 +1309,12 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
 
-        vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
+        vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>
+			allStorageDetails;
         mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-        for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>& storageDetails: allStorageDetails)
+        for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>&
+				storageDetails: allStorageDetails)
         {
 			MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
             int mmsPartitionNumber;
@@ -1329,7 +1331,14 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
 				continue;
 
             {
-				if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming)
+				string m3u8Suffix(".m3u8");
+
+				if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming
+					|| 
+					fileName.size() >= m3u8Suffix.size()	// end with .m3u8
+						&& 0 == fileName.compare(fileName.size()-m3u8Suffix.size(), m3u8Suffix.size(),
+							m3u8Suffix)
+					)
 				{
 					// in this case we have to removed the directory and not just the m3u8/mpd file
 					fileName = "";

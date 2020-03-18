@@ -1905,6 +1905,9 @@ void API::uploadedBinary(
                 throw runtime_error(errorMessage);            
             }
 
+			// we should manage segmented contents as it is done
+			// in MMSEngineProcessor.cpp (manageTarFileInCaseOfIngestionOfSegments)
+
             bool sourceBinaryTransferred = true;
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2029,6 +2032,9 @@ void API::uploadedBinary(
             
             if (contentRangeEnd + 1 == contentRangeSize)
             {
+				// we should manage segmented contents as it is done
+				// in MMSEngineProcessor.cpp (manageTarFileInCaseOfIngestionOfSegments)
+
                 bool sourceBinaryTransferred = true;
                 _logger->info(__FILEREF__ + "Update IngestionJob"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)

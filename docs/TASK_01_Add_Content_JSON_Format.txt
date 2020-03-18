@@ -10,6 +10,12 @@
 		"SourceURL": "http://myhost/example.mp4",
 
 		// mandatory: extension of the file
+		//		In case it is am HLS segmented content, the file format will be "m3u8" and
+		//		the sourceURL will refer a .tar.gz file of a directory having the following constraints:
+		//			1. in case of copy:// or move:// sourceURL, the tar.gz file name will be the same name
+		//				of the internal directory
+		//			2. in case of other sourceURL, the directory inside the tar.gz downloaded content will be
+		//				fixed to "content"
 		"FileFormat": "mp4",
 
 		// optional for both the below parameters. It is possible to add/ingest a new variant/profile of a content (mediaItemKey).

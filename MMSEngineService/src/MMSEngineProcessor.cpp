@@ -11,6 +11,7 @@
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
 #include "catralibraries/Encrypt.h"
+#include "catralibraries/ProcessUtility.h"
 #include "FFMpeg.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -1555,6 +1556,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								else
 								{
+									bool segmentedContent = false;
+									if (mediaFileFormat == "m3u8")
+										segmentedContent = true;
+
 									if (nextIngestionStatus ==
 										MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
 									{
@@ -1603,7 +1608,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 
 											thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
 											downloadMediaSource.detach();
 										}
 									}
@@ -1658,7 +1663,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
                                         
 											thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
 											moveMediaSource.detach();
 										}
 									}
@@ -1714,7 +1719,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 
 											thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
 											copyMediaSource.detach();
 										}
 									}
@@ -4484,6 +4489,130 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
     LocalAssetIngestionEvent localAssetIngestionEvent)
 {
+
+    Json::Value parametersRoot;
+    try
+    {
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+        string errors;
+
+        string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
+        
+        // LF and CR create problems to the json parser...
+        while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
+            sMetadataContent.pop_back();
+        
+        bool parsingSuccessful = reader->parse(sMetadataContent.c_str(),
+                sMetadataContent.c_str() + sMetadataContent.size(), 
+                &parametersRoot, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+			string errorMessage = __FILEREF__ + "failed to parse the metadata"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", errors: " + errors
+				+ ", metaDataContent: " + sMetadataContent
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "parsing parameters failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+			+ ", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent()
+			+ ", exception: " + e.what()
+        );
+
+        string errorMessage = e.what();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
+				MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        // throw e;
+		return;	// return because it is a thread
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "validateMetadata failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", exception: " + e.what()
+        );
+
+        string errorMessage = e.what();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
+				 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+				 e.what()
+			);
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+				+ ", IngestionStatus: " + "End_ValidationMetadataFailed"
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+        // throw e;
+		return;	// return because it is a thread
+    }
+
 	string binaryPathName;
 	string externalStorageRelativePathName;
     try
@@ -4500,14 +4629,23 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			;
 
 			binaryPathName = workspaceIngestionBinaryPathName;
+			/*
+			string field = "FileFormat";
+			string fileFormat = parametersRoot.get(field, "").asString();
+			if (fileFormat == "m3u8")
+			{
+			}
+			*/
 		}
 		else
 		{
-			string mediaSourceURL = localAssetIngestionEvent.getExternalStorageMediaSourceURL();
+			string mediaSourceURL =
+				localAssetIngestionEvent.getExternalStorageMediaSourceURL();
 
 			string externalStoragePrefix("externalStorage://");
 			if (!(mediaSourceURL.size() >= externalStoragePrefix.size()
-					&& 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix)))
+					&& 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(),
+						externalStoragePrefix)))
 			{
 				string errorMessage = string("mediaSourceURL is not an externalStorage reference")
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4623,38 +4761,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
     string      metadataFileContent;
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
-    Json::Value parametersRoot;
     Validator validator(_logger, _mmsEngineDBFacade, _configuration);
     try
     {
-        Json::CharReaderBuilder builder;
-        Json::CharReader* reader = builder.newCharReader();
-        string errors;
-
-        string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
-        
-        // LF and CR create problems to the json parser...
-        while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
-            sMetadataContent.pop_back();
-        
-        bool parsingSuccessful = reader->parse(sMetadataContent.c_str(),
-                sMetadataContent.c_str() + sMetadataContent.size(), 
-                &parametersRoot, &errors);
-        delete reader;
-
-        if (!parsingSuccessful)
-        {
-            string errorMessage = __FILEREF__ + "failed to parse the metadata"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
-                    + ", errors: " + errors
-                    + ", metaDataContent: " + sMetadataContent
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
 		dependencies = validator.validateSingleTaskMetadata(
 			localAssetIngestionEvent.getWorkspace()->_workspaceKey,
 			localAssetIngestionEvent.getIngestionType(), parametersRoot);
@@ -4984,7 +5093,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         validateMediaSourceFile(
                 localAssetIngestionEvent.getIngestionJobKey(),
-                binaryPathName,
+                binaryPathName, mediaFileFormat,
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -5169,6 +5278,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				localAssetIngestionEvent.getWorkspace()->_territories
             );
 			mmsPartitionUsed = mmsPartitionIndexUsed;
+
+			if (mediaFileFormat == "m3u8")
+			{
+				relativePathToBeUsed += (mediaSourceFileName + "/");
+			}
 		}
 		else
 		{
@@ -5333,6 +5447,223 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		return;	// return because it is a thread
 	}
 
+	string m3u8FileName;
+	if (mediaFileFormat == "m3u8")
+	{
+		// in this case mmsAssetPathName refers a directory and we need to find out the m3u8 file name
+
+		try
+		{
+			FileIO::DirectoryEntryType_t detDirectoryEntryType;
+			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+				mmsAssetPathName + "/");
+			bool scanDirectoryFinished = false;
+			while (!scanDirectoryFinished)
+			{
+				string directoryEntry;
+				try
+				{
+					string directoryEntry = FileIO::readDirectory (directory,
+						&detDirectoryEntryType);
+
+					if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+						continue;
+
+					string m3u8Suffix(".m3u8");
+					if (directoryEntry.size() >= m3u8Suffix.size()
+							&& 0 == directoryEntry.compare(
+								directoryEntry.size()-m3u8Suffix.size(),
+								m3u8Suffix.size(), m3u8Suffix))
+					{
+						m3u8FileName = directoryEntry;
+
+						scanDirectoryFinished = true;
+					}
+				}
+				catch(DirectoryListFinished e)
+				{
+					scanDirectoryFinished = true;
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "listing directory failed"
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					throw e;
+				}
+			}
+
+			FileIO::closeDirectory (directory);
+
+			if (m3u8FileName == "")
+			{
+				string errorMessage = __FILEREF__ + "m3u8 file not found"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			mediaSourceFileName = m3u8FileName;
+		}
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "retrieving m3u8 file failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+			}
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
+                    MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+                    e.what()
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
+
+			// throw e;
+			return;	// return because it is a thread
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "retrieving m3u8 file failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+
+			if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "Remove file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", mmsAssetPathName: " + mmsAssetPathName
+					);
+
+					FileIO::remove(mmsAssetPathName);
+				}
+				catch(runtime_error e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->info(__FILEREF__ + "remove failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+						+ ", errorMessage: " + e.what()
+					);
+				}
+			}
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
+			try
+			{
+				_mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent.getIngestionJobKey(),
+                    MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                    e.what()
+				);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", errorMessage: " + re.what()
+					);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", errorMessage: " + ex.what()
+					);
+			}
+
+			// throw e;
+			return;	// return because it is a thread
+        }        
+	}
+
     MMSEngineDBFacade::ContentType contentType;
 
     int64_t durationInMilliSeconds = -1;
@@ -5357,8 +5688,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         try
         {
             FFMpeg ffmpeg (_configuration, _logger);
-            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-                ffmpeg.getMediaInfo(mmsAssetPathName);
+            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
+			if (mediaFileFormat == "m3u8")
+				mediaInfo = ffmpeg.getMediaInfo(mmsAssetPathName + "/" + m3u8FileName);
+			else
+				mediaInfo = ffmpeg.getMediaInfo(mmsAssetPathName);
 
             tie(durationInMilliSeconds, bitRate, 
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -5987,7 +6321,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     try
     {
         bool inCaseOfLinkHasItToBeRead = false;
-        unsigned long sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
+        unsigned long long sizeInBytes;
+		if (mediaFileFormat == "m3u8")
+			sizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
+		else
+			sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
 
 		int64_t variantOfMediaItemKey = -1;
 		{
@@ -6420,6 +6758,132 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		return;	// return because it is a thread
     }    
 }
+
+
+/*
+void MMSEngineProcessor::exploidTarGzContentFile(
+	string tarGzBinaryPathName,
+	string workspaceIngestionBinaryPathName,
+	int64_t ingestionJobKey)
+{
+	// string binaryPathName;
+
+	try
+	{
+		string tarGzSuffix(".tar.gz");
+		if (tarGzBinaryPathName.size() >= tarGzSuffix.size() && 0 == tarGzBinaryPathName.compare(
+			tarGzBinaryPathName.size()-tarGzSuffix.size(), tarGzSuffix.size(), tarGzSuffix))
+		{
+			size_t binaryPathNameIndex = tarGzBinaryPathName.find_last_of(".tar.gz");
+			if (binaryPathNameIndex == string::npos)
+			{
+				// error
+			}
+
+			binaryPathName = tarGzBinaryPathName.substr(0, binaryPathNameIndex);
+		}
+		else
+		{
+			// error
+		}
+
+
+		string m3u8FileName;
+		{
+			try
+			{
+				FileIO::DirectoryEntryType_t detDirectoryEntryType;
+				shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+					binaryPathName + "/");
+				bool scanDirectoryFinished = false;
+				while (!scanDirectoryFinished)
+				{
+					string directoryEntry;
+					try
+					{
+						string directoryEntry = FileIO::readDirectory (directory,
+							&detDirectoryEntryType);
+
+						if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+							continue;
+
+						string m3u8Suffix(".m3u8");
+						if (directoryEntry.size() >= m3u8Suffix.size()
+								&& 0 == directoryEntry.compare(
+									directoryEntry.size()-m3u8Suffix.size(),
+									m3u8Suffix.size(), m3u8Suffix))
+						{
+							m3u8FileName = directoryEntry;
+
+							scanDirectoryFinished = true;
+						}
+					}
+					catch(DirectoryListFinished e)
+					{
+						scanDirectoryFinished = true;
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "listing directory failed"
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "listing directory failed"
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						throw e;
+					}
+				}
+
+				FileIO::closeDirectory (directory);
+			}
+			catch(runtime_error e)
+			{
+				// error
+			}
+			catch(exception e)
+			{
+				// error
+			}
+		}
+
+		if (m3u8FileName == "")
+		{
+			// error
+		}
+
+		binaryPathName += ("/" + m3u8FileName);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "exploidTarGzContentFile failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "exploidTarGzContentFile failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+
+        throw e;
+    }
+
+	// return binaryPathName;
+}
+*/
 
 void MMSEngineProcessor::manageGroupOfTasks(
         int64_t ingestionJobKey,
@@ -14245,29 +14709,48 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 }
 
 void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
-        string mediaSourcePathName,
+        string mediaSourcePathName, string mediaFileFormat,
         string md5FileCheckSum, int fileSizeInBytes)
 {
-	// we added the following two parameters for the FileIO::fileExisting method
-	// because, in the scenario where still MMS generates the file to be ingested
-	// (i.e.: generate frames task and other tasks), and the NFS is used, we saw sometimes
-	// FileIO::fileExisting returns false even if the file is there. This is due because of NFS 
-	// delay to present the file 
-	long maxMillisecondsToWait = 5000;
-	long milliSecondsWaitingBetweenChecks = 100;
-    if (!FileIO::fileExisting(mediaSourcePathName,
-				maxMillisecondsToWait, milliSecondsWaitingBetweenChecks))
-    {
-        string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
+
+	if (mediaFileFormat == "m3u8")
+	{
+		// in this case it is a directory with segments inside
+		if (!FileIO::directoryExisting(mediaSourcePathName))
+		{
+			string errorMessage = __FILEREF__ + "Media Source directory does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", mediaSourcePathName: " + mediaSourcePathName;
-        _logger->error(errorMessage);
+			_logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+			throw runtime_error(errorMessage);
+		}
+	}
+	else
+	{
+		// we added the following two parameters for the FileIO::fileExisting method
+		// because, in the scenario where still MMS generates the file to be ingested
+		// (i.e.: generate frames task and other tasks), and the NFS is used, we saw sometimes
+		// FileIO::fileExisting returns false even if the file is there. This is due because of NFS 
+		// delay to present the file 
+		long maxMillisecondsToWait = 5000;
+		long milliSecondsWaitingBetweenChecks = 100;
+		if (!FileIO::fileExisting(mediaSourcePathName,
+			maxMillisecondsToWait, milliSecondsWaitingBetweenChecks))
+		{
+			string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", mediaSourcePathName: " + mediaSourcePathName;
+			_logger->error(errorMessage);
 
-    if (md5FileCheckSum != "")
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	// we just simplify and md5FileCheck is not done in case of segments
+    if (mediaFileFormat != "m3u8" && md5FileCheckSum != "")
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
@@ -14288,7 +14771,8 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
         }
     }
     
-    if (fileSizeInBytes != -1)
+	// we just simplify and file size check is not done in case of segments
+    if (mediaFileFormat != "m3u8" && fileSizeInBytes != -1)
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long downloadedFileSizeInBytes = 
@@ -14319,11 +14803,11 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     if (curlDownloadData->currentChunkNumber == 0)
     {
         (curlDownloadData->mediaSourceFileStream).open(
-                curlDownloadData -> workspaceIngestionBinaryPathName, ofstream::binary | ofstream::trunc);
+                curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::trunc);
         curlDownloadData->currentChunkNumber += 1;
         
         logger->info(__FILEREF__ + "Opening binary file"
-             + ", curlDownloadData -> workspaceIngestionBinaryPathName: " + curlDownloadData -> workspaceIngestionBinaryPathName
+             + ", curlDownloadData -> destBinaryPathName: " + curlDownloadData -> destBinaryPathName
              + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
              + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
              + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
@@ -14376,11 +14860,11 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
         }
          */
         // (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
-        (curlDownloadData->mediaSourceFileStream).open(curlDownloadData->workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
+        (curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
         curlDownloadData->currentChunkNumber += 1;
 
         logger->info(__FILEREF__ + "Opening binary file"
-             + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
+             + ", curlDownloadData->destBinaryPathName: " + curlDownloadData->destBinaryPathName
              + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
              + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
              + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
@@ -14395,7 +14879,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 };
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
@@ -14431,12 +14915,15 @@ RESUMING FILE TRANSFERS
         doesn't, curl will say so. 
  */    
 
-    string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-    workspaceIngestionBinaryPathName
-        .append("/")
-        .append(to_string(ingestionJobKey))
-        .append("_source")
-        ;
+	string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+	string destBinaryPathName =
+		workspaceIngestionRepository
+		+ "/"
+		+ to_string(ingestionJobKey)
+		+ "_source";
+	if (segmentedContent)
+		destBinaryPathName = destBinaryPathName + ".tar.gz";
+
 
         
     for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
@@ -14459,12 +14946,12 @@ RESUMING FILE TRANSFERS
                 CurlDownloadData curlDownloadData;
                 curlDownloadData.currentChunkNumber = 0;
                 curlDownloadData.currentTotalSize = 0;
-                curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
+                curlDownloadData.destBinaryPathName   = destBinaryPathName;
                 curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
                 
-                // fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
+                // fstream mediaSourceFileStream(destBinaryPathName, ios::binary | ios::out);
                 // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
-                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
+                // FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb");
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -14511,7 +14998,7 @@ RESUMING FILE TRANSFERS
                 (curlDownloadData.mediaSourceFileStream).close();
 
                 /*
-                string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
+                string localPathFileName = curlDownloadData.destBinaryPathName
                         + ".new";
                 if (curlDownloadData.currentChunkNumber >= 2)
                 {
@@ -14521,17 +15008,17 @@ RESUMING FILE TRANSFERS
 
                         _logger->info(__FILEREF__ + "Concat file"
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                             + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                         );
 
-                        FileIO::concatFile(curlDownloadData.workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+                        FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
                     }
                     catch(runtime_error e)
                     {
                         string errorMessage = string("Error to concat file")
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                                 + ", e.what(): " + e.what()
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -14542,7 +15029,7 @@ RESUMING FILE TRANSFERS
                     {
                         string errorMessage = string("Error to concat file")
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
 
@@ -14558,16 +15045,16 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
+                // FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb+");
                 long long fileSize;
                 {
-                    ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
+                    ofstream mediaSourceFileStream(destBinaryPathName, ofstream::binary | ofstream::app);
                     fileSize = mediaSourceFileStream.tellp();
                     mediaSourceFileStream.close();
                 }
 
                 CurlDownloadData curlDownloadData;
-                curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
+                curlDownloadData.destBinaryPathName   = destBinaryPathName;
                 curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
 
                 curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
@@ -14622,7 +15109,7 @@ RESUMING FILE TRANSFERS
                 (curlDownloadData.mediaSourceFileStream).close();
 
                 /*
-                string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
+                string localPathFileName = curlDownloadData.destBinaryPathName
                         + ".new";
                 if (curlDownloadData.currentChunkNumber >= 2)
                 {
@@ -14632,17 +15119,17 @@ RESUMING FILE TRANSFERS
 
                         _logger->info(__FILEREF__ + "Concat file"
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                             + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                         );
 
-                        FileIO::concatFile(curlDownloadData.workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+                        FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
                     }
                     catch(runtime_error e)
                     {
                         string errorMessage = string("Error to concat file")
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                                 + ", e.what(): " + e.what()
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -14653,7 +15140,7 @@ RESUMING FILE TRANSFERS
                     {
                         string errorMessage = string("Error to concat file")
                             + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
 
@@ -14663,14 +15150,44 @@ RESUMING FILE TRANSFERS
                  */
             }
 
+			if (segmentedContent)
+			{
+				try
+				{
+					// by a convention, the directory inside the tar file has to be named as 'content'
+					string sourcePathName = "/content.tar.gz";
+
+					_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+						+ ", destBinaryPathName: " + destBinaryPathName
+						+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+						+ ", sourcePathName: " + sourcePathName
+					);
+					manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+						destBinaryPathName, workspaceIngestionRepository,
+						sourcePathName);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+						+ ", sourceReferenceURL: " + sourceReferenceURL 
+					;
+           
+					_logger->error(__FILEREF__ + errorMessage);
+           
+					throw runtime_error(errorMessage);
+				}
+			}
+
             downloadingCompleted = true;
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+                + ", destBinaryPathName: " + destBinaryPathName
                 + ", downloadingCompleted: " + to_string(downloadingCompleted)
-            );                            
+            );
             _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
                 ingestionJobKey, downloadingCompleted);
         }
@@ -14792,6 +15309,72 @@ RESUMING FILE TRANSFERS
 							);
 					}
 
+                    return;
+                }
+                else
+                {
+                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+                    );
+                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+                }
+            }
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Download failed (runtime_error)"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", exception: " + e.what()
+            );
+
+            if (downloadingStoppedByUser)
+            {
+                downloadingCompleted = true;
+            }
+            else
+            {
+                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+                {
+                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+                    );
+                    
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_IngestionFailure"
+                        + ", errorMessage: " + e.what()
+                    );                            
+					try
+					{
+						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                            e.what());
+					}
+					catch(runtime_error& re)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + re.what()
+							);
+					}
+					catch(exception ex)
+					{
+						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errorMessage: " + ex.what()
+							);
+					}
+                    
                     return;
                 }
                 else
@@ -17599,18 +18182,20 @@ void MMSEngineProcessor::userHttpCallbackThread(
 
 
 void MMSEngineProcessor::moveMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
     try 
     {
-        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-        workspaceIngestionBinaryPathName
-            .append("/")
-            .append(to_string(ingestionJobKey))
-            .append("_source")
-            ;
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        string destBinaryPathName =
+			workspaceIngestionRepository
+			+ "/"
+			+ to_string(ingestionJobKey)
+			+ "_source";
+        if (segmentedContent)
+			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string movePrefix("move://");
         if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)))
@@ -17632,13 +18217,40 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+            + ", destBinaryPathName: " + destBinaryPathName
         );
         
 		chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-        FileIO::moveFile(sourcePathName, workspaceIngestionBinaryPathName);
+        FileIO::moveFile(sourcePathName, destBinaryPathName);
         chrono::system_clock::time_point endMoving = chrono::system_clock::now();
-            
+
+		if (segmentedContent)
+		{
+			try
+			{
+				_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+					+ ", destBinaryPathName: " + destBinaryPathName
+					+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+					+ ", sourcePathName: " + sourcePathName
+				);
+				manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+					destBinaryPathName, workspaceIngestionRepository,
+					sourcePathName);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", sourceReferenceURL: " + sourceReferenceURL 
+				;
+           
+				_logger->error(__FILEREF__ + errorMessage);
+           
+				throw runtime_error(errorMessage);
+			}
+		}
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17735,18 +18347,20 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 }
 
 void MMSEngineProcessor::copyMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
     try 
     {
-        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-        workspaceIngestionBinaryPathName
-            .append("/")
-            .append(to_string(ingestionJobKey))
-            .append("_source")
-            ;
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        string destBinaryPathName =
+			workspaceIngestionRepository
+			+ "/"
+			+ to_string(ingestionJobKey)
+			+ "_source";
+        if (segmentedContent)
+			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string copyPrefix("copy://");
         if (!(sourceReferenceURL.size() >= copyPrefix.size() && 0 == sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix)))
@@ -17768,27 +18382,54 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
-            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+            + ", destBinaryPathName: " + destBinaryPathName
         );
-        
+
 		chrono::system_clock::time_point startCoping = chrono::system_clock::now();
-        FileIO::copyFile(sourcePathName, workspaceIngestionBinaryPathName);
+        FileIO::copyFile(sourcePathName, destBinaryPathName);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
-            
+
+		if (segmentedContent)
+		{
+			try
+			{
+				_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+					+ ", destBinaryPathName: " + destBinaryPathName
+					+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+					+ ", sourcePathName: " + sourcePathName
+				);
+				manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+					destBinaryPathName, workspaceIngestionRepository,
+					sourcePathName);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", sourceReferenceURL: " + sourceReferenceURL 
+				;
+           
+				_logger->error(__FILEREF__ + errorMessage);
+           
+				throw runtime_error(errorMessage);
+			}
+		}
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
 			+ ", copingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count())
-        );              
-        
+        );
+
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
             ingestionJobKey, true);
     }
     catch (runtime_error& e) 
     {
         _logger->error(__FILEREF__ + "Coping failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
@@ -17830,14 +18471,14 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
     catch (exception e)
     {
         _logger->error(__FILEREF__ + "Coping failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
         );
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_IngestionFailure"
             + ", errorMessage: " + e.what()
@@ -17870,6 +18511,135 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         return;
     }
 }
+
+void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
+		int64_t ingestionJobKey,
+		string tarBinaryPathName, string workspaceIngestionRepository,
+		string sourcePathName
+	)
+{
+	string executeCommand;
+	try
+	{
+		// tar into workspaceIngestion directory
+		//	source will be something like <ingestion key>_source
+		//	destination will be the original directory (that has to be the same name of the tar file name)
+		executeCommand =
+			"tar xfz " + tarBinaryPathName
+			+ " --directory " + workspaceIngestionRepository;
+		_logger->info(__FILEREF__ + "Start tar command "
+			+ ", executeCommand: " + executeCommand
+		);
+		chrono::system_clock::time_point startTar = chrono::system_clock::now();
+		int executeCommandStatus = ProcessUtility::execute(executeCommand);
+		chrono::system_clock::time_point endTar = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "End tar command "
+			+ ", executeCommand: " + executeCommand
+			+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+		);
+		if (executeCommandStatus != 0)
+		{
+			string errorMessage = string("ProcessUtility::execute failed")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+				+ ", executeCommand: " + executeCommand 
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+          
+			throw runtime_error(errorMessage);
+		}
+
+		// sourceFileName is the name of the tar file name that is the same
+		//	of the name of the directory inside the tar file
+		string sourceFileName;
+		{
+			string suffix(".tar.gz");
+			if (!(sourcePathName.size() >= suffix.size()
+				&& 0 == sourcePathName.compare(sourcePathName.size()-suffix.size(), suffix.size(), suffix)))
+			{
+				string errorMessage = __FILEREF__ + "sourcePathName does not end with " + suffix
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourcePathName: " + sourcePathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			size_t startFileNameIndex = sourcePathName.find_last_of("/");
+			if (startFileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "sourcePathName bad format"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourcePathName: " + sourcePathName
+					+ ", startFileNameIndex: " + to_string(startFileNameIndex)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceFileName = sourcePathName.substr(startFileNameIndex + 1);
+			sourceFileName = sourceFileName.substr(0, sourceFileName.size() - suffix.size());
+		}
+
+		// remove tar file
+		{
+			string sourceTarFile = workspaceIngestionRepository + "/"
+				+ to_string(ingestionJobKey)
+				+ "_source"
+				+ ".tar.gz";
+
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceTarFile: " + sourceTarFile
+			);
+
+			FileIO::remove(sourceTarFile);
+		}
+
+		// rename directory generated from tar: from user_tar_filename to 1247848_source
+		{
+			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
+			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
+			_logger->info(__FILEREF__ + "Start moveDirectory..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceDirectory: " + sourceDirectory
+				+ ", destDirectory: " + destDirectory
+			);
+			chrono::system_clock::time_point startMoveDir = chrono::system_clock::now();
+			FileIO::moveDirectory(sourceDirectory, destDirectory,
+				S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
+				S_IRGRP | S_IXGRP |                                                                                   
+				S_IROTH | S_IXOTH);
+			chrono::system_clock::time_point endMoveDir = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "End moveDirectory"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceDirectory: " + sourceDirectory
+				+ ", destDirectory: " + destDirectory
+				+ ", moveDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoveDir - startMoveDir).count())
+			);
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("ProcessUtility::execute failed")
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", executeCommand: " + executeCommand 
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+         
+		throw runtime_error(errorMessage);
+	}
+}
+
 
 int MMSEngineProcessor::progressDownloadCallback(
         int64_t ingestionJobKey,

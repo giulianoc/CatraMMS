@@ -106,8 +106,8 @@ private:
     mutex						_liveProxyMutex;
     int							_maxLiveProxiesCapability;
     vector<shared_ptr<LiveProxy>>	_liveProxiesCapability;
-	int							_liveProxyHealthCheckInSeconds;
-	bool						_liveProxyMonitorThreadShutdown;
+	int							_monitorCheckInSeconds;
+	bool						_monitorThreadShutdown;
 
     mutex                       _liveRecordingMutex;
     int                         _maxLiveRecordingsCapability;
@@ -194,7 +194,7 @@ private:
         shared_ptr<LiveProxy> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
-	void liveProxyMonitorThread();
+	void monitorThread();
 
 	void videoSpeed(
         // FCGX_Request& request,

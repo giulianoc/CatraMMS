@@ -3105,6 +3105,86 @@ int FFMpeg::getEncodingProgress()
     return encodingPercentage;
 }
 
+bool FFMpeg::nonMonotonousDTSInOutputLog()
+{
+    try
+    {
+		if (_currentApiName != "liveProxyByCDN")
+		{
+			// actually we need this check just for liveProxyByCDN
+
+			return false;
+		}
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        string ffmpegEncodingStatus;
+        try
+        {
+            int lastCharsToBeRead = 512;
+            
+            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+		string lowerCaseFfmpegEncodingStatus;
+		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
+		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(), lowerCaseFfmpegEncodingStatus.begin(), [](unsigned char c){return tolower(c); } );
+
+		// [flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+		if (lowerCaseFfmpegEncodingStatus.find("non-monotonous dts in output stream") != string::npos
+				&& lowerCaseFfmpegEncodingStatus.find("incorrect timestamps") != string::npos)
+			return true;
+		else
+			return false;
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+}
+
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 	FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
@@ -5390,7 +5470,8 @@ void FFMpeg::liveProxyByCDN(
 		ffmpegArgumentList.push_back("-nostdin");
 		ffmpegArgumentList.push_back("-re");
 		ffmpegArgumentList.push_back("-itsoffset");
-		ffmpegArgumentList.push_back("-0.5");
+		// ffmpegArgumentList.push_back("-0.5");
+		ffmpegArgumentList.push_back("-2.0");
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-c:v");

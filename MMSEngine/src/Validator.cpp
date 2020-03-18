@@ -1193,7 +1193,7 @@ void Validator::validateAddContentMetadata(
             + ", label: " + label
         ;
         _logger->error(__FILEREF__ + errorMessage);
-        
+
         throw runtime_error(errorMessage);
     }
 
@@ -4202,6 +4202,7 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
         "avi",
         "mov",
         "wmv",
+        "m3u8",
         "yuv",
         "mp4",
         "m4p ",
