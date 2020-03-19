@@ -5666,6 +5666,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
     MMSEngineDBFacade::ContentType contentType;
 
+	/*
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -5678,6 +5679,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     long audioSampleRate = -1;
     int audioChannels = -1;
     long audioBitRate = -1;
+	*/
+	pair<int64_t, long> mediaInfoDetails;
+	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int64_t, string, long, int, long>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;
@@ -5688,15 +5693,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         try
         {
             FFMpeg ffmpeg (_configuration, _logger);
-            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
-			if (mediaFileFormat == "m3u8")
-				mediaInfo = ffmpeg.getMediaInfo(mmsAssetPathName + "/" + m3u8FileName);
-			else
-				mediaInfo = ffmpeg.getMediaInfo(mmsAssetPathName);
+            // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 
+			if (mediaFileFormat == "m3u8")
+				mediaInfoDetails = ffmpeg.getMediaInfo(mmsAssetPathName + "/" + m3u8FileName,
+						videoTracks, audioTracks);
+			else
+				mediaInfoDetails = ffmpeg.getMediaInfo(mmsAssetPathName, videoTracks, audioTracks);
+
+			/*
             tie(durationInMilliSeconds, bitRate, 
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+			*/
 
 			/*
 			 * 2019-10-13: commented because I guess the avg frame rate returned by ffmpeg is OK
@@ -5712,7 +5721,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             }
 			*/
 
-            if (videoCodecName == "")
+            if (videoTracks.size() == 0)
                 contentType = MMSEngineDBFacade::ContentType::Audio;
             else
                 contentType = MMSEngineDBFacade::ContentType::Video;
@@ -6376,6 +6385,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
 				+ ", sizeInBytes: " + to_string(sizeInBytes)
 
+				/*
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", videoCodecName: " + videoCodecName
@@ -6388,6 +6398,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", audioSampleRate: " + to_string(audioSampleRate)
 				+ ", audioChannels: " + to_string(audioChannels)
 				+ ", audioBitRate: " + to_string(audioBitRate)
+				*/
+				+ ", videoTracks.size: " + to_string(videoTracks.size())
+				+ ", audioTracks.size: " + to_string(audioTracks.size())
 
 				+ ", imageWidth: " + to_string(imageWidth)
 				+ ", imageHeight: " + to_string(imageHeight)
@@ -6409,6 +6422,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                     sizeInBytes,
                 
                     // video-audio
+					mediaInfoDetails,
+					videoTracks,
+					audioTracks,
+					/*
                     durationInMilliSeconds,
                     bitRate,
                     videoCodecName,
@@ -6421,6 +6438,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                     audioSampleRate,
                     audioChannels,
                     audioBitRate,
+					*/
 
                     // image
                     imageWidth,
@@ -6471,6 +6489,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", sizeInBytes: " + to_string(sizeInBytes)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 
+				+ ", videoTracks.size: " + to_string(videoTracks.size())
+				+ ", audioTracks.size: " + to_string(audioTracks.size())
+				/*
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", videoCodecName: " + videoCodecName
@@ -6483,6 +6504,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", audioSampleRate: " + to_string(audioSampleRate)
 				+ ", audioChannels: " + to_string(audioChannels)
 				+ ", audioBitRate: " + to_string(audioBitRate)
+				*/
 
 				+ ", imageWidth: " + to_string(imageWidth)
 				+ ", imageHeight: " + to_string(imageHeight)
@@ -6506,6 +6528,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					encodingProfileKey,
                 
                     // video-audio
+					mediaInfoDetails,
+					videoTracks,
+					audioTracks,
+					/*
                     durationInMilliSeconds,
                     bitRate,
                     videoCodecName,
@@ -6518,6 +6544,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                     audioSampleRate,
                     audioChannels,
                     audioBitRate,
+					*/
 
                     // image
                     imageWidth,
@@ -9447,6 +9474,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					throw e;
 				}
 
+				/*
 				int64_t durationInMilliSeconds = -1;
 				long bitRate = -1;
 				string videoCodecName;
@@ -9459,6 +9487,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 				long audioSampleRate = -1;
 				int audioChannels = -1;
 				long audioBitRate = -1;
+				*/
+				pair<int64_t, long> mediaInfoDetails;
+				vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
+				vector<tuple<int64_t, string, long, int, long>> audioTracks;
 
 				int imageWidth = -1;
 				int imageHeight = -1;
@@ -9472,12 +9504,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 						+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 					);
 					FFMpeg ffmpeg (_configuration, _logger);
-					tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-						ffmpeg.getMediaInfo(stagingChangeFileFormatAssetPathName);
+					// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+					mediaInfoDetails = ffmpeg.getMediaInfo(stagingChangeFileFormatAssetPathName,
+							videoTracks, audioTracks);
 
-					tie(durationInMilliSeconds, bitRate, 
-						videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-						audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+					// tie(durationInMilliSeconds, bitRate, 
+					// 	videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+					// 	audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
 				}
 				catch(runtime_error e)
 				{
@@ -9718,6 +9751,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 						mmsAssetSizeInBytes,
 						-1,	// encodingProfileKey,
 
+						mediaInfoDetails,
+						videoTracks,
+						audioTracks,
+						/*
 						durationInMilliSeconds,
 						bitRate,
 						videoCodecName,
@@ -9730,6 +9767,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						audioSampleRate,
 						audioChannels,
 						audioBitRate,
+						*/
 
 						imageWidth,
 						imageHeight,
@@ -11789,6 +11827,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 		);
 		if (maxDurationInSeconds != 0.0)
 		{
+			pair<int64_t, long> mediaInfoDetails;
+			vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
+			vector<tuple<int64_t, string, long, int, long>> audioTracks;
 			int64_t durationInMilliSeconds;
 
 
@@ -11798,12 +11839,13 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
 			);
 			FFMpeg ffmpeg (_configuration, _logger);
-			tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-				ffmpeg.getMediaInfo(concatenatedMediaPathName);
+			// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+			mediaInfoDetails = ffmpeg.getMediaInfo(concatenatedMediaPathName, videoTracks, audioTracks);
 
-			tie(durationInMilliSeconds, ignore,
-				ignore, ignore, ignore, ignore, ignore, ignore,
-				ignore, ignore, ignore, ignore) = mediaInfo;
+			//tie(durationInMilliSeconds, ignore,
+			//	ignore, ignore, ignore, ignore, ignore, ignore,
+			//	ignore, ignore, ignore, ignore) = mediaInfo;
+			tie(durationInMilliSeconds, ignore) = mediaInfoDetails;
 
 			_logger->info(__FILEREF__ + "duration check"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)

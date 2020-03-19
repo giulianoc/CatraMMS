@@ -4526,9 +4526,11 @@ void FFMPEGEncoder::monitorThread()
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 
 					// First health check
-					try
+					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
+					//		CDN:	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
-						if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
+						try
 						{
 							// First health check (HLS/DASH) looking the manifest path name timestamp
 
@@ -4568,7 +4570,8 @@ void FFMPEGEncoder::monitorThread()
 										DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
 											&lTimeZoneDifferenceInHours);
 
-										long maxLastManifestFileUpdateInSeconds = 120;
+										long maxLastManifestFileUpdateInSeconds = 30;
+
 										unsigned long long lastManifestFileUpdateInSeconds = ullNow - utcManifestFileLastModificationTime;
 										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
 										{
@@ -4619,7 +4622,30 @@ void FFMPEGEncoder::monitorThread()
 								);
 							}
 						}
-						else
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS) on manifest path name failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+					}
+					else
+					{
+						try
 						{
 							// First health check (CDN), looks the log and check there is no message like
 							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
@@ -4648,34 +4674,36 @@ void FFMPEGEncoder::monitorThread()
 								}
 							}
 						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) Non-monotonous DTS failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) Non-monotonous DTS failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
 					}
-					catch(runtime_error e)
+
+
+					// Second health 
+					//		HLS/DASH:	kill if segments were not generated
+					//					it is also implemented the retention of segments too old (10 minutes)
+					//		CDN:		frame increasing check
+					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
-						string errorMessage = string ("liveProxyMonitorCheck on manifest path name/Non-monotonous DTS failed")
-							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveProxyMonitorCheck on manifest path name/Non-monotonous DTS failed")
-							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-
-
-					// Second health check looking the generated segments
-					// Retention of segments is managed too
-					try
-					{
-						if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
+						try
 						{
 							chrono::system_clock::time_point now = chrono::system_clock::now();
 							int64_t liveProxyLiveTimeInMinutes =
@@ -4818,7 +4846,7 @@ void FFMPEGEncoder::monitorThread()
 								}
 					
 								if (!firstChunkRead
-									|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(3))
+									|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
 								{
 									// if we are here, it means the ffmpeg command is not generating the ts files
 
@@ -4880,26 +4908,76 @@ void FFMPEGEncoder::monitorThread()
 								}
 							}
 						}
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = string ("liveProxyMonitorCheck on segments (and retention) failed")
-							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
 
-						_logger->error(__FILEREF__ + errorMessage);
-					}
-					catch(exception e)
-					{
-						string errorMessage = string ("liveProxyMonitorCheck on segments (and retention) failed")
-							+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS) on segments (and retention) failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
 
-						_logger->error(__FILEREF__ + errorMessage);
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+					}
+					else
+					{
+						try
+						{
+							// Second health check (CDN), looks if the frame is increasing
+							if (!liveProxy->_ffmpeg->isFrameIncreasing())
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								try
+								{
+									ProcessUtility::killProcess(liveProxy->_childPid);
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = string("ProcessUtility::killProcess failed")
+										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+										+ ", e.what(): " + e.what()
+											;
+									_logger->error(__FILEREF__ + errorMessage);
+								}
+							}
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
 					}
 
 					_logger->info(__FILEREF__ + "liveProxyMonitorCheck"

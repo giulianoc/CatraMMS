@@ -3615,6 +3615,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         unsigned long sizeInBytes,
 
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -3627,6 +3631,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
@@ -4159,6 +4164,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				encodingProfileKey,
 
 				// video-audio
+				mediaInfoDetails,
+				videoTracks,
+				audioTracks,
+				/*
 				durationInMilliSeconds,
 				bitRate,
 				videoCodecName,
@@ -4171,6 +4180,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				audioSampleRate,
 				audioChannels,
 				audioBitRate,
+				*/
 
 				// image
 				imageWidth,
@@ -4573,6 +4583,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t encodingProfileKey,
         
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -4585,6 +4599,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
@@ -4633,6 +4648,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             encodingProfileKey,
 
             // video-audio
+			mediaInfoDetails,
+			videoTracks,
+			audioTracks,
+			/*
             durationInMilliSeconds,
             bitRate,
             videoCodecName,
@@ -4645,6 +4664,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             audioSampleRate,
             audioChannels,
             audioBitRate,
+			*/
 
             // image
             imageWidth,
@@ -4856,6 +4876,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t encodingProfileKey,
         
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -4868,6 +4892,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
@@ -4922,6 +4947,11 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			}
 		}
 
+        int64_t durationInMilliSeconds;
+        long bitRate;
+
+		tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+
         {
             int drm = 0;
 
@@ -4934,10 +4964,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					);
             lastSQLCommand = 
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
-				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, deliveryInfo, creationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
+				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             preparedStatement->setInt(queryParameterIndex++, drm);
@@ -4950,6 +4982,14 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
             else
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+			if (durationInMilliSeconds == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
+			if (bitRate == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, bitRate);
             if (deliveryInfo == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -4961,15 +5001,39 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         physicalPathKey = getLastInsertId(conn);
 
         {
-            if (contentType == ContentType::Video)
+            if (contentType == ContentType::Video && videoTracks.size() > 0 && audioTracks.size() > 0)
             {
+				int64_t videoDurationInMilliSeconds;
+				string videoCodecName;
+				string videoProfile;
+				int videoWidth;
+				int videoHeight;
+				string videoAvgFrameRate;
+				long videoBitRate;
+
+				int64_t audioDurationInMilliSeconds;
+				string audioCodecName;
+				long audioSampleRate;
+				int audioChannels;
+				long audioBitRate;
+
+
+				tuple<int64_t, string, string, int, int, string, long> videoTrack = videoTracks[0];
+				tie(videoDurationInMilliSeconds, videoCodecName, videoProfile,
+					videoWidth, videoHeight, videoAvgFrameRate, videoBitRate) = videoTrack;
+
+				tuple<int64_t, string, long, int, long> audioTrack = audioTracks[0];
+				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
+					audioChannels, audioBitRate) = audioTrack;
+
                 lastSQLCommand = 
-                    "insert into MMS_VideoItemProfile (physicalPathKey, durationInMilliSeconds, bitRate, width, height, avgFrameRate, "
-                    "videoCodecName, videoProfile, videoBitRate, "
+                    "insert into MMS_VideoItemProfile (physicalPathKey, durationInMilliSeconds, bitRate, "
+					"width, height, avgFrameRate, videoCodecName, videoProfile, videoBitRate, "
                     "audioCodecName, audioSampleRate, audioChannels, audioBitRate) values ("
                     "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
                 if (durationInMilliSeconds == -1)
@@ -5023,13 +5087,26 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
                 preparedStatement->executeUpdate();
             }
-            else if (contentType == ContentType::Audio)
+            else if (contentType == ContentType::Audio && audioTracks.size() > 0)
             {
+				int64_t audioDurationInMilliSeconds;
+				string audioCodecName;
+				long audioSampleRate;
+				int audioChannels;
+				long audioBitRate;
+
+
+				tuple<int64_t, string, long, int, long> audioTrack = audioTracks[0];
+				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
+					audioChannels, audioBitRate) = audioTrack;
+
                 lastSQLCommand = 
-                    "insert into MMS_AudioItemProfile (physicalPathKey, durationInMilliSeconds, codecName, bitRate, sampleRate, channels) values ("
+                    "insert into MMS_AudioItemProfile (physicalPathKey, durationInMilliSeconds, "
+					"codecName, bitRate, sampleRate, channels) values ("
                     "?, ?, ?, ?, ?, ?)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
                 if (durationInMilliSeconds == -1)
@@ -5058,10 +5135,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             else if (contentType == ContentType::Image)
             {
                 lastSQLCommand = 
-                    "insert into MMS_ImageItemProfile (physicalPathKey, width, height, format, quality) values ("
+                    "insert into MMS_ImageItemProfile (physicalPathKey, width, height, format, "
+					"quality) values ("
                     "?, ?, ?, ?, ?)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
                 preparedStatement->setInt64(queryParameterIndex++, imageWidth);

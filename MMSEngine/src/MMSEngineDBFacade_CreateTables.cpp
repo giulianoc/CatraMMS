@@ -1417,6 +1417,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "partitionNumber			INT NULL,"
                     "sizeInBytes				BIGINT UNSIGNED NOT NULL,"
                     "encodingProfileKey			BIGINT UNSIGNED NULL,"
+                    "durationInMilliSeconds		BIGINT NULL,"
+                    "bitRate            		INT NULL,"
                     "deliveryInfo				" + deliveryInfoDefinition + ","
                     "isAlias					INT NOT NULL DEFAULT 0,"
                     "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

@@ -1370,6 +1370,10 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
 				field, 0);
     }
     
+	pair<int64_t, long> mediaInfoDetails;
+	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int64_t, string, long, int, long>> audioTracks;
+	/*
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -1382,6 +1386,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
     long audioSampleRate = -1;
     int audioChannels = -1;
     long audioBitRate = -1;
+	*/
 
     int imageWidth = -1;
     int imageHeight = -1;
@@ -1787,6 +1792,10 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
             mmsAssetSizeInBytes,
             encodingProfileKey,
                 
+			mediaInfoDetails,
+			videoTracks,
+			audioTracks,
+			/*
             durationInMilliSeconds,
             bitRate,
             videoCodecName,
@@ -1799,6 +1808,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
             audioSampleRate,
             audioChannels,
             audioBitRate,
+			*/
 
             imageWidth,
             imageHeight,
@@ -2747,6 +2757,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 	else if (fileFormatLowerCase == "dash")
 		manifestFileName += ".mpd";
 
+	/*
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -2759,6 +2770,10 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
     long audioSampleRate = -1;
     int audioChannels = -1;
     long audioBitRate = -1;
+	*/
+	pair<int64_t, long> mediaInfoDetails;
+	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int64_t, string, long, int, long>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;
@@ -2773,19 +2788,21 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
         FFMpeg ffmpeg (_configuration, _logger);
-		tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
+		// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
-			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName);
+			mediaInfoDetails = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName,
+					videoTracks, audioTracks);
 		}
 		else
 		{
-			mediaInfo = ffmpeg.getMediaInfo(stagingEncodedAssetPathName);
+			mediaInfoDetails = ffmpeg.getMediaInfo(stagingEncodedAssetPathName,
+					videoTracks, audioTracks);
 		}
 
-        tie(durationInMilliSeconds, bitRate, 
-            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-            audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+        // tie(durationInMilliSeconds, bitRate, 
+        //     videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+        //     audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
     }
     catch(runtime_error e)
     {
@@ -3138,6 +3155,10 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             mmsAssetSizeInBytes,
             encodingProfileKey,
                 
+			mediaInfoDetails,
+			videoTracks,
+			audioTracks,
+			/*
             durationInMilliSeconds,
             bitRate,
             videoCodecName,
@@ -3150,6 +3171,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             audioSampleRate,
             audioChannels,
             audioBitRate,
+			*/
 
             imageWidth,
             imageHeight,

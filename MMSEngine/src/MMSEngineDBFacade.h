@@ -1635,6 +1635,10 @@ public:
         unsigned long sizeInBytes,
         
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -1647,6 +1651,7 @@ public:
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
@@ -1670,6 +1675,10 @@ public:
         int64_t encodingProfileKey,
         
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -1682,6 +1691,7 @@ public:
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
@@ -1971,6 +1981,10 @@ private:
         int64_t encodingProfileKey,
         
         // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		/*
         int64_t durationInMilliSeconds,
         long bitRate,
         string videoCodecName,
@@ -1983,6 +1997,7 @@ private:
         long audioSampleRate,
         int audioChannels,
         long audioBitRate,
+		*/
 
         // image
         int imageWidth,
