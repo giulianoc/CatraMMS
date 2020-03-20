@@ -1583,6 +1583,38 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
+                "create table if not exists MMS_VideoTrack ("
+                    "videoTrackKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
+                    "durationInMilliSeconds		BIGINT NULL,"
+                    "width              		INT NULL,"
+                    "height             		INT NULL,"
+                    "avgFrameRate				VARCHAR (64) NULL,"
+                    "codecName					VARCHAR (64) NULL,"
+                    "bitRate					INT NULL,"
+                    "profile					VARCHAR (128) NULL,"
+                    "constraint MMS_VideoTrack_PK PRIMARY KEY (videoTrackKey), "
+                    "constraint MMS_VideoTrack_FK foreign key (physicalPathKey) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
                 "create table if not exists MMS_AudioItemProfile ("
                     "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
                     "durationInMilliSeconds		BIGINT NULL,"
@@ -1609,6 +1641,36 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
         
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_AudioTrack ("
+                    "audioTrackKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
+                    "durationInMilliSeconds		BIGINT NULL,"
+                    "codecName          		VARCHAR (64) NULL,"
+                    "bitRate             		INT NULL,"
+                    "sampleRate                  	INT NULL,"
+                    "channels             		INT NULL,"
+                    "constraint MMS_AudioTrack_PK PRIMARY KEY (audioTrackKey), "
+                    "constraint MMS_AudioTrack_FK foreign key (physicalPathKey) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 

@@ -5132,6 +5132,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
                 preparedStatement->executeUpdate();
             }
+			/*
             else if (contentType == ContentType::Image)
             {
                 lastSQLCommand = 
@@ -5159,7 +5160,138 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
                 throw runtime_error(errorMessage);                    
             }            
+			*/
         }
+
+		if (contentType == ContentType::Video || contentType == ContentType::Audio)
+        {
+			for (tuple<int64_t, string, string, int, int, string, long> videoTrack: videoTracks)
+            {
+				int64_t videoDurationInMilliSeconds;
+				string videoCodecName;
+				string videoProfile;
+				int videoWidth;
+				int videoHeight;
+				string videoAvgFrameRate;
+				long videoBitRate;
+
+				tie(videoDurationInMilliSeconds, videoCodecName, videoProfile,
+					videoWidth, videoHeight, videoAvgFrameRate, videoBitRate) = videoTrack;
+
+                lastSQLCommand = 
+                    "insert into MMS_VideoTrack (videoTrackKey, physicalPathKey, "
+					"durationInMilliSeconds, width, height, avgFrameRate, "
+					"codecName, bitRate, profile) values ("
+                    "NULL, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+                if (videoDurationInMilliSeconds == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, videoDurationInMilliSeconds);
+                if (videoWidth == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoWidth);
+                if (videoHeight == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoHeight);
+                if (videoAvgFrameRate == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoAvgFrameRate);
+                if (videoCodecName == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoCodecName);
+                if (videoBitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoBitRate);
+                if (videoProfile == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoProfile);
+
+                preparedStatement->executeUpdate();
+            }
+
+			for(tuple<int64_t, string, long, int, long> audioTrack: audioTracks)
+            {
+				int64_t audioDurationInMilliSeconds;
+				string audioCodecName;
+				long audioSampleRate;
+				int audioChannels;
+				long audioBitRate;
+
+
+				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
+					audioChannels, audioBitRate) = audioTrack;
+
+                lastSQLCommand = 
+                    "insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
+					"durationInMilliSeconds, codecName, bitRate, sampleRate, channels) values ("
+                    "NULL, ?, ?, ?, ?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+                if (audioDurationInMilliSeconds == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, audioDurationInMilliSeconds);
+                if (audioCodecName == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, audioCodecName);
+                if (audioBitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioBitRate);
+                if (audioSampleRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioSampleRate);
+                if (audioChannels == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioChannels);
+
+                preparedStatement->executeUpdate();
+            }
+		}
+		else if (contentType == ContentType::Image)
+        {
+			lastSQLCommand = 
+				"insert into MMS_ImageItemProfile (physicalPathKey, width, height, format, "
+				"quality) values ("
+				"?, ?, ?, ?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+			conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+			preparedStatement->setInt64(queryParameterIndex++, imageWidth);
+			preparedStatement->setInt64(queryParameterIndex++, imageHeight);
+			preparedStatement->setString(queryParameterIndex++, imageFormat);
+			preparedStatement->setInt(queryParameterIndex++, imageQuality);
+
+			preparedStatement->executeUpdate();
+		}
+		else
+		{
+			string errorMessage = __FILEREF__ + "ContentType is wrong"
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);                    
+		}            
 
 		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey,
 			liveRecordingIngestionJobKey);
