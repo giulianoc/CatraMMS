@@ -157,11 +157,11 @@ public:
 	bool nonMonotonousDTSInOutputLog();
 	bool isFrameIncreasing();
 
-    tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
+    // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
 	pair<int64_t, long> getMediaInfo(string mmsAssetPathName,
 		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long>>& audioTracks);
+		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks);
 
     vector<string> generateFramesToIngest(
         int64_t ingestionJobKey,

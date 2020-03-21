@@ -1098,7 +1098,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
                     lastSQLCommand = 
-                        "select physicalPathKey, externalReadOnlyStorage, "
+                        "select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
 						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryTechnology')) as externalDeliveryTechnology, "
 						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryURL')) as externalDeliveryURL, "
 						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, "
@@ -1119,6 +1119,17 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         field = "physicalPathKey";
                         profileRoot[field] = physicalPathKey;
 
+                        field = "durationInMilliSeconds";
+						if (resultSetProfiles->isNull("durationInMilliSeconds"))
+							profileRoot[field] = Json::nullValue;
+						else
+							profileRoot[field] = resultSetProfiles->getInt64("durationInMilliSeconds");
+
+                        field = "bitRate";
+						if (resultSetProfiles->isNull("bitRate"))
+							profileRoot[field] = Json::nullValue;
+						else
+							profileRoot[field] = resultSetProfiles->getInt64("bitRate");
 
                         field = "fileFormat";
                         string fileName = resultSetProfiles->getString("fileName");
@@ -1211,102 +1222,160 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         if (contentType == ContentType::Video)
                         {
-                            int64_t durationInMilliSeconds;
-                            int videoWidth;
-                            int videoHeight;
-                            long bitRate;
-                            string videoCodecName;
-                            string videoProfile;
-                            string videoAvgFrameRate;
-                            long videoBitRate;
-                            string audioCodecName;
-                            long audioSampleRate;
-                            int audioChannels;
-                            long audioBitRate;
+							vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
+							vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
 
-                            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                                videoDetails = getVideoDetails(localMediaItemKey, physicalPathKey);
+							getVideoDetails(localMediaItemKey, physicalPathKey, videoTracks, audioTracks);
+                            _logger->info(__FILEREF__ + "getVideoDetails"
+                                + ", mediaItemKey: " + to_string(localMediaItemKey)
+                                + ", physicalPathKey: " + to_string(physicalPathKey)
+                                + ", videoTracks.size: " + to_string(videoTracks.size())
+                                + ", audioTracks.size: " + to_string(audioTracks.size())
+							);
 
-                            tie(durationInMilliSeconds, bitRate,
-                                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+							{
+								Json::Value videoTracksRoot(Json::arrayValue);
 
-                            Json::Value videoDetailsRoot;
+								for(tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack: videoTracks)
+								{
+									int64_t videoTrackKey;
+									int64_t durationInMilliSeconds;
+									int width;
+									int height;
+									string avgFrameRate;
+									string codecName;
+									long bitRate;
+									string profile;
 
-                            field = "durationInMilliSeconds";
-                            videoDetailsRoot[field] = durationInMilliSeconds;
+									tie(videoTrackKey, durationInMilliSeconds, width, height,
+										avgFrameRate, codecName, bitRate, profile) = videoTrack;
 
-                            field = "videoWidth";
-                            videoDetailsRoot[field] = videoWidth;
+									Json::Value videoTrackRoot;
 
-                            field = "videoHeight";
-                            videoDetailsRoot[field] = videoHeight;
+									field = "videoTrackKey";
+									videoTrackRoot[field] = videoTrackKey;
 
-                            field = "bitRate";
-                            videoDetailsRoot[field] = (int64_t) bitRate;
+									field = "durationInMilliSeconds";
+									videoTrackRoot[field] = durationInMilliSeconds;
 
-                            field = "videoCodecName";
-                            videoDetailsRoot[field] = videoCodecName;
+									field = "width";
+									videoTrackRoot[field] = width;
 
-                            field = "videoProfile";
-                            videoDetailsRoot[field] = videoProfile;
+									field = "height";
+									videoTrackRoot[field] = height;
 
-                            field = "videoAvgFrameRate";
-                            videoDetailsRoot[field] = videoAvgFrameRate;
+									field = "avgFrameRate";
+									videoTrackRoot[field] = avgFrameRate;
 
-                            field = "videoBitRate";
-                            videoDetailsRoot[field] = (int64_t) videoBitRate;
+									field = "codecName";
+									videoTrackRoot[field] = codecName;
 
-                            field = "audioCodecName";
-                            videoDetailsRoot[field] = audioCodecName;
+									field = "bitRate";
+									videoTrackRoot[field] = (int64_t) bitRate;
 
-                            field = "audioSampleRate";
-                            videoDetailsRoot[field] = (int64_t) audioSampleRate;
+									field = "profile";
+									videoTrackRoot[field] = profile;
 
-                            field = "audioChannels";
-                            videoDetailsRoot[field] = audioChannels;
+									videoTracksRoot.append(videoTrackRoot);
+								}
 
-                            field = "audioBitRate";
-                            videoDetailsRoot[field] = (int64_t) audioBitRate;
+								field = "videoTracks";
+								profileRoot[field] = videoTracksRoot;
+							}
 
+							{
+								Json::Value audioTracksRoot(Json::arrayValue);
 
-                            field = "videoDetails";
-                            profileRoot[field] = videoDetailsRoot;
+								for(tuple<int64_t, int64_t, long, string, long, int, string> audioTrack: audioTracks)
+								{
+									int64_t audioTrackKey;
+									int64_t durationInMilliSeconds;
+									long bitRate;
+									string codecName;
+									long sampleRate;
+									int channels;
+									string language;
+
+									tie(audioTrackKey, durationInMilliSeconds, bitRate, codecName,
+										sampleRate, channels, language) = audioTrack;
+
+									Json::Value audioTrackRoot;
+
+									field = "audioTrackKey";
+									audioTrackRoot[field] = audioTrackKey;
+
+									field = "durationInMilliSeconds";
+									audioTrackRoot[field] = durationInMilliSeconds;
+
+									field = "bitRate";
+									audioTrackRoot[field] = (int64_t) bitRate;
+
+									field = "codecName";
+									audioTrackRoot[field] = codecName;
+
+									field = "sampleRate";
+									audioTrackRoot[field] = (int64_t) sampleRate;
+
+									field = "channels";
+									audioTrackRoot[field] = (int64_t) channels;
+
+									field = "language";
+									audioTrackRoot[field] = language;
+
+									audioTracksRoot.append(audioTrackRoot);
+								}
+
+								field = "audioTracks";
+								profileRoot[field] = audioTracksRoot;
+							}
                         }
                         else if (contentType == ContentType::Audio)
                         {
-                            int64_t durationInMilliSeconds;
-                            string codecName;
-                            long bitRate;
-                            long sampleRate;
-                            int channels;
+							vector<tuple<int64_t, int64_t, long, string, long, int>> audioTracks;
 
-                            tuple<int64_t,string,long,long,int>
-                                audioDetails = getAudioDetails(localMediaItemKey, physicalPathKey);
+							getAudioDetails(localMediaItemKey, physicalPathKey, audioTracks);
 
-                            tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
-                                    = audioDetails;
+							{
+								Json::Value audioTracksRoot(Json::arrayValue);
 
-                            Json::Value audioDetailsRoot;
+								for(tuple<int64_t, int64_t, long, string, long, int> audioTrack: audioTracks)
+								{
+									int64_t audioTrackKey;
+									int64_t durationInMilliSeconds;
+									long bitRate;
+									string codecName;
+									long sampleRate;
+									int channels;
 
-                            field = "durationInMilliSeconds";
-                            audioDetailsRoot[field] = durationInMilliSeconds;
+									tie(audioTrackKey, durationInMilliSeconds, bitRate, codecName,
+										sampleRate, channels) = audioTrack;
 
-                            field = "codecName";
-                            audioDetailsRoot[field] = codecName;
+									Json::Value audioTrackRoot;
 
-                            field = "bitRate";
-                            audioDetailsRoot[field] = (int64_t) bitRate;
+									field = "audioTrackKey";
+									audioTrackRoot[field] = audioTrackKey;
 
-                            field = "sampleRate";
-                            audioDetailsRoot[field] = (int64_t) sampleRate;
+									field = "durationInMilliSeconds";
+									audioTrackRoot[field] = durationInMilliSeconds;
 
-                            field = "channels";
-                            audioDetailsRoot[field] = channels;
+									field = "bitRate";
+									audioTrackRoot[field] = (int64_t) bitRate;
 
+									field = "codecName";
+									audioTrackRoot[field] = codecName;
 
-                            field = "audioDetails";
-                            profileRoot[field] = audioDetailsRoot;
+									field = "sampleRate";
+									audioTrackRoot[field] = (int64_t) sampleRate;
+
+									field = "channels";
+									audioTrackRoot[field] = (int64_t) channels;
+
+									audioTracksRoot.append(audioTrackRoot);
+								}
+
+								field = "audioTracks";
+								profileRoot[field] = audioTracksRoot;
+							}
                         }
                         else if (contentType == ContentType::Image)
                         {
@@ -3120,8 +3189,187 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     return mediaItemKeyAndContentType;
 }
 
-tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEngineDBFacade::getVideoDetails(
-    int64_t mediaItemKey, int64_t physicalPathKey)
+int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
+	int64_t mediaItemKey, int64_t physicalPathKey)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn = nullptr;
+    
+	int64_t durationInMilliSeconds;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        if (physicalPathKey == -1)
+        {
+            lastSQLCommand = 
+                "select durationInMilliSeconds from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey is null";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+				if (resultSet->isNull("durationInMilliSeconds"))
+				{
+					string errorMessage = __FILEREF__ + "duration is not found"
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+
+				durationInMilliSeconds = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        else
+        {
+            lastSQLCommand = 
+				"select durationInMilliSeconds from MMS_PhysicalPath where physicalPathKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+				if (resultSet->isNull("durationInMilliSeconds"))
+				{
+					string errorMessage = __FILEREF__ + "duration is not found"
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+
+				durationInMilliSeconds = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(MediaItemKeyNotFound mnf)
+    {
+        string exceptionMessage(mnf.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw mnf;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }    
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }    
+
+	return durationInMilliSeconds;
+}
+
+void MMSEngineDBFacade::getVideoDetails(
+	int64_t mediaItemKey, int64_t physicalPathKey,
+	vector<tuple<int64_t, int64_t, int, int, string, string, long, string>>& videoTracks,
+	vector<tuple<int64_t, int64_t, long, string, long, int, string>>& audioTracks
+	)
 {
     string      lastSQLCommand;
         
@@ -3165,56 +3413,83 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             localPhysicalPathKey = physicalPathKey;
         }
         
-        int64_t durationInMilliSeconds;
-        long bitRate;
-        string videoCodecName;
-        string videoProfile;
-        int videoWidth;
-        int videoHeight;
-        string videoAvgFrameRate;
-        long videoBitRate;
-        string audioCodecName;
-        long audioSampleRate;
-        int audioChannels;
-        long audioBitRate;
+		videoTracks.clear();
+		audioTracks.clear();
 
         {
             lastSQLCommand = 
-                "select durationInMilliSeconds, bitRate, width, height, avgFrameRate, "
-                "videoCodecName, videoProfile, videoBitRate, "
-                "audioCodecName, audioSampleRate, audioChannels, audioBitRate "
-                "from MMS_VideoItemProfile where physicalPathKey = ?";
+                "select videoTrackKey, durationInMilliSeconds, width, height, avgFrameRate, "
+                "codecName, profile, bitRate "
+                "from MMS_VideoTrack where physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, localPhysicalPathKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
+            while (resultSet->next())
             {
-                durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
-                bitRate = resultSet->getInt("bitRate");
-                videoCodecName = resultSet->getString("videoCodecName");
-                videoProfile = resultSet->getString("videoProfile");
-                videoWidth = resultSet->getInt("width");
-                videoHeight = resultSet->getInt("height");
-                videoAvgFrameRate = resultSet->getString("avgFrameRate");
-                videoBitRate = resultSet->getInt("videoBitRate");
-                audioCodecName = resultSet->getString("audioCodecName");
-                audioSampleRate = resultSet->getInt("audioSampleRate");
-                audioChannels = resultSet->getInt("audioChannels");
-                audioBitRate = resultSet->getInt("audioBitRate");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+                int64_t videoTrackKey = resultSet->getInt64("videoTrackKey");
+                int64_t durationInMilliSeconds = -1;
+				if (!resultSet->isNull("durationInMilliSeconds"))
+					durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+                long bitRate = -1;
+				if (!resultSet->isNull("bitRate"))
+					bitRate = resultSet->getInt("bitRate");
+                string codecName;
+				if (!resultSet->isNull("codecName"))
+					codecName = resultSet->getString("codecName");
+                string profile;
+				if (!resultSet->isNull("profile"))
+					profile = resultSet->getString("profile");
+                int width = -1;
+				if (!resultSet->isNull("width"))
+					width = resultSet->getInt("width");
+                int height = -1;
+				if (!resultSet->isNull("height"))
+					height = resultSet->getInt("height");
+                string avgFrameRate;
+				if (!resultSet->isNull("avgFrameRate"))
+					avgFrameRate = resultSet->getString("avgFrameRate");
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
+				videoTracks.push_back(make_tuple(videoTrackKey, durationInMilliSeconds, width, height,
+					avgFrameRate, codecName, bitRate, profile));
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "select audioTrackKey, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language "
+                "from MMS_AudioTrack where physicalPathKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, localPhysicalPathKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t audioTrackKey = resultSet->getInt64("audioTrackKey");
+                int64_t durationInMilliSeconds;
+				if (!resultSet->isNull("durationInMilliSeconds"))
+					durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+                long bitRate = -1;
+				if (!resultSet->isNull("bitRate"))
+					bitRate = resultSet->getInt("bitRate");
+                string codecName;
+				if (!resultSet->isNull("codecName"))
+					codecName = resultSet->getString("codecName");
+                long sampleRate = -1;
+				if (!resultSet->isNull("sampleRate"))
+					sampleRate = resultSet->getInt("sampleRate");
+                int channels = -1;
+				if (!resultSet->isNull("channels"))
+					channels = resultSet->getInt("channels");
+                string language;
+				if (!resultSet->isNull("language"))
+					language = resultSet->getString("language");
+
+				audioTracks.push_back(make_tuple(audioTrackKey, durationInMilliSeconds,
+					bitRate, codecName, sampleRate, channels, language));
+            }
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -3222,10 +3497,6 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
-        
-        return make_tuple(durationInMilliSeconds, bitRate,
-            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-            audioCodecName, audioSampleRate, audioChannels, audioBitRate);
     }
     catch(MediaItemKeyNotFound mnf)
     {
@@ -3308,8 +3579,10 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
     }    
 }
 
-tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
-    int64_t mediaItemKey, int64_t physicalPathKey)
+void MMSEngineDBFacade::getAudioDetails(
+	int64_t mediaItemKey, int64_t physicalPathKey,
+	vector<tuple<int64_t, int64_t, long, string, long, int>>& audioTracks
+	)
 {
     string      lastSQLCommand;
         
@@ -3353,16 +3626,12 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
             localPhysicalPathKey = physicalPathKey;
         }
         
-        int64_t durationInMilliSeconds;
-        string codecName;
-        long bitRate;
-        long sampleRate;
-        int channels;
+		audioTracks.clear();
 
         {
             lastSQLCommand = 
-                "select durationInMilliSeconds, codecName, bitRate, sampleRate, channels "
-                "from MMS_AudioItemProfile where physicalPathKey = ?";
+                "select audioTrackKey, durationInMilliSeconds, codecName, bitRate, sampleRate, channels "
+                "from MMS_AudioTrack where physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, localPhysicalPathKey);
@@ -3370,16 +3639,21 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
-                codecName = resultSet->getString("codecName");
-                bitRate = resultSet->getInt("bitRate");
-                sampleRate = resultSet->getInt("sampleRate");
-                channels = resultSet->getInt("channels");
+                int64_t audioTrackKey = resultSet->getInt64("audioTrackKey");
+                int64_t durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+                long bitRate = resultSet->getInt("bitRate");
+                string codecName = resultSet->getString("codecName");
+                long sampleRate = resultSet->getInt("sampleRate");
+                int channels = resultSet->getInt("channels");
+
+				audioTracks.push_back(make_tuple(audioTrackKey, durationInMilliSeconds,
+					bitRate, codecName, sampleRate, channels));
             }
             else
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey is not found"
                     + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -3393,8 +3667,6 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
-        
-        return make_tuple(durationInMilliSeconds, codecName, bitRate, sampleRate, channels);
     }
     catch(sql::SQLException se)
     {
@@ -3617,7 +3889,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
@@ -4585,7 +4857,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
@@ -4878,7 +5150,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long>>& audioTracks,
+		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
@@ -5022,9 +5294,9 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				tie(videoDurationInMilliSeconds, videoCodecName, videoProfile,
 					videoWidth, videoHeight, videoAvgFrameRate, videoBitRate) = videoTrack;
 
-				tuple<int64_t, string, long, int, long> audioTrack = audioTracks[0];
+				tuple<int64_t, string, long, int, long, string> audioTrack = audioTracks[0];
 				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
-					audioChannels, audioBitRate) = audioTrack;
+					audioChannels, audioBitRate, ignore) = audioTrack;
 
                 lastSQLCommand = 
                     "insert into MMS_VideoItemProfile (physicalPathKey, durationInMilliSeconds, bitRate, "
@@ -5096,9 +5368,9 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				long audioBitRate;
 
 
-				tuple<int64_t, string, long, int, long> audioTrack = audioTracks[0];
+				tuple<int64_t, string, long, int, long, string> audioTrack = audioTracks[0];
 				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
-					audioChannels, audioBitRate) = audioTrack;
+					audioChannels, audioBitRate, ignore) = audioTrack;
 
                 lastSQLCommand = 
                     "insert into MMS_AudioItemProfile (physicalPathKey, durationInMilliSeconds, "
@@ -5220,22 +5492,23 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 preparedStatement->executeUpdate();
             }
 
-			for(tuple<int64_t, string, long, int, long> audioTrack: audioTracks)
+			for(tuple<int64_t, string, long, int, long, string> audioTrack: audioTracks)
             {
 				int64_t audioDurationInMilliSeconds;
 				string audioCodecName;
 				long audioSampleRate;
 				int audioChannels;
 				long audioBitRate;
+				string language;
 
 
 				tie(audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
-					audioChannels, audioBitRate) = audioTrack;
+					audioChannels, audioBitRate, language) = audioTrack;
 
                 lastSQLCommand = 
                     "insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
-					"durationInMilliSeconds, codecName, bitRate, sampleRate, channels) values ("
-                    "NULL, ?, ?, ?, ?, ?, ?)";
+					"durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language) values ("
+                    "NULL, ?, ?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5261,6 +5534,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
                 else
                     preparedStatement->setInt(queryParameterIndex++, audioChannels);
+                if (language == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, language);
 
                 preparedStatement->executeUpdate();
             }

@@ -1372,7 +1372,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
     
 	pair<int64_t, long> mediaInfoDetails;
 	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long>> audioTracks;
+	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
 	/*
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
@@ -2773,7 +2773,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 	*/
 	pair<int64_t, long> mediaInfoDetails;
 	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long>> audioTracks;
+	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;

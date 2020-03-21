@@ -626,6 +626,34 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							mainChunk_1 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
+							try
+							{
+								int64_t physicalPathKey = -1;
+								durationInMilliSecondsChunk_1 = getMediaDurationInMilliseconds(mediaItemKeyChunk_1,
+									physicalPathKey);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
+									+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+									+ ", exception: " + e.what()
+								);
+
+								continue;
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
+									+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+								);
+
+								continue;
+							}
+							/*
 							if (contentType == ContentType::Video)
 							{
 								int videoWidth;
@@ -666,6 +694,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
 										= audioDetails;
 							}
+							*/
 						}
 						else
 						{
@@ -685,6 +714,34 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							mainChunk_2 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
 
+							try
+							{
+								int64_t physicalPathKey = -1;
+								durationInMilliSecondsChunk_2 = getMediaDurationInMilliseconds(mediaItemKeyChunk_2,
+									physicalPathKey);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
+									+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+									+ ", exception: " + e.what()
+								);
+
+								continue;
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
+									+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+								);
+
+								continue;
+							}
+							/*
 							if (contentType == ContentType::Video)
 							{
 								int videoWidth;
@@ -725,6 +782,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
 										= audioDetails;
 							}
+							*/
 						}
 						else
 						{
@@ -756,7 +814,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
 							+ ", mainChunk_1: " + to_string(mainChunk_1)
 							+ ", durationInMilliSecondsChunk_1: "
-								+ to_string(durationInMilliSecondsChunk_1)
+							+ to_string(durationInMilliSecondsChunk_1)
 							+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
 							+ ", mainChunk_2: " + to_string(mainChunk_2)
 							+ ", durationInMilliSecondsChunk_2: "

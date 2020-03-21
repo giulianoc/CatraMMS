@@ -838,7 +838,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                     {
                         lastSQLCommand = 
-                            "select m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
+                            "select m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, "
+							"p.relativePath, p.durationInMilliSeconds "
                             "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey "
 							"and p.physicalPathKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
@@ -851,13 +852,18 @@ void MMSEngineDBFacade::getEncodingJobs(
                         if (physicalPathResultSet->next())
                         {
                             encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(
-									physicalPathResultSet->getString("contentType"));
+								physicalPathResultSet->getString("contentType"));
                             // encodingItem->_encodeData->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_encodeData->_mediaItemKey =
 								physicalPathResultSet->getInt64("mediaItemKey");
                             encodingItem->_encodeData->_fileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_encodeData->_relativePath =
 								physicalPathResultSet->getString("relativePath");
+							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+								encodingItem->_encodeData->_durationInMilliSeconds = -1;
+							else
+								encodingItem->_encodeData->_durationInMilliSeconds =
+									physicalPathResultSet->getInt64("durationInMilliSeconds");
                         }
                         else
                         {
@@ -889,6 +895,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
+					/*
                     if (encodingItem->_encodeData->_contentType == ContentType::Video)
                     {
                         lastSQLCommand = 
@@ -983,6 +990,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+					*/
 
                     {
                         lastSQLCommand = 
@@ -1144,7 +1152,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     int64_t videoMediaItemKey;
                     {
                         lastSQLCommand = 
-                            "select partitionNumber, mediaItemKey, fileName, relativePath "
+                            "select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
 								conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1160,6 +1168,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 								physicalPathResultSet->getString("fileName");
                             encodingItem->_overlayImageOnVideoData->_videoRelativePath =
 								physicalPathResultSet->getString("relativePath");
+							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+								encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds = -1;
+							else
+								encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds =
+									physicalPathResultSet->getInt64("durationInMilliSeconds");
                             
                             videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         }
@@ -1196,6 +1209,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
+					/*
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -1242,6 +1256,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+					*/
 
                     {
                         lastSQLCommand = 
@@ -1401,7 +1416,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     int64_t videoMediaItemKey;
                     {
                         lastSQLCommand = 
-                            "select partitionNumber, mediaItemKey, fileName, relativePath "
+                            "select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
@@ -1413,6 +1428,11 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_overlayTextOnVideoData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_overlayTextOnVideoData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
+							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+								encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds = -1;
+							else
+								encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds =
+									physicalPathResultSet->getInt64("durationInMilliSeconds");
                             
                             videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         }
@@ -1446,6 +1466,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
+					/*
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -1487,6 +1508,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+					*/
 
                     {
                         lastSQLCommand = 
@@ -1584,7 +1606,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     int64_t videoMediaItemKey;
                     {
                         lastSQLCommand = 
-                            "select partitionNumber, mediaItemKey, fileName, relativePath "
+                            "select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
@@ -1596,7 +1618,12 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // encodingItem->_generateFramesData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_generateFramesData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_generateFramesData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
-                            
+							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+								encodingItem->_generateFramesData->_videoDurationInMilliSeconds = -1;
+							else
+								encodingItem->_generateFramesData->_videoDurationInMilliSeconds =
+									physicalPathResultSet->getInt64("durationInMilliSeconds");
+
                             videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         }
                         else
@@ -1629,6 +1656,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
+					/*
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -1670,6 +1698,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+					*/
 
                     {
                         lastSQLCommand = 
@@ -2128,7 +2157,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     int64_t videoMediaItemKey;
                     {
                         lastSQLCommand = 
-                            "select partitionNumber, mediaItemKey, fileName, relativePath "
+                            "select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
                             "from MMS_PhysicalPath where physicalPathKey = ?";
                         shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
@@ -2140,7 +2169,12 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // encodingItem->_videoSpeedData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_videoSpeedData->_videoFileName = physicalPathResultSet->getString("fileName");
                             encodingItem->_videoSpeedData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
-                            
+							if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+								encodingItem->_videoSpeedData->_videoDurationInMilliSeconds = -1;
+							else
+								encodingItem->_videoSpeedData->_videoDurationInMilliSeconds =
+									physicalPathResultSet->getInt64("durationInMilliSeconds");
+
                             videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         }
                         else
@@ -2173,6 +2207,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
+					/*
                     {
                         lastSQLCommand = 
                             "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -2214,6 +2249,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+					*/
 
                     {
                         lastSQLCommand = 
@@ -2316,7 +2352,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						int64_t mainVideoMediaItemKey;
 						{
 							lastSQLCommand = 
-								"select partitionNumber, mediaItemKey, fileName, relativePath "
+								"select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
 								"from MMS_PhysicalPath where physicalPathKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
 									conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2334,6 +2370,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 									= physicalPathResultSet->getString("fileName");
 								encodingItem->_pictureInPictureData->_mainVideoRelativePath
 									= physicalPathResultSet->getString("relativePath");
+								if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+									encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds = -1;
+								else
+									encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds =
+										physicalPathResultSet->getInt64("durationInMilliSeconds");
                             
 								mainVideoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
 							}
@@ -2370,6 +2411,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							}
 						}
                     
+						/*
 						{
 							lastSQLCommand = 
 								"select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -2416,13 +2458,14 @@ void MMSEngineDBFacade::getEncodingJobs(
 								// throw runtime_error(errorMessage);
 							}
 						}
+						*/
 					}
 
 					{
 						int64_t overlayVideoMediaItemKey;
 						{
 							lastSQLCommand = 
-								"select partitionNumber, mediaItemKey, fileName, relativePath "
+								"select partitionNumber, mediaItemKey, fileName, relativePath, durationInMilliSeconds "
 								"from MMS_PhysicalPath where physicalPathKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (
 									conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2440,6 +2483,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 									= physicalPathResultSet->getString("fileName");
 								encodingItem->_pictureInPictureData->_overlayVideoRelativePath
 									= physicalPathResultSet->getString("relativePath");
+								if (physicalPathResultSet->isNull("durationInMilliSeconds"))
+									encodingItem->_pictureInPictureData->_overlayVideoDurationInMilliSeconds = -1;
+								else
+									encodingItem->_pictureInPictureData->_overlayVideoDurationInMilliSeconds =
+										physicalPathResultSet->getInt64("durationInMilliSeconds");
                             
 								overlayVideoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
 							}
@@ -2476,6 +2524,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							}
 						}
                     
+						/*
 						{
 							lastSQLCommand = 
 								"select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
@@ -2522,6 +2571,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 								// throw runtime_error(errorMessage);
 							}
 						}
+						*/
 					}
 
                     {

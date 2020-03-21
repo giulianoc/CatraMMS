@@ -4174,6 +4174,7 @@ void FFMPEGEncoder::liveProxy(
 
     try
     {
+		liveProxy->_killedBecauseOfNotWorking = false;
         liveProxy->_encodingJobKey = encodingJobKey;
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
@@ -4343,6 +4344,7 @@ void FFMPEGEncoder::liveProxy(
 
         liveProxy->_running = false;
         liveProxy->_childPid = 0;
+		liveProxy->_killedBecauseOfNotWorking = false;
         
         _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHTTPStreaming finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
@@ -4380,7 +4382,18 @@ void FFMPEGEncoder::liveProxy(
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
-		bool killedByUser				= true;
+		bool killedByUser;
+		if (liveProxy->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			liveProxy->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser				= true;
+		}
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(liveProxy->_encodingJobKey,
@@ -4394,6 +4407,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4423,6 +4437,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4452,6 +4467,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4481,6 +4497,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string("API failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4599,6 +4616,7 @@ void FFMPEGEncoder::monitorThread()
 										try
 										{
 											ProcessUtility::killProcess(liveProxy->_childPid);
+											liveProxy->_killedBecauseOfNotWorking = true;
 										}
 										catch(runtime_error e)
 										{
@@ -4661,6 +4679,7 @@ void FFMPEGEncoder::monitorThread()
 								try
 								{
 									ProcessUtility::killProcess(liveProxy->_childPid);
+									liveProxy->_killedBecauseOfNotWorking = true;
 								}
 								catch(runtime_error e)
 								{
@@ -4699,6 +4718,7 @@ void FFMPEGEncoder::monitorThread()
 
 					// Second health 
 					//		HLS/DASH:	kill if segments were not generated
+					//					frame increasing check
 					//					it is also implemented the retention of segments too old (10 minutes)
 					//		CDN:		frame increasing check
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
@@ -4869,6 +4889,7 @@ void FFMPEGEncoder::monitorThread()
 									try
 									{
 										ProcessUtility::killProcess(liveProxy->_childPid);
+										liveProxy->_killedBecauseOfNotWorking = true;
 									}
 									catch(runtime_error e)
 									{
@@ -4928,6 +4949,55 @@ void FFMPEGEncoder::monitorThread()
 
 							_logger->error(__FILEREF__ + errorMessage);
 						}
+
+						try
+						{
+							// Second health check (HLS/DASH), looks if the frame is increasing
+							if (!liveProxy->_ffmpeg->isFrameIncreasing())
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								try
+								{
+									ProcessUtility::killProcess(liveProxy->_childPid);
+									liveProxy->_killedBecauseOfNotWorking = true;
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = string("ProcessUtility::killProcess failed")
+										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+										+ ", e.what(): " + e.what()
+											;
+									_logger->error(__FILEREF__ + errorMessage);
+								}
+							}
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
 					}
 					else
 					{
@@ -4945,6 +5015,7 @@ void FFMPEGEncoder::monitorThread()
 								try
 								{
 									ProcessUtility::killProcess(liveProxy->_childPid);
+									liveProxy->_killedBecauseOfNotWorking = true;
 								}
 								catch(runtime_error e)
 								{

@@ -5682,7 +5682,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	*/
 	pair<int64_t, long> mediaInfoDetails;
 	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long>> audioTracks;
+	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;
@@ -5700,6 +5700,18 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						videoTracks, audioTracks);
 			else
 				mediaInfoDetails = ffmpeg.getMediaInfo(mmsAssetPathName, videoTracks, audioTracks);
+
+			int64_t durationInMilliSeconds = -1;
+			long bitRate = -1;
+			tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+
+			_logger->info(__FILEREF__ + "ffmpeg.getMediaInfo"
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				+ ", bitRate: " + to_string(bitRate)
+				+ ", videoTracks.size: " + to_string(videoTracks.size())
+				+ ", audioTracks.size: " + to_string(audioTracks.size())
+			);
 
 			/*
             tie(durationInMilliSeconds, bitRate, 
@@ -8188,6 +8200,38 @@ void MMSEngineProcessor::httpCallbackTask(
 					}
                 }
 
+				if (contentType == MMSEngineDBFacade::ContentType::Video
+					|| contentType == MMSEngineDBFacade::ContentType::Audio)
+				{
+					try
+					{
+						int64_t durationInMilliSeconds =
+							_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+							mediaItemKey, physicalPathKey);
+
+						float durationInSeconds = durationInMilliSeconds / 1000;
+
+						callbackMedatada["durationInSeconds"] = durationInSeconds;
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", exception: " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+						);
+					}
+				}
+				/*
 				if (contentType == MMSEngineDBFacade::ContentType::Video)
 				{
 					int64_t durationInMilliSeconds;
@@ -8217,6 +8261,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					callbackMedatada["durationInSeconds"] = durationInSeconds;
 				}
+				*/
 			}
         }
 
@@ -9490,7 +9535,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				*/
 				pair<int64_t, long> mediaInfoDetails;
 				vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-				vector<tuple<int64_t, string, long, int, long>> audioTracks;
+				vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
 
 				int imageWidth = -1;
 				int imageHeight = -1;
@@ -11342,6 +11387,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         int videoHeight;
         try
         {
+			/*
             long bitRate;
             string videoCodecName;
             string videoProfile;
@@ -11358,6 +11404,27 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
             tie(durationInMilliSeconds, bitRate,
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+			*/
+			vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
+			vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+
+			_mmsEngineDBFacade->getVideoDetails(
+				sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+			if (videoTracks.size() == 0)
+			{
+				string errorMessage = __FILEREF__ + "No video track are present"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+
+			tie(ignore, ignore, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
         }
         catch(runtime_error e)
         {
@@ -11742,6 +11809,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             if (concatContentType == MMSEngineDBFacade::ContentType::Video
                     && forcedAvgFrameRate == "")
             {
+				/*
                 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> videoDetails 
                     = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
 
@@ -11749,6 +11817,27 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                     ignore, ignore, ignore, forcedAvgFrameRate,
                     ignore, ignore, ignore, ignore, ignore)
                     = videoDetails;
+				*/
+				vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
+				vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+
+				_mmsEngineDBFacade->getVideoDetails(
+					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+				if (videoTracks.size() == 0)
+				{
+					string errorMessage = __FILEREF__ + "No video track are present"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+
+				tie(ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
         }
 
@@ -11829,7 +11918,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 		{
 			pair<int64_t, long> mediaInfoDetails;
 			vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-			vector<tuple<int64_t, string, long, int, long>> audioTracks;
+			vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
 			int64_t durationInMilliSeconds;
 
 
@@ -12166,8 +12255,17 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         int64_t durationInMilliSeconds;
         try
         {
+            if (contentType == MMSEngineDBFacade::ContentType::Video
+				|| contentType == MMSEngineDBFacade::ContentType::Audio)
+			{
+				durationInMilliSeconds =
+					_mmsEngineDBFacade->getMediaDurationInMilliseconds(
+					sourceMediaItemKey, sourcePhysicalPathKey);
+			}
+
             if (contentType == MMSEngineDBFacade::ContentType::Video)
             {
+				/*
                 int videoWidth;
                 int videoHeight;
                 long bitRate;
@@ -12185,7 +12283,30 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                 tie(durationInMilliSeconds, bitRate,
                     videoCodecName, videoProfile, videoWidth, videoHeight, forcedAvgFrameRate, videoBitRate,
                     audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+				*/
+
+				vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
+				vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+
+				_mmsEngineDBFacade->getVideoDetails(
+					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+				if (videoTracks.size() == 0)
+				{
+					string errorMessage = __FILEREF__ + "No video track are present"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+
+				tie(ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
+			/*
             else if (contentType == MMSEngineDBFacade::ContentType::Audio)
             {
                 string codecName;
@@ -12199,6 +12320,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                 tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
                         = audioDetails;
             }
+			*/
         }
         catch(runtime_error e)
         {

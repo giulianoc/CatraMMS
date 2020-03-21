@@ -3366,6 +3366,7 @@ long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 	return stol(ffmpegEncodingStatus);
 }
 
+/*
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 	FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
@@ -3390,16 +3391,14 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
     string      detailsPathFileName =
             _ffmpegTempDir + "/" + sourceFileName + ".json";
     
-    /*
-     * ffprobe:
-        "-v quiet": Don't output anything else but the desired raw data value
-        "-print_format": Use a certain format to print out the data
-        "compact=": Use a compact output format
-        "print_section=0": Do not print the section name
-        ":nokey=1": do not print the key of the key:value pair
-        ":escape=csv": escape the value
-        "-show_entries format=duration": Get entries of a field named duration inside a section named format
-    */
+    // ffprobe:
+    //   "-v quiet": Don't output anything else but the desired raw data value
+    //   "-print_format": Use a certain format to print out the data
+    //   "compact=": Use a compact output format
+    //   "print_section=0": Do not print the section name
+    //   ":nokey=1": do not print the key of the key:value pair
+    //   ":escape=csv": escape the value
+    //   "-show_entries format=duration": Get entries of a field named duration inside a section named format
     string ffprobeExecuteCommand = 
             _ffmpegPath + "/ffprobe "
             // + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
@@ -3523,110 +3522,108 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
     try
     {
         // json output will be like:
-        /*
-            {
-                "streams": [
-                    {
-                        "index": 0,
-                        "codec_name": "mpeg4",
-                        "codec_long_name": "MPEG-4 part 2",
-                        "profile": "Advanced Simple Profile",
-                        "codec_type": "video",
-                        "codec_time_base": "1/25",
-                        "codec_tag_string": "XVID",
-                        "codec_tag": "0x44495658",
-                        "width": 712,
-                        "height": 288,
-                        "coded_width": 712,
-                        "coded_height": 288,
-                        "has_b_frames": 1,
-                        "sample_aspect_ratio": "1:1",
-                        "display_aspect_ratio": "89:36",
-                        "pix_fmt": "yuv420p",
-                        "level": 5,
-                        "chroma_location": "left",
-                        "refs": 1,
-                        "quarter_sample": "false",
-                        "divx_packed": "false",
-                        "r_frame_rate": "25/1",
-                        "avg_frame_rate": "25/1",
-                        "time_base": "1/25",
-                        "start_pts": 0,
-                        "start_time": "0.000000",
-                        "duration_ts": 142100,
-                        "duration": "5684.000000",
-                        "bit_rate": "873606",
-                        "nb_frames": "142100",
-                        "disposition": {
-                            "default": 0,
-                            "dub": 0,
-                            "original": 0,
-                            "comment": 0,
-                            "lyrics": 0,
-                            "karaoke": 0,
-                            "forced": 0,
-                            "hearing_impaired": 0,
-                            "visual_impaired": 0,
-                            "clean_effects": 0,
-                            "attached_pic": 0,
-                            "timed_thumbnails": 0
-                        }
-                    },
-                    {
-                        "index": 1,
-                        "codec_name": "mp3",
-                        "codec_long_name": "MP3 (MPEG audio layer 3)",
-                        "codec_type": "audio",
-                        "codec_time_base": "1/48000",
-                        "codec_tag_string": "U[0][0][0]",
-                        "codec_tag": "0x0055",
-                        "sample_fmt": "s16p",
-                        "sample_rate": "48000",
-                        "channels": 2,
-                        "channel_layout": "stereo",
-                        "bits_per_sample": 0,
-                        "r_frame_rate": "0/0",
-                        "avg_frame_rate": "0/0",
-                        "time_base": "3/125",
-                        "start_pts": 0,
-                        "start_time": "0.000000",
-                        "duration_ts": 236822,
-                        "duration": "5683.728000",
-                        "bit_rate": "163312",
-                        "nb_frames": "236822",
-                        "disposition": {
-                            "default": 0,
-                            "dub": 0,
-                            "original": 0,
-                            "comment": 0,
-                            "lyrics": 0,
-                            "karaoke": 0,
-                            "forced": 0,
-                            "hearing_impaired": 0,
-                            "visual_impaired": 0,
-                            "clean_effects": 0,
-                            "attached_pic": 0,
-                            "timed_thumbnails": 0
-                        }
-                    }
-                ],
-                "format": {
-                    "filename": "/Users/multi/VitadaCamper.avi",
-                    "nb_streams": 2,
-                    "nb_programs": 0,
-                    "format_name": "avi",
-                    "format_long_name": "AVI (Audio Video Interleaved)",
-                    "start_time": "0.000000",
-                    "duration": "5684.000000",
-                    "size": "745871360",
-                    "bit_rate": "1049783",
-                    "probe_score": 100,
-                    "tags": {
-                        "encoder": "VirtualDubMod 1.5.10.2 (build 2540/release)"
-                    }
-                }
-            }
-         */
+        //    {
+        //        "streams": [
+        //            {
+        //                "index": 0,
+        //                "codec_name": "mpeg4",
+        //                "codec_long_name": "MPEG-4 part 2",
+        //                "profile": "Advanced Simple Profile",
+        //                "codec_type": "video",
+        //                "codec_time_base": "1/25",
+        //                "codec_tag_string": "XVID",
+        //                "codec_tag": "0x44495658",
+        //                "width": 712,
+        //                "height": 288,
+        //                "coded_width": 712,
+        //                "coded_height": 288,
+        //                "has_b_frames": 1,
+        //                "sample_aspect_ratio": "1:1",
+        //                "display_aspect_ratio": "89:36",
+        //                "pix_fmt": "yuv420p",
+        //                "level": 5,
+        //                "chroma_location": "left",
+        //                "refs": 1,
+        //                "quarter_sample": "false",
+        //                "divx_packed": "false",
+        //                "r_frame_rate": "25/1",
+        //                "avg_frame_rate": "25/1",
+        //                "time_base": "1/25",
+        //                "start_pts": 0,
+        //                "start_time": "0.000000",
+        //                "duration_ts": 142100,
+        //                "duration": "5684.000000",
+        //                "bit_rate": "873606",
+        //                "nb_frames": "142100",
+        //                "disposition": {
+        //                    "default": 0,
+        //                    "dub": 0,
+        //                    "original": 0,
+        //                    "comment": 0,
+        //                    "lyrics": 0,
+        //                    "karaoke": 0,
+        //                    "forced": 0,
+        //                    "hearing_impaired": 0,
+        //                    "visual_impaired": 0,
+        //                    "clean_effects": 0,
+        //                    "attached_pic": 0,
+        //                    "timed_thumbnails": 0
+        //                }
+        //            },
+        //            {
+        //                "index": 1,
+        //                "codec_name": "mp3",
+        //                "codec_long_name": "MP3 (MPEG audio layer 3)",
+        //                "codec_type": "audio",
+        //                "codec_time_base": "1/48000",
+        //                "codec_tag_string": "U[0][0][0]",
+        //                "codec_tag": "0x0055",
+        //                "sample_fmt": "s16p",
+        //                "sample_rate": "48000",
+        //                "channels": 2,
+        //                "channel_layout": "stereo",
+        //                "bits_per_sample": 0,
+        //                "r_frame_rate": "0/0",
+        //                "avg_frame_rate": "0/0",
+        //                "time_base": "3/125",
+        //                "start_pts": 0,
+        //                "start_time": "0.000000",
+        //                "duration_ts": 236822,
+        //                "duration": "5683.728000",
+        //                "bit_rate": "163312",
+        //                "nb_frames": "236822",
+        //                "disposition": {
+        //                    "default": 0,
+        //                    "dub": 0,
+        //                    "original": 0,
+        //                    "comment": 0,
+        //                    "lyrics": 0,
+        //                    "karaoke": 0,
+        //                    "forced": 0,
+        //                    "hearing_impaired": 0,
+        //                    "visual_impaired": 0,
+        //                    "clean_effects": 0,
+        //                    "attached_pic": 0,
+        //                    "timed_thumbnails": 0
+        //                }
+        //            }
+        //        ],
+        //        "format": {
+        //            "filename": "/Users/multi/VitadaCamper.avi",
+        //            "nb_streams": 2,
+        //            "nb_programs": 0,
+        //            "format_name": "avi",
+        //            "format_long_name": "AVI (Audio Video Interleaved)",
+        //            "start_time": "0.000000",
+        //            "duration": "5684.000000",
+        //            "size": "745871360",
+        //            "bit_rate": "1049783",
+        //            "probe_score": 100,
+        //            "tags": {
+        //                "encoder": "VirtualDubMod 1.5.10.2 (build 2540/release)"
+        //            }
+        //        }
+        //    }
 
         ifstream detailsFile(detailsPathFileName);
         stringstream buffer;
@@ -3727,17 +3724,15 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
                     videoProfile = streamRoot.get(field, "XXX").asString();
                 else
                 {
-                    /*
-                    if (videoCodecName != "mjpeg")
-                    {
-                        string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                                + ", mmsAssetPathName: " + mmsAssetPathName
-                                + ", Field: " + field;
-                        _logger->error(errorMessage);
+                    // if (videoCodecName != "mjpeg")
+                    // {
+                    //     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+                    //             + ", mmsAssetPathName: " + mmsAssetPathName
+                    //             + ", Field: " + field;
+                    //     _logger->error(errorMessage);
 
-                        throw runtime_error(errorMessage);
-                    }
-                     */
+                    //     throw runtime_error(errorMessage);
+                    // }
                 }
 
                 field = "width";
@@ -3942,28 +3937,26 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
         throw e;
     }
 
-    /*
-    if (durationInMilliSeconds == -1)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: durationInMilliSeconds was not able to be retrieved from media"
-                + ", mmsAssetPathName: " + mmsAssetPathName
-                + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
-        _logger->error(errorMessage);
+    // if (durationInMilliSeconds == -1)
+    // {
+    //     string errorMessage = __FILEREF__ + "ffmpeg: durationInMilliSeconds was not able to be retrieved from media"
+    //             + ", mmsAssetPathName: " + mmsAssetPathName
+    //             + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
+    //     _logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    else if (width == -1 || height == -1)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg: width/height were not able to be retrieved from media"
-                + ", mmsAssetPathName: " + mmsAssetPathName
-                + ", width: " + to_string(width)
-                + ", height: " + to_string(height)
-                ;
-        _logger->error(errorMessage);
+    //     throw runtime_error(errorMessage);
+    // }
+    // else if (width == -1 || height == -1)
+    // {
+    //     string errorMessage = __FILEREF__ + "ffmpeg: width/height were not able to be retrieved from media"
+    //             + ", mmsAssetPathName: " + mmsAssetPathName
+    //             + ", width: " + to_string(width)
+    //             + ", height: " + to_string(height)
+    //             ;
+    //     _logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-     */
+    //     throw runtime_error(errorMessage);
+    // }
     
     _logger->info(__FILEREF__ + "FFMpeg::getMediaInfo"
         + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
@@ -3985,10 +3978,11 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
             audioCodecName, audioSampleRate, audioChannels, audioBitRate
             );
 }
+*/
 
 pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 	vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-	vector<tuple<int64_t, string, long, int, long>>& audioTracks)
+	vector<tuple<int64_t, string, long, int, long, string>>& audioTracks)
 {
 	_currentApiName = "getMediaInfo";
 
@@ -4447,7 +4441,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 				videoTracks.push_back(make_tuple(videoDurationInMilliSeconds,
 					videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate));
             }
-            else if (codecType == "audio" && !audioFound)
+            else if (codecType == "audio")
             {
                 audioFound = true;
 
@@ -4520,8 +4514,19 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 					audioDurationInMilliSeconds = dDurationInMilliSeconds * 1000;
 				}
 
+				string language;
+                string tagsField = "tags";
+                if (isMetadataPresent(streamRoot, tagsField))
+                {
+					field = "language";
+					if (isMetadataPresent(streamRoot[tagsField], field))
+					{
+						language = streamRoot[tagsField].get(field, "").asString();
+					}
+                }
+
 				audioTracks.push_back(make_tuple(audioDurationInMilliSeconds,
-							audioCodecName, audioSampleRate, audioChannels, audioBitRate));
+							audioCodecName, audioSampleRate, audioChannels, audioBitRate, language));
             }
         }
 

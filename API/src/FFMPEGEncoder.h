@@ -63,6 +63,7 @@ private:
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>		_ffmpeg;
 		pid_t					_childPid;
+        bool					_killedBecauseOfNotWorking;	// by monitorThread
 
 		int64_t					_ingestionJobKey;
 		string					_manifestFilePathName;
