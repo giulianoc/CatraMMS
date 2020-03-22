@@ -1371,8 +1371,8 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
     }
     
 	pair<int64_t, long> mediaInfoDetails;
-	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
+	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 	/*
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
@@ -2075,6 +2075,59 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					}
 				}
 
+				Json::Value videoTrackIndexesRoot(Json::arrayValue);
+				Json::Value audioTrackIndexesRoot(Json::arrayValue);
+				if (_encodingItem->_encodeData->_contentType == MMSEngineDBFacade::ContentType::Video)
+				{
+					vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+					int64_t sourceMediaItemKey = -1;
+					_mmsEngineDBFacade->getVideoDetails(
+						sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+
+					for (tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack:
+							videoTracks)
+					{
+						int trackIndex;
+						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
+							= videoTrack;
+
+						if (trackIndex != -1)
+							videoTrackIndexesRoot.append(trackIndex);
+					}
+
+					for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
+							audioTracks)
+					{
+						int trackIndex;
+						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore)
+							= audioTrack;
+
+						if (trackIndex != -1)
+							audioTrackIndexesRoot.append(trackIndex);
+					}
+				}
+				else if (_encodingItem->_encodeData->_contentType == MMSEngineDBFacade::ContentType::Audio)
+				{
+					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+					int64_t sourceMediaItemKey = -1;
+					_mmsEngineDBFacade->getAudioDetails(
+						sourceMediaItemKey, sourcePhysicalPathKey, audioTracks);
+
+					for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
+							audioTracks)
+					{
+						int trackIndex;
+						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore)
+							= audioTrack;
+
+						if (trackIndex != -1)
+							audioTrackIndexesRoot.append(trackIndex);
+					}
+				}
+
 				_logger->info(__FILEREF__ + "building body for encoder 2"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2098,6 +2151,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 encodingMedatada["relativePath"] = _encodingItem->_encodeData->_relativePath;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+                encodingMedatada["videoTrackIndexes"] = videoTrackIndexesRoot;
+                encodingMedatada["audioTrackIndexes"] = audioTrackIndexesRoot;
 
                 {
                     Json::StreamWriterBuilder wbuilder;
@@ -2772,8 +2827,8 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
     long audioBitRate = -1;
 	*/
 	pair<int64_t, long> mediaInfoDetails;
-	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
+	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;

@@ -1810,6 +1810,23 @@ void FFMPEGEncoder::encodeContent(
         int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 
+		vector<int> videoTrackIndexes;
+		string field = "videoTrackIndexes";
+        if (JSONUtils::isMetadataPresent(encodingMedatada, field))
+		{
+			Json::Value videoTrackIndexesRoot = encodingMedatada[field];
+			for (int index = 0; index < videoTrackIndexesRoot.size(); index++)
+				videoTrackIndexes.push_back(JSONUtils::asInt(videoTrackIndexesRoot[index], "", -1));
+		}
+		vector<int> audioTrackIndexes;
+		field = "audioTrackIndexes";
+        if (JSONUtils::isMetadataPresent(encodingMedatada, field))
+		{
+			Json::Value audioTrackIndexesRoot = encodingMedatada[field];
+			for (int index = 0; index < audioTrackIndexesRoot.size(); index++)
+				audioTrackIndexes.push_back(JSONUtils::asInt(audioTrackIndexesRoot[index], "", -1));
+		}
+
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         encoding->_ffmpeg->encodeContent(
                 mmsSourceAssetPathName,
@@ -1818,6 +1835,8 @@ void FFMPEGEncoder::encodeContent(
                 stagingEncodedAssetPathName,
                 encodingProfileDetails,
                 contentType == MMSEngineDBFacade::ContentType::Video,
+				videoTrackIndexes,
+				audioTrackIndexes,
                 physicalPathKey,
                 workspaceDirectoryName,
                 relativePath,

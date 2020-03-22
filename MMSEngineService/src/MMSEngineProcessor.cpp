@@ -5681,8 +5681,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     long audioBitRate = -1;
 	*/
 	pair<int64_t, long> mediaInfoDetails;
-	vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
+	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
     int imageWidth = -1;
     int imageHeight = -1;
@@ -9534,8 +9534,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 				long audioBitRate = -1;
 				*/
 				pair<int64_t, long> mediaInfoDetails;
-				vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-				vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
+				vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+				vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
 				int imageWidth = -1;
 				int imageHeight = -1;
@@ -11405,8 +11405,8 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
 			*/
-			vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
-			vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+			vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+			vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 			_mmsEngineDBFacade->getVideoDetails(
 				sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
@@ -11422,9 +11422,9 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 				throw runtime_error(errorMessage);
 			}
 
-			tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+			tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
 
-			tie(ignore, ignore, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
+			tie(ignore, ignore, ignore, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
         }
         catch(runtime_error e)
         {
@@ -11818,8 +11818,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
                     ignore, ignore, ignore, ignore, ignore)
                     = videoDetails;
 				*/
-				vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
-				vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+				vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 				_mmsEngineDBFacade->getVideoDetails(
 					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
@@ -11835,9 +11835,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+				tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
 
-				tie(ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
+				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
         }
 
@@ -11917,8 +11917,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 		if (maxDurationInSeconds != 0.0)
 		{
 			pair<int64_t, long> mediaInfoDetails;
-			vector<tuple<int64_t, string, string, int, int, string, long>> videoTracks;
-			vector<tuple<int64_t, string, long, int, long, string>> audioTracks;
+			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			int64_t durationInMilliSeconds;
 
 
@@ -12285,8 +12285,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                     audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
 				*/
 
-				vector<tuple<int64_t, int64_t, int, int, string, string, long, string>> videoTracks;
-				vector<tuple<int64_t, int64_t, long, string, long, int, string>> audioTracks;
+				vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 				_mmsEngineDBFacade->getVideoDetails(
 					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
@@ -12302,9 +12302,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<int64_t, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+				tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
 
-				tie(ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
+				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
 			/*
             else if (contentType == MMSEngineDBFacade::ContentType::Audio)

@@ -84,6 +84,8 @@ public:
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
+		vector<int>& videoTrackIndexes,
+		vector<int>& audioTrackIndexes,
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -160,8 +162,8 @@ public:
     // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
 	pair<int64_t, long> getMediaInfo(string mmsAssetPathName,
-		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks);
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 
     vector<string> generateFramesToIngest(
         int64_t ingestionJobKey,

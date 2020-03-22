@@ -1414,14 +1414,14 @@ public:
     //     int64_t mediaItemKey, int64_t physicalpathKey);
 	void getVideoDetails(
 		int64_t mediaItemKey, int64_t physicalPathKey,
-		vector<tuple<int64_t, int64_t, int, int, string, string, long, string>>& videoTracks,
-		vector<tuple<int64_t, int64_t, long, string, long, int, string>>& audioTracks);
+		vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>>& videoTracks,
+		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks);
 
     // tuple<int64_t,string,long,long,int> getAudioDetails(
     //     int64_t mediaItemKey, int64_t physicalpathKey);
 	void getAudioDetails(
 		int64_t mediaItemKey, int64_t physicalPathKey,
-		vector<tuple<int64_t, int64_t, long, string, long, int>>& audioTracks);
+		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks);
 
     tuple<int,int,string,int> getImageDetails(
         int64_t mediaItemKey, int64_t physicalpathKey);
@@ -1646,8 +1646,8 @@ public:
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
-		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
@@ -1686,8 +1686,8 @@ public:
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
-		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
@@ -1992,8 +1992,8 @@ private:
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
-		vector<tuple<int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int64_t, string, long, int, long, string>>& audioTracks,
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 		/*
         int64_t durationInMilliSeconds,
         long bitRate,
