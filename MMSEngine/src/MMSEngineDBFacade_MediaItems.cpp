@@ -3245,7 +3245,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 					throw runtime_error(errorMessage);                    
 				}
 
-				durationInMilliSeconds = resultSet->getInt64("physicalPathKey");
+				durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
             }
             else
             {
@@ -3281,7 +3281,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 					throw runtime_error(errorMessage);                    
 				}
 
-				durationInMilliSeconds = resultSet->getInt64("physicalPathKey");
+				durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
             }
             else
             {
