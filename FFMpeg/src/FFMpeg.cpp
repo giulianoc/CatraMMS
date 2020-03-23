@@ -481,6 +481,7 @@ void FFMpeg::encodeContent(
 				}
 
 				ffmpegArgumentList.clear();
+				ffmpegArgumentListStream.clear();
 
                 // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 				ffmpegArgumentList.push_back("ffmpeg");
@@ -1136,6 +1137,7 @@ void FFMpeg::encodeContent(
 					+ "/" + manifestFileName;
 
 				ffmpegArgumentList.clear();
+				ffmpegArgumentListStream.clear();
 
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -1578,6 +1580,8 @@ void FFMpeg::encodeContent(
                 }
 
 				ffmpegArgumentList.clear();
+				ffmpegArgumentListStream.clear();
+
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
