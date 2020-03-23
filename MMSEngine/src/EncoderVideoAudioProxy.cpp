@@ -2075,8 +2075,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					}
 				}
 
-				Json::Value videoTrackIndexesRoot(Json::arrayValue);
-				Json::Value audioTrackIndexesRoot(Json::arrayValue);
+				Json::Value videoTracksRoot(Json::arrayValue);
+				Json::Value audioTracksRoot(Json::arrayValue);
 				if (_encodingItem->_encodeData->_contentType == MMSEngineDBFacade::ContentType::Video)
 				{
 					vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
@@ -2094,18 +2094,36 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							= videoTrack;
 
 						if (trackIndex != -1)
-							videoTrackIndexesRoot.append(trackIndex);
+						{
+							Json::Value videoTrackRoot;
+
+							string field = "trackIndex";
+							videoTrackRoot[field] = trackIndex;
+
+							videoTracksRoot.append(videoTrackRoot);
+						}
 					}
 
 					for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack:
 							audioTracks)
 					{
 						int trackIndex;
-						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore)
+						string language;
+						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
 							= audioTrack;
 
-						if (trackIndex != -1)
-							audioTrackIndexesRoot.append(trackIndex);
+						if (trackIndex != -1 && language != "")
+						{
+							Json::Value audioTrackRoot;
+
+							string field = "trackIndex";
+							audioTrackRoot[field] = trackIndex;
+
+							field = "language";
+							audioTrackRoot[field] = language;
+
+							audioTracksRoot.append(audioTrackRoot);
+						}
 					}
 				}
 				else if (_encodingItem->_encodeData->_contentType == MMSEngineDBFacade::ContentType::Audio)
@@ -2120,11 +2138,22 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							audioTracks)
 					{
 						int trackIndex;
-						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, ignore)
+						string language;
+						tie(ignore, trackIndex, ignore, ignore, ignore, ignore, ignore, language)
 							= audioTrack;
 
-						if (trackIndex != -1)
-							audioTrackIndexesRoot.append(trackIndex);
+						if (trackIndex != -1 && language != "")
+						{
+							Json::Value audioTrackRoot;
+
+							string field = "trackIndex";
+							audioTrackRoot[field] = trackIndex;
+
+							field = "language";
+							audioTrackRoot[field] = language;
+
+							audioTracksRoot.append(audioTrackRoot);
+						}
 					}
 				}
 
@@ -2151,8 +2180,8 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                 encodingMedatada["relativePath"] = _encodingItem->_encodeData->_relativePath;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-                encodingMedatada["videoTrackIndexes"] = videoTrackIndexesRoot;
-                encodingMedatada["audioTrackIndexes"] = audioTrackIndexesRoot;
+                encodingMedatada["videoTracks"] = videoTracksRoot;
+                encodingMedatada["audioTracks"] = audioTracksRoot;
 
                 {
                     Json::StreamWriterBuilder wbuilder;

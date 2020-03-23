@@ -330,6 +330,9 @@ private:
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
 
+	int64_t manageDeliveryAuthorization(
+		string contentURI, string tokenParameter);
+
     void addYouTubeConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

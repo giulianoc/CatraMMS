@@ -9227,7 +9227,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 120;
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 60;
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }

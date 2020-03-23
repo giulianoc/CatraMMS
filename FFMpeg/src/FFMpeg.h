@@ -84,8 +84,8 @@ public:
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
-		vector<int>& videoTrackIndexes,
-		vector<int>& audioTrackIndexes,
+		Json::Value videoTracksRoot,
+		Json::Value audioTracksRoot,
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,

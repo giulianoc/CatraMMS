@@ -98,8 +98,8 @@ void FFMpeg::encodeContent(
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
-		vector<int>& videoTrackIndexes,
-		vector<int>& audioTrackIndexes,
+		Json::Value videoTracksRoot,
+		Json::Value audioTracksRoot,
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -113,6 +113,14 @@ void FFMpeg::encodeContent(
 
     try
     {
+		_logger->info(__FILEREF__ + "Received encodeContent"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+			+ ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
+			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
+		);
+
         string httpStreamingFileFormat;    
 		string ffmpegHttpStreamingParameter = "";
 
@@ -198,13 +206,13 @@ void FFMpeg::encodeContent(
 			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-suffix.size(), suffix.size(), suffix)
 
 			// output is hls
-			&& httpStreamingFileFormat != "hls"
+			&& httpStreamingFileFormat == "hls"
 
 			// more than 1 audio track
-			&& audioTrackIndexes.size() > 1
+			&& audioTracksRoot.size() > 1
 
 			// one video track
-			&& videoTrackIndexes.size() == 1
+			&& videoTracksRoot.size() == 1
 		)
 		{
 			/*
@@ -212,11 +220,11 @@ void FFMpeg::encodeContent(
 
 			ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/ws2/000/228/001/1247989_source.mp4
 
-			-map 0:1 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/ita/1247992_384637_%04d.ts -f hls /home/mms/tmp/ita/1247992_384637.m3u8
+				-map 0:1 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/ita/1247992_384637_%04d.ts -f hls /home/mms/tmp/ita/1247992_384637.m3u8
 
-			-map 0:2 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/eng/1247992_384637_%04d.ts -f hls /home/mms/tmp/eng/1247992_384637.m3u8
+				-map 0:2 -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/eng/1247992_384637_%04d.ts -f hls /home/mms/tmp/eng/1247992_384637.m3u8
 
-			-map 0:0 -codec:v libx264 -profile:v high422 -b:v 800k -preset veryfast -level 4.0 -crf 22 -r 25 -vf scale=640:360 -threads 0 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/low/1247992_384637_%04d.ts -f hls /home/mms/tmp/low/1247992_384637.m3u8
+				-map 0:0 -codec:v libx264 -profile:v high422 -b:v 800k -preset veryfast -level 4.0 -crf 22 -r 25 -vf scale=640:360 -threads 0 -hls_time 10 -hls_list_size 0 -hls_segment_filename /home/mms/tmp/low/1247992_384637_%04d.ts -f hls /home/mms/tmp/low/1247992_384637.m3u8
 
 			Manifest will be like:
 			#EXTM3U
@@ -226,6 +234,11 @@ void FFMpeg::encodeContent(
 			#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=195023,CODECS="avc1.42e00a,mp4a.40.2",AUDIO="audio"
 			lo/prog_index.m3u8
 			*/
+
+			_logger->info(__FILEREF__ + "Special encoding in order to allow audio/language selection by the player"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			);
 
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
@@ -239,15 +252,48 @@ void FFMpeg::encodeContent(
 				FileIO::createDirectory(stagingEncodedAssetPathName,
 					S_IRUSR | S_IWUSR | S_IXUSR |
 					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					string audioPathName = stagingEncodedAssetPathName + "/"
+						+ audioTrackDirectoryName;
+
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", audioPathName: " + audioPathName
+					);
+					FileIO::createDirectory(audioPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				{
+					string videoTrackDirectoryName;
+					{
+						Json::Value videoTrack = videoTracksRoot[0];
+
+						videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+					}
+
+					string videoPathName = stagingEncodedAssetPathName + "/"
+						+ videoTrackDirectoryName;
+
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", videoPathName: " + videoPathName
+					);
+					FileIO::createDirectory(videoPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
 			}
 
 			// the manifestFileName naming convention is used also in EncoderVideoAudioProxy.cpp
-			string manifestFileName = to_string(ingestionJobKey) +
-				"_" + to_string(encodingJobKey);
-			if (httpStreamingFileFormat == "hls")
-				manifestFileName += ".m3u8";
-			else	// if (httpStreamingFileFormat == "dash")
-				manifestFileName += ".mpd";
+			string manifestFileName = to_string(ingestionJobKey)
+				+ "_" + to_string(encodingJobKey)
+				+ ".m3u8";
 
             if (_twoPasses)
             {
@@ -268,6 +314,61 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				// It should be useless to add the audio parameters in phase 1 but,
+				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+				//  So, this is the reason, I'm adding phase 2 as well
+				// + "-an "    // disable audio
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					{
+						string segmentPathFileName =
+							stagingEncodedAssetPathName 
+							+ "/"
+							+ audioTrackDirectoryName
+							+ "/"
+							+ to_string(_currentIngestionJobKey)
+							+ "_"
+							+ to_string(_currentEncodingJobKey)
+							+ "_%04d.ts"
+						;
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+					}
+
+					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					{
+						string stagingManifestAssetPathName =
+							stagingEncodedAssetPathName
+							+ "/" + audioTrackDirectoryName
+							+ "/" + manifestFileName;
+						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+					}
+				}
+
+				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -283,17 +384,6 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("1");
 				ffmpegArgumentList.push_back("-passlogfile");
 				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				// It should be useless to add the audio parameters in phase 1 but,
-				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
-				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
-				//  So, this is the reason, I'm adding phase 2 as well
-				// + "-an "    // disable audio
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-
 				// 2020-01-20: I removed the hls file format parameter because it was not working
 				//	and added -f mp4. At the end it has to generate just the log file
 				//	to be used in the second step
@@ -331,8 +421,8 @@ void FFMpeg::encodeContent(
 					if (iReturnedStatus != 0)
 					{
 						string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
@@ -390,23 +480,9 @@ void FFMpeg::encodeContent(
 						throw e;
 				}
 
-				string segmentPathFileName;
-				if (httpStreamingFileFormat == "hls")
-					segmentPathFileName =
-						stagingEncodedAssetPathName 
-						+ "/"
-						+ to_string(_currentIngestionJobKey)
-						+ "_"
-						+ to_string(_currentEncodingJobKey)
-						+ "_%04d.ts"
-					;
-
-				string stagingManifestAssetPathName =
-					stagingEncodedAssetPathName
-					+ "/" + manifestFileName;
-
 				ffmpegArgumentList.clear();
 
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -414,6 +490,61 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				// It should be useless to add the audio parameters in phase 1 but,
+				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+				//  So, this is the reason, I'm adding phase 2 as well
+				// + "-an "    // disable audio
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					{
+						string segmentPathFileName =
+							stagingEncodedAssetPathName 
+							+ "/"
+							+ audioTrackDirectoryName
+							+ "/"
+							+ to_string(_currentIngestionJobKey)
+							+ "_"
+							+ to_string(_currentEncodingJobKey)
+							+ "_%04d.ts"
+						;
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+					}
+
+					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					{
+						string stagingManifestAssetPathName =
+							stagingEncodedAssetPathName
+							+ "/" + audioTrackDirectoryName
+							+ "/" + manifestFileName;
+						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+					}
+				}
+
+				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -429,22 +560,39 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("2");
 				ffmpegArgumentList.push_back("-passlogfile");
 				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				if (httpStreamingFileFormat == "hls")
+				string videoTrackDirectoryName;
 				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+				}
+
+				{
+					string segmentPathFileName =
+						stagingEncodedAssetPathName 
+						+ "/"
+						+ videoTrackDirectoryName
+						+ "/"
+						+ to_string(_currentIngestionJobKey)
+						+ "_"
+						+ to_string(_currentEncodingJobKey)
+						+ "_%04d.ts"
+					;
 					ffmpegArgumentList.push_back("-hls_segment_filename");
 					ffmpegArgumentList.push_back(segmentPathFileName);
 				}
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+				{
+					string stagingManifestAssetPathName =
+						stagingEncodedAssetPathName
+						+ "/" + videoTrackDirectoryName
+						+ "/" + manifestFileName;
+					ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+				}
 
                 _currentlyAtSecondPass = true;
 				try
@@ -541,21 +689,7 @@ void FFMpeg::encodeContent(
 			}
 			else
             {
-				string segmentPathFileName;
-				if (httpStreamingFileFormat == "hls")
-					segmentPathFileName =
-						stagingEncodedAssetPathName 
-						+ "/"
-						+ to_string(_currentIngestionJobKey)
-						+ "_"
-						+ to_string(_currentEncodingJobKey)
-						+ "_%04d.ts"
-					;
-
-				string stagingManifestAssetPathName =
-					stagingEncodedAssetPathName
-					+ "/" + manifestFileName;
-
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -563,6 +697,61 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				// It should be useless to add the audio parameters in phase 1 but,
+				// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+				//  So, this is the reason, I'm adding phase 2 as well
+				// + "-an "    // disable audio
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					{
+						string segmentPathFileName =
+							stagingEncodedAssetPathName 
+							+ "/"
+							+ audioTrackDirectoryName
+							+ "/"
+							+ to_string(_currentIngestionJobKey)
+							+ "_"
+							+ to_string(_currentEncodingJobKey)
+							+ "_%04d.ts"
+						;
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+					}
+
+					addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+					{
+						string stagingManifestAssetPathName =
+							stagingEncodedAssetPathName
+							+ "/" + audioTrackDirectoryName
+							+ "/" + manifestFileName;
+						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+					}
+				}
+
+				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -574,22 +763,39 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-threads");
 				ffmpegArgumentList.push_back("0");
-				addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
-				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
 				addToArguments(ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-				if (httpStreamingFileFormat == "hls")
+				string videoTrackDirectoryName;
 				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+				}
+
+				{
+					string segmentPathFileName =
+						stagingEncodedAssetPathName 
+						+ "/"
+						+ videoTrackDirectoryName
+						+ "/"
+						+ to_string(_currentIngestionJobKey)
+						+ "_"
+						+ to_string(_currentEncodingJobKey)
+						+ "_%04d.ts"
+					;
 					ffmpegArgumentList.push_back("-hls_segment_filename");
 					ffmpegArgumentList.push_back(segmentPathFileName);
 				}
 
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
-				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+				{
+					string stagingManifestAssetPathName =
+						stagingEncodedAssetPathName
+						+ "/" + videoTrackDirectoryName
+						+ "/" + manifestFileName;
+					ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+				}
 
 				try
 				{
@@ -708,7 +914,44 @@ void FFMpeg::encodeContent(
                 throw runtime_error(errorMessage);
             }
 
-            // changes to be done to the manifest, see EncoderThread.cpp
+			// create manifest file
+			{
+				string mainManifestPathName = stagingEncodedAssetPathName + "/"
+					+ manifestFileName;
+
+				string mainManifest;
+
+				mainManifest = string("#EXTM3U") + "\n";
+
+				for (int index = 0; index < audioTracksRoot.size(); index++)
+				{
+					Json::Value audioTrack = audioTracksRoot[index];
+
+					string audioTrackDirectoryName = audioTrack.get("language", "").asString();
+
+					string audioLanguage = audioTrack.get("language", "").asString();
+
+					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
+						+ audioLanguage + "\",NAME=\"" + audioLanguage + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
+						+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
+						
+					mainManifest += (audioManifestLine + "\n");
+				}
+
+				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO=\"audio\"";
+				mainManifest += (videoManifestLine + "\n");
+
+				string videoTrackDirectoryName;
+				{
+					Json::Value videoTrack = videoTracksRoot[0];
+
+					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+				}
+				mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
+
+				ofstream manifestFile(mainManifestPathName);
+				manifestFile << mainManifest;
+			}
         }
 		else if (httpStreamingFileFormat != "")
         {
