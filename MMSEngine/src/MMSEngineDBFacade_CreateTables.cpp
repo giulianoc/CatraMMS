@@ -1544,6 +1544,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
         
+		/*
         try
         {
             lastSQLCommand = 
@@ -1579,6 +1580,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+		*/
         
         try
         {
@@ -1613,6 +1615,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
         
+		/*
         try
         {
             lastSQLCommand = 
@@ -1641,6 +1644,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+		*/
         
         try
         {

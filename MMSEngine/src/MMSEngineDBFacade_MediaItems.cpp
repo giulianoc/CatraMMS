@@ -5313,6 +5313,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         physicalPathKey = getLastInsertId(conn);
 
         {
+			/*
             if (contentType == ContentType::Video && videoTracks.size() > 0 && audioTracks.size() > 0)
             {
 				int videoTrackIndex;
@@ -5447,6 +5448,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
                 preparedStatement->executeUpdate();
             }
+			*/
 			/*
             else if (contentType == ContentType::Image)
             {
