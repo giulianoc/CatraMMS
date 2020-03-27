@@ -233,6 +233,11 @@ void FFMpeg::encodeContent(
 
 			#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=195023,CODECS="avc1.42e00a,mp4a.40.2",AUDIO="audio"
 			lo/prog_index.m3u8
+
+
+			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
+			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
+
 			*/
 
 			_logger->info(__FILEREF__ + "Special encoding in order to allow audio/language selection by the player"
@@ -3991,7 +3996,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
     }
 }
 
-bool FFMpeg::isFrameIncreasing()
+bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 {
 
 	bool frameIncreasing = true;
@@ -4036,7 +4041,7 @@ bool FFMpeg::isFrameIncreasing()
 			firstFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
 		}
 
-		this_thread::sleep_for(chrono::seconds(2));
+		this_thread::sleep_for(chrono::seconds(secondsToWaitBetweenSamples));
 
 		long secondFramesValue;
 		{
@@ -4110,7 +4115,7 @@ long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 	size_t startFrameIndex = ffmpegEncodingStatus.rfind(frameToSearch);
 	if (startFrameIndex == string::npos)
 	{
-		_logger->info(__FILEREF__ + "ffmpeg: frame info was not found"
+		_logger->warn(__FILEREF__ + "ffmpeg: frame info was not found"
 			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -4125,7 +4130,7 @@ long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 	size_t endFrameIndex = ffmpegEncodingStatus.find(" fps=");
 	if (endFrameIndex == string::npos)
 	{
-		_logger->info(__FILEREF__ + "ffmpeg: fps info was not found"
+		_logger->error(__FILEREF__ + "ffmpeg: fps info was not found"
 			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName

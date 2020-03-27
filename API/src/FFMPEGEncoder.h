@@ -55,6 +55,8 @@ private:
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>		_ffmpeg;
 		pid_t					_childPid;
+
+		string					_errorMessage;
     };
 
     struct LiveProxy
@@ -65,9 +67,12 @@ private:
 		pid_t					_childPid;
         bool					_killedBecauseOfNotWorking;	// by monitorThread
 
+		string					_errorMessage;
+
 		int64_t					_ingestionJobKey;
 		string					_manifestFilePathName;
 		string					_outputType;
+		string					_configurationLabel;
 		chrono::system_clock::time_point	_proxyStart;
     };
 
@@ -78,6 +83,8 @@ private:
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>      _ffmpeg;
 		pid_t					_childPid;
+
+		string					_errorMessage;
 
 		int64_t					_ingestionJobKey;
 		Json::Value				_encodingParametersRoot;
@@ -94,6 +101,7 @@ private:
 	{
 		int64_t					_encodingJobKey;
 		bool					_completedWithError;
+		string					_errorMessage;
 		bool					_killedByUser;
 		bool					_urlForbidden;
 		bool					_urlNotFound;
@@ -210,7 +218,7 @@ private:
         string requestBody);
 
 	void addEncodingCompleted(
-        int64_t encodingJobKey, bool completedWithError,
+        int64_t encodingJobKey, bool completedWithError, string errorMessage,
 		bool killedByUser, bool urlForbidden, bool urlNotFound);
 
 	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);

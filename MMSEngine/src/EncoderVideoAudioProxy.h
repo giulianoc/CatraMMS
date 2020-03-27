@@ -251,7 +251,7 @@ private:
     pair<string, bool> pictureInPicture_through_ffmpeg();
     void processPictureInPicture(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    tuple<bool, bool, bool, bool, bool> getEncodingStatus();
+    tuple<bool, bool, bool, string, bool, bool> getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

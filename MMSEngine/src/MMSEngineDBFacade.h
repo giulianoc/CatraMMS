@@ -1273,6 +1273,10 @@ public:
         string errorMessage,
         string processorMMS = "noToBeUpdated");
 
+	void appendIngestionJobErrorMessage (
+		int64_t ingestionJobKey,
+		string errorMessage);
+
     /*
     void updateIngestionJob (
         int64_t ingestionJobKey,

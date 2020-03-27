@@ -9227,7 +9227,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 60;
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 15;
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }
@@ -13737,7 +13737,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
         vector<string> emailBody;
         emailBody.push_back(message);
-            
+
         EMailSender emailSender(_logger, _configuration);
         emailSender.sendEmail(emailAddresses, subject, emailBody);
 

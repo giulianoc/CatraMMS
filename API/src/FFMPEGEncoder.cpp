@@ -945,7 +945,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         
         try
-        {            
+        {
             selectedLiveProxy->_running = true;
             selectedLiveProxy->_childPid = 0;
 
@@ -1319,42 +1319,120 @@ void FFMPEGEncoder::manageRequestAndResponse(
             */
             
 			if (encodingCompleted)
-				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedEncodingCompleted->_encodingJobKey)
-					+ ", \"pid\": 0 "
-					+ ", \"killedByUser\": " + (selectedEncodingCompleted->_killedByUser ? "true" : "false")
-					+ ", \"urlForbidden\": " + (selectedEncodingCompleted->_urlForbidden ? "true" : "false")
-					+ ", \"urlNotFound\": " + (selectedEncodingCompleted->_urlNotFound ? "true" : "false")
-					+ ", \"completedWithError\": " + (selectedEncodingCompleted->_completedWithError ? "true" : "false")
-					+ ", \"encodingFinished\": true "
-					+ "}";
+			{
+				Json::Value responseBodyRoot;
+
+				string field = "encodingJobKey";
+				responseBodyRoot[field] = selectedEncodingCompleted->_encodingJobKey;
+
+				field = "pid";
+				responseBodyRoot[field] = 0;
+
+				field = "killedByUser";
+				responseBodyRoot[field] = selectedEncodingCompleted->_killedByUser;
+
+				field = "urlForbidden";
+				responseBodyRoot[field] = selectedEncodingCompleted->_urlForbidden;
+
+				field = "urlNotFound";
+				responseBodyRoot[field] = selectedEncodingCompleted->_urlNotFound;
+
+				field = "completedWithError";
+				responseBodyRoot[field] = selectedEncodingCompleted->_completedWithError;
+
+				field = "errorMessage";
+				responseBodyRoot[field] = selectedEncodingCompleted->_errorMessage;
+
+				field = "encodingFinished";
+				responseBodyRoot[field] = true;
+
+				Json::StreamWriterBuilder wbuilder;
+				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			}
 			else if (encodingFound)
-				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey)
-					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
-					+ ", \"killedByUser\": false"
-					+ ", \"urlForbidden\": false"
-					+ ", \"urlNotFound\": false"
-					+ ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
-					+ "}";
+			{
+				Json::Value responseBodyRoot;
+
+				string field = "encodingJobKey";
+				responseBodyRoot[field] = selectedEncoding->_encodingJobKey;
+
+				field = "pid";
+				responseBodyRoot[field] = selectedEncoding->_childPid;
+
+				field = "killedByUser";
+				responseBodyRoot[field] = false;
+
+				field = "urlForbidden";
+				responseBodyRoot[field] = false;
+
+				field = "urlNotFound";
+				responseBodyRoot[field] = false;
+
+				field = "errorMessage";
+				responseBodyRoot[field] = selectedEncoding->_errorMessage;
+
+				field = "encodingFinished";
+				responseBodyRoot[field] = !selectedEncoding->_running;
+
+				Json::StreamWriterBuilder wbuilder;
+				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			}
 			else if (liveProxyFound)
-				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedLiveProxy->_encodingJobKey)
-					+ ", \"pid\": " + to_string(selectedLiveProxy->_childPid)
-					+ ", \"killedByUser\": false"
-					+ ", \"urlForbidden\": false"
-					+ ", \"urlNotFound\": false"
-					+ ", \"encodingFinished\": " + (selectedLiveProxy->_running ? "false " : "true ")
-					+ "}";
+			{
+				Json::Value responseBodyRoot;
+
+				string field = "encodingJobKey";
+				responseBodyRoot[field] = selectedLiveProxy->_encodingJobKey;
+
+				field = "pid";
+				responseBodyRoot[field] = selectedLiveProxy->_childPid;
+
+				field = "killedByUser";
+				responseBodyRoot[field] = false;
+
+				field = "urlForbidden";
+				responseBodyRoot[field] = false;
+
+				field = "urlNotFound";
+				responseBodyRoot[field] = false;
+
+				field = "errorMessage";
+				responseBodyRoot[field] = selectedLiveProxy->_errorMessage;
+
+				field = "encodingFinished";
+				responseBodyRoot[field] = !selectedLiveProxy->_running;
+
+				Json::StreamWriterBuilder wbuilder;
+				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			}
 			else // if (liveRecording)
-				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedLiveRecording->_encodingJobKey)
-					+ ", \"pid\": " + to_string(selectedLiveRecording->_childPid)
-					+ ", \"killedByUser\": false"
-					+ ", \"urlForbidden\": false"
-					+ ", \"urlNotFound\": false"
-					+ ", \"encodingFinished\": " + (selectedLiveRecording->_running ? "false " : "true ")
-					+ "}";
+			{
+				Json::Value responseBodyRoot;
+
+				string field = "encodingJobKey";
+				responseBodyRoot[field] = selectedLiveRecording->_encodingJobKey;
+
+				field = "pid";
+				responseBodyRoot[field] = selectedLiveRecording->_childPid;
+
+				field = "killedByUser";
+				responseBodyRoot[field] = false;
+
+				field = "urlForbidden";
+				responseBodyRoot[field] = false;
+
+				field = "urlNotFound";
+				responseBodyRoot[field] = false;
+
+				field = "errorMessage";
+				responseBodyRoot[field] = selectedLiveRecording->_errorMessage;
+
+				field = "encodingFinished";
+				responseBodyRoot[field] = !selectedLiveRecording->_running;
+
+				Json::StreamWriterBuilder wbuilder;
+				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			}
         }
 
         sendSuccess(request, 200, responseBody);
@@ -1739,6 +1817,7 @@ void FFMPEGEncoder::encodeContent(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         /*
@@ -1858,7 +1937,7 @@ void FFMPEGEncoder::encodeContent(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -1880,7 +1959,7 @@ void FFMPEGEncoder::encodeContent(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -1894,15 +1973,16 @@ void FFMPEGEncoder::encodeContent(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+		
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -1920,15 +2000,16 @@ void FFMPEGEncoder::encodeContent(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -1953,6 +2034,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value overlayMedatada;
@@ -2036,7 +2118,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -2050,7 +2132,6 @@ void FFMPEGEncoder::overlayImageOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -2058,7 +2139,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -2072,15 +2153,16 @@ void FFMPEGEncoder::overlayImageOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2098,15 +2180,16 @@ void FFMPEGEncoder::overlayImageOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2131,6 +2214,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value overlayTextMedatada;
@@ -2267,7 +2351,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -2281,7 +2365,6 @@ void FFMPEGEncoder::overlayTextOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -2289,7 +2372,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -2303,15 +2386,16 @@ void FFMPEGEncoder::overlayTextOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2329,15 +2413,16 @@ void FFMPEGEncoder::overlayTextOnVideo(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2362,6 +2447,7 @@ void FFMPEGEncoder::generateFrames(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value generateFramesMedatada;
@@ -2441,7 +2527,7 @@ void FFMPEGEncoder::generateFrames(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -2455,7 +2541,6 @@ void FFMPEGEncoder::generateFrames(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -2463,7 +2548,7 @@ void FFMPEGEncoder::generateFrames(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -2477,15 +2562,16 @@ void FFMPEGEncoder::generateFrames(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(exception e)
@@ -2499,15 +2585,16 @@ void FFMPEGEncoder::generateFrames(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 }
@@ -2528,6 +2615,7 @@ void FFMPEGEncoder::slideShow(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value slideShowMedatada;
@@ -2598,7 +2686,7 @@ void FFMPEGEncoder::slideShow(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -2612,7 +2700,6 @@ void FFMPEGEncoder::slideShow(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -2620,7 +2707,7 @@ void FFMPEGEncoder::slideShow(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -2634,15 +2721,16 @@ void FFMPEGEncoder::slideShow(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(exception e)
@@ -2656,15 +2744,16 @@ void FFMPEGEncoder::slideShow(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 }
@@ -2685,6 +2774,7 @@ void FFMPEGEncoder::liveRecorder(
     try
     {
         liveRecording->_encodingJobKey = encodingJobKey;
+		liveRecording->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value liveRecorderMedatada;
@@ -2794,7 +2884,7 @@ void FFMPEGEncoder::liveRecorder(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
@@ -2827,7 +2917,7 @@ void FFMPEGEncoder::liveRecorder(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
@@ -2855,15 +2945,16 @@ void FFMPEGEncoder::liveRecorder(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveRecording->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= true;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
@@ -2891,15 +2982,16 @@ void FFMPEGEncoder::liveRecorder(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveRecording->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= true;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
@@ -2927,15 +3019,16 @@ void FFMPEGEncoder::liveRecorder(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveRecording->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
@@ -2963,15 +3056,16 @@ void FFMPEGEncoder::liveRecorder(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveRecording->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
@@ -4186,6 +4280,7 @@ void FFMPEGEncoder::liveProxy(
     try
     {
 		liveProxy->_killedBecauseOfNotWorking = false;
+		liveProxy->_errorMessage = "";
         liveProxy->_encodingJobKey = encodingJobKey;
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
@@ -4232,7 +4327,8 @@ void FFMPEGEncoder::liveProxy(
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
-		liveProxy->_manifestFilePathName = liveProxyMetadata.get("manifestFilePathName", -1).asString();
+		liveProxy->_manifestFilePathName = liveProxyMetadata.get("manifestFilePathName", "").asString();
+		liveProxy->_configurationLabel = liveProxyMetadata.get("configurationLabel", "").asString();
 
 		if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 		{
@@ -4368,12 +4464,13 @@ void FFMPEGEncoder::liveProxy(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
 		liveProxy->_ingestionJobKey = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -4382,6 +4479,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
 
         string errorMessage = string ("API failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4399,6 +4497,7 @@ void FFMPEGEncoder::liveProxy(
 			// it was killed just because it was not working and not because of user
 			// In this case the process has to be restarted soon
 			killedByUser				= false;
+			completedWithError			= true;
 			liveProxy->_killedBecauseOfNotWorking = false;
 		}
 		else
@@ -4408,7 +4507,7 @@ void FFMPEGEncoder::liveProxy(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(liveProxy->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(FFMpegURLForbidden e)
@@ -4418,6 +4517,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
@@ -4426,15 +4526,16 @@ void FFMPEGEncoder::liveProxy(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= true;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4448,6 +4549,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
@@ -4456,15 +4558,16 @@ void FFMPEGEncoder::liveProxy(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= true;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4478,6 +4581,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string ("API failed")
@@ -4486,15 +4590,16 @@ void FFMPEGEncoder::liveProxy(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4508,6 +4613,7 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathName = "";
 		liveProxy->_outputType = "";
+		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
         string errorMessage = string("API failed")
@@ -4516,15 +4622,16 @@ void FFMPEGEncoder::liveProxy(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4621,6 +4728,7 @@ void FFMPEGEncoder::monitorThread()
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 											+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
+											+ ", configurationLabel: " + liveProxy->_configurationLabel
 											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 										);
 
@@ -4628,6 +4736,25 @@ void FFMPEGEncoder::monitorThread()
 										{
 											ProcessUtility::killProcess(liveProxy->_childPid);
 											liveProxy->_killedBecauseOfNotWorking = true;
+											{
+												char strDateTime [64];
+												{
+													time_t utcTime = chrono::system_clock::to_time_t(
+														chrono::system_clock::now());
+													tm tmDateTime;
+													localtime_r (&utcTime, &tmDateTime);
+													sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+														tmDateTime. tm_year + 1900,
+														tmDateTime. tm_mon + 1,
+														tmDateTime. tm_mday,
+														tmDateTime. tm_hour,
+														tmDateTime. tm_min,
+														tmDateTime. tm_sec);
+												}
+												liveProxy->_errorMessage = string(strDateTime) + " "
+													+ liveProxy->_configurationLabel +
+													" restarted because of 'manifest file is missing or was not updated'";
+											}
 										}
 										catch(runtime_error e)
 										{
@@ -4684,6 +4811,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", configurationLabel: " + liveProxy->_configurationLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -4691,6 +4819,25 @@ void FFMPEGEncoder::monitorThread()
 								{
 									ProcessUtility::killProcess(liveProxy->_childPid);
 									liveProxy->_killedBecauseOfNotWorking = true;
+									{
+										char strDateTime [64];
+										{
+											time_t utcTime = chrono::system_clock::to_time_t(
+												chrono::system_clock::now());
+											tm tmDateTime;
+											localtime_r (&utcTime, &tmDateTime);
+											sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+												tmDateTime. tm_year + 1900,
+												tmDateTime. tm_mon + 1,
+												tmDateTime. tm_mday,
+												tmDateTime. tm_hour,
+												tmDateTime. tm_min,
+												tmDateTime. tm_sec);
+										}
+										liveProxy->_errorMessage = string(strDateTime) + " "
+											+ liveProxy->_configurationLabel +
+											" restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
+									}
 								}
 								catch(runtime_error e)
 								{
@@ -4894,6 +5041,7 @@ void FFMPEGEncoder::monitorThread()
 										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 										+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
+										+ ", configurationLabel: " + liveProxy->_configurationLabel
 										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 									);
 
@@ -4901,6 +5049,25 @@ void FFMPEGEncoder::monitorThread()
 									{
 										ProcessUtility::killProcess(liveProxy->_childPid);
 										liveProxy->_killedBecauseOfNotWorking = true;
+										{
+											char strDateTime [64];
+											{
+												time_t utcTime = chrono::system_clock::to_time_t(
+													chrono::system_clock::now());
+												tm tmDateTime;
+												localtime_r (&utcTime, &tmDateTime);
+												sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+													tmDateTime. tm_year + 1900,
+													tmDateTime. tm_mon + 1,
+													tmDateTime. tm_mday,
+													tmDateTime. tm_hour,
+													tmDateTime. tm_min,
+													tmDateTime. tm_sec);
+											}
+											liveProxy->_errorMessage = string(strDateTime) + " "
+												+ liveProxy->_configurationLabel +
+												" restarted because of 'no segments were generated'";
+										}
 									}
 									catch(runtime_error e)
 									{
@@ -4964,11 +5131,14 @@ void FFMPEGEncoder::monitorThread()
 						try
 						{
 							// Second health check (HLS/DASH), looks if the frame is increasing
-							if (!liveProxy->_ffmpeg->isFrameIncreasing())
+							int secondsToWaitBetweenSamples = 3;
+							if (!liveProxy->_ffmpeg->isFrameIncreasing(
+								secondsToWaitBetweenSamples))
 							{
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", configurationLabel: " + liveProxy->_configurationLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -4976,6 +5146,25 @@ void FFMPEGEncoder::monitorThread()
 								{
 									ProcessUtility::killProcess(liveProxy->_childPid);
 									liveProxy->_killedBecauseOfNotWorking = true;
+									{
+										char strDateTime [64];
+										{
+											time_t utcTime = chrono::system_clock::to_time_t(
+												chrono::system_clock::now());
+											tm tmDateTime;
+											localtime_r (&utcTime, &tmDateTime);
+											sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+												tmDateTime. tm_year + 1900,
+												tmDateTime. tm_mon + 1,
+												tmDateTime. tm_mday,
+												tmDateTime. tm_hour,
+												tmDateTime. tm_min,
+												tmDateTime. tm_sec);
+										}
+										liveProxy->_errorMessage = string(strDateTime) + " "
+											+ liveProxy->_configurationLabel +
+											" restarted because of 'frame is not increasing'";
+									}
 								}
 								catch(runtime_error e)
 								{
@@ -4989,6 +5178,15 @@ void FFMPEGEncoder::monitorThread()
 								}
 							}
 						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
 						catch(runtime_error e)
 						{
 							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
@@ -4996,7 +5194,6 @@ void FFMPEGEncoder::monitorThread()
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
 							;
-
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 						catch(exception e)
@@ -5006,7 +5203,6 @@ void FFMPEGEncoder::monitorThread()
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
 							;
-
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
@@ -5015,11 +5211,14 @@ void FFMPEGEncoder::monitorThread()
 						try
 						{
 							// Second health check (CDN), looks if the frame is increasing
-							if (!liveProxy->_ffmpeg->isFrameIncreasing())
+							int secondsToWaitBetweenSamples = 3;
+							if (!liveProxy->_ffmpeg->isFrameIncreasing(
+								secondsToWaitBetweenSamples))
 							{
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", configurationLabel: " + liveProxy->_configurationLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -5027,6 +5226,25 @@ void FFMPEGEncoder::monitorThread()
 								{
 									ProcessUtility::killProcess(liveProxy->_childPid);
 									liveProxy->_killedBecauseOfNotWorking = true;
+									{
+										char strDateTime [64];
+										{
+											time_t utcTime = chrono::system_clock::to_time_t(
+												chrono::system_clock::now());
+											tm tmDateTime;
+											localtime_r (&utcTime, &tmDateTime);
+											sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+												tmDateTime. tm_year + 1900,
+												tmDateTime. tm_mon + 1,
+												tmDateTime. tm_mday,
+												tmDateTime. tm_hour,
+												tmDateTime. tm_min,
+												tmDateTime. tm_sec);
+										}
+										liveProxy->_errorMessage = string(strDateTime) + " "
+											+ liveProxy->_configurationLabel +
+											" restarted because of 'frame is not increasing'";
+									}
 								}
 								catch(runtime_error e)
 								{
@@ -5040,6 +5258,15 @@ void FFMPEGEncoder::monitorThread()
 								}
 							}
 						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
 						catch(runtime_error e)
 						{
 							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
@@ -5047,7 +5274,6 @@ void FFMPEGEncoder::monitorThread()
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
 							;
-
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 						catch(exception e)
@@ -5057,7 +5283,6 @@ void FFMPEGEncoder::monitorThread()
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
 							;
-
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
@@ -5109,6 +5334,7 @@ void FFMPEGEncoder::videoSpeed(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value videoSpeedMetadata;
@@ -5192,7 +5418,7 @@ void FFMPEGEncoder::videoSpeed(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -5206,7 +5432,6 @@ void FFMPEGEncoder::videoSpeed(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -5214,7 +5439,7 @@ void FFMPEGEncoder::videoSpeed(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -5228,15 +5453,16 @@ void FFMPEGEncoder::videoSpeed(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -5254,15 +5480,16 @@ void FFMPEGEncoder::videoSpeed(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -5287,6 +5514,7 @@ void FFMPEGEncoder::pictureInPicture(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value pictureInPictureMetadata;
@@ -5384,7 +5612,7 @@ void FFMPEGEncoder::pictureInPicture(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
 	catch(FFMpegEncodingKilledByUser e)
@@ -5398,7 +5626,6 @@ void FFMPEGEncoder::pictureInPicture(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -5406,7 +5633,7 @@ void FFMPEGEncoder::pictureInPicture(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encoding->_encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
     }
     catch(runtime_error e)
@@ -5420,15 +5647,16 @@ void FFMPEGEncoder::pictureInPicture(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -5446,15 +5674,16 @@ void FFMPEGEncoder::pictureInPicture(
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
+
+		encoding->_errorMessage = errorMessage;
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, killedByUser,
+				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -5465,6 +5694,7 @@ void FFMPEGEncoder::pictureInPicture(
 
 void FFMPEGEncoder::addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,
+		string errorMessage,
 		bool killedByUser, bool urlForbidden, bool urlNotFound)
 {
 	lock_guard<mutex> locker(_encodingCompletedMutex);
@@ -5473,6 +5703,7 @@ void FFMPEGEncoder::addEncodingCompleted(
 
 	encodingCompleted->_encodingJobKey		= encodingJobKey;
 	encodingCompleted->_completedWithError	= completedWithError;
+	encodingCompleted->_errorMessage		= errorMessage;
 	encodingCompleted->_killedByUser		= killedByUser;
 	encodingCompleted->_urlForbidden		= urlForbidden;
 	encodingCompleted->_urlNotFound			= urlNotFound;

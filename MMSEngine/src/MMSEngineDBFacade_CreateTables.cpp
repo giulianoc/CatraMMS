@@ -942,7 +942,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "sourceBinaryTransferred    INT NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
-                    "errorMessage               VARCHAR (1024) NULL,"
+                    "errorMessage               VARCHAR (20480) NULL,"	// 1024 * 20
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				

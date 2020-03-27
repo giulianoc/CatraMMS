@@ -1733,7 +1733,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
 
         throw se;
-    }    
+    }
     catch(AlreadyLocked e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1812,19 +1812,27 @@ void MMSEngineDBFacade::updateIngestionJob (
             errorMessageForSQL = errorMessage.substr(0, 1024);
         else
             errorMessageForSQL = errorMessage;
-        
+
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
 			if (processorMMS != "noToBeUpdated")
 				lastSQLCommand = 
-					"update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+					string("update MMS_IngestionJob set status = ?, ")
+					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+					+ "endProcessing = NOW(), processorMMS = ? "
+					+ "where ingestionJobKey = ?";
 			else
 				lastSQLCommand = 
-					"update MMS_IngestionJob set status = ?, endProcessing = NOW(), errorMessage = ? where ingestionJobKey = ?";
+					string("update MMS_IngestionJob set status = ?, ")
+					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+					+ "endProcessing = NOW() "
+					+ "where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+            if (errorMessageForSQL != "")
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
 			if (processorMMS != "noToBeUpdated")
 			{
 				if (processorMMS == "")
@@ -1832,10 +1840,6 @@ void MMSEngineDBFacade::updateIngestionJob (
 				else
 					preparedStatement->setString(queryParameterIndex++, processorMMS);
 			}
-            if (errorMessageForSQL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -1859,14 +1863,21 @@ void MMSEngineDBFacade::updateIngestionJob (
         {
 			if (processorMMS != "noToBeUpdated")
 				lastSQLCommand = 
-					"update MMS_IngestionJob set status = ?, processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+					string("update MMS_IngestionJob set status = ?, ")
+					+ (errorMessageForSQL == "" ? "" : "errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20), ")
+					+ "processorMMS = ? "
+					+ "where ingestionJobKey = ?";
 			else
 				lastSQLCommand = 
-					"update MMS_IngestionJob set status = ?, errorMessage = ? where ingestionJobKey = ?";
+					string("update MMS_IngestionJob set status = ? ")
+					+ (errorMessageForSQL == "" ? "" : ", errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20) ")
+					+ "where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+            if (errorMessageForSQL != "")
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
 			if (processorMMS != "noToBeUpdated")
 			{
 				if (processorMMS == "")
@@ -1874,10 +1885,6 @@ void MMSEngineDBFacade::updateIngestionJob (
 				else
 					preparedStatement->setString(queryParameterIndex++, processorMMS);
 			}
-            if (errorMessageForSQL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -1939,6 +1946,132 @@ void MMSEngineDBFacade::updateIngestionJob (
 
         throw e;
     }    
+}
+
+void MMSEngineDBFacade::appendIngestionJobErrorMessage (
+	int64_t ingestionJobKey,
+	string errorMessage
+)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        string errorMessageForSQL;
+        if (errorMessage.length() >= 1024)
+            errorMessageForSQL = errorMessage.substr(0, 1024);
+        else
+            errorMessageForSQL = errorMessage;
+
+		if (errorMessageForSQL != "")
+        {
+			lastSQLCommand = 
+				"update MMS_IngestionJob "
+				"set errorMessage = SUBSTR(CONCAT(?, '\n', IFNULL(errorMessage, '')), 1, 1024 * 20) "
+				"where ingestionJobKey = ? and status not like 'End_%'";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+				// throw runtime_exception(errorMessage);
+            }
+			else
+			{
+				_logger->info(__FILEREF__ + "IngestionJob updated successful"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				);
+			}
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
