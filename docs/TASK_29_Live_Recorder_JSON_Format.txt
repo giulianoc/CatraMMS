@@ -7,7 +7,7 @@
 
 	"Parameters": {
 
-		// mandatory...
+		// mandatory: it refers the Live URL configuration
 		"ConfigurationLabel": "",
 
 		// optional: user agent to be used when the URL is called
