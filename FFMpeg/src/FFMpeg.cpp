@@ -7529,7 +7529,9 @@ void FFMpeg::settingFfmpegParameters(
 
             codec = videoRoot.get(field, "XXX").asString();
 
-            FFMpeg::encodingVideoCodecValidation(codec, _logger);
+			// 2020-03-27: commented just to avoid to add the check every time a new codec is added
+			//		In case the codec is wrong, ffmpeg will generate the error later
+            // FFMpeg::encodingVideoCodecValidation(codec, _logger);
 
             ffmpegVideoCodecParameter   =
                     "-codec:v " + codec + " "
@@ -7541,28 +7543,36 @@ void FFMpeg::settingFfmpegParameters(
             field = "Profile";
             if (isMetadataPresent(videoRoot, field))
             {
-                string profile = videoRoot.get(field, "XXX").asString();
+                string profile = videoRoot.get(field, "").asString();
 
-                FFMpeg::encodingVideoProfileValidation(codec, profile, _logger);
-                if (codec == "libx264")
-                {
-                    ffmpegVideoProfileParameter =
+                if (codec == "libx264" || codec == "libvpx")
+				{
+					FFMpeg::encodingVideoProfileValidation(codec, profile, _logger);
+					if (codec == "libx264")
+					{
+						ffmpegVideoProfileParameter =
                             "-profile:v " + profile + " "
-                    ;
-                }
-                else if (codec == "libvpx")
-                {
-                    ffmpegVideoProfileParameter =
+						;
+					}
+					else if (codec == "libvpx")
+					{
+						ffmpegVideoProfileParameter =
                             "-quality " + profile + " "
-                    ;
-                }
-                else
+						;
+					}
+				}
+                else if (profile != "")
                 {
+					ffmpegVideoProfileParameter =
+						"-profile:v " + profile + " "
+					;
+					/*
                     string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
                             + ", codec: " + codec;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
+					*/
                 }
             }
         }
@@ -7673,23 +7683,26 @@ void FFMpeg::settingFfmpegParameters(
             {
                 int frameRate = asInt(videoRoot, field, 0);
 
-                ffmpegVideoFrameRateParameter =
+				if (frameRate != 0)
+				{
+					ffmpegVideoFrameRateParameter =
                         "-r " + to_string(frameRate) + " "
-                ;
+					;
 
-                // keyFrameIntervalInSeconds
-                {
-                    field = "KeyFrameIntervalInSeconds";
-                    if (isMetadataPresent(videoRoot, field))
-                    {
-                        int keyFrameIntervalInSeconds = asInt(videoRoot, field, 0);
+					// keyFrameIntervalInSeconds
+					{
+						field = "KeyFrameIntervalInSeconds";
+						if (isMetadataPresent(videoRoot, field))
+						{
+							int keyFrameIntervalInSeconds = asInt(videoRoot, field, 0);
 
-                        // -g specifies the number of frames in a GOP
-                        ffmpegVideoKeyFramesRateParameter =
+							// -g specifies the number of frames in a GOP
+							ffmpegVideoKeyFramesRateParameter =
                                 "-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
-                        ;
-                    }
-                }
+							;
+						}
+					}
+				}
             }
         }
     }

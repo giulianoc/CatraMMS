@@ -175,6 +175,7 @@ private:
 	pair<string, int> liveRecorder_processLastGeneratedLiveRecorderFiles(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+		Json::Value encodingParametersRoot,
 		Json::Value liveRecorderParametersRoot,
 		string transcoderStagingContentsPath,
 		string stagingContentsPath,

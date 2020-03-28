@@ -32,6 +32,8 @@ SET (PROFILEs
 	MMS_DASH_H264_veryslow_720p25_AAC_160.json
 	MMS_MP4_H264_6Mbps_veryslow_720p50_AAC_160.json
 	MMS_MP4_H264_6Mbps_veryslow_720p25_AAC_160.json
+	MMS_MP4_AV1_ConstantQuality_360p_AAC_92.json
+	MMS_MP4_AV1_ConstrainedQuality_2Mbps_360p_AAC_92.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/video)

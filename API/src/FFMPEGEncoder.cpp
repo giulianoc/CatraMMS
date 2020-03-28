@@ -1975,7 +1975,7 @@ void FFMPEGEncoder::encodeContent(
         ;
         _logger->error(__FILEREF__ + errorMessage);
 		
-		encoding->_errorMessage = errorMessage;
+		encoding->_errorMessage = e.what();
 
 		bool completedWithError			= true;
 		bool killedByUser				= false;
@@ -2764,12 +2764,12 @@ void FFMPEGEncoder::liveRecorder(
         int64_t encodingJobKey,
         string requestBody)
 {
-    string api = "liveRecorder";
+	string api = "liveRecorder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", requestBody: " + requestBody
+	);
 
     try
     {
@@ -3126,6 +3126,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 								liveRecording->_ingestionJobKey,
 								liveRecording->_encodingJobKey,
 								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
+								liveRecording->_encodingParametersRoot,
 								liveRecording->_liveRecorderParametersRoot,
 
 								liveRecording->_transcoderStagingContentsPath,
@@ -3194,6 +3195,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
 	string transcoderStagingContentsPath,
 	string stagingContentsPath,
@@ -3369,6 +3371,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
+				mmsDataRoot["liveURLConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
 				{

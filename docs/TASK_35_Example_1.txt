@@ -1,0 +1,17 @@
+"Task": {
+	"Label": "Use of a WorkflowAsLibrary",
+
+	"Parameters": {
+		"WorkflowAsLibraryLabel": "Best Picture of the Video",
+		"WorkflowAsLibraryType": "MMS",
+
+		"ImageRetention": "1d",
+		"ImageTags": "FACE",
+		"Ingester": "Admin",
+		"InitialFramesNumberToBeSkipped": 1500,
+		"InstantInSeconds": 60,
+		"Label": "Image label",
+		"Title": "My Title"
+	},
+	"Type": "Workflow-As-Library"
+}

@@ -9096,11 +9096,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 
         pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
                 workspace->_workspaceKey, configurationLabel);            
+		int64_t confKey;
 		string liveURL;
-		tie(ignore, liveURL) = confKeyAndLiveURL;
+		tie(confKey, liveURL) = confKeyAndLiveURL;
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			highAvailability, configurationLabel, liveURL, userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+			highAvailability, configurationLabel, confKey, liveURL, userAgent,
+			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 
 		/*

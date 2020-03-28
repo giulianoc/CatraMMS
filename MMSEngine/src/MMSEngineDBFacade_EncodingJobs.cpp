@@ -7686,7 +7686,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	bool highAvailability,
-	string configurationLabel, string liveURL, string userAgent,
+	string configurationLabel, int64_t confKey, string liveURL,
+	string userAgent,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
 	bool autoRenew,
@@ -7707,6 +7708,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
+            + ", confKey: " + to_string(confKey)
             + ", liveURL: " + liveURL
             + ", userAgent: " + userAgent
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
@@ -7738,12 +7740,14 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 			EncodingType encodingType = EncodingType::LiveRecorder;
         
+			/*
 			string parameters = string()
                 + "{ "
                 + "\"highAvailability\": " + to_string(highAvailability) + ""
                 + ", \"main\": " + to_string(main) + ""
 				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
                 + ", \"configurationLabel\": \"" + configurationLabel + "\""
+                + ", \"confKey\": " + to_string(confKey)
                 + ", \"liveURL\": \"" + liveURL + "\""
                 + ", \"userAgent\": \"" + userAgent + "\""
 				// utcRecordingPeriodStart/utcRecordingPeriodEnd is used by the GUI (encodingJobs.java to calculate and display the duration)
@@ -7754,6 +7758,47 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + ", \"outputFileFormat\": \"" + outputFileFormat + "\""
                 + "} "
                 ;
+			*/
+			string parameters;
+			{
+				Json::Value parametersRoot;
+
+				string field = "highAvailability";
+				parametersRoot[field] = highAvailability;
+
+				field = "main";
+				parametersRoot[field] = main;
+
+				field = "configurationLabel";
+				parametersRoot[field] = configurationLabel;
+
+				field = "confKey";
+				parametersRoot[field] = confKey;
+
+				field = "liveURL";
+				parametersRoot[field] = liveURL;
+
+				field = "userAgent";
+				parametersRoot[field] = userAgent;
+
+				field = "utcRecordingPeriodStart";
+				parametersRoot[field] = utcRecordingPeriodStart;
+
+				field = "utcRecordingPeriodEnd";
+				parametersRoot[field] = utcRecordingPeriodEnd;
+
+				field = "autoRenew";
+				parametersRoot[field] = autoRenew;
+
+				field = "segmentDurationInSeconds";
+				parametersRoot[field] = segmentDurationInSeconds;
+
+				field = "outputFileFormat";
+				parametersRoot[field] = outputFileFormat;
+
+				Json::StreamWriterBuilder wbuilder;
+				parameters = Json::writeString(wbuilder, parametersRoot);
+			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
 				+ ", parameters.length: " + to_string(parameters.length()));
@@ -8172,6 +8217,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 		{
 			EncodingType encodingType = EncodingType::LiveProxy;
         
+			/*
 			string parameters = string()
                 + "{ "
 				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
@@ -8186,6 +8232,41 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 + ", \"cdnURL\": \"" + cdnURL + "\""
                 + "} "
                 ;
+			*/
+			string parameters;
+			{
+				Json::Value parametersRoot;
+
+				string field = "liveURLConfKey";
+				parametersRoot[field] = liveURLConfKey;
+
+				field = "configurationLabel";
+				parametersRoot[field] = configurationLabel;
+
+				field = "liveURL";
+				parametersRoot[field] = liveURL;
+
+				field = "outputType";
+				parametersRoot[field] = outputType;
+
+				field = "segmentDurationInSeconds";
+				parametersRoot[field] = segmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				parametersRoot[field] = playlistEntriesNumber;
+
+				field = "maxAttemptsNumberInCaseOfErrors";
+				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
+
+				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
+				field = "cdnURL";
+				parametersRoot[field] = cdnURL;
+
+				Json::StreamWriterBuilder wbuilder;
+				parameters = Json::writeString(wbuilder, parametersRoot);
+			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
 				+ ", parameters.length: " + to_string(parameters.length()));

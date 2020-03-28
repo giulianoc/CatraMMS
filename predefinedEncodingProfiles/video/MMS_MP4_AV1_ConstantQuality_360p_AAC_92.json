@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_MP4_AV1_ConstantQuality_360p_AAC_92",
+	"FileFormat" : "mp4",
+	"Video" : 
+	{
+		"Codec" : "libaom-av1",
+		"Profile" : "",
+		"Width" : 640,
+		"Height" : 360,
+		"FrameRate": 0,
+		"TwoPasses" : false,
+		"KBitRate" : 0,
+		"OtherOutputParameters": "-crf 30 -strict experimental -movflags +faststart"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 92,
+		"ChannelsNumber": 2
+	}
+}
