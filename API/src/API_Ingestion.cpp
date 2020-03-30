@@ -718,6 +718,67 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		string internalMMSField = "InternalMMS";
 		parametersRoot[internalMMSField] = internalMMSRoot;
 	}
+    else if (type == "Live-Cut")
+    {
+		// 1. Live-Cut needs the UserKey/ApiKey for the ingestion of the cut workflow.
+		// The same UserKey/ApiKey used for the ingestion of the Workflow are used to ingest the cut
+		//
+		// 2. Live-Cut generates a workflow made of Concat plus Cut.
+		// For this reason, the events (onSuccess, onError, onComplete) have to be attached
+		// to the previous workflow 
+		// Here, we will remove the events (onSuccess, onError, onComplete) from LiveCut, if present,
+		// and we will add temporary inside the Parameters section. These events will be managed later
+		// in MMSEngineProcessor.cpp when the new workflow will be created
+
+        Json::Value internalMMSRoot;
+		{
+			string field = "userKey";
+			internalMMSRoot[field] = userKey;
+
+			field = "apiKey";
+			internalMMSRoot[field] = apiKey;
+		}
+
+		string onSuccessField = "OnSuccess";
+		string onErrorField = "OnError";
+		string onCompleteField = "OnComplete";
+    	if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
+			|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
+			|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
+		)
+    	{
+    		if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+			{
+        		Json::Value onSuccessRoot = taskRoot[onSuccessField];
+
+				internalMMSRoot[onSuccessField] = onSuccessRoot;
+
+				Json::Value removed;
+				taskRoot.removeMember(onSuccessField, &removed);
+			}
+    		if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+			{
+        		Json::Value onErrorRoot = taskRoot[onErrorField];
+
+				internalMMSRoot[onErrorField] = onErrorRoot;
+
+				Json::Value removed;
+				taskRoot.removeMember(onErrorField, &removed);
+			}
+    		if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+			{
+        		Json::Value onCompleteRoot = taskRoot[onCompleteField];
+
+				internalMMSRoot[onCompleteField] = onCompleteRoot;
+
+				Json::Value removed;
+				taskRoot.removeMember(onCompleteField, &removed);
+			}
+		}
+
+		string internalMMSField = "InternalMMS";
+		parametersRoot[internalMMSField] = internalMMSRoot;
+	}
     else if (type == "Add-Content")
     {
 		// The Add-Content Task can be used also to add just a variant/profile of a content

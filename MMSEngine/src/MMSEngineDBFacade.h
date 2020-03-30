@@ -664,6 +664,7 @@ public:
         VideoSpeed				= 24,
         PictureInPicture		= 25,
         LiveProxy				= 26,
+        LiveCut					= 27,
 
         EmailNotification       = 30,
         MediaCrossReference		= 31,
@@ -730,6 +731,8 @@ public:
 				return "Picture-In-Picture";
 			case IngestionType::LiveProxy:
 				return "Live-Proxy";
+			case IngestionType::LiveCut:
+				return "Live-Cut";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -807,6 +810,8 @@ public:
             return IngestionType::PictureInPicture;
         else if (lowerCase == "live-proxy")
             return IngestionType::LiveProxy;
+        else if (lowerCase == "live-cut")
+            return IngestionType::LiveCut;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

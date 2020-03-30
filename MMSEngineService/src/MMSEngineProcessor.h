@@ -119,7 +119,12 @@ private:
     string                  _youTubeDataAPIClientSecret;
 
     bool                    _localCopyTaskEnabled;
-    
+
+	string					_mmsAPIProtocol;
+	string					_mmsAPIHostname;
+	int						_mmsAPIPort;
+	string					_mmsAPIIngestionURI;
+
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
     void handleCheckIngestionEvent();
@@ -219,6 +224,12 @@ private:
 	void manageLiveProxy(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot);
+
+	void liveCutThread(
+		shared_ptr<long> processorsThreadsNumber,
+        int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 

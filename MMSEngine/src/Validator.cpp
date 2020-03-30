@@ -964,6 +964,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Live-Cut")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::LiveCut;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else if (type == "Workflow-As-Library")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::WorkflowAsLibrary;
@@ -1138,6 +1159,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
+    {
+        validateLiveCutMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::WorkflowAsLibrary)
@@ -3508,7 +3534,6 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     }    
 }
 
-
 void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
@@ -3643,6 +3668,191 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 				throw runtime_error(errorMessage);
 			}
 		}
+	}
+}
+
+void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    // see sample in directory samples
+
+	vector<string> mandatoryFields = {
+		"ConfigurationLabel",
+		"CutPeriod"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "CutPeriod";
+	Json::Value cutPeriodRoot = parametersRoot[field];
+    field = "Start";
+	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	// next code is the same in the MMSEngineProcessor class
+	time_t utcCutPeriodStart;
+	{
+		string cutPeriodStart = cutPeriodRoot.get(field, "").asString();
+
+		unsigned long       ulUTCYear;
+		unsigned long       ulUTCMonth;
+		unsigned long       ulUTCDay;
+		unsigned long       ulUTCHour;
+		unsigned long       ulUTCMinutes;
+		unsigned long       ulUTCSeconds;
+		tm                  tmCutPeriodStart;
+		int                 sscanfReturn;
+
+
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+		// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+		// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
+		if ((sscanfReturn = sscanf (cutPeriodStart.c_str(),
+			"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds)) != 6)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", Field: " + field
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		time (&utcCutPeriodStart);
+		gmtime_r(&utcCutPeriodStart, &tmCutPeriodStart);
+
+		tmCutPeriodStart.tm_year      = ulUTCYear - 1900;
+		tmCutPeriodStart.tm_mon       = ulUTCMonth - 1;
+		tmCutPeriodStart.tm_mday      = ulUTCDay;
+		tmCutPeriodStart.tm_hour      = ulUTCHour;                       
+		tmCutPeriodStart.tm_min       = ulUTCMinutes;
+		tmCutPeriodStart.tm_sec       = ulUTCSeconds;
+
+		utcCutPeriodStart = timegm(&tmCutPeriodStart);
+	}
+
+    field = "End";
+	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	// next code is the same in the MMSEngineProcessor class
+	time_t utcCutPeriodEnd;
+	{
+		string cutPeriodEnd = cutPeriodRoot.get(field, "").asString();
+
+		unsigned long       ulUTCYear;
+		unsigned long       ulUTCMonth;
+		unsigned long       ulUTCDay;
+		unsigned long       ulUTCHour;
+		unsigned long       ulUTCMinutes;
+		unsigned long       ulUTCSeconds;
+		tm                  tmCutPeriodEnd;
+		int                 sscanfReturn;
+
+
+		// _logger->error(__FILEREF__ + "cutPeriodStart 1: " + cutPeriodStart);
+		// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+		// _logger->error(__FILEREF__ + "cutPeriodStart 2: " + cutPeriodStart);
+		if ((sscanfReturn = sscanf (cutPeriodEnd.c_str(),
+			"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds)) != 6)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", Field: " + field
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		time (&utcCutPeriodEnd);
+		gmtime_r(&utcCutPeriodEnd, &tmCutPeriodEnd);
+
+		tmCutPeriodEnd.tm_year      = ulUTCYear - 1900;
+		tmCutPeriodEnd.tm_mon       = ulUTCMonth - 1;
+		tmCutPeriodEnd.tm_mday      = ulUTCDay;
+		tmCutPeriodEnd.tm_hour      = ulUTCHour;                       
+		tmCutPeriodEnd.tm_min       = ulUTCMinutes;
+		tmCutPeriodEnd.tm_sec       = ulUTCSeconds;
+
+		utcCutPeriodEnd = timegm(&tmCutPeriodEnd);
+	}
+	if (utcCutPeriodStart >= utcCutPeriodEnd)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__
+			+ "CutPeriodStart cannot be bigger than CutPeriodEnd"
+			+ ", utcCutPeriodStart: " + to_string(utcCutPeriodStart)
+			+ ", utcCutPeriodEnd: " + to_string(utcCutPeriodEnd)
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+        
+		throw runtime_error(errorMessage);
 	}
 }
 

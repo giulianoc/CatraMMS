@@ -12,6 +12,7 @@
 #include "catralibraries/System.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/Convert.h"
 #include "FFMpeg.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -171,6 +172,23 @@ MMSEngineProcessor::MMSEngineProcessor(
     _localCopyTaskEnabled               =  JSONUtils::asBool(_configuration["mms"], "localCopyTaskEnabled", false);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
+    );
+
+    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->protocol: " + _mmsAPIProtocol
+    );
+    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->hostname: " + _mmsAPIHostname
+    );
+    _mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->port: " + to_string(_mmsAPIPort)
+    );
+    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
 
     if (_processorIdentifier == 0)
@@ -4262,6 +4280,136 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
+                        {
+							try
+							{
+								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+								{
+									_logger->warn(__FILEREF__ + "Not enough available threads to manage liveCutThread, activity is postponed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+										+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+											+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+									);
+
+									string errorMessage = "";
+									string processorMMS = "";
+
+									_logger->info(__FILEREF__ + "Update IngestionJob"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+										+ ", errorMessage: " + errorMessage
+										+ ", processorMMS: " + processorMMS
+									);                            
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										ingestionStatus, 
+										errorMessage,
+										processorMMS
+									);
+								}
+								else
+								{
+									thread liveCutThread(&MMSEngineProcessor::liveCutThread, this, 
+										_processorsThreadsNumber, ingestionJobKey,
+										workspace,
+										parametersRoot
+									);
+									liveCutThread.detach();
+								}
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "liveCutThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "liveCutThread failed"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", exception: " + e.what()
+								);
+
+								string errorMessage = e.what();
+
+								_logger->info(__FILEREF__ + "Update IngestionJob"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", IngestionStatus: " + "End_IngestionFailure"
+									+ ", errorMessage: " + errorMessage
+									+ ", processorMMS: " + ""
+								);                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+										errorMessage
+									);
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+						}
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
                         {
                             try
@@ -4483,7 +4631,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         );
     }
 }
-
 
 void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
@@ -6798,7 +6945,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     }    
 }
 
-
 /*
 void MMSEngineProcessor::exploidTarGzContentFile(
 	string tarGzBinaryPathName,
@@ -8481,7 +8627,6 @@ void MMSEngineProcessor::localCopyContentTask(
     }
 }
 
-
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -8697,7 +8842,6 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
     }
 }
 
-
 void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -8889,7 +9033,6 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         throw e;
     }
 }
-
 
 void MMSEngineProcessor::manageLiveRecorder(
         int64_t ingestionJobKey,
@@ -9141,7 +9284,6 @@ void MMSEngineProcessor::manageLiveRecorder(
     }
 }
 
-
 void MMSEngineProcessor::manageLiveProxy(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -9272,6 +9414,920 @@ void MMSEngineProcessor::manageLiveProxy(
     }
 }
 
+void MMSEngineProcessor::liveCutThread(
+	shared_ptr<long> processorsThreadsNumber,
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value liveCutParametersRoot
+)
+{
+    try
+    {
+		string configurationLabel;
+        string cutPeriodStartTimeInMilliSeconds;
+        string cutPeriodEndTimeInMilliSeconds;
+		int maxWaitingForLastChunkInSeconds = 90;
+        {
+            string field = "ConfigurationLabel";
+            if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            configurationLabel = liveCutParametersRoot.get(field, "XXX").asString();
+
+			field = "MaxWaitingForLastChunkInSeconds";
+			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+
+            field = "CutPeriod";
+			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
+
+            field = "Start";
+            if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            cutPeriodStartTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+
+            field = "End";
+            if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            cutPeriodEndTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
+        }
+
+		// next code is the same in the Validator class
+		int64_t utcCutPeriodStartTimeInMilliSeconds;
+		{
+			unsigned long		ulUTCYear;
+			unsigned long		ulUTCMonth;
+			unsigned long		ulUTCDay;
+			unsigned long		ulUTCHour;
+			unsigned long		ulUTCMinutes;
+			unsigned long		ulUTCSeconds;
+			unsigned long		ulUTCMilliSeconds;
+			tm					tmCutPeriodStart;
+			int					sscanfReturn;
+
+
+			// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+			// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+			// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
+			if ((sscanfReturn = sscanf (cutPeriodStartTimeInMilliSeconds.c_str(),
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ",
+				&ulUTCYear,
+				&ulUTCMonth,
+				&ulUTCDay,
+				&ulUTCHour,
+				&ulUTCMinutes,
+				&ulUTCSeconds,
+				&ulUTCMilliSeconds)) != 7)
+			{
+				string field = "Start";
+
+				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", Field: " + field
+					+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
+					+ ", sscanfReturn: " + to_string(sscanfReturn)
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			time_t utcCutPeriodStartTime;
+			time (&utcCutPeriodStartTime);
+			gmtime_r(&utcCutPeriodStartTime, &tmCutPeriodStart);
+
+			tmCutPeriodStart.tm_year		= ulUTCYear - 1900;
+			tmCutPeriodStart.tm_mon		= ulUTCMonth - 1;
+			tmCutPeriodStart.tm_mday		= ulUTCDay;
+			tmCutPeriodStart.tm_hour		= ulUTCHour;
+			tmCutPeriodStart.tm_min		= ulUTCMinutes;
+			tmCutPeriodStart.tm_sec		= ulUTCSeconds;
+
+			utcCutPeriodStartTimeInMilliSeconds = timegm(&tmCutPeriodStart) * 1000;
+			utcCutPeriodStartTimeInMilliSeconds += ulUTCMilliSeconds;
+		}
+
+		// next code is the same in the Validator class
+		int64_t utcCutPeriodEndTimeInMilliSeconds;
+		{
+			unsigned long		ulUTCYear;
+			unsigned long		ulUTCMonth;
+			unsigned long		ulUTCDay;
+			unsigned long		ulUTCHour;
+			unsigned long		ulUTCMinutes;
+			unsigned long		ulUTCSeconds;
+			unsigned long		ulUTCMilliSeconds;
+			tm					tmCutPeriodEnd;
+			int					sscanfReturn;
+
+
+			if ((sscanfReturn = sscanf (cutPeriodEndTimeInMilliSeconds.c_str(),
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ",
+				&ulUTCYear,
+				&ulUTCMonth,
+				&ulUTCDay,
+				&ulUTCHour,
+				&ulUTCMinutes,
+				&ulUTCSeconds,
+				&ulUTCMilliSeconds)) != 7)
+			{
+				string field = "End";
+
+				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", Field: " + field
+					+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
+					+ ", sscanfReturn: " + to_string(sscanfReturn)
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			time_t utcCutPeriodEndTime;
+			time (&utcCutPeriodEndTime);
+			gmtime_r(&utcCutPeriodEndTime, &tmCutPeriodEnd);
+
+			tmCutPeriodEnd.tm_year		= ulUTCYear - 1900;
+			tmCutPeriodEnd.tm_mon			= ulUTCMonth - 1;
+			tmCutPeriodEnd.tm_mday		= ulUTCDay;
+			tmCutPeriodEnd.tm_hour		= ulUTCHour;
+			tmCutPeriodEnd.tm_min			= ulUTCMinutes;
+			tmCutPeriodEnd.tm_sec			= ulUTCSeconds;
+
+			utcCutPeriodEndTimeInMilliSeconds = timegm(&tmCutPeriodEnd) * 1000;
+			utcCutPeriodEndTimeInMilliSeconds += ulUTCMilliSeconds;
+		}
+
+		/*
+		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In case the chunk is 1 minute,
+		 * we will take 5 chunks.
+		 * The result is that the Cut will fail because:
+		 * - we need to cut to 300 seconds
+		 * - the duration of the video is 298874 milliseconds
+		 * For this reason, when we retrieve the chunks, we will use 'period end time' plus one second
+		 */
+		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
+
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
+                workspace->_workspaceKey, configurationLabel);
+		int64_t confKey;
+		string liveURL;
+		tie(confKey, liveURL) = confKeyAndLiveURL;
+
+		Json::Value mediaItemKeyReferencesRoot(Json::arrayValue);
+		int64_t utcFirstChunkStartTime;
+		string firstChunkStartTime;
+		int64_t utcLastChunkEndTime;
+		string lastChunkEndTime;
+
+		chrono::system_clock::time_point startLookingForChunks = chrono::system_clock::now();
+
+		bool allChunksAvailable = false;
+		while (!allChunksAvailable
+			&& (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
+		)
+		{
+			int64_t mediaItemKey = -1;
+			int64_t physicalPathKey = -1;
+			string uniqueName;
+			vector<int64_t> otherMediaItemsKey;
+			int start = 0;
+			int rows = 60 * 1;	// assuming every MediaItem is one minute, let's take 1 hour
+			bool contentTypePresent = true;
+			MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
+			bool startAndEndIngestionDatePresent = false;
+			string startIngestionDate;
+			string endIngestionDate;
+			string title;
+			int liveRecordingChunk = 1;
+			vector<string> tagsIn;
+			vector<string> tagsNotIn;
+			string ingestionDateOrder = "desc";
+			bool admin = false;
+
+			string jsonCondition;
+			{
+				// SC: Start Chunk
+				// PS: Playout Start, PE: Playout End
+				// --------------SC--------------SC--------------SC--------------SC
+				//                       PS-------------------------------PE
+
+				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
+				jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.liveURLConfKey') = " + to_string(confKey) + " and (";
+
+				// first chunk of the cut
+				jsonCondition += (
+					"(JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') * 1000 <= "
+						+ to_string(utcCutPeriodStartTimeInMilliSeconds) + " "
+					+ "and " + to_string(utcCutPeriodStartTimeInMilliSeconds) + " < JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 ) "
+				);
+
+				jsonCondition += " or ";
+
+				// internal chunk of the cut
+				jsonCondition += (
+					"( " + to_string(utcCutPeriodStartTimeInMilliSeconds) + " <= JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') * 1000 "
+					+ "and JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 <= " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + ") "
+				);
+
+				jsonCondition += " or ";
+
+				// last chunk of the cut
+				jsonCondition += (
+				"( JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') * 1000 < " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " "
+					+ "and " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " <= JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 ) "
+				);
+
+				jsonCondition += ") )";
+			}
+			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime')";
+
+			long utcPreviousUtcChunkEndTime = -1;
+			bool firstChunk = true;
+			bool lastChunk = false;
+
+			// retrieve the reference of all the MediaItems to be concatenate
+			mediaItemKeyReferencesRoot.clear();
+
+			Json::Value mediaItemsListRoot;
+			do
+			{
+				mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
+					start, rows,
+					contentTypePresent, contentType,
+					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
+					ingestionDateOrder, jsonOrderBy, admin);
+
+				string field = "response";
+				Json::Value responseRoot = mediaItemsListRoot[field];
+
+				field = "mediaItems";
+				Json::Value mediaItemsRoot = responseRoot[field];
+
+				for (int mediaItemIndex = 0; mediaItemIndex < mediaItemsRoot.size(); mediaItemIndex++)
+				{
+					Json::Value mediaItemRoot = mediaItemsRoot[mediaItemIndex];
+
+					field = "mediaItemKey";
+					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemRoot, field, 0);
+
+					Json::Value userDataRoot;
+					{
+						field = "userData";
+						string userData = mediaItemRoot.get(field, "").asString();
+						if (userData == "")
+						{
+							string errorMessage = __FILEREF__ + "recording media item without userData!!!"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						try
+						{
+							Json::CharReaderBuilder builder;                                  
+							Json::CharReader* reader = builder.newCharReader();               
+							string errors;                                                    
+
+							bool parsingSuccessful = reader->parse(                           
+								userData.c_str(),                             
+								userData.c_str() + userData.size(),
+								&userDataRoot, &errors);                      
+							delete reader;
+
+							if (!parsingSuccessful)                                           
+							{
+								string errorMessage = __FILEREF__ + "failed to parse the userData"
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", mediaItemKey: " + to_string(mediaItemKey)
+									+ ", errors: " + errors
+									+ ", userData: " + userData
+								;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errors);
+							}
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string("userData json is not well format")
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", userData: " + userData
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string("userData json is not well format")
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKey: " + to_string(mediaItemKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+
+					field = "mmsData";
+					Json::Value mmsDataRoot = userDataRoot[field];
+
+					field = "utcChunkStartTime";
+					int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+
+					field = "utcChunkEndTime";
+					int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+
+					string chunkStartTime;
+					string chunkEndTime;
+					{
+						char strDateTime [64];
+						tm tmDateTime;
+
+						localtime_r (&utcChunkStartTime, &tmDateTime);
+						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+							tmDateTime. tm_year + 1900,
+							tmDateTime. tm_mon + 1,
+							tmDateTime. tm_mday,
+							tmDateTime. tm_hour,
+							tmDateTime. tm_min,
+							tmDateTime. tm_sec);
+						chunkStartTime = strDateTime;
+
+						localtime_r (&utcChunkEndTime, &tmDateTime);
+						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+							tmDateTime. tm_year + 1900,
+							tmDateTime. tm_mon + 1,
+							tmDateTime. tm_mday,
+							tmDateTime. tm_hour,
+							tmDateTime. tm_min,
+							tmDateTime. tm_sec);
+						chunkEndTime = strDateTime;
+					}
+
+					_logger->error(__FILEREF__ + "Retrieved chunk"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", mediaITemKey: " + to_string(mediaItemKey)
+						+ ", utcChunkStartTime: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
+						+ ", utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+					);
+
+					// check if it is the next chunk
+					if (utcPreviousUtcChunkEndTime != -1 && utcPreviousUtcChunkEndTime != utcChunkStartTime)
+					{
+						string previousUtcChunkEndTime;
+						{
+							char strDateTime [64];
+							tm tmDateTime;
+
+							localtime_r (&utcPreviousUtcChunkEndTime, &tmDateTime);
+
+							sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+								tmDateTime. tm_year + 1900,
+								tmDateTime. tm_mon + 1,
+								tmDateTime. tm_mday,
+								tmDateTime. tm_hour,
+								tmDateTime. tm_min,
+								tmDateTime. tm_sec);
+							previousUtcChunkEndTime = strDateTime;
+						}
+
+						// it is not the next chunk
+						string errorMessage = string("Next chunk was not found")
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", utcPreviousUtcChunkEndTime: " + to_string(utcPreviousUtcChunkEndTime) + " (" + previousUtcChunkEndTime + ")"
+							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
+							+ ", utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+							+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+								+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
+							+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
+								+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// check if it is the first chunk
+					if (firstChunk)
+					{
+						firstChunk = false;
+
+						// check that it is the first chunk
+
+						if (!(utcChunkStartTime * 1000 <= utcCutPeriodStartTimeInMilliSeconds
+							&& utcCutPeriodStartTimeInMilliSeconds < utcChunkEndTime * 1000))
+						{
+							// it is not the first chunk
+							string errorMessage = string("First chunk was not found")
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", first utcChunkStart: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
+								+ ", first utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+								+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+									+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
+								+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
+									+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						utcFirstChunkStartTime = utcChunkStartTime;
+						firstChunkStartTime = chunkStartTime;
+					}
+
+					{
+						Json::Value mediaItemKeyReferenceRoot;
+
+						field = "ReferenceMediaItemKey";
+						mediaItemKeyReferenceRoot[field] = mediaItemKey;
+
+						mediaItemKeyReferencesRoot.append(mediaItemKeyReferenceRoot);
+					}
+
+					{
+						// check if it is the last chunk
+
+						if (!(utcChunkStartTime * 1000 < utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+								&& utcCutPeriodEndTimeInMilliSecondsPlusOneSecond <= utcChunkEndTime * 1000))
+							lastChunk = false;
+						else
+						{
+							lastChunk = true;
+							utcLastChunkEndTime = utcChunkEndTime;
+							lastChunkEndTime = chunkEndTime;
+						}
+					}
+
+					utcPreviousUtcChunkEndTime = utcChunkEndTime;
+				}
+
+				start += rows;
+			}
+			while(mediaItemsListRoot.size() == rows);
+
+			// just waiting if the last chunk was not finished yet
+			if (!lastChunk)
+			{
+				if (chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
+				{
+					int secondsToWaitLastChunk = 30;
+
+					this_thread::sleep_for(chrono::seconds(secondsToWaitLastChunk));
+				}
+			}
+			else
+			{
+				allChunksAvailable = true;
+			}
+		}
+
+		if (!allChunksAvailable)
+		{
+			string errorMessage = string("Chunks not available")
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", configurationLabel: " + configurationLabel
+				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
+				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
+				+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		Json::Value liveCutOnSuccess = Json::nullValue;
+		Json::Value liveCutOnError = Json::nullValue;
+		Json::Value liveCutOnComplete = Json::nullValue;
+		int64_t userKey;
+		string apiKey;
+		{
+			string field = "InternalMMS";
+			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+			{
+				Json::Value internalMMSRoot = liveCutParametersRoot[field];
+
+				field = "userKey";
+				userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+
+				field = "apiKey";
+				apiKey = internalMMSRoot.get(field, "").asString();
+
+				field = "OnSuccess";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					liveCutOnSuccess = internalMMSRoot[field];
+
+				field = "OnError";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					liveCutOnError = internalMMSRoot[field];
+
+				field = "OnComplete";
+				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					liveCutOnComplete = internalMMSRoot[field];
+			}
+		}
+
+		// create workflow to ingest
+		string workflowMetadata;
+		{
+			Json::Value concatDemuxerRoot;
+			Json::Value concatDemuxerParametersRoot;
+			{
+				string field = "Label";
+				concatDemuxerRoot[field] = "Concat from " + to_string(utcFirstChunkStartTime) + " (" + firstChunkStartTime
+					+ ") to " + to_string(utcLastChunkEndTime) + " (" + lastChunkEndTime + ")";
+
+				field = "Type";
+				concatDemuxerRoot[field] = "Concat-Demuxer";
+
+				concatDemuxerParametersRoot = liveCutParametersRoot;
+				{
+					Json::Value removed;
+					field = "ConfigurationLabel";
+					concatDemuxerParametersRoot.removeMember(field, &removed);
+				}
+				{
+					Json::Value removed;
+					field = "CutPeriod";
+					concatDemuxerParametersRoot.removeMember(field, &removed);
+				}
+				{
+					field = "MaxWaitingForLastChunkInSeconds";
+					if (JSONUtils::isMetadataPresent(concatDemuxerParametersRoot, field))
+					{
+						Json::Value removed;
+						concatDemuxerParametersRoot.removeMember(field, &removed);
+					}
+				}
+
+				field = "Retention";
+				concatDemuxerParametersRoot[field] = "0";
+
+				field = "References";
+				concatDemuxerParametersRoot[field] = mediaItemKeyReferencesRoot;
+
+				field = "Parameters";
+				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
+			}
+
+			Json::Value cutRoot;
+			{
+				string field = "Label";
+				cutRoot[field] = string("Live Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
+					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
+
+				field = "Type";
+				cutRoot[field] = "Cut";
+
+				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
+				{
+					Json::Value removed;
+					field = "References";
+					cutParametersRoot.removeMember(field, &removed);
+				}
+
+				field = "Retention";
+				cutParametersRoot[field] = liveCutParametersRoot.get(field, "").asString();
+
+				double startTimeInSeconds =
+					(utcCutPeriodStartTimeInMilliSeconds - (utcFirstChunkStartTime * 1000)) / 1000;
+				field = "StartTimeInSeconds";
+				cutParametersRoot[field] = startTimeInSeconds;
+
+				double endTimeInSeconds =
+					(utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000)) / 1000;
+				field = "EndTimeInSeconds";
+				cutParametersRoot[field] = endTimeInSeconds;
+
+				field = "Parameters";
+				cutRoot[field] = cutParametersRoot;
+
+				if (liveCutOnSuccess != Json::nullValue)
+				{
+					field = "OnSuccess";
+					cutRoot[field] = liveCutOnSuccess;
+				}
+				if (liveCutOnError != Json::nullValue)
+				{
+					field = "OnError";
+					cutRoot[field] = liveCutOnError;
+				}
+				if (liveCutOnComplete != Json::nullValue)
+				{
+					field = "OnComplete";
+					cutRoot[field] = liveCutOnComplete;
+				}
+			}
+
+			Json::Value concatOnSuccessRoot;
+			{
+				Json::Value cutTaskRoot;
+				string field = "Task";
+				cutTaskRoot[field] = cutRoot;
+
+				field = "OnSuccess";
+				concatDemuxerRoot[field] = cutTaskRoot;
+			}
+
+			Json::Value workflowRoot;
+			{
+				string field = "Label";
+				workflowRoot[field] = string("Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
+					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
+
+				field = "Type";
+				workflowRoot[field] = "Workflow";
+
+				field = "Task";
+				workflowRoot[field] = concatDemuxerRoot;
+			}
+
+			{
+				Json::StreamWriterBuilder wbuilder;
+				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+			}
+		}
+
+		{
+			string mmsAPIURL =
+				_mmsAPIProtocol
+				+ "://"
+				+ _mmsAPIHostname + ":"
+				+ to_string(_mmsAPIPort)
+				+ _mmsAPIIngestionURI
+            ;
+
+			list<string> header;
+
+			header.push_back("Content-Type: application/json");
+			{
+				// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+				string userPasswordEncoded = Convert::base64_encode(to_string(userKey) + ":" + apiKey);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+				header.push_back(basicAuthorization);
+			}
+
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
+
+			// Setting the URL to retrive.
+			request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+			if (_mmsAPIProtocol == "https")
+			{
+				/*
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+				typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+				typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+				typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+				typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+				typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+				*/
+
+				/*
+				// cert is stored PEM coded in file... 
+				// since PEM is default, we needn't set it for PEM 
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+				equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+				request.setOpt(sslCert);
+				*/
+
+				/*
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				if(pPassphrase)
+				curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+				*/
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				request.setOpt(sslVerifyPeer);
+               
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				request.setOpt(sslVerifyHost);
+               
+				// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+			}
+
+			request.setOpt(new curlpp::options::HttpHeader(header));
+			request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+			request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+			ostringstream response;
+
+			request.setOpt(new curlpp::options::WriteStream(&response));
+
+			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Ingesting CutLive workflow"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", mmsAPIURL: " + mmsAPIURL
+				+ ", workflowMetadata: " + workflowMetadata
+			);
+			chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
+			request.perform();
+			chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
+
+			string sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (sResponse.back() == 10 || sResponse.back() == 13)
+				sResponse.pop_back();
+
+			long responseCode = curlpp::infos::ResponseCode::get(request);
+			if (responseCode == 201)
+			{
+				string message = __FILEREF__ + "Ingested CutLive workflow response"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", sResponse: " + sResponse
+					;
+				_logger->info(message);
+			}
+			else
+			{
+				string message = __FILEREF__ + "Ingested CutLive workflow response"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+					+ ", workflowMetadata: " + workflowMetadata
+					+ ", sResponse: " + sResponse
+					+ ", responseCode: " + to_string(responseCode)
+					;
+				_logger->error(message);
+
+				throw runtime_error(message);
+			}
+		}
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "" // errorMessage
+        );
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "liveCutThread failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "liveCutThread failed"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		return;
+        // throw e;
+    }
+}
 
 void MMSEngineProcessor::changeFileFormatThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
@@ -9939,7 +10995,6 @@ void MMSEngineProcessor::changeFileFormatThread(
         return;
     }
 }
-
 
 void MMSEngineProcessor::copyContentThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string mmsAssetPathName, 
