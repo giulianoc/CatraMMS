@@ -988,7 +988,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     {
                         Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 						if (ingestionType == MMSEngineDBFacade::IngestionType::GroupOfTasks)
-							validator.validateGroupOfTasksMetadata(
+							dependencies = validator.validateGroupOfTasksMetadata(
                                 workspace->_workspaceKey, parametersRoot);                        
 						else
 							dependencies = validator.validateSingleTaskMetadata(
@@ -9371,7 +9371,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				waitingSecondsBetweenAttemptsInCaseOfErrors = 15;
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }

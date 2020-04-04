@@ -34,9 +34,6 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
-if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
-endif()
-
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
@@ -54,6 +51,15 @@ endif()
 if (ZLIB_FOUND)
 	target_link_libraries(cvCaptureTest ${ZLIB_LIBRARIES})
 endif()
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
+	target_link_libraries (cvCaptureTest aom)
+	target_link_libraries (cvCaptureTest fdk-aac)
+	target_link_libraries (cvCaptureTest x264)
+	target_link_libraries (cvCaptureTest x265)
+	target_link_libraries (cvCaptureTest srt)
+endif()
+
 target_link_libraries (cvCaptureTest opencv_core)
 target_link_libraries (cvCaptureTest opencv_imgcodecs)
 target_link_libraries (cvCaptureTest opencv_imgproc)
@@ -67,11 +73,6 @@ target_link_libraries (cvCaptureTest avformat)
 target_link_libraries (cvCaptureTest avutil)
 target_link_libraries (cvCaptureTest swscale)
 target_link_libraries (cvCaptureTest swresample)
-target_link_libraries (cvCaptureTest aom)
-target_link_libraries (cvCaptureTest fdk-aac)
-target_link_libraries (cvCaptureTest x264)
-target_link_libraries (cvCaptureTest x265)
-target_link_libraries (cvCaptureTest srt)
 
 install (TARGETS cvCaptureTest DESTINATION bin)
 

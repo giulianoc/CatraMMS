@@ -56,10 +56,12 @@ public:
 
     void validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root);
 
-    void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot, bool validateDependenciesToo);
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+		validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot,
+		bool validateDependenciesToo);
 
-	void validateGroupOfTasksMetadata(int64_t workspaceKey, 
-		Json::Value parametersRoot);
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+		validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value parametersRoot);
 
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> validateSingleTaskMetadata(
             int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo);

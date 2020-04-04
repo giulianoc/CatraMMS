@@ -51,7 +51,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    string type = root.get(field, "XXX").asString();
+    string type = root.get(field, "").asString();
     if (type != "Workflow")
     {
         string errorMessage = __FILEREF__ + "Type field is wrong"
@@ -105,10 +105,18 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     }
 }
 
-void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
+vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+	Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
 	Json::Value groupOfTasksRoot, bool validateDependenciesToo)
 {
-    string field = "Parameters";
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>		dependencies;
+
+	string label;
+	string field = "Label";
+	if (JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
+		label = groupOfTasksRoot.get(field, "").asString();
+
+    field = "Parameters";
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         Json::StreamWriterBuilder wbuilder;
@@ -122,8 +130,8 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         throw runtime_error(errorMessage);
     }
     Json::Value parametersRoot = groupOfTasksRoot[field];
-    
-	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
+
+	dependencies = validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
     field = "Tasks";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -178,11 +186,18 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     }
 
     validateEvents(workspaceKey, groupOfTasksRoot, validateDependenciesToo);
+
+	return dependencies;
 }
 
-void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
+vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+	Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
 	Json::Value parametersRoot)
 {
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>		dependencies;
+
+    string label;
+
     string field = "ExecutionType";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
@@ -197,7 +212,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         throw runtime_error(errorMessage);
     }
 
-    string executionType = parametersRoot.get(field, "XXX").asString();
+    string executionType = parametersRoot.get(field, "").asString();
     if (executionType != "parallel" 
             && executionType != "sequential")
     {
@@ -207,6 +222,25 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
         throw runtime_error(errorMessage);
     }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "References";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+		/*
+        if (validateDependenciesToo)
+        {
+        }
+		*/
+    }
+
+	return dependencies;
 }
 
 void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot, bool validateDependenciesToo)
@@ -373,7 +407,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     if (JSONUtils::isMetadataPresent(taskRoot, field))
         label = taskRoot.get(field, "").asString();
 
-    string type = taskRoot.get("Type", "XXX").asString();
+    string type = taskRoot.get("Type", "").asString();
     if (type == "Add-Content")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
