@@ -108,11 +108,6 @@ void EncoderVideoAudioProxy::init(
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
 	*/
-    _ffmpegEncoderTimeoutInSeconds =
-		JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
-    );
     _ffmpegEncoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
@@ -2174,7 +2169,6 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
                 Json::Value encodingMedatada;
                 
-                encodingMedatada["sourceEngine"] = System::getHostName();
                 encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
                 encodingMedatada["durationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_encodeData->_durationInMilliSeconds);
                 // encodingMedatada["encodedFileName"] = encodedFileName;
@@ -2283,7 +2277,6 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -3553,7 +3546,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
                 Json::Value overlayMedatada;
                 
-                overlayMedatada["sourceEngine"] = System::getHostName();
                 overlayMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
                 overlayMedatada["videoDurationInMilliSeconds"] =
 					(Json::LargestUInt) (_encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds);
@@ -3659,7 +3651,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -4490,7 +4481,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
                 Json::Value overlayTextMedatada;
                 
-                overlayTextMedatada["sourceEngine"] = System::getHostName();
                 overlayTextMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
                 overlayTextMedatada["videoDurationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds);
 
@@ -4604,7 +4594,6 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -5419,7 +5408,6 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
                 Json::Value videoSpeedMetadata;
                 
-                videoSpeedMetadata["sourceEngine"] = System::getHostName();
                 videoSpeedMetadata["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
                 videoSpeedMetadata["videoDurationInMilliSeconds"] =
 					(Json::LargestUInt) (_encodingItem->_videoSpeedData->_videoDurationInMilliSeconds);
@@ -5525,7 +5513,6 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -6145,7 +6132,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
                 Json::Value pictureInPictureMedatada;
                 
-                pictureInPictureMedatada["sourceEngine"] = System::getHostName();
                 pictureInPictureMedatada["mmsMainVideoAssetPathName"] = mmsMainVideoAssetPathName;
                 pictureInPictureMedatada["mainVideoDurationInMilliSeconds"] =
 					(Json::LargestUInt) (_encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds);
@@ -6259,7 +6245,6 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -6817,7 +6802,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
                 Json::Value generateFramesMedatada;
                 
-                generateFramesMedatada["sourceEngine"] = System::getHostName();
                 generateFramesMedatada["imageDirectory"] = imageDirectory;
                 generateFramesMedatada["startTimeInSeconds"] = startTimeInSeconds;
                 generateFramesMedatada["maxFramesNumber"] = maxFramesNumber;
@@ -6924,7 +6908,6 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -7388,7 +7371,6 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
                 Json::Value slideShowMedatada;
                 
-                slideShowMedatada["sourceEngine"] = System::getHostName();
                 slideShowMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 slideShowMedatada["durationOfEachSlideInSeconds"] = durationOfEachSlideInSeconds;
                 slideShowMedatada["outputFrameRate"] = outputFrameRate;
@@ -7489,7 +7471,6 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -9633,7 +9614,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 					Json::Value liveRecorderMedatada;
                 
-					liveRecorderMedatada["sourceEngine"] = System::getHostName();
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveRecorderMedatada["userAgent"] = userAgent;
 					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
@@ -9736,7 +9716,6 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				request.setOpt(new curlpp::options::HttpHeader(header));
 				request.setOpt(new curlpp::options::PostFields(body));
 				request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
 				request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -10515,7 +10494,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					Json::Value liveProxyMetadata;
 
-					liveProxyMetadata["sourceEngine"] = System::getHostName();
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
@@ -10620,7 +10598,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				request.setOpt(new curlpp::options::HttpHeader(header));
 				request.setOpt(new curlpp::options::PostFields(body));
 				request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
 				request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -11467,7 +11444,6 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 				}
 
 				request.setOpt(new curlpp::options::HttpHeader(header));
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
 				request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -11782,7 +11758,6 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
         }
 
         request.setOpt(new curlpp::options::HttpHeader(header));
-		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
         request.setOpt(new curlpp::options::WriteStream(&response));
 

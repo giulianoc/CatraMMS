@@ -243,13 +243,6 @@ private:
 
 	Json::Value manageWorkflowVariables(string requestBody, Json::Value variablesValuesToBeUsedRoot);
 
-	void manageReferencesInput(int64_t ingestionRootKey,
-			string taskOrGroupOfTasksLabel, string ingestionType, Json::Value taskOrGroupOfTasksRoot,
-			bool parametersSectionPresent, Json::Value parametersRoot,
-			vector<int64_t>& dependOnIngestionJobKeysForStarting,
-			vector<int64_t>& dependOnIngestionJobKeysOverallInput,
-			unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey);
-
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,

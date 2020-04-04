@@ -6,27 +6,6 @@
 	"Type": "GroupOfTasks",
 
 	"Parameters": {
-		// optional
-		"References": [
-			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
-			// In case there is no References tag, the System will automatically add the Reference items using the key
-			// of the video by which this video depend on.
-			// As references can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
-
-			// The below object could contain optionally the "ErrorIfContentNotFound" boolean field
-			// to specify if the MMS has to continue or not in case of a content not found.
-			// Default is true
-
-			{ "ReferenceMediaItemKey": 11 },
-			{ "ReferenceMediaItemKey": 12 }
-		],
-
-		// Optional. This tag is used in the scenario where it is needed to concatenate both
-		//	the media inherited by the parent Task and the media specified by the References tag
-		//	In this scenario this tag has to be set
-		//  Options: "", "atTheBeginning", "atTheEnd"
-		"DependenciesToBeAddedToReferences": "atTheEnd",
-
 		"ExecutionType": "parallel",
 
 		"Tasks": [

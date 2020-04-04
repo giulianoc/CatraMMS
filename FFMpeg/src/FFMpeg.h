@@ -156,8 +156,6 @@ public:
 
     int getEncodingProgress();
 
-	bool isOutputFileExisting();
-	bool outputFileAlive(int maxSecondsToWaitToHaveSuccess);
 	bool nonMonotonousDTSInOutputLog();
 	bool isFrameIncreasing(int secondsToWaitBetweenSamples);
 

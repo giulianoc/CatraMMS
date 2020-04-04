@@ -918,42 +918,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         lock_guard<mutex> locker(_liveProxyMutex);
 
-		// 1. look for a free place for the LiveProxy
-		// 2. check if the encodingJobKey is already present
         shared_ptr<LiveProxy>    selectedLiveProxy;
         bool                    liveProxyFound = false;
         for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
         {
             if (!liveProxy->_running)
             {
-				/*
                 liveProxyFound = true;
                 selectedLiveProxy = liveProxy;
                 
                 break;
-				*/
-				if (!liveProxyFound)
-				{
-					liveProxyFound = true;
-					selectedLiveProxy = liveProxy;
-				}
             }
-			else
-			{
-				// liveProxy running
-
-				if (liveProxy->_encodingJobKey == encodingJobKey)
-				{
-					string errorMessage = string("WARNING: we are executing a new ffmpeg command for the same encodingJobKey")
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-					;
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					// sendError(request, 400, errorMessage);
-
-					// return;
-				}
-			}
         }
 
         if (!liveProxyFound)
@@ -4689,104 +4664,8 @@ void FFMPEGEncoder::monitorThread()
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 
 					// First health check
-					//		ffmpeg output file alive?
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 					//		CDN:	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
-					// kill if ffmpeg output file does not exist
-					{
-						try
-						{
-							// First health check kill if ffmpeg output file is not alive
-
-							chrono::system_clock::time_point now = chrono::system_clock::now();
-							int64_t liveProxyLiveTimeInMinutes =
-								chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
-
-							// check id done after 1 minutes LiveProxy started, in order to be sure
-							// the output file was already created
-							if (liveProxyLiveTimeInMinutes > 1)
-							{
-								bool liveProxyWorking = true;
-
-								int maxSecondsToWaitToHaveSuccess = 30;
-								if (!liveProxy->_ffmpeg->outputFileAlive(maxSecondsToWaitToHaveSuccess))
-								{
-									liveProxyWorking = false;
-
-									_logger->error(__FILEREF__ + "liveProxyMonitor. ffmpef output file is not alive"
-										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									);
-								}
-
-								if (!liveProxyWorking)
-								{
-									_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (ffmpeg output file is not changing). LiveProxy (ffmpeg) is killed in order to be started again"
-										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", configurationLabel: " + liveProxy->_configurationLabel
-										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-									);
-
-									try
-									{
-										ProcessUtility::killProcess(liveProxy->_childPid);
-										liveProxy->_killedBecauseOfNotWorking = true;
-										{
-											char strDateTime [64];
-											{
-												time_t utcTime = chrono::system_clock::to_time_t(
-													chrono::system_clock::now());
-												tm tmDateTime;
-												localtime_r (&utcTime, &tmDateTime);
-												sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-													tmDateTime. tm_year + 1900,
-													tmDateTime. tm_mon + 1,
-													tmDateTime. tm_mday,
-													tmDateTime. tm_hour,
-													tmDateTime. tm_min,
-													tmDateTime. tm_sec);
-											}
-											liveProxy->_errorMessage = string(strDateTime) + " "
-												+ liveProxy->_configurationLabel +
-												" restarted because of 'manifest file is missing or was not updated'";
-										}
-									}
-									catch(runtime_error e)
-									{
-										string errorMessage = string("ProcessUtility::killProcess failed")
-											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-											+ ", e.what(): " + e.what()
-												;
-										_logger->error(__FILEREF__ + errorMessage);
-									}
-								}
-							}
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck on ffmpeg output file failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-						catch(exception e)
-						{
-							string errorMessage = string ("liveProxyMonitorCheck on ffmpeg output file failed")
-								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-								+ ", e.what(): " + e.what()
-							;
-
-							_logger->error(__FILEREF__ + errorMessage);
-						}
-					}
-
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
 						try
