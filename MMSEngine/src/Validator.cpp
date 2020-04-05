@@ -23,7 +23,7 @@ Validator::Validator(
     _logger             = logger;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
 
-    _storagePath = configuration["storage"].get("path", "XXX").asString();
+    _storagePath = configuration["storage"].get("path", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->path: " + _storagePath
     );
@@ -51,7 +51,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    string type = root.get(field, "XXX").asString();
+    string type = root.get(field, "").asString();
     if (type != "Workflow")
     {
         string errorMessage = __FILEREF__ + "Type field is wrong"
@@ -89,7 +89,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    string taskType = taskRoot.get(field, "XXX").asString();
+    string taskType = taskRoot.get(field, "").asString();
 
     // this method is called when the json is just ingested, for this reason
     // we cannot validate dependencies too because we would not have them (they have to be generated yet)
@@ -165,7 +165,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
         if (taskType == "GroupOfTasks")
         {
@@ -197,7 +197,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         throw runtime_error(errorMessage);
     }
 
-    string executionType = parametersRoot.get(field, "XXX").asString();
+    string executionType = parametersRoot.get(field, "").asString();
     if (executionType != "parallel" 
             && executionType != "sequential")
     {
@@ -244,7 +244,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
         if (taskType == "GroupOfTasks")
         {
@@ -289,7 +289,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
         if (taskType == "GroupOfTasks")
         {
@@ -334,7 +334,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
         if (taskType == "GroupOfTasks")
         {
@@ -373,7 +373,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     if (JSONUtils::isMetadataPresent(taskRoot, field))
         label = taskRoot.get(field, "").asString();
 
-    string type = taskRoot.get("Type", "XXX").asString();
+    string type = taskRoot.get("Type", "").asString();
     if (type == "Add-Content")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
@@ -1209,7 +1209,7 @@ void Validator::validateAddContentMetadata(
         }
     }
     string field = "FileFormat";
-    string fileFormat = parametersRoot.get(field, "XXX").asString();
+    string fileFormat = parametersRoot.get(field, "").asString();
 
     if (!isVideoAudioFileFormat(fileFormat)
             && !isImageFileFormat(fileFormat))
@@ -1228,7 +1228,7 @@ void Validator::validateAddContentMetadata(
         field = "SourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-			string sourceURL = parametersRoot.get(field, "XXX").asString();
+			string sourceURL = parametersRoot.get(field, "").asString();
 
 			string externalStoragePrefix("externalStorage://");
             if (sourceURL.size() >= externalStoragePrefix.size()
@@ -1314,7 +1314,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 	string field = "EncodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string encodingPriority = parametersRoot.get(field, "XXX").asString();
+        string encodingPriority = parametersRoot.get(field, "").asString();
         try
         {
 			// it generate an exception in case of wrong string
@@ -1916,7 +1916,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     string field = "FontType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string fontType = parametersRoot.get(field, "XXX").asString();
+        string fontType = parametersRoot.get(field, "").asString();
                         
         if (!isFontTypeValid(fontType))
         {
@@ -1933,7 +1933,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "FontColor";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string fontColor = parametersRoot.get(field, "XXX").asString();
+        string fontColor = parametersRoot.get(field, "").asString();
                         
         if (!isColorValid(fontColor))
         {
@@ -1990,7 +1990,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "EncodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string encodingPriority = parametersRoot.get(field, "XXX").asString();
+        string encodingPriority = parametersRoot.get(field, "").asString();
         try
         {
             MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
@@ -2010,7 +2010,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     field = "BoxColor";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string boxColor = parametersRoot.get(field, "XXX").asString();
+        string boxColor = parametersRoot.get(field, "").asString();
                         
         if (!isColorValid(boxColor))
         {
@@ -2159,7 +2159,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+                    referenceIngestionJobKey = referenceRoot.get(field, "").asInt64();
                 }        
 
                 if (referenceIngestionJobKey != -1)
@@ -2316,7 +2316,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     string field = "Method";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string method = parametersRoot.get(field, "XXX").asString();
+        string method = parametersRoot.get(field, "").asString();
                         
         if (method != "GET" && method != "POST")
         {
@@ -2421,7 +2421,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     }
     
     string field = "LocalPath";
-    string localPath = parametersRoot.get(field, "XXX").asString();
+    string localPath = parametersRoot.get(field, "").asString();
     if (localPath.size() >= _storagePath.size() && 0 == localPath.compare(0, _storagePath.size(), _storagePath))
     {
         string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS"
@@ -2522,7 +2522,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
             throw runtime_error(errorMessage);
         }
-        string trackType = trackRoot.get(field, "XXX").asString();
+        string trackType = trackRoot.get(field, "").asString();
         if (trackType != "video" && trackType != "audio")
         {
             string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
@@ -2537,7 +2537,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     }
 
     field = "OutputFileFormat";
-    string outputFileFormat = parametersRoot.get(field, "XXX").asString();
+    string outputFileFormat = parametersRoot.get(field, "").asString();
     if (!isVideoAudioFileFormat(outputFileFormat))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
@@ -2706,7 +2706,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     string field = "Privacy";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        string youTubePrivacy = parametersRoot.get(field, "XXX").asString();
+        string youTubePrivacy = parametersRoot.get(field, "").asString();
 
         if (youTubePrivacy != "private" && youTubePrivacy != "public")
         {
@@ -2799,7 +2799,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     }
 
     string field = "CascadeName";
-    string faceRecognitionCascadeName = parametersRoot.get(field, "XXX").asString();
+    string faceRecognitionCascadeName = parametersRoot.get(field, "").asString();
     if (!isFaceRecognitionCascadeNameValid(faceRecognitionCascadeName))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -2816,7 +2816,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     }
 
     field = "Output";
-    string faceRecognitionOutput = parametersRoot.get(field, "XXX").asString();
+    string faceRecognitionOutput = parametersRoot.get(field, "").asString();
     if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -2922,7 +2922,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     }
 
     string field = "CascadeName";
-    string faceIdentificationCascadeName = parametersRoot.get(field, "XXX").asString();
+    string faceIdentificationCascadeName = parametersRoot.get(field, "").asString();
     if (!isFaceRecognitionCascadeNameValid(faceIdentificationCascadeName))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3096,7 +3096,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	// next code is the same in the MMSEngineProcessor class
 	time_t utcRecordingPeriodStart;
 	{
-		string recordingPeriodStart = recordingPeriodRoot.get(field, "XXX").asString();
+		string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
 
 		unsigned long       ulUTCYear;
 		unsigned long       ulUTCMonth;
@@ -3165,7 +3165,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	// next code is the same in the MMSEngineProcessor class
 	time_t utcRecordingPeriodEnd;
 	{
-		string recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
+		string recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
 
 		unsigned long       ulUTCYear;
 		unsigned long       ulUTCMonth;
@@ -3235,7 +3235,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     field = "OutputFormat";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string liveRecorderOutputFormat = parametersRoot.get(field, "XXX").asString();
+		string liveRecorderOutputFormat = parametersRoot.get(field, "").asString();
 		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3279,7 +3279,7 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
     }
 
     string field = "WorkflowAsLibraryType";
-    string workflowAsLibraryType = parametersRoot.get(field, "XXX").asString();
+    string workflowAsLibraryType = parametersRoot.get(field, "").asString();
 
     if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
     {
@@ -3322,7 +3322,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 	bool isImage = false;
 
     string field = "OutputFileFormat";
-    string outputFileFormat = parametersRoot.get(field, "XXX").asString();
+    string outputFileFormat = parametersRoot.get(field, "").asString();
     if (isVideoAudioFileFormat(outputFileFormat))
 		isVideoOrAudio = true;
     else if (isImageFileFormat(outputFileFormat))
@@ -3438,7 +3438,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     string field = "SpeedType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		string speedType = parametersRoot.get(field, "XXX").asString();
+		string speedType = parametersRoot.get(field, "").asString();
 		if (!isVideoSpeedTypeValid(speedType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
@@ -3632,7 +3632,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	string liveProxyOutputType;
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		liveProxyOutputType = parametersRoot.get(field, "XXX").asString();
+		liveProxyOutputType = parametersRoot.get(field, "").asString();
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS or DASH)"
@@ -3912,7 +3912,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     }
                     else
                     {
-                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        referenceUniqueName = referenceRoot.get(field, "").asString();
                     }        
                 }
                 else
@@ -4240,7 +4240,7 @@ void Validator::fillReferencesOutput(
 					}
                     else
                     {
-                        referenceUniqueName = referenceOutputRoot.get(field, "XXX").asString();
+                        referenceUniqueName = referenceOutputRoot.get(field, "").asString();
                     }        
                 }
                 else
@@ -4673,7 +4673,7 @@ void Validator::validateCrossReference(
 	}
 
 	string field = "Type";
-	string sCrossReferenceType = crossReferenceRoot.get(field, "XXX").asString();
+	string sCrossReferenceType = crossReferenceRoot.get(field, "").asString();
 	MMSEngineDBFacade::CrossReferenceType crossReferenceType;
 	try
 	{
@@ -4819,7 +4819,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string label = encodingProfileRoot.get(field, "").asString();
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
@@ -4911,7 +4911,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string label = encodingProfileRoot.get(field, "").asString();
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
@@ -4976,7 +4976,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 
     {
         string field = "Label";
-        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string label = encodingProfileRoot.get(field, "").asString();
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
         {
