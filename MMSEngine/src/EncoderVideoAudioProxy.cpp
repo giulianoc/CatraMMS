@@ -894,22 +894,37 @@ void EncoderVideoAudioProxy::operator()()
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                Boolean_t bRemoveRecursively = true;
-                _logger->info(__FILEREF__ + "removeDirectory"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                );
-                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "remove"
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                );
-                FileIO::remove(stagingEncodedAssetPathName);
-            }
+			try
+			{
+				// file in case of .3gp content OR directory in case of IPhone content
+				if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+				{
+					Boolean_t bRemoveRecursively = true;
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+					);
+					FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+				}
+				else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+				{
+					_logger->info(__FILEREF__ + "remove"
+						+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+					);
+					FileIO::remove(stagingEncodedAssetPathName);
+				}
+			}
+			catch(runtime_error er)
+			{
+				_logger->error(__FILEREF__ + "remove FAILED"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+					+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+					+ ", er.what(): " + er.what()
+				);
+			}
         }
 
 		try

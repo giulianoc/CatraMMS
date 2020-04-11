@@ -1857,6 +1857,12 @@ string MMSStorage::moveAssetInMMSRepository(
     {
         if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
+			// 2020-04-11: I saw sometimes the below moveDirectory fails because the removeDirectory fails
+			//	And this is because it fails the deletion of files like .nfs0000000103c87546000004d7
+			//	For this reason we split moveDirectory in: copyDirectory and removeDirectory.
+			//	In this way we will be able to manage the failure of the remove directory
+
+			/*
             _logger->info(__FILEREF__ + "Move directory"
                 + ", from: " + sourceAssetPathName
                 + ", to: " + mmsAssetPathName
@@ -1873,7 +1879,41 @@ string MMSStorage::moveAssetInMMSRepository(
 				+ ", elapsed (secs): "
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
 			);
-        } 
+			*/
+            _logger->info(__FILEREF__ + "Copy directory"
+                + ", from: " + sourceAssetPathName
+                + ", to: " + mmsAssetPathName
+            );
+			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+            FileIO::copyDirectory(sourceAssetPathName,
+                    mmsAssetPathName,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH);
+			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			_logger->info(__FILEREF__ + "Copy directory statistics"
+				+ ", elapsed (secs): "
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			);
+
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", sourceAssetPathName: " + sourceAssetPathName
+				);
+				bool bRemoveRecursively = false;
+				FileIO::removeDirectory(sourceAssetPathName, bRemoveRecursively);
+			}
+			catch(runtime_error e)
+			{
+				// we will not raise an exception, it is a staging directory,
+				// it will be removed by cronjob
+				_logger->error(__FILEREF__ + "FileIO::removeDirectory failed"
+						+ ", sourceAssetPathName: " + sourceAssetPathName
+						+ ", e.what(): " + e.what()
+				);
+			}
+        }
         else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
             _logger->info(__FILEREF__ + "Move file"
@@ -1882,8 +1922,7 @@ string MMSStorage::moveAssetInMMSRepository(
             );
 
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-            FileIO::moveFile(sourceAssetPathName,
-                    mmsAssetPathName);
+            FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Move file statistics"
 				+ ", elapsed (secs): "
