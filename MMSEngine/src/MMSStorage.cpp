@@ -1901,13 +1901,13 @@ string MMSStorage::moveAssetInMMSRepository(
 				_logger->info(__FILEREF__ + "Remove directory"
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
-				bool bRemoveRecursively = false;
+				bool bRemoveRecursively = true;
 				FileIO::removeDirectory(sourceAssetPathName, bRemoveRecursively);
 			}
 			catch(runtime_error e)
 			{
 				// we will not raise an exception, it is a staging directory,
-				// it will be removed by cronjob
+				// it will be removed by cronjob (see the comment above)
 				_logger->error(__FILEREF__ + "FileIO::removeDirectory failed"
 						+ ", sourceAssetPathName: " + sourceAssetPathName
 						+ ", e.what(): " + e.what()
