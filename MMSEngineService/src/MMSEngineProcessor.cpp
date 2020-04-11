@@ -8736,7 +8736,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				tuple<int64_t, string, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourceMediaItemKey = key;

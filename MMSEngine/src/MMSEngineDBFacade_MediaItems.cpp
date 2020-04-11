@@ -1161,10 +1161,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						profileRoot[field] = (resultSetProfiles->getInt("externalReadOnlyStorage") == 0 ? false : true);
 
 						field = "externalDeliveryTechnology";
+						string externalDeliveryTechnology;
                         if (resultSetProfiles->isNull("externalDeliveryTechnology"))
                             profileRoot[field] = Json::nullValue;
                         else
-                            profileRoot[field] = static_cast<string>(resultSetProfiles->getString("externalDeliveryTechnology"));
+						{
+							externalDeliveryTechnology = resultSetProfiles->getString("externalDeliveryTechnology");
+                            profileRoot[field] = externalDeliveryTechnology;
+						}
 
 						field = "externalDeliveryURL";
                         if (resultSetProfiles->isNull("externalDeliveryURL"))
@@ -1178,6 +1182,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                             profileRoot[field] = Json::nullValue;
 
 							field = "deliveryTechnology";
+							if (externalDeliveryTechnology == "hls")
+							{
+								profileRoot[field] =
+									MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
+							}
+							else
 							{
 								string fileExtensionLowerCase;
 								fileExtensionLowerCase.resize(fileExtension.size());
