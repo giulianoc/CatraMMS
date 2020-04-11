@@ -343,6 +343,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 							}
 							else if (variableType == "datetime")
 								sValue = variableDetails.get(field, "").asString();
+							else if (variableType == "datetime-millisecs")
+								sValue = variableDetails.get(field, "").asString();
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
@@ -368,6 +370,8 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 								sValue = bValue ? "true" : "false";
 							}
 							else if (variableType == "datetime")
+								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+							else if (variableType == "datetime-millisecs")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else
 							{
