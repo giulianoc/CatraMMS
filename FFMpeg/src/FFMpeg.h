@@ -261,6 +261,10 @@ public:
     static void encodingVideoCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger);
 
+	pair<string, string> retrieveStreamingYouTubeURL(
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		string youTubeURL);
+
 private:
     shared_ptr<spdlog::logger>  _logger;
     string          _ffmpegPath;
@@ -271,6 +275,8 @@ private:
     string          _outputFfmpegPathFileName;
     bool            _currentlyAtSecondPass;
     
+	string			_youTubeDlPath;
+
 	string			_currentApiName;
 
     int64_t         _currentDurationInMilliSeconds;

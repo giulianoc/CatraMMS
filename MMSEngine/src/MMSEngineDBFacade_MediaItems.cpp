@@ -1,35 +1,8 @@
 
 #include "MMSEngineDBFacade.h"
 #include "JSONUtils.h"
+#include "catralibraries/StringUtils.h"
 
-string& ltrim(string& s)
-{
-    auto it = find_if(s.begin(), s.end(),
-        [](char c)
-        {
-            return !isspace<char>(c, locale::classic());
-        });
-    s.erase(s.begin(), it);
-
-    return s;
-}
-
-string& rtrim(string& s)                                                                                      
-{                                                                                                             
-    auto it = find_if(s.rbegin(), s.rend(),                                                                   
-        [](char c)                                                                                            
-        {                                                                                                     
-            return !isspace<char>(c, locale::classic());                                                      
-        });                                                                                                   
-    s.erase(it.base(), s.end());                                                                              
-                                                                                                              
-    return s;                                                                                                 
-}                                                                                                             
-                                                                                                              
-string& trim(string& s)                                                                                       
-{                                                                                                             
-    return ltrim(rtrim(s));                                                                                   
-}
 
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
@@ -4215,7 +4188,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					string tag;
 					getline(ssTagsCommaSeparated, tag, ',');
 
-					trim(tag);
+					tag = StringUtils::trim(tag);
 
 					if (tag == "")
 						continue;

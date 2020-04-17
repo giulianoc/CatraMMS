@@ -15,37 +15,8 @@
 #include <regex>
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/FileIO.h"
+#include "catralibraries/StringUtils.h"
 #include "FFMpeg.h"
-
-
-string& ltrim(string& s)
-{
-    auto it = find_if(s.begin(), s.end(),
-        [](char c)
-        {
-            return !isspace<char>(c, locale::classic());
-        });
-    s.erase(s.begin(), it);
-
-    return s;
-}
-
-string& rtrim(string& s)
-{
-    auto it = find_if(s.rbegin(), s.rend(),
-        [](char c)
-        {
-            return !isspace<char>(c, locale::classic());
-        });
-    s.erase(it.base(), s.end());
-
-    return s;
-}
-
-string& trim(string& s)
-{
-    return ltrim(rtrim(s));
-}
 
 
 FFMpeg::FFMpeg(Json::Value configuration,
@@ -56,6 +27,11 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _ffmpegPath = configuration["ffmpeg"].get("path", "").asString();
     _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
     _ffmpegTtfFontDir = configuration["ffmpeg"].get("ttfFontDir", "").asString();
+
+    _youTubeDlPath = configuration["youTubeDl"].get("path", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", youTubeDl->path: " + _youTubeDlPath
+    );
 
     _waitingNFSSync_attemptNumber = asInt(configuration["storage"],
 		"waitingNFSSync_attemptNumber", 1);
@@ -4142,7 +4118,7 @@ long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 		throw FFMpegEncodingStatusNotAvailable();
 	}
 	ffmpegEncodingStatus = ffmpegEncodingStatus.substr(0, endFrameIndex);
-	trim(ffmpegEncodingStatus);
+	ffmpegEncodingStatus = StringUtils::trim(ffmpegEncodingStatus);
 
 	return stol(ffmpegEncodingStatus);
 }
@@ -7869,6 +7845,391 @@ string FFMpeg::getLastPartOfFile(
     }
 
     return lastPartOfFile;
+}
+
+pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	string youTubeURL)
+{
+	_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL"
+		+ ", youTubeURL: " + youTubeURL
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+	);
+
+	string detailsYouTubeProfilesPath;
+	{
+		detailsYouTubeProfilesPath =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ to_string(encodingJobKey)
+			+ "-youTubeProfiles.txt";
+    
+		string youTubeExecuteCommand =
+			_youTubeDlPath + "/youtube-dl "
+			+ "--list-formats "
+			+ youTubeURL + " "
+			+ " > " + detailsYouTubeProfilesPath
+			+ " 2>&1"
+		;
+
+		try
+		{
+			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+			);
+
+			chrono::system_clock::time_point startYouTubeCommand = chrono::system_clock::now();
+
+			int executeCommandStatus = ProcessUtility::execute(youTubeExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: youTube command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (!FileIO::fileExisting(detailsYouTubeProfilesPath))
+			{
+				string errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: youTube command failed. no profiles file created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			chrono::system_clock::time_point endYouTubeCommand = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				+ ", statistics duration (secs): "
+					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count())
+			);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			}
+
+			throw e;
+		}
+		catch(exception e)
+		{
+			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			}
+
+			throw e;
+		}
+	}
+
+	int selectedFormatCode = -1;
+	string extension;
+    try
+    {
+        // txt output will be like:
+        /*
+[youtube] f2vW_XyTW4o: Downloading webpage
+[youtube] f2vW_XyTW4o: Downloading m3u8 information
+[youtube] f2vW_XyTW4o: Downloading MPD manifest
+[info] Available formats for f2vW_XyTW4o:
+format code  extension  resolution note
+91           mp4        256x144    HLS  197k , avc1.42c00b, 30.0fps, mp4a.40.5@ 48k
+92           mp4        426x240    HLS  338k , avc1.4d4015, 30.0fps, mp4a.40.5@ 48k
+93           mp4        640x360    HLS  829k , avc1.4d401e, 30.0fps, mp4a.40.2@128k
+94           mp4        854x480    HLS 1380k , avc1.4d401f, 30.0fps, mp4a.40.2@128k
+95           mp4        1280x720   HLS 2593k , avc1.4d401f, 30.0fps, mp4a.40.2@256k (best)
+        */
+
+        ifstream detailsFile(detailsYouTubeProfilesPath);
+		string line;
+		bool formatCodeLabelFound = false;
+		int lastFormatCode = -1;
+		int bestFormatCode = -1;
+		while(getline(detailsFile, line))
+		{
+			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath
+				+ ", formatCodeLabelFound: " + to_string(formatCodeLabelFound)
+				+ ", lastFormatCode: " + to_string(lastFormatCode)
+				+ ", bestFormatCode: " + to_string(bestFormatCode)
+				+ ", line: " + line
+			);
+
+			if (formatCodeLabelFound)
+			{
+				int lastDigit = 0;
+				while(lastDigit < line.length() && isdigit(line[lastDigit]))
+					lastDigit++;
+				if (lastDigit > 0)
+				{
+					string formatCode = line.substr(0, lastDigit);
+					lastFormatCode = stoi(formatCode);
+
+					if (line.find("(best)") != string::npos)
+						bestFormatCode = lastFormatCode;
+
+					int startExtensionIndex = lastDigit;
+					while(startExtensionIndex < line.length()
+						&& isspace(line[startExtensionIndex]))
+						startExtensionIndex++;
+					int endExtensionIndex = startExtensionIndex;
+					while(endExtensionIndex < line.length()
+						&& !isspace(line[endExtensionIndex]))
+						endExtensionIndex++;
+
+					extension = line.substr(startExtensionIndex,
+						endExtensionIndex - startExtensionIndex);
+				}
+			}
+			else if (line.find("format code") != string::npos)
+				formatCodeLabelFound = true;
+		}
+
+		_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles, final info"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath
+			+ ", formatCodeLabelFound: " + to_string(formatCodeLabelFound)
+			+ ", lastFormatCode: " + to_string(lastFormatCode)
+			+ ", bestFormatCode: " + to_string(bestFormatCode)
+			+ ", line: " + line
+		);
+
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+		}
+
+		if (bestFormatCode != -1)
+			selectedFormatCode = bestFormatCode;
+		else if (lastFormatCode != -1)
+			selectedFormatCode = lastFormatCode;
+		else
+		{
+			string errorMessage = __FILEREF__
+				+ "retrieveStreamingYouTubeURL: no format code found"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profile error processing or format code not found"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+		if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+		}
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profiles error processing"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+		if (FileIO::fileExisting(detailsYouTubeProfilesPath))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+            + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+		}
+
+        throw e;
+	}
+
+	string streamingYouTubeURL;
+	{
+		string detailsYouTubeURLPath =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ to_string(encodingJobKey)
+			+ "-youTubeUrl.txt";
+
+		string youTubeExecuteCommand =
+			_youTubeDlPath + "/youtube-dl "
+			+ "-f " + to_string(selectedFormatCode) + " "
+			+ "-g " + youTubeURL + " "
+			+ " > " + detailsYouTubeURLPath
+			+ " 2>&1"
+		;
+
+		try
+		{
+			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+			);
+
+			chrono::system_clock::time_point startYouTubeCommand = chrono::system_clock::now();
+
+			int executeCommandStatus = ProcessUtility::execute(youTubeExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: youTube command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (!FileIO::fileExisting(detailsYouTubeURLPath))
+			{
+				string errorMessage = __FILEREF__
+					+ "retrieveStreamingYouTubeURL: youTube command failed. no URL file created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			chrono::system_clock::time_point endYouTubeCommand = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				+ ", statistics duration (secs): "
+					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count())
+			);
+
+			{
+				ifstream urlFile(detailsYouTubeURLPath);
+				std::stringstream buffer;
+				buffer << urlFile.rdbuf();
+
+				streamingYouTubeURL = buffer.str();
+				streamingYouTubeURL = StringUtils::trimNewLineToo(streamingYouTubeURL);
+
+				_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+					+ ", streamingYouTubeURL: " + streamingYouTubeURL
+				);
+			}
+
+			{
+				_logger->info(__FILEREF__ + "Remove"
+				+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			if (FileIO::fileExisting(detailsYouTubeURLPath))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(detailsYouTubeURLPath, exceptionInCaseOfError);
+			}
+
+			throw e;
+		}
+		catch(exception e)
+		{
+			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			if (FileIO::fileExisting(detailsYouTubeURLPath))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(detailsYouTubeProfilesPath, exceptionInCaseOfError);
+			}
+
+			throw e;
+		}
+	}
+
+	return make_pair(streamingYouTubeURL, extension);
 }
 
 void FFMpeg::encodingFileFormatValidation(string fileFormat,

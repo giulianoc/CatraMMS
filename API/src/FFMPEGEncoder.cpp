@@ -2829,7 +2829,8 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = liveRecorderMedatada["encodingParametersRoot"];
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 
-        string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
+        // string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
+        string liveURL = liveRecorderMedatada.get("liveURL", "").asString();
         time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodStart", -1);
         time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodEnd", -1);
         int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "segmentDurationInSeconds", -1);

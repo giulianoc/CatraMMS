@@ -24,6 +24,7 @@
 #endif
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
+#include "catralibraries/StringUtils.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
 #include "catralibraries/Convert.h"
@@ -97,7 +98,7 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
-    
+
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -9627,6 +9628,38 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							;
 					}
 
+					string localLiveURL = liveURL;
+					// in case of youtube url, the real URL to be used has to be calcolated
+					{
+						string youTubePrefix1 ("https://www.youtube.com/");
+						string youTubePrefix2 ("https://youtu.be/");
+						if (
+							(liveURL.size() >= youTubePrefix1.size()
+								&& 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
+							||
+							(liveURL.size() >= youTubePrefix2.size()
+								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
+							)
+						{
+							FFMpeg ffmpeg (_configuration, _logger);
+							pair<string, string> streamingLiveURLDetails =
+								ffmpeg.retrieveStreamingYouTubeURL(
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								liveURL);
+
+							tie(localLiveURL, ignore) = streamingLiveURLDetails;
+
+							_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", initial YouTube URL: " + liveURL
+								+ ", streaming YouTube Live URL: " + localLiveURL
+							);
+						}
+					}
+
 					Json::Value liveRecorderMedatada;
                 
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
@@ -9637,6 +9670,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
 					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_ingestedParametersRoot;
+					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{
 						Json::StreamWriterBuilder wbuilder;
@@ -10389,7 +10423,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         configurationLabel = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
 
         field = "liveURL";
-        liveURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
+        liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "UserAgent";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
@@ -10505,6 +10539,41 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
 								_mmsEngineDBFacade, liveURLConfKey,
 								manifestExtension, _encodingItem->_workspace);
+					}
+
+					// in case of youtube url, the real URL to be used has to be calcolated
+					{
+						string youTubePrefix1 ("https://www.youtube.com/");
+						string youTubePrefix2 ("https://youtu.be/");
+						if (
+							(liveURL.size() >= youTubePrefix1.size()
+								&& 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
+							||
+							(liveURL.size() >= youTubePrefix2.size()
+								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
+							)
+						{
+							FFMpeg ffmpeg (_configuration, _logger);
+							pair<string, string> streamingLiveURLDetails =
+								ffmpeg.retrieveStreamingYouTubeURL(
+								_encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey,
+								liveURL);
+
+							string streamingYouTubeLiveURL;
+							tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+
+
+							_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", initial YouTube URL: " + liveURL
+								+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+							);
+
+							liveURL = streamingYouTubeLiveURL;
+						}
 					}
 
 					Json::Value liveProxyMetadata;

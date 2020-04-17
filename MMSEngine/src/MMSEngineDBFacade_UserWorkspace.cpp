@@ -1,37 +1,8 @@
 
 #include <random>
 #include "catralibraries/Encrypt.h"
+#include "catralibraries/StringUtils.h"
 #include "MMSEngineDBFacade.h"
-
-
-string ltrim(string s)
-{
-	auto it = find_if(s.begin(), s.end(),
-		[](char c)
-		{
-			return !isspace<char>(c, locale::classic());
-		});
-	s.erase(s.begin(), it);
-
-	return s;
-}
-
-string rtrim(string s)                                                                                        
-{
-	auto it = find_if(s.rbegin(), s.rend(),                                                                   
-		[](char c)                                                                                            
-		{                                                                                                     
-			return !isspace<char>(c, locale::classic());                                                      
-		});                                                                                                   
-	s.erase(it.base(), s.end());                                                                              
-                                                                                                              
-	return s;                                                                                                 
-}                                                                                                             
-
-string trim(string s)                                                                                         
-{
-	return ltrim(rtrim(s));                                                                                   
-}
 
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
@@ -298,7 +269,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
     try
     {
-		if (trim(workspaceName) == "")
+		string trimWorkspaceName = StringUtils::trim(workspaceName);
+		if (trimWorkspaceName == "")
 		{
 			string errorMessage = string("WorkspaceName is not well formed.")                             
 				+ ", workspaceName: " + workspaceName                                                     
@@ -308,7 +280,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			throw runtime_error(errorMessage);
 		}
 
-		if (trim(userName) == "")
+		string trimUserName = StringUtils::trim(userName);
+		if (trimUserName == "")
 		{
 			string errorMessage = string("userName is not well formed.")                             
 				+ ", userName: " + userName                                                     
@@ -342,7 +315,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, userName);
+            preparedStatement->setString(queryParameterIndex++, trimUserName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
             preparedStatement->setString(queryParameterIndex++, userCountry);
@@ -395,7 +368,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 					editConfiguration,
 					killEncoding,
 					cancelIngestionJob,
-                    workspaceName,
+                    trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
                     maxEncodingPriority,
@@ -752,7 +725,8 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 
     try
     {
-		if (trim(workspaceName) == "")
+		string trimWorkspaceName = StringUtils::trim(workspaceName);
+		if (trimWorkspaceName == "")
 		{
 			string errorMessage = string("WorkspaceName is not well formed.")                             
 				+ ", workspaceName: " + workspaceName                                                     
@@ -803,7 +777,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 					editConfiguration,
 					killEncoding,
 					cancelIngestionJob,
-                    workspaceName,
+                    trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
                     maxEncodingPriority,
@@ -1075,7 +1049,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         }
         else
         {
-			if (trim(userName) == "")
+			string trimUserName = StringUtils::trim(userName);
+			if (trimUserName == "")
 			{
 				string errorMessage = string("userName is not well formed.")                             
 					+ ", userName: " + userName                                                     
@@ -1091,7 +1066,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 "NULL, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, userName);
+            preparedStatement->setString(queryParameterIndex++, trimUserName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
             preparedStatement->setString(queryParameterIndex++, userCountry);

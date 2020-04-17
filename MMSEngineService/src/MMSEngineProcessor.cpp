@@ -362,8 +362,8 @@ void MMSEngineProcessor::operator ()()
 					else
 					{
 						// handleLocalAssetIngestionEvent (localAssetIngestionEvent);
-                        thread handleLocalAssetIngestionEventThread(&MMSEngineProcessor::handleLocalAssetIngestionEventThread, this,
-                            _processorsThreadsNumber, *localAssetIngestionEvent);
+                        thread handleLocalAssetIngestionEventThread(&MMSEngineProcessor::handleLocalAssetIngestionEventThread,
+								this, _processorsThreadsNumber, *localAssetIngestionEvent);
                         handleLocalAssetIngestionEventThread.detach();
 					}
                 }
@@ -5068,13 +5068,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     }
 
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
-    string mediaSourceURL;
     string mediaFileFormat;
     string md5FileCheckSum;
     int fileSizeInBytes;
 	bool externalReadOnlyStorage;
     try
     {
+		string mediaSourceURL;
+
         tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent.getIngestionJobKey(),
@@ -5084,6 +5085,37 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaFileFormat, 
                 md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) = mediaSourceDetails;
+
+		// in case of youtube url, the real URL to be used has to be calcolated
+		// Here the mediaFileFormat is retrieved
+		{
+			string youTubePrefix1 ("https://www.youtube.com/");
+			string youTubePrefix2 ("https://youtu.be/");
+			if (
+				(mediaSourceURL.size() >= youTubePrefix1.size()
+					&& 0 == mediaSourceURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
+				||
+				(mediaSourceURL.size() >= youTubePrefix2.size()
+					&& 0 == mediaSourceURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
+				)
+			{
+				FFMpeg ffmpeg (_configuration, _logger);
+				pair<string, string> streamingURLDetails =
+					ffmpeg.retrieveStreamingYouTubeURL(
+					localAssetIngestionEvent.getIngestionJobKey(),
+					-1,
+					mediaSourceURL);
+
+				tie(ignore, mediaFileFormat) = streamingURLDetails;
+
+
+				_logger->info(__FILEREF__ + "Retrieve streaming YouTube URL"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+					+ ", initial YouTube URL: " + mediaSourceURL
+				);
+			}
+		}
     }
     catch(runtime_error e)
     {
@@ -12734,7 +12766,6 @@ void MMSEngineProcessor::manageSlideShowTask(
     }
 }
 
-
 void MMSEngineProcessor::generateAndIngestConcatenationThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -15845,10 +15876,10 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
     {
         field = "SourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            mediaSourceURL = parametersRoot.get(field, "XXX").asString();
-        
+            mediaSourceURL = parametersRoot.get(field, "").asString();
+
         field = "FileFormat";
-        mediaFileFormat = parametersRoot.get(field, "XXX").asString();
+        mediaFileFormat = parametersRoot.get(field, "").asString();
 
         string httpPrefix ("http://");
         string httpsPrefix ("https://");
@@ -16136,13 +16167,51 @@ RESUMING FILE TRANSFERS
         doesn't, curl will say so. 
  */    
 
+	string localSourceReferenceURL = sourceReferenceURL;
+	bool localSegmentedContent = segmentedContent;
+	// in case of youtube url, the real URL to be used has to be calcolated
+	{
+		string youTubePrefix1 ("https://www.youtube.com/");
+		string youTubePrefix2 ("https://youtu.be/");
+		if (
+			(sourceReferenceURL.size() >= youTubePrefix1.size()
+				&& 0 == sourceReferenceURL.compare(0, youTubePrefix1.size(), youTubePrefix1))
+			||
+			(sourceReferenceURL.size() >= youTubePrefix2.size()
+				&& 0 == sourceReferenceURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
+			)
+		{
+			FFMpeg ffmpeg (_configuration, _logger);
+			pair<string, string> streamingURLDetails =
+				ffmpeg.retrieveStreamingYouTubeURL(
+				ingestionJobKey, -1,
+				sourceReferenceURL);
+
+			string streamingYouTubeURL;
+			tie(streamingYouTubeURL, ignore) = streamingURLDetails;
+
+
+			_logger->info(__FILEREF__ + "LiveProxy. YouTube URL calculation"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", initial YouTube URL: " + sourceReferenceURL
+				+ ", streaming YouTube URL: " + streamingYouTubeURL
+			);
+
+			localSourceReferenceURL = streamingYouTubeURL;
+
+			// for sure localSegmentedContent has to be false
+			localSegmentedContent = false;
+		}
+	}
+
 	string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
 	string destBinaryPathName =
 		workspaceIngestionRepository
 		+ "/"
 		+ to_string(ingestionJobKey)
 		+ "_source";
-	if (segmentedContent)
+	if (localSegmentedContent)
 		destBinaryPathName = destBinaryPathName + ".tar.gz";
 
 
@@ -16157,7 +16226,7 @@ RESUMING FILE TRANSFERS
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", sourceReferenceURL: " + sourceReferenceURL
+                + ", localSourceReferenceURL: " + localSourceReferenceURL
                 + ", attempt: " + to_string(attemptIndex + 1)
                 + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
             );
@@ -16187,10 +16256,10 @@ RESUMING FILE TRANSFERS
                 request.setOpt(curlDownloadDataData);
 
                 // Setting the URL to retrive.
-                request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+                request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.size() >= httpsPrefix.size()
-						&& 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                if (localSourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     // disconnect if we can't validate server's cert
                     bool bSslVerifyPeer = false;
@@ -16212,7 +16281,7 @@ RESUMING FILE TRANSFERS
                 _logger->info(__FILEREF__ + "Downloading media file"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", sourceReferenceURL: " + sourceReferenceURL
+                    + ", localSourceReferenceURL: " + localSourceReferenceURL
                 );
                 request.perform();
                 
@@ -16295,10 +16364,10 @@ RESUMING FILE TRANSFERS
                 request.setOpt(curlDownloadDataData);
 
                 // Setting the URL to retrive.
-                request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+                request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.size() >= httpsPrefix.size()
-						&& 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                if (localSourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     _logger->info(__FILEREF__ + "Setting SslEngineDefault"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16322,7 +16391,7 @@ RESUMING FILE TRANSFERS
                 _logger->info(__FILEREF__ + "Resume Download media file"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", sourceReferenceURL: " + sourceReferenceURL
+                    + ", localSourceReferenceURL: " + localSourceReferenceURL
                     + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
@@ -16371,7 +16440,7 @@ RESUMING FILE TRANSFERS
                  */
             }
 
-			if (segmentedContent)
+			if (localSegmentedContent)
 			{
 				try
 				{
@@ -16392,7 +16461,7 @@ RESUMING FILE TRANSFERS
 					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-						+ ", sourceReferenceURL: " + sourceReferenceURL 
+						+ ", localSourceReferenceURL: " + localSourceReferenceURL 
 					;
            
 					_logger->error(__FILEREF__ + errorMessage);
@@ -16417,7 +16486,7 @@ RESUMING FILE TRANSFERS
             _logger->error(__FILEREF__ + "Download failed (LogicError)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", localSourceReferenceURL: " + localSourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
@@ -16471,7 +16540,7 @@ RESUMING FILE TRANSFERS
                     _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
                         + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
                     );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
@@ -16483,7 +16552,7 @@ RESUMING FILE TRANSFERS
             _logger->error(__FILEREF__ + "Download failed (RuntimeError)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", localSourceReferenceURL: " + localSourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
@@ -16537,7 +16606,7 @@ RESUMING FILE TRANSFERS
                     _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
                         + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
                     );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
@@ -16549,7 +16618,7 @@ RESUMING FILE TRANSFERS
             _logger->error(__FILEREF__ + "Download failed (runtime_error)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", localSourceReferenceURL: " + localSourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
@@ -16603,7 +16672,7 @@ RESUMING FILE TRANSFERS
                     _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
                         + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
                     );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
@@ -16615,7 +16684,7 @@ RESUMING FILE TRANSFERS
             _logger->error(__FILEREF__ + "Download failed (exception)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", localSourceReferenceURL: " + localSourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
@@ -16669,7 +16738,7 @@ RESUMING FILE TRANSFERS
                     _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
                         + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
                     );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
