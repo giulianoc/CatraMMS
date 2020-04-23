@@ -1056,6 +1056,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_WorkflowLibrary ("
                     "workflowLibraryKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey  			BIGINT UNSIGNED NULL,"
+					// if userKey is NULL, it means
+					//	- it was loaded by mmsEngine when it started
+					//	- belong to MMS scope (workspaceKey is NULL)
+					"creatorUserKey			BIGINT UNSIGNED NULL,"
+					"lastUpdateUserKey		BIGINT UNSIGNED NULL,"
                     "label					VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "thumbnailMediaItemKey	BIGINT UNSIGNED NULL,"
                     "jsonWorkflow			MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
@@ -1160,7 +1165,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						string label = workflowRoot.get("Label", "XXX").asString();
 
 						int64_t workspaceKey = -1;
-						addUpdateWorkflowAsLibrary(conn, workspaceKey, label, -1, jsonWorkflow);
+						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1, jsonWorkflow);
                     }
                     catch(DirectoryListFinished e)
                     {

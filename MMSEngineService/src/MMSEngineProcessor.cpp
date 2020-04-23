@@ -16181,27 +16181,71 @@ RESUMING FILE TRANSFERS
 				&& 0 == sourceReferenceURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 			)
 		{
-			FFMpeg ffmpeg (_configuration, _logger);
-			pair<string, string> streamingURLDetails =
-				ffmpeg.retrieveStreamingYouTubeURL(
-				ingestionJobKey, -1,
-				sourceReferenceURL);
+			try
+			{
+				FFMpeg ffmpeg (_configuration, _logger);
+				pair<string, string> streamingURLDetails =
+					ffmpeg.retrieveStreamingYouTubeURL(
+					ingestionJobKey, -1,
+					sourceReferenceURL);
 
-			string streamingYouTubeURL;
-			tie(streamingYouTubeURL, ignore) = streamingURLDetails;
+				string streamingYouTubeURL;
+				tie(streamingYouTubeURL, ignore) = streamingURLDetails;
 
+				_logger->info(__FILEREF__ + "downloadMediaSourceFileThread. YouTube URL calculation"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", initial YouTube URL: " + sourceReferenceURL
+					+ ", streaming YouTube URL: " + streamingYouTubeURL
+				);
 
-			_logger->info(__FILEREF__ + "LiveProxy. YouTube URL calculation"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", initial YouTube URL: " + sourceReferenceURL
-				+ ", streaming YouTube URL: " + streamingYouTubeURL
-			);
+				localSourceReferenceURL = streamingYouTubeURL;
 
-			localSourceReferenceURL = streamingYouTubeURL;
+				// for sure localSegmentedContent has to be false
+				localSegmentedContent = false;
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg.retrieveStreamingYouTubeURL failed"
+					+ ", may be the YouTube URL is not available anymore"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", YouTube URL: " + sourceReferenceURL
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+                    
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + "End_IngestionFailure"
+					+ ", errorMessage: " + errorMessage
+				);
+				try
+				{
+					_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+						MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+						errorMessage);
+				}
+				catch(runtime_error& re)
+				{
+					_logger->info(__FILEREF__ + "Update IngestionJob failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errorMessage: " + re.what()
+					);
+				}
+				catch(exception ex)
+				{
+					_logger->info(__FILEREF__ + "Update IngestionJob failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errorMessage: " + ex.what()
+					);
+				}
 
-			// for sure localSegmentedContent has to be false
-			localSegmentedContent = false;
+				return;
+			}
 		}
 	}
 
@@ -16498,7 +16542,7 @@ RESUMING FILE TRANSFERS
             {
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
-                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                    _logger->error(__FILEREF__ + "Reached the max number of download attempts"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)

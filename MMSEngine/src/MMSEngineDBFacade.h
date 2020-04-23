@@ -1362,12 +1362,14 @@ public:
         );
 
 	int64_t addUpdateWorkflowAsLibrary(
+		int64_t userKey,
 		int64_t workspaceKey,
 		string label,
 		int64_t thumbnailMediaItemKey,
 		string jsonWorkflow);
 
 	void removeWorkflowAsLibrary(                                                                
+		int64_t userKey,
 		int64_t workspaceKey,
 		int64_t workflowLibraryKey);
 
@@ -2028,6 +2030,7 @@ private:
 
 	int64_t addUpdateWorkflowAsLibrary(                                                          
 		shared_ptr<MySQLConnection> conn,                                                                         
+		int64_t userKey,
 		int64_t workspaceKey,                                                                                     
 		string label,                                                                                             
 		int64_t thumbnailMediaItemKey,

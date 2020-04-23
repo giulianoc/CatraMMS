@@ -6,6 +6,7 @@
 
 
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
+	int64_t userKey,
 	int64_t workspaceKey,
 	string label,
 	int64_t thumbnailMediaItemKey,
@@ -26,6 +27,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
 		workflowLibraryKey = addUpdateWorkflowAsLibrary(
 			conn,
+			userKey,
 			workspaceKey,
 			label,
 			thumbnailMediaItemKey,
@@ -101,6 +103,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	shared_ptr<MySQLConnection> conn,
+	int64_t userKey,
 	int64_t workspaceKey,
 	string label,
 	int64_t thumbnailMediaItemKey,
@@ -114,13 +117,15 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
     try
     {
         {
+			// in case workspaceKey == -1 (MMS library), only ADMIN can add/update it
+			// and this is checked in the calling call (API_WorkflowLibrary.cpp)
 			if (workspaceKey == -1)
 				lastSQLCommand = 
 					"select workflowLibraryKey from MMS_WorkflowLibrary "
 					"where workspaceKey is null and label = ?";
 			else
 				lastSQLCommand = 
-					"select workflowLibraryKey from MMS_WorkflowLibrary "
+					"select workflowLibraryKey, creatorUserKey from MMS_WorkflowLibrary "
 					"where workspaceKey = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -131,14 +136,37 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+				// two options:
+				// 1. MMS library: it is an admin user (check already done, update can be done
+				// 2. NO MMS Library: only creatorUserKey can do the update
+				//		We should add a rights like 'Allow Update Workflow Library even if not the creator'
+				//		but this is not present yet
                 workflowLibraryKey     = resultSet->getInt64("workflowLibraryKey");
+				if (workspaceKey != -1)
+				{
+					int64_t creatorUserKey     = resultSet->getInt64("creatorUserKey");
+					if (creatorUserKey != userKey)
+					{
+						string errorMessage = string("User does not have the permission to add/update MMS WorkflowAsLibrary")
+							+ ", creatorUserKey: " + to_string(creatorUserKey)
+							+ ", userKey: " + to_string(userKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
 
                 lastSQLCommand =
-                    "update MMS_WorkflowLibrary set thumbnailMediaItemKey = ?, jsonWorkflow = ? "
+                    "update MMS_WorkflowLibrary set lastUpdateUserKey = ?, thumbnailMediaItemKey = ?, jsonWorkflow = ? "
 					"where workflowLibraryKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
+				if (workspaceKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
 				if (thumbnailMediaItemKey == -1)
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 				else
@@ -152,16 +180,27 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             {
                 lastSQLCommand = 
 					"insert into MMS_WorkflowLibrary ("
-						"workflowLibraryKey, workspaceKey, label, thumbnailMediaItemKey, jsonWorkflow) values ("
-						"NULL, ?, ?, ?, ?)";
+						"workflowLibraryKey, workspaceKey, creatorUserKey, lastUpdateUserKey, "
+						"label, thumbnailMediaItemKey, jsonWorkflow) values ("
+						"NULL, ?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
 				if (workspaceKey == -1)
+				{
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+					// creatorUserKey
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				}
 				else
+				{
 					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+					// creatorUserKey
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
+				}
+				// lastUpdateUserKey
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
 				preparedStatement->setString(queryParameterIndex++, label);
 				if (thumbnailMediaItemKey == -1)
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
@@ -209,7 +248,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 }
 
 void MMSEngineDBFacade::removeWorkflowAsLibrary(
-    int64_t workspaceKey, int64_t workflowLibraryKey)
+    int64_t userKey, int64_t workspaceKey, int64_t workflowLibraryKey)
 {
     string      lastSQLCommand;
 
@@ -223,6 +262,8 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
         );
 
         {
+			// in case workspaceKey == -1 (MMS library), only ADMIN can remove it
+			// and this is checked in the calling call (API_WorkflowLibrary.cpp)
 			if (workspaceKey == -1)
 				lastSQLCommand = 
 					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
@@ -230,20 +271,24 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 			else
 				lastSQLCommand = 
 					"delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
-					"and workspaceKey = ?";
+					"and creatorUserKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
 			if (workspaceKey != -1)
+			{
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			}
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated == 0)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", workflowLibraryKey: " + to_string(workflowLibraryKey)
+                        + ", userKey: " + to_string(userKey)
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -379,7 +424,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
         Json::Value workflowsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string ("select workspaceKey, workflowLibraryKey, label, "
+                string ("select workspaceKey, workflowLibraryKey, creatorUserKey, label, "
 					"thumbnailMediaItemKey, jsonWorkflow from MMS_WorkflowLibrary ") 
                 + sqlWhere;
 
@@ -396,7 +441,12 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 				if (resultSet->isNull("workspaceKey"))
 					workflowLibraryRoot[field] = true;
 				else
+				{
 					workflowLibraryRoot[field] = false;
+
+					field = "creatorUserKey";
+					workflowLibraryRoot[field] = resultSet->getInt64("creatorUserKey");
+				}
 
                 field = "workflowLibraryKey";
                 workflowLibraryRoot[field] = resultSet->getInt64("workflowLibraryKey");

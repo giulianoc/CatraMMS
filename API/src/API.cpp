@@ -1624,11 +1624,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "saveWorkflowAsLibrary")
     {
-        saveWorkflowAsLibrary(request, workspace, queryParameters, requestBody, admin);
+        saveWorkflowAsLibrary(request, userKey, workspace, queryParameters, requestBody, admin);
     }
     else if (method == "removeWorkflowAsLibrary")
     {
-        removeWorkflowAsLibrary(request, workspace, queryParameters, admin);
+        removeWorkflowAsLibrary(request, userKey, workspace, queryParameters, admin);
     }
     else if (method == "testEmail")
     {

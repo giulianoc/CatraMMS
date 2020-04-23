@@ -321,12 +321,14 @@ private:
 
 	void saveWorkflowAsLibrary(
         FCGX_Request& request,
+		int64_t userKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody, bool admin);
 
 	void removeWorkflowAsLibrary(
         FCGX_Request& request,
+		int64_t userKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters, bool admin);
 

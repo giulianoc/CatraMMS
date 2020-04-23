@@ -7887,6 +7887,9 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 			int executeCommandStatus = ProcessUtility::execute(youTubeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
+				// it could be also that the live is not available
+				// ERROR: f2vW_XyTW4o: YouTube said: This live stream recording is not available.
+
 				string errorMessage = __FILEREF__
 					+ "retrieveStreamingYouTubeURL: youTube command failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)

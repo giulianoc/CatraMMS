@@ -9641,22 +9641,66 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 							)
 						{
-							FFMpeg ffmpeg (_configuration, _logger);
-							pair<string, string> streamingLiveURLDetails =
-								ffmpeg.retrieveStreamingYouTubeURL(
-								_encodingItem->_ingestionJobKey,
-								_encodingItem->_encodingJobKey,
-								liveURL);
+							try
+							{
+								FFMpeg ffmpeg (_configuration, _logger);
+								pair<string, string> streamingLiveURLDetails =
+									ffmpeg.retrieveStreamingYouTubeURL(
+									_encodingItem->_ingestionJobKey,
+									_encodingItem->_encodingJobKey,
+									liveURL);
 
-							tie(localLiveURL, ignore) = streamingLiveURLDetails;
+								tie(localLiveURL, ignore) = streamingLiveURLDetails;
 
-							_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", initial YouTube URL: " + liveURL
-								+ ", streaming YouTube Live URL: " + localLiveURL
-							);
+								_logger->info(__FILEREF__ + "LiveRecorder. Retrieve streaming YouTube URL"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", initial YouTube URL: " + liveURL
+									+ ", streaming YouTube Live URL: " + localLiveURL
+								);
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__
+									+ "LiveRecorder. ffmpeg.retrieveStreamingYouTubeURL failed"
+									+ ", may be YouTube URL is not available anymore"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", YouTube URL: " + liveURL
+								;
+								_logger->error(errorMessage);
+
+								try
+								{
+									_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+										_encodingItem->_ingestionJobKey, errorMessage);
+								}
+								catch(runtime_error e)
+								{
+									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", e.what(): " + e.what()
+									);
+								}
+								catch(exception e)
+								{
+									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+									);
+								}
+
+								// 2020-04-21: let's go ahead because it would be managed
+								// the killing of the encodingJob
+								// throw e;
+							}
 						}
 					}
 
@@ -10451,9 +10495,33 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	bool killedByUser = false;
 	bool urlForbidden = false;
 	bool urlNotFound = false;
-	long encodingStatusFailures = 0;
 
 	long currentAttemptsNumberInCaseOfErrors = 0;
+
+	long encodingStatusFailures = 0;
+	// 2020-04-19: Reset encodingStatusFailures into DB. That because if we comes from an error/exception
+	//	encodingStatusFailures is > than 0 but we consider here like it is 0 because our variable is set to 0
+	try
+	{
+		_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+		);
+
+		_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+				_encodingItem->_encodingJobKey, 
+				encodingStatusFailures
+		);
+	}
+	catch(...)
+	{
+		_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+		);
+	}
 
 	// 2020-03-11: we saw the following scenarios:
 	//	1. ffmpeg was running
@@ -10553,26 +10621,69 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 							)
 						{
-							FFMpeg ffmpeg (_configuration, _logger);
-							pair<string, string> streamingLiveURLDetails =
-								ffmpeg.retrieveStreamingYouTubeURL(
-								_encodingItem->_ingestionJobKey,
-								_encodingItem->_encodingJobKey,
-								liveURL);
+							try
+							{
+								FFMpeg ffmpeg (_configuration, _logger);
+								pair<string, string> streamingLiveURLDetails =
+									ffmpeg.retrieveStreamingYouTubeURL(
+									_encodingItem->_ingestionJobKey,
+									_encodingItem->_encodingJobKey,
+									liveURL);
 
-							string streamingYouTubeLiveURL;
-							tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+								string streamingYouTubeLiveURL;
+								tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
 
+								_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", initial YouTube URL: " + liveURL
+									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+								);
 
-							_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", initial YouTube URL: " + liveURL
-								+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-							);
+								liveURL = streamingYouTubeLiveURL;
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__
+									+ "LiveProxy. ffmpeg.retrieveStreamingYouTubeURL failed"
+									+ ", may be YouTube URL is not available anymore"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", YouTube URL: " + liveURL
+								;
+								_logger->error(errorMessage);
 
-							liveURL = streamingYouTubeLiveURL;
+								try
+								{
+									_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+										_encodingItem->_ingestionJobKey, errorMessage);
+								}
+								catch(runtime_error e)
+								{
+									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+										+ ", e.what(): " + e.what()
+									);
+								}
+								catch(exception e)
+								{
+									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+										+ ", _ingestionJobKey: " +
+											to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: "
+											+ to_string(_encodingItem->_encodingJobKey)
+									);
+								}
+
+								// 2020-04-21: let's go ahead because it would be managed
+								// the killing of the encodingJob
+								// throw e;
+							}
 						}
 					}
 
@@ -11009,7 +11120,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								int64_t encodedPhysicalPathKey = -1;
 								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 										_encodingItem->_encodingJobKey, 
-										encodingStatusFailures);
+										encodingStatusFailures
+								);
 							}
 							catch(...)
 							{
@@ -11180,7 +11292,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         }
         catch (runtime_error e)
         {
-            _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
+            _logger->error(__FILEREF__ + "Encoding URL failed/runtime_error"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

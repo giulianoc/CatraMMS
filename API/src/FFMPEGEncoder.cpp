@@ -1945,13 +1945,22 @@ void FFMPEGEncoder::encodeContent(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
-
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
@@ -1967,11 +1976,21 @@ void FFMPEGEncoder::encodeContent(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 		
@@ -1994,11 +2013,21 @@ void FFMPEGEncoder::encodeContent(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2126,11 +2155,21 @@ void FFMPEGEncoder::overlayImageOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2147,11 +2186,21 @@ void FFMPEGEncoder::overlayImageOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2174,11 +2223,21 @@ void FFMPEGEncoder::overlayImageOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2359,11 +2418,21 @@ void FFMPEGEncoder::overlayTextOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2380,11 +2449,21 @@ void FFMPEGEncoder::overlayTextOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2407,11 +2486,21 @@ void FFMPEGEncoder::overlayTextOnVideo(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2535,11 +2624,21 @@ void FFMPEGEncoder::generateFrames(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2556,11 +2655,21 @@ void FFMPEGEncoder::generateFrames(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2579,11 +2688,21 @@ void FFMPEGEncoder::generateFrames(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2694,11 +2813,21 @@ void FFMPEGEncoder::slideShow(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2715,11 +2844,21 @@ void FFMPEGEncoder::slideShow(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2738,11 +2877,21 @@ void FFMPEGEncoder::slideShow(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2905,11 +3054,21 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
-        string errorMessage = string ("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2940,11 +3099,21 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -2977,11 +3146,21 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -3014,11 +3193,21 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -3051,11 +3240,21 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -4485,11 +4684,21 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_outputType = "";
 		liveProxy->_configurationLabel = "";
 
-        string errorMessage = string ("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
@@ -4524,11 +4733,21 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
-        string errorMessage = string ("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -4556,11 +4775,21 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
-        string errorMessage = string ("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -4588,11 +4817,21 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
-        string errorMessage = string ("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -4620,11 +4859,21 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_configurationLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
-        string errorMessage = string("API failed")
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5430,11 +5679,21 @@ void FFMPEGEncoder::videoSpeed(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5451,11 +5710,21 @@ void FFMPEGEncoder::videoSpeed(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5478,11 +5747,21 @@ void FFMPEGEncoder::videoSpeed(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5624,11 +5903,21 @@ void FFMPEGEncoder::pictureInPicture(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5645,11 +5934,21 @@ void FFMPEGEncoder::pictureInPicture(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string ("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
@@ -5672,11 +5971,21 @@ void FFMPEGEncoder::pictureInPicture(
         encoding->_running = false;
         encoding->_childPid = 0;
 
-        string errorMessage = string("API failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
 
