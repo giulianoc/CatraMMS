@@ -386,6 +386,7 @@ private:
 	void liveRecorder_ingestVOD(
 		shared_ptr<Workspace> workspace,
 		int64_t liveRecorderIngestionJobKey,
+		int64_t liveRecorderProfileKey,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -397,6 +398,7 @@ private:
 	void liveRecorder_updateVOD(
 		shared_ptr<Workspace> workspace,
 		int64_t liveRecorderIngestionJobKey,
+		int64_t liveRecorderProfileKey,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,

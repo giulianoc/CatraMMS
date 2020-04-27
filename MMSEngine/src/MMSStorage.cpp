@@ -282,7 +282,7 @@ string MMSStorage::getIngestionRootRepository(void) {
     return _ingestionRootRepository;
 }
 
-tuple<int64_t, string, string, string, int64_t, string>
+tuple<int64_t, string, int, string, string, int64_t, string>
 	MMSStorage::getPhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		int64_t mediaItemKey, int64_t encodingProfileKey)
 {
@@ -318,8 +318,8 @@ tuple<int64_t, string, string, string, int64_t, string>
 			relativePath,
 			fileName);
     
-		return make_tuple(physicalPathKey, physicalPath, relativePath, fileName,
-				sizeInBytes, deliveryFileName);
+		return make_tuple(physicalPathKey, physicalPath, mmsPartitionNumber,
+				relativePath, fileName, sizeInBytes, deliveryFileName);
     }
     catch(MediaItemKeyNotFound e)
     {

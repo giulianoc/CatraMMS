@@ -1302,7 +1302,7 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
 }
 
 void MMSEngineDBFacade::getRunningLiveRecordersDetails(
-	vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+	vector<tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
 		)
 {
 	string      lastSQLCommand;
@@ -1327,6 +1327,7 @@ void MMSEngineDBFacade::getRunningLiveRecordersDetails(
 			lastSQLCommand =
 				string("select ir.workspaceKey, ij.ingestionJobKey, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel, "
+					"JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderProfileKey') as liveRecorderProfileKey, "
 					"JSON_EXTRACT (ij.metaDataContent, '$.SegmentDuration') as segmentDuration, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.Retention')) as retention, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.InternalMMS.userKey')) as userKey, "
@@ -1352,6 +1353,9 @@ void MMSEngineDBFacade::getRunningLiveRecordersDetails(
 				int segmentDuration = -1;
 				if (!resultSet->isNull("segmentDuration"))
 					segmentDuration = resultSet->getInt("segmentDuration");
+				int64_t liveRecorderProfileKey = -1;
+				if (!resultSet->isNull("liveRecorderProfileKey"))
+					liveRecorderProfileKey = resultSet->getInt64("liveRecorderProfileKey");
 				string retention;
 				if (!resultSet->isNull("retention"))
 					retention = resultSet->getString("retention");
@@ -1360,7 +1364,8 @@ void MMSEngineDBFacade::getRunningLiveRecordersDetails(
 				string apiKey = resultSet->getString("apiKey");
 
 				runningLiveRecordersDetails.push_back(
-					make_tuple(workspaceKey, ingestionJobKey, segmentDuration,                       
+					make_tuple(workspaceKey, ingestionJobKey,
+						liveRecorderProfileKey, segmentDuration,                       
 						configurationLabel, retention, userKey,                      
 						apiKey)
 				);

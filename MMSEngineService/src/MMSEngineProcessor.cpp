@@ -7568,10 +7568,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
                 int64_t encodingProfileKey = -1;
                
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(physicalPathKey, mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
+				tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
             else
@@ -7737,10 +7737,10 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7975,10 +7975,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -8343,7 +8343,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						int64_t encodingProfileKey = -1;
-						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails =
+						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
 
 						string physicalPath;
@@ -8351,7 +8351,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPathKey, physicalPath, ignore, fileName, ignore, ignore) = physicalPathDetails;
+						tie(physicalPathKey, physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["physicalPathKey"] = physicalPathKey;
 						callbackMedatada["fileName"] = fileName;
@@ -8621,10 +8621,10 @@ void MMSEngineProcessor::localCopyContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -8814,10 +8814,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourceMediaItemKey = key;
@@ -9012,10 +9012,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -10470,10 +10470,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 				mediaItemKey = key;
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
+				tie(ignore, mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
             else
@@ -11348,10 +11348,10 @@ void MMSEngineProcessor::extractTracksContentThread(
             {
                 int64_t encodingProfileKey = -1;
                 
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -12478,10 +12478,10 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
             int64_t encodingProfileKey = -1;
-			tuple<int64_t, string, string, string, int64_t, string>
+			tuple<int64_t, string, int, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore)
+            tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourceMediaItemKey = key;
@@ -12698,10 +12698,10 @@ void MMSEngineProcessor::manageSlideShowTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourceMediaItemKey = key;
@@ -12859,10 +12859,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
-				tuple<int64_t, string, string, string, int64_t, string>
+				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
+                tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourceMediaItemKey = key;
@@ -13315,10 +13315,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
 			int64_t encodingProfileKey = -1;
-			tuple<int64_t, string, string, string, int64_t, string>
+			tuple<int64_t, string, int, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
 				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
-			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore) =
+			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourceMediaItemKey = key;
@@ -19897,11 +19897,11 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 				_processorMMS, "UpdateLiveRecorderVOD",
 				milliSecondsToSleepWaitingLock, _logger);
 
-			vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>> runningLiveRecordersDetails;
+			vector<tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string>> runningLiveRecordersDetails;
 
 			_mmsEngineDBFacade->getRunningLiveRecordersDetails(runningLiveRecordersDetails);
 
-			for(tuple<int64_t, int64_t, int, string, string, int64_t, string> runningLiveRecorderDetails:
+			for(tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string> runningLiveRecorderDetails:
 					runningLiveRecordersDetails)
 			{
 				int64_t workspaceKey;
@@ -19910,12 +19910,14 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 				try
 				{
+					int64_t liveRecorderProfileKey;
 					int liveRecorderSegmentDuration;
 					string liveChunkRetention;
 					int64_t liveRecorderUserKey;
 					string liveRecorderApiKey;
 
-					tie(workspaceKey, liveRecorderIngestionJobKey, liveRecorderSegmentDuration,
+					tie(workspaceKey, liveRecorderIngestionJobKey,
+						liveRecorderProfileKey, liveRecorderSegmentDuration,
 						liveRecorderConfigurationLabel, liveChunkRetention, liveRecorderUserKey,
 						liveRecorderApiKey) = runningLiveRecorderDetails;
 
@@ -19929,18 +19931,18 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 					string liveRecorderVODManifestPathName;
 					try
 					{
-						// mediaItemKey and content type
+						// look for the Live Recorder VOD
 						pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(workspaceKey,
 							liveRecorderVODUniqueName, warningIfMissing);
 						tie(liveRecorderVODMediaItemKey, ignore) = mediaItemKeyDetails;
 
 						int64_t encodingProfileKey = -1;
-						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails
+						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 							= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, liveRecorderVODMediaItemKey,
 							encodingProfileKey);
 						tie(liveRecorderVODPhysicalPathKey, liveRecorderVODManifestPathName,
-								ignore, ignore, ignore, ignore) = physicalPathDetails;
+								ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 					}
 					catch(MediaItemKeyNotFound mnf)
 					{
@@ -19969,6 +19971,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 						liveRecorder_updateVOD(workspace,
 							liveRecorderIngestionJobKey,
+							liveRecorderProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
@@ -19996,6 +19999,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 						liveRecorder_ingestVOD(
 							workspace,
 							liveRecorderIngestionJobKey,
+							liveRecorderProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
@@ -20057,6 +20061,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 void MMSEngineProcessor::liveRecorder_ingestVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
+	int64_t liveRecorderProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -20088,11 +20093,11 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			bool validated;
 			int64_t willBeRemovedInSeconds;
 
-			int64_t mediaItemKey;
-			int64_t physicalPathKey;
+			int64_t tsMediaItemKey;
+			int64_t tsPhysicalPathKey;
 
 			{
-				tie(mediaItemKey, physicalPathKey, ignore) = mediaItemDetail;
+				tie(tsMediaItemKey, tsPhysicalPathKey, ignore) = mediaItemDetail;
 
 				string userData;
 				try
@@ -20101,7 +20106,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 						moreMediaItemDetails;
 					moreMediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
-						workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+						workspace->_workspaceKey, tsMediaItemKey, warningIfMissing);
 
 					tie(ignore, ignore, userData, ignore, willBeRemovedInSeconds, ignore) =
 						moreMediaItemDetails;
@@ -20232,16 +20237,38 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
 			{
-				tsFound = true;
+				if (liveRecorderProfileKey != -1)
+				{
+					try
+					{
+						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderProfileKey);
 
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
+						tie(tsPhysicalPathKey, tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
+							= physicalPathDetails;
 
-				tie(tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
-					= physicalPathDetails;
+						tsFound = true;
+					}
+					catch(MediaItemKeyNotFound e)
+					{
+						// profileKey, the one selected for the live recorder VOD is not present yet
+
+						continue;
+					}
+				}
+				else
+				{
+					tsFound = true;
+
+					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsPhysicalPathKey);
+
+					tie(tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
+						= physicalPathDetails;
+				}
 
 				tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-					mediaItemKey, physicalPathKey);
+					tsMediaItemKey, tsPhysicalPathKey);
 
 				break;
 			}
@@ -20868,6 +20895,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 void MMSEngineProcessor::liveRecorder_updateVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
+	int64_t liveRecorderProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -20894,11 +20922,11 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			bool validated;
 			int64_t willBeRemovedInSeconds;
 
-			int64_t physicalPathKey;
-			int64_t mediaItemKey;
+			int64_t tsPhysicalPathKey;
+			int64_t tsMediaItemKey;
 
 			{
-				tie(mediaItemKey, physicalPathKey, ignore) = mediaItemDetail;
+				tie(tsMediaItemKey, tsPhysicalPathKey, ignore) = mediaItemDetail;
 
 				string userData;
 				try
@@ -20907,7 +20935,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 						moreMediaItemDetails;
 					moreMediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
-						workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+						workspace->_workspaceKey, tsMediaItemKey, warningIfMissing);
 
 					tie(ignore, ignore, userData, ignore, willBeRemovedInSeconds, ignore) =
 						moreMediaItemDetails;
@@ -21046,18 +21074,38 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
 			{
-				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
-
 				int mmsPartitionNumber;
 				string relativePath;
 				string fileName;
 
-				tie(ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
-					= physicalPathDetails;
+				if (liveRecorderProfileKey != -1)
+				{
+					try
+					{
+						 tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderProfileKey);
+
+						tie(tsPhysicalPathKey, ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
+							= physicalPathDetails;
+					}
+					catch(MediaItemKeyNotFound e)
+					{
+						// profileKey, the one selected for the live recorder VOD is not present yet
+
+						continue;
+					}
+				}
+				else
+				{
+					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsPhysicalPathKey);
+
+					tie(ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
+						= physicalPathDetails;
+				}
 
 				int64_t tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
-					mediaItemKey, physicalPathKey);
+					tsMediaItemKey, tsPhysicalPathKey);
 
 				tsToBeUsed.push_back(
 						make_tuple(mmsPartitionNumber, relativePath, fileName, tsDuration)

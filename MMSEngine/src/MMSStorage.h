@@ -50,8 +50,9 @@ public:
 
     string getDoneRootRepository (void);
 
-	tuple<int64_t,string, string, string, int64_t, string> getPhysicalPath(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey);
+	tuple<int64_t, string, int, string, string, int64_t, string> getPhysicalPath(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t mediaItemKey, int64_t encodingProfileKey);
     
 	tuple<string, int, string, string, int64_t, string> getPhysicalPath(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);

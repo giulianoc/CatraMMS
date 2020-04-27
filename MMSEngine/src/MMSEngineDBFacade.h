@@ -1228,7 +1228,7 @@ public:
 		int64_t ingestionJobKey);
 
 	void getRunningLiveRecordersDetails(
-		vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+		vector<tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
 	);
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
