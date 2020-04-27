@@ -20070,13 +20070,14 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 	// It will contain just one real ts file. Once the content is created, next update,
 	// will replace the singl ts file with all the links to the ts generated files
 
-	int tsWillBePresentAtLeastForSeconds = 120;
+	int tsWillBePresentAtLeastForSeconds = 30 * 60;
 
 	// look for the ts to be used
 	string tsPathFileName;
 	string tsFileName;
 	int64_t tsDuration;
 	int64_t utcChunkStartTime;
+	int64_t utcChunkEndTime;
 	try
 	{
 		bool tsFound = false;
@@ -20177,6 +20178,21 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 						field = "utcChunkStartTime";
 						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
 							utcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+
+						field = "utcChunkEndTime";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+							utcChunkEndTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
 						else
 						{
 							string errorMessage = string("metadata json is not well format")
@@ -20488,18 +20504,22 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		*/
 		Json::Value mmsDataRoot;
 
-		string field = "lastUtcChunkStartTime";
-		mmsDataRoot[field] = utcChunkStartTime;
+		string field = "dataType";
+		mmsDataRoot[field] = "liverRecorderVOD";
 
-		string sUtcChunkStartTime;
+		field = "lastUtcChunkEndTime";
+		mmsDataRoot[field] = utcChunkEndTime;
+
+		string sUtcChunkEndTime;
 		{
-			char	lastUtcChunkStartTime_str [64];
+			char	lastUtcChunkEndTime_str [64];
 			tm		tmDateTime;
 
-			// from utc to local time
-			localtime_r (&utcChunkStartTime, &tmDateTime);
 
-			sprintf (lastUtcChunkStartTime_str,
+			// from utc to local time
+			localtime_r (&utcChunkEndTime, &tmDateTime);
+
+			sprintf (lastUtcChunkEndTime_str,
 				"%04d-%02d-%02d %02d:%02d:%02d",
 				tmDateTime. tm_year + 1900,
 				tmDateTime. tm_mon + 1,
@@ -20508,10 +20528,10 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 				tmDateTime. tm_min,
 				tmDateTime. tm_sec);
 
-			sUtcChunkStartTime = lastUtcChunkStartTime_str;
+			sUtcChunkEndTime = lastUtcChunkEndTime_str;
 
-			field = "lastUtcChunkStartTime_str";
-			mmsDataRoot[field] = sUtcChunkStartTime;
+			field = "lastUtcChunkEndTime_str";
+			mmsDataRoot[field] = sUtcChunkEndTime;
 		}
 
 		Json::Value userDataRoot;
@@ -20521,7 +20541,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 		Json::Value addContentRoot;
 
-		string addContentLabel = liveRecorderConfigurationLabel + " up to " + sUtcChunkStartTime;
+		string addContentLabel = liveRecorderConfigurationLabel + " up to " + sUtcChunkEndTime;
 
 		field = "Label";
 		addContentRoot[field] = addContentLabel;
@@ -20860,11 +20880,12 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 	// build the new manifest in memory
 	// save the new manifest having references to the ts files
 
-	int tsWillBePresentAtLeastForSeconds = 120;
+	int tsWillBePresentAtLeastForSeconds = 30 * 60;
 
 	// look for the ts to be used
 	vector<tuple<int, string, string, int64_t>> tsToBeUsed;
 	int64_t lastUtcChunkStartTime = -1;
+	int64_t lastUtcChunkEndTime = -1;
 	try
 	{
 		for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemDetail:
@@ -20966,6 +20987,25 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 							int64_t utcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
 							if (utcChunkStartTime > lastUtcChunkStartTime)
 								lastUtcChunkStartTime = utcChunkStartTime;
+						}
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+
+						field = "utcChunkEndTime";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+						{
+							int64_t utcChunkEndTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
+							if (utcChunkEndTime > lastUtcChunkEndTime)
+								lastUtcChunkEndTime = utcChunkEndTime;
 						}
 						else
 						{
@@ -21135,7 +21175,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		}
 
 		// retrieve updated information
-		string sLastUtcChunkStartTime;
+		string sLastUtcChunkEndTime;
 		string title;
 		int64_t durationInMilliSeconds = -1;
 		long bitRate = -1;
@@ -21144,13 +21184,13 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 		{
 			{
-				char	lastUtcChunkStartTime_str [64];
+				char	lastUtcChunkEndTime_str [64];
 				tm		tmDateTime;
 
 				// from utc to local time
-				localtime_r (&lastUtcChunkStartTime, &tmDateTime);
+				localtime_r (&lastUtcChunkEndTime, &tmDateTime);
 
-				sprintf (lastUtcChunkStartTime_str,
+				sprintf (lastUtcChunkEndTime_str,
 					"%04d-%02d-%02d %02d:%02d:%02d",
 					tmDateTime. tm_year + 1900,
 					tmDateTime. tm_mon + 1,
@@ -21159,9 +21199,9 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 					tmDateTime. tm_min,
 					tmDateTime. tm_sec);
 
-				sLastUtcChunkStartTime = lastUtcChunkStartTime_str;
+				sLastUtcChunkEndTime = lastUtcChunkEndTime_str;
 			}
-			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkStartTime;
+			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkEndTime;
 
 			{
 				pair<int64_t, long> mediaInfoDetails;
@@ -21199,8 +21239,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			_mmsEngineDBFacade->updateLiveRecorderVOD (liveRecorderVODMediaItemKey,
 				liveRecorderVODPhysicalPathKey,
 
-				lastUtcChunkStartTime,
-				sLastUtcChunkStartTime,
+				lastUtcChunkEndTime,
+				sLastUtcChunkEndTime,
 				title,
 				durationInMilliSeconds,
 				bitRate,

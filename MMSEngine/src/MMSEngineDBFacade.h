@@ -1735,8 +1735,8 @@ public:
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
 
-		int64_t lastUtcChunkStartTime,
-		string sLastUtcChunkStartTime,
+		int64_t lastUtcChunkEndTime,
+		string sLastUtcChunkEndTime,
 		string title,
 		int64_t durationInMilliSeconds,
 		long bitRate,

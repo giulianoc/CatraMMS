@@ -5656,8 +5656,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
 
-	int64_t lastUtcChunkStartTime,
-	string sLastUtcChunkStartTime,
+	int64_t lastUtcChunkEndTime,
+	string sLastUtcChunkEndTime,
 	string title,
 	int64_t durationInMilliSeconds,
 	long bitRate,
@@ -5683,16 +5683,16 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             lastSQLCommand = 
 				"update MMS_MediaItem "
 				"set title = ?, "
-				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkStartTime', ?), "
-				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkStartTime_str', ?), "
+				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime', ?), "
+				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?), "
 				"ingestionDate = NOW() "
 				"where mediaItemKey = ?";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, title);
-            preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkStartTime);
-            preparedStatement->setString(queryParameterIndex++, sLastUtcChunkStartTime);
+            preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkEndTime);
+            preparedStatement->setString(queryParameterIndex++, sLastUtcChunkEndTime);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();

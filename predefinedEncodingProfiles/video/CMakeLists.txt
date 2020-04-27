@@ -24,6 +24,7 @@ SET (PROFILEs
 	MMS_MP4_H264_medium_360p25_AAC_92.json
 	MMS_MP4_H264_veryfast_360p25_AAC_92.json
 	MMS_MP4_H264_veryfast_360p25_high422_AAC_92.json
+	MMS_TS_H264_veryfast_360p25_high422_AAC_92.json
 	MMS_HLS_H264_veryfast_360p25_high422_AAC_92.json
 	MMS_DASH_H264_veryfast_360p25_high422_AAC_92.json
 	MMS_MP4_H264_veryslow_360p25_AAC_92.json

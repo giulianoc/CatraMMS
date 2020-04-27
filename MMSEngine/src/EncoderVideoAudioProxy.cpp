@@ -2036,11 +2036,17 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
 						if (fileFormatLowerCase == "mp4")
 							encodedFileName.append(".mp4");
+						else if (fileFormatLowerCase == "mov")
+							encodedFileName.append(".mov");
 						else if (fileFormatLowerCase == "hls"
 							|| fileFormatLowerCase == "dash")
 							;
 						else if (fileFormatLowerCase == "webm")
 							encodedFileName.append(".webm");
+						else if (fileFormatLowerCase == "ts")
+							encodedFileName.append(".ts");
+						else if (fileFormatLowerCase == "mkv")
+							encodedFileName.append(".mkv");
 						else
 						{
 							string errorMessage = __FILEREF__ + "Unknown fileFormat"

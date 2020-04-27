@@ -7469,9 +7469,19 @@ void FFMpeg::settingFfmpegParameters(
         {
             httpStreamingFileFormat = "";
 
-            ffmpegFileFormatParameter =
-				" -f " + fileFormatLowerCase + " "
-            ;
+			if (fileFormatLowerCase == "ts")
+			{
+				// if "-f ts filename.ts" is added the following error happens:
+				//		...Requested output format 'ts' is not a suitable output format
+				// Without "-f ts", just filename.ts works fine
+				ffmpegFileFormatParameter = "";
+			}
+			else
+			{
+				ffmpegFileFormatParameter =
+					" -f " + fileFormatLowerCase + " "
+				;
+			}
         }
     }
 
@@ -8244,9 +8254,12 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
 
     if (fileFormatLowerCase != "3gp" 
 		&& fileFormatLowerCase != "mp4" 
+		&& fileFormatLowerCase != "mov"
 		&& fileFormatLowerCase != "webm" 
 		&& fileFormatLowerCase != "hls"
 		&& fileFormatLowerCase != "dash"
+		&& fileFormatLowerCase != "ts"
+		&& fileFormatLowerCase != "mkv"
 	)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"

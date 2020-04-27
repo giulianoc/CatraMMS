@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_TS_H264_veryfast_360p25_high422_AAC_92",
+	"FileFormat" : "ts",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "high422",
+		"Width" : 640,
+		"Height" : 360,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 800,
+		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 92,
+		"ChannelsNumber": 2
+	}
+}
