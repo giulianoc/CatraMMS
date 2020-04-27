@@ -87,7 +87,8 @@ public:
     enum class LockType {
 		Ingestion						= 0,
 		Encoding						= 1,
-		MainAndBackupLiveRecordingHA	= 2
+		MainAndBackupLiveRecordingHA	= 2,
+		UpdateLiveRecorderVOD			= 3
     };
     static const char* toString(const LockType& lockType)
     {
@@ -99,6 +100,8 @@ public:
                 return "Encoding";
             case LockType::MainAndBackupLiveRecordingHA:
                 return "MainAndBackupLiveRecordingHA";
+            case LockType::UpdateLiveRecorderVOD:
+                return "UpdateLiveRecorderVOD";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -115,6 +118,8 @@ public:
             return LockType::Encoding;
 		else if (lowerCase == "mainandbackupliverecordingha")
             return LockType::MainAndBackupLiveRecordingHA;
+		else if (lowerCase == "updateliverecordervod")
+            return LockType::UpdateLiveRecorderVOD;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -1222,6 +1227,10 @@ public:
 	bool liveRecorderMainAndBackupChunksManagementCompleted(
 		int64_t ingestionJobKey);
 
+	void getRunningLiveRecordersDetails(
+		vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+	);
+
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     
     int64_t addIngestionRoot (
@@ -1403,7 +1412,7 @@ public:
 	tuple<int64_t, int, string, string, int64_t, bool> getSourcePhysicalPath(
 		int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t> getMediaItemKeyDetails(
+    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> getMediaItemKeyDetails(
         int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing);
 
     tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
@@ -1722,6 +1731,21 @@ public:
         int imageQuality
     );
     
+	void updateLiveRecorderVOD (
+		int64_t mediaItemKey,
+		int64_t physicalPathKey,
+
+		int64_t lastUtcChunkStartTime,
+		string sLastUtcChunkStartTime,
+		string title,
+		int64_t durationInMilliSeconds,
+		long bitRate,
+		unsigned long long sizeInBytes,
+
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks
+	);
+
 	void addCrossReference (
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
 		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);

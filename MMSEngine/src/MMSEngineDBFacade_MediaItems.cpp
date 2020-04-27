@@ -2552,7 +2552,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
+tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 	MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing)
 {
@@ -2560,8 +2560,8 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-		contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+		contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
     try
     {
@@ -2573,7 +2573,8 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
         {
             lastSQLCommand = 
                 "select contentType, title, userData, ingestionJobKey, "
-                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+				"TIME_TO_SEC(TIMEDIFF(DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE), NOW())) willBeRemovedInSeconds "
 				"from MMS_MediaItem where workspaceKey = ? and mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2599,8 +2600,10 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
                 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-                contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
-					make_tuple(contentType, title, userData, ingestionDate, ingestionJobKey);
+                int64_t willBeRemovedInSeconds = resultSet->getInt64("willBeRemovedInSeconds");
+
+                contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+					make_tuple(contentType, title, userData, ingestionDate, willBeRemovedInSeconds, ingestionJobKey);
             }
             else
             {
@@ -2623,7 +2626,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        return contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
     }
     catch(sql::SQLException se)
     {
@@ -2944,17 +2947,23 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
                             + ", lastSQLCommand: " + lastSQLCommand
                         ;
                         if (warningIfMissing)
+						{
                             _logger->warn(errorMessage);
+
+							continue;
+						}
                         else
+						{
                             _logger->error(errorMessage);
 
-                        throw MediaItemKeyNotFound(errorMessage);                    
+							throw MediaItemKeyNotFound(errorMessage);                    
+						}
                     }
                 }
 
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
-                        = make_tuple(mediaItemKey, physicalPathKey, contentType);
-                mediaItemsDetails.push_back(mediaItemKeyPhysicalPathKeyAndContentType);
+				tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
+					= make_tuple(mediaItemKey, physicalPathKey, contentType);
+				mediaItemsDetails.push_back(mediaItemKeyPhysicalPathKeyAndContentType);
             }
         }
 
@@ -3127,7 +3136,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     catch(MediaItemKeyNotFound e)
     {
         if (warningIfMissing)
-            _logger->warn(__FILEREF__ + "SQL exception"
+            _logger->warn(__FILEREF__ + "MediaItemKeyNotFound"
                 + ", lastSQLCommand: " + lastSQLCommand
                 + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
@@ -5641,6 +5650,264 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
     }
     
     return physicalPathKey;
+}
+
+void MMSEngineDBFacade::updateLiveRecorderVOD (
+	int64_t mediaItemKey,
+	int64_t physicalPathKey,
+
+	int64_t lastUtcChunkStartTime,
+	string sLastUtcChunkStartTime,
+	string title,
+	int64_t durationInMilliSeconds,
+	long bitRate,
+	unsigned long long sizeInBytes,
+
+	vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+	vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks
+)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+				"update MMS_MediaItem "
+				"set title = ?, "
+				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkStartTime', ?), "
+				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkStartTime_str', ?), "
+				"ingestionDate = NOW() "
+				"where mediaItemKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, title);
+            preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkStartTime);
+            preparedStatement->setString(queryParameterIndex++, sLastUtcChunkStartTime);
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+
+        {
+            lastSQLCommand = 
+				"update MMS_PhysicalPath "
+				"set sizeInBytes = ?, "
+				"durationInMilliSeconds = ?, "
+				"bitRate = ? "
+				"where physicalPathKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, sizeInBytes);
+			preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
+			preparedStatement->setInt64(queryParameterIndex++, bitRate);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", physicalPathKey: " + to_string(physicalPathKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+
+		for (tuple<int, int64_t, string, string, int, int, string, long> videoTrack: videoTracks)
+        {
+			int videoTrackIndex;
+			int64_t videoDurationInMilliSeconds;
+			// string videoCodecName;
+			// string videoProfile;
+			// int videoWidth;
+			// int videoHeight;
+			string videoAvgFrameRate;
+			long videoBitRate;
+
+			tie(videoTrackIndex, videoDurationInMilliSeconds, ignore, ignore,
+				ignore, ignore, videoAvgFrameRate, videoBitRate) = videoTrack;
+
+            lastSQLCommand = 
+				"update MMS_VideoTrack "
+				"set durationInMilliSeconds = ?, "
+				"avgFrameRate = ?, "
+				"bitRate = ? "
+				"where physicalPathKey = ? and trackIndex = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (videoDurationInMilliSeconds == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, videoDurationInMilliSeconds);
+			if (videoAvgFrameRate == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, videoAvgFrameRate);
+			if (videoBitRate == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, videoBitRate);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+			preparedStatement->setInt64(queryParameterIndex++, videoTrackIndex);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", physicalPathKey: " + to_string(physicalPathKey)
+                        + ", videoTrackIndex: " + to_string(videoTrackIndex)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+
+		for(tuple<int, int64_t, string, long, int, long, string> audioTrack: audioTracks)
+		{
+			int audioTrackIndex;
+			int64_t audioDurationInMilliSeconds;
+			// string audioCodecName;
+			long audioSampleRate;
+			// int audioChannels;
+			long audioBitRate;
+			// string language;
+
+
+			tie(audioTrackIndex, audioDurationInMilliSeconds, ignore, audioSampleRate,
+				ignore, audioBitRate, ignore) = audioTrack;
+
+            lastSQLCommand = 
+				"update MMS_AudioTrack "
+				"set durationInMilliSeconds = ?, "
+				"bitRate = ?, "
+				"sampleRate = ? "
+				"where physicalPathKey = ? and trackIndex = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (audioDurationInMilliSeconds == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, audioDurationInMilliSeconds);
+			if (audioBitRate == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, audioBitRate);
+			if (audioSampleRate == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, audioSampleRate);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+			preparedStatement->setInt64(queryParameterIndex++, audioTrackIndex);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", physicalPathKey: " + to_string(physicalPathKey)
+                        + ", audioTrackIndex: " + to_string(audioTrackIndex)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::addCrossReference (

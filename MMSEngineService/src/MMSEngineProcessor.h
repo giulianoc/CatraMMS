@@ -70,6 +70,7 @@ private:
     int                                 _processorIdentifier;
     int                                 _processorThreads;
     int                                 _maxAdditionalProcessorThreads;
+    int									_maxSecondsToWaitUpdateLiveRecorderVOD;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -146,6 +147,7 @@ private:
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
 	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
+	void handleUpdateLiveRecorderVODEventThread (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(
         int64_t ingestionJobKey,
@@ -380,6 +382,27 @@ private:
 		string tarBinaryPathName, string workspaceIngestionRepository,
 		string sourcePathName
 		);
+
+	void liveRecorder_ingestVOD(
+		shared_ptr<Workspace> workspace,
+		int64_t liveRecorderIngestionJobKey,
+		int liveRecorderSegmentDuration,
+		string liveRecorderConfigurationLabel,
+		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
+		string liveChunkRetention,
+		string liveRecorderVODUniqueName,
+		int64_t liveRecorderUserKey,
+		string liveRecorderApiKey);
+
+	void liveRecorder_updateVOD(
+		shared_ptr<Workspace> workspace,
+		int64_t liveRecorderIngestionJobKey,
+		int liveRecorderSegmentDuration,
+		string liveRecorderConfigurationLabel,
+		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
+		int64_t liveRecorderVODMediaItemKey,
+		int64_t liveRecorderVODPhysicalPathKey,
+		string liveRecorderVODManifestPathName);
 
     int progressDownloadCallback(
         int64_t ingestionJobKey,

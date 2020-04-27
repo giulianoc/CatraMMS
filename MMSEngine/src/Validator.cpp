@@ -3945,12 +3945,12 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
-                tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					contentTypeTitleUserDataIngestionDateAndIngestionJobKey = 
+                tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+					contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey = 
 					_mmsEngineDBFacade->getMediaItemKeyDetails(workspaceKey, referenceMediaItemKey,
 					warningIfMissing); 
-                tie(referenceContentType, ignore, ignore, ignore, ignore)
-					= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                tie(referenceContentType, ignore, ignore, ignore, ignore, ignore)
+					= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
             }
             else if (referencePhysicalPathKey != -1)
             {

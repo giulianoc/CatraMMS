@@ -28,6 +28,7 @@ SET (SOURCES
 	CheckRefreshPartitionFreeSizeTimes.cpp
 	ContentRetentionTimes.cpp
 	DBDataRetentionTimes.cpp
+	UpdateLiveRecorderVODTimes.cpp
 	MainAndBackupRunningHALiveRecordingEvent.cpp
 )
 
@@ -38,6 +39,7 @@ SET (HEADERS
 	CheckRefreshPartitionFreeSizeTimes.h
 	ContentRetentionTimes.h
 	DBDataRetentionTimes.h
+	UpdateLiveRecorderVODTimes.h
 	MainAndBackupRunningHALiveRecordingEvent.h
 )
 

@@ -11,6 +11,7 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
+#include "UpdateLiveRecorderVODTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
@@ -281,6 +282,15 @@ int main (int iArgc, char *pArgv [])
             make_shared<MainAndBackupRunningHALiveRecordingEvent>(mainAndBackupRunningHALiveRecordingTimesSchedule, multiEventsSet, logger);
     mainAndBackupRunningHALiveRecordingTimes->start();
     scheduler.activeTimes(mainAndBackupRunningHALiveRecordingTimes);
+
+    unsigned long           updateLiveRecorderVODTimesPeriodInMilliSecs = JSONUtils::asInt(configuration["scheduler"], "updateLiveRecorderVODTimesPeriodInMilliSecs", 10000);
+    logger->info(__FILEREF__ + "Creating and Starting UpdateLiveRecorderVODTimes"
+        + ", updateLiveRecorderVODTimesPeriodInMilliSecs: " + to_string(updateLiveRecorderVODTimesPeriodInMilliSecs)
+            );
+    shared_ptr<UpdateLiveRecorderVODTimes>		updateLiveRecorderVODTimes =
+            make_shared<UpdateLiveRecorderVODTimes>(updateLiveRecorderVODTimesPeriodInMilliSecs, multiEventsSet, logger);
+    updateLiveRecorderVODTimes->start();
+    scheduler.activeTimes(updateLiveRecorderVODTimes);
 
 
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"

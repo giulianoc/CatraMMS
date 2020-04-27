@@ -282,12 +282,14 @@ string MMSStorage::getIngestionRootRepository(void) {
     return _ingestionRootRepository;
 }
 
-tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
-	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey)
+tuple<int64_t, string, string, string, int64_t, string>
+	MMSStorage::getPhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t mediaItemKey, int64_t encodingProfileKey)
 {
     try
     {
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
+			string, string, string, string, int64_t, bool> storageDetails =
 			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
 		int64_t physicalPathKey;
@@ -301,7 +303,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
 		string title;
 		bool externalReadOnlyStorage;
 		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, 
-            fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
 		_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
 			+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
@@ -356,7 +358,7 @@ tuple<int64_t, string, string, string, int64_t, string> MMSStorage::getPhysicalP
     }
 }
 
-tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
+tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey)
 {
     try
@@ -389,7 +391,8 @@ tuple<string, string, string, int64_t, string> MMSStorage::getPhysicalPath(
 			relativePath,
 			fileName);
 
-		return make_tuple(physicalPath, relativePath, fileName, sizeInBytes, deliveryFileName);
+		return make_tuple(physicalPath, mmsPartitionNumber, relativePath,
+			fileName, sizeInBytes, deliveryFileName);
     }
     catch(MediaItemKeyNotFound e)
     {

@@ -496,7 +496,6 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 }
 
 void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS)
-
 {
     string      lastSQLCommand;
     
@@ -924,7 +923,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							// "and retentionInMinutes != 0 for update"
 						);
 
-					shared_ptr<sql::PreparedStatement> preparedStatementMediaItemKey (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					shared_ptr<sql::PreparedStatement> preparedStatementMediaItemKey (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
 					preparedStatementMediaItemKey->setInt64(queryParameterIndex++, ingestionJobKey);
 					preparedStatementMediaItemKey->setInt(queryParameterIndex++, chunksToBeManagedWithinSeconds);
@@ -936,7 +936,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single), set to validated"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
-							);
+						);
 
 						{
 							lastSQLCommand = 
@@ -1301,6 +1301,143 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
     }    
 }
 
+void MMSEngineDBFacade::getRunningLiveRecordersDetails(
+	vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+		)
+{
+	string      lastSQLCommand;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
+
+	try
+	{
+		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		runningLiveRecordersDetails.clear();
+
+		{
+			// End_TaskSuccess below: if the ingestionJob is 'just' finished, anyway we have to get the ingestionJob
+			// in order to get the last chunks 
+			int toleranceMinutes = 5;
+			lastSQLCommand =
+				string("select ir.workspaceKey, ij.ingestionJobKey, "
+					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel, "
+					"JSON_EXTRACT (ij.metaDataContent, '$.SegmentDuration') as segmentDuration, "
+					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.Retention')) as retention, "
+					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.InternalMMS.userKey')) as userKey, "
+					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.InternalMMS.apiKey')) as apiKey "
+					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+					"where ir.ingestionRootKey = ij.ingestionRootKey "
+					"and ij.ingestionType = 'Live-Recorder' "
+					"and (ij.status = 'EncodingQueued' "
+					"or (ij.status = 'End_TaskSuccess' and "
+						"NOW() <= DATE_ADD(ij.endProcessing, INTERVAL ? MINUTE))) "
+				);
+			// This select returns all the ingestion job key of running LiveRecording
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, toleranceMinutes);
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			while (resultSet->next())
+			{
+				int64_t workspaceKey = resultSet->getInt64("workspaceKey");
+				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				int segmentDuration = -1;
+				if (!resultSet->isNull("segmentDuration"))
+					segmentDuration = resultSet->getInt("segmentDuration");
+				string retention;
+				if (!resultSet->isNull("retention"))
+					retention = resultSet->getString("retention");
+				string configurationLabel = resultSet->getString("configurationLabel");
+				int64_t userKey = resultSet->getInt64("userKey");
+				string apiKey = resultSet->getString("apiKey");
+
+				runningLiveRecordersDetails.push_back(
+					make_tuple(workspaceKey, ingestionJobKey, segmentDuration,                       
+						configurationLabel, retention, userKey,                      
+						apiKey)
+				);
+			}
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
+		_logger->info(__FILEREF__ + "getRunningLiveRecordersDetails"
+			+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+		);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (
     int64_t workspaceKey
@@ -1425,7 +1562,8 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     return relativePathToBeUsed;
 }
 
-tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
+	string, string, string, string, int64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t physicalPathKey
 )
@@ -1614,7 +1752,8 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     }
 }
 
-tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
+tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
+	string, string, string, string, int64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t mediaItemKey,
 		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)

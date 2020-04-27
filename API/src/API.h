@@ -287,6 +287,11 @@ private:
             unordered_map<string, string>& requestDetails
     );
     
+	void manageTarFileInCaseOfIngestionOfSegments(
+		int64_t ingestionJobKey,
+		string tarBinaryPathName, string workspaceIngestionRepository,
+		string sourcePathName);
+
     void addEncodingProfilesSet(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

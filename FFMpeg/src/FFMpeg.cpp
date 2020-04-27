@@ -4810,7 +4810,6 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
 					;
-
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);

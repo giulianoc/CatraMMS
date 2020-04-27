@@ -13,6 +13,7 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/Convert.h"
+#include "PersistenceLock.h"
 #include "FFMpeg.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -21,6 +22,7 @@
 #include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
+#include "UpdateLiveRecorderVODTimes.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
 #include "Magick++.h"
@@ -72,6 +74,12 @@ MMSEngineProcessor::MMSEngineProcessor(
     _maxEncodingJobsPerEvent       = JSONUtils::asInt(configuration["mms"], "maxEncodingJobsPerEvent", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
+    );
+
+    _maxSecondsToWaitUpdateLiveRecorderVOD	= JSONUtils::asInt(configuration["mms"]["locks"],
+		"maxSecondsToWaitUpdateLiveRecorderVOD", 10);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxSecondsToWaitUpdateLiveRecorderVOD: " + to_string(_maxSecondsToWaitUpdateLiveRecorderVOD)
     );
 
     _maxEventManagementTimeInSeconds       = JSONUtils::asInt(configuration["mms"], "maxEventManagementTimeInSeconds", 5);
@@ -681,6 +689,46 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD:	// 9
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                try
+                {
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // it is a periodical event, we will wait the next one
+                        
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleUpdateLiveRecorderVODEventThread, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+                    {
+                        thread updateLiveRecorderVOD(&MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread, this,
+                            _processorsThreadsNumber);
+                        updateLiveRecorderVOD.detach();
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
             default:
                 throw runtime_error(string("Event type identifier not managed")
                         + to_string(event->getEventKey().first));
@@ -1020,15 +1068,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									if (dependencyType == Validator::DependencyType::MediaItemKey)
 									{
 										bool warningIfMissing = false;
-										tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-											contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+										tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+											contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 											_mmsEngineDBFacade->getMediaItemKeyDetails(
 											workspace->_workspaceKey, key, warningIfMissing);
 
 										string localTitle;
 										int64_t localIngestionJobKey;
-										tie(referenceContentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-											= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+										tie(referenceContentType, localTitle, userData, ingestionDate, ignore,
+												localIngestionJobKey)
+											= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 									}
 									else
 									{
@@ -6974,7 +7023,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
         // throw e;
 		return;	// return because it is a thread
-    }    
+    }
 }
 
 /*
@@ -7264,8 +7313,8 @@ void MMSEngineProcessor::removeContentTask(
 					if (dependencyType == Validator::DependencyType::MediaItemKey)
 					{
 						bool warningIfMissing = false;
-						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
 								workspace->_workspaceKey, key, warningIfMissing);
 
@@ -7274,8 +7323,8 @@ void MMSEngineProcessor::removeContentTask(
 						string localUserData;
 						string localIngestionDate;
 						int64_t localIngestionJobKey;
-						tie(localContentType, localTitle, localUserData, localIngestionDate, localIngestionJobKey)
-							= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+						tie(localContentType, localTitle, localUserData, localIngestionDate, ignore, localIngestionJobKey)
+							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
 						int ingestionDependenciesNumber = 
 							_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
@@ -7539,10 +7588,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 				}
 
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, fileName, sizeInBytes, deliveryFileName)
+				tie(mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
 
@@ -7709,21 +7758,21 @@ void MMSEngineProcessor::postOnFacebookTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(contentType, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
+						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
                 }
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -7946,21 +7995,21 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(contentType, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
+						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
                 }
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, sizeInBytes, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -8249,15 +8298,15 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						bool warningIfMissing = false;
-						tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-							contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 							_mmsEngineDBFacade->getMediaItemKeyDetails(
 								workspace->_workspaceKey, mediaItemKey, warningIfMissing);
 
 						string localTitle;
 						string userData;
-						tie(contentType, localTitle, userData, ignore, ignore)
-							= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+						tie(contentType, localTitle, userData, ignore, ignore, ignore)
+							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
 						callbackMedatada["title"] = localTitle;
 
@@ -8363,7 +8412,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						int64_t encodingProfileKey = -1;
-						tuple<string, string, string, int64_t, string> physicalPathDetails =
+						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
 
 						string physicalPath;
@@ -8371,7 +8420,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t sizeInBytes;
 						string deliveryFileName;
 
-						tie(physicalPath, ignore, fileName, ignore, ignore) = physicalPathDetails;
+						tie(physicalPath, ignore, ignore, fileName, ignore, ignore) = physicalPathDetails;
 
 						callbackMedatada["fileName"] = fileName;
 						// callbackMedatada["physicalPath"] = physicalPath;
@@ -8594,10 +8643,10 @@ void MMSEngineProcessor::localCopyContentTask(
             {
 				physicalPathKey = key;
 
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -8787,21 +8836,21 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(contentType, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
+						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
                 }
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourcePhysicalPathKey = key;
@@ -8983,21 +9032,21 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-						contentTypeTitleUserDataIngestionDateAndIngestionJobKey =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             workspace->_workspaceKey, key, warningIfMissing);
 
-                    tie(contentType, ignore, ignore, ignore, ignore)
-						= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+                    tie(contentType, ignore, ignore, ignore, ignore, ignore)
+						= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
                 }
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t, int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -10225,8 +10274,6 @@ void MMSEngineProcessor::liveCutThread(
 
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
-			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
 			_logger->info(__FILEREF__ + "Ingesting CutLive workflow"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
@@ -10431,10 +10478,10 @@ void MMSEngineProcessor::changeFileFormatThread(
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsSourceAssetPathName, relativePath, ignore, ignore, ignore)
+				tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				bool warningIfMissing = false;
@@ -11323,10 +11370,10 @@ void MMSEngineProcessor::extractTracksContentThread(
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore)
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
@@ -12441,10 +12488,10 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         }
         else
         {
-			tuple<string, string, string, int64_t, string>
+			tuple<string, int, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
 				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
+			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 
@@ -12661,10 +12708,10 @@ void MMSEngineProcessor::manageSlideShowTask(
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourcePhysicalPathKey = key;
@@ -12683,8 +12730,8 @@ void MMSEngineProcessor::manageSlideShowTask(
             
             bool warningIfMissing = false;
             
-            tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-				contentTypeTitleUserDataIngestionDateAndIngestionJobKey 
+            tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+				contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey 
                     = _mmsEngineDBFacade->getMediaItemKeyDetails(
 					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
            
@@ -12693,8 +12740,8 @@ void MMSEngineProcessor::manageSlideShowTask(
             string userData;
             string ingestionDate;
 			int64_t localIngestionJobKey;
-            tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-				= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+            tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
+				= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
             
             if (!slideshowContentTypeInitialized)
             {
@@ -12822,10 +12869,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             }
             else
             {
-				tuple<string, string, string, int64_t, string>
+				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
                 sourcePhysicalPathKey = key;
@@ -13278,10 +13325,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         }
         else
         {
-			tuple<string, string, string, int64_t, string>
+			tuple<string, int, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
 				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore)
+			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
             sourcePhysicalPathKey = key;
@@ -13297,8 +13344,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
         bool warningIfMissing = false;
 
-        tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-			contentTypeTitleUserDataIngestionDateAndIngestionJobKey
+        tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+			contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey
                 = _mmsEngineDBFacade->getMediaItemKeyDetails(
 				workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
         
@@ -13307,8 +13354,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         string userData;
         string ingestionDate;
 		int64_t localIngestionJobKey;
-        tie(contentType, localTitle, userData, ingestionDate, localIngestionJobKey)
-			= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
+			= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
         
         if (contentType != MMSEngineDBFacade::ContentType::Video
                 && contentType != MMSEngineDBFacade::ContentType::Audio)
@@ -14682,8 +14729,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
 				mediaItemKey = key;
 
-        		tuple<MMSEngineDBFacade::ContentType,string,string,string,int64_t>
-					contentTypeTitleUserDataIngestionDateAndIngestionJobKey
+        		tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+					contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey
                 	= _mmsEngineDBFacade->getMediaItemKeyDetails(
 					workspace->_workspaceKey, key, warningIfMissing);
         
@@ -14691,8 +14738,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         		string userData;
                 string ingestionDate;
 				int64_t localIngestionJobKey;
-        		tie(contentType, firstTitle, userData, ingestionDate, localIngestionJobKey)
-					= contentTypeTitleUserDataIngestionDateAndIngestionJobKey;
+        		tie(contentType, firstTitle, userData, ingestionDate, ignore, localIngestionJobKey)
+					= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
         	}
         	else
         	{
@@ -16045,7 +16092,6 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
-
 size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     MMSEngineProcessor::CurlDownloadData* curlDownloadData = (MMSEngineProcessor::CurlDownloadData*) f;
@@ -17328,8 +17374,6 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             ostringstream response;
             request.setOpt(new curlpp::options::WriteStream(&response));
 
-            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
             _logger->info(__FILEREF__ + "Calling facebook"
                     + ", facebookURL: " + facebookURL
                     + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
@@ -17592,8 +17636,6 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 ostringstream response;
                 request.setOpt(new curlpp::options::WriteStream(&response));
 
-                chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
                 _logger->info(__FILEREF__ + "Calling facebook"
                         + ", facebookURL: " + facebookURL
                         + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
@@ -17793,8 +17835,6 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
 
             ostringstream response;
             request.setOpt(new curlpp::options::WriteStream(&response));
-
-            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
             _logger->info(__FILEREF__ + "Calling facebook"
                     + ", facebookURL: " + facebookURL
@@ -18303,8 +18343,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             // You simply have to set next option to prefix the header to the normal body output. 
             request.setOpt(new curlpp::options::Header(true)); 
             
-            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
             _logger->info(__FILEREF__ + "Calling youTube (first call)"
                     + ", youTubeURL: " + youTubeURL
                     + ", body: " + body
@@ -18481,8 +18519,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
                 request.setOpt(new curlpp::options::HttpHeader(headerList));
 
-                chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
                 _logger->info(__FILEREF__ + "Calling youTube (upload)"
                         + ", youTubeUploadURL: " + youTubeUploadURL
                 );
@@ -18609,8 +18645,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         // You simply have to set next option to prefix the header to the normal body output. 
                         request.setOpt(new curlpp::options::Header(true));
             
-                        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
                         _logger->info(__FILEREF__ + "Calling youTube check status"
                                 + ", youTubeUploadURL: " + youTubeUploadURL
                                 + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
@@ -18976,8 +19010,6 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
         ostringstream response;
         request.setOpt(new curlpp::options::WriteStream(&response));
 
-        // chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
         _logger->info(__FILEREF__ + "Calling youTube refresh token"
                 + ", youTubeURL: " + youTubeURL
                 + ", body: " + body
@@ -19233,8 +19265,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
 
 			ostringstream response;
 			request.setOpt(new curlpp::options::WriteStream(&response));
-
-			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
 			_logger->info(__FILEREF__ + "Calling user callback"
                 + ", userURL: " + userURL
@@ -19513,7 +19543,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
 		);
 	}
 }
-
 
 void MMSEngineProcessor::moveMediaSourceFileThread(
         shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
@@ -19846,6 +19875,1366 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
     }
 }
 
+void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
+        shared_ptr<long> processorsThreadsNumber)
+{
+
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
+    {
+        _logger->info(__FILEREF__ + "Update Live Recorder VOD started"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+        );
+
+		try
+		{
+			int milliSecondsToSleepWaitingLock = 500;
+
+			PersistenceLock persistenceLock(_mmsEngineDBFacade.get(),
+				MMSEngineDBFacade::LockType::UpdateLiveRecorderVOD,
+				_maxSecondsToWaitUpdateLiveRecorderVOD,
+				_processorMMS, "UpdateLiveRecorderVOD",
+				milliSecondsToSleepWaitingLock, _logger);
+
+			vector<tuple<int64_t, int64_t, int, string, string, int64_t, string>> runningLiveRecordersDetails;
+
+			_mmsEngineDBFacade->getRunningLiveRecordersDetails(runningLiveRecordersDetails);
+
+			for(tuple<int64_t, int64_t, int, string, string, int64_t, string> runningLiveRecorderDetails:
+					runningLiveRecordersDetails)
+			{
+				int64_t workspaceKey;
+				int64_t liveRecorderIngestionJobKey;
+				string liveRecorderConfigurationLabel;
+
+				try
+				{
+					int liveRecorderSegmentDuration;
+					string liveChunkRetention;
+					int64_t liveRecorderUserKey;
+					string liveRecorderApiKey;
+
+					tie(workspaceKey, liveRecorderIngestionJobKey, liveRecorderSegmentDuration,
+						liveRecorderConfigurationLabel, liveChunkRetention, liveRecorderUserKey,
+						liveRecorderApiKey) = runningLiveRecorderDetails;
+
+					string liveRecorderVODUniqueName =
+						liveRecorderConfigurationLabel + " (" + to_string(liveRecorderIngestionJobKey) + ")";
+
+					bool liveRecorderVODPresent = true;
+					bool warningIfMissing = true;
+					int64_t liveRecorderVODMediaItemKey = -1;
+					int64_t liveRecorderVODPhysicalPathKey;
+					string liveRecorderVODManifestPathName;
+					try
+					{
+						// mediaItemKey and content type
+						pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(workspaceKey,
+							liveRecorderVODUniqueName, warningIfMissing);
+						tie(liveRecorderVODMediaItemKey, ignore) = mediaItemKeyDetails;
+
+						int64_t encodingProfileKey = -1;
+						tuple<int64_t, string, string, string, int64_t, string> physicalPathDetails
+							= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, liveRecorderVODMediaItemKey,
+							encodingProfileKey);
+						tie(liveRecorderVODPhysicalPathKey, liveRecorderVODManifestPathName,
+								ignore, ignore, ignore, ignore) = physicalPathDetails;
+					}
+					catch(MediaItemKeyNotFound mnf)
+					{
+						liveRecorderVODPresent = false;
+					}
+
+					if (liveRecorderVODPresent)
+					{
+						_logger->info(__FILEREF__ + "Live Recorder VOD is already present, just update the manifest"
+							+ ", _processorMMS: " + _processorMMS
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+							+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
+							+ ", liveRecorderVODMediaItemKey: " + to_string(liveRecorderVODMediaItemKey)
+							+ ", liveRecorderVODPhysicalPathKey: " + to_string(liveRecorderVODPhysicalPathKey)
+							+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName
+						);
+
+						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
+						bool warningIfMissing = true;
+						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
+
+						shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
+
+						liveRecorder_updateVOD(workspace,
+							liveRecorderIngestionJobKey,
+							liveRecorderSegmentDuration,
+							liveRecorderConfigurationLabel,
+							liveChunksDetails,
+							liveRecorderVODMediaItemKey,
+							liveRecorderVODPhysicalPathKey,
+							liveRecorderVODManifestPathName);
+					}
+					else
+					{
+						_logger->info(__FILEREF__ + "Live Recorder VOD is NOT present"
+							+ ", _processorMMS: " + _processorMMS
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+							+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
+						);
+
+						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
+						bool warningIfMissing = true;
+						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
+
+						shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
+
+						liveRecorder_ingestVOD(
+							workspace,
+							liveRecorderIngestionJobKey,
+							liveRecorderSegmentDuration,
+							liveRecorderConfigurationLabel,
+							liveChunksDetails,
+							liveChunkRetention,
+							liveRecorderVODUniqueName,
+							liveRecorderUserKey,
+							liveRecorderApiKey);
+					}
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "UpdateLiveRecorderVOD failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+						+ ", exception: " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+					);
+				}
+			}
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "Update Live Recorder VOD finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+		);
+    }
+}
+
+void MMSEngineProcessor::liveRecorder_ingestVOD(
+	shared_ptr<Workspace> workspace,
+	int64_t liveRecorderIngestionJobKey,
+	int liveRecorderSegmentDuration,
+	string liveRecorderConfigurationLabel,
+	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
+	string liveChunkRetention,
+	string liveRecorderVODUniqueName,
+	int64_t liveRecorderUserKey,
+	string liveRecorderApiKey
+	)
+{
+	// prepare the content to be ingested.
+	// It will contain just one real ts file. Once the content is created, next update,
+	// will replace the singl ts file with all the links to the ts generated files
+
+	int tsWillBePresentAtLeastForSeconds = 120;
+
+	// look for the ts to be used
+	string tsPathFileName;
+	string tsFileName;
+	int64_t tsDuration;
+	int64_t utcChunkStartTime;
+	try
+	{
+		bool tsFound = false;
+
+		for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemDetail:
+			liveChunksDetails)
+		{
+			bool validated;
+			int64_t willBeRemovedInSeconds;
+
+			int64_t mediaItemKey;
+			int64_t physicalPathKey;
+
+			{
+				tie(mediaItemKey, physicalPathKey, ignore) = mediaItemDetail;
+
+				string userData;
+				try
+				{
+					bool warningIfMissing = true;
+					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+						moreMediaItemDetails;
+					moreMediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
+						workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+
+					tie(ignore, ignore, userData, ignore, willBeRemovedInSeconds, ignore) =
+						moreMediaItemDetails;
+				}
+				catch(MediaItemKeyNotFound mnf)
+				{
+					continue;
+				}
+
+				Json::Value userDataRoot;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(userData.c_str(),
+						userData.c_str() + userData.size(), 
+						&userDataRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the metadata"
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", errors: " + errors
+							+ ", userData: " + userData
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(...)
+				{
+					string errorMessage = string("metadata json is not well format")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// throw runtime_error(errorMessage);
+					continue;
+				}
+
+				/*
+				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
+				*/
+
+				string mmsDataField = "mmsData";
+				string dataTypeField = "dataType";
+				if (JSONUtils::isMetadataPresent(userDataRoot, mmsDataField)
+					&& JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], dataTypeField)
+				)
+				{
+					string dataType = (userDataRoot[mmsDataField]).get(dataTypeField, "").asString();
+					if (dataType == "liveRecordingChunk")
+					{
+						string field = "validated";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+							validated = JSONUtils::asBool((userDataRoot[mmsDataField]), field, false);
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+
+						field = "utcChunkStartTime";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+							utcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+					}
+					else
+					{
+						string errorMessage = string("metadata json is not well format")
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", userData: " + userData
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						// throw runtime_error(errorMessage);
+						continue;
+					}
+				}
+				else
+				{
+					string errorMessage = string("metadata json is not well format")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// throw runtime_error(errorMessage);
+					continue;
+				}
+			}
+
+			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
+			{
+				tsFound = true;
+
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
+
+				tie(tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
+					= physicalPathDetails;
+
+				tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+					mediaItemKey, physicalPathKey);
+
+				break;
+			}
+			else
+			{
+				continue;
+			}
+		}
+
+		if (!tsFound)
+		{
+			string errorMessage = string("No TS found to ingest the live recorder VOD")
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			return;
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("look for one TS to build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("look for one TS to build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	// we have the TS, let's build the live recorder VOD (the directory,
+	// TS, manifest file)
+	string liveRecorderVODName;
+	string stagingLiveRecorderVODPathName;
+	string tarGzStagingLiveRecorderVODPathName;
+	try
+	{
+		{
+			liveRecorderVODName = to_string(liveRecorderIngestionJobKey)
+				+ "_liveRecorderVOD"
+			;
+
+			bool removeLinuxPathIfExist = false;
+			bool neededForTranscoder = false;
+			stagingLiveRecorderVODPathName = _mmsStorage->getStagingAssetPathName(  
+				neededForTranscoder,
+				workspace->_directoryName,
+				to_string(liveRecorderIngestionJobKey),  // directoryNamePrefix,
+				"/",    // relativePath,
+				liveRecorderVODName,	// filename
+				-1, // mediaItemKey, not used because FileName is not ""
+				-1, // physicalPathKey, not used because FileName is not ""
+				removeLinuxPathIfExist);
+
+			// in our case 'fileName' is a directory, so we have to create it
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(
+				stagingLiveRecorderVODPathName,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP |
+				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		}
+
+		// copy TS file into the stagingLiveRecorderVODPathName
+		{
+			string destTSPathFileName = stagingLiveRecorderVODPathName + "/" + tsFileName;
+
+			_logger->info(__FILEREF__ + "Coping"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", tsPathFileName,: " + tsPathFileName
+				+ ", destTSPathFileName: " + destTSPathFileName
+			);
+
+			chrono::system_clock::time_point startCoping = chrono::system_clock::now();
+			FileIO::copyFile(tsPathFileName, destTSPathFileName);
+			chrono::system_clock::time_point endCoping = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "TS copied"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", copingDuration (millisecs): "
+					+ to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count())
+			);
+		}
+
+		// save manifest file
+		{
+			string endLine = "\n";
+
+			char	pTsDuration [64];
+			sprintf(pTsDuration, "%0.6f", ((float) tsDuration) / 1000);
+
+			string manifestContent =
+				"#EXTM3U" + endLine
+				+ "#EXT-X-VERSION:3" + endLine
+				+ "#EXT-X-TARGETDURATION:" + to_string(liveRecorderSegmentDuration) + endLine
+				+ "#EXT-X-MEDIA-SEQUENCE:0" + endLine
+				+ "#EXTINF:" + string(pTsDuration) + "," + endLine
+				+ tsFileName + endLine
+				+ "#EXT-X-ENDLIST" + endLine
+			;
+
+			string manifestPathFileName = stagingLiveRecorderVODPathName + "/" + liveRecorderVODName + ".m3u8";
+
+			ofstream ofManifestFile(manifestPathFileName);
+			ofManifestFile << manifestContent;
+		}
+
+		{
+			string executeCommand;
+			try
+			{
+				tarGzStagingLiveRecorderVODPathName = stagingLiveRecorderVODPathName + ".tar.gz";
+
+				size_t endOfPathIndex = stagingLiveRecorderVODPathName.find_last_of("/");
+				if (endOfPathIndex == string::npos)
+				{
+					string errorMessage = string("No stagingLiveRecorderVODDirectory found")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+				string stagingLiveRecorderVODDirectory =
+					stagingLiveRecorderVODPathName.substr(0, endOfPathIndex);
+
+				executeCommand =
+					"tar cfz " + tarGzStagingLiveRecorderVODPathName
+					+ " -C " + stagingLiveRecorderVODDirectory
+					+ " " + liveRecorderVODName;
+				_logger->info(__FILEREF__ + "Start tar command "
+					+ ", executeCommand: " + executeCommand
+				);
+				chrono::system_clock::time_point startTar = chrono::system_clock::now();
+				int executeCommandStatus = ProcessUtility::execute(executeCommand);
+				chrono::system_clock::time_point endTar = chrono::system_clock::now();
+				_logger->info(__FILEREF__ + "End tar command "
+					+ ", executeCommand: " + executeCommand
+					+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+				);
+				if (executeCommandStatus != 0)
+				{
+					string errorMessage = string("ProcessUtility::execute failed")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+						+ ", executeCommand: " + executeCommand 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					_logger->info(__FILEREF__ + "Remove directory"
+						+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+					);
+					bool removeRecursively = true;
+					FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("tar command failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", executeCommand: " + executeCommand 
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+         
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		if (stagingLiveRecorderVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		if (stagingLiveRecorderVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	// build workflow
+	string workflowMetadata;
+	try
+	{
+		/*
+		{
+        	"Label": "<workflow label>",
+        	"Type": "Workflow",
+        	"Task": {
+                "Label": "<task label 1>",
+                "Type": "Add-Content"
+                "Parameters": {
+                        "FileFormat": "m3u8",
+                        "Ingester": "Giuliano",
+                        "SourceURL": "move:///abc...."
+                },
+        	}
+		}
+		*/
+		Json::Value mmsDataRoot;
+
+		string field = "lastUtcChunkStartTime";
+		mmsDataRoot[field] = utcChunkStartTime;
+
+		string sUtcChunkStartTime;
+		{
+			char	lastUtcChunkStartTime_str [64];
+			tm		tmDateTime;
+
+			// from utc to local time
+			localtime_r (&utcChunkStartTime, &tmDateTime);
+
+			sprintf (lastUtcChunkStartTime_str,
+				"%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900,
+				tmDateTime. tm_mon + 1,
+				tmDateTime. tm_mday,
+				tmDateTime. tm_hour,
+				tmDateTime. tm_min,
+				tmDateTime. tm_sec);
+
+			sUtcChunkStartTime = lastUtcChunkStartTime_str;
+
+			field = "lastUtcChunkStartTime_str";
+			mmsDataRoot[field] = sUtcChunkStartTime;
+		}
+
+		Json::Value userDataRoot;
+
+		field = "mmsData";
+		userDataRoot[field] = mmsDataRoot;
+
+		Json::Value addContentRoot;
+
+		string addContentLabel = liveRecorderConfigurationLabel + " up to " + sUtcChunkStartTime;
+
+		field = "Label";
+		addContentRoot[field] = addContentLabel;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		Json::Value addContentParametersRoot;
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = "m3u8";
+
+		string sourceURL = string("copy") + "://" + tarGzStagingLiveRecorderVODPathName;
+        field = "SourceURL";
+        addContentParametersRoot[field] = sourceURL;
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Live Recorder Task";
+
+		field = "Title";
+		addContentParametersRoot[field] = addContentLabel;
+
+		field = "UniqueName";
+		addContentParametersRoot[field] = liveRecorderVODUniqueName;
+
+		field = "Retention";
+		addContentParametersRoot[field] = liveChunkRetention;
+
+		field = "UserData";
+		addContentParametersRoot[field] = userDataRoot;
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = addContentLabel;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Live Recorder VOD Workflow metadata generated"
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", " + addContentLabel + ", "
+		);
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	// ingest the Live Recorder VOD
+	ostringstream response;
+	string mmsAPIURL;
+	try
+	{
+		mmsAPIURL =
+			_mmsAPIProtocol
+			+ "://"
+			+ _mmsAPIHostname + ":"
+			+ to_string(_mmsAPIPort)
+			+ _mmsAPIIngestionURI
+           ;
+
+		list<string> header;
+
+		header.push_back("Content-Type: application/json");
+		{
+			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			string userPasswordEncoded = Convert::base64_encode(to_string(liveRecorderUserKey) + ":" + liveRecorderApiKey);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+		if (_mmsAPIProtocol == "https")
+		{
+			/*
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+			*/
+
+			/*
+			// cert is stored PEM coded in file... 
+			// since PEM is default, we needn't set it for PEM 
+			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			equest.setOpt(sslCertType);
+
+			// set the cert for client authentication
+			// "testcert.pem"
+			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			request.setOpt(sslCert);
+			*/
+
+			/*
+			// sorry, for engine we must set the passphrase
+			//   (if the key has one...)
+			// const char *pPassphrase = NULL;
+			if(pPassphrase)
+			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+			// if we use a key stored in a crypto engine,
+			//   we must set the key type to "ENG"
+			// pKeyType  = "PEM";
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+			// set the private key (file or ID in engine)
+			// pKeyName  = "testkey.pem";
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+			// set the file with the certs vaildating the server
+			// *pCACertFile = "cacert.pem";
+			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+			*/
+
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+              
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+              
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		_logger->info(__FILEREF__ + "Ingesting Live Recorder VOD workflow"
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
+		request.perform();
+		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
+
+		string sResponse = response.str();
+		// LF and CR create problems to the json parser...
+		while (sResponse.back() == 10 || sResponse.back() == 13)
+			sResponse.pop_back();
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);
+		if (responseCode == 201)
+		{
+			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				;
+			_logger->info(message);
+		}
+		else
+		{
+			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				+ ", responseCode: " + to_string(responseCode)
+				;
+			_logger->error(message);
+
+			throw runtime_error(message);
+		}
+	}
+	catch (curlpp::LogicError& e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed (LogicError)")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (curlpp::RuntimeError& e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed (RuntimeError)")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void MMSEngineProcessor::liveRecorder_updateVOD(
+	shared_ptr<Workspace> workspace,
+	int64_t liveRecorderIngestionJobKey,
+	int liveRecorderSegmentDuration,
+	string liveRecorderConfigurationLabel,
+	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
+	int64_t liveRecorderVODMediaItemKey,
+	int64_t liveRecorderVODPhysicalPathKey,
+	string liveRecorderVODManifestPathName
+	)
+{
+	// look for all the TS to be used (vector tsToBeUsed)
+	// build the new manifest in memory
+	// save the new manifest having references to the ts files
+
+	int tsWillBePresentAtLeastForSeconds = 120;
+
+	// look for the ts to be used
+	vector<tuple<int, string, string, int64_t>> tsToBeUsed;
+	int64_t lastUtcChunkStartTime = -1;
+	try
+	{
+		for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemDetail:
+			liveChunksDetails)
+		{
+			bool validated;
+			int64_t willBeRemovedInSeconds;
+
+			int64_t physicalPathKey;
+			int64_t mediaItemKey;
+
+			{
+				tie(mediaItemKey, physicalPathKey, ignore) = mediaItemDetail;
+
+				string userData;
+				try
+				{
+					bool warningIfMissing = true;
+					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
+						moreMediaItemDetails;
+					moreMediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
+						workspace->_workspaceKey, mediaItemKey, warningIfMissing);
+
+					tie(ignore, ignore, userData, ignore, willBeRemovedInSeconds, ignore) =
+						moreMediaItemDetails;
+				}
+				catch(MediaItemKeyNotFound mnf)
+				{
+					continue;
+				}
+
+				Json::Value userDataRoot;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(userData.c_str(),
+						userData.c_str() + userData.size(), 
+						&userDataRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the metadata"
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", errors: " + errors
+							+ ", userData: " + userData
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(...)
+				{
+					string errorMessage = string("metadata json is not well format")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// throw runtime_error(errorMessage);
+					continue;
+				}
+
+				/*
+				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
+				*/
+
+				string mmsDataField = "mmsData";
+				string dataTypeField = "dataType";
+				if (JSONUtils::isMetadataPresent(userDataRoot, mmsDataField)
+					&& JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], dataTypeField)
+				)
+				{
+					string dataType = (userDataRoot[mmsDataField]).get(dataTypeField, "").asString();
+					if (dataType == "liveRecordingChunk")
+					{
+						string field = "validated";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+							validated = JSONUtils::asBool((userDataRoot[mmsDataField]), field, false);
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+
+						field = "utcChunkStartTime";
+						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
+						{
+							int64_t utcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
+							if (utcChunkStartTime > lastUtcChunkStartTime)
+								lastUtcChunkStartTime = utcChunkStartTime;
+						}
+						else
+						{
+							string errorMessage = string("metadata json is not well format")
+								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", userData: " + userData
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							// throw runtime_error(errorMessage);
+							continue;
+						}
+					}
+					else
+					{
+						string errorMessage = string("metadata json is not well format")
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", userData: " + userData
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						// throw runtime_error(errorMessage);
+						continue;
+					}
+				}
+				else
+				{
+					string errorMessage = string("metadata json is not well format")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// throw runtime_error(errorMessage);
+					continue;
+				}
+			}
+
+			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
+
+				int mmsPartitionNumber;
+				string relativePath;
+				string fileName;
+
+				tie(ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
+					= physicalPathDetails;
+
+				int64_t tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+					mediaItemKey, physicalPathKey);
+
+				tsToBeUsed.push_back(
+						make_tuple(mmsPartitionNumber, relativePath, fileName, tsDuration)
+						);
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("retrieve all the TS to update the live recorder manifest failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("retrieve all the TS to update the live recorder manifest failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	// build and update the new manifest file
+	try
+	{
+		string liveRecorderVODDirectory;
+		{
+			size_t endOfPathIndex = liveRecorderVODManifestPathName.find_last_of("/");
+			if (endOfPathIndex == string::npos)
+			{
+				string errorMessage = string("No liveRecorderVODDirectory found")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+         
+				throw runtime_error(errorMessage);
+			}
+			liveRecorderVODDirectory = liveRecorderVODManifestPathName.substr(0, endOfPathIndex);
+		}
+
+		// build new manifest file
+		string manifestContent;
+		{
+			string endLine = "\n";
+
+			manifestContent =
+				"#EXTM3U" + endLine
+				+ "#EXT-X-VERSION:3" + endLine
+				+ "#EXT-X-TARGETDURATION:" + to_string(liveRecorderSegmentDuration) + endLine
+				+ "#EXT-X-MEDIA-SEQUENCE:0" + endLine
+			;
+
+			for (tuple<int, string, string, int64_t> tsInfo: tsToBeUsed)
+			{
+				int mmsPartitionNumber;
+				string relativePath;
+				string fileName;
+				int64_t tsDuration;
+				
+				tie(mmsPartitionNumber, relativePath, fileName, tsDuration) = tsInfo;
+
+				{
+					char	pTsDuration [64];
+					sprintf(pTsDuration, "%0.6f", ((float) tsDuration) / 1000);
+
+					manifestContent +=
+						("#EXTINF:" + string(pTsDuration) + "," + endLine);
+				}
+
+				{
+					char pMMSPartitionName [64];
+					sprintf(pMMSPartitionName, "MMS_%04lu",
+						(unsigned long) mmsPartitionNumber);
+
+					if (!FileIO::fileExisting(liveRecorderVODDirectory + "/" + fileName))
+					{
+						string relativePathName = string("../../../../../../")
+							+ string(pMMSPartitionName)
+							+ "/"
+							+ workspace->_directoryName
+							+ relativePath
+							+ fileName;
+						string linkPathName = liveRecorderVODDirectory + "/" + fileName;
+						Boolean_t bReplaceItIfExist = true;
+						_logger->info(__FILEREF__ + "create link"
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", linkPathName: " + linkPathName 
+							+ ", relativePathName: " + relativePathName
+						);
+						FileIO:: createLink (relativePathName.c_str(), 
+							linkPathName.c_str(), bReplaceItIfExist);
+					}
+
+					// manifestContent += (relativePathName + endLine);
+					manifestContent += (fileName + endLine);
+				}
+			}
+
+			manifestContent += ("#EXT-X-ENDLIST" + endLine);
+
+			_logger->info(__FILEREF__ + "update the Live Recorder VOD manifest file"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", manifestContent: " + manifestContent
+			);
+		}
+
+		// retrieve updated information
+		string sLastUtcChunkStartTime;
+		string title;
+		int64_t durationInMilliSeconds = -1;
+		long bitRate = -1;
+		unsigned long long sizeInBytes;
+		vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+		vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+		{
+			{
+				char	lastUtcChunkStartTime_str [64];
+				tm		tmDateTime;
+
+				// from utc to local time
+				localtime_r (&lastUtcChunkStartTime, &tmDateTime);
+
+				sprintf (lastUtcChunkStartTime_str,
+					"%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
+
+				sLastUtcChunkStartTime = lastUtcChunkStartTime_str;
+			}
+			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkStartTime;
+
+			{
+				pair<int64_t, long> mediaInfoDetails;
+
+				FFMpeg ffmpeg (_configuration, _logger);
+				mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
+					videoTracks, audioTracks);
+
+				tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+			}
+
+			{
+				/*
+				size_t endOfPathIndex = liveRecorderVODManifestPathName.find_last_of("/");
+				if (endOfPathIndex == string::npos)
+				{
+					string errorMessage = string("No liveRecorderVODDirectory found")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+				string liveRecorderVODDirectory =
+					liveRecorderVODManifestPathName.substr(0, endOfPathIndex);
+				*/
+
+				sizeInBytes = FileIO::getDirectorySizeInBytes(liveRecorderVODDirectory);
+			}
+		}
+
+		// update Media Item
+		{
+			_mmsEngineDBFacade->updateLiveRecorderVOD (liveRecorderVODMediaItemKey,
+				liveRecorderVODPhysicalPathKey,
+
+				lastUtcChunkStartTime,
+				sLastUtcChunkStartTime,
+				title,
+				durationInMilliSeconds,
+				bitRate,
+				sizeInBytes,
+
+				videoTracks,
+				audioTracks
+			);
+
+			ofstream ofManifestFile(liveRecorderVODManifestPathName);
+			ofManifestFile << manifestContent;
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("build and update new live recorder VOD manifest file failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("build and update new live recorder VOD manifest file failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
 void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		int64_t ingestionJobKey,
 		string tarBinaryPathName, string workspaceIngestionRepository,
@@ -19963,7 +21352,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 	}
 	catch(runtime_error e)
 	{
-		string errorMessage = string("ProcessUtility::execute failed")
+		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 			+ ", executeCommand: " + executeCommand 

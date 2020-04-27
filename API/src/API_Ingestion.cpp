@@ -25,6 +25,7 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
+#include "catralibraries/ProcessUtility.h"
 #include "Validator.h"
 #include "PersistenceLock.h"
 #include "API.h"
@@ -2120,7 +2121,8 @@ void API::uploadedBinary(
 
             throw runtime_error(errorMessage);            
         }
-        string binaryPathFile = binaryPathFileIt->second;
+		// sourceBinaryPathFile will be something like: /var/catramms/storage/nginxWorkingAreaRepository/0000001023
+        string sourceBinaryPathFile = binaryPathFileIt->second;
 
         // Content-Range: bytes 0-99999/100000
         bool contentRangePresent = false;
@@ -2160,29 +2162,115 @@ void API::uploadedBinary(
             + ", contentRangeSize: " + to_string(contentRangeSize)
         );
 
-        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-        workspaceIngestionBinaryPathName
-                .append("/")
-                .append(to_string(ingestionJobKey))
-                .append("_source")
-                ;
-             
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        string destBinaryPathName =
+			workspaceIngestionRepository
+			+ "/"
+			+ to_string(ingestionJobKey)
+			+ "_source";
+		bool segmentedContent = false;
+		try
+		{
+			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+
+			string parameters;
+			tie(ignore, ignore, ignore, parameters, ignore) = ingestionJobDetails;
+
+			Json::Value parametersRoot;
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(parameters.c_str(),
+						parameters.c_str() + parameters.size(),
+						&parametersRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", errors: " + errors
+						+ ", parameters: " + parameters
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			string field = "FileFormat";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string fileFormat = parametersRoot.get(field, "").asString();
+				if (fileFormat == "m3u8")
+					segmentedContent = true;
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+				+ ", destBinaryPathName: " + destBinaryPathName
+				+ ", e.what: " + e.what()
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);            
+		}
+		catch(exception e)
+		{
+			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+				+ ", destBinaryPathName: " + destBinaryPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);            
+		}
+		if (segmentedContent)                                                                                 
+			destBinaryPathName = destBinaryPathName + ".tar.gz";
+
         if (!contentRangePresent)
         {
             try
             {
                 _logger->info(__FILEREF__ + "Moving file"
-                    + ", binaryPathFile: " + binaryPathFile
-                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                    + ", destBinaryPathName: " + destBinaryPathName
                 );
 
-                FileIO::moveFile(binaryPathFile, workspaceIngestionBinaryPathName);
+                FileIO::moveFile(sourceBinaryPathFile, destBinaryPathName);
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = string("Error to move file")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                    + ", destBinaryPathName: " + destBinaryPathName
+					+ ", e.what: " + e.what()
+                ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 500, errorMessage);
+
+                throw runtime_error(errorMessage);            
             }
             catch(exception e)
             {
                 string errorMessage = string("Error to move file")
-                    + ", binaryPathFile: " + binaryPathFile
-                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                    + ", destBinaryPathName: " + destBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -2191,8 +2279,34 @@ void API::uploadedBinary(
                 throw runtime_error(errorMessage);            
             }
 
-			// we should manage segmented contents as it is done
-			// in MMSEngineProcessor.cpp (manageTarFileInCaseOfIngestionOfSegments)
+			if (segmentedContent)
+			{
+				try
+				{
+					// by a convention, the directory inside the tar file has to be named as 'content'
+                    string localSourceBinaryPathFile = "/content.tar.gz";
+
+					_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+						+ ", destBinaryPathName: " + destBinaryPathName
+						+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+						+ ", localSourceBinaryPathFile: " + localSourceBinaryPathFile
+					);
+
+					manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+							destBinaryPathName, workspaceIngestionRepository,
+							localSourceBinaryPathFile);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
 
             bool sourceBinaryTransferred = true;
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -2206,12 +2320,12 @@ void API::uploadedBinary(
         {
             //  Content-Range is present
             
-            if (FileIO::fileExisting (workspaceIngestionBinaryPathName))
+            if (FileIO::fileExisting (destBinaryPathName))
             {
                 if (contentRangeStart == 0)
                 {
                     // content is reset
-                    ofstream osDestStream(workspaceIngestionBinaryPathName.c_str(), 
+                    ofstream osDestStream(destBinaryPathName.c_str(), 
                             ofstream::binary | ofstream::trunc);
 
                     osDestStream.close();
@@ -2219,13 +2333,14 @@ void API::uploadedBinary(
                 
                 bool inCaseOfLinkHasItToBeRead  = false;
                 unsigned long workspaceIngestionBinarySizeInBytes = FileIO::getFileSizeInBytes (
-                    workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                    destBinaryPathName, inCaseOfLinkHasItToBeRead);
                 unsigned long binarySizeInBytes = FileIO::getFileSizeInBytes (
-                    binaryPathFile, inCaseOfLinkHasItToBeRead);
+                    sourceBinaryPathFile, inCaseOfLinkHasItToBeRead);
                 
                 if (contentRangeStart != workspaceIngestionBinarySizeInBytes)
                 {
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
                         + ", workspaceIngestionBinarySizeInBytes: " + to_string(workspaceIngestionBinarySizeInBytes)
                     ;
@@ -2257,18 +2372,20 @@ void API::uploadedBinary(
                     bool removeSrcFileAfterConcat = true;
                     
                     _logger->info(__FILEREF__ + "Concat file"
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-                        + ", binaryPathFile: " + binaryPathFile
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", destBinaryPathName: " + destBinaryPathName
+                        + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                         + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                     );
 
-                    FileIO::concatFile(workspaceIngestionBinaryPathName, binaryPathFile, removeSrcFileAfterConcat);
+                    FileIO::concatFile(destBinaryPathName, sourceBinaryPathFile, removeSrcFileAfterConcat);
                 }
                 catch(exception e)
                 {
                     string errorMessage = string("Error to concat file")
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-                        + ", binaryPathFile: " + binaryPathFile
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", destBinaryPathName: " + destBinaryPathName
+                        + ", sourceBinaryPathFile: " + sourceBinaryPathFile
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -2284,6 +2401,7 @@ void API::uploadedBinary(
                 if (contentRangeStart != 0)
                 {
                     string errorMessage = string("This is the first chunk of the file and Content-Range start has to be 0")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", contentRangeStart: " + to_string(contentRangeStart)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
@@ -2296,17 +2414,19 @@ void API::uploadedBinary(
                 try
                 {
                     _logger->info(__FILEREF__ + "Moving file"
-                        + ", binaryPathFile: " + binaryPathFile
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                        + ", destBinaryPathName: " + destBinaryPathName
                     );
 
-                    FileIO::moveFile(binaryPathFile, workspaceIngestionBinaryPathName);
+                    FileIO::moveFile(sourceBinaryPathFile, destBinaryPathName);
                 }
                 catch(exception e)
                 {
                     string errorMessage = string("Error to move file")
-                        + ", binaryPathFile: " + binaryPathFile
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", sourceBinaryPathFile: " + sourceBinaryPathFile
+                        + ", destBinaryPathName: " + destBinaryPathName
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -2318,8 +2438,34 @@ void API::uploadedBinary(
             
             if (contentRangeEnd + 1 == contentRangeSize)
             {
-				// we should manage segmented contents as it is done
-				// in MMSEngineProcessor.cpp (manageTarFileInCaseOfIngestionOfSegments)
+				if (segmentedContent)
+				{
+					try
+					{
+						// by a convention, the directory inside the tar file has to be named as 'content'
+						string localSourceBinaryPathFile = "/content.tar.gz";
+
+						_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+							+ ", destBinaryPathName: " + destBinaryPathName
+							+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+							+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
+							+ ", localSourceBinaryPathFile: " + localSourceBinaryPathFile
+						);
+
+						manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+							destBinaryPathName, workspaceIngestionRepository,
+							localSourceBinaryPathFile);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
 
                 bool sourceBinaryTransferred = true;
                 _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -2327,7 +2473,7 @@ void API::uploadedBinary(
                     + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
                 );                            
                 _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
-                    ingestionJobKey, sourceBinaryTransferred);
+					ingestionJobKey, sourceBinaryTransferred);
             }
         }
         
@@ -2562,6 +2708,126 @@ void API::uploadedBinary(
     }    
 }
 
+void API::manageTarFileInCaseOfIngestionOfSegments(
+		int64_t ingestionJobKey,
+		string tarBinaryPathName, string workspaceIngestionRepository,
+		string sourcePathName)
+{
+	string executeCommand;
+	try
+	{
+		// tar into workspaceIngestion directory
+		//	source will be something like <ingestion key>_source
+		//	destination will be the original directory (that has to be the same name of the tar file name)
+		executeCommand =
+			"tar xfz " + tarBinaryPathName
+			+ " --directory " + workspaceIngestionRepository;
+		_logger->info(__FILEREF__ + "Start tar command "
+			+ ", executeCommand: " + executeCommand
+		);
+		chrono::system_clock::time_point startTar = chrono::system_clock::now();
+		int executeCommandStatus = ProcessUtility::execute(executeCommand);
+		chrono::system_clock::time_point endTar = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "End tar command "
+			+ ", executeCommand: " + executeCommand
+			+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+		);
+		if (executeCommandStatus != 0)
+		{
+			string errorMessage = string("ProcessUtility::execute failed")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+				+ ", executeCommand: " + executeCommand 
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+          
+			throw runtime_error(errorMessage);
+		}
+
+		// sourceFileName is the name of the tar file name that is the same
+		//	of the name of the directory inside the tar file
+		string sourceFileName;
+		{
+			string suffix(".tar.gz");
+			if (!(sourcePathName.size() >= suffix.size()
+				&& 0 == sourcePathName.compare(sourcePathName.size()-suffix.size(), suffix.size(), suffix)))
+			{
+				string errorMessage = __FILEREF__ + "sourcePathName does not end with " + suffix
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourcePathName: " + sourcePathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			size_t startFileNameIndex = sourcePathName.find_last_of("/");
+			if (startFileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "sourcePathName bad format"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourcePathName: " + sourcePathName
+					+ ", startFileNameIndex: " + to_string(startFileNameIndex)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			sourceFileName = sourcePathName.substr(startFileNameIndex + 1);
+			sourceFileName = sourceFileName.substr(0, sourceFileName.size() - suffix.size());
+		}
+
+		// remove tar file
+		{
+			string sourceTarFile = workspaceIngestionRepository + "/"
+				+ to_string(ingestionJobKey)
+				+ "_source"
+				+ ".tar.gz";
+
+			_logger->info(__FILEREF__ + "Remove file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceTarFile: " + sourceTarFile
+			);
+
+			FileIO::remove(sourceTarFile);
+		}
+
+		// rename directory generated from tar: from user_tar_filename to 1247848_source
+		{
+			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
+			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
+			_logger->info(__FILEREF__ + "Start moveDirectory..."
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceDirectory: " + sourceDirectory
+				+ ", destDirectory: " + destDirectory
+			);
+			chrono::system_clock::time_point startMoveDir = chrono::system_clock::now();
+			FileIO::moveDirectory(sourceDirectory, destDirectory,
+				S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
+				S_IRGRP | S_IXGRP |                                                                                   
+				S_IROTH | S_IXOTH);
+			chrono::system_clock::time_point endMoveDir = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "End moveDirectory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceDirectory: " + sourceDirectory
+				+ ", destDirectory: " + destDirectory
+				+ ", moveDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoveDir - startMoveDir).count())
+			);
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+			+ ", executeCommand: " + executeCommand 
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+         
+		throw runtime_error(errorMessage);
+	}
+}
+
 void API::stopUploadFileProgressThread()
 {
     _fileUploadProgressThreadShutdown       = true;
@@ -2598,7 +2864,7 @@ void API::fileUploadProgressCheck()
             
             try 
             {
-                string progressURL = string("http://localhost:") + to_string(_webServerPort) + _progressURI;
+                string progressURL = string("http://127.0.0.1:") + to_string(_webServerPort) + _progressURI;
                 string progressIdHeader = string("X-Progress-ID: ") + itr->_progressId;
 
                 _logger->info(__FILEREF__ + "Call for upload progress"
