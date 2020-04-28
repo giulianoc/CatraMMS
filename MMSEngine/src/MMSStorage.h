@@ -52,7 +52,8 @@ public:
 
 	tuple<int64_t, string, int, string, string, int64_t, string> getPhysicalPath(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t mediaItemKey, int64_t encodingProfileKey);
+		int64_t mediaItemKey, int64_t encodingProfileKey,
+		bool warningIfMissing);
     
 	tuple<string, int, string, string, int64_t, string> getPhysicalPath(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);

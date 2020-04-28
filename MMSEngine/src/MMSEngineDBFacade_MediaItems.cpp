@@ -5760,47 +5760,23 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 		// not be visible into the MediaItems view
 		{
 			{
+				string newDataTpe = "liveRecordingChunk";
+				string previousDataTpe = "liveRecordingVOD";
 				lastSQLCommand = 
-					"select mediaItemKey from MMS_ExternalUniqueName "
-					"where workspaceKey = ? and uniqueName = ?";
+					"update MMS_ExternalUniqueName "
+					"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
+					"where workspaceKey = ? and uniqueName like concat(?, '-', '%') "
+					"and JSON_EXTRACT(userData, '$.mmsData.dataType') = ?" ;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement(
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, newDataTpe);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 				preparedStatement->setString(queryParameterIndex++, liveRecorderVODUniqueName);
-				shared_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
-				if (resultSet->next())
-				{
-					int64_t previousLiveRecorderVODMediaItemKey
-						= resultSet->getInt64("mediaItemKey");
+				preparedStatement->setString(queryParameterIndex++, previousDataTpe);
 
-					string newDataTpe = "liveRecordingChunk";
-					lastSQLCommand = 
-						"update MMS_MediaItem "
-						"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
-						"where mediaItemKey = ?";
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setString(queryParameterIndex++, newDataTpe);
-					preparedStatement->setInt64(queryParameterIndex++,
-						previousLiveRecorderVODMediaItemKey);
-
-					int rowsUpdated = preparedStatement->executeUpdate();
-					if (rowsUpdated != 1)
-					{
-						string errorMessage = __FILEREF__ + "no update was done"
-								+ ", previousLiveRecorderVODMediaItemKey: "
-									+ to_string(previousLiveRecorderVODMediaItemKey)
-								+ ", rowsUpdated: " + to_string(rowsUpdated)
-								+ ", lastSQLCommand: " + lastSQLCommand
-						;
-						_logger->warn(errorMessage);
-
-						// throw runtime_error(errorMessage);                    
-					}
-				}
+				int rowsUpdated = preparedStatement->executeUpdate();
 			}
 
 			{

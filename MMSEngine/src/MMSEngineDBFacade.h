@@ -1463,7 +1463,8 @@ public:
 
     tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t mediaItemKey,
-        int64_t encodingProfileKey
+        int64_t encodingProfileKey,
+		bool warningIfMissing
     );
 
     void getAllStorageDetails(int64_t mediaItemKey,

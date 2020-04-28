@@ -1762,7 +1762,8 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t mediaItemKey,
 		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
-		int64_t encodingProfileKey
+		int64_t encodingProfileKey,
+		bool warningIfMissing
 )
 {
 
@@ -1826,7 +1827,10 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                     + ", encodingProfileKey: " + to_string(encodingProfileKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
                 throw MediaItemKeyNotFound(errorMessage);                    
             }
@@ -1866,7 +1870,6 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         }
 		else
 		{
-			bool warningIfMissing = false;
 			tuple<int64_t, int, string, string, int64_t, bool> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(mediaItemKey, warningIfMissing);
 			tie(physicalPathKey, mmsPartitionNumber, relativePath,
@@ -1880,7 +1883,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            
+
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -1904,7 +1907,10 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                     + ", mediaItemKey: " + to_string(mediaItemKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
                 throw MediaItemKeyNotFound(errorMessage);                    
             }
@@ -1944,11 +1950,18 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     }    
     catch(MediaItemKeyNotFound e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
+		if (warningIfMissing)
+			_logger->warn(__FILEREF__ + "SQL exception"
+			 + ", e.what(): " + e.what()
+			 + ", lastSQLCommand: " + lastSQLCommand
+			 + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
+		else
+			_logger->error(__FILEREF__ + "SQL exception"
+			 + ", e.what(): " + e.what()
+			 + ", lastSQLCommand: " + lastSQLCommand
+			 + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+			);
 
         if (conn != nullptr)
         {

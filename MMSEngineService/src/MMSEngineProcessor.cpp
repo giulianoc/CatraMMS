@@ -7568,9 +7568,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
                 int64_t encodingProfileKey = -1;
                
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -7737,9 +7738,10 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -7975,9 +7977,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8343,8 +8346,9 @@ void MMSEngineProcessor::httpCallbackTask(
 
 					{
 						int64_t encodingProfileKey = -1;
+						bool warningIfMissing = false;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 
 						string physicalPath;
 						string fileName;
@@ -8621,9 +8625,10 @@ void MMSEngineProcessor::localCopyContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8814,9 +8819,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -9012,9 +9018,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -10470,9 +10477,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 				mediaItemKey = key;
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -11348,9 +11356,10 @@ void MMSEngineProcessor::extractTracksContentThread(
             {
                 int64_t encodingProfileKey = -1;
                 
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -12478,9 +12487,10 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
             int64_t encodingProfileKey = -1;
+			bool warningIfMissing = false;
 			tuple<int64_t, string, int, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
             tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -12698,9 +12708,10 @@ void MMSEngineProcessor::manageSlideShowTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -12859,9 +12870,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
 				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -13315,9 +13327,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
 			int64_t encodingProfileKey = -1;
+			bool warningIfMissing = false;
 			tuple<int64_t, string, int, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey);
+				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -19958,9 +19971,10 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 						tie(liveRecorderVODMediaItemKey, ignore) = mediaItemKeyDetails;
 
 						int64_t encodingProfileKey = -1;
+						bool warningIfMissing = false;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 							= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, liveRecorderVODMediaItemKey,
-							encodingProfileKey);
+							encodingProfileKey, warningIfMissing);
 						tie(liveRecorderVODPhysicalPathKey, liveRecorderVODManifestPathName,
 								ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 					}
@@ -20265,8 +20279,10 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 					try
 					{
+						bool warningIfMissing = true;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderVODEncodingProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey,
+							liveRecorderVODEncodingProfileKey, warningIfMissing);
 
 						tie(tsPhysicalPathKey, tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
 							= physicalPathDetails;
@@ -21033,9 +21049,13 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						{
 							string errorMessage = string("metadata json is not well format")
 								+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+								+ ", tsMediaItemKey: " + to_string(tsMediaItemKey)
+								+ ", tsPhysicalPathKey: " + to_string(tsPhysicalPathKey)
 								+ ", userData: " + userData
 							;
-							_logger->error(__FILEREF__ + errorMessage);
+							// 2020-04-28: in case of high availability, no validated field is present at the beggining
+							//	So set it as warn
+							_logger->warn(__FILEREF__ + errorMessage);
 
 							// throw runtime_error(errorMessage);
 							continue;
@@ -21119,9 +21139,10 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 					try
 					{
-						 tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+						bool warningIfMissing = true;
+						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey,
-							liveRecorderVODEncodingProfileKey);
+							liveRecorderVODEncodingProfileKey, warningIfMissing);
 
 						tie(tsPhysicalPathKey, ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
 							= physicalPathDetails;

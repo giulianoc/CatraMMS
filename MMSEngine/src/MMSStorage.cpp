@@ -284,13 +284,15 @@ string MMSStorage::getIngestionRootRepository(void) {
 
 tuple<int64_t, string, int, string, string, int64_t, string>
 	MMSStorage::getPhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t mediaItemKey, int64_t encodingProfileKey)
+		int64_t mediaItemKey, int64_t encodingProfileKey,
+		bool warningIfMissing)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
 			string, string, string, string, int64_t, bool> storageDetails =
-			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
+			warningIfMissing);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -328,8 +330,10 @@ tuple<int64_t, string, int, string, string, int64_t, string>
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
 			+ ", e.what(): " + e.what()
         ;
-        
-        _logger->error(__FILEREF__ + errorMessage);
+		if (warningIfMissing)
+			_logger->warn(__FILEREF__ + errorMessage);
+		else
+			_logger->error(__FILEREF__ + errorMessage);
         
         throw e;
     }
@@ -540,8 +544,11 @@ tuple<int64_t, string, string> MMSStorage::getVODDeliveryURI(
 {
 	try
 	{
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
-			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+		bool warningIfMissing = false;
+		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,
+			shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
+			warningIfMissing);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -552,8 +559,9 @@ tuple<int64_t, string, string> MMSStorage::getVODDeliveryURI(
 		string deliveryFileName;
 		string title;
 		bool externalReadOnlyStorage;
-		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, contentWorkspace, relativePath, fileName,
-                    deliveryFileName, title, ignore, externalReadOnlyStorage) = storageDetails;
+		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, contentWorkspace,
+				relativePath, fileName, deliveryFileName, title, ignore,
+				externalReadOnlyStorage) = storageDetails;
 
 		if (save)
 		{
