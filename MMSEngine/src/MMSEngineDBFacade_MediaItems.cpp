@@ -5763,17 +5763,21 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				string newDataTpe = "liveRecordingChunk";
 				string previousDataTpe = "liveRecordingVOD";
 				lastSQLCommand = 
-					"update MMS_ExternalUniqueName "
+					"update MMS_MediaItem "
 					"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
-					"where workspaceKey = ? and uniqueName like '" + liveRecorderVODUniqueName + "-%' "
-					"and JSON_EXTRACT(userData, '$.mmsData.dataType') = ?" ;
+					"where JSON_EXTRACT(userData, '$.mmsData.dataType') = ? and "
+					"mediaItemKey in ( "
+					"select mediaItemKey from MMS_ExternalUniqueName "
+					"where workspaceKey = ? and "
+					"uniqueName like '" + liveRecorderVODUniqueName + "-%' "
+					")" ;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement(
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, newDataTpe);
-				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 				preparedStatement->setString(queryParameterIndex++, previousDataTpe);
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 				int rowsUpdated = preparedStatement->executeUpdate();
 			}
