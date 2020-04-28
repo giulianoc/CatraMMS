@@ -5707,6 +5707,15 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "updateLiveRecorderVOD (sizeInBytes, durationInMilliSeconds, bitRate)"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", sizeInBytes: " + to_string(sizeInBytes)
+				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+				+ ", bitRate: " + to_string(bitRate)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -5722,7 +5731,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 
         {
 			// before it was liveRecordingChunk to avoid to be seen in the MediaItems view
-			string newDataTpe = "liveRecordingVOD";
+			string newDataType = "liveRecordingVOD";
             lastSQLCommand = 
 				"update MMS_MediaItem "
 				"set title = ?, retentionInMinutes = ?, "
@@ -5735,12 +5744,21 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, title);
             preparedStatement->setInt(queryParameterIndex++, newRetentionInMinutes);
-            preparedStatement->setString(queryParameterIndex++, newDataTpe);
+            preparedStatement->setString(queryParameterIndex++, newDataType);
             preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkEndTime);
             preparedStatement->setString(queryParameterIndex++, sLastUtcChunkEndTime);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "updateLiveRecorderVOD (title, retentionInMinutes, dataType)"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", title: " + title
+				+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+				+ ", newDataType: " + newDataType
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -5760,8 +5778,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 		// not be visible into the MediaItems view
 		{
 			{
-				string newDataTpe = "liveRecordingChunk";
-				string previousDataTpe = "liveRecordingVOD";
+				string newDataType = "liveRecordingChunk";
+				string previousDataType = "liveRecordingVOD";
 				lastSQLCommand = 
 					"update MMS_MediaItem "
 					"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
@@ -5775,11 +5793,19 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				shared_ptr<sql::PreparedStatement> preparedStatement(
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
-				preparedStatement->setString(queryParameterIndex++, newDataTpe);
-				preparedStatement->setString(queryParameterIndex++, previousDataTpe);
+				preparedStatement->setString(queryParameterIndex++, newDataType);
+				preparedStatement->setString(queryParameterIndex++, previousDataType);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "updateLiveRecorderVOD (dataType)"
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
+					+ ", newDataType: " + newDataType
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+				);
 			}
 
 			{

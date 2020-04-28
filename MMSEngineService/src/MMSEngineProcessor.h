@@ -126,6 +126,9 @@ private:
 	int						_mmsAPIPort;
 	string					_mmsAPIIngestionURI;
 
+	int						_waitingNFSSync_attemptNumber;
+	int						_waitingNFSSync_sleepTimeInSeconds;
+
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
     void handleCheckIngestionEvent();

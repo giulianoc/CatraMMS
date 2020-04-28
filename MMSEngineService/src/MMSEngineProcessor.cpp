@@ -199,6 +199,18 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
 
+	_waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_attemptNumber", 1);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->waitingNFSSync_attemptNumber: " + to_string(_waitingNFSSync_attemptNumber)
+	);
+	_waitingNFSSync_sleepTimeInSeconds = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_sleepTimeInSeconds", 3);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->waitingNFSSync_sleepTimeInSeconds: "
+		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
+	);
+
     if (_processorIdentifier == 0)
     {
         try
@@ -21316,13 +21328,47 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkEndTime;
 
 			{
-				pair<int64_t, long> mediaInfoDetails;
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-				FFMpeg ffmpeg (_configuration, _logger);
-				mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
-					videoTracks, audioTracks);
+				// links created above may take a bit of time to be visible because of NFS
+				int attemptIndex = 0;
+				bool getMediaInfoWorked = false;
+				while(true)
+				{
+					pair<int64_t, long> mediaInfoDetails;
 
-				tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+					FFMpeg ffmpeg (_configuration, _logger);
+					mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
+						videoTracks, audioTracks);
+
+					tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+
+					if (tsToBeUsed.size() > 2
+							&& durationInMilliSeconds / 1000
+						< liveRecorderSegmentDuration + (liveRecorderSegmentDuration / 2)
+						&& attemptIndex < _waitingNFSSync_attemptNumber
+						)
+					{
+						attemptIndex++;
+						this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
+					}
+					else
+					{
+						if (attemptIndex < _waitingNFSSync_attemptNumber)
+							getMediaInfoWorked = true;
+						else
+							getMediaInfoWorked = false;
+
+						break;
+					}
+				}
+
+				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+				long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
+				_logger->info(__FILEREF__ + "liveRecorder_updateVOD, getMediaInfoWorked"
+					+ ", getMediaInfoWorked: " + to_string(getMediaInfoWorked)
+					+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+				);
 			}
 
 			{
