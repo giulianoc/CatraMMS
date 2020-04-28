@@ -1732,8 +1732,12 @@ public:
     );
     
 	void updateLiveRecorderVOD (
+		int64_t workspaceKey,
+		string liveRecorderVODUniqueName,
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
+
+		int newRetentionInMinutes,
 
 		int64_t lastUtcChunkEndTime,
 		string sLastUtcChunkEndTime,

@@ -832,9 +832,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     }
                 }
 
-                {                    
+                {
                     lastSQLCommand = 
-                        "select uniqueName from MMS_ExternalUniqueName where workspaceKey = ? and mediaItemKey = ?";
+                        "select uniqueName from MMS_ExternalUniqueName "
+						"where workspaceKey = ? and mediaItemKey = ?";
 
                     shared_ptr<sql::PreparedStatement> preparedStatementUniqueName (
 							conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3075,7 +3076,8 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
+                "select mi.mediaItemKey, mi.contentType "
+				"from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
                 "where mi.mediaItemKey = eun.mediaItemKey "
                 "and eun.workspaceKey = ? and eun.uniqueName = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3217,7 +3219,9 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
         if (physicalPathKey == -1)
         {
             lastSQLCommand = 
-                "select durationInMilliSeconds from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey is null";
+                "select durationInMilliSeconds "
+				"from MMS_PhysicalPath "
+				"where mediaItemKey = ? and encodingProfileKey is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3253,7 +3257,9 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
         else
         {
             lastSQLCommand = 
-				"select durationInMilliSeconds from MMS_PhysicalPath where physicalPathKey = ?";
+				"select durationInMilliSeconds "
+				"from MMS_PhysicalPath "
+				"where physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4230,10 +4236,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				if (allowUniqueNameOverride)
 				{
 					lastSQLCommand = 
-						"update MMS_ExternalUniqueName set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+						"update MMS_ExternalUniqueName "
+						"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
 						"where workspaceKey = ? and uniqueName = ?";
 
-					shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
 					preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 					preparedStatement->setString(queryParameterIndex++, uniqueName);
@@ -5653,8 +5661,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 }
 
 void MMSEngineDBFacade::updateLiveRecorderVOD (
+	int64_t workspaceKey,
+	string liveRecorderVODUniqueName,
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
+
+	int newRetentionInMinutes,
 
 	int64_t lastUtcChunkEndTime,
 	string sLastUtcChunkEndTime,
@@ -5680,10 +5692,12 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
         );
 
         {
+			// before it was liveRecordingChunk to avoid to be seen in the MediaItems view
+			string newDataTpe = "liveRecordingVOD";
             lastSQLCommand = 
 				"update MMS_MediaItem "
-				"set title = ?, "
-				// "ingestionDate = NOW(), "
+				"set title = ?, retentionInMinutes = ?, "
+				"userData = JSON_SET(userData, '$.mmsData.dataType', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?) "
 				"where mediaItemKey = ?";
@@ -5691,6 +5705,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, title);
+            preparedStatement->setInt(queryParameterIndex++, newRetentionInMinutes);
+            preparedStatement->setString(queryParameterIndex++, newDataTpe);
             preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkEndTime);
             preparedStatement->setString(queryParameterIndex++, sLastUtcChunkEndTime);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
@@ -5737,6 +5753,71 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
                 // throw runtime_error(errorMessage);                    
             }
         }
+
+		// 2020-04-28: uniqueName is changed so that next check unique name is not found and
+		// a new MediaItem is created.
+		// Also the previous liveRecordingVOD was set to liveRecordingChunk, so it will
+		// not be visible into the MediaItems view
+		{
+			{
+				lastSQLCommand = 
+					"select mediaItemKey from MMS_ExternalUniqueName "
+					"where workspaceKey = ? and uniqueName = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement(
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, liveRecorderVODUniqueName);
+				shared_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
+				if (resultSet->next())
+				{
+					int64_t previousLiveRecorderVODMediaItemKey
+						= resultSet->getInt64("mediaItemKey");
+
+					string newDataTpe = "liveRecordingChunk";
+					lastSQLCommand = 
+						"update MMS_MediaItem "
+						"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
+						"where mediaItemKey = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setString(queryParameterIndex++, newDataTpe);
+					preparedStatement->setInt64(queryParameterIndex++,
+						previousLiveRecorderVODMediaItemKey);
+
+					int rowsUpdated = preparedStatement->executeUpdate();
+					if (rowsUpdated != 1)
+					{
+						string errorMessage = __FILEREF__ + "no update was done"
+								+ ", previousLiveRecorderVODMediaItemKey: "
+									+ to_string(previousLiveRecorderVODMediaItemKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", lastSQLCommand: " + lastSQLCommand
+						;
+						_logger->warn(errorMessage);
+
+						// throw runtime_error(errorMessage);                    
+					}
+				}
+			}
+
+			{
+				lastSQLCommand = 
+					"update MMS_ExternalUniqueName "
+					"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+					"where workspaceKey = ? and uniqueName = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, liveRecorderVODUniqueName);
+
+				int rowsUpdated = preparedStatement->executeUpdate();
+			}
+		}
 
 		for (tuple<int, int64_t, string, string, int, int, string, long> videoTrack: videoTracks)
         {

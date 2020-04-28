@@ -19989,6 +19989,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 						liveRecorder_updateVOD(workspace,
 							liveRecorderIngestionJobKey,
+							liveRecorderVODUniqueName,
 							liveRecorderVODEncodingProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
@@ -20559,8 +20560,10 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		*/
 		Json::Value mmsDataRoot;
 
+		// 2020-04-28: set it to liveRecordingChunk to avoid to be visible into the GUI (view MediaItems).
+		//	This is because this MediaItem is not completed yet
 		string field = "dataType";
-		mmsDataRoot[field] = "liverRecorderVOD";
+		mmsDataRoot[field] = "liveRecordingChunk";
 
 		field = "lastUtcChunkEndTime";
 		mmsDataRoot[field] = utcChunkEndTime;
@@ -20923,6 +20926,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 void MMSEngineProcessor::liveRecorder_updateVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
+	string liveRecorderVODUniqueName,
 	int64_t liveRecorderVODEncodingProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
@@ -21116,7 +21120,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 					try
 					{
 						 tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderVODEncodingProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey,
+							liveRecorderVODEncodingProfileKey);
 
 						tie(tsPhysicalPathKey, ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
 							= physicalPathDetails;
@@ -21322,8 +21327,23 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 		// update Media Item
 		{
-			_mmsEngineDBFacade->updateLiveRecorderVOD (liveRecorderVODMediaItemKey,
+			// 2020-04-28: next method will change also:
+			//  - $.mmsData.dataType of the current liveRecordingVOD: from liveRecordingChunk to liveRecordingVOD
+			//		(to make it visible in the MediaItems GUI view)
+			//  - $.mmsData.dataType of the previous liveRecordingVOD: from liveRecordingVOD to liveRecordingChunk
+			//		(to make it not visible in the MediaItems GUI view)
+			//	- the unique name: so next check the item is not found and a new Media Item is created.
+			//		This is because I saw the player may not work fine if every minutes the playlist/manifest
+			//		is changed
+			//	- 
+			int newRetentionInMinutes = 30;
+			_mmsEngineDBFacade->updateLiveRecorderVOD (
+				workspace->_workspaceKey,
+				liveRecorderVODUniqueName,
+				liveRecorderVODMediaItemKey,
 				liveRecorderVODPhysicalPathKey,
+
+				newRetentionInMinutes,
 
 				lastUtcChunkEndTime,
 				sLastUtcChunkEndTime,

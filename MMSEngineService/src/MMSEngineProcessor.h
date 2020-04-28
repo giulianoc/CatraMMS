@@ -398,6 +398,7 @@ private:
 	void liveRecorder_updateVOD(
 		shared_ptr<Workspace> workspace,
 		int64_t liveRecorderIngestionJobKey,
+		string liveRecorderVODUniqueName,
 		int64_t liveRecorderProfileKey,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
