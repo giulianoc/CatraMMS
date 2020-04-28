@@ -5683,9 +5683,9 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             lastSQLCommand = 
 				"update MMS_MediaItem "
 				"set title = ?, "
+				// "ingestionDate = NOW(), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime', ?), "
-				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?), "
-				"ingestionDate = NOW() "
+				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?) "
 				"where mediaItemKey = ?";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
