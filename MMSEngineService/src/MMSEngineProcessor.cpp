@@ -21296,6 +21296,9 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
 				+ ", manifestContent: " + manifestContent
 			);
+
+			ofstream ofManifestFile(liveRecorderVODManifestPathName);
+			ofManifestFile << manifestContent;
 		}
 
 		// retrieve updated information
@@ -21367,6 +21370,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
 				_logger->info(__FILEREF__ + "liveRecorder_updateVOD, getMediaInfoWorked"
 					+ ", getMediaInfoWorked: " + to_string(getMediaInfoWorked)
+					+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 					+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
 				);
 			}
@@ -21423,8 +21427,10 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				audioTracks
 			);
 
-			ofstream ofManifestFile(liveRecorderVODManifestPathName);
-			ofManifestFile << manifestContent;
+			// 2020-04-28: the saving of the manifest was moved above because otherwise
+			//	ffmpeg.getMediaInfo, of course, was not working
+			// ofstream ofManifestFile(liveRecorderVODManifestPathName);
+			// ofManifestFile << manifestContent;
 		}
 	}
 	catch(runtime_error e)
