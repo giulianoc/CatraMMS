@@ -5692,6 +5692,35 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
         );
 
         {
+            lastSQLCommand = 
+				"update MMS_PhysicalPath "
+				"set sizeInBytes = ?, "
+				"durationInMilliSeconds = ?, "
+				"bitRate = ? "
+				"where physicalPathKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, sizeInBytes);
+			preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
+			preparedStatement->setInt64(queryParameterIndex++, bitRate);
+			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", physicalPathKey: " + to_string(physicalPathKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+
+        {
 			// before it was liveRecordingChunk to avoid to be seen in the MediaItems view
 			string newDataTpe = "liveRecordingVOD";
             lastSQLCommand = 
@@ -5725,35 +5754,6 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             }
         }
 
-        {
-            lastSQLCommand = 
-				"update MMS_PhysicalPath "
-				"set sizeInBytes = ?, "
-				"durationInMilliSeconds = ?, "
-				"bitRate = ? "
-				"where physicalPathKey = ?";
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, sizeInBytes);
-			preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
-			preparedStatement->setInt64(queryParameterIndex++, bitRate);
-			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", physicalPathKey: " + to_string(physicalPathKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->warn(errorMessage);
-
-                // throw runtime_error(errorMessage);                    
-            }
-        }
-
 		// 2020-04-28: uniqueName is changed so that next check unique name is not found and
 		// a new MediaItem is created.
 		// Also the previous liveRecordingVOD was set to liveRecordingChunk, so it will
@@ -5765,7 +5765,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				lastSQLCommand = 
 					"update MMS_ExternalUniqueName "
 					"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
-					"where workspaceKey = ? and uniqueName like concat(?, '-', '%') "
+					"where workspaceKey = ? and uniqueName like '" + liveRecorderVODUniqueName + "-%' "
 					"and JSON_EXTRACT(userData, '$.mmsData.dataType') = ?" ;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement(
@@ -5773,7 +5773,6 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, newDataTpe);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-				preparedStatement->setString(queryParameterIndex++, liveRecorderVODUniqueName);
 				preparedStatement->setString(queryParameterIndex++, previousDataTpe);
 
 				int rowsUpdated = preparedStatement->executeUpdate();
