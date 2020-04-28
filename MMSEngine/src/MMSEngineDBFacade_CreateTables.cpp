@@ -682,8 +682,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							{
 								if (fileFormatLowerCase == "mp4")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
+								else if (fileFormatLowerCase == "mov")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::DownloadAndStreaming;
 								else if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming;
+								else if (fileFormatLowerCase == "webm")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								else if (fileFormatLowerCase == "ts")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								else if (fileFormatLowerCase == "mkv")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"

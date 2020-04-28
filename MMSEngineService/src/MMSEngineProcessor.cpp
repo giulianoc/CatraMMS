@@ -19897,11 +19897,11 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 				_processorMMS, "UpdateLiveRecorderVOD",
 				milliSecondsToSleepWaitingLock, _logger);
 
-			vector<tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string>> runningLiveRecordersDetails;
+			vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>> runningLiveRecordersDetails;
 
 			_mmsEngineDBFacade->getRunningLiveRecordersDetails(runningLiveRecordersDetails);
 
-			for(tuple<int64_t, int64_t, int64_t, int, string, string, int64_t, string> runningLiveRecorderDetails:
+			for(tuple<int64_t, int64_t, string, int, string, string, int64_t, string> runningLiveRecorderDetails:
 					runningLiveRecordersDetails)
 			{
 				int64_t workspaceKey;
@@ -19910,6 +19910,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 				try
 				{
+					string liveRecorderProfileLabel;
 					int64_t liveRecorderProfileKey;
 					int liveRecorderSegmentDuration;
 					string liveChunkRetention;
@@ -19917,9 +19918,17 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 					string liveRecorderApiKey;
 
 					tie(workspaceKey, liveRecorderIngestionJobKey,
-						liveRecorderProfileKey, liveRecorderSegmentDuration,
+						liveRecorderProfileLabel, liveRecorderSegmentDuration,
 						liveRecorderConfigurationLabel, liveChunkRetention, liveRecorderUserKey,
 						liveRecorderApiKey) = runningLiveRecorderDetails;
+
+					shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
+
+					if (liveRecorderConfigurationLabel != "")
+						liveRecorderProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
+							MMSEngineDBFacade::ContentType::Video, liveRecorderConfigurationLabel);
+					else
+						liveRecorderProfileKey = -1;
 
 					string liveRecorderVODUniqueName =
 						liveRecorderConfigurationLabel + " (" + to_string(liveRecorderIngestionJobKey) + ")";
@@ -19966,8 +19975,6 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 						bool warningIfMissing = true;
 						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
 							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
-
-						shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
 
 						liveRecorder_updateVOD(workspace,
 							liveRecorderIngestionJobKey,
