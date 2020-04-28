@@ -19910,25 +19910,36 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 				try
 				{
-					string liveRecorderProfileLabel;
-					int64_t liveRecorderProfileKey;
+					string liveRecorderVODEncodingProfileLabel;
+					int64_t liveRecorderVODEncodingProfileKey;
 					int liveRecorderSegmentDuration;
 					string liveChunkRetention;
 					int64_t liveRecorderUserKey;
 					string liveRecorderApiKey;
 
 					tie(workspaceKey, liveRecorderIngestionJobKey,
-						liveRecorderProfileLabel, liveRecorderSegmentDuration,
+						liveRecorderVODEncodingProfileLabel, liveRecorderSegmentDuration,
 						liveRecorderConfigurationLabel, liveChunkRetention, liveRecorderUserKey,
 						liveRecorderApiKey) = runningLiveRecorderDetails;
 
 					shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
 
-					if (liveRecorderProfileLabel != "")
-						liveRecorderProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
-							MMSEngineDBFacade::ContentType::Video, liveRecorderProfileLabel);
+					if (liveRecorderVODEncodingProfileLabel != "")
+					{
+						liveRecorderVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
+							MMSEngineDBFacade::ContentType::Video, liveRecorderVODEncodingProfileLabel);
+
+						_logger->info(__FILEREF__ + "Retrieve encoding profile key through his label"
+							+ ", _processorMMS: " + _processorMMS
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+							+ ", liveRecorderVODEncodingProfileLabel: " + liveRecorderVODEncodingProfileLabel
+							+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+						);
+					}
 					else
-						liveRecorderProfileKey = -1;
+						liveRecorderVODEncodingProfileKey = -1;
 
 					string liveRecorderVODUniqueName =
 						liveRecorderConfigurationLabel + " (" + to_string(liveRecorderIngestionJobKey) + ")";
@@ -19978,7 +19989,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 						liveRecorder_updateVOD(workspace,
 							liveRecorderIngestionJobKey,
-							liveRecorderProfileKey,
+							liveRecorderVODEncodingProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
@@ -20006,7 +20017,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 						liveRecorder_ingestVOD(
 							workspace,
 							liveRecorderIngestionJobKey,
-							liveRecorderProfileKey,
+							liveRecorderVODEncodingProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
@@ -20068,7 +20079,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 void MMSEngineProcessor::liveRecorder_ingestVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
-	int64_t liveRecorderProfileKey,
+	int64_t liveRecorderVODEncodingProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -20244,12 +20255,17 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
 			{
-				if (liveRecorderProfileKey != -1)
+				if (liveRecorderVODEncodingProfileKey != -1)
 				{
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVODEncodingProfileKey"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+						);
+
 					try
 					{
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderVODEncodingProfileKey);
 
 						tie(tsPhysicalPathKey, tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
 							= physicalPathDetails;
@@ -20265,6 +20281,11 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 				}
 				else
 				{
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through tsPhysicalPathKey"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", tsPhysicalPathKey: " + to_string(tsPhysicalPathKey)
+						);
+
 					tsFound = true;
 
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
@@ -20902,7 +20923,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 void MMSEngineProcessor::liveRecorder_updateVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
-	int64_t liveRecorderProfileKey,
+	int64_t liveRecorderVODEncodingProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -21085,12 +21106,17 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				string relativePath;
 				string fileName;
 
-				if (liveRecorderProfileKey != -1)
+				if (liveRecorderVODEncodingProfileKey != -1)
 				{
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVODEncodingProfileKey"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+						);
+
 					try
 					{
 						 tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderProfileKey);
+							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey, liveRecorderVODEncodingProfileKey);
 
 						tie(tsPhysicalPathKey, ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
 							= physicalPathDetails;
@@ -21104,6 +21130,11 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				}
 				else
 				{
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through tsPhysicalPathKey"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", tsPhysicalPathKey: " + to_string(tsPhysicalPathKey)
+						);
+
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 						_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsPhysicalPathKey);
 
