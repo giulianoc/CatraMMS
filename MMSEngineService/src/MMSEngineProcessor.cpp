@@ -19924,9 +19924,9 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 					shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
 
-					if (liveRecorderConfigurationLabel != "")
+					if (liveRecorderProfileLabel != "")
 						liveRecorderProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
-							MMSEngineDBFacade::ContentType::Video, liveRecorderConfigurationLabel);
+							MMSEngineDBFacade::ContentType::Video, liveRecorderProfileLabel);
 					else
 						liveRecorderProfileKey = -1;
 
@@ -20082,7 +20082,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 	// It will contain just one real ts file. Once the content is created, next update,
 	// will replace the singl ts file with all the links to the ts generated files
 
-	int tsWillBePresentAtLeastForSeconds = 30 * 60;
+	int tsWillBePresentAtLeastForSeconds = 20 * 60;
 
 	// look for the ts to be used
 	string tsPathFileName;
@@ -20915,7 +20915,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 	// build the new manifest in memory
 	// save the new manifest having references to the ts files
 
-	int tsWillBePresentAtLeastForSeconds = 30 * 60;
+	int tsWillBePresentAtLeastForSeconds = 20 * 60;
 
 	// look for the ts to be used
 	vector<tuple<int, string, string, int64_t>> tsToBeUsed;
