@@ -4231,38 +4231,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             {
 				bool allowUniqueNameOverride = false;
 				if (JSONUtils::isMetadataPresent(parametersRoot, "AllowUniqueNameOverride"))
-					allowUniqueNameOverride = JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
+					allowUniqueNameOverride =
+						JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
 
-				if (allowUniqueNameOverride)
-				{
-					lastSQLCommand = 
-						"update MMS_ExternalUniqueName "
-						"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
-						"where workspaceKey = ? and uniqueName = ?";
-
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-					preparedStatement->setString(queryParameterIndex++, uniqueName);
-
-					int rowsUpdated = preparedStatement->executeUpdate();
-				}
-
-                lastSQLCommand = 
-                    "insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) values ("
-                    "?, ?, ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                preparedStatement->setString(queryParameterIndex++, uniqueName);
-
-                preparedStatement->executeUpdate();
+				addExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
+					allowUniqueNameOverride, uniqueName);
             }
         }
-        
+
 		// cross references
 		{
 			string field = "CrossReference";
@@ -4878,6 +4854,88 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
     }
     
     return mediaItemKeyAndPhysicalPathKey;
+}
+
+void MMSEngineDBFacade::addExternalUniqueName(
+	shared_ptr<MySQLConnection> conn,
+	int64_t workspaceKey,
+	int64_t mediaItemKey,
+
+	bool allowUniqueNameOverride,
+	string uniqueName
+)
+{
+	string      lastSQLCommand;
+
+	try
+	{
+		if (uniqueName == "")
+		{
+			string errorMessage = __FILEREF__ + "UniqueName is empty"
+				+ ", uniqueName: " + uniqueName
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (allowUniqueNameOverride)
+		{
+			lastSQLCommand = 
+				"update MMS_ExternalUniqueName "
+				"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+				"where workspaceKey = ? and uniqueName = ?";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+			int rowsUpdated = preparedStatement->executeUpdate();
+		}
+
+		lastSQLCommand = 
+			"insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) "
+			"values (?, ?, ?)";
+
+		shared_ptr<sql::PreparedStatement> preparedStatement (
+			conn->_sqlConnection->prepareStatement(lastSQLCommand));
+		int queryParameterIndex = 1;
+		preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+		preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+		preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+		preparedStatement->executeUpdate();
+	}
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+        
+        throw e;
+    }
 }
 
 int64_t MMSEngineDBFacade::saveVariantContentMetadata(

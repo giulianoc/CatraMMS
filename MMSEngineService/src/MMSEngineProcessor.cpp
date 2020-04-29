@@ -21331,48 +21331,13 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkEndTime;
 
 			{
-				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				pair<int64_t, long> mediaInfoDetails;
 
-				// links created above may take a bit of time to be visible because of NFS
-				int attemptIndex = 0;
-				bool getMediaInfoWorked = false;
-				while(true)
-				{
-					pair<int64_t, long> mediaInfoDetails;
+				FFMpeg ffmpeg (_configuration, _logger);
+				mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
+					videoTracks, audioTracks);
 
-					FFMpeg ffmpeg (_configuration, _logger);
-					mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
-						videoTracks, audioTracks);
-
-					tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
-
-					if (tsToBeUsed.size() > 2
-							&& durationInMilliSeconds / 1000
-						< liveRecorderSegmentDuration + (liveRecorderSegmentDuration / 2)
-						&& attemptIndex < _waitingNFSSync_attemptNumber
-						)
-					{
-						attemptIndex++;
-						this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
-					}
-					else
-					{
-						if (attemptIndex < _waitingNFSSync_attemptNumber)
-							getMediaInfoWorked = true;
-						else
-							getMediaInfoWorked = false;
-
-						break;
-					}
-				}
-
-				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
-				_logger->info(__FILEREF__ + "liveRecorder_updateVOD, getMediaInfoWorked"
-					+ ", getMediaInfoWorked: " + to_string(getMediaInfoWorked)
-					+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-					+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
-				);
+				tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
 			}
 
 			{

@@ -2015,6 +2015,13 @@ private:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 
+	void addExternalUniqueName(
+		shared_ptr<MySQLConnection> conn,
+		int64_t workspaceKey,
+		int64_t mediaItemKey,
+		bool allowUniqueNameOverride,
+		string uniqueName);
+
     int64_t saveVariantContentMetadata(
         shared_ptr<MySQLConnection> conn,
         

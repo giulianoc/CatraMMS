@@ -594,17 +594,24 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 							);
 
-						int64_t mediaItemKeyChunk_1;
+						int64_t workspaceKey;
 						ContentType contentType;
+
+						int64_t mediaItemKeyChunk_1;
 						bool mainChunk_1;
 						int64_t durationInMilliSecondsChunk_1;
+						string uniqueName_1;
+
 						int64_t mediaItemKeyChunk_2;
 						bool mainChunk_2;
 						int64_t durationInMilliSecondsChunk_2;
+						string uniqueName_2;
 
 						lastSQLCommand =
-							string("select mediaItemKey, contentType, "
-									"CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main from MMS_MediaItem "
+							string("select workspaceKey, mediaItemKey, contentType, "
+								"CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main, "
+								"JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.uniqueName')) as uniqueName "
+								"from MMS_MediaItem "
 								"where JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 								"and JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
 							);
@@ -619,11 +626,15 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								preparedStatementMediaItemDetails->executeQuery());
 						if (resultSetMediaItemDetails->next())
 						{
+							workspaceKey =
+								resultSetMediaItemDetails->getInt64("workspaceKey");
 							mediaItemKeyChunk_1 =
 								resultSetMediaItemDetails->getInt64("mediaItemKey");
 							contentType = MMSEngineDBFacade::toContentType(resultSetMediaItemDetails->getString("contentType"));
 							mainChunk_1 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
+							if (!resultSetMediaItemDetails->isNull("uniqueName"))
+								uniqueName_1 = resultSetMediaItemDetails->getString("uniqueName");
 
 							try
 							{
@@ -712,6 +723,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								resultSetMediaItemDetails->getInt64("mediaItemKey");
 							mainChunk_2 =
 								resultSetMediaItemDetails->getInt("main") == 1 ? true : false;
+							if (!resultSetMediaItemDetails->isNull("uniqueName"))
+								uniqueName_2 = resultSetMediaItemDetails->getString("uniqueName");
 
 							try
 							{
@@ -823,28 +836,33 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						{
 							int64_t mediaItemKeyNotValidated;
 							int64_t mediaItemKeyValidated;
+							string uniqueNameValidated;
 							if (durationInMilliSecondsChunk_1 == durationInMilliSecondsChunk_2)
 							{
 								if (mainChunk_1)
 								{
 									mediaItemKeyNotValidated = mediaItemKeyChunk_2;
 									mediaItemKeyValidated = mediaItemKeyChunk_1;
+									uniqueNameValidated = uniqueName_1;
 								}
 								else
 								{
 									mediaItemKeyNotValidated = mediaItemKeyChunk_1;
 									mediaItemKeyValidated = mediaItemKeyChunk_2;
+									uniqueNameValidated = uniqueName_2;
 								}
 							}
 							else if (durationInMilliSecondsChunk_1 < durationInMilliSecondsChunk_2)
 							{
 									mediaItemKeyNotValidated = mediaItemKeyChunk_1;
 									mediaItemKeyValidated = mediaItemKeyChunk_2;
+									uniqueNameValidated = uniqueName_2;
 							}
 							else
 							{
 									mediaItemKeyNotValidated = mediaItemKeyChunk_2;
 									mediaItemKeyValidated = mediaItemKeyChunk_1;
+									uniqueNameValidated = uniqueName_1;
 							}
 
 							_logger->info(__FILEREF__
@@ -866,14 +884,13 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 							// mediaItemKeyValidated
 							{
-								lastSQLCommand = 
+								lastSQLCommand =
 									"update MMS_MediaItem set userData = JSON_SET(userData, '$.mmsData.validated', true) "
 									"where mediaItemKey = ?";
 								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
 										conn->_sqlConnection->prepareStatement(lastSQLCommand));
 								int queryParameterIndex = 1;
-								preparedStatementUpdate->setInt64(
-										queryParameterIndex++, mediaItemKeyValidated);
+								preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyValidated);
 
 								int rowsUpdated = preparedStatementUpdate->executeUpdate();
 								if (rowsUpdated != 1)
@@ -881,14 +898,24 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 										+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyValidated)
 										+ ", rowsUpdated: " + to_string(rowsUpdated)
 									);
+
+								if (uniqueNameValidated != "")
+								{
+									// it should not happen duplicated unique name
+									bool allowUniqueNameOverride = false;
+									addExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
+										allowUniqueNameOverride, uniqueNameValidated);
+								}
 							}
 
 							// mediaItemKeyNotValidated
 							{
 								lastSQLCommand = 
-									"update MMS_MediaItem set retentionInMinutes = 0, userData = JSON_SET(userData, '$.mmsData.validated', false) "
+									"update MMS_MediaItem set retentionInMinutes = 0, "
+									"userData = JSON_SET(userData, '$.mmsData.validated', false) "
 									"where mediaItemKey = ?";
-								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
 								int queryParameterIndex = 1;
 								preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyNotValidated);
 
@@ -914,7 +941,9 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						);
 
 					lastSQLCommand =
-						string("select mediaItemKey  from MMS_MediaItem where "
+						string("select workspaceKey, mediaItemKey, "
+							"JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.uniqueName')) as uniqueName "
+							"from MMS_MediaItem where "
 							"JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' "
 							"and JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 							"and JSON_EXTRACT(userData, '$.mmsData.validated') is null "
@@ -931,7 +960,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 					shared_ptr<sql::ResultSet> resultSetMediaItemKey (preparedStatementMediaItemKey->executeQuery());
 					while (resultSetMediaItemKey->next())
 					{
+						int64_t workspaceKey = resultSetMediaItemKey->getInt64("workspaceKey");
 						int64_t mediaItemKeyChunk = resultSetMediaItemKey->getInt64("mediaItemKey");
+						string uniqueName;
+						if (!resultSetMediaItemKey->isNull("uniqueName"))
+							uniqueName = resultSetMediaItemKey->getString("uniqueName");
 
 						_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single), set to validated"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -940,7 +973,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 						{
 							lastSQLCommand = 
-								"update MMS_MediaItem set userData = JSON_SET(userData, '$.mmsData.validated', true) "
+								"update MMS_MediaItem "
+								"set userData = JSON_SET(userData, '$.mmsData.validated', true) "
 								"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
@@ -951,6 +985,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								_logger->error(__FILEREF__ + "It should never happen"
 									+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
 								);
+
+							if (uniqueName != "")
+							{
+								// it should not happen duplicated unique name
+								bool allowUniqueNameOverride = false;
+								addExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
+									allowUniqueNameOverride, uniqueName);
+							}
 						}
 					}
 				}

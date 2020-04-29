@@ -3563,6 +3563,13 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 				currentRecordedAssetPathName);
 			*/
 
+			string uniqueName;
+			{
+				uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
+				uniqueName += " - ";
+				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
+			}
+
 			// UserData
 			Json::Value userDataRoot;
 			{
@@ -3584,6 +3591,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
 				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
 
+				mmsDataRoot["uniqueName"] = uniqueName;
+
 				userDataRoot["mmsData"] = mmsDataRoot;
 			}
 
@@ -3591,7 +3600,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			string addContentTitle;
 			{
 				// ConfigurationLabel is the label associated to the live URL
-				addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "XXX").asString();
+				addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
 				addContentTitle += " - ";
 
@@ -3677,7 +3686,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 					liveRecorder_ingestRecordedMedia(ingestionJobKey,
 						transcoderStagingContentsPath, currentRecordedAssetFileName,
 						stagingContentsPath,
-						addContentTitle, userDataRoot, outputFileFormat,
+						addContentTitle, uniqueName, highAvailability, userDataRoot, outputFileFormat,
 						liveRecorderParametersRoot);
 				}
 				catch(runtime_error e)
@@ -3757,6 +3766,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	string transcoderStagingContentsPath, string currentRecordedAssetFileName,
 	string stagingContentsPath,
 	string addContentTitle,
+	string uniqueName,
+	bool highAvailability,
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value liveRecorderParametersRoot)
@@ -3909,6 +3920,15 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
+
+		if (!highAvailability)
+		{
+			// in case of no high availability, we can set just now the UniqueName for this content
+			// in case of high availability, the unique name will be set only of the selected content
+			//		choosing between main and bqckup
+			field = "UniqueName";
+			addContentParametersRoot[field] = uniqueName;
+		}
 
 		field = "Parameters";
 		addContentRoot[field] = addContentParametersRoot;

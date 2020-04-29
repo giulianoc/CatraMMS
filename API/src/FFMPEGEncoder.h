@@ -195,6 +195,8 @@ private:
 		string transcoderStagingContentsPath, string currentRecordedAssetFileName,
 		string stagingContentsPath,
 		string addContentTitle,
+		string uniqueName,
+		bool highAvailability,
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
