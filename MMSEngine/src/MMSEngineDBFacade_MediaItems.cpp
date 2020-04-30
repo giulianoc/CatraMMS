@@ -5797,7 +5797,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				"set title = ?, retentionInMinutes = ?, "
 				"userData = JSON_SET(userData, '$.mmsData.dataType', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.firstUtcChunkStartTime', ?), "
-				"userData = JSON_SET(userData, '$.mmsData.firstUtcChunkStartTime_str', ?) "
+				"userData = JSON_SET(userData, '$.mmsData.firstUtcChunkStartTime_str', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?) "
 				"where mediaItemKey = ?";
