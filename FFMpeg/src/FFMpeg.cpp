@@ -7075,6 +7075,7 @@ void FFMpeg::liveProxyByCDN(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
+	double itsoffset,
 	string cdnURL,
 	pid_t* pChildPid)
 {
@@ -7104,6 +7105,16 @@ void FFMpeg::liveProxyByCDN(
 
 		// sample: ffmpeg -re -i http://80.211.238.33/restream/fiera.m3u8 -c copy -bsf:a aac_adtstoasc -vcodec copy -f flv rtmp://1.s.cdn77.eu:1936/static/LS-PRG-43330-22?password=hrpiTIFmsK3R
 
+		string sItsoffset;
+
+		if (itsoffset != 0.0)
+		{
+			char buffer[64];
+			sprintf(buffer, "%.1f", itsoffset);
+
+			sItsoffset = buffer;
+		}
+
 		ffmpegArgumentList.push_back("ffmpeg");
 		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
 		//		as fast as possible. This option will slow down the reading of the input(s)
@@ -7111,9 +7122,14 @@ void FFMpeg::liveProxyByCDN(
 		//		(e.g. live streaming).
 		ffmpegArgumentList.push_back("-nostdin");
 		ffmpegArgumentList.push_back("-re");
-		ffmpegArgumentList.push_back("-itsoffset");
-		// ffmpegArgumentList.push_back("-0.5");
-		ffmpegArgumentList.push_back("-2.0");
+		if (sItsoffset != "")
+		{
+			ffmpegArgumentList.push_back("-itsoffset");
+
+			// ffmpegArgumentList.push_back("-0.5");
+			// ffmpegArgumentList.push_back("-2.0");
+			ffmpegArgumentList.push_back(sItsoffset);
+		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-c:v");

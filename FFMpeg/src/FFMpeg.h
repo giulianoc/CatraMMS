@@ -239,6 +239,7 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		string liveURL, string userAgent,
+		double itsoffset,
 		string cdnURL,
 		pid_t* pChildPid);
 

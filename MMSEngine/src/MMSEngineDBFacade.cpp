@@ -1359,7 +1359,7 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
     }    
 }
 
-void MMSEngineDBFacade::getRunningLiveRecordersDetails(
+void MMSEngineDBFacade::getRunningLiveRecorderVODsDetails(
 	vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
 		)
 {
@@ -1393,6 +1393,7 @@ void MMSEngineDBFacade::getRunningLiveRecordersDetails(
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 					"where ir.ingestionRootKey = ij.ingestionRootKey "
 					"and ij.ingestionType = 'Live-Recorder' "
+					"and JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVOD') = true "
 					"and (ij.status = 'EncodingQueued' "
 					"or (ij.status = 'End_TaskSuccess' and "
 						"NOW() <= DATE_ADD(ij.endProcessing, INTERVAL ? MINUTE))) "

@@ -4664,10 +4664,12 @@ void FFMPEGEncoder::liveProxy(
 		{
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
+			double itsoffset = -2.0;
+
 			liveProxy->_ffmpeg->liveProxyByCDN(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
-				liveURL, userAgent,
+				liveURL, userAgent, itsoffset,
 				cdnURL,
 				&(liveProxy->_childPid));
 		}

@@ -44,6 +44,11 @@
 		// optional. To be set only in case a specific encoders pool has to be used
 		"EncodersPool": "",
 
+		// optional. the LiveRecorderVOD is the Media Item updated continuously containing
+		//	all the generated chunks. This parameter specifies if the LiveRecorderVOD
+		//	has to be generated or not. Default is false.
+		"liveRecorderVOD": false,
+
 		// optional. it specifies the encoding profile label to be used for the Live Recorder VOD
 		//	By default it is the generated/source ts profile
 		"liveRecorderVODProfileLabel": "MMS_TS_H264_veryfast_360p25_high422_AAC_92",

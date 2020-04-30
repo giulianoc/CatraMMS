@@ -1227,7 +1227,7 @@ public:
 	bool liveRecorderMainAndBackupChunksManagementCompleted(
 		int64_t ingestionJobKey);
 
-	void getRunningLiveRecordersDetails(
+	void getRunningLiveRecorderVODsDetails(
 		vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
 	);
 

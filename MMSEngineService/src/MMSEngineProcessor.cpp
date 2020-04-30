@@ -19925,6 +19925,9 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
         );
 
+		int64_t liveRecorderIngestionJobKey;
+		string liveRecorderConfigurationLabel;
+
 		try
 		{
 			int milliSecondsToSleepWaitingLock = 500;
@@ -19937,14 +19940,12 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 			vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>> runningLiveRecordersDetails;
 
-			_mmsEngineDBFacade->getRunningLiveRecordersDetails(runningLiveRecordersDetails);
+			_mmsEngineDBFacade->getRunningLiveRecorderVODsDetails(runningLiveRecordersDetails);
 
 			for(tuple<int64_t, int64_t, string, int, string, string, int64_t, string> runningLiveRecorderDetails:
 					runningLiveRecordersDetails)
 			{
 				int64_t workspaceKey;
-				int64_t liveRecorderIngestionJobKey;
-				string liveRecorderConfigurationLabel;
 
 				try
 				{
@@ -20092,6 +20093,8 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		{
 			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
 				+ ", exception: " + e.what()
 			);
 
@@ -20102,6 +20105,8 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		{
 			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
 			);
 
 			// no throw since it is running in a detached thread
@@ -21414,7 +21419,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			//		This is because I saw the player may not work fine if every minutes the playlist/manifest
 			//		is changed
 			//	- 
-			int newRetentionInMinutes = 30;
+			int newRetentionInMinutes = 120;
 			_mmsEngineDBFacade->updateLiveRecorderVOD (
 				workspace->_workspaceKey,
 				liveRecorderVODUniqueName,
