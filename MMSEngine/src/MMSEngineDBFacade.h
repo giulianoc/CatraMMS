@@ -1740,6 +1740,8 @@ public:
 
 		int newRetentionInMinutes,
 
+		int64_t firstUtcChunkStartTime,
+		string sFirstUtcChunkStartTime,
 		int64_t lastUtcChunkEndTime,
 		string sLastUtcChunkEndTime,
 		string title,

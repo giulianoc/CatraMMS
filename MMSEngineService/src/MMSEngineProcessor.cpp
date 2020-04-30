@@ -20606,6 +20606,9 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		string field = "dataType";
 		mmsDataRoot[field] = "liveRecordingChunk";
 
+		field = "firstUtcChunkStartTime";
+		mmsDataRoot[field] = utcChunkStartTime;
+
 		field = "lastUtcChunkEndTime";
 		mmsDataRoot[field] = utcChunkEndTime;
 
@@ -20985,6 +20988,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 	// look for the ts to be used
 	vector<tuple<int, string, string, int64_t>> tsToBeUsed;
+	int64_t firstUtcChunkStartTime = -1;
 	int64_t lastUtcChunkStartTime = -1;
 	int64_t lastUtcChunkEndTime = -1;
 	try
@@ -20994,6 +20998,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		{
 			bool validated;
 			int64_t willBeRemovedInSeconds;
+			int64_t currentUtcChunkStartTime;
+			int64_t currentUtcChunkEndTime;
 
 			int64_t tsPhysicalPathKey;
 			int64_t tsMediaItemKey;
@@ -21089,9 +21095,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						field = "utcChunkStartTime";
 						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
 						{
-							int64_t utcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
-							if (utcChunkStartTime > lastUtcChunkStartTime)
-								lastUtcChunkStartTime = utcChunkStartTime;
+							currentUtcChunkStartTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
 						}
 						else
 						{
@@ -21108,9 +21112,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						field = "utcChunkEndTime";
 						if (JSONUtils::isMetadataPresent(userDataRoot[mmsDataField], field))
 						{
-							int64_t utcChunkEndTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
-							if (utcChunkEndTime > lastUtcChunkEndTime)
-								lastUtcChunkEndTime = utcChunkEndTime;
+							currentUtcChunkEndTime = JSONUtils::asInt64((userDataRoot[mmsDataField]), field, -1);
 						}
 						else
 						{
@@ -21195,6 +21197,13 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 				int64_t tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 					tsMediaItemKey, tsPhysicalPathKey);
+
+				if (currentUtcChunkStartTime > lastUtcChunkStartTime)
+					lastUtcChunkStartTime = currentUtcChunkStartTime;
+				if (currentUtcChunkEndTime > lastUtcChunkEndTime)
+					lastUtcChunkEndTime = currentUtcChunkEndTime;
+				if (firstUtcChunkStartTime == -1 || currentUtcChunkStartTime < firstUtcChunkStartTime)
+					firstUtcChunkStartTime = currentUtcChunkStartTime;
 
 				tsToBeUsed.push_back(
 						make_tuple(mmsPartitionNumber, relativePath, fileName, tsDuration)
@@ -21315,6 +21324,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		}
 
 		// retrieve updated information
+		string sFirstUtcChunkStartTime;
 		string sLastUtcChunkEndTime;
 		string title;
 		int64_t durationInMilliSeconds = -1;
@@ -21323,6 +21333,25 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 		vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 		{
+			{
+				char	firstUtcChunkStartTime_str [64];
+				tm		tmDateTime;
+
+				// from utc to local time
+				localtime_r (&firstUtcChunkStartTime, &tmDateTime);
+
+				sprintf (firstUtcChunkStartTime_str,
+					"%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
+
+				sFirstUtcChunkStartTime = firstUtcChunkStartTime_str;
+			}
+
 			{
 				char	lastUtcChunkEndTime_str [64];
 				tm		tmDateTime;
@@ -21341,7 +21370,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 				sLastUtcChunkEndTime = lastUtcChunkEndTime_str;
 			}
-			title = liveRecorderConfigurationLabel + " up to " + sLastUtcChunkEndTime;
+			title = liveRecorderConfigurationLabel + " from " + sFirstUtcChunkStartTime + " to " + sLastUtcChunkEndTime;
 
 			{
 				pair<int64_t, long> mediaInfoDetails;
@@ -21394,6 +21423,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 				newRetentionInMinutes,
 
+				firstUtcChunkStartTime,
+				sFirstUtcChunkStartTime,
 				lastUtcChunkEndTime,
 				sLastUtcChunkEndTime,
 				title,

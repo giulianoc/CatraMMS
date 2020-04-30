@@ -5726,6 +5726,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 
 	int newRetentionInMinutes,
 
+	int64_t firstUtcChunkStartTime,
+	string sFirstUtcChunkStartTime,
 	int64_t lastUtcChunkEndTime,
 	string sLastUtcChunkEndTime,
 	string title,
@@ -5794,6 +5796,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				"update MMS_MediaItem "
 				"set title = ?, retentionInMinutes = ?, "
 				"userData = JSON_SET(userData, '$.mmsData.dataType', ?), "
+				"userData = JSON_SET(userData, '$.mmsData.firstUtcChunkStartTime', ?), "
+				"userData = JSON_SET(userData, '$.mmsData.firstUtcChunkStartTime_str', ?) "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime', ?), "
 				"userData = JSON_SET(userData, '$.mmsData.lastUtcChunkEndTime_str', ?) "
 				"where mediaItemKey = ?";
@@ -5803,6 +5807,8 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             preparedStatement->setString(queryParameterIndex++, title);
             preparedStatement->setInt(queryParameterIndex++, newRetentionInMinutes);
             preparedStatement->setString(queryParameterIndex++, newDataType);
+            preparedStatement->setInt64(queryParameterIndex++, firstUtcChunkStartTime);
+            preparedStatement->setString(queryParameterIndex++, sFirstUtcChunkStartTime);
             preparedStatement->setInt64(queryParameterIndex++, lastUtcChunkEndTime);
             preparedStatement->setString(queryParameterIndex++, sLastUtcChunkEndTime);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
