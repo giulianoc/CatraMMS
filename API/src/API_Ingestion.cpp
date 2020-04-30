@@ -1389,7 +1389,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				field = "GlobalIngestionLabel";
 				if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
 				{
-					string waitForGlobalIngestionLabel = waitForLabelRoot.get(field, "XXX").asString();
+					string waitForGlobalIngestionLabel = waitForLabelRoot.get(field, "").asString();
 
 					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel (
 							workspace->_workspaceKey, waitForGlobalIngestionLabel,

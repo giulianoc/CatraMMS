@@ -97,11 +97,11 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
     );
     
-    _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "XXX").asString();
+    _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->protocol: " + _emailProtocol
     );
-    _emailServer                        = _configuration["EmailNotification"].get("server", "XXX").asString();
+    _emailServer                        = _configuration["EmailNotification"].get("server", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", EmailNotification->server: " + _emailServer
     );
@@ -6591,10 +6591,23 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		int64_t variantOfMediaItemKey = -1;
 		{
 			string variantOfMediaItemKeyField = "VariantOfMediaItemKey";
+			string variantOfUniqueNameField = "VariantOfUniqueName";
 			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
 			if (JSONUtils::isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
 			{
 				variantOfMediaItemKey = JSONUtils::asInt64(parametersRoot, variantOfMediaItemKeyField, -1);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfUniqueNameField))
+			{
+				bool warningIfMissing = false;
+
+				string variantOfUniqueName = parametersRoot.get(variantOfUniqueNameField, "").asString();
+
+				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+						localAssetIngestionEvent.getWorkspace()->_workspaceKey,
+						variantOfUniqueName, warningIfMissing);
+				tie(variantOfMediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
 			{

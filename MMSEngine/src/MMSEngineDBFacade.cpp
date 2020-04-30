@@ -532,8 +532,9 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         }
         
         {
-			// the setting of this variable is done also in EncoderVideoAudioProxy::processLiveRecorder method
-			// So in case this is changed, also in EncoderVideoAudioProxy::processLiveRecorder has to be changed too
+			// the setting of this variable is done also in EncoderVideoAudioProxy::processLiveRecorder
+			// method. So in case this is changed, also in EncoderVideoAudioProxy::processLiveRecorder
+			// has to be changed too
 
 			// if the ingestionJob is 'just' finished, anyway we have to get the ingestionJob
 			// in order to remove the last backup file 
@@ -568,6 +569,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						string("select JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') "
 							"as utcChunkStartTime from MMS_MediaItem where "
 							"JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
+							"and JSON_EXTRACT(userData, '$.mmsData.validated') is null "
 							"and retentionInMinutes != 0 "
 							"group by JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') "
 								"having count(*) = 2"
@@ -902,7 +904,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								if (uniqueNameValidated != "")
 								{
 									// it should not happen duplicated unique name
-									bool allowUniqueNameOverride = false;
+									bool allowUniqueNameOverride = true;
 									addExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
 										allowUniqueNameOverride, uniqueNameValidated);
 								}
@@ -934,7 +936,21 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 				// This is the scenario where just one chunk is generated, main or backup,
 				// So it has to be marked as validated
 				{
-					int chunksToBeManagedWithinSeconds = 60;
+					// 2020-04-30: before it was 60 and we saw it was too early, scenario:
+					//	1. chunks main and backup were ingested
+					//	2. this method delay to be called and 60 seconds were passed
+					//	3. next select get this chunk and set it to validated
+					//	4. once the previous select (the one looking for the couple of chunks) get it
+					//		it is too late and we got an error because the update to validated fails
+					//		since it is already validated
+					// For this reason we increased chunksToBeManagedWithinSeconds to 180 (3 * 60)
+					// I added also the following contition to the previous select
+					//		(the one looking for the couple of chunks)
+					//		"and JSON_EXTRACT(userData, '$.mmsData.validated') is null "
+					// Previous condition is important because in the scenario of high availability,
+					// $.mmsData.validated is null.
+
+					int chunksToBeManagedWithinSeconds = 3 * 60;
 
 					_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single)"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -989,7 +1005,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							if (uniqueName != "")
 							{
 								// it should not happen duplicated unique name
-								bool allowUniqueNameOverride = false;
+								bool allowUniqueNameOverride = true;
 								addExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
 									allowUniqueNameOverride, uniqueName);
 							}
