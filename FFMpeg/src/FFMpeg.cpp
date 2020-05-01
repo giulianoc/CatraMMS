@@ -7075,7 +7075,7 @@ void FFMpeg::liveProxyByCDN(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
-	double itsoffset,
+	double inputTimeOffset,
 	string cdnURL,
 	pid_t* pChildPid)
 {
@@ -7105,14 +7105,14 @@ void FFMpeg::liveProxyByCDN(
 
 		// sample: ffmpeg -re -i http://80.211.238.33/restream/fiera.m3u8 -c copy -bsf:a aac_adtstoasc -vcodec copy -f flv rtmp://1.s.cdn77.eu:1936/static/LS-PRG-43330-22?password=hrpiTIFmsK3R
 
-		string sItsoffset;
+		string sInputTimeOffset;
 
-		if (itsoffset != 0.0)
+		if (inputTimeOffset != 0.0)
 		{
 			char buffer[64];
-			sprintf(buffer, "%.1f", itsoffset);
+			sprintf(buffer, "%.1f", inputTimeOffset);
 
-			sItsoffset = buffer;
+			sInputTimeOffset = buffer;
 		}
 
 		ffmpegArgumentList.push_back("ffmpeg");
@@ -7122,13 +7122,13 @@ void FFMpeg::liveProxyByCDN(
 		//		(e.g. live streaming).
 		ffmpegArgumentList.push_back("-nostdin");
 		ffmpegArgumentList.push_back("-re");
-		if (sItsoffset != "")
+		if (sInputTimeOffset != "")
 		{
 			ffmpegArgumentList.push_back("-itsoffset");
 
 			// ffmpegArgumentList.push_back("-0.5");
 			// ffmpegArgumentList.push_back("-2.0");
-			ffmpegArgumentList.push_back(sItsoffset);
+			ffmpegArgumentList.push_back(sInputTimeOffset);
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);

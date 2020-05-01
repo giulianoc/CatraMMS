@@ -28,6 +28,11 @@
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",
 
+		// optional: The offset is added to the timestamps of the input files.
+		//	Specifying a positive offset means that the corresponding streams are delayed
+		//	by the time duration specified in offset
+		"InputTimeOffset": -2.0,
+
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
 		//		Default: 2

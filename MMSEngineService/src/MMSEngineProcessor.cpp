@@ -21559,6 +21559,8 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source
+		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVOD
+		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
 		{
 			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;
 			string destDirectory = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
@@ -21568,19 +21570,50 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 				+ ", sourceDirectory: " + sourceDirectory
 				+ ", destDirectory: " + destDirectory
 			);
-			chrono::system_clock::time_point startMoveDir = chrono::system_clock::now();
-			FileIO::moveDirectory(sourceDirectory, destDirectory,
-				S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
-				S_IRGRP | S_IXGRP |                                                                                   
-				S_IROTH | S_IXOTH);
-			chrono::system_clock::time_point endMoveDir = chrono::system_clock::now();
-			_logger->info(__FILEREF__ + "End moveDirectory"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", sourceDirectory: " + sourceDirectory
-				+ ", destDirectory: " + destDirectory
-				+ ", moveDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoveDir - startMoveDir).count())
-			);
+			// 2020-05-01: since the remove of the director could fails because of nfs issue,
+			//	better do a copy and then a remove.
+			//	In this way, in case the remove fails, we can ignore the error.
+			//	The directory will be removed later by cron job
+			{
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				FileIO::copyDirectory(sourceDirectory, destDirectory,
+					S_IRUSR | S_IWUSR | S_IXUSR |                                                                         
+					S_IRGRP | S_IXGRP |                                                                                   
+					S_IROTH | S_IXOTH);
+				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+				_logger->info(__FILEREF__ + "End copyDirectory"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceDirectory: " + sourceDirectory
+					+ ", destDirectory: " + destDirectory
+					+ ", copyDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+				);
+			}
+
+			try
+			{
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				bool removeRecursively = true;
+				FileIO::removeDirectory(sourceDirectory, removeRecursively);
+				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+				_logger->info(__FILEREF__ + "End removeDirectory"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceDirectory: " + sourceDirectory
+					+ ", removeDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+				);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("removeDirectory failed")
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", e.what: " + e.what() 
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+         
+				// throw runtime_error(errorMessage);
+			}
 		}
 	}
 	catch(runtime_error e)
@@ -21588,7 +21621,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-			+ ", executeCommand: " + executeCommand 
+			+ ", e.what: " + e.what() 
 		;
 		_logger->error(__FILEREF__ + errorMessage);
          

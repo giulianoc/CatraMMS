@@ -10459,6 +10459,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
+	double inputTimeOffset = 0.0;
 	string cdnURL;
 	{
         string field = "EncodersPool";
@@ -10478,6 +10479,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         field = "UserAgent";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
+
+        field = "inputTimeOffset";
+		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
+			inputTimeOffset = JSONUtils::asDouble(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -2.0);
 
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -10699,6 +10704,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["userAgent"] = userAgent;
+					liveProxyMetadata["inputTimeOffset"] = inputTimeOffset;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;

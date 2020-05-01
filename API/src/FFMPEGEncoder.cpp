@@ -4546,6 +4546,7 @@ void FFMPEGEncoder::liveProxy(
 
 		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
 		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
+		double inputTimeOffset = JSONUtils::asDouble(liveProxyMetadata, "inputTimeOffset", -2.0);
 		liveProxy->_outputType = liveProxyMetadata.get("outputType", -1).asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
@@ -4664,12 +4665,10 @@ void FFMPEGEncoder::liveProxy(
 		{
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
-			double itsoffset = -2.0;
-
 			liveProxy->_ffmpeg->liveProxyByCDN(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
-				liveURL, userAgent, itsoffset,
+				liveURL, userAgent, inputTimeOffset,
 				cdnURL,
 				&(liveProxy->_childPid));
 		}
