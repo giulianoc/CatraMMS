@@ -313,6 +313,29 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         );
 
         {
+			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Locks"
+					+ ", processorMMS: " + processorMMS
+					);
+            lastSQLCommand = 
+				"update MMS_Lock set active = ? where owner = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, 0);
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Found Processing jobs (MMS_Lock) to be reset"
+                    + ", processorMMS: " + processorMMS
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
+        }
+
+        {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed"
 					+ ", processorMMS: " + processorMMS
 					);
