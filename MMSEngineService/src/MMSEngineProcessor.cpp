@@ -20101,6 +20101,15 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
+		catch(AlreadyLocked e)
+		{
+			_logger->warn(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread already locked"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
 		catch(exception e)
 		{
 			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
@@ -20616,6 +20625,9 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 		field = "lastUtcChunkEndTime";
 		mmsDataRoot[field] = utcChunkEndTime;
+
+		field = "configurationLabel";
+		mmsDataRoot[field] = liveRecorderConfigurationLabel;
 
 		string sUtcChunkEndTime;
 		{

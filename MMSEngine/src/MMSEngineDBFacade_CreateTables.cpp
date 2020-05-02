@@ -181,7 +181,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 			{
 				LockType lockType = LockType::UpdateLiveRecorderVOD;
-				int maxDurationInMinutes = 5;
+				int maxDurationInMinutes = 30;
 
 				lastSQLCommand = 
 					"select count(*) from MMS_Lock where type = ?";
