@@ -21252,6 +21252,10 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		throw runtime_error(errorMessage);
 	}
 
+	int maxTSToBeUsed = 2000;
+	if (tsToBeUsed.size() > maxTSToBeUsed)
+		tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + (tsToBeUsed.size() - maxTSToBeUsed));
+
 	// build and update the new manifest file
 	try
 	{
