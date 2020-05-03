@@ -21004,10 +21004,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 	int tsWillBePresentAtLeastForSeconds = 20 * 60;
 
 	// look for the ts to be used
-	vector<tuple<int, string, string, int64_t>> tsToBeUsed;
-	int64_t firstUtcChunkStartTime = -1;
-	int64_t lastUtcChunkStartTime = -1;
-	int64_t lastUtcChunkEndTime = -1;
+	vector<tuple<int64_t, int64_t, int, string, string, int64_t>> tsToBeUsed;
 	try
 	{
 		for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemDetail:
@@ -21215,15 +21212,9 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				int64_t tsDuration = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 					tsMediaItemKey, tsPhysicalPathKey);
 
-				if (currentUtcChunkStartTime > lastUtcChunkStartTime)
-					lastUtcChunkStartTime = currentUtcChunkStartTime;
-				if (currentUtcChunkEndTime > lastUtcChunkEndTime)
-					lastUtcChunkEndTime = currentUtcChunkEndTime;
-				if (firstUtcChunkStartTime == -1 || currentUtcChunkStartTime < firstUtcChunkStartTime)
-					firstUtcChunkStartTime = currentUtcChunkStartTime;
-
 				tsToBeUsed.push_back(
-						make_tuple(mmsPartitionNumber, relativePath, fileName, tsDuration)
+						make_tuple(currentUtcChunkStartTime, currentUtcChunkEndTime,
+							mmsPartitionNumber, relativePath, fileName, tsDuration)
 						);
 			}
 			else
@@ -21256,6 +21247,28 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 	if (tsToBeUsed.size() > maxTSToBeUsed)
 		tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + (tsToBeUsed.size() - maxTSToBeUsed));
 
+	if (tsToBeUsed.size() == 0)
+	{
+		string errorMessage = string("No chunks found")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+			+ ", tsToBeUsed.size: " + to_string(tsToBeUsed.size())
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+	int64_t firstUtcChunkStartTime;
+	int64_t lastUtcChunkEndTime;
+	{
+		tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo = tsToBeUsed[0];
+		tie(firstUtcChunkStartTime, ignore, ignore, ignore, ignore, ignore) = tsInfo;
+
+		tsInfo = tsToBeUsed[tsToBeUsed.size() - 1];
+		tie(ignore, lastUtcChunkEndTime, ignore, ignore, ignore, ignore) = tsInfo;
+	}
+
 	// build and update the new manifest file
 	try
 	{
@@ -21287,14 +21300,17 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				+ "#EXT-X-MEDIA-SEQUENCE:0" + endLine
 			;
 
-			for (tuple<int, string, string, int64_t> tsInfo: tsToBeUsed)
+			for (tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo: tsToBeUsed)
 			{
+				int64_t currentUtcChunkStartTime;
+				int64_t currentUtcChunkEndTime;
 				int mmsPartitionNumber;
 				string relativePath;
 				string fileName;
 				int64_t tsDuration;
 				
-				tie(mmsPartitionNumber, relativePath, fileName, tsDuration) = tsInfo;
+				tie(currentUtcChunkStartTime, currentUtcChunkEndTime,
+						mmsPartitionNumber, relativePath, fileName, tsDuration) = tsInfo;
 
 				{
 					char	pTsDuration [64];
