@@ -14987,9 +14987,9 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 			MMSEngineDBFacade::toCrossReferenceType(parametersRoot.get(field, "").asString());
 		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
-			crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
-			crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
+			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
 
         MMSEngineDBFacade::ContentType firstContentType;
 		int64_t firstMediaItemKey;

@@ -4255,7 +4255,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 				if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
 				{
-					crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 
 					targetMediaItemKey = mediaItemKey;
 
@@ -4264,7 +4264,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
 				{
-					crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
+					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
 
 					targetMediaItemKey = mediaItemKey;
 
