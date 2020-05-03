@@ -39,7 +39,7 @@
 		// optional: only in case you have to add a CrossReference. For example, if you are ingesting an image,
 		//	it is possible to specify this image is for a specific Video
 		"CrossReference": {
-			// mandatory. Possible values: ImageOfVideo, ImageOfAudio, FaceOfVideo, CutOfVideo, CutOfAudio
+			// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo, CutOfVideo, CutOfAudio
 			"Type": "ImageOfVideo",
 
 			// mandatory

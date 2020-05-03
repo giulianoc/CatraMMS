@@ -995,7 +995,9 @@ public:
     
     enum class CrossReferenceType {
         ImageOfVideo,
+		VideoOfImage,	// will be converted to ImageOfVideo
         ImageOfAudio,
+		AudioOfImage,	// will be converted to ImageOfAudio
         FaceOfVideo,
         CutOfVideo,
         CutOfAudio
@@ -1006,8 +1008,12 @@ public:
         {
             case CrossReferenceType::ImageOfVideo:
                 return "ImageOfVideo";
+            case CrossReferenceType::VideoOfImage:
+                return "VideoOfImage";
             case CrossReferenceType::ImageOfAudio:
                 return "ImageOfAudio";
+            case CrossReferenceType::AudioOfImage:
+                return "AudioOfImage";
             case CrossReferenceType::FaceOfVideo:
                 return "FaceOfVideo";
             case CrossReferenceType::CutOfVideo:
@@ -1027,8 +1033,12 @@ public:
 
         if (lowerCase == "imageofvideo")
             return CrossReferenceType::ImageOfVideo;
+        if (lowerCase == "videoofimage")
+            return CrossReferenceType::VideoOfImage;
 		else if (lowerCase == "imageofaudio")
             return CrossReferenceType::ImageOfAudio;
+		else if (lowerCase == "audioofimage")
+            return CrossReferenceType::AudioOfImage;
 		else if (lowerCase == "faceofvideo")
             return CrossReferenceType::FaceOfVideo;
 		else if (lowerCase == "cutofvideo")

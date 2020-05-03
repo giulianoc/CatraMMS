@@ -64,6 +64,7 @@ add_subdirectory(predefinedEncodingProfiles/video)
 add_subdirectory(predefinedEncodingProfiles/audio)
 add_subdirectory(predefinedEncodingProfiles/image)
 add_subdirectory(predefinedWorkflowLibrary)
+add_subdirectory(predefinedImages)
 
 add_subdirectory(utilities/registerAndConfirmUser/src)
 add_subdirectory(utilities/cvCaptureTest/src)

@@ -129,6 +129,8 @@ private:
 	int						_waitingNFSSync_attemptNumber;
 	int						_waitingNFSSync_sleepTimeInSeconds;
 
+	int64_t					_liveRecorderVODImageMediaItemKey;
+
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
     void handleCheckIngestionEvent();

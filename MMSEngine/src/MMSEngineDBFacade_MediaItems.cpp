@@ -4250,8 +4250,34 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 					MMSEngineDBFacade::toCrossReferenceType(crossReferenceRoot.get(field, "").asString());
 
-				field = "MediaItemKey";
-				int64_t targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				int64_t sourceMediaItemKey;
+				int64_t targetMediaItemKey;
+
+				if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
+				{
+					crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+
+					targetMediaItemKey = mediaItemKey;
+
+					field = "MediaItemKey";
+					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				}
+				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
+				{
+					crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
+
+					targetMediaItemKey = mediaItemKey;
+
+					field = "MediaItemKey";
+					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				}
+				else
+				{
+					sourceMediaItemKey = mediaItemKey;
+
+					field = "MediaItemKey";
+					targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				}
 
                 Json::Value crossReferenceParametersRoot;
 				field = "Parameters";
@@ -4260,7 +4286,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					crossReferenceParametersRoot = crossReferenceRoot[field];
 				}
 
-				addCrossReference (conn, mediaItemKey, crossReferenceType, targetMediaItemKey,
+				addCrossReference (conn, sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
 						crossReferenceParametersRoot);
 			}
 		}

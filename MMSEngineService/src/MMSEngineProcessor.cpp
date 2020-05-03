@@ -211,6 +211,11 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
 	);
 
+    _liveRecorderVODImageMediaItemKey	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODImage", -1);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->liveRecorderVODImage: " + to_string(_liveRecorderVODImageMediaItemKey)
+    );
+
     if (_processorIdentifier == 0)
     {
         try
@@ -14980,7 +14985,11 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             throw runtime_error(errorMessage);
         }
         MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-			MMSEngineDBFacade::toCrossReferenceType(parametersRoot.get(field, "XXX").asString());
+			MMSEngineDBFacade::toCrossReferenceType(parametersRoot.get(field, "").asString());
+		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
+			crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
+			crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
 
         MMSEngineDBFacade::ContentType firstContentType;
 		int64_t firstMediaItemKey;
@@ -20691,6 +20700,20 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
+
+		if (_liveRecorderVODImageMediaItemKey != -1)
+		{
+			Json::Value crossReferenceRoot;
+
+			field = "Type";
+			crossReferenceRoot[field] = "VideoOfImage";
+
+			field = "MediaItemKey";
+			crossReferenceRoot[field] = _liveRecorderVODImageMediaItemKey;
+
+			field = "CrossReference";
+			addContentParametersRoot[field] = crossReferenceRoot;
+		}
 
 		field = "Parameters";
 		addContentRoot[field] = addContentParametersRoot;

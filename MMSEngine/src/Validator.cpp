@@ -2175,8 +2175,9 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 }
 
 void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	Json::Value parametersRoot, 
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
 
