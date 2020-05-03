@@ -2908,7 +2908,8 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				"select ijo.mediaItemKey, ijo.physicalPathKey "
 				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
-				"and ijo.ingestionJobKey = ? order by ijo.mediaItemKey";
+				"and ijo.ingestionJobKey = ? "
+				"order by ijo.mediaItemKey asc";
 			/*
 			lastSQLCommand =
 				"select mediaItemKey, physicalPathKey "
