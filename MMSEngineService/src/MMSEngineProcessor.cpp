@@ -21387,6 +21387,12 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				if (previousUtcChunkEndTime != -1
 						&& previousUtcChunkEndTime != currentUtcChunkStartTime)
 				{
+					_logger->info(__FILEREF__ + "added EXT-X-DISCONTINUITY"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", previousUtcChunkEndTime: " + to_string(previousUtcChunkEndTime)
+						+ ", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime)
+					);
+
 					manifestContent += ("#EXT-X-DISCONTINUITY" + endLine);
 				}
 
@@ -21427,6 +21433,9 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 					// manifestContent += (relativePathName + endLine);
 					manifestContent += (fileName + endLine);
 				}
+
+				previousUtcChunkStartTime = currentUtcChunkStartTime;
+				previousUtcChunkEndTime = currentUtcChunkEndTime;
 			}
 
 			manifestContent += ("#EXT-X-ENDLIST" + endLine);
