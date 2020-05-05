@@ -1679,10 +1679,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			if (liveRecordingChunk == 0)
 			{
 				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
-				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
+				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') not like 'liveRecordingChunk%') ");
 			}
 			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') like 'liveRecordingChunk%' ");
 		}
         if (jsonCondition != "")
             sqlWhere += ("and " + jsonCondition);
@@ -1910,10 +1910,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				if (liveRecordingChunk == 0)
 				{
 					sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
-					sqlWhere += ("OR JSON_EXTRACT(mi.userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
+					sqlWhere += ("OR JSON_EXTRACT(mi.userData, '$.mmsData.dataType') not like 'liveRecordingChunk%') ");
 				}
 				else if (liveRecordingChunk == 1)
-					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.dataType') like 'liveRecordingChunk%' ");
 			}
 			if (jsonCondition != "")
 				sqlWhere += ("and " + jsonCondition);
@@ -3059,7 +3059,8 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
     }    
 }
 
-pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
+pair<int64_t,MMSEngineDBFacade::ContentType>
+	MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
     int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing)
 {
     string      lastSQLCommand;
@@ -5869,7 +5870,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 		// not be visible into the MediaItems view
 		{
 			{
-				string newDataType = "liveRecordingChunk";
+				string newDataType = "liveRecordingChunk_VOD";
 				string previousDataType = "liveRecordingVOD";
 				lastSQLCommand = 
 					"update MMS_MediaItem "

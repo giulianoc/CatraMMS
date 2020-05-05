@@ -47,7 +47,7 @@
 		// If you want to copy a frame-exact section of video you have to re-encode.
 		"KeyFrameSeeking": true,
 
-		// optional: by default the file format of the output is the same of the source media to be cut.
+		// optional: by default the file format of the output is the same of the source media to be cut. Only in case the source file format is m3u8, the default output format will be ts.
 		//	This parameter is needed only in case the default output file format has to be changed
 		"OutputFileFormat": "mp4",
 

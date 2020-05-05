@@ -211,10 +211,14 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
 	);
 
-    _liveRecorderVODImageMediaItemKey	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODImage", -1);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->liveRecorderVODImage: " + to_string(_liveRecorderVODImageMediaItemKey)
-    );
+	_liveRecorderVODImageLabel	= _configuration["mms"].get("liveRecorderVODImageLabel", "").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+	);
+	_liveRecorderVODMaxTSToBeUsed	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODImageMaxTSToBeUsed", 1000);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", mms->liveRecorderVODImageMaxTSToBeUsed: " + to_string(_liveRecorderVODMaxTSToBeUsed)
+	);
 
     if (_processorIdentifier == 0)
     {
@@ -2967,10 +2971,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
                         {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            // mediaItemKeysDependency is present because checked
+							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestCutMediaThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13638,7 +13644,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
                 throw runtime_error(errorMessage);
             }
-            fileFormat = sourcePhysicalPath.substr(extensionIndex + 1);
+			string extension = sourcePhysicalPath.substr(extensionIndex + 1);
+
+			if (extension == "m3u8")
+				fileFormat = "ts";
+			else
+				fileFormat = extension;
         }
         else
         {
@@ -20701,18 +20712,55 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
 
-		if (_liveRecorderVODImageMediaItemKey != -1)
+		if (_liveRecorderVODImageLabel != "")
 		{
-			Json::Value crossReferenceRoot;
+			try
+			{
+				bool warningIfMissing = true;
+				pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+					workspace->_workspaceKey, _liveRecorderVODImageLabel, warningIfMissing);
 
-			field = "Type";
-			crossReferenceRoot[field] = "VideoOfImage";
+				int64_t liveRecorderVODImageMediaItemKey;
+				tie(liveRecorderVODImageMediaItemKey, ignore) = mediaItemDetails;
 
-			field = "MediaItemKey";
-			crossReferenceRoot[field] = _liveRecorderVODImageMediaItemKey;
+				Json::Value crossReferenceRoot;
 
-			field = "CrossReference";
-			addContentParametersRoot[field] = crossReferenceRoot;
+				field = "Type";
+				crossReferenceRoot[field] = "VideoOfImage";
+
+				field = "MediaItemKey";
+				crossReferenceRoot[field] = liveRecorderVODImageMediaItemKey;
+
+				field = "CrossReference";
+				addContentParametersRoot[field] = crossReferenceRoot;
+			}
+			catch (MediaItemKeyNotFound e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
+			catch (runtime_error e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
 		}
 
 		field = "Parameters";
@@ -21266,9 +21314,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		throw runtime_error(errorMessage);
 	}
 
-	int maxTSToBeUsed = 2000;
-	if (tsToBeUsed.size() > maxTSToBeUsed)
-		tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + (tsToBeUsed.size() - maxTSToBeUsed));
+	if (tsToBeUsed.size() > _liveRecorderVODMaxTSToBeUsed)
+		tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + (tsToBeUsed.size() - _liveRecorderVODMaxTSToBeUsed));
 
 	if (tsToBeUsed.size() == 0)
 	{
@@ -21323,6 +21370,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				+ "#EXT-X-MEDIA-SEQUENCE:0" + endLine
 			;
 
+			int64_t previousUtcChunkStartTime = -1;
+			int64_t previousUtcChunkEndTime = -1;
 			for (tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo: tsToBeUsed)
 			{
 				int64_t currentUtcChunkStartTime;
@@ -21335,6 +21384,13 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				tie(currentUtcChunkStartTime, currentUtcChunkEndTime,
 						mmsPartitionNumber, relativePath, fileName, tsDuration) = tsInfo;
 
+				if (previousUtcChunkEndTime != -1
+						&& previousUtcChunkEndTime != currentUtcChunkStartTime)
+				{
+					manifestContent += ("#EXT-X-DISCONTINUITY" + endLine);
+				}
+
+				// #EXTINF
 				{
 					char	pTsDuration [64];
 					sprintf(pTsDuration, "%0.6f", ((float) tsDuration) / 1000);
@@ -21343,6 +21399,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						("#EXTINF:" + string(pTsDuration) + "," + endLine);
 				}
 
+				// content
 				{
 					char pMMSPartitionName [64];
 					sprintf(pMMSPartitionName, "MMS_%04lu",
