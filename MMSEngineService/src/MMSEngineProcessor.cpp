@@ -215,7 +215,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
 	);
-	_liveRecorderVODMaxTSToBeUsed	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODImageMaxTSToBeUsed", 1000);
+	_liveRecorderVODMaxTSToBeUsed	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODMaxTSToBeUsed", 1000);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->liveRecorderVODImageMaxTSToBeUsed: " + to_string(_liveRecorderVODMaxTSToBeUsed)
 	);
