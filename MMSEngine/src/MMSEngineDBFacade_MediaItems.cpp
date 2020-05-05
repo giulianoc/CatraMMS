@@ -1679,10 +1679,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			if (liveRecordingChunk == 0)
 			{
 				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
-				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') not like 'liveRecordingChunk%') ");
+				sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
 			}
 			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') like 'liveRecordingChunk%' ");
+				sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
         if (jsonCondition != "")
             sqlWhere += ("and " + jsonCondition);
@@ -1910,10 +1910,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				if (liveRecordingChunk == 0)
 				{
 					sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
-					sqlWhere += ("OR JSON_EXTRACT(mi.userData, '$.mmsData.dataType') not like 'liveRecordingChunk%') ");
+					sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
 				}
 				else if (liveRecordingChunk == 1)
-					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.dataType') like 'liveRecordingChunk%' ");
+					sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 			}
 			if (jsonCondition != "")
 				sqlWhere += ("and " + jsonCondition);
