@@ -21391,6 +21391,8 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 						+ ", previousUtcChunkEndTime: " + to_string(previousUtcChunkEndTime)
 						+ ", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime)
+						+ ", difference: " + to_string(currentUtcChunkStartTime - previousUtcChunkEndTime)
+						+ ", liveRecorderSegmentDuration: " + to_string(liveRecorderSegmentDuration)
 					);
 
 					manifestContent += ("#EXT-X-DISCONTINUITY" + endLine);
