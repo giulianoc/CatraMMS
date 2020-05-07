@@ -21,7 +21,7 @@
 # with the authors.
 
 SET (IMAGEs
-	liveRecorderVOD.jpg
+	LiveRecorderVirtualVOD.png
 )
 
 install (FILES ${IMAGES} DESTINATION predefinedImages)
