@@ -180,14 +180,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
 
 			{
-				LockType lockType = LockType::UpdateLiveRecorderVOD;
+				LockType lockType = LockType::UpdateLiveRecorderVirtualVOD;
 				int maxDurationInMinutes = 30;
 
 				lastSQLCommand = 
 					"select count(*) from MMS_Lock where type = ?";
-				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
-				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(lockType));
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 				if (resultSet->next())
 				{
@@ -197,7 +199,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							"insert into MMS_Lock (type, start, end, active, lastUpdate, lastDurationInMilliSecs, owner, maxDurationInMinutes, data) "
 							"values (?, NOW(), NOW(), 0, NOW(), 0, NULL, ?, NULL)";
 
-						shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 						int queryParameterIndex = 1;
 						preparedStatement->setString(queryParameterIndex++, toString(lockType));
 						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);

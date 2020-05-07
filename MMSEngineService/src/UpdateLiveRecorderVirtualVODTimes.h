@@ -1,16 +1,16 @@
 
-#ifndef UpdateLiveRecorderVODTimes_h
-#define UpdateLiveRecorderVODTimes_h
+#ifndef UpdateLiveRecorderVirtualVODTimes_h
+#define UpdateLiveRecorderVirtualVODTimes_h
 
 #include <memory>
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
 #include "catralibraries/Times2.h"
 
-#define MMSENGINE_UPDATELIVERECORDERVODTIMES_CLASSNAME		"UpdateLiveRecorderVODTimes"
-#define MMSENGINE_UPDATELIVERECORDERVODTIMES_SOURCE		"UpdateLiveRecorderVODTimes"
+#define MMSENGINE_UPDATELIVERECORDERVIRTUALVODTIMES_CLASSNAME		"UpdateLiveRecorderVirtualVODTimes"
+#define MMSENGINE_UPDATELIVERECORDERVIRTUALVODTIMES_SOURCE		"UpdateLiveRecorderVirtualVODTimes"
 
-#define MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD	9
+#define MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD	9
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
@@ -22,18 +22,18 @@
     #endif
 #endif
 
-class UpdateLiveRecorderVODTimes: public Times2
+class UpdateLiveRecorderVirtualVODTimes: public Times2
 {
 protected:
     shared_ptr<MultiEventsSet>              _multiEventsSet;
     shared_ptr<spdlog::logger>              _logger;
 
 public:
-    UpdateLiveRecorderVODTimes (unsigned long ulPeriodInMilliSecs,
+    UpdateLiveRecorderVirtualVODTimes (unsigned long ulPeriodInMilliSecs,
         shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<spdlog::logger> logger);
 
-    virtual ~UpdateLiveRecorderVODTimes (void);
+    virtual ~UpdateLiveRecorderVirtualVODTimes (void);
 
     virtual void handleTimeOut (void);
 

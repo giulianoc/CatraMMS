@@ -22,7 +22,7 @@
 #include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
-#include "UpdateLiveRecorderVODTimes.h"
+#include "UpdateLiveRecorderVirtualVODTimes.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
 #include "Magick++.h"
@@ -76,10 +76,10 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
     );
 
-    _maxSecondsToWaitUpdateLiveRecorderVOD	= JSONUtils::asInt(configuration["mms"]["locks"],
-		"maxSecondsToWaitUpdateLiveRecorderVOD", 10);
+    _maxSecondsToWaitUpdateLiveRecorderVirtualVOD	= JSONUtils::asInt(configuration["mms"]["locks"],
+		"maxSecondsToWaitUpdateLiveRecorderVirtualVOD", 10);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->maxSecondsToWaitUpdateLiveRecorderVOD: " + to_string(_maxSecondsToWaitUpdateLiveRecorderVOD)
+        + ", mms->maxSecondsToWaitUpdateLiveRecorderVirtualVOD: " + to_string(_maxSecondsToWaitUpdateLiveRecorderVirtualVOD)
     );
 
     _maxEventManagementTimeInSeconds       = JSONUtils::asInt(configuration["mms"], "maxEventManagementTimeInSeconds", 5);
@@ -211,13 +211,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
 	);
 
-	_liveRecorderVODImageLabel	= _configuration["mms"].get("liveRecorderVODImageLabel", "").asString();
+	_liveRecorderVirtualVODImageLabel	= _configuration["mms"].get("liveRecorderVirtualVODImageLabel", "").asString();
 	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
-	);
-	_liveRecorderVODMaxTSToBeUsed	= JSONUtils::asInt64(_configuration["mms"], "liveRecorderVODMaxTSToBeUsed", 1000);
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->liveRecorderVODImageMaxTSToBeUsed: " + to_string(_liveRecorderVODMaxTSToBeUsed)
+		+ ", mms->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 	);
 
     if (_processorIdentifier == 0)
@@ -710,9 +706,9 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
-            case MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD:	// 9
+            case MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD:	// 9
             {
-                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD"
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
 
@@ -722,7 +718,7 @@ void MMSEngineProcessor::operator ()()
                     {
                         // it is a periodical event, we will wait the next one
                         
-                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleUpdateLiveRecorderVODEventThread, activity is postponed"
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleUpdateLiveRecorderVirtualVODEventThread, activity is postponed"
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
                             + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
                             + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
@@ -730,14 +726,14 @@ void MMSEngineProcessor::operator ()()
                     }
                     else
                     {
-                        thread updateLiveRecorderVOD(&MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread, this,
+                        thread updateLiveRecorderVirtualVOD(&MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread, this,
                             _processorsThreadsNumber);
-                        updateLiveRecorderVOD.detach();
+                        updateLiveRecorderVirtualVOD.detach();
                     }
                 }
                 catch(exception e)
                 {
-                    _logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+                    _logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                     );
@@ -745,7 +741,7 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVOD"
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -19933,14 +19929,14 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
     }
 }
 
-void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
+void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
         shared_ptr<long> processorsThreadsNumber)
 {
 
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
     {
-        _logger->info(__FILEREF__ + "Update Live Recorder VOD started"
+        _logger->info(__FILEREF__ + "Update Live Recorder Virtual VOD started"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
         );
@@ -19953,93 +19949,99 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 			int milliSecondsToSleepWaitingLock = 500;
 
 			PersistenceLock persistenceLock(_mmsEngineDBFacade.get(),
-				MMSEngineDBFacade::LockType::UpdateLiveRecorderVOD,
-				_maxSecondsToWaitUpdateLiveRecorderVOD,
-				_processorMMS, "UpdateLiveRecorderVOD",
+				MMSEngineDBFacade::LockType::UpdateLiveRecorderVirtualVOD,
+				_maxSecondsToWaitUpdateLiveRecorderVirtualVOD,
+				_processorMMS, "UpdateLiveRecorderVirtualVOD",
 				milliSecondsToSleepWaitingLock, _logger);
 
-			vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>> runningLiveRecordersDetails;
+			vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>
+				runningLiveRecordersDetails;
 
-			_mmsEngineDBFacade->getRunningLiveRecorderVODsDetails(runningLiveRecordersDetails);
+			_mmsEngineDBFacade->getRunningLiveRecorderVirtualVODsDetails(runningLiveRecordersDetails);
 
-			for(tuple<int64_t, int64_t, string, int, string, string, int64_t, string> runningLiveRecorderDetails:
-					runningLiveRecordersDetails)
+			for(tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>
+					runningLiveRecorderDetails: runningLiveRecordersDetails)
 			{
 				int64_t workspaceKey;
 
 				try
 				{
-					string liveRecorderVODEncodingProfileLabel;
-					int64_t liveRecorderVODEncodingProfileKey;
+					int liveRecorderVirtualVODMaxDurationInMinutes;
+					string liveRecorderVirtualVODEncodingProfileLabel;
+					int64_t liveRecorderVirtualVODEncodingProfileKey;
 					int liveRecorderSegmentDuration;
 					string liveChunkRetention;
 					int64_t liveRecorderUserKey;
 					string liveRecorderApiKey;
 
 					tie(workspaceKey, liveRecorderIngestionJobKey,
-						liveRecorderVODEncodingProfileLabel, liveRecorderSegmentDuration,
+						liveRecorderVirtualVODMaxDurationInMinutes,
+						liveRecorderVirtualVODEncodingProfileLabel, liveRecorderSegmentDuration,
 						liveRecorderConfigurationLabel, liveChunkRetention, liveRecorderUserKey,
 						liveRecorderApiKey) = runningLiveRecorderDetails;
 
+					if (liveRecorderVirtualVODMaxDurationInMinutes == -1)
+						liveRecorderVirtualVODMaxDurationInMinutes = 120;
+
 					shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
 
-					if (liveRecorderVODEncodingProfileLabel != "")
+					if (liveRecorderVirtualVODEncodingProfileLabel != "")
 					{
-						liveRecorderVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
-							MMSEngineDBFacade::ContentType::Video, liveRecorderVODEncodingProfileLabel);
+						liveRecorderVirtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace,
+							MMSEngineDBFacade::ContentType::Video, liveRecorderVirtualVODEncodingProfileLabel);
 
 						_logger->info(__FILEREF__ + "Retrieve encoding profile key through his label"
 							+ ", _processorMMS: " + _processorMMS
 							+ ", workspaceKey: " + to_string(workspaceKey)
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
-							+ ", liveRecorderVODEncodingProfileLabel: " + liveRecorderVODEncodingProfileLabel
-							+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+							+ ", liveRecorderVirtualVODEncodingProfileLabel: " + liveRecorderVirtualVODEncodingProfileLabel
+							+ ", liveRecorderVirtualVODEncodingProfileKey: " + to_string(liveRecorderVirtualVODEncodingProfileKey)
 						);
 					}
 					else
-						liveRecorderVODEncodingProfileKey = -1;
+						liveRecorderVirtualVODEncodingProfileKey = -1;
 
-					string liveRecorderVODUniqueName =
+					string liveRecorderVirtualVODUniqueName =
 						liveRecorderConfigurationLabel + " (" + to_string(liveRecorderIngestionJobKey) + ")";
 
-					bool liveRecorderVODPresent = true;
+					bool liveRecorderVirtualVODPresent = true;
 					bool warningIfMissing = true;
-					int64_t liveRecorderVODMediaItemKey = -1;
-					int64_t liveRecorderVODPhysicalPathKey;
-					string liveRecorderVODManifestPathName;
+					int64_t liveRecorderVirtualVODMediaItemKey = -1;
+					int64_t liveRecorderVirtualVODPhysicalPathKey;
+					string liveRecorderVirtualVODManifestPathName;
 					try
 					{
 						// look for the Live Recorder VOD
 						pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(workspaceKey,
-							liveRecorderVODUniqueName, warningIfMissing);
-						tie(liveRecorderVODMediaItemKey, ignore) = mediaItemKeyDetails;
+							liveRecorderVirtualVODUniqueName, warningIfMissing);
+						tie(liveRecorderVirtualVODMediaItemKey, ignore) = mediaItemKeyDetails;
 
 						int64_t encodingProfileKey = -1;
 						bool warningIfMissing = false;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-							= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, liveRecorderVODMediaItemKey,
+							= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, liveRecorderVirtualVODMediaItemKey,
 							encodingProfileKey, warningIfMissing);
-						tie(liveRecorderVODPhysicalPathKey, liveRecorderVODManifestPathName,
+						tie(liveRecorderVirtualVODPhysicalPathKey, liveRecorderVirtualVODManifestPathName,
 								ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 					}
 					catch(MediaItemKeyNotFound mnf)
 					{
-						liveRecorderVODPresent = false;
+						liveRecorderVirtualVODPresent = false;
 					}
 
-					if (liveRecorderVODPresent)
+					if (liveRecorderVirtualVODPresent)
 					{
-						_logger->info(__FILEREF__ + "Live Recorder VOD is already present, just update the manifest"
+						_logger->info(__FILEREF__ + "Live Recorder Virtual VOD is already present, just update the manifest"
 							+ ", _processorMMS: " + _processorMMS
 							+ ", workspaceKey: " + to_string(workspaceKey)
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
-							+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
-							+ ", liveRecorderVODMediaItemKey: " + to_string(liveRecorderVODMediaItemKey)
-							+ ", liveRecorderVODPhysicalPathKey: " + to_string(liveRecorderVODPhysicalPathKey)
-							+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName
+							+ ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
+							+ ", liveRecorderVirtualVODMediaItemKey: " + to_string(liveRecorderVirtualVODMediaItemKey)
+							+ ", liveRecorderVirtualVODPhysicalPathKey: " + to_string(liveRecorderVirtualVODPhysicalPathKey)
+							+ ", liveRecorderVirtualVODManifestPathName: " + liveRecorderVirtualVODManifestPathName
 						);
 
 						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
@@ -20047,25 +20049,26 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
 							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
 
-						liveRecorder_updateVOD(workspace,
+						liveRecorder_updateVirtualVOD(workspace,
 							liveRecorderIngestionJobKey,
-							liveRecorderVODUniqueName,
-							liveRecorderVODEncodingProfileKey,
+							liveRecorderVirtualVODUniqueName,
+							liveRecorderVirtualVODEncodingProfileKey,
+							liveRecorderVirtualVODMaxDurationInMinutes,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
-							liveRecorderVODMediaItemKey,
-							liveRecorderVODPhysicalPathKey,
-							liveRecorderVODManifestPathName);
+							liveRecorderVirtualVODMediaItemKey,
+							liveRecorderVirtualVODPhysicalPathKey,
+							liveRecorderVirtualVODManifestPathName);
 					}
 					else
 					{
-						_logger->info(__FILEREF__ + "Live Recorder VOD is NOT present"
+						_logger->info(__FILEREF__ + "Live Recorder Virtual VOD is NOT present"
 							+ ", _processorMMS: " + _processorMMS
 							+ ", workspaceKey: " + to_string(workspaceKey)
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 							+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
-							+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
+							+ ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
 						);
 
 						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
@@ -20075,22 +20078,22 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 
 						shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
 
-						liveRecorder_ingestVOD(
+						liveRecorder_ingestVirtualVOD(
 							workspace,
 							liveRecorderIngestionJobKey,
-							liveRecorderVODEncodingProfileKey,
+							liveRecorderVirtualVODEncodingProfileKey,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
 							liveChunkRetention,
-							liveRecorderVODUniqueName,
+							liveRecorderVirtualVODUniqueName,
 							liveRecorderUserKey,
 							liveRecorderApiKey);
 					}
 				}
 				catch(runtime_error e)
 				{
-					_logger->error(__FILEREF__ + "UpdateLiveRecorderVOD failed"
+					_logger->error(__FILEREF__ + "UpdateLiveRecorderVirtualVOD failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -20100,7 +20103,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 				}
 				catch(exception e)
 				{
-					_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+					_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -20111,7 +20114,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		}
 		catch(runtime_error e)
 		{
-			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
@@ -20123,7 +20126,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		}
 		catch(AlreadyLocked e)
 		{
-			_logger->warn(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread already locked"
+			_logger->warn(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread already locked"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -20132,7 +20135,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		}
 		catch(exception e)
 		{
-			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVODEventThread failed"
+			_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
@@ -20143,22 +20146,22 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVODEventThread (
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(__FILEREF__ + "Update Live Recorder VOD finished"
+		_logger->info(__FILEREF__ + "Update Live Recorder Virtual VOD finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
 		);
     }
 }
 
-void MMSEngineProcessor::liveRecorder_ingestVOD(
+void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
-	int64_t liveRecorderVODEncodingProfileKey,
+	int64_t liveRecorderVirtualVODEncodingProfileKey,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
 	string liveChunkRetention,
-	string liveRecorderVODUniqueName,
+	string liveRecorderVirtualVODUniqueName,
 	int64_t liveRecorderUserKey,
 	string liveRecorderApiKey
 	)
@@ -20329,11 +20332,11 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 			if (validated && willBeRemovedInSeconds >= tsWillBePresentAtLeastForSeconds)
 			{
-				if (liveRecorderVODEncodingProfileKey != -1)
+				if (liveRecorderVirtualVODEncodingProfileKey != -1)
 				{
-					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVODEncodingProfileKey"
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVirtualVODEncodingProfileKey"
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+						+ ", liveRecorderVirtualVODEncodingProfileKey: " + to_string(liveRecorderVirtualVODEncodingProfileKey)
 						);
 
 					try
@@ -20341,7 +20344,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 						bool warningIfMissing = true;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey,
-							liveRecorderVODEncodingProfileKey, warningIfMissing);
+							liveRecorderVirtualVODEncodingProfileKey, warningIfMissing);
 
 						tie(tsPhysicalPathKey, tsPathFileName, ignore, ignore, tsFileName, ignore, ignore)
 							= physicalPathDetails;
@@ -20414,24 +20417,24 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 	// we have the TS, let's build the live recorder VOD (the directory,
 	// TS, manifest file)
-	string liveRecorderVODName;
-	string stagingLiveRecorderVODPathName;
-	string tarGzStagingLiveRecorderVODPathName;
+	string liveRecorderVirtualVODName;
+	string stagingLiveRecorderVirtualVODPathName;
+	string tarGzStagingLiveRecorderVirtualVODPathName;
 	try
 	{
 		{
-			liveRecorderVODName = to_string(liveRecorderIngestionJobKey)
-				+ "_liveRecorderVOD"
+			liveRecorderVirtualVODName = to_string(liveRecorderIngestionJobKey)
+				+ "_liveRecorderVirtualVOD"
 			;
 
 			bool removeLinuxPathIfExist = false;
 			bool neededForTranscoder = false;
-			stagingLiveRecorderVODPathName = _mmsStorage->getStagingAssetPathName(  
+			stagingLiveRecorderVirtualVODPathName = _mmsStorage->getStagingAssetPathName(  
 				neededForTranscoder,
 				workspace->_directoryName,
 				to_string(liveRecorderIngestionJobKey),  // directoryNamePrefix,
 				"/",    // relativePath,
-				liveRecorderVODName,	// filename
+				liveRecorderVirtualVODName,	// filename
 				-1, // mediaItemKey, not used because FileName is not ""
 				-1, // physicalPathKey, not used because FileName is not ""
 				removeLinuxPathIfExist);
@@ -20440,15 +20443,15 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			bool noErrorIfExists = true;
 			bool recursive = true;
 			FileIO::createDirectory(
-				stagingLiveRecorderVODPathName,
+				stagingLiveRecorderVirtualVODPathName,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP |
 				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 		}
 
-		// copy TS file into the stagingLiveRecorderVODPathName
+		// copy TS file into the stagingLiveRecorderVirtualVODPathName
 		{
-			string destTSPathFileName = stagingLiveRecorderVODPathName + "/" + tsFileName;
+			string destTSPathFileName = stagingLiveRecorderVirtualVODPathName + "/" + tsFileName;
 
 			_logger->info(__FILEREF__ + "Coping"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -20484,7 +20487,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 				+ "#EXT-X-ENDLIST" + endLine
 			;
 
-			string manifestPathFileName = stagingLiveRecorderVODPathName + "/" + liveRecorderVODName + ".m3u8";
+			string manifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" + liveRecorderVirtualVODName + ".m3u8";
 
 			ofstream ofManifestFile(manifestPathFileName);
 			ofManifestFile << manifestContent;
@@ -20494,26 +20497,26 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			string executeCommand;
 			try
 			{
-				tarGzStagingLiveRecorderVODPathName = stagingLiveRecorderVODPathName + ".tar.gz";
+				tarGzStagingLiveRecorderVirtualVODPathName = stagingLiveRecorderVirtualVODPathName + ".tar.gz";
 
-				size_t endOfPathIndex = stagingLiveRecorderVODPathName.find_last_of("/");
+				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
 				if (endOfPathIndex == string::npos)
 				{
-					string errorMessage = string("No stagingLiveRecorderVODDirectory found")
+					string errorMessage = string("No stagingLiveRecorderVirtualVODDirectory found")
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName 
+						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
 					;
 					_logger->error(__FILEREF__ + errorMessage);
           
 					throw runtime_error(errorMessage);
 				}
-				string stagingLiveRecorderVODDirectory =
-					stagingLiveRecorderVODPathName.substr(0, endOfPathIndex);
+				string stagingLiveRecorderVirtualVODDirectory =
+					stagingLiveRecorderVirtualVODPathName.substr(0, endOfPathIndex);
 
 				executeCommand =
-					"tar cfz " + tarGzStagingLiveRecorderVODPathName
-					+ " -C " + stagingLiveRecorderVODDirectory
-					+ " " + liveRecorderVODName;
+					"tar cfz " + tarGzStagingLiveRecorderVirtualVODPathName
+					+ " -C " + stagingLiveRecorderVirtualVODDirectory
+					+ " " + liveRecorderVirtualVODName;
 				_logger->info(__FILEREF__ + "Start tar command "
 					+ ", executeCommand: " + executeCommand
 				);
@@ -20538,10 +20541,10 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 
 				{
 					_logger->info(__FILEREF__ + "Remove directory"
-						+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 					);
 					bool removeRecursively = true;
-					FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+					FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
 				}
 			}
 			catch(runtime_error e)
@@ -20564,23 +20567,23 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
-		if (stagingLiveRecorderVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVODPathName))
+		if (stagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 			);
 			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
 		}
 
 		throw runtime_error(errorMessage);
@@ -20592,23 +20595,23 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
-		if (stagingLiveRecorderVODPathName != ""
-			&& FileIO::directoryExisting(stagingLiveRecorderVODPathName))
+		if (stagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove directory"
-				+ ", stagingLiveRecorderVODPathName: " + stagingLiveRecorderVODPathName
+				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
 			);
 			bool removeRecursively = true;
-			FileIO::removeDirectory(stagingLiveRecorderVODPathName, removeRecursively);
+			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
 		}
 
 		throw runtime_error(errorMessage);
@@ -20693,7 +20696,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		field = "FileFormat";
 		addContentParametersRoot[field] = "m3u8";
 
-		string sourceURL = string("copy") + "://" + tarGzStagingLiveRecorderVODPathName;
+		string sourceURL = string("copy") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
         field = "SourceURL";
         addContentParametersRoot[field] = sourceURL;
 
@@ -20704,7 +20707,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		addContentParametersRoot[field] = addContentLabel;
 
 		field = "UniqueName";
-		addContentParametersRoot[field] = liveRecorderVODUniqueName;
+		addContentParametersRoot[field] = liveRecorderVirtualVODUniqueName;
 
 		field = "Retention";
 		addContentParametersRoot[field] = liveChunkRetention;
@@ -20712,17 +20715,17 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
 
-		if (_liveRecorderVODImageLabel != "")
+		if (_liveRecorderVirtualVODImageLabel != "")
 		{
 			try
 			{
 				bool warningIfMissing = true;
 				pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-					workspace->_workspaceKey, _liveRecorderVODImageLabel, warningIfMissing);
+					workspace->_workspaceKey, _liveRecorderVirtualVODImageLabel, warningIfMissing);
 
-				int64_t liveRecorderVODImageMediaItemKey;
-				tie(liveRecorderVODImageMediaItemKey, ignore) = mediaItemDetails;
+				int64_t liveRecorderVirtualVODImageMediaItemKey;
+				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
 
 				Json::Value crossReferenceRoot;
 
@@ -20730,7 +20733,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 				crossReferenceRoot[field] = "VideoOfImage";
 
 				field = "MediaItemKey";
-				crossReferenceRoot[field] = liveRecorderVODImageMediaItemKey;
+				crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
 
 				field = "CrossReference";
 				addContentParametersRoot[field] = crossReferenceRoot;
@@ -20739,7 +20742,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			{
 				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+					+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 					+ ", e.what: " + e.what()
 				;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -20748,7 +20751,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			{
 				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+					+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 					+ ", e.what: " + e.what()
 				;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -20757,7 +20760,7 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 			{
 				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", _liveRecorderVODImageLabel: " + _liveRecorderVODImageLabel
+					+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 				;
 				_logger->error(__FILEREF__ + errorMessage);
 			}
@@ -20796,13 +20799,13 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -20815,13 +20818,13 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -20977,13 +20980,13 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -20999,13 +21002,13 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -21021,13 +21024,13 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
@@ -21042,30 +21045,31 @@ void MMSEngineProcessor::liveRecorder_ingestVOD(
 		;
 		_logger->error(__FILEREF__ + errorMessage);
 
-		if (tarGzStagingLiveRecorderVODPathName != ""
-			&& FileIO::fileExisting(tarGzStagingLiveRecorderVODPathName))
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
-				+ ", tarGzStagingLiveRecorderVODPathName: " + tarGzStagingLiveRecorderVODPathName
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
 			);
-			FileIO::remove(tarGzStagingLiveRecorderVODPathName);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		throw runtime_error(errorMessage);
 	}
 }
 
-void MMSEngineProcessor::liveRecorder_updateVOD(
+void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 	shared_ptr<Workspace> workspace,
 	int64_t liveRecorderIngestionJobKey,
-	string liveRecorderVODUniqueName,
-	int64_t liveRecorderVODEncodingProfileKey,
+	string liveRecorderVirtualVODUniqueName,
+	int64_t liveRecorderVirtualVODEncodingProfileKey,
+	int liveRecorderVirtualVODMaxDurationInMinutes,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
-	int64_t liveRecorderVODMediaItemKey,
-	int64_t liveRecorderVODPhysicalPathKey,
-	string liveRecorderVODManifestPathName
+	int64_t liveRecorderVirtualVODMediaItemKey,
+	int64_t liveRecorderVirtualVODPhysicalPathKey,
+	string liveRecorderVirtualVODManifestPathName
 	)
 {
 	// look for all the TS to be used (vector tsToBeUsed)
@@ -21242,11 +21246,11 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				string relativePath;
 				string fileName;
 
-				if (liveRecorderVODEncodingProfileKey != -1)
+				if (liveRecorderVirtualVODEncodingProfileKey != -1)
 				{
-					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVODEncodingProfileKey"
+					_logger->info(__FILEREF__ + "retrieve the TS path file name through liveRecorderVirtualVODEncodingProfileKey"
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderVODEncodingProfileKey: " + to_string(liveRecorderVODEncodingProfileKey)
+						+ ", liveRecorderVirtualVODEncodingProfileKey: " + to_string(liveRecorderVirtualVODEncodingProfileKey)
 						);
 
 					try
@@ -21254,7 +21258,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 						bool warningIfMissing = true;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
 							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, tsMediaItemKey,
-							liveRecorderVODEncodingProfileKey, warningIfMissing);
+							liveRecorderVirtualVODEncodingProfileKey, warningIfMissing);
 
 						tie(tsPhysicalPathKey, ignore, mmsPartitionNumber, relativePath, fileName, ignore, ignore)
 							= physicalPathDetails;
@@ -21314,14 +21318,17 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 		throw runtime_error(errorMessage);
 	}
 
-	if (tsToBeUsed.size() > _liveRecorderVODMaxTSToBeUsed)
-		tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + (tsToBeUsed.size() - _liveRecorderVODMaxTSToBeUsed));
+	int liveRecorderVirtualVODMaxTSToBeUsed = liveRecorderVirtualVODMaxDurationInMinutes * 60
+		/ liveRecorderSegmentDuration;
+	if (tsToBeUsed.size() > liveRecorderVirtualVODMaxTSToBeUsed)
+		tsToBeUsed.erase(tsToBeUsed.begin(),
+			tsToBeUsed.begin() + (tsToBeUsed.size() - liveRecorderVirtualVODMaxTSToBeUsed));
 
 	if (tsToBeUsed.size() == 0)
 	{
 		string errorMessage = string("No chunks found")
 			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-			+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+			+ ", liveRecorderVirtualVODManifestPathName: " + liveRecorderVirtualVODManifestPathName 
 			+ ", tsToBeUsed.size: " + to_string(tsToBeUsed.size())
 		;
 		_logger->error(__FILEREF__ + errorMessage);
@@ -21342,20 +21349,20 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 	// build and update the new manifest file
 	try
 	{
-		string liveRecorderVODDirectory;
+		string liveRecorderVirtualVODDirectory;
 		{
-			size_t endOfPathIndex = liveRecorderVODManifestPathName.find_last_of("/");
+			size_t endOfPathIndex = liveRecorderVirtualVODManifestPathName.find_last_of("/");
 			if (endOfPathIndex == string::npos)
 			{
-				string errorMessage = string("No liveRecorderVODDirectory found")
+				string errorMessage = string("No liveRecorderVirtualVODDirectory found")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-					+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+					+ ", liveRecorderVirtualVODManifestPathName: " + liveRecorderVirtualVODManifestPathName 
 				;
 				_logger->error(__FILEREF__ + errorMessage);
          
 				throw runtime_error(errorMessage);
 			}
-			liveRecorderVODDirectory = liveRecorderVODManifestPathName.substr(0, endOfPathIndex);
+			liveRecorderVirtualVODDirectory = liveRecorderVirtualVODManifestPathName.substr(0, endOfPathIndex);
 		}
 
 		// build new manifest file
@@ -21413,7 +21420,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 					sprintf(pMMSPartitionName, "MMS_%04lu",
 						(unsigned long) mmsPartitionNumber);
 
-					if (!FileIO::fileExisting(liveRecorderVODDirectory + "/" + fileName))
+					if (!FileIO::fileExisting(liveRecorderVirtualVODDirectory + "/" + fileName))
 					{
 						string relativePathName = string("../../../../../../")
 							+ string(pMMSPartitionName)
@@ -21421,7 +21428,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 							+ workspace->_directoryName
 							+ relativePath
 							+ fileName;
-						string linkPathName = liveRecorderVODDirectory + "/" + fileName;
+						string linkPathName = liveRecorderVirtualVODDirectory + "/" + fileName;
 						Boolean_t bReplaceItIfExist = true;
 						_logger->info(__FILEREF__ + "create link"
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -21447,7 +21454,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				+ ", manifestContent: " + manifestContent
 			);
 
-			ofstream ofManifestFile(liveRecorderVODManifestPathName);
+			ofstream ofManifestFile(liveRecorderVirtualVODManifestPathName);
 			ofManifestFile << manifestContent;
 		}
 
@@ -21504,7 +21511,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 				pair<int64_t, long> mediaInfoDetails;
 
 				FFMpeg ffmpeg (_configuration, _logger);
-				mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVODManifestPathName,
+				mediaInfoDetails = ffmpeg.getMediaInfo(liveRecorderVirtualVODManifestPathName,
 					videoTracks, audioTracks);
 
 				tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
@@ -21512,22 +21519,22 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 			{
 				/*
-				size_t endOfPathIndex = liveRecorderVODManifestPathName.find_last_of("/");
+				size_t endOfPathIndex = liveRecorderVirtualVODManifestPathName.find_last_of("/");
 				if (endOfPathIndex == string::npos)
 				{
-					string errorMessage = string("No liveRecorderVODDirectory found")
+					string errorMessage = string("No liveRecorderVirtualVODDirectory found")
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderVODManifestPathName: " + liveRecorderVODManifestPathName 
+						+ ", liveRecorderVirtualVODManifestPathName: " + liveRecorderVirtualVODManifestPathName 
 					;
 					_logger->error(__FILEREF__ + errorMessage);
           
 					throw runtime_error(errorMessage);
 				}
-				string liveRecorderVODDirectory =
-					liveRecorderVODManifestPathName.substr(0, endOfPathIndex);
+				string liveRecorderVirtualVODDirectory =
+					liveRecorderVirtualVODManifestPathName.substr(0, endOfPathIndex);
 				*/
 
-				sizeInBytes = FileIO::getDirectorySizeInBytes(liveRecorderVODDirectory);
+				sizeInBytes = FileIO::getDirectorySizeInBytes(liveRecorderVirtualVODDirectory);
 			}
 		}
 
@@ -21543,11 +21550,11 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 			//		is changed
 			//	- 
 			int newRetentionInMinutes = 120;
-			_mmsEngineDBFacade->updateLiveRecorderVOD (
+			_mmsEngineDBFacade->updateLiveRecorderVirtualVOD (
 				workspace->_workspaceKey,
-				liveRecorderVODUniqueName,
-				liveRecorderVODMediaItemKey,
-				liveRecorderVODPhysicalPathKey,
+				liveRecorderVirtualVODUniqueName,
+				liveRecorderVirtualVODMediaItemKey,
+				liveRecorderVirtualVODPhysicalPathKey,
 
 				newRetentionInMinutes,
 
@@ -21566,7 +21573,7 @@ void MMSEngineProcessor::liveRecorder_updateVOD(
 
 			// 2020-04-28: the saving of the manifest was moved above because otherwise
 			//	ffmpeg.getMediaInfo, of course, was not working
-			// ofstream ofManifestFile(liveRecorderVODManifestPathName);
+			// ofstream ofManifestFile(liveRecorderVirtualVODManifestPathName);
 			// ofManifestFile << manifestContent;
 		}
 	}
@@ -21682,7 +21689,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source
-		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVOD
+		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
 		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
 		{
 			string sourceDirectory = workspaceIngestionRepository + "/" + sourceFileName;

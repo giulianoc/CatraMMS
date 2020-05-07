@@ -1382,9 +1382,10 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
     }    
 }
 
-void MMSEngineDBFacade::getRunningLiveRecorderVODsDetails(
-	vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
-		)
+void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
+	vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>&
+	runningLiveRecordersDetails
+)
 {
 	string      lastSQLCommand;
 
@@ -1408,7 +1409,8 @@ void MMSEngineDBFacade::getRunningLiveRecorderVODsDetails(
 			lastSQLCommand =
 				string("select ir.workspaceKey, ij.ingestionJobKey, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel, "
-					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVODProfileLabel')) as liveRecorderVODProfileLabel, "
+					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVirtualVODProfileLabel')) as liveRecorderVirtualVODProfileLabel, "
+					"JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVirtualVODMaxDuration') as liveRecorderVirtualVODMaxDuration, "
 					"JSON_EXTRACT (ij.metaDataContent, '$.SegmentDuration') as segmentDuration, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.Retention')) as retention, "
 					"JSON_UNQUOTE(JSON_EXTRACT (ij.metaDataContent, '$.InternalMMS.userKey')) as userKey, "
@@ -1416,7 +1418,7 @@ void MMSEngineDBFacade::getRunningLiveRecorderVODsDetails(
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 					"where ir.ingestionRootKey = ij.ingestionRootKey "
 					"and ij.ingestionType = 'Live-Recorder' "
-					"and JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVOD') = true "
+					"and JSON_EXTRACT (ij.metaDataContent, '$.LiveRecorderVirtualVOD') = true "
 					"and (ij.status = 'EncodingQueued' "
 					"or (ij.status = 'End_TaskSuccess' and "
 						"NOW() <= DATE_ADD(ij.endProcessing, INTERVAL ? MINUTE))) "
@@ -1432,22 +1434,31 @@ void MMSEngineDBFacade::getRunningLiveRecorderVODsDetails(
 			{
 				int64_t workspaceKey = resultSet->getInt64("workspaceKey");
 				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
 				int segmentDuration = -1;
 				if (!resultSet->isNull("segmentDuration"))
 					segmentDuration = resultSet->getInt("segmentDuration");
-				string liveRecorderVODProfileLabel;
-				if (!resultSet->isNull("liveRecorderVODProfileLabel"))
-					liveRecorderVODProfileLabel = resultSet->getString("liveRecorderVODProfileLabel");
+
+				string liveRecorderVirtualVODProfileLabel;
+				if (!resultSet->isNull("liveRecorderVirtualVODProfileLabel"))
+					liveRecorderVirtualVODProfileLabel = resultSet->getString("liveRecorderVirtualVODProfileLabel");
+
+				int liveRecorderVirtualVODMaxDuration = -1;
+				if (!resultSet->isNull("liveRecorderVirtualVODMaxDuration"))
+					liveRecorderVirtualVODMaxDuration = resultSet->getInt("liveRecorderVirtualVODMaxDuration");
+
 				string retention;
 				if (!resultSet->isNull("retention"))
 					retention = resultSet->getString("retention");
+
 				string configurationLabel = resultSet->getString("configurationLabel");
 				int64_t userKey = resultSet->getInt64("userKey");
 				string apiKey = resultSet->getString("apiKey");
 
 				runningLiveRecordersDetails.push_back(
 					make_tuple(workspaceKey, ingestionJobKey,
-						liveRecorderVODProfileLabel, segmentDuration,                       
+						liveRecorderVirtualVODMaxDuration,
+						liveRecorderVirtualVODProfileLabel, segmentDuration,                       
 						configurationLabel, retention, userKey,                      
 						apiKey)
 				);

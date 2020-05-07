@@ -5746,9 +5746,9 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
     return physicalPathKey;
 }
 
-void MMSEngineDBFacade::updateLiveRecorderVOD (
+void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 	int64_t workspaceKey,
-	string liveRecorderVODUniqueName,
+	string liveRecorderVirtualVODUniqueName,
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
 
@@ -5795,7 +5795,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "updateLiveRecorderVOD (sizeInBytes, durationInMilliSeconds, bitRate)"
+			_logger->info(__FILEREF__ + "updateLiveRecorderVirtualVOD (sizeInBytes, durationInMilliSeconds, bitRate)"
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
@@ -5842,7 +5842,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "updateLiveRecorderVOD (title, retentionInMinutes, dataType)"
+			_logger->info(__FILEREF__ + "updateLiveRecorderVirtualVOD (title, retentionInMinutes, dataType)"
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
@@ -5879,7 +5879,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 					"mediaItemKey in ( "
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = ? and "
-					"uniqueName like '" + liveRecorderVODUniqueName + "-%' "
+					"uniqueName like '" + liveRecorderVirtualVODUniqueName + "-%' "
 					")" ;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement(
@@ -5890,11 +5890,11 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "updateLiveRecorderVOD (dataType)"
+				_logger->info(__FILEREF__ + "updateLiveRecorderVirtualVOD (dataType)"
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", mediaItemKey: " + to_string(mediaItemKey)
 					+ ", physicalPathKey: " + to_string(physicalPathKey)
-					+ ", liveRecorderVODUniqueName: " + liveRecorderVODUniqueName
+					+ ", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName
 					+ ", newDataType: " + newDataType
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 				);
@@ -5910,7 +5910,7 @@ void MMSEngineDBFacade::updateLiveRecorderVOD (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-				preparedStatement->setString(queryParameterIndex++, liveRecorderVODUniqueName);
+				preparedStatement->setString(queryParameterIndex++, liveRecorderVirtualVODUniqueName);
 
 				int rowsUpdated = preparedStatement->executeUpdate();
 			}

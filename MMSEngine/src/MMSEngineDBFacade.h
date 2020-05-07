@@ -88,7 +88,7 @@ public:
 		Ingestion						= 0,
 		Encoding						= 1,
 		MainAndBackupLiveRecordingHA	= 2,
-		UpdateLiveRecorderVOD			= 3
+		UpdateLiveRecorderVirtualVOD	= 3
     };
     static const char* toString(const LockType& lockType)
     {
@@ -100,8 +100,8 @@ public:
                 return "Encoding";
             case LockType::MainAndBackupLiveRecordingHA:
                 return "MainAndBackupLiveRecordingHA";
-            case LockType::UpdateLiveRecorderVOD:
-                return "UpdateLiveRecorderVOD";
+            case LockType::UpdateLiveRecorderVirtualVOD:
+                return "UpdateLiveRecorderVirtualVOD";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -118,8 +118,8 @@ public:
             return LockType::Encoding;
 		else if (lowerCase == "mainandbackupliverecordingha")
             return LockType::MainAndBackupLiveRecordingHA;
-		else if (lowerCase == "updateliverecordervod")
-            return LockType::UpdateLiveRecorderVOD;
+		else if (lowerCase == "updateliverecordervirtualvod")
+            return LockType::UpdateLiveRecorderVirtualVOD;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -1237,8 +1237,8 @@ public:
 	bool liveRecorderMainAndBackupChunksManagementCompleted(
 		int64_t ingestionJobKey);
 
-	void getRunningLiveRecorderVODsDetails(
-		vector<tuple<int64_t, int64_t, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
+	void getRunningLiveRecorderVirtualVODsDetails(
+		vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
 	);
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
@@ -1742,9 +1742,9 @@ public:
         int imageQuality
     );
     
-	void updateLiveRecorderVOD (
+	void updateLiveRecorderVirtualVOD (
 		int64_t workspaceKey,
-		string liveRecorderVODUniqueName,
+		string liveRecorderVirtualVODUniqueName,
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
 

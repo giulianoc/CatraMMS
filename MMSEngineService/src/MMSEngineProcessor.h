@@ -70,7 +70,7 @@ private:
     int                                 _processorIdentifier;
     int                                 _processorThreads;
     int                                 _maxAdditionalProcessorThreads;
-    int									_maxSecondsToWaitUpdateLiveRecorderVOD;
+    int									_maxSecondsToWaitUpdateLiveRecorderVirtualVOD;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -129,8 +129,7 @@ private:
 	int						_waitingNFSSync_attemptNumber;
 	int						_waitingNFSSync_sleepTimeInSeconds;
 
-	string					_liveRecorderVODImageLabel;
-	int						_liveRecorderVODMaxTSToBeUsed;
+	string					_liveRecorderVirtualVODImageLabel;
 
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
@@ -153,7 +152,7 @@ private:
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
 	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
-	void handleUpdateLiveRecorderVODEventThread (shared_ptr<long> processorsThreadsNumber);
+	void handleUpdateLiveRecorderVirtualVODEventThread (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(
         int64_t ingestionJobKey,
@@ -389,29 +388,30 @@ private:
 		string sourcePathName
 		);
 
-	void liveRecorder_ingestVOD(
+	void liveRecorder_ingestVirtualVOD(
 		shared_ptr<Workspace> workspace,
 		int64_t liveRecorderIngestionJobKey,
-		int64_t liveRecorderProfileKey,
+		int64_t liveRecorderVirtualVODProfileKey,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
 		string liveChunkRetention,
-		string liveRecorderVODUniqueName,
+		string liveRecorderVirtualVODUniqueName,
 		int64_t liveRecorderUserKey,
 		string liveRecorderApiKey);
 
-	void liveRecorder_updateVOD(
+	void liveRecorder_updateVirtualVOD(
 		shared_ptr<Workspace> workspace,
 		int64_t liveRecorderIngestionJobKey,
-		string liveRecorderVODUniqueName,
-		int64_t liveRecorderProfileKey,
+		string liveRecorderVirtualVODUniqueName,
+		int64_t liveRecorderVirtualVODProfileKey,
+		int liveRecorderVirtualVODMaxDurationInMinutes,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
-		int64_t liveRecorderVODMediaItemKey,
-		int64_t liveRecorderVODPhysicalPathKey,
-		string liveRecorderVODManifestPathName);
+		int64_t liveRecorderVirtualVODMediaItemKey,
+		int64_t liveRecorderVirtualVODPhysicalPathKey,
+		string liveRecorderVirtualVODManifestPathName);
 
     int progressDownloadCallback(
         int64_t ingestionJobKey,
