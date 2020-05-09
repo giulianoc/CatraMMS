@@ -21394,10 +21394,51 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 				if (previousUtcChunkEndTime != -1
 						&& previousUtcChunkEndTime != currentUtcChunkStartTime)
 				{
+					string sPreviousUtcChunkEndTime;
+					{
+						char	time_str [64];
+						tm		tmDateTime;
+
+						// from utc to local time
+						localtime_r (&previousUtcChunkEndTime, &tmDateTime);
+
+						sprintf (time_str,
+							"%04d-%02d-%02d %02d:%02d:%02d",
+							tmDateTime. tm_year + 1900,
+							tmDateTime. tm_mon + 1,
+							tmDateTime. tm_mday,
+							tmDateTime. tm_hour,
+							tmDateTime. tm_min,
+							tmDateTime. tm_sec);
+
+						sPreviousUtcChunkEndTime = time_str;
+					}
+
+					string sCurrentUtcChunkStartTime;
+					{
+						char	time_str [64];
+						tm		tmDateTime;
+
+						// from utc to local time
+						localtime_r (&currentUtcChunkStartTime, &tmDateTime);
+
+						sprintf (time_str,
+							"%04d-%02d-%02d %02d:%02d:%02d",
+							tmDateTime. tm_year + 1900,
+							tmDateTime. tm_mon + 1,
+							tmDateTime. tm_mday,
+							tmDateTime. tm_hour,
+							tmDateTime. tm_min,
+							tmDateTime. tm_sec);
+
+						sCurrentUtcChunkStartTime = time_str;
+					}
+
 					_logger->info(__FILEREF__ + "added EXT-X-DISCONTINUITY"
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", previousUtcChunkEndTime: " + to_string(previousUtcChunkEndTime)
-						+ ", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime)
+						+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+						+ ", previousUtcChunkEndTime: " + sPreviousUtcChunkEndTime + " (" + to_string(previousUtcChunkEndTime) + ")"
+						+ ", currentUtcChunkStartTime: " + sCurrentUtcChunkStartTime + " (" + to_string(currentUtcChunkStartTime) + ")"
 						+ ", difference: " + to_string(currentUtcChunkStartTime - previousUtcChunkEndTime)
 						+ ", liveRecorderSegmentDuration: " + to_string(liveRecorderSegmentDuration)
 					);
