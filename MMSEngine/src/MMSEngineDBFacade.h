@@ -1618,7 +1618,8 @@ public:
 		string overlay_Width_InPixel, string overlay_Height_InPixel,
 		bool soundOfMain, EncodingPriority encodingPriority);
 
-	void updateEncodingLiveRecordingPeriod (
+	void updateIngestionAndEncodingLiveRecordingPeriod (
+		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd);

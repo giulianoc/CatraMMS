@@ -10115,7 +10115,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 						+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 					);
-					_mmsEngineDBFacade->updateEncodingLiveRecordingPeriod(
+					_mmsEngineDBFacade->updateIngestionAndEncodingLiveRecordingPeriod(
+							_encodingItem->_ingestionJobKey,
 							_encodingItem->_encodingJobKey,
 							utcRecordingPeriodStart, utcRecordingPeriodEnd);
 

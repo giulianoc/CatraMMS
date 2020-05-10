@@ -3693,7 +3693,8 @@ int MMSEngineDBFacade::updateEncodingJob (
     return encodingFailureNumber;
 }
 
-void MMSEngineDBFacade::updateEncodingLiveRecordingPeriod (
+void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
+		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd)
@@ -3709,6 +3710,43 @@ void MMSEngineDBFacade::updateEncodingLiveRecordingPeriod (
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
+
+        {
+			_logger->info(__FILEREF__ + "IngestionJob update"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", JSON_SET...utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+				+ ", JSON_SET....utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+				);
+			// "RecordingPeriod" : { "AutoRenew" : true, "End" : "2020-05-10T02:00:00Z", "Start" : "2020-05-03T02:00:00Z" }
+            lastSQLCommand = 
+                "update MMS_IngestionJob set "
+				"metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.Start', DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(?), @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ'))"
+				", metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.End', DATE_FORMAT(CONVERT_TZ(FROM_UNIXTIME(?), @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ')) "
+				"where ingestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, utcRecordingPeriodStart);
+            preparedStatement->setInt64(queryParameterIndex++, utcRecordingPeriodEnd);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+			int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+				// 2020-05-10: in case of 'high availability', this update will be done two times
+				//	For this reason it is a warn below and no exception is raised
+                string errorMessage = __FILEREF__ + "no ingestion update was done"
+					+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+					+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->warn(errorMessage);
+
+				// throw runtime_error(errorMessage);
+            }
+        }
 
         {
 			_logger->info(__FILEREF__ + "EncodingJob update"
@@ -3743,7 +3781,6 @@ void MMSEngineDBFacade::updateEncodingLiveRecordingPeriod (
                 throw runtime_error(errorMessage);                    
             }
         }
-        
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
