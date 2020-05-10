@@ -2891,6 +2891,35 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		IngestionType ingestionType;
+        {
+			lastSQLCommand =
+				"select ingestionType "
+				"from MMS_IngestionJob "
+				"where ingestionJobKey = ? ";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+				ingestionType     = MMSEngineDBFacade::toIngestionType(
+					resultSet->getString("ingestionType"));
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "IngestionJob is not found"
+					+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+					+ ", lastSQLCommand: " + lastSQLCommand
+				;
+				_logger->error(errorMessage);
+
+				throw MediaItemKeyNotFound(errorMessage);                    
+			}
+		}
+
         {
             // order by in the next select is important  to have the right order in case of dependency in a workflow
 			/*
@@ -2904,12 +2933,18 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// 2019-09-20: The Live-Recorder task now updates the Ingestion Status at the end of the task,
 			// when main and backup management is finished (no MIKs with valitaded==false are present)
 			// So we do not need anymore the above check
+			string orderBy;
+			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+				orderBy = "JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') asc";
+			else
+				orderBy = "order by ijo.mediaItemKey asc";
+
 			lastSQLCommand =
-				"select ijo.mediaItemKey, ijo.physicalPathKey "
-				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
-				"where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
-				"and ijo.ingestionJobKey = ? "
-				"order by ijo.mediaItemKey asc";
+				string("select ijo.mediaItemKey, ijo.physicalPathKey ")
+				+ "from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
+				+ "where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
+				+ "and ijo.ingestionJobKey = ? "
+				+ orderBy;
 			/*
 			lastSQLCommand =
 				"select mediaItemKey, physicalPathKey "
