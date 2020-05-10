@@ -2935,7 +2935,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// So we do not need anymore the above check
 			string orderBy;
 			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
-				orderBy = "JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') asc";
+				orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') asc";
 			else
 				orderBy = "order by ijo.mediaItemKey asc";
 
