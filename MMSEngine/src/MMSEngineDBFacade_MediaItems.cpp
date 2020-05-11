@@ -2877,6 +2877,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 
 void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 	int64_t workspaceKey, int64_t referenceIngestionJobKey, 
+	int maxLastMediaItemsToBeReturned,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
 	bool warningIfMissing)
 {
@@ -2935,9 +2936,9 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// So we do not need anymore the above check
 			string orderBy;
 			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
-				orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') asc";
+				orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
 			else
-				orderBy = "order by ijo.mediaItemKey asc";
+				orderBy = "order by ijo.mediaItemKey desc ";
 
 			lastSQLCommand =
 				string("select ijo.mediaItemKey, ijo.physicalPathKey ")
@@ -2945,6 +2946,8 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				+ "where mi.workspaceKey = ? and ijo.mediaItemKey = mi.mediaItemKey "
 				+ "and ijo.ingestionJobKey = ? "
 				+ orderBy;
+			if (maxLastMediaItemsToBeReturned != -1)
+				lastSQLCommand += ("limit " + to_string(maxLastMediaItemsToBeReturned));
 			/*
 			lastSQLCommand =
 				"select mediaItemKey, physicalPathKey "
@@ -3000,7 +3003,8 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 				tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
 					= make_tuple(mediaItemKey, physicalPathKey, contentType);
-				mediaItemsDetails.push_back(mediaItemKeyPhysicalPathKeyAndContentType);
+				mediaItemsDetails.insert(mediaItemsDetails.begin(),
+					mediaItemKeyPhysicalPathKeyAndContentType);
             }
         }
 

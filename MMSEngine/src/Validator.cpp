@@ -3970,7 +3970,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        workspaceKey, referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+                        workspaceKey, referenceIngestionJobKey, -1,
+						mediaItemsDetails, warningIfMissing);  
 
                 if (mediaItemsDetails.size() == 0)
                 {
@@ -4314,7 +4315,8 @@ void Validator::fillReferencesOutput(
                 vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        workspaceKey, referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+                        workspaceKey, referenceIngestionJobKey, -1,
+						mediaItemsDetails, warningIfMissing);  
 
                 if (mediaItemsDetails.size() == 0)
                 {

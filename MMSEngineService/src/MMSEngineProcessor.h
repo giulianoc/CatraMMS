@@ -405,7 +405,6 @@ private:
 		int64_t liveRecorderIngestionJobKey,
 		string liveRecorderVirtualVODUniqueName,
 		int64_t liveRecorderVirtualVODProfileKey,
-		int liveRecorderVirtualVODMaxDurationInMinutes,
 		int liveRecorderSegmentDuration,
 		string liveRecorderConfigurationLabel,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,

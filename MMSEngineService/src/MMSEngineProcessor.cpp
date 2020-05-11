@@ -6624,7 +6624,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
 					localAssetIngestionEvent.getWorkspace()->_workspaceKey, variantOfIngestionJobKey,
-					mediaItemsDetails, warningIfMissing);
+					-1, mediaItemsDetails, warningIfMissing);
 
 				if (mediaItemsDetails.size() != 1)
 				{
@@ -20046,14 +20046,18 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 
 						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
 						bool warningIfMissing = true;
+						int liveRecorderVirtualVODMaxTSToBeUsed =
+							liveRecorderVirtualVODMaxDurationInMinutes * 60
+							/ liveRecorderSegmentDuration;
 						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
+							workspaceKey, liveRecorderIngestionJobKey,
+							liveRecorderVirtualVODMaxTSToBeUsed, liveChunksDetails,
+							warningIfMissing);
 
 						liveRecorder_updateVirtualVOD(workspace,
 							liveRecorderIngestionJobKey,
 							liveRecorderVirtualVODUniqueName,
 							liveRecorderVirtualVODEncodingProfileKey,
-							liveRecorderVirtualVODMaxDurationInMinutes,
 							liveRecorderSegmentDuration,
 							liveRecorderConfigurationLabel,
 							liveChunksDetails,
@@ -20073,10 +20077,16 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 
 						vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> liveChunksDetails;
 						bool warningIfMissing = true;
+						int liveRecorderVirtualVODMaxTSToBeUsed =
+							liveRecorderVirtualVODMaxDurationInMinutes * 60
+							/ liveRecorderSegmentDuration;
 						_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-							workspaceKey, liveRecorderIngestionJobKey, liveChunksDetails, warningIfMissing);
+							workspaceKey, liveRecorderIngestionJobKey,
+							liveRecorderVirtualVODMaxTSToBeUsed, liveChunksDetails,
+							warningIfMissing);
 
-						shared_ptr<Workspace> workspace = _mmsEngineDBFacade->getWorkspace(workspaceKey);
+						shared_ptr<Workspace> workspace =
+							_mmsEngineDBFacade->getWorkspace(workspaceKey);
 
 						liveRecorder_ingestVirtualVOD(
 							workspace,
@@ -21063,7 +21073,6 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 	int64_t liveRecorderIngestionJobKey,
 	string liveRecorderVirtualVODUniqueName,
 	int64_t liveRecorderVirtualVODEncodingProfileKey,
-	int liveRecorderVirtualVODMaxDurationInMinutes,
 	int liveRecorderSegmentDuration,
 	string liveRecorderConfigurationLabel,
 	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
@@ -21318,11 +21327,13 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 		throw runtime_error(errorMessage);
 	}
 
+	/*
 	int liveRecorderVirtualVODMaxTSToBeUsed = liveRecorderVirtualVODMaxDurationInMinutes * 60
 		/ liveRecorderSegmentDuration;
 	if (tsToBeUsed.size() > liveRecorderVirtualVODMaxTSToBeUsed)
 		tsToBeUsed.erase(tsToBeUsed.begin(),
 			tsToBeUsed.begin() + (tsToBeUsed.size() - liveRecorderVirtualVODMaxTSToBeUsed));
+	*/
 
 	if (tsToBeUsed.size() == 0)
 	{
@@ -21339,11 +21350,12 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 	int64_t firstUtcChunkStartTime;
 	int64_t lastUtcChunkEndTime;
 	{
-		tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo = tsToBeUsed[0];
-		tie(firstUtcChunkStartTime, ignore, ignore, ignore, ignore, ignore) = tsInfo;
+		tuple<int64_t, int64_t, int, string, string, int64_t> firstTsInfo = tsToBeUsed[0];
+		tie(firstUtcChunkStartTime, ignore, ignore, ignore, ignore, ignore) = firstTsInfo;
 
-		tsInfo = tsToBeUsed[tsToBeUsed.size() - 1];
-		tie(ignore, lastUtcChunkEndTime, ignore, ignore, ignore, ignore) = tsInfo;
+		tuple<int64_t, int64_t, int, string, string, int64_t> lastTsInfo =
+			tsToBeUsed[tsToBeUsed.size() - 1];
+		tie(ignore, lastUtcChunkEndTime, ignore, ignore, ignore, ignore) = lastTsInfo;
 	}
 
 	// build and update the new manifest file

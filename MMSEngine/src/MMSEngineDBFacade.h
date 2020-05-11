@@ -1431,6 +1431,7 @@ public:
     
     void getMediaItemDetailsByIngestionJobKey(
 		int64_t workspaceKey, int64_t referenceIngestionJobKey, 
+		int maxLastMediaItemsToBeReturned,
 		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
 		bool warningIfMissing);
 
