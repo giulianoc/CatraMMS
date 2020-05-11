@@ -688,48 +688,6 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 								continue;
 							}
-							/*
-							if (contentType == ContentType::Video)
-							{
-								int videoWidth;
-								int videoHeight;
-								long bitRate;
-								string videoCodecName;
-								string videoProfile;
-								string videoAvgFrameRate;
-								long videoBitRate;
-								string audioCodecName;
-								long audioSampleRate;
-								int audioChannels;
-								long audioBitRate;
-
-								int64_t physicalPathKey = -1;
-								tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-									videoDetails = getVideoDetails(mediaItemKeyChunk_1,
-											physicalPathKey);
-
-								tie(durationInMilliSecondsChunk_1, bitRate,
-									videoCodecName, videoProfile, videoWidth, videoHeight,
-										videoAvgFrameRate, videoBitRate,
-									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
-										= videoDetails;
-							}
-							else // if (contentType == ContentType::Audio)
-							{
-								string audioCodecName;
-								long audioSampleRate;
-								int audioChannels;
-								long audioBitRate;
-
-								int64_t physicalPathKey = -1;
-								tuple<int64_t,string,long,long,int> audioDetails =
-									getAudioDetails(mediaItemKeyChunk_1, physicalPathKey);
-
-								tie(durationInMilliSecondsChunk_1, 
-									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
-										= audioDetails;
-							}
-							*/
 						}
 						else
 						{
@@ -778,48 +736,6 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 								continue;
 							}
-							/*
-							if (contentType == ContentType::Video)
-							{
-								int videoWidth;
-								int videoHeight;
-								long bitRate;
-								string videoCodecName;
-								string videoProfile;
-								string videoAvgFrameRate;
-								long videoBitRate;
-								string audioCodecName;
-								long audioSampleRate;
-								int audioChannels;
-								long audioBitRate;
-
-								int64_t physicalPathKey = -1;
-								tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-									videoDetails = getVideoDetails(mediaItemKeyChunk_2,
-											physicalPathKey);
-
-								tie(durationInMilliSecondsChunk_2, bitRate,
-									videoCodecName, videoProfile, videoWidth, videoHeight,
-										videoAvgFrameRate, videoBitRate,
-									audioCodecName, audioSampleRate, audioChannels, audioBitRate)
-										= videoDetails;
-							}
-							else // if (contentType == ContentType::Audio)
-							{
-								string audioCodecName;
-								long audioSampleRate;
-								int audioChannels;
-								long audioBitRate;
-
-								int64_t physicalPathKey = -1;
-								tuple<int64_t,string,long,long,int> audioDetails =
-									getAudioDetails(mediaItemKeyChunk_2, physicalPathKey);
-
-								tie(durationInMilliSecondsChunk_2, 
-									audioCodecName, audioBitRate, audioSampleRate, audioChannels)
-										= audioDetails;
-							}
-							*/
 						}
 						else
 						{
@@ -926,10 +842,54 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 								if (uniqueNameValidated != "")
 								{
-									// it should not happen duplicated unique name
-									bool allowUniqueNameOverride = true;
-									addExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
-										allowUniqueNameOverride, uniqueNameValidated);
+									try
+									{
+										// it should not happen duplicated unique name
+										bool allowUniqueNameOverride = true;
+										addExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
+											allowUniqueNameOverride, uniqueNameValidated);
+									}
+									catch(sql::SQLException se)
+									{
+										string exceptionMessage(se.what());
+        
+										_logger->error(__FILEREF__ + "SQL exception"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", exceptionMessage: " + exceptionMessage
+											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+										);
+
+										// continue;
+									}
+									catch(AlreadyLocked e)
+									{
+										_logger->error(__FILEREF__ + "SQL exception"
+											+ ", e.what(): " + e.what()
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+										);
+
+										// continue;
+									}
+									catch(runtime_error e)
+									{
+										_logger->error(__FILEREF__ + "SQL exception"
+											+ ", e.what(): " + e.what()
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+										);
+
+										// continue;
+									}
+									catch(exception e)
+									{
+										_logger->error(__FILEREF__ + "SQL exception"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+										);
+
+										// continue;
+									}
 								}
 							}
 
@@ -1027,10 +987,54 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 							if (uniqueName != "")
 							{
-								// it should not happen duplicated unique name
-								bool allowUniqueNameOverride = true;
-								addExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
-									allowUniqueNameOverride, uniqueName);
+								try
+								{
+									// it should not happen duplicated unique name
+									bool allowUniqueNameOverride = true;
+									addExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
+										allowUniqueNameOverride, uniqueName);
+								}
+								catch(sql::SQLException se)
+								{
+									string exceptionMessage(se.what());
+       
+									_logger->error(__FILEREF__ + "SQL exception"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", exceptionMessage: " + exceptionMessage
+										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+									);
+
+									// continue;
+								}
+								catch(AlreadyLocked e)
+								{
+									_logger->error(__FILEREF__ + "SQL exception"
+										+ ", e.what(): " + e.what()
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+									);
+
+									// continue;
+								}
+								catch(runtime_error e)
+								{
+									_logger->error(__FILEREF__ + "SQL exception"
+										+ ", e.what(): " + e.what()
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+									);
+
+									// continue;
+								}
+								catch(exception e)
+								{
+									_logger->error(__FILEREF__ + "SQL exception"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+									);
+
+									// continue;
+								}
 							}
 						}
 					}

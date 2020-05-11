@@ -21446,12 +21446,13 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 						sCurrentUtcChunkStartTime = time_str;
 					}
 
+					int differenceInSeconds = currentUtcChunkStartTime - previousUtcChunkEndTime;
 					_logger->info(__FILEREF__ + "added EXT-X-DISCONTINUITY"
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 						+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
 						+ ", previousUtcChunkEndTime: " + sPreviousUtcChunkEndTime + " (" + to_string(previousUtcChunkEndTime) + ")"
 						+ ", currentUtcChunkStartTime: " + sCurrentUtcChunkStartTime + " (" + to_string(currentUtcChunkStartTime) + ")"
-						+ ", difference: " + to_string(currentUtcChunkStartTime - previousUtcChunkEndTime)
+						+ ", difference (secs): " + to_string(differenceInSeconds) + " (" + to_string(differenceInSeconds / liveRecorderSegmentDuration) + " segments)"
 						+ ", liveRecorderSegmentDuration: " + to_string(liveRecorderSegmentDuration)
 					);
 
