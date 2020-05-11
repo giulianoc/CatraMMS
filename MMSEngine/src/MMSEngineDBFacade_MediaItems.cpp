@@ -4950,7 +4950,7 @@ void MMSEngineDBFacade::addExternalUniqueName(
 		{
 			lastSQLCommand = 
 				"update MMS_ExternalUniqueName "
-				"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+				"set uniqueName = concat(uniqueName, '-', mediaItemKey, '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
 				"where workspaceKey = ? and uniqueName = ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (

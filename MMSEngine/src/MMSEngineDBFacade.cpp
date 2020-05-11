@@ -811,10 +811,12 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 								+ ", mediaItemKeyChunk_1: " + to_string(mediaItemKeyChunk_1)
+								+ ", uniqueName_1: " + uniqueName_1
 								+ ", mainChunk_1: " + to_string(mainChunk_1)
 								+ ", durationInMilliSecondsChunk_1: "
 									+ to_string(durationInMilliSecondsChunk_1)
 								+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
+								+ ", uniqueName_2: " + uniqueName_2
 								+ ", mainChunk_2: " + to_string(mainChunk_2)
 								+ ", durationInMilliSecondsChunk_2: "
 									+ to_string(durationInMilliSecondsChunk_2)
@@ -854,7 +856,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 										string exceptionMessage(se.what());
         
 										_logger->error(__FILEREF__ + "SQL exception"
-											+ ", lastSQLCommand: " + lastSQLCommand
+										// 	+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", exceptionMessage: " + exceptionMessage
 											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 										);
@@ -865,7 +867,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									{
 										_logger->error(__FILEREF__ + "SQL exception"
 											+ ", e.what(): " + e.what()
-											+ ", lastSQLCommand: " + lastSQLCommand
+										// 	+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 										);
 
@@ -875,7 +877,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									{
 										_logger->error(__FILEREF__ + "SQL exception"
 											+ ", e.what(): " + e.what()
-											+ ", lastSQLCommand: " + lastSQLCommand
+										// 	+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 										);
 
@@ -884,7 +886,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									catch(exception e)
 									{
 										_logger->error(__FILEREF__ + "SQL exception"
-											+ ", lastSQLCommand: " + lastSQLCommand
+										// 	+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 										);
 
@@ -999,7 +1001,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									string exceptionMessage(se.what());
        
 									_logger->error(__FILEREF__ + "SQL exception"
-										+ ", lastSQLCommand: " + lastSQLCommand
+										// + ", lastSQLCommand: " + lastSQLCommand
 										+ ", exceptionMessage: " + exceptionMessage
 										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 									);
@@ -1010,7 +1012,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								{
 									_logger->error(__FILEREF__ + "SQL exception"
 										+ ", e.what(): " + e.what()
-										+ ", lastSQLCommand: " + lastSQLCommand
+										// + ", lastSQLCommand: " + lastSQLCommand
 										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 									);
 
@@ -1020,7 +1022,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								{
 									_logger->error(__FILEREF__ + "SQL exception"
 										+ ", e.what(): " + e.what()
-										+ ", lastSQLCommand: " + lastSQLCommand
+										// + ", lastSQLCommand: " + lastSQLCommand
 										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 									);
 
@@ -1029,7 +1031,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								catch(exception e)
 								{
 									_logger->error(__FILEREF__ + "SQL exception"
-										+ ", lastSQLCommand: " + lastSQLCommand
+									// 	+ ", lastSQLCommand: " + lastSQLCommand
 										+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 									);
 
