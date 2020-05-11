@@ -4949,9 +4949,10 @@ void MMSEngineDBFacade::addExternalUniqueName(
 		if (allowUniqueNameOverride)
 		{
 			lastSQLCommand = 
-				"update MMS_ExternalUniqueName "
-				"set uniqueName = concat(uniqueName, '-', mediaItemKey, '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
-				"where workspaceKey = ? and uniqueName = ?";
+				string("update MMS_ExternalUniqueName ")
+				+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
+					+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
+				+ "where workspaceKey = ? and uniqueName = ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
