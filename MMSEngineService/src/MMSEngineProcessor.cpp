@@ -9924,7 +9924,7 @@ void MMSEngineProcessor::liveCutThread(
 						chunkEndTime = strDateTime;
 					}
 
-					_logger->error(__FILEREF__ + "Retrieved chunk"
+					_logger->info(__FILEREF__ + "Retrieved chunk"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", mediaITemKey: " + to_string(mediaItemKey)
