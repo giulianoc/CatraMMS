@@ -21487,6 +21487,8 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 				tie(currentUtcChunkStartTime, currentUtcChunkEndTime,
 						mmsPartitionNumber, relativePath, fileName, tsDuration) = tsInfo;
 
+				// 2020-05-15: since we added the check on discontinuity before (see comment '2020-05-14'),
+				//	we will never enter into next if
 				if (previousUtcChunkEndTime != -1
 						&& previousUtcChunkEndTime != currentUtcChunkStartTime)
 				{
