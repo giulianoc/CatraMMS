@@ -21333,26 +21333,26 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 	{
 		int64_t previousUtcChunkStartTime = -1;
 		int64_t previousUtcChunkEndTime = -1;
-		int tsToBeUsedIndex;
-		for (tsToBeUsedIndex = tsToBeUsed.size() - 1; tsToBeUsedIndex >= 0; tsToBeUsedIndex--)
+		int discontinuityIndex;
+		for (discontinuityIndex = tsToBeUsed.size() - 1; discontinuityIndex >= 0; discontinuityIndex--)
 		{
-			tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo = tsToBeUsed[tsToBeUsedIndex];
+			tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo = tsToBeUsed[discontinuityIndex];
 
 			int64_t currentUtcChunkStartTime;
 			int64_t currentUtcChunkEndTime;
 
 			tie(currentUtcChunkStartTime, currentUtcChunkEndTime, ignore, ignore, ignore, ignore) = tsInfo;
 
-			if (previousUtcChunkEndTime != -1
-				&& previousUtcChunkEndTime != currentUtcChunkStartTime)
+			if (previousUtcChunkStartTime != -1
+				&& previousUtcChunkStartTime != currentUtcChunkEndTime)
 			{
-				string sPreviousUtcChunkEndTime;
+				string sPreviousUtcChunkStartTime;
 				{
 					char	time_str [64];
 					tm		tmDateTime;
 
 					// from utc to local time
-					localtime_r (&previousUtcChunkEndTime, &tmDateTime);
+					localtime_r (&previousUtcChunkStartTime, &tmDateTime);
 
 					sprintf (time_str,
 						"%04d-%02d-%02d %02d:%02d:%02d",
@@ -21363,16 +21363,16 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
 
-					sPreviousUtcChunkEndTime = time_str;
+					sPreviousUtcChunkStartTime = time_str;
 				}
 
-				string sCurrentUtcChunkStartTime;
+				string sCurrentUtcChunkEndTime;
 				{
 					char	time_str [64];
 					tm		tmDateTime;
 
 					// from utc to local time
-					localtime_r (&currentUtcChunkStartTime, &tmDateTime);
+					localtime_r (&currentUtcChunkEndTime, &tmDateTime);
 
 					sprintf (time_str,
 						"%04d-%02d-%02d %02d:%02d:%02d",
@@ -21383,26 +21383,31 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
 
-					sCurrentUtcChunkStartTime = time_str;
+					sCurrentUtcChunkEndTime = time_str;
 				}
 
-				int differenceInSeconds = currentUtcChunkStartTime - previousUtcChunkEndTime;
+				int differenceInSeconds = previousUtcChunkStartTime - currentUtcChunkEndTime;
 				_logger->warn(__FILEREF__ + "Found a discontinuity"
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 					+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
-					+ ", previousUtcChunkEndTime: " + sPreviousUtcChunkEndTime + " (" + to_string(previousUtcChunkEndTime) + ")"
-					+ ", currentUtcChunkStartTime: " + sCurrentUtcChunkStartTime + " (" + to_string(currentUtcChunkStartTime) + ")"
+					+ ", discontinuityIndex: " + to_string(discontinuityIndex)
+					+ ", tsToBeUsed.size(): " + to_string(tsToBeUsed.size())
+					+ ", previousUtcChunkStartTime: " + sPreviousUtcChunkStartTime + " (" + to_string(previousUtcChunkStartTime) + ")"
+					+ ", currentUtcChunkEndTime: " + sCurrentUtcChunkEndTime + " (" + to_string(currentUtcChunkEndTime) + ")"
 					+ ", difference (secs): " + to_string(differenceInSeconds) + " (" + to_string(differenceInSeconds / liveRecorderSegmentDuration) + " segments)"
 					+ ", liveRecorderSegmentDuration: " + to_string(liveRecorderSegmentDuration)
 				);
 
 				break;
 			}
+
+			previousUtcChunkStartTime = currentUtcChunkStartTime;
+			previousUtcChunkEndTime = currentUtcChunkEndTime;
 		}
 
-		if (tsToBeUsedIndex >= 0)
+		if (discontinuityIndex >= 0)
 		{
-			tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + tsToBeUsedIndex + 1);
+			tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + discontinuityIndex + 1);
 		}
 	}
 
