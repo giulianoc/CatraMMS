@@ -20693,7 +20693,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 		Json::Value addContentRoot;
 
-		string addContentLabel = liveRecorderConfigurationLabel + " up to " + sUtcChunkEndTime;
+		string addContentLabel = liveRecorderConfigurationLabel + " (" + sUtcChunkEndTime + ") building Virtual VOD...";
 
 		field = "Label";
 		addContentRoot[field] = addContentLabel;
@@ -21327,6 +21327,85 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 		throw runtime_error(errorMessage);
 	}
 
+	// 2020-05-14: we have to avoid any time discontinuity otherwise the "absolute" time of the player
+	//	will not be consistent with the real time of the video.
+	//	For this reason, starting from the last chunk, we will remove all the chunks before the first discontinuity
+	{
+		int64_t previousUtcChunkStartTime = -1;
+		int64_t previousUtcChunkEndTime = -1;
+		int tsToBeUsedIndex;
+		for (tsToBeUsedIndex = tsToBeUsed.size() - 1; tsToBeUsedIndex >= 0; tsToBeUsedIndex--)
+		{
+			tuple<int64_t, int64_t, int, string, string, int64_t> tsInfo = tsToBeUsed[tsToBeUsedIndex];
+
+			int64_t currentUtcChunkStartTime;
+			int64_t currentUtcChunkEndTime;
+
+			tie(currentUtcChunkStartTime, currentUtcChunkEndTime, ignore, ignore, ignore, ignore) = tsInfo;
+
+			if (previousUtcChunkEndTime != -1
+				&& previousUtcChunkEndTime != currentUtcChunkStartTime)
+			{
+				string sPreviousUtcChunkEndTime;
+				{
+					char	time_str [64];
+					tm		tmDateTime;
+
+					// from utc to local time
+					localtime_r (&previousUtcChunkEndTime, &tmDateTime);
+
+					sprintf (time_str,
+						"%04d-%02d-%02d %02d:%02d:%02d",
+						tmDateTime. tm_year + 1900,
+						tmDateTime. tm_mon + 1,
+						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+
+					sPreviousUtcChunkEndTime = time_str;
+				}
+
+				string sCurrentUtcChunkStartTime;
+				{
+					char	time_str [64];
+					tm		tmDateTime;
+
+					// from utc to local time
+					localtime_r (&currentUtcChunkStartTime, &tmDateTime);
+
+					sprintf (time_str,
+						"%04d-%02d-%02d %02d:%02d:%02d",
+						tmDateTime. tm_year + 1900,
+						tmDateTime. tm_mon + 1,
+						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+
+					sCurrentUtcChunkStartTime = time_str;
+				}
+
+				int differenceInSeconds = currentUtcChunkStartTime - previousUtcChunkEndTime;
+				_logger->warn(__FILEREF__ + "Found a discontinuity"
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderConfigurationLabel: " + liveRecorderConfigurationLabel
+					+ ", previousUtcChunkEndTime: " + sPreviousUtcChunkEndTime + " (" + to_string(previousUtcChunkEndTime) + ")"
+					+ ", currentUtcChunkStartTime: " + sCurrentUtcChunkStartTime + " (" + to_string(currentUtcChunkStartTime) + ")"
+					+ ", difference (secs): " + to_string(differenceInSeconds) + " (" + to_string(differenceInSeconds / liveRecorderSegmentDuration) + " segments)"
+					+ ", liveRecorderSegmentDuration: " + to_string(liveRecorderSegmentDuration)
+				);
+
+				break;
+			}
+		}
+
+		if (tsToBeUsedIndex >= 0)
+		{
+			tsToBeUsed.erase(tsToBeUsed.begin(), tsToBeUsed.begin() + tsToBeUsedIndex + 1);
+		}
+	}
+
 	/*
 	int liveRecorderVirtualVODMaxTSToBeUsed = liveRecorderVirtualVODMaxDurationInMinutes * 60
 		/ liveRecorderSegmentDuration;
@@ -21559,7 +21638,7 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 
 				sLastUtcChunkEndTime = lastUtcChunkEndTime_str;
 			}
-			title = liveRecorderConfigurationLabel + " from " + sFirstUtcChunkStartTime + " to " + sLastUtcChunkEndTime;
+			title = liveRecorderConfigurationLabel + " - " + sFirstUtcChunkStartTime + " - " + sLastUtcChunkEndTime;
 
 			{
 				pair<int64_t, long> mediaInfoDetails;
