@@ -20485,7 +20485,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 			string endLine = "\n";
 
 			char	pTsDuration [64];
-			sprintf(pTsDuration, "%0.6f", ((float) tsDuration) / 1000);
+			sprintf(pTsDuration, "%0.3f", ((float) tsDuration) / 1000);
 
 			string manifestContent =
 				"#EXTM3U" + endLine
@@ -21548,7 +21548,7 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 				// #EXTINF
 				{
 					char	pTsDuration [64];
-					sprintf(pTsDuration, "%0.6f", ((float) tsDuration) / 1000);
+					sprintf(pTsDuration, "%0.3f", ((float) tsDuration) / 1000);
 
 					manifestContent +=
 						("#EXTINF:" + string(pTsDuration) + "," + endLine);
