@@ -3969,20 +3969,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
-		/*
-        int64_t durationInMilliSeconds,
-        long bitRate,
-        string videoCodecName,
-        string videoProfile,
-        int videoWidth,
-        int videoHeight,
-        string videoAvgFrameRate,
-        long videoBitRate,
-        string audioCodecName,
-        long audioSampleRate,
-        int audioChannels,
-        long audioBitRate,
-		*/
 
         // image
         int imageWidth,
@@ -3998,6 +3984,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
     shared_ptr<MySQLConnection> conn = nullptr;
     bool autoCommit = true;
 
+	string title = "";
     try
     {
         conn = _connectionPool->borrow();	
@@ -4053,7 +4040,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
         // int64_t encodingProfileSetKey;
         {
-            string title = "";
             string ingester = "";
             string userData = "";
             string deliveryFileName = "";
@@ -4759,7 +4745,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
+			+ ", exceptionMessage: " + exceptionMessage
+			+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", title: " + title
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
@@ -4815,6 +4804,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", title: " + title
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
@@ -4869,6 +4861,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", title: " + title
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
@@ -4919,7 +4914,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         
         throw e;
     }
-    
+
     return mediaItemKeyAndPhysicalPathKey;
 }
 
@@ -4981,7 +4976,11 @@ void MMSEngineDBFacade::addExternalUniqueName(
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", allowUniqueNameOverride: " + to_string(allowUniqueNameOverride)
+			+ ", uniqueName: " + uniqueName
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -4992,6 +4991,10 @@ void MMSEngineDBFacade::addExternalUniqueName(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", allowUniqueNameOverride: " + to_string(allowUniqueNameOverride)
+			+ ", uniqueName: " + uniqueName
         );
 
         throw e;
@@ -5000,6 +5003,10 @@ void MMSEngineDBFacade::addExternalUniqueName(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", allowUniqueNameOverride: " + to_string(allowUniqueNameOverride)
+			+ ", uniqueName: " + uniqueName
         );
         
         throw e;
