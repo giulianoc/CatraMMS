@@ -3693,7 +3693,8 @@ void MMSEngineDBFacade::getAudioDetails(
 
         {
             lastSQLCommand = 
-                "select audioTrackKey, trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels "
+                "select audioTrackKey, trackIndex, durationInMilliSeconds, "
+				"codecName, bitRate, sampleRate, channels, language "
                 "from MMS_AudioTrack where physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -5911,22 +5912,20 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
             }
         }
 
-		// 2020-04-28: uniqueName is changed so that next check unique name is not found and
-		// a new MediaItem is created.
-		// Also the previous liveRecordingVOD was set to liveRecordingChunk, so it will
-		// not be visible into the MediaItems view
 		{
+			// Previous liveRecordingVOD was set to liveRecordingChunk, so it will
+			// not be visible into the MediaItems view
 			{
-				string newDataType = "liveRecordingChunk_VOD";
 				string previousDataType = "liveRecordingVOD";
+				string newDataType = "liveRecordingChunk_VOD";
 				lastSQLCommand = 
 					"update MMS_MediaItem "
 					"set userData = JSON_SET(userData, '$.mmsData.dataType', ?) "
 					"where JSON_EXTRACT(userData, '$.mmsData.dataType') = ? and "
 					"mediaItemKey in ( "
-					"select mediaItemKey from MMS_ExternalUniqueName "
-					"where workspaceKey = ? and "
-					"uniqueName like '" + liveRecorderVirtualVODUniqueName + "-%' "
+						"select mediaItemKey from MMS_ExternalUniqueName "
+						"where workspaceKey = ? and "
+						"uniqueName like '" + liveRecorderVirtualVODUniqueName + "-%' "
 					")" ;
 
 				shared_ptr<sql::PreparedStatement> preparedStatement(
@@ -5947,12 +5946,13 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 				);
 			}
 
+			// 2020-04-28: uniqueName is changed so that next check unique name is not found and
+			// a new MediaItem is created.
 			{
 				lastSQLCommand = 
 					"update MMS_ExternalUniqueName "
-					"set uniqueName = concat(uniqueName, '-', UNIX_TIMESTAMP()) "
+					"set uniqueName = concat(uniqueName, '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
 					"where workspaceKey = ? and uniqueName = ?";
-
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
