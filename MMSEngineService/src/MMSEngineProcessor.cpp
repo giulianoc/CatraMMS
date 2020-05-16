@@ -9892,18 +9892,18 @@ void MMSEngineProcessor::liveCutThread(
 					Json::Value mmsDataRoot = userDataRoot[field];
 
 					field = "utcChunkStartTime";
-					int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					int64_t currentUtcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
 
 					field = "utcChunkEndTime";
-					int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					int64_t currentUtcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
 
-					string chunkStartTime;
-					string chunkEndTime;
+					string currentChunkStartTime;
+					string currentChunkEndTime;
 					{
 						char strDateTime [64];
 						tm tmDateTime;
 
-						localtime_r (&utcChunkStartTime, &tmDateTime);
+						localtime_r (&currentUtcChunkStartTime, &tmDateTime);
 						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
 							tmDateTime. tm_year + 1900,
 							tmDateTime. tm_mon + 1,
@@ -9911,9 +9911,9 @@ void MMSEngineProcessor::liveCutThread(
 							tmDateTime. tm_hour,
 							tmDateTime. tm_min,
 							tmDateTime. tm_sec);
-						chunkStartTime = strDateTime;
+						currentChunkStartTime = strDateTime;
 
-						localtime_r (&utcChunkEndTime, &tmDateTime);
+						localtime_r (&currentUtcChunkEndTime, &tmDateTime);
 						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
 							tmDateTime. tm_year + 1900,
 							tmDateTime. tm_mon + 1,
@@ -9921,19 +9921,19 @@ void MMSEngineProcessor::liveCutThread(
 							tmDateTime. tm_hour,
 							tmDateTime. tm_min,
 							tmDateTime. tm_sec);
-						chunkEndTime = strDateTime;
+						currentChunkEndTime = strDateTime;
 					}
 
 					_logger->info(__FILEREF__ + "Retrieved chunk"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", mediaITemKey: " + to_string(mediaItemKey)
-						+ ", utcChunkStartTime: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
-						+ ", utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+						+ ", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime) + " (" + currentChunkStartTime + ")"
+						+ ", currentUtcChunkEndTime: " + to_string(currentUtcChunkEndTime) + " (" + currentChunkEndTime + ")"
 					);
 
 					// check if it is the next chunk
-					if (utcPreviousUtcChunkEndTime != -1 && utcPreviousUtcChunkEndTime != utcChunkStartTime)
+					if (utcPreviousUtcChunkEndTime != -1 && utcPreviousUtcChunkEndTime != currentUtcChunkStartTime)
 					{
 						string previousUtcChunkEndTime;
 						{
@@ -9957,8 +9957,8 @@ void MMSEngineProcessor::liveCutThread(
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcPreviousUtcChunkEndTime: " + to_string(utcPreviousUtcChunkEndTime) + " (" + previousUtcChunkEndTime + ")"
-							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
-							+ ", utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+							+ ", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime) + " (" + currentChunkStartTime + ")"
+							+ ", currentUtcChunkEndTime: " + to_string(currentUtcChunkEndTime) + " (" + currentChunkEndTime + ")"
 							+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 								+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
 							+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
@@ -9976,15 +9976,15 @@ void MMSEngineProcessor::liveCutThread(
 
 						// check that it is the first chunk
 
-						if (!(utcChunkStartTime * 1000 <= utcCutPeriodStartTimeInMilliSeconds
-							&& utcCutPeriodStartTimeInMilliSeconds < utcChunkEndTime * 1000))
+						if (!(currentUtcChunkStartTime * 1000 <= utcCutPeriodStartTimeInMilliSeconds
+							&& utcCutPeriodStartTimeInMilliSeconds < currentUtcChunkEndTime * 1000))
 						{
 							// it is not the first chunk
 							string errorMessage = string("First chunk was not found")
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", first utcChunkStart: " + to_string(utcChunkStartTime) + " (" + chunkStartTime + ")"
-								+ ", first utcChunkEndTime: " + to_string(utcChunkEndTime) + " (" + chunkEndTime + ")"
+								+ ", first utcChunkStart: " + to_string(currentUtcChunkStartTime) + " (" + currentChunkStartTime + ")"
+								+ ", first currentUtcChunkEndTime: " + to_string(currentUtcChunkEndTime) + " (" + currentChunkEndTime + ")"
 								+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 									+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
 								+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
@@ -9995,8 +9995,8 @@ void MMSEngineProcessor::liveCutThread(
 							throw runtime_error(errorMessage);
 						}
 
-						utcFirstChunkStartTime = utcChunkStartTime;
-						firstChunkStartTime = chunkStartTime;
+						utcFirstChunkStartTime = currentUtcChunkStartTime;
+						firstChunkStartTime = currentChunkStartTime;
 					}
 
 					{
@@ -10011,18 +10011,18 @@ void MMSEngineProcessor::liveCutThread(
 					{
 						// check if it is the last chunk
 
-						if (!(utcChunkStartTime * 1000 < utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
-								&& utcCutPeriodEndTimeInMilliSecondsPlusOneSecond <= utcChunkEndTime * 1000))
+						if (!(currentUtcChunkStartTime * 1000 < utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+								&& utcCutPeriodEndTimeInMilliSecondsPlusOneSecond <= currentUtcChunkEndTime * 1000))
 							lastChunk = false;
 						else
 						{
 							lastChunk = true;
-							utcLastChunkEndTime = utcChunkEndTime;
-							lastChunkEndTime = chunkEndTime;
+							utcLastChunkEndTime = currentUtcChunkEndTime;
+							lastChunkEndTime = currentChunkEndTime;
 						}
 					}
 
-					utcPreviousUtcChunkEndTime = utcChunkEndTime;
+					utcPreviousUtcChunkEndTime = currentUtcChunkEndTime;
 				}
 
 				start += rows;

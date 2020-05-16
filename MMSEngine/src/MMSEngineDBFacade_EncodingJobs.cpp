@@ -7898,22 +7898,46 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 			EncodingType encodingType = EncodingType::LiveRecorder;
         
-			string parameters = string()
-                + "{ "
-                + "\"highAvailability\": " + to_string(highAvailability) + ""
-                + ", \"main\": " + to_string(main) + ""
-				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
-                + ", \"configurationLabel\": \"" + configurationLabel + "\""
-                + ", \"liveURL\": \"" + liveURL + "\""
-                + ", \"userAgent\": \"" + userAgent + "\""
-				// utcRecordingPeriodStart/utcRecordingPeriodEnd is used by the GUI (encodingJobs.java to calculate and display the duration)
-                + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
-                + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
-                + ", \"autoRenew\": " + to_string(autoRenew) + ""
-                + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds) + ""
-                + ", \"outputFileFormat\": \"" + outputFileFormat + "\""
-                + "} "
-                ;
+			string parameters;
+			{
+				Json::Value parametersRoot;
+
+				string field = "highAvailability";
+				parametersRoot[field] = highAvailability;
+
+				field = "main";
+				parametersRoot[field] = main;
+
+				field = "configurationLabel";
+				parametersRoot[field] = configurationLabel;
+
+				field = "confKey";
+				parametersRoot[field] = confKey;
+
+				field = "liveURL";
+				parametersRoot[field] = liveURL;
+
+				field = "userAgent";
+				parametersRoot[field] = userAgent;
+
+				field = "utcRecordingPeriodStart";
+				parametersRoot[field] = utcRecordingPeriodStart;
+
+				field = "utcRecordingPeriodEnd";
+				parametersRoot[field] = utcRecordingPeriodEnd;
+
+				field = "autoRenew";
+				parametersRoot[field] = autoRenew;
+
+				field = "segmentDurationInSeconds";
+				parametersRoot[field] = segmentDurationInSeconds;
+
+				field = "outputFileFormat";
+				parametersRoot[field] = outputFileFormat;
+
+				Json::StreamWriterBuilder wbuilder;
+				parameters = Json::writeString(wbuilder, parametersRoot);
+			}
 
 			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
 				+ ", parameters.length: " + to_string(parameters.length()));
