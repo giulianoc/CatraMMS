@@ -1674,7 +1674,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 		 *  0: look for NO liveRecordingChunk
 		 *  1: look for liveRecordingChunk
 		 */
-        if (liveRecordingChunk != -1)
+        if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 		{
 			if (liveRecordingChunk == 0)
 			{
@@ -1905,7 +1905,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			*  0: look for NO liveRecordingChunk
 			*  1: look for liveRecordingChunk
 			*/
-			if (liveRecordingChunk != -1)
+			if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 			{
 				if (liveRecordingChunk == 0)
 				{

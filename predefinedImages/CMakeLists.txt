@@ -24,5 +24,5 @@ SET (IMAGEs
 	LiveRecorderVirtualVOD.png
 )
 
-install (FILES ${IMAGES} DESTINATION predefinedImages)
+install (FILES ${IMAGEs} DESTINATION predefinedImages)
 

@@ -168,6 +168,12 @@ private:
         FCGX_Request& request,
         string requestBody);
 
+	void mmsSupport(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void ingestionRootsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

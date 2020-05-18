@@ -1630,30 +1630,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         removeWorkflowAsLibrary(request, userKey, workspace, queryParameters, admin);
     }
-    else if (method == "testEmail")
+    else if (method == "mmsSupport")
     {
-        if (!admin)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-                
-        string to = "giulianocatrambone@gmail.com";
-        string subject = "Email test";
-
-        vector<string> emailBody;
-        emailBody.push_back(string("<p>Hi, this is just a test") + "</p>");
-        emailBody.push_back("<p>Bye</p>");
-        emailBody.push_back("<p>MMS technical support</p>");
-
-        EMailSender emailSender(_logger, _configuration);
-        emailSender.sendEmail(to, subject, emailBody);
+		mmsSupport(request, workspace, queryParameters, requestBody);
     }
     else if (method == "addYouTubeConf")
     {
@@ -2753,6 +2732,153 @@ void API::parseContentRange(string contentRange,
         _logger->error(__FILEREF__ + errorMessage);
 
         throw runtime_error(errorMessage);            
+    }
+}
+
+void API::mmsSupport(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "mmsSupport";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string userEmailAddress;
+        string subject;
+        string text;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		vector<string> mandatoryFields = {
+			"UserEmailAddress",
+			"Subject",
+			"Text"
+		};
+		for (string field: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				string errorMessage = string("Json field is not present or it is null")
+					+ ", Json field: " + field;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		userEmailAddress = metadataRoot.get("UserEmailAddress", "").asString();
+		subject = metadataRoot.get("Subject", "").asString();
+		text = metadataRoot.get("Text", "").asString();
+
+        try
+        {
+            string to = "mms.technical.support@catrasoft.cloud";
+            
+            vector<string> emailBody;
+            emailBody.push_back(string("<p>From: ") + userEmailAddress + "</p>");
+            emailBody.push_back(string("<p></p>"));
+            emailBody.push_back(string("<p>") + text + "</p>");
+
+            EMailSender emailSender(_logger, _configuration);
+            emailSender.sendEmail(to, subject, emailBody);
+
+            string responseBody;
+            sendSuccess(request, 201, responseBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
     }
 }
 
