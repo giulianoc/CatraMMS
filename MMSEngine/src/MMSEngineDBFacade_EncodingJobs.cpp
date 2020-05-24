@@ -4497,10 +4497,12 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         );
 
         {
+			/* 2020-05-24: commented because already logged by the calling method
 			_logger->info(__FILEREF__ + "EncodingJob update"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
+			*/
             lastSQLCommand = 
                 "update MMS_EncodingJob set encodingProgress = ? where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4511,7 +4513,9 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
-                // probable because encodingPercentage was already the same in the table
+                // because encodingPercentage was already the same in the table
+				// 2020-05-24: It is not an error, so just comment next log
+				/*
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", encodingPercentage: " + to_string(encodingPercentage)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4519,6 +4523,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->warn(errorMessage);
+				*/
 
                 // throw runtime_error(errorMessage);                    
             }

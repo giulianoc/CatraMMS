@@ -10027,7 +10027,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 catch(...)
                 {
 					// 2020-05-20: The initial loop will make the liveRecording to exit in case of urlNotFound.
-					//	This is because in case the URL is not ound, does not have sense to try again the liveRecording.
+					//	This is because in case the URL is not found, does not have sense to try again the liveRecording.
 					//	This is true in case the URL not found error happens at the beginning of the liveRecording.
 					//	This is not always the case. Sometimes the URLNotFound error is returned by ffmpeg after a lot of time
 					//	the liveRecoridng is started and because just one ts file was not found (this is in case of m3u8 URL).
