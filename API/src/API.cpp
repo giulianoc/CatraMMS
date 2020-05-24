@@ -25,6 +25,7 @@
 #include "Validator.h"
 #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
+#include <openssl/md5.h>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -1480,6 +1481,28 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         createDeliveryAuthorization(request, userKey, workspace,
                 clientIPAddress, queryParameters);
     }
+    else if (method == "createDeliveryCDN77Authorization")
+    {
+        if (!deliveryAuthorization)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", deliveryAuthorization: " + to_string(deliveryAuthorization)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string clientIPAddress;
+        auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
+        if (remoteAddrIt != requestDetails.end())
+            clientIPAddress = remoteAddrIt->second;
+
+        createDeliveryCDN77Authorization(request, userKey, workspace,
+                clientIPAddress, queryParameters);
+    }
     else if (method == "ingestion")
     {
         if (!ingestWorkflow)
@@ -1632,7 +1655,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "mmsSupport")
     {
-		mmsSupport(request, workspace, queryParameters, requestBody);
+		mmsSupport(request, userKey, apiKey, workspace, queryParameters, requestBody);
     }
     else if (method == "addYouTubeConf")
     {
@@ -2261,6 +2284,243 @@ int64_t API::manageDeliveryAuthorization(
 	return tokenComingFromURL;
 }
 
+void API::createDeliveryCDN77Authorization(
+        FCGX_Request& request,
+        int64_t userKey,
+        shared_ptr<Workspace> requestWorkspace,
+        string clientIPAddress,
+        unordered_map<string, string> queryParameters)
+{
+	string api = "createDeliveryCDN77Authorization";
+
+	_logger->info(__FILEREF__ + "Received " + api
+	);
+
+    try
+    {
+        auto confKeyIt = queryParameters.find("confKey");
+        if (confKeyIt != queryParameters.end())
+		{
+            string errorMessage = string("The 'confKey' parameter has to be present");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+		int64_t liveURLConfKey = stoll(confKeyIt->second);
+
+		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
+		//  This way the link will be available only for the time needed to start the download.
+		//  Afterwards a new link must be generated in order to download this content again.
+        auto expireTimestampInSecondsIt = queryParameters.find("expireTimestampInSeconds");
+        if (expireTimestampInSecondsIt != queryParameters.end())
+		{
+            string errorMessage = string("The 'expireTimestampInSeconds' parameter has to be present");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+		int64_t expireTimestampInSeconds = stoll(expireTimestampInSecondsIt->second);
+
+		string liveURLData;
+		tuple<string, string, string> liveURLConfDetails
+			= _mmsEngineDBFacade->getLiveURLConfDetails(
+			requestWorkspace->_workspaceKey, liveURLConfKey);
+		tie(ignore, ignore, liveURLData) = liveURLConfDetails;
+
+		string cdn77DeliveryURL;
+		string cdn77SecureToken;
+		{
+			Json::Value liveURLDataRoot;
+			string errors;
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+
+				bool parsingSuccessful = reader->parse(liveURLData.c_str(),
+					liveURLData.c_str() + liveURLData.size(), 
+					&liveURLDataRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = string("liveURLData parsing failed")
+						+ ", errors: " + errors
+						+ ", json liveURLData: " + liveURLData
+                       ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("liveURLData parsing failed")
+					+ ", errors: " + errors
+					+ ", json liveURLData: " + liveURLData
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string field = "deliveryURL";
+			cdn77DeliveryURL = liveURLDataRoot.get(field, "").asString();
+
+			field = "cdn77SecureToken";
+			cdn77SecureToken = liveURLDataRoot.get(field, "").asString();
+		}
+
+		string protocolPart;
+		string cdnResourceUrl;
+		string filePath;
+		{
+			size_t cdnResourceUrlStart = cdn77DeliveryURL.find("://");
+			if (cdnResourceUrlStart == string::npos)
+			{
+				string errorMessage = string("cdn77DeliveryURL format is wrong")
+					+ ", cdn77DeliveryURL: " + cdn77DeliveryURL
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			cdnResourceUrlStart += 3;	// "://"
+			protocolPart = cdn77DeliveryURL.substr(0, cdnResourceUrlStart);
+
+			size_t cdnResourceUrlEnd = cdn77DeliveryURL.find_first_of("/", cdnResourceUrlStart);
+			if (cdnResourceUrlEnd == string::npos)
+			{
+				string errorMessage = string("cdn77DeliveryURL format is wrong")
+					+ ", cdn77DeliveryURL: " + cdn77DeliveryURL
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			cdnResourceUrl = cdn77DeliveryURL.substr(cdnResourceUrlStart, cdnResourceUrlEnd - cdnResourceUrlStart);
+			filePath = cdn77DeliveryURL.substr(cdnResourceUrlEnd);
+		}
+
+		string newDeliveryURL;
+		{
+			// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
+			// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
+			// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
+			size_t fileNameStart = filePath.find_last_of("/");
+			if (fileNameStart == string::npos)
+			{
+				string errorMessage = string("filePath format is wrong")
+					+ ", filePath: " + filePath
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string strippedPath = filePath.substr(0, fileNameStart);
+
+			// replace invalid URL query string characters +, =, / with valid characters -, _, ~
+			// $invalidChars = ['+','/'];
+			// $validChars = ['-','_'];
+			// GIU: replace is done below
+
+			// if ($strippedPath[0] != '/') {
+			// 	$strippedPath = '/' . $strippedPath;
+			// }
+			// GIU: our strippedPath already starts with /
+
+			// if ($pos = strpos($strippedPath, '?')) {
+			// 	$filePath = substr($strippedPath, 0, $pos);
+			// }
+			// GIU: our strippedPath does not have ?
+
+			// $hashStr = $strippedPath . $secureToken;
+			string hashStr = strippedPath + cdn77SecureToken;
+
+			// if ($expiryTimestamp) {
+			// 	$hashStr = $expiryTimestamp . $hashStr;
+			// 	$expiryTimestamp = ',' . $expiryTimestamp;
+			// }
+			hashStr = to_string(expireTimestampInSeconds) + hashStr;
+			string sExpiryTimestamp = string(",") + to_string(expireTimestampInSeconds);
+
+			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
+			// return 'http://' . $cdnResourceUrl . '/' .
+			// 	str_replace($invalidChars, $validChars, base64_encode(md5($hashStr, TRUE))) .
+			// 	$expiryTimestamp . $filePath;
+			string md5Base64;
+			{
+				unsigned char digest[MD5_DIGEST_LENGTH];
+				MD5((unsigned char*) hashStr.c_str(), hashStr.size(), digest);
+				md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+
+				// $invalidChars = ['+','/'];
+				// $validChars = ['-','_'];
+				transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+					[](unsigned char c){
+						if (c == '+')
+							return '-';
+						else if (c == '/')
+							return '_';
+						else
+							return (char) c;
+					}
+				);
+			}
+
+			newDeliveryURL = protocolPart + cdnResourceUrl + "/" + md5Base64
+				+ sExpiryTimestamp + filePath;
+		}
+
+		string responseBody;
+		{
+			Json::Value responseBodyRoot;
+
+			string field = "deliveryURL";
+			responseBodyRoot[field] = newDeliveryURL;
+
+			{
+				Json::StreamWriterBuilder wbuilder;
+
+				responseBody = Json::writeString(wbuilder, responseBodyRoot);
+			}
+		}
+
+		sendSuccess(request, 201, responseBody);
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + api + " failed"
+			+ ", e.what(): " + e.what()
+		);
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + api + " failed"
+			+ ", e.what(): " + e.what()
+		);
+
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
 void API::mediaItemsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
@@ -2737,6 +2997,7 @@ void API::parseContentRange(string contentRange,
 
 void API::mmsSupport(
         FCGX_Request& request,
+		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
@@ -2816,8 +3077,13 @@ void API::mmsSupport(
         try
         {
             string to = "mms.technical.support@catrasoft.cloud";
-            
+
             vector<string> emailBody;
+            emailBody.push_back(string("<p>UserKey: ") + to_string(userKey) + "</p>");
+            emailBody.push_back(string("<p>WorkspaceKey: ")
+				+ to_string(workspace->_workspaceKey) + "</p>");
+            emailBody.push_back(string("<p>APIKey: ") + apiKey + "</p>");
+            emailBody.push_back(string("<p></p>"));
             emailBody.push_back(string("<p>From: ") + userEmailAddress + "</p>");
             emailBody.push_back(string("<p></p>"));
             emailBody.push_back(string("<p>") + text + "</p>");

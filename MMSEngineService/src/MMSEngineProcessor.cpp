@@ -4,6 +4,7 @@
 #include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -23,11 +24,11 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "UpdateLiveRecorderVirtualVODTimes.h"
-#include "catralibraries/md5.h"
 #include "EMailSender.h"
 #include "Magick++.h"
+#include <openssl/md5.h>
 
-
+#define MD5BUFFERSIZE 16384
 
 MMSEngineProcessor::MMSEngineProcessor(
         int processorIdentifier,
@@ -16026,8 +16027,8 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
     field = "MD5FileCheckSum";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        MD5         md5;
-        char        md5RealDigest [32 + 1];
+        // MD5         md5;
+        // char        md5RealDigest [32 + 1];
 
         md5FileCheckSum = parametersRoot.get(field, "XXX").asString();
     }
@@ -16105,12 +16106,46 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	// we just simplify and md5FileCheck is not done in case of segments
     if (mediaFileFormat != "m3u8" && md5FileCheckSum != "")
     {
-        MD5         md5;
-        char        md5RealDigest [32 + 1];
+		char buffer[MD5BUFFERSIZE];
+		unsigned char digest[MD5_DIGEST_LENGTH];
+		std::stringstream ss;
 
-        strcpy (md5RealDigest, md5.digestFile((char *) mediaSourcePathName.c_str()));
+		std::ifstream ifs(mediaSourcePathName, std::ifstream::binary);
+		MD5_CTX md5Context;
+		MD5_Init(&md5Context);
+		while (ifs.good())
+		{
+			ifs.read(buffer, MD5BUFFERSIZE);
+			MD5_Update(&md5Context, buffer, ifs.gcount());
+		}
+		ifs.close();
+		int res = MD5_Final(digest, &md5Context);
 
-        if (md5FileCheckSum != md5RealDigest)
+		if(res == 0) // hash failed
+        {
+            string errorMessage = __FILEREF__ + "MD5 calculation failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", mediaSourcePathName: " + mediaSourcePathName
+                + ", md5FileCheckSum: " + md5FileCheckSum
+                    ;
+            _logger->error(errorMessage);
+            throw runtime_error(errorMessage);
+        }
+
+		// set up stringstream format
+		ss << std::hex << std::setfill('0');
+		for(unsigned char uc: digest)
+			ss << std::setw(2) << (int)uc;
+
+        string md5RealDigest = ss.str();
+
+		bool isCaseInsensitiveEqual = md5FileCheckSum.length() != md5RealDigest.length()
+			? false :
+            equal(md5FileCheckSum.begin(), md5FileCheckSum.end(), md5RealDigest.begin(),
+				[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+
+        if (!isCaseInsensitiveEqual)
         {
             string errorMessage = __FILEREF__ + "MD5 check failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

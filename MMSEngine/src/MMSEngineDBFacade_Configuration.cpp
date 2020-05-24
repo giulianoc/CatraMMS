@@ -2000,13 +2000,11 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
     return make_pair(confKey, liveURL);
 }
 
-pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
+tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
     int64_t workspaceKey, int64_t confKey
 )
 {
     string      lastSQLCommand;
-    string		liveURL;
-    string		channelName;
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2022,8 +2020,11 @@ pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
+		string		liveURL;
+		string		channelName;
+		string		liveURLData;
         {
-            lastSQLCommand = string("select liveURL, channelName from MMS_Conf_LiveURL ")
+            lastSQLCommand = string("select liveURL, channelName, liveURLData from MMS_Conf_LiveURL ")
 				+ "where workspaceKey = ? and confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2046,6 +2047,7 @@ pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
 
             liveURL = resultSet->getString("liveURL");
             channelName = resultSet->getString("channelName");
+            liveURLData = resultSet->getString("liveURLData");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -2053,6 +2055,8 @@ pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return make_tuple(liveURL, channelName, liveURLData);
     }
     catch(sql::SQLException se)
     {
@@ -2112,8 +2116,6 @@ pair<string, string> MMSEngineDBFacade::getLiveURLConfDetails(
 
         throw e;
     } 
-    
-    return make_pair(liveURL, channelName);
 }
 
 int64_t MMSEngineDBFacade::addFTPConf(

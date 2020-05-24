@@ -2050,13 +2050,13 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     catch(MediaItemKeyNotFound e)
     {        
 		if (warningIfMissing)
-			_logger->warn(__FILEREF__ + "SQL exception"
+			_logger->warn(__FILEREF__ + "MediaItemKeyNotFound"
 			 + ", e.what(): " + e.what()
 			 + ", lastSQLCommand: " + lastSQLCommand
 			 + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
 			);
 		else
-			_logger->error(__FILEREF__ + "SQL exception"
+			_logger->error(__FILEREF__ + "MediaItemKeyNotFound"
 			 + ", e.what(): " + e.what()
 			 + ", lastSQLCommand: " + lastSQLCommand
 			 + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2075,7 +2075,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     }        
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "runtime_error"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -2094,7 +2094,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     }        
     catch(exception e)
     {        
-        _logger->error(__FILEREF__ + "SQL exception"
+        _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );

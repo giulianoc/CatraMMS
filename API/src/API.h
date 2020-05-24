@@ -170,6 +170,7 @@ private:
 
 	void mmsSupport(
         FCGX_Request& request,
+		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
@@ -349,6 +350,13 @@ private:
         shared_ptr<Workspace> requestWorkspace,
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
+
+	void createDeliveryCDN77Authorization(
+		FCGX_Request& request,
+		int64_t userKey,
+		shared_ptr<Workspace> requestWorkspace,
+		string clientIPAddress,
+		unordered_map<string, string> queryParameters);
 
 	int64_t manageDeliveryAuthorization(
 		string contentURI, string tokenParameter);

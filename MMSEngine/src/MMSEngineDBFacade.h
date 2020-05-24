@@ -1853,7 +1853,7 @@ public:
     pair<int64_t, string> getLiveURLConfDetails(
         int64_t workspaceKey, string liveURLConfigurationLabel);
 
-	pair<string, string> getLiveURLConfDetails(
+	tuple<string, string, string> getLiveURLConfDetails(
 		int64_t workspaceKey, int64_t confKey);
 
     int64_t addFTPConf(
