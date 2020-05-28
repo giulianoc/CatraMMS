@@ -3061,7 +3061,8 @@ int MMSEngineDBFacade::updateEncodingJob (
         int64_t mediaItemKey,
         int64_t encodedPhysicalPathKey,
         int64_t ingestionJobKey,
-		string ingestionErrorMessage)
+		string ingestionErrorMessage,
+		bool forceEncodingToBeFailed)
 {
     
     string      lastSQLCommand;
@@ -3133,7 +3134,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 			string transcoderUpdate;
 			// in case of LiveRecorder there is no more retries since it already run up
 			//		to the end of the recording
-            if (type == "LiveRecorder"
+            if (forceEncodingToBeFailed
 					|| encodingFailureNumber + 1 >= _maxEncodingFailures)
 			{
                 newEncodingStatus          = EncodingStatus::End_Failed;

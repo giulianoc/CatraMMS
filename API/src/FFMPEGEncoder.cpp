@@ -4544,10 +4544,11 @@ void FFMPEGEncoder::liveProxy(
 
 		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
 
-		string liveURL = liveProxyMetadata.get("liveURL", -1).asString();
-		string userAgent = liveProxyMetadata.get("userAgent", -1).asString();
+		string liveURL = liveProxyMetadata.get("liveURL", "").asString();
+		string userAgent = liveProxyMetadata.get("userAgent", "").asString();
 		double inputTimeOffset = JSONUtils::asDouble(liveProxyMetadata, "inputTimeOffset", -2.0);
-		liveProxy->_outputType = liveProxyMetadata.get("outputType", -1).asString();
+		string otherOutputOptions = liveProxyMetadata.get("otherOutputOptions", "").asString();
+		liveProxy->_outputType = liveProxyMetadata.get("outputType", "").asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
@@ -4655,6 +4656,7 @@ void FFMPEGEncoder::liveProxy(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent,
+				otherOutputOptions,
 				liveProxy->_outputType,
 				segmentDurationInSeconds,
 				playlistEntriesNumber,
@@ -4669,6 +4671,7 @@ void FFMPEGEncoder::liveProxy(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				liveURL, userAgent, inputTimeOffset,
+				otherOutputOptions,
 				cdnURL,
 				&(liveProxy->_childPid));
 		}

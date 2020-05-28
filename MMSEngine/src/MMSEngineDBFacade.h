@@ -1631,7 +1631,8 @@ public:
         int64_t mediaItemKey,
         int64_t encodedPhysicalPathKey,
         int64_t ingestionJobKey,
-		string ingestionErrorMessage = "");
+		string ingestionErrorMessage = "",
+		bool forceEncodingToBeFailed = false);
 
     void updateEncodingJobPriority (
         shared_ptr<Workspace> workspace,

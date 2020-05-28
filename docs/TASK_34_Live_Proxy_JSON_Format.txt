@@ -33,6 +33,13 @@
 		//	by the time duration specified in offset
 		"InputTimeOffset": -2.0,
 
+		// optional: It is possible to use this field to specify any other output options.
+		// Examples:
+		//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
+		//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
+		//	-map 0:v: specify to take all video from the first input (0) to be used in the output
+		"OtherOutputOptions": "-map 0:1",
+
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
 		//		Default: 2

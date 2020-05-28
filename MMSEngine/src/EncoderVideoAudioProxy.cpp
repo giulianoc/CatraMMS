@@ -424,12 +424,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -440,7 +453,8 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -536,12 +550,29 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy
+				|| _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: channel cielo, the URL return FORBIDDEN and it has to be generated again
+				//		because it will have an expired timestamp. For this reason we have to stop this request
+				//		in order the crontab script will generate a new URL
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -555,7 +586,8 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				e.what());
+				e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -595,12 +627,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -614,7 +659,8 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
                 main ? _encodingItem->_ingestionJobKey : -1,
-				e.what());
+				e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -654,12 +700,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -672,7 +731,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -712,12 +772,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -730,7 +803,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -930,12 +1004,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -948,7 +1035,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -1018,12 +1106,25 @@ void EncoderVideoAudioProxy::operator()()
 
 		try
 		{
+			bool forceEncodingToBeFailed;
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
+				// to the end of the recording
+				forceEncodingToBeFailed = true;
+			}
+			else
+			{
+				forceEncodingToBeFailed = false;
+			}
+
 			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
@@ -1036,7 +1137,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
 		}
 		catch(...)
 		{
@@ -10493,6 +10595,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
 	double inputTimeOffset = 0.0;
+	string otherOutputOptions;
 	string cdnURL;
 	{
         string field = "EncodersPool";
@@ -10516,6 +10619,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         field = "inputTimeOffset";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			inputTimeOffset = JSONUtils::asDouble(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -2.0);
+
+        field = "OtherOutputOptions";
+		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
+			otherOutputOptions = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -10738,6 +10845,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["inputTimeOffset"] = inputTimeOffset;
+					liveProxyMetadata["otherOutputOptions"] = otherOutputOptions;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;

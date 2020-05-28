@@ -6777,6 +6777,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
+	string otherOutputOptions,
 
 	string outputType,	// HLS or DASH
 
@@ -6884,6 +6885,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		ffmpegArgumentList.push_back("-re");
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
+		addToArguments(otherOutputOptions, ffmpegArgumentList);
 		ffmpegArgumentList.push_back("-c:v");
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-c:a");
@@ -7078,6 +7080,7 @@ void FFMpeg::liveProxyByCDN(
 	int64_t encodingJobKey,
 	string liveURL, string userAgent,
 	double inputTimeOffset,
+	string otherOutputOptions,
 	string cdnURL,
 	pid_t* pChildPid)
 {
@@ -7105,6 +7108,7 @@ void FFMpeg::liveProxyByCDN(
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
+		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 		// sample: ffmpeg -re -i http://80.211.238.33/restream/fiera.m3u8 -c copy -bsf:a aac_adtstoasc -vcodec copy -f flv rtmp://1.s.cdn77.eu:1936/static/LS-PRG-43330-22?password=hrpiTIFmsK3R
 
 		string sInputTimeOffset;
@@ -7134,6 +7138,7 @@ void FFMpeg::liveProxyByCDN(
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
+		addToArguments(otherOutputOptions, ffmpegArgumentList);
 		ffmpegArgumentList.push_back("-c:v");
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-c:a");

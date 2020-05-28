@@ -226,6 +226,7 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		string liveURL, string userAgent,
+		string otherOutputOptions,
 
 		string outputType,	// HLS or DASH
 
@@ -240,6 +241,7 @@ public:
 		int64_t encodingJobKey,
 		string liveURL, string userAgent,
 		double itsoffset,
+		string otherOutputOptions,
 		string cdnURL,
 		pid_t* pChildPid);
 
