@@ -5537,7 +5537,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(FFMpegEncodingStatusNotAvailable e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (HLS/DASH) frame increasing check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -5556,6 +5556,92 @@ void FFMPEGEncoder::monitorThread()
 						catch(exception e)
 						{
 							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+					}
+
+					// Third health 
+					//		HLS/DASH:	
+					//		CDN:		the ffmpeg is up and running, it is not working and,
+					//			looking in the output log file, we have:
+					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
+					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
+					{
+					}
+					else
+					{
+						try
+						{
+							if (!liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", configurationLabel: " + liveProxy->_configurationLabel
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								try
+								{
+									ProcessUtility::killProcess(liveProxy->_childPid);
+									liveProxy->_killedBecauseOfNotWorking = true;
+									{
+										char strDateTime [64];
+										{
+											time_t utcTime = chrono::system_clock::to_time_t(
+												chrono::system_clock::now());
+											tm tmDateTime;
+											localtime_r (&utcTime, &tmDateTime);
+											sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+												tmDateTime. tm_year + 1900,
+												tmDateTime. tm_mon + 1,
+												tmDateTime. tm_mday,
+												tmDateTime. tm_hour,
+												tmDateTime. tm_min,
+												tmDateTime. tm_sec);
+										}
+										liveProxy->_errorMessage = string(strDateTime) + " "
+											+ liveProxy->_configurationLabel +
+											" restarted because of 'HTTP error 403 Forbidden'";
+									}
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = string("ProcessUtility::killProcess failed")
+										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+										+ ", e.what(): " + e.what()
+											;
+									_logger->error(__FILEREF__ + errorMessage);
+								}
+							}
+						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()

@@ -3972,6 +3972,91 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
     }
 }
 
+bool FFMpeg::forbiddenErrorInOutputLog()
+{
+    try
+    {
+		if (_currentApiName != "liveProxyByCDN")
+		{
+			// actually we need this check just for liveProxyByCDN
+
+			return false;
+		}
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        string ffmpegEncodingStatus;
+        try
+        {
+            int lastCharsToBeRead = 512;
+            
+            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+		string lowerCaseFfmpegEncodingStatus;
+		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
+		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(),
+			lowerCaseFfmpegEncodingStatus.begin(),
+			[](unsigned char c)
+			{
+				return tolower(c);
+			}
+		);
+
+		// [https @ 0x555a8e428a00] HTTP error 403 Forbidden
+		if (lowerCaseFfmpegEncodingStatus.find("http error 403 forbidden") != string::npos)
+			return true;
+		else
+			return false;
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+}
+
 bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 {
 
