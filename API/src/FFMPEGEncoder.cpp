@@ -5576,7 +5576,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						try
 						{
-							if (!liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
+							if (liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 							{
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
