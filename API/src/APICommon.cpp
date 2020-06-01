@@ -512,7 +512,8 @@ bool APICommon::basicAuthenticationRequired(
         string errorMessage = string("The 'method' parameter is not found");
         _logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
+        // throw runtime_error(errorMessage);
+		return basicAuthenticationRequired;
     }
     string method = methodIt->second;
 
