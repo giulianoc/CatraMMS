@@ -7212,6 +7212,11 @@ void FFMpeg::liveProxyByCDN(
 		//		to the native frame rate of the input(s). It is useful for real-time output
 		//		(e.g. live streaming).
 		ffmpegArgumentList.push_back("-nostdin");
+		if (userAgent != "")
+		{
+			ffmpegArgumentList.push_back("-user_agent");
+			ffmpegArgumentList.push_back(userAgent);
+		}
 		ffmpegArgumentList.push_back("-re");
 		if (sInputTimeOffset != "")
 		{

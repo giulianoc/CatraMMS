@@ -28,7 +28,8 @@
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",
 
-		// optional: The offset is added to the timestamps of the input files.
+		// optional: The offset is added to the video timestamps of the input files.
+		//	It can be used to sync the video and audio streams.
 		//	Specifying a positive offset means that the corresponding streams are delayed
 		//	by the time duration specified in offset
 		"InputTimeOffset": -2.0,

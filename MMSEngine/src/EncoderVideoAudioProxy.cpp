@@ -10616,7 +10616,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
-        field = "inputTimeOffset";
+        field = "InputTimeOffset";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			inputTimeOffset = JSONUtils::asDouble(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -2.0);
 
