@@ -10138,14 +10138,29 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					long encodingDurationInMinutes = chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - startEncoding).count();
 					if (urlNotFound && encodingDurationInMinutes > urlNotFoundFakeAfterMinutes)
 					{
-						_logger->error(__FILEREF__ + "fake urlNotFound"
+						// 2020-06-06. Scenario:
+						//	- MMS was sending RAI 1 to CDN77
+						//	- here we were recording the streaming poiting to the CDN77 URL
+						//	- MMS has an error (restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps')
+						//	- here we had the URL not found error
+						// Asking again the URL raises again 'URL not found' error. For this reason we added
+						// a waiting, let's see if 60 seconds is enough
+						int waitingInSeconsBeforeTryingAgain = 60;
+
+						_logger->error(__FILEREF__ + "fake urlNotFound, wait a bit and try again"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+							+ ", waitingInSeconsBeforeTryingAgain: " + to_string(waitingInSeconsBeforeTryingAgain)
 						);
 
 						urlNotFound = false;
+
+						// in case URL not found is because of a segment not found
+						// or in case of a temporary failures
+						//		let's wait a bit before to try again
+						this_thread::sleep_for(chrono::seconds(waitingInSeconsBeforeTryingAgain));
 					}
 					else
 					{

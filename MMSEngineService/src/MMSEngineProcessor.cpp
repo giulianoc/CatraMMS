@@ -9548,6 +9548,7 @@ void MMSEngineProcessor::liveCutThread(
         string cutPeriodStartTimeInMilliSeconds;
         string cutPeriodEndTimeInMilliSeconds;
 		int maxWaitingForLastChunkInSeconds = 90;
+		bool errorIfAChunkIsMissing = false;
         {
             string field = "ConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -9565,6 +9566,10 @@ void MMSEngineProcessor::liveCutThread(
 			field = "MaxWaitingForLastChunkInSeconds";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+
+			field = "ErrorIfAChunkIsMissing";
+			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
 
             field = "CutPeriod";
 			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
@@ -9965,9 +9970,16 @@ void MMSEngineProcessor::liveCutThread(
 							+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
 								+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
 						;
-						_logger->error(__FILEREF__ + errorMessage);
+						if (errorIfAChunkIsMissing)
+						{
+							_logger->error(__FILEREF__ + errorMessage);
 
-						throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
+						else
+						{
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
 					}
 
 					// check if it is the first chunk
@@ -9991,9 +10003,16 @@ void MMSEngineProcessor::liveCutThread(
 								+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
 									+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
 							;
-							_logger->error(__FILEREF__ + errorMessage);
+							if (errorIfAChunkIsMissing)
+							{
+								_logger->error(__FILEREF__ + errorMessage);
 
-							throw runtime_error(errorMessage);
+								throw runtime_error(errorMessage);
+							}
+							else
+							{
+								_logger->warn(__FILEREF__ + errorMessage);
+							}
 						}
 
 						utcFirstChunkStartTime = currentUtcChunkStartTime;
@@ -10057,9 +10076,16 @@ void MMSEngineProcessor::liveCutThread(
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
 				+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
 			;
-			_logger->error(__FILEREF__ + errorMessage);
+			if (errorIfAChunkIsMissing)
+			{
+				_logger->error(__FILEREF__ + errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				_logger->warn(__FILEREF__ + errorMessage);
+			}
 		}
 
 		Json::Value liveCutOnSuccess = Json::nullValue;
@@ -20728,7 +20754,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 		Json::Value addContentRoot;
 
-		string addContentLabel = liveRecorderConfigurationLabel + " (" + sUtcChunkEndTime + ") building Virtual VOD...";
+		string addContentLabel = liveRecorderConfigurationLabel + " (" + sUtcChunkEndTime + ") building V-VOD...";
 
 		field = "Label";
 		addContentRoot[field] = addContentLabel;
@@ -21680,7 +21706,12 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 
 				sLastUtcChunkEndTime = lastUtcChunkEndTime_str;
 			}
-			title = liveRecorderConfigurationLabel + " - " + sFirstUtcChunkStartTime + " - " + sLastUtcChunkEndTime;
+			title = "V-VOD - "
+				+ liveRecorderConfigurationLabel
+				+ " - "
+				+ sFirstUtcChunkStartTime
+				+ " - "
+				+ sLastUtcChunkEndTime;
 
 			{
 				pair<int64_t, long> mediaInfoDetails;

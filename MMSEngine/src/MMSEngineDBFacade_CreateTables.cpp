@@ -1821,7 +1821,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "liveURL					VARCHAR (1024) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
-                    "description				VARCHAR (1024) NULL,"
+                    "description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "channelName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "channelRegion				VARCHAR (128) NULL,"
                     "channelCountry				VARCHAR (128) NULL,"
