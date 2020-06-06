@@ -13635,13 +13635,13 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				if (durationInMilliSeconds < endTimeInSeconds * 1000)
 				{
-					string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds"
+					string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-						+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+						+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
 					;
 					_logger->error(errorMessage);
 

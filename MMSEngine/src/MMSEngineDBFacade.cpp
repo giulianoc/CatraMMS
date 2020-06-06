@@ -935,6 +935,21 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 					// Previous condition is important because in the scenario of high availability,
 					// $.mmsData.validated is null.
 
+					// 2020-06-06: Executing the following select 
+					//	select title, ingestionDate, JSON_EXTRACT (userData, '$.mmsData.validated') from MMS_MediaItem where workspaceKey = 7 and title like '44 -%' order by title;
+					//	I saw that the difference between the ingestionDate of the main and the backup chunks arrived up to 14 minutes
+					//	So this scenario is the following:
+					//	- one chunk is ingested (assuming it is the main)
+					//	- 3 minutes passed
+					//	- next select set it as validated
+					//	- after 5 minutes the other chunk arrives
+					//	- it is still single and next select set it as validated
+					//	The wrong result is that we have two chunks that are the same and both validated
+					//	To avoid that:
+					//	- we still maintain 3 minutes max to validate the chunk BUT
+					//	- before to validate it, we check if the same reduntant chunk was already validated.
+					//		If yes we do not validated the new one
+
 					int chunksToBeManagedWithinSeconds = 3 * 60;
 
 					_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single)"
@@ -943,7 +958,9 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 					lastSQLCommand =
 						string("select workspaceKey, mediaItemKey, "
-							"JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.uniqueName')) as uniqueName "
+							"JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.uniqueName')) as uniqueName, "
+							"JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') as utcChunkStartTime, "
+							"CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main "
 							"from MMS_MediaItem where "
 							"JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' "
 							"and JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
@@ -966,18 +983,56 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						string uniqueName;
 						if (!resultSetMediaItemKey->isNull("uniqueName"))
 							uniqueName = resultSetMediaItemKey->getString("uniqueName");
+						int64_t utcChunkStartTime = resultSetMediaItemKey->getInt64("utcChunkStartTime");
+						bool main = resultSetMediaItemKey->getInt("main") == 1 ? true : false;
 
-						_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single), set to validated"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
-						);
+						// as specified in the above 2020-06-06 comment, before to validate it,
+						// we will check if the other chunk (the duplicated one) was already validated
+						bool validatedAlreadyPresent = false;
+						{
+							lastSQLCommand =
+								string("select count(*) from MMS_MediaItem where ")
+									+ "JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' "
+									+ "and JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
+									+ "and JSON_EXTRACT(userData, '$.mmsData.validated') = true "
+									+ "and JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
+									+ "and JSON_EXTRACT(userData, '$.mmsData.main') = " + (main ? "false" : "true")
+								;
+
+							shared_ptr<sql::PreparedStatement> preparedStatementCheckValidation (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatementCheckValidation->setInt64(queryParameterIndex++, ingestionJobKey);
+							preparedStatementCheckValidation->setInt64(queryParameterIndex++, utcChunkStartTime);
+							shared_ptr<sql::ResultSet> resultSetCheckValidation (
+								preparedStatementCheckValidation->executeQuery());
+							if (resultSetCheckValidation->next())
+							{
+								validatedAlreadyPresent = resultSetCheckValidation->getInt(1) == 1;
+							}
+							else
+							{
+								string errorMessage ("select count(*) failed");
+								_logger->error(errorMessage);
+
+								// throw runtime_error(errorMessage);
+							}
+						}
 
 						{
+							_logger->info(__FILEREF__ + "Manage HA LiveRecording, main or backup (single), set validation"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
+								+ ", validatedAlreadyPresent: " + to_string(validatedAlreadyPresent)
+							);
+
 							lastSQLCommand = 
-								"update MMS_MediaItem "
-								"set userData = JSON_SET(userData, '$.mmsData.validated', true) "
-								"where mediaItemKey = ?";
-							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+								string("update MMS_MediaItem ")
+								+ "set userData = JSON_SET(userData, '$.mmsData.validated', "
+									+ (validatedAlreadyPresent ? "false" : "true") + ") "
+								+ "where mediaItemKey = ?";
+							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
 							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyChunk);
 
@@ -987,7 +1042,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
 								);
 
-							if (uniqueName != "")
+							if (!validatedAlreadyPresent && uniqueName != "")
 							{
 								try
 								{
