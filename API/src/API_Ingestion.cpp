@@ -3304,12 +3304,22 @@ void API::ingestionRootsStatus(
                 asc = false;
         }
 
+        bool ingestionJobOutputs = true;
+        auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
+        if (ingestionJobOutputsIt != queryParameters.end() && ingestionJobOutputsIt->second != "")
+        {
+            if (ingestionJobOutputsIt->second == "true")
+                ingestionJobOutputs = true;
+            else
+                ingestionJobOutputs = false;
+        }
+
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
                     workspace, ingestionRootKey, mediaItemKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    label, status, asc
+                    label, status, asc, ingestionJobOutputs
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -3515,6 +3525,16 @@ void API::ingestionJobsStatus(
                 asc = false;
         }
 
+        bool ingestionJobOutputs = true;
+        auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
+        if (ingestionJobOutputsIt != queryParameters.end() && ingestionJobOutputsIt->second != "")
+        {
+            if (ingestionJobOutputsIt->second == "true")
+                ingestionJobOutputs = true;
+            else
+                ingestionJobOutputs = false;
+        }
+
         string status = "all";
         auto statusIt = queryParameters.find("status");
         if (statusIt != queryParameters.end() && statusIt->second != "")
@@ -3527,7 +3547,7 @@ void API::ingestionJobsStatus(
                     workspace, ingestionJobKey,
                     start, rows, label,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    ingestionType, asc, status
+                    ingestionType, asc, status, ingestionJobOutputs
                     );
 
             Json::StreamWriterBuilder wbuilder;

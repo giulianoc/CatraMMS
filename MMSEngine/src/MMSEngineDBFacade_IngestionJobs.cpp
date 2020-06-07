@@ -826,7 +826,6 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
     }        
 }
 
-
 shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 {
     string      lastSQLCommand;
@@ -3299,7 +3298,6 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
     return make_tuple(label, ingestionType, ingestionStatus, metaDataContent, errorMessage);
 }
 
-
 void MMSEngineDBFacade::addIngestionJobOutput(
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey,
@@ -3389,7 +3387,6 @@ void MMSEngineDBFacade::addIngestionJobOutput(
         throw e;
     }
 }
-
 
 void MMSEngineDBFacade::addIngestionJobOutput(
 	shared_ptr<MySQLConnection> conn,
@@ -3483,7 +3480,6 @@ void MMSEngineDBFacade::addIngestionJobOutput(
         throw e;
     }
 }
-
 
 long MMSEngineDBFacade::getIngestionJobOutputsCount(
 	int64_t ingestionJobKey
@@ -3594,7 +3590,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 		int64_t ingestionRootKey, int64_t mediaItemKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string label, string status, bool asc
+        string label, string status, bool asc, bool ingestionJobOutputs
 )
 {
     string      lastSQLCommand;
@@ -3646,7 +3642,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             
             field = "status";
             requestParametersRoot[field] = status;
-            
+
             field = "requestParameters";
             statusListRoot[field] = requestParametersRoot;
         }
@@ -3826,7 +3822,8 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
-                                workspace, resultSetIngestionJob, currentIngestionRootKey, conn);
+                                workspace, resultSetIngestionJob, currentIngestionRootKey,
+								ingestionJobOutputs, conn);
 
                         ingestionJobsRoot.append(ingestionJobRoot);
                     }
@@ -3918,9 +3915,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
 		string ingestionType,
-        bool asc, string status
+        bool asc, string status,
+		bool ingestionJobOutputs	// added because output could be thousands of entries
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value statusListRoot;
     
@@ -3970,7 +3968,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 field = "ingestionType";
                 requestParametersRoot[field] = ingestionType;
             }
-            
+
+            field = "ingestionJobOutputs";
+            requestParametersRoot[field] = ingestionJobOutputs;
+
             field = "requestParameters";
             statusListRoot[field] = requestParametersRoot;
         }
@@ -4059,7 +4060,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             while (resultSet->next())
             {
                 Json::Value ingestionJobRoot = getIngestionJobRoot(
-                        workspace, resultSet, resultSet->getInt64("ingestionRootKey"), conn);
+                        workspace, resultSet, resultSet->getInt64("ingestionRootKey"),
+						ingestionJobOutputs, conn);
 
                 ingestionJobsRoot.append(ingestionJobRoot);
             }
@@ -4143,6 +4145,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
         int64_t ingestionRootKey,
+		bool ingestionJobOutputs,	// added because output could be thousands of entries
         shared_ptr<MySQLConnection> conn
 )
 {
@@ -4208,6 +4211,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 		}
 
         Json::Value mediaItemsRoot(Json::arrayValue);
+		if(ingestionJobOutputs)
         {
             lastSQLCommand = 
                 "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput "

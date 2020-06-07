@@ -1344,14 +1344,16 @@ public:
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
-        string label, string status, bool asc);
+        string label, string status, bool asc,
+		bool ingestionJobOutputs);
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
 		string ingestionType,
-        bool asc, string status);
+        bool asc, string status,
+		bool ingestionJobOutputs);
 
     Json::Value getEncodingJobsStatus (
         shared_ptr<Workspace> workspace, int64_t encodingJobKey,
@@ -2096,6 +2098,7 @@ private:
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
         int64_t ingestionRootKey,
+		bool ingestionJobOutputs,
         shared_ptr<MySQLConnection> conn);
 
     void manageIngestionJobStatusUpdate (
