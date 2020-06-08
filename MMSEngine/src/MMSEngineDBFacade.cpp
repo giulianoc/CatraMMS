@@ -1026,13 +1026,17 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								+ ", validatedAlreadyPresent: " + to_string(validatedAlreadyPresent)
 							);
 
-							lastSQLCommand = 
-								string("update MMS_MediaItem ")
-								+ "set userData = JSON_SET(userData, '$.mmsData.validated', "
-									+ (validatedAlreadyPresent ? "false" : "true") + ") "
-								+ "where mediaItemKey = ?";
+							if (validatedAlreadyPresent)
+								lastSQLCommand = 
+									"update MMS_MediaItem set retentionInMinutes = 0, "
+									"userData = JSON_SET(userData, '$.mmsData.validated', false) "
+									"where mediaItemKey = ?";
+							else
+								lastSQLCommand =
+									"update MMS_MediaItem set userData = JSON_SET(userData, '$.mmsData.validated', true) "
+									"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
 							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyChunk);
 
