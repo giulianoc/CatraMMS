@@ -3997,7 +3997,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 string("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij ")
                     + sqlWhere;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
@@ -4011,7 +4012,19 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             }
 			if (ingestionType != "")
                 preparedStatement->setString(queryParameterIndex++, ingestionType);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", label: " + "%" + label + "%"
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", ingestionType: " + ingestionType
+				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count())
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -4040,7 +4053,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 + "order by newStartProcessing" + (asc ? " asc" : " desc") + ", newEndProcessing " + 
                 + "limit ? offset ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
@@ -4056,7 +4070,21 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, ingestionType);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", label: " + "%" + label + "%"
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", ingestionType: " + ingestionType
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count())
+			);
             while (resultSet->next())
             {
                 Json::Value ingestionJobRoot = getIngestionJobRoot(
@@ -4301,10 +4329,19 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
                 "transcoder, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncodingJob->setInt64(queryParameterIndex++, ingestionJobKey);
-            shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSetEncodingJob (
+				preparedStatementEncodingJob->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count())
+			);
             if (resultSetEncodingJob->next())
             {
                 Json::Value encodingJobRoot;
