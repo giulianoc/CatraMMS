@@ -3056,8 +3056,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		IngestionType ingestionType;
         {
 			lastSQLCommand =
-				"select ingestionType "
-				"from MMS_IngestionJob "
+				"select ingestionType from MMS_IngestionJob "
 				"where ingestionJobKey = ? ";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));

@@ -7204,13 +7204,52 @@ void MMSEngineProcessor::manageGroupOfTasks(
 		int64_t liveRecordingIngestionJobKey = -1;
 		for (pair<int64_t, int64_t>  referenceOutput: referencesOutput)
 		{
-			_logger->info(__FILEREF__ + "References.Output"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", mediaItemKey: " + to_string(referenceOutput.first)
-				+ ", physicalPathKey: " + to_string(referenceOutput.second)
-			);
-			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
-				referenceOutput.first, referenceOutput.second, liveRecordingIngestionJobKey);
+			/*
+			 * 2020-06-08. I saw a scenario where:
+			 *	1. MediaItems were coming from a LiveRecorder with high availability
+			 *	2. a media item was present during validator.fillReferencesOutput
+			 *	3. just before the calling of the below statement _mmsEngineDBFacade->addIngestionJobOutput
+			 *		it was removed (because it was not validated
+			 *	4. _mmsEngineDBFacade->addIngestionJobOutput raised an exception
+			 *		Cannot add or update a child row: a foreign key constraint fails
+			 *		(`vedatest`.`MMS_IngestionJobOutput`, CONSTRAINT `MMS_IngestionJobOutput_FK`
+			 *		FOREIGN KEY (`physicalPathKey`) REFERENCES `MMS_PhysicalPath` (`physicalPathKey`)
+			 *		ON DELETE CASCADE)
+			 * This scenario should never happen because the EncoderVideoAudioProxy::processLiveRecorder method
+			 * wait that the high availability is completely managed.
+			 *
+			 * Anyway to be sure we will not interrupt our workflow, we will add a try catch
+			 */
+			try
+			{
+				_logger->info(__FILEREF__ + "References.Output"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mediaItemKey: " + to_string(referenceOutput.first)
+					+ ", physicalPathKey: " + to_string(referenceOutput.second)
+				);
+
+				_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
+					referenceOutput.first, referenceOutput.second, liveRecordingIngestionJobKey);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addIngestionJobOutput failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mediaItemKey: " + to_string(referenceOutput.first)
+					+ ", physicalPathKey: " + to_string(referenceOutput.second)
+					+ ", e.what(): " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addIngestionJobOutput failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mediaItemKey: " + to_string(referenceOutput.first)
+					+ ", physicalPathKey: " + to_string(referenceOutput.second)
+				);
+			}
 		}
 
 		/*

@@ -10470,6 +10470,11 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
 				// So in case this is changed, also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA has to be changed too
 				int toleranceMinutes = 5;
+
+				// 2020-06-09: since it happened that this waiting was not enough and a MIK went as input
+				// to a task and it was removed while the task was using it, it was added one more minute
+				toleranceMinutes++;	
+
 				int sleepTimeInSeconds = 15;	// main and backup management starts: * * * * * * 15,30,45
 
 				_logger->info(__FILEREF__ + "Waiting the finishing of main and backup chunks management"
@@ -10483,12 +10488,14 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 				{
 					this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
 
-					mainAndBackupChunksManagementCompleted = _mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
+					mainAndBackupChunksManagementCompleted =
+						_mmsEngineDBFacade->liveRecorderMainAndBackupChunksManagementCompleted(
 						_encodingItem->_ingestionJobKey);
 					endPoint = chrono::system_clock::now();
 				}
 				while(!mainAndBackupChunksManagementCompleted &&
-					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count() < toleranceMinutes * 60);
+					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
+					< toleranceMinutes * 60);
 
 				if (mainAndBackupChunksManagementCompleted)
 				{

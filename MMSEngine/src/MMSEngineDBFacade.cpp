@@ -1488,7 +1488,8 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
             lastSQLCommand =
 				string("select count(*) from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 					"where ijo.mediaItemKey = mi.mediaItemKey and ijo.ingestionJobKey = ? "
-					"and JSON_EXTRACT(mi.userData, '$.mmsData.validated') = false "
+					"and (JSON_EXTRACT(mi.userData, '$.mmsData.validated') = false "
+					"or JSON_EXTRACT(mi.userData, '$.mmsData.validated') is null) "
 				);
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1503,7 +1504,8 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
-				mainAndBackupChunksManagementCompleted = (resultSet->getInt64(1) == 0) ? true : false;
+				mainAndBackupChunksManagementCompleted =
+					(resultSet->getInt64(1) == 0) ? true : false;
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
