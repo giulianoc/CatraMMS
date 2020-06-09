@@ -10192,6 +10192,12 @@ void MMSEngineProcessor::liveCutThread(
 				field = "EndTimeInSeconds";
 				cutParametersRoot[field] = endTimeInSeconds;
 
+				if (!errorIfAChunkIsMissing)
+				{
+					field = "FixEndTimeIfOvercomeDuration";
+					cutParametersRoot[field] = true;
+				}
+
 				field = "Parameters";
 				cutRoot[field] = cutParametersRoot;
 
@@ -13472,26 +13478,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
             if (contentType == MMSEngineDBFacade::ContentType::Video)
             {
-				/*
-                int videoWidth;
-                int videoHeight;
-                long bitRate;
-                string videoCodecName;
-                string videoProfile;
-                long videoBitRate;
-                string audioCodecName;
-                long audioSampleRate;
-                int audioChannels;
-                long audioBitRate;
-
-                tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                    videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
-
-                tie(durationInMilliSeconds, bitRate,
-                    videoCodecName, videoProfile, videoWidth, videoHeight, forcedAvgFrameRate, videoBitRate,
-                    audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-				*/
-
 				vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
 				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
@@ -13513,21 +13499,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
-			/*
-            else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-            {
-                string codecName;
-                long bitRate;
-                long sampleRate;
-                int channels;
-
-                tuple<int64_t,string,long,long,int> audioDetails = _mmsEngineDBFacade->getAudioDetails(
-                    sourceMediaItemKey, sourcePhysicalPathKey);
-
-                tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
-                        = audioDetails;
-            }
-			*/
         }
         catch(runtime_error e)
         {
@@ -13580,6 +13551,13 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+        }
+
+        bool fixEndTimeIfOvercomeDuration = false;
+        field = "FixEndTimeIfOvercomeDuration";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, false);
         }
 
 		/*
@@ -13635,17 +13613,35 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				if (durationInMilliSeconds < endTimeInSeconds * 1000)
 				{
-					string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-						+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
-					;
-					_logger->error(errorMessage);
+					if (fixEndTimeIfOvercomeDuration)
+					{
+						double previousEndTimeInSeconds = endTimeInSeconds;
+						endTimeInSeconds = durationInMilliSeconds / 1000;
 
-					throw runtime_error(errorMessage);
+						_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
+							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+							+ ", previousEndTimeInSeconds: " + to_string(previousEndTimeInSeconds)
+							+ ", new endTimeInSeconds: " + to_string(endTimeInSeconds)
+							+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
+						);
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+							+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+							+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+							+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
 				}
 			}
 		}

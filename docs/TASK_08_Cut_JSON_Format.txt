@@ -33,6 +33,14 @@
 		//			EndTimeInSeconds = media duration - (-EndTimeInSeconds)
 		"EndTimeInSeconds": 3.5,
 
+		// optional. Only in case EndTimeInSeconds overcome the duration of the input media:
+		//		if FixEndTimeIfOvercomeDuration is set to true
+		//			the EndTime is changed to the duration of the media.
+		//		if FixEndTimeIfOvercomeDuration is set to false
+		//			this task will fail because the cut is not possible to be done
+		//	Default is false
+		"FixEndTimeIfOvercomeDuration": false,
+
 		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
 		"FramesNumber": 10,
 
