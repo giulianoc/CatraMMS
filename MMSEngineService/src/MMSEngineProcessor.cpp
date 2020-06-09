@@ -9801,10 +9801,11 @@ void MMSEngineProcessor::liveCutThread(
 			// retrieve the reference of all the MediaItems to be concatenate
 			mediaItemKeyReferencesRoot.clear();
 
-			Json::Value mediaItemsListRoot;
+			// Json::Value mediaItemsListRoot;
+			Json::Value mediaItemsRoot;
 			do
 			{
-				mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+				Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey,
 					start, rows,
 					contentTypePresent, contentType,
@@ -9816,7 +9817,7 @@ void MMSEngineProcessor::liveCutThread(
 				Json::Value responseRoot = mediaItemsListRoot[field];
 
 				field = "mediaItems";
-				Json::Value mediaItemsRoot = responseRoot[field];
+				mediaItemsRoot = responseRoot[field];
 
 				for (int mediaItemIndex = 0; mediaItemIndex < mediaItemsRoot.size(); mediaItemIndex++)
 				{
@@ -10046,8 +10047,16 @@ void MMSEngineProcessor::liveCutThread(
 				}
 
 				start += rows;
+
+				_logger->info(__FILEREF__ + "Retrieving chunk"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", start: " + to_string(start)
+					+ ", rows: " + to_string(rows)
+					+ ", mediaItemsRoot.size: " + to_string(mediaItemsRoot.size())
+				);
 			}
-			while(mediaItemsListRoot.size() != rows);
+			while(mediaItemsRoot.size() == rows);
 
 			// just waiting if the last chunk was not finished yet
 			if (!lastChunk)
