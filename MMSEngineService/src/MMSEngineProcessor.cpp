@@ -10047,7 +10047,7 @@ void MMSEngineProcessor::liveCutThread(
 
 				start += rows;
 			}
-			while(mediaItemsListRoot.size() == rows);
+			while(mediaItemsListRoot.size() != rows);
 
 			// just waiting if the last chunk was not finished yet
 			if (!lastChunk)

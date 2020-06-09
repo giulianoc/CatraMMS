@@ -23,13 +23,23 @@ int64_t MMSEngineDBFacade::addYouTubeConf(
                 "insert into MMS_Conf_YouTube(workspaceKey, label, refreshToken) values ("
                 "?, ?, ?)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, refreshToken);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", refreshToken: " + refreshToken
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             confKey = getLastInsertId(conn);
         }
@@ -130,7 +140,18 @@ void MMSEngineDBFacade::modifyYouTubeConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", refreshToken: " + refreshToken
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 /*
@@ -235,7 +256,16 @@ void MMSEngineDBFacade::removeYouTubeConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
@@ -360,7 +390,14 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage ("select count(*) failed");
@@ -383,7 +420,14 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value youTubeConfRoot;
@@ -504,7 +548,15 @@ string MMSEngineDBFacade::getYouTubeRefreshTokenByConfigurationLabel(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, youTubeConfigurationLabel);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", youTubeConfigurationLabel: " + youTubeConfigurationLabel
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_YouTube failed"
@@ -616,7 +668,16 @@ int64_t MMSEngineDBFacade::addFacebookConf(
             preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, pageToken);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", pageToken: " + pageToken
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             confKey = getLastInsertId(conn);
         }
@@ -717,7 +778,18 @@ void MMSEngineDBFacade::modifyFacebookConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", pageToken: " + pageToken
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 /*
@@ -822,7 +894,16 @@ void MMSEngineDBFacade::removeFacebookConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
@@ -947,7 +1028,14 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage ("select count(*) failed");
@@ -970,7 +1058,14 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value facebookConfRoot;
@@ -1091,7 +1186,15 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, facebookConfigurationLabel);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", facebookConfigurationLabel: " + facebookConfigurationLabel
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_Facebook failed"
@@ -1241,7 +1344,22 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 			else
 				preparedStatement->setString(queryParameterIndex++, sLiveURLData);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", liveURL: " + liveURL
+				+ ", type: " + type
+				+ ", description: " + description
+				+ ", channelName: " + channelName
+				+ ", channelRegion: " + channelRegion
+				+ ", channelCountry: " + channelCountry
+				+ ", sLiveURLData: " + sLiveURLData
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             confKey = getLastInsertId(conn);
         }
@@ -1380,7 +1498,24 @@ void MMSEngineDBFacade::modifyLiveURLConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", liveURL: " + liveURL
+				+ ", type: " + type
+				+ ", description: " + description
+				+ ", channelName: " + channelName
+				+ ", channelRegion: " + channelRegion
+				+ ", channelCountry: " + channelCountry
+				+ ", sLiveURLData: " + sLiveURLData
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 /*
@@ -1485,7 +1620,16 @@ void MMSEngineDBFacade::removeLiveURLConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
@@ -1709,7 +1853,20 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelRegion + "%");
             if (channelCountry != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelCountry + "%");
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", liveURLKey: " + to_string(liveURLKey)
+				+ ", liveURL: " + "%" + liveURL + "%"
+				+ ", type: " + type
+				+ ", channelName: " + "%" + channelName + "%"
+				+ ", channelRegion: " + "%" + channelRegion + "%"
+				+ ", channelCountry: " + "%" + channelCountry + "%"
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage ("select count(*) failed");
@@ -1757,7 +1914,23 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + channelCountry + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", liveURLKey: " + to_string(liveURLKey)
+				+ ", label: " + "%" + label + "%"
+				+ ", liveURL: " + "%" + liveURL + "%"
+				+ ", type: " + type
+				+ ", channelName: " + "%" + channelName + "%"
+				+ ", channelRegion: " + "%" + channelRegion + "%"
+				+ ", channelCountry: " + "%" + channelCountry + "%"
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value liveURLConfRoot;
@@ -1915,7 +2088,15 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_LiveURL failed"
@@ -2032,7 +2213,15 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, confKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confKey: " + to_string(confKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_LiveURL failed"
@@ -2150,7 +2339,20 @@ int64_t MMSEngineDBFacade::addFTPConf(
             preparedStatement->setString(queryParameterIndex++, password);
             preparedStatement->setString(queryParameterIndex++, remoteDirectory);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", server: " + server
+				+ ", port: " + to_string(port)
+				+ ", userName: " + userName
+				+ ", password: " + password
+				+ ", remoteDirectory: " + remoteDirectory
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             confKey = getLastInsertId(conn);
         }
@@ -2255,7 +2457,22 @@ void MMSEngineDBFacade::modifyFTPConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", server: " + server
+				+ ", port: " + to_string(port)
+				+ ", userName: " + userName
+				+ ", password: " + password
+				+ ", remoteDirectory: " + remoteDirectory
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 /*
@@ -2360,7 +2577,16 @@ void MMSEngineDBFacade::removeFTPConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
@@ -2485,7 +2711,14 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage ("select count(*) failed");
@@ -2508,7 +2741,14 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value ftpConfRoot;
@@ -2641,7 +2881,15 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_FTP failed"
@@ -2761,7 +3009,18 @@ int64_t MMSEngineDBFacade::addEMailConf(
             preparedStatement->setString(queryParameterIndex++, subject);
             preparedStatement->setString(queryParameterIndex++, message);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", addresses: " + addresses
+				+ ", subject: " + subject
+				+ ", message: " + message
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             confKey = getLastInsertId(conn);
         }
@@ -2864,7 +3123,20 @@ void MMSEngineDBFacade::modifyEMailConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", label: " + label
+				+ ", addresses: " + addresses
+				+ ", subject: " + subject
+				+ ", message: " + message
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 /*
@@ -2969,7 +3241,16 @@ void MMSEngineDBFacade::removeEMailConf(
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confKey: " + to_string(confKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
@@ -3094,7 +3375,14 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage ("select count(*) failed");
@@ -3117,7 +3405,14 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value emailConfRoot;
@@ -3244,7 +3539,15 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
                 string errorMessage = __FILEREF__ + "select from MMS_Conf_EMail failed"

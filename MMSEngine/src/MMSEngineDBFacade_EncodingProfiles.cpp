@@ -20,7 +20,16 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 encodingProfilesSetKey     = resultSet->getInt64("encodingProfilesSetKey");
@@ -36,7 +45,16 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 preparedStatement->setString(queryParameterIndex++, label);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+					+ ", label: " + label
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
                 encodingProfilesSetKey = getLastInsertId(conn);
             }
@@ -197,7 +215,16 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
@@ -212,7 +239,16 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", deliveryTechnology: " + MMSEngineDBFacade::toString(deliveryTechnology)
+					+ ", jsonProfile: " + jsonProfile
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
             }
             else
             {
@@ -230,7 +266,18 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 						MMSEngineDBFacade::toString(deliveryTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", label: " + label
+					+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+					+ ", deliveryTechnology: " + MMSEngineDBFacade::toString(deliveryTechnology)
+					+ ", jsonProfile: " + jsonProfile
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
                 encodingProfileKey = getLastInsertId(conn);
             }
@@ -246,7 +293,15 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (!resultSet->next())
                 {
                     {
@@ -255,7 +310,14 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (resultSet->next())
                         {
                             int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
@@ -281,7 +343,15 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                 }
             }
@@ -342,7 +412,16 @@ void MMSEngineDBFacade::removeEncodingProfile(
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated == 0)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -445,7 +524,16 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 encodingProfileKey     = resultSet->getInt64("encodingProfileKey");                
@@ -472,7 +560,15 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (!resultSet->next())
                 {
                     {
@@ -481,7 +577,14 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
                         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (resultSet->next())
                         {
                             int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
@@ -507,7 +610,15 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
                         preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                 }
             }
@@ -568,7 +679,16 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated == 0)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -713,7 +833,15 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -742,7 +870,15 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value encodingProfilesSetRoot;
@@ -770,7 +906,14 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                     shared_ptr<sql::PreparedStatement> preparedStatementProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementProfile->setInt64(queryParameterIndex++, localEncodingProfilesSetKey);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> resultSetProfile (preparedStatementProfile->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", localEncodingProfilesSetKey: " + to_string(localEncodingProfilesSetKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     while (resultSetProfile->next())
                     {
                         Json::Value encodingProfileRoot;
@@ -977,7 +1120,16 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -1006,7 +1158,16 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value encodingProfileRoot;
@@ -1171,7 +1332,14 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
@@ -1207,7 +1375,14 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 encodingProfilesSetKeys.push_back(resultSet->getInt64("encodingProfileKey"));
@@ -1307,7 +1482,15 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 encodingProfilesSetKey     = resultSet->getInt64("encodingProfilesSetKey");
@@ -1332,7 +1515,14 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 encodingProfilesSetKeys.push_back(resultSet->getInt64("encodingProfileKey"));
@@ -1435,7 +1625,16 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ ", encodingProfileLabel: " + encodingProfileLabel
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 encodingProfileKey = resultSet->getInt64("encodingProfileKey");
@@ -1552,7 +1751,15 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 label = resultSet->getString("label");

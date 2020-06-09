@@ -55,7 +55,14 @@ void MMSEngineDBFacade::setLock(
 				int queryParameterIndexIngestionJob = 1;
 				preparedStatement->setString(queryParameterIndexIngestionJob++, sLockType);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", sLockType: " + sLockType
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
 				if (!resultSet->next())
 				{
@@ -170,7 +177,17 @@ void MMSEngineDBFacade::setLock(
 				}
 				preparedStatement->setString(queryParameterIndex++, sLockType);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", owner: " + owner
+					+ ", data: " + data
+					+ ", sLockType: " + sLockType
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done"
@@ -497,7 +514,14 @@ void MMSEngineDBFacade::releaseLock(
 			int queryParameterIndexIngestionJob = 1;
 			preparedStatement->setString(queryParameterIndexIngestionJob++, sLockType);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", sLockType: " + sLockType
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
 			if (!resultSet->next())
 			{
@@ -546,7 +570,16 @@ void MMSEngineDBFacade::releaseLock(
 			}
 			preparedStatement->setString(queryParameterIndex++, sLockType);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", data: " + data
+				+ ", sLockType: " + sLockType
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "MMS_Lock, no update was done"

@@ -104,7 +104,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (resultSet->next())
 				{
 					if (resultSet->getInt64(1) == 0)
@@ -118,7 +125,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						preparedStatement->setString(queryParameterIndex++, toString(lockType));
 						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", lockType: " + toString(lockType)
+							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
 					}
 				}
             }
@@ -132,7 +147,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (resultSet->next())
 				{
 					if (resultSet->getInt64(1) == 0)
@@ -146,7 +168,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						preparedStatement->setString(queryParameterIndex++, toString(lockType));
 						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", lockType: " + toString(lockType)
+							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
 					}
 				}
             }
@@ -160,7 +190,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (resultSet->next())
 				{
 					if (resultSet->getInt64(1) == 0)
@@ -174,7 +211,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						preparedStatement->setString(queryParameterIndex++, toString(lockType));
 						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", lockType: " + toString(lockType)
+							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
 					}
 				}
             }
@@ -190,7 +235,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(lockType));
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (resultSet->next())
 				{
 					if (resultSet->getInt64(1) == 0)
@@ -205,7 +257,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						preparedStatement->setString(queryParameterIndex++, toString(lockType));
 						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", lockType: " + toString(lockType)
+							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
 					}
 				}
             }
@@ -758,7 +818,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             int queryParameterIndex = 1;
                             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                             preparedStatement->setString(queryParameterIndex++, label);
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+								+ ", label: " + label
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                             if (resultSet->next())
                             {
                                 int64_t encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
@@ -772,7 +840,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 preparedStatement->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", deliveryTechnology: " + toString(deliveryTechnology)
+									+ ", jsonProfile: " + jsonProfile
+									+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
                             else
                             {
@@ -789,7 +866,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                                 preparedStatement->setString(queryParameterIndex++, toString(deliveryTechnology));
                                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 preparedStatement->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", label: " + label
+									+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+									+ ", deliveryTechnology: " + toString(deliveryTechnology)
+									+ ", jsonProfile: " + jsonProfile
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
 
                                 // encodingProfileKey = getLastInsertId(conn);
                             }

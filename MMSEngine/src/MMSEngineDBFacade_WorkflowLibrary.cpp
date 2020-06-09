@@ -133,7 +133,15 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 			if (workspaceKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				// two options:
@@ -163,7 +171,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-				if (workspaceKey == -1)
+				if (userKey == -1)	// if (workspaceKey == -1)
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 				else
 					preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -174,7 +182,17 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
                 preparedStatement->setString(queryParameterIndex++, jsonWorkflow);
                 preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", thumbnailMediaItemKey: " + to_string(thumbnailMediaItemKey)
+					+ ", jsonWorkflow: " + jsonWorkflow
+					+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
             }
             else
             {
@@ -209,7 +227,19 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
                 preparedStatement->setString(queryParameterIndex++, jsonWorkflow);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", userKey: " + to_string(userKey)
+					+ ", userKey: " + to_string(userKey)
+					+ ", label: " + label
+					+ ", thumbnailMediaItemKey: " + to_string(thumbnailMediaItemKey)
+					+ ", jsonWorkflow: " + jsonWorkflow
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
                 workflowLibraryKey = getLastInsertId(conn);
             }
@@ -283,7 +313,17 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			}
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated == 0)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -405,7 +445,14 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -432,7 +479,14 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value workflowLibraryRoot;
@@ -616,7 +670,15 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
 				string errorMessage = __FILEREF__ + "WorkflowLibrary was not found"
@@ -741,7 +803,15 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 			if (workspaceKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatement->setString(queryParameterIndex++, label);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
 				string errorMessage = __FILEREF__ + "WorkflowLibrary was not found"

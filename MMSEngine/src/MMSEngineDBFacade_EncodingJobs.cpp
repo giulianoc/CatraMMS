@@ -60,7 +60,14 @@ void MMSEngineDBFacade::getEncodingJobs(
             preparedStatementEncoding->setString(queryParameterIndex++,
 				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             while (encodingResultSet->next())
             {
@@ -107,7 +114,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                     
                     continue;
@@ -151,7 +167,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -172,8 +197,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementWorkspace->setInt64(queryParameterIndex++,
 							encodingItem->_ingestionJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (workspaceResultSet->next())
                     {
                         encodingItem->_workspace = getWorkspace(workspaceResultSet->getInt64("workspaceKey"));
@@ -203,7 +235,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -223,7 +264,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string liveProxyParameters = imgestionResultSet->getString("metaDataContent");
@@ -260,7 +308,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -290,7 +347,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -320,7 +386,17 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementUpdateEncoding->setInt64(queryParameterIndex++,
 							encodingItem->_encodingJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", processorMMS: " + processorMMS
+						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (rowsUpdated != 1)
                     {
                         string errorMessage = __FILEREF__ + "no update was done"
@@ -358,7 +434,14 @@ void MMSEngineDBFacade::getEncodingJobs(
             preparedStatementEncoding->setString(queryParameterIndex++,
 				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             while (encodingResultSet->next())
             {
@@ -405,7 +488,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                     
                     continue;
@@ -449,7 +541,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -470,8 +571,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementWorkspace->setInt64(queryParameterIndex++,
 							encodingItem->_ingestionJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (workspaceResultSet->next())
                     {
                         encodingItem->_workspace = getWorkspace(workspaceResultSet->getInt64("workspaceKey"));
@@ -501,7 +609,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -521,7 +638,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string liveRecorderParameters = imgestionResultSet->getString("metaDataContent");
@@ -558,7 +682,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -588,7 +721,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -618,7 +760,17 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementUpdateEncoding->setInt64(queryParameterIndex++,
 							encodingItem->_encodingJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", processorMMS: " + processorMMS
+						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (rowsUpdated != 1)
                     {
                         string errorMessage = __FILEREF__ + "no update was done"
@@ -672,7 +824,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 			startRow += maxEncodingsNumber;
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
+				+ ", startRow: " + to_string(startRow)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 			if (encodingResultSet->rowsCount() != maxEncodingsNumber)
 				stillRows = false;
 
@@ -721,7 +882,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 							MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                     
                     continue;
@@ -765,7 +935,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -786,8 +965,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementWorkspace->setInt64(queryParameterIndex++,
 							encodingItem->_ingestionJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (workspaceResultSet->next())
                     {
                         encodingItem->_workspace = getWorkspace(workspaceResultSet->getInt64("workspaceKey"));
@@ -817,7 +1003,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                             preparedStatementUpdate->setInt64(queryParameterIndex++,
 									encodingItem->_encodingJobKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
 
                         continue;
@@ -847,8 +1042,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(
@@ -887,7 +1089,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -895,103 +1106,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
-					/*
-                    if (encodingItem->_encodeData->_contentType == ContentType::Video)
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementVideo->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-                        if (videoResultSet->next())
-                        {
-                            encodingItem->_encodeData->_durationInMilliSeconds =
-								videoResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-                    else if (encodingItem->_encodeData->_contentType == ContentType::Audio)
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_AudioItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementAudio (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementAudio->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> audioResultSet (preparedStatementAudio->executeQuery());
-                        if (audioResultSet->next())
-                        {
-                            encodingItem->_encodeData->_durationInMilliSeconds =
-								audioResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-					*/
-
                     {
                         lastSQLCommand = 
                             "select deliveryTechnology, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
@@ -1000,8 +1114,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> encodingProfilesResultSet (
 								preparedStatementEncodingProfile->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (encodingProfilesResultSet->next())
                         {
                             encodingItem->_encodeData->_deliveryTechnology =
@@ -1034,7 +1155,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1051,8 +1181,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         preparedStatementIngestion->setInt64(queryParameterIndex++,
 								encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (
 								preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string ingestionParameters = imgestionResultSet->getString("metaDataContent");
@@ -1092,7 +1229,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setInt64(queryParameterIndex++,
 												encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1125,7 +1271,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1159,8 +1314,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_overlayImageOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
@@ -1201,7 +1363,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1209,55 +1380,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
-					/*
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-                        if (videoResultSet->next())
-                        {
-                            encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds =
-								videoResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-					*/
-
                     {
                         lastSQLCommand = 
                             "select partitionNumber, fileName, relativePath "
@@ -1268,8 +1390,15 @@ void MMSEngineDBFacade::getEncodingJobs(
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
 								sourceImagePhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourceImagePhysicalPathKey: " + to_string(sourceImagePhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_overlayImageOnVideoData->_mmsImagePartitionNumber = physicalPathResultSet->getInt("partitionNumber");
@@ -1303,7 +1432,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1320,7 +1458,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         preparedStatementIngestion->setInt64(queryParameterIndex++,
 								encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string overlayParameters = imgestionResultSet->getString("metaDataContent");
@@ -1361,7 +1506,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setInt64(queryParameterIndex++,
 												encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1394,7 +1548,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1422,7 +1585,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_overlayTextOnVideoData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
@@ -1458,7 +1628,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1466,50 +1645,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
-					/*
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-                        if (videoResultSet->next())
-                        {
-                            encodingItem->_overlayTextOnVideoData->_videoDurationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-					*/
-
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
@@ -1517,7 +1652,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string overlayTextParameters = imgestionResultSet->getString("metaDataContent");
@@ -1554,7 +1696,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1584,7 +1735,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1612,7 +1772,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_generateFramesData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
@@ -1648,7 +1815,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1656,50 +1832,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
-					/*
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-                        if (videoResultSet->next())
-                        {
-                            encodingItem->_generateFramesData->_videoDurationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-					*/
-
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
@@ -1707,7 +1839,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string generateFramesParameters = imgestionResultSet->getString("metaDataContent");
@@ -1744,7 +1883,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1774,7 +1922,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1794,7 +1951,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string slideShowParameters = imgestionResultSet->getString("metaDataContent");
@@ -1831,7 +1995,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1861,7 +2034,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1881,7 +2063,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string faceRecognitionParameters = imgestionResultSet->getString("metaDataContent");
@@ -1921,7 +2110,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setInt64(queryParameterIndex++,
 												encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -1953,7 +2151,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -1973,7 +2180,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string faceIdentificationParameters = imgestionResultSet->getString("metaDataContent");
@@ -2014,7 +2228,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setInt64(queryParameterIndex++,
 												encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -2046,7 +2269,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -2057,90 +2289,6 @@ void MMSEngineDBFacade::getEncodingJobs(
 				/* Live-Recorder are managed in the previous loop
                 else if (encodingItem->_encodingType == EncodingType::LiveRecorder)
                 {
-                    encodingItem->_liveRecorderData = make_shared<EncodingItem::LiveRecorderData>();
-                    
-                    {
-                        lastSQLCommand = 
-                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
-
-                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-                        if (imgestionResultSet->next())
-                        {
-                            string liveRecorderParameters = imgestionResultSet->getString("metaDataContent");
-                            
-                            {
-                                Json::CharReaderBuilder builder;
-                                Json::CharReader* reader = builder.newCharReader();
-                                string errors;
-
-                                bool parsingSuccessful = reader->parse(liveRecorderParameters.c_str(),
-                                        liveRecorderParameters.c_str() + liveRecorderParameters.size(), 
-                                        &(encodingItem->_liveRecorderData->_ingestedParametersRoot), &errors);
-                                delete reader;
-
-                                if (!parsingSuccessful)
-                                {
-                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-                                            + ", errors: " + errors
-                                            + ", liveRecorderParameters: " + liveRecorderParameters
-                                            ;
-                                    _logger->error(errorMessage);
-
-                                    // in case an encoding job row generate an error, we have to make it to Failed
-                                    // otherwise we will indefinitely get this error
-                                    {
-										_logger->info(__FILEREF__ + "EncodingJob update"
-											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-											);
-                                        lastSQLCommand = 
-                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                        int queryParameterIndex = 1;
-                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                                    }
-
-                                    continue;
-                                    // throw runtime_error(errorMessage);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
                 }
 				*/
                 else if (encodingItem->_encodingType == EncodingType::VideoSpeed)
@@ -2163,7 +2311,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (physicalPathResultSet->next())
                         {
                             // encodingItem->_videoSpeedData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
@@ -2199,7 +2354,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -2207,50 +2371,6 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                     
-					/*
-                    {
-                        lastSQLCommand = 
-                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
-
-                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-                        if (videoResultSet->next())
-                        {
-                            encodingItem->_videoSpeedData->_videoDurationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
-					*/
-
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
@@ -2258,7 +2378,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string videoSpeedParameters = imgestionResultSet->getString("metaDataContent");
@@ -2295,7 +2422,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -2325,7 +2461,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -2360,8 +2505,15 @@ void MMSEngineDBFacade::getEncodingJobs(
 							preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
 									mainVideoPhysicalPathKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> physicalPathResultSet (
 									preparedStatementPhysicalPath->executeQuery());
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
 							if (physicalPathResultSet->next())
 							{
 								// encodingItem->_pictureInPictureData->_mmsMainVideoPartitionNumber
@@ -2403,62 +2555,22 @@ void MMSEngineDBFacade::getEncodingJobs(
 									preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+									chrono::system_clock::time_point startSql = chrono::system_clock::now();
 									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								}
-
-								continue;
-								// throw runtime_error(errorMessage);
-							}
-						}
-                    
-						/*
-						{
-							lastSQLCommand = 
-								"select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-							shared_ptr<sql::PreparedStatement> preparedStatementVideo (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-							int queryParameterIndex = 1;
-							preparedStatementVideo->setInt64(queryParameterIndex++, mainVideoPhysicalPathKey);
-
-							shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-							if (videoResultSet->next())
-							{
-								encodingItem->_pictureInPictureData->_mainVideoDurationInMilliSeconds
-									= videoResultSet->getInt64("durationInMilliSeconds");
-							}
-							else
-							{
-								string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-								;
-								_logger->error(errorMessage);
-
-								// in case an encoding job row generate an error, we have to make it to Failed
-								// otherwise we will indefinitely get this error
-								{
-									_logger->info(__FILEREF__ + "EncodingJob update"
+									_logger->info(__FILEREF__ + "SQL statistics"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+										+ ", rowsUpdated: " + to_string(rowsUpdated)
+										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+											chrono::system_clock::now() - startSql).count()) + "@"
 									);
-									lastSQLCommand = 
-										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-									int queryParameterIndex = 1;
-									preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-									preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-									int rowsUpdated = preparedStatementUpdate->executeUpdate();
 								}
 
 								continue;
 								// throw runtime_error(errorMessage);
 							}
 						}
-						*/
 					}
 
 					{
@@ -2473,8 +2585,15 @@ void MMSEngineDBFacade::getEncodingJobs(
 							preparedStatementPhysicalPath->setInt64(queryParameterIndex++,
 									overlayVideoPhysicalPathKey);
 
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> physicalPathResultSet (
 									preparedStatementPhysicalPath->executeQuery());
+							_logger->info(__FILEREF__ + "SQL statistics"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
 							if (physicalPathResultSet->next())
 							{
 								// encodingItem->_pictureInPictureData->_mmsOverlayVideoPartitionNumber
@@ -2516,62 +2635,22 @@ void MMSEngineDBFacade::getEncodingJobs(
 									preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
+									chrono::system_clock::time_point startSql = chrono::system_clock::now();
 									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								}
-
-								continue;
-								// throw runtime_error(errorMessage);
-							}
-						}
-                    
-						/*
-						{
-							lastSQLCommand = 
-								"select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
-							shared_ptr<sql::PreparedStatement> preparedStatementVideo (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-							int queryParameterIndex = 1;
-							preparedStatementVideo->setInt64(queryParameterIndex++, overlayVideoPhysicalPathKey);
-
-							shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
-							if (videoResultSet->next())
-							{
-								encodingItem->_pictureInPictureData->_overlayVideoDurationInMilliSeconds
-									= videoResultSet->getInt64("durationInMilliSeconds");
-							}
-							else
-							{
-								string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-								;
-								_logger->error(errorMessage);
-
-								// in case an encoding job row generate an error, we have to make it to Failed
-								// otherwise we will indefinitely get this error
-								{
-									_logger->info(__FILEREF__ + "EncodingJob update"
+									_logger->info(__FILEREF__ + "SQL statistics"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+										+ ", rowsUpdated: " + to_string(rowsUpdated)
+										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+											chrono::system_clock::now() - startSql).count()) + "@"
 									);
-									lastSQLCommand = 
-										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
-										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-									int queryParameterIndex = 1;
-									preparedStatementUpdate->setString(queryParameterIndex++,
-										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-									preparedStatementUpdate->setInt64(queryParameterIndex++,
-										encodingItem->_encodingJobKey);
-
-									int rowsUpdated = preparedStatementUpdate->executeUpdate();
 								}
 
 								continue;
 								// throw runtime_error(errorMessage);
 							}
 						}
-						*/
 					}
 
                     {
@@ -2581,7 +2660,14 @@ void MMSEngineDBFacade::getEncodingJobs(
                         int queryParameterIndex = 1;
                         preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                         if (imgestionResultSet->next())
                         {
                             string parameters = imgestionResultSet->getString("metaDataContent");
@@ -2621,7 +2707,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                         preparedStatementUpdate->setInt64(queryParameterIndex++,
 												encodingItem->_encodingJobKey);
 
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "SQL statistics"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
                                     }
 
                                     continue;
@@ -2651,7 +2746,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                                 preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                                 preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "SQL statistics"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
                             }
 
                             continue;
@@ -2662,90 +2766,6 @@ void MMSEngineDBFacade::getEncodingJobs(
 				/*
                 else if (encodingItem->_encodingType == EncodingType::LiveProxy)
                 {
-                    encodingItem->_liveProxyData = make_shared<EncodingItem::LiveProxyData>();
-                    
-                    {
-                        lastSQLCommand = 
-                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
-
-                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-                        if (imgestionResultSet->next())
-                        {
-                            string liveProxyParameters = imgestionResultSet->getString("metaDataContent");
-                            
-                            {
-                                Json::CharReaderBuilder builder;
-                                Json::CharReader* reader = builder.newCharReader();
-                                string errors;
-
-                                bool parsingSuccessful = reader->parse(liveProxyParameters.c_str(),
-                                        liveProxyParameters.c_str() + liveProxyParameters.size(), 
-                                        &(encodingItem->_liveProxyData->_ingestedParametersRoot), &errors);
-                                delete reader;
-
-                                if (!parsingSuccessful)
-                                {
-                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-                                            + ", errors: " + errors
-                                            + ", liveProxyParameters: " + liveProxyParameters
-                                            ;
-                                    _logger->error(errorMessage);
-
-                                    // in case an encoding job row generate an error, we have to make it to Failed
-                                    // otherwise we will indefinitely get this error
-                                    {
-										_logger->info(__FILEREF__ + "EncodingJob update"
-											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-											);
-                                        lastSQLCommand = 
-                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                        int queryParameterIndex = 1;
-                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                                    }
-
-                                    continue;
-                                    // throw runtime_error(errorMessage);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed, no row returned"
-                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
-
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-                            }
-
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
-                    }
                 }
 				*/
                 else
@@ -2769,7 +2789,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                         preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
                         preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
+						_logger->info(__FILEREF__ + "SQL statistics"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
                     }
                     
                     continue;
@@ -2793,7 +2822,17 @@ void MMSEngineDBFacade::getEncodingJobs(
                     preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
                     preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+						+ ", processorMMS: " + processorMMS
+						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     if (rowsUpdated != 1)
                     {
                         string errorMessage = __FILEREF__ + "no update was done"
@@ -3113,7 +3152,14 @@ int MMSEngineDBFacade::updateEncodingJob (
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (resultSet->next())
                 {
                     type = resultSet->getString("type");
@@ -3174,7 +3220,18 @@ int MMSEngineDBFacade::updateEncodingJob (
                 preparedStatement->setString(queryParameterIndex++,
 						MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (rowsUpdated != 1)
                 {
                     string errorMessage = __FILEREF__ + "no update was done"
@@ -3220,7 +3277,17 @@ int MMSEngineDBFacade::updateEncodingJob (
             preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3261,7 +3328,17 @@ int MMSEngineDBFacade::updateEncodingJob (
             preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3302,7 +3379,17 @@ int MMSEngineDBFacade::updateEncodingJob (
             preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3344,7 +3431,17 @@ int MMSEngineDBFacade::updateEncodingJob (
             preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3382,22 +3479,6 @@ int MMSEngineDBFacade::updateEncodingJob (
                     + ", processorMMS: " + processorMMS
                 );                            
                 updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-
-				/*
-				 * commented because next insert is done in saveVariantContentMetadata
-                lastSQLCommand = 
-                    "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
-                    "?, ?, ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                preparedStatement->setInt64(queryParameterIndex++, encodedPhysicalPathKey);
-
-                preparedStatement->executeUpdate();
-				*/
             }
         }
         else if (newEncodingStatus == EncodingStatus::End_Failed && ingestionJobKey != -1)
@@ -3731,7 +3812,17 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
             preparedStatement->setInt64(queryParameterIndex++, utcRecordingPeriodEnd);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
 				// 2020-05-10: in case of 'high availability', this update will be done two times
@@ -3767,7 +3858,17 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
             preparedStatement->setInt64(queryParameterIndex++, utcRecordingPeriodEnd);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3891,7 +3992,14 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 currentEncodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSet->getString("status"));
@@ -3958,7 +4066,16 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingPriority));
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingPriority: " + to_string(static_cast<int>(newEncodingPriority))
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -4203,7 +4320,14 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 currentEncodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSet->getString("status"));
@@ -4246,7 +4370,16 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             preparedStatement->setString(queryParameterIndex++, toString(newEncodingStatus));
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -4275,7 +4408,16 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
             preparedStatement->setString(queryParameterIndex++, toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newIngestionStatus: " + toString(newIngestionStatus)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -4511,7 +4653,16 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             preparedStatement->setInt(queryParameterIndex++, encodingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingPercentage: " + to_string(encodingPercentage)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // because encodingPercentage was already the same in the table
@@ -4628,7 +4779,14 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				previousFailuresNumber = resultSet->getInt("failuresNumber");
@@ -4658,7 +4816,16 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
             preparedStatement->setInt(queryParameterIndex++, failuresNumber);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", failuresNumber: " + to_string(failuresNumber)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // in case it is alyways failing, it will be already 1
@@ -4777,7 +4944,17 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
             preparedStatement->setString(queryParameterIndex++, stagingEncodedAssetPathName);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", transcoder: " + transcoder
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // probable because encodingPercentage was already the same in the table
@@ -4892,7 +5069,14 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 			if (resultSet->next())
 			{
 				if (resultSet->isNull("otherEncodingJobKey"))
@@ -4930,7 +5114,14 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, otherEncodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", otherEncodingJobKey: " + to_string(otherEncodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 			if (resultSet->next())
 			{
 				if (!resultSet->isNull("transcoder"))
@@ -5060,7 +5251,14 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 ingestionJobKey = resultSet->getInt64("ingestionJobKey");
@@ -5128,7 +5326,14 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, theOtherEncodingJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 theOtherTranscoder = resultSet->getString("transcoder");
@@ -5328,7 +5533,20 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             }
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", startEncodingDate: " + startEncodingDate
+				+ ", endEncodingDate: " + endEncodingDate
+				+ ", type: " + type
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -5376,7 +5594,22 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatementEncodingJob->setString(queryParameterIndex++, type);
             preparedStatementEncodingJob->setInt(queryParameterIndex++, rows);
             preparedStatementEncodingJob->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", startEncodingDate: " + startEncodingDate
+				+ ", endEncodingDate: " + endEncodingDate
+				+ ", type: " + type
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSetEncodingJob->next())
             {
                 Json::Value encodingJobRoot;
@@ -5587,7 +5820,14 @@ int MMSEngineDBFacade::addEncodingJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
@@ -5614,7 +5854,14 @@ int MMSEngineDBFacade::addEncodingJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 localSourcePhysicalPathKey = resultSet->getInt64("physicalPathKey");
@@ -5667,7 +5914,18 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->setString(queryParameterIndex++,
 					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {     
@@ -5908,7 +6166,14 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_1);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 contentType_1 = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
@@ -5933,7 +6198,14 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_2);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 contentType_2 = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
@@ -5960,7 +6232,14 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_1);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 localSourcePhysicalPathKey_1 = resultSet->getInt64("physicalPathKey");
@@ -5987,7 +6266,14 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_2);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 localSourcePhysicalPathKey_2 = resultSet->getInt64("physicalPathKey");
@@ -6064,7 +6350,18 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -6314,7 +6611,14 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
@@ -6341,7 +6645,14 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 sourceVideoPhysicalPathKey = resultSet->getInt64("physicalPathKey");
@@ -6400,7 +6711,18 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -6694,7 +7016,18 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -6976,7 +7309,18 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -7254,7 +7598,18 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -7524,7 +7879,18 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -7875,7 +8241,18 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingType: " + toString(encodingType)
+					+ ", parameters: " + parameters
+					+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 			}
 
 			mainEncodingJobKey = getLastInsertId(conn);
@@ -7977,7 +8354,18 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingType: " + toString(encodingType)
+					+ ", parameters: " + parameters
+					+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 			}
 
 			backupEncodingJobKey = getLastInsertId(conn);
@@ -8011,7 +8399,16 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				preparedStatement->setInt64(queryParameterIndex++, backupEncodingJobKey);
 				preparedStatement->setInt64(queryParameterIndex++, mainEncodingJobKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
+					+ ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "it should never happen"
@@ -8036,7 +8433,16 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				preparedStatement->setInt64(queryParameterIndex++, mainEncodingJobKey);
 				preparedStatement->setInt64(queryParameterIndex++, backupEncodingJobKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
+					+ ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "it should never happen"
@@ -8355,7 +8761,18 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingType: " + toString(encodingType)
+					+ ", parameters: " + parameters
+					+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 			}
 
 			// int64_t encodingJobKey = getLastInsertId(conn);
@@ -8597,7 +9014,14 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
@@ -8624,7 +9048,14 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 sourceVideoPhysicalPathKey = resultSet->getInt64("physicalPathKey");
@@ -8675,7 +9106,18 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            
@@ -8918,7 +9360,14 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mainMediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mainMediaItemKey: " + to_string(mainMediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 localMainPhysicalPathKey = resultSet->getInt64("physicalPathKey");
@@ -8945,7 +9394,14 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, overlayMediaItemKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", overlayMediaItemKey: " + to_string(overlayMediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 localOverlayPhysicalPathKey = resultSet->getInt64("physicalPathKey");
@@ -8998,7 +9454,18 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingType: " + toString(encodingType)
+				+ ", parameters: " + parameters
+				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         {            

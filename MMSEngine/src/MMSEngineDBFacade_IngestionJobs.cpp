@@ -91,7 +91,18 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
 				while (resultSet->next())
 				{
@@ -182,7 +193,19 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+					+ ", minutesAheadToConsiderLiveRecorder: " + to_string(minutesAheadToConsiderLiveRecorder)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 
 				while (resultSet->next())
 				{
@@ -279,7 +302,21 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 					preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
+						+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+						+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+						+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+						+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+						+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
+						+ ", mysqlRowCount: " + to_string(mysqlRowCount)
+						+ ", mysqlOffset: " + to_string(mysqlOffset)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
 
 					if (resultSet->rowsCount() < mysqlRowCount)
 						moreRows = false;
@@ -383,7 +420,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", processorMMS: " + processorMMS
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -404,7 +450,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 "COMMIT";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         autoCommit = true;
 
@@ -681,8 +733,15 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		int queryParameterIndexDependency = 1;
 		preparedStatementDependency->setInt64(queryParameterIndexDependency++, ingestionJobKey);
 
+		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSetDependency (
 			preparedStatementDependency->executeQuery());
+		_logger->info(__FILEREF__ + "SQL statistics"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startSql).count()) + "@"
+		);
 		// 2019-10-05: GroupOfTasks has always to be executed once the dependencies are in a final state.
 		//	This is because the manageIngestionJobStatusUpdate do not update the GroupOfTasks with a state 
 		//	like End_NotToBeExecuted
@@ -703,7 +762,14 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 				int queryParameterIndexStatus = 1;
 				preparedStatementIngestionJob->setInt64(queryParameterIndexStatus++, dependOnIngestionJobKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 				if (resultSetIngestionJob->next())
 				{
 					string sStatus = resultSetIngestionJob->getString("status");
@@ -930,7 +996,13 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
                 "COMMIT";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         else
         {
@@ -1034,7 +1106,18 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
                 preparedStatement->setString(queryParameterIndex++, metaDataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted));
  
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", rootType: " + rootType
+					+ ", rootLabel: " + rootLabel
+					+ ", metaDataContent: " + metaDataContent
+					+ ", IngestionRootStatus::NotCompleted: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
             }
 
             ingestionRootKey = getLastInsertId(conn);           
@@ -1093,7 +1176,14 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 int isEnabled = resultSet->getInt("isEnabled");
@@ -1150,7 +1240,18 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", label: " + label
+					+ ", metadataContent: " + metadataContent
+					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
             }
 
             ingestionJobKey = getLastInsertId(conn);
@@ -1248,7 +1349,15 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, globalIngestionLabel);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", globalIngestionLabel: " + globalIngestionLabel
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
 				ingestionJobsKey.push_back(resultSet->getInt64("ingestionJobKey"));
@@ -1345,7 +1454,14 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				if (resultSet->isNull("maxOrderNumber"))
@@ -1377,15 +1493,18 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 			preparedStatement->setInt(queryParameterIndex++, localOrderNumber);
 			preparedStatement->setInt(queryParameterIndex++, referenceOutputDependency ? 1 : 0);
 
-			int rowsInserted = preparedStatement->executeUpdate();
-
-			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency successful"
-				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependOnSuccess: " + to_string(dependOnSuccess)
 				+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-				+ ", orderNumber: " + to_string(orderNumber)
-				+ ", rowsInserted: " + to_string(rowsInserted)
+				+ ", localOrderNumber: " + to_string(localOrderNumber)
+				+ ", referenceOutputDependency: " + to_string(referenceOutputDependency ? 1 : 0)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
     }
@@ -1441,7 +1560,16 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
             preparedStatement->setString(queryParameterIndex++, metadataContent);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", metadataContent: " + metadataContent
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -1513,7 +1641,16 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
             preparedStatement->setInt64(queryParameterIndex++, parentGroupOfTasksIngestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -1594,7 +1731,14 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, groupOfTasksIngestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", groupOfTasksIngestionJobKey: " + to_string(groupOfTasksIngestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
 				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
@@ -1841,7 +1985,18 @@ void MMSEngineDBFacade::updateIngestionJob (
 			}
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessageForSQL: " + errorMessageForSQL
+				+ ", processorMMS: " + processorMMS
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -1886,7 +2041,18 @@ void MMSEngineDBFacade::updateIngestionJob (
 			}
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessageForSQL: " + errorMessageForSQL
+				+ ", processorMMS: " + processorMMS
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -1983,7 +2149,16 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
 			preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", errorMessageForSQL: " + errorMessageForSQL
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -2168,7 +2343,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					// 	+ ", dependOnSuccess (important in case of levelIndex 0): " + to_string(dependOnSuccess)
 					// );
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     bool dependenciesFound = false;
                     ingestionJobKeysToFindDependencies = "";
                     while (resultSet->next())
@@ -2231,7 +2413,15 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 preparedStatement->setString(queryParameterIndex++,
 						MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted));
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", IngestionStatus::End_NotToBeExecuted: " + MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
             }
         }
 
@@ -2249,7 +2439,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (resultSet->next())
                 {
                     ingestionRootKey = resultSet->getInt64("ingestionRootKey");
@@ -2278,7 +2475,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 while (resultSet->next())
                 {                
                     IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
@@ -2324,7 +2528,16 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionRootStatus));
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", newIngestionRootStatus: " + MMSEngineDBFacade::toString(newIngestionRootStatus)
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (rowsUpdated != 1)
                 {
                     string errorMessage = __FILEREF__ + "no update was done"
@@ -2703,7 +2916,16 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             preparedStatement->setDouble(queryParameterIndex++, downloadingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", downloadingPercentage: " + to_string(downloadingPercentage)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // we tried to update a value but the same value was already in the table,
@@ -2727,7 +2949,14 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
@@ -2843,7 +3072,16 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             preparedStatement->setDouble(queryParameterIndex++, uploadingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", uploadingPercentage: " + to_string(uploadingPercentage)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // we tried to update a value but the same value was already in the table,
@@ -2867,7 +3105,14 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
@@ -2982,7 +3227,16 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             preparedStatement->setInt(queryParameterIndex++, sourceBinaryTransferred ? 1 : 0);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred ? 1 : 0)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 // we tried to update a value but the same value was already in the table,
@@ -3093,7 +3347,15 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 metaDataContent = static_cast<string>(resultSet->getString("metaDataContent"));
@@ -3207,7 +3469,14 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 label = static_cast<string>(resultSet->getString("label"));
@@ -3412,7 +3681,17 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
 			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3435,7 +3714,17 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
 			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
 				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
@@ -3504,7 +3793,14 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (!resultSet->next())
             {
 				string errorMessage ("select count(*) failed");
@@ -3660,7 +3956,15 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
 				ingestionTookKeysByMediaItemKey.push_back(resultSet->getInt64("ingestionRootKey"));
@@ -3734,7 +4038,18 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             }
 			if (label != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", label: " + "%" + label + "%"
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 field = "numFound";
@@ -3783,7 +4098,20 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", startIngestionDate: " + startIngestionDate
+				+ ", endIngestionDate: " + endIngestionDate
+				+ ", label: " + "%" + label + "%"
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value workflowRoot;
@@ -3818,7 +4146,14 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementIngestionJob->setInt64(queryParameterIndex++, currentIngestionRootKey);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", currentIngestionRootKey: " + to_string(currentIngestionRootKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
                     while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
@@ -4022,8 +4357,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", ingestionType: " + ingestionType
-				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSet->next())
             {
@@ -4082,8 +4417,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", ingestionType: " + ingestionType
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
-				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             while (resultSet->next())
             {
@@ -4249,7 +4584,14 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementMediaItems->setInt64(queryParameterIndex++, ingestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSetMediaItems (preparedStatementMediaItems->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSetMediaItems->next())
             {
                 Json::Value mediaItemRoot;
@@ -4339,8 +4681,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			_logger->info(__FILEREF__ + "SQL statistics"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             if (resultSetEncodingJob->next())
             {
@@ -4526,7 +4868,14 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 maxIngestionsNumber = resultSet->getInt("maxIngestionsNumber");
@@ -4783,7 +5132,17 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
             preparedStatement->setString(queryParameterIndex++, newPeriodEndDateTime);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newPeriodStartDateTime: " + newPeriodStartDateTime
+				+ ", newPeriodEndDateTime: " + newPeriodEndDateTime
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -4903,7 +5262,15 @@ void MMSEngineDBFacade::retentionOfIngestionData()
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, _ingestionWorkflowRetentionInDays);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated > 0)
             {
                 _logger->info(__FILEREF__ + "Deletion obsolete IngestionWorkflows (MMS_IngestionRoot)"
@@ -4934,7 +5301,18 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
 			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInDays);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
+				+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
+				+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
+				+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+				+ ", _contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
 			while (resultSet->next())
 			{

@@ -23,7 +23,14 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		int queryParameterIndex = 1;
 		preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+		_logger->info(__FILEREF__ + "SQL statistics"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startSql).count()) + "@"
+		);
 
 		shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
@@ -141,7 +148,14 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		int queryParameterIndex = 1;
 		preparedStatement->setString(queryParameterIndex++, workspaceName);
+		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+		_logger->info(__FILEREF__ + "SQL statistics"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", workspaceName: " + workspaceName
+			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startSql).count()) + "@"
+		);
 
 		shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
@@ -319,9 +333,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
             preparedStatement->setString(queryParameterIndex++, userCountry);
+			char        strExpirationDate [64];
             {
                 tm          tmDateTime;
-                char        strExpirationDate [64];
                 time_t utcTime = chrono::system_clock::to_time_t(userExpirationDate);
                 
                 localtime_r (&utcTime, &tmDateTime);
@@ -337,7 +351,18 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 preparedStatement->setString(queryParameterIndex++, strExpirationDate);
             }
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", trimUserName: " + trimUserName
+				+ ", userEmailAddress: " + userEmailAddress
+				+ ", userPassword: " + userPassword
+				+ ", userCountry: " + userCountry
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
         
         userKey = getLastInsertId(conn);
@@ -382,136 +407,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             confirmationCode = workspaceKeyAndConfirmationCode.second;
         }
 
-        /*
-        {
-            bool enabled = false;
-            
-            lastSQLCommand = 
-                    "insert into MMS_Workspace ("
-                    "workspaceKey, creationDate, name, directoryName, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode) values ("
-                    "NULL,         NULL,         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              ?)";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, workspaceName);
-            preparedStatement->setString(queryParameterIndex++, workspaceDirectoryName);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(workspaceType));
-            if (deliveryURL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, deliveryURL);
-            preparedStatement->setInt(queryParameterIndex++, enabled);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(maxEncodingPriority));
-            preparedStatement->setString(queryParameterIndex++, toString(encodingPeriod));
-            preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
-            preparedStatement->setInt(queryParameterIndex++, maxStorageInMB);
-            preparedStatement->setString(queryParameterIndex++, languageCode);
-
-            preparedStatement->executeUpdate();
-        }
-
-        workspaceKey = getLastInsertId(conn);
-
-        unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-        default_random_engine e(seed);
-        confirmationCode = to_string(e());
-        {
-            string flags;
-            {
-                bool admin = false;
-                bool ingestWorkflow = true;
-                bool createProfiles = true;
-                bool deliveryAuthorization = true;
-                bool shareWorkspace = true;
-                bool editMedia = true;
-
-                if (admin)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("ADMIN");
-                }
-
-                if (ingestWorkflow)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("INGEST_WORKFLOW");
-                }
-
-                if (createProfiles)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATE_PROFILES");
-                }
-
-                if (deliveryAuthorization)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("DELIVERY_AUTHORIZATION");
-                }
-
-                if (shareWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("SHARE_WORKSPACE");
-                }
-
-                if (editMedia)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_MEDIA");
-                }
-            }
-            
-            lastSQLCommand = 
-                    "insert into MMS_ConfirmationCode (userKey, flags, workspaceKey, isSharedWorkspace, creationDate, confirmationCode) values ("
-                    "?, ?, ?, 0, NOW(), ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-            preparedStatement->setString(queryParameterIndex++, flags);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, confirmationCode);
-
-        }
-
-        {
-            lastSQLCommand = 
-                    "insert into MMS_WorkspaceMoreInfo (workspaceKey, currentDirLevel1, currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, currentIngestionsNumber) values ("
-                    "?, 0, 0, 0, NOW(), NOW(), 0)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-
-            preparedStatement->executeUpdate();
-        }
-
-        {
-            lastSQLCommand = 
-                "insert into MMS_ContentProvider (contentProviderKey, workspaceKey, name) values ("
-                "NULL, ?, ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, _defaultContentProviderName);
-
-            preparedStatement->executeUpdate();
-        }
-
-        contentProviderKey = getLastInsertId(conn);
-
-        // int64_t territoryKey = addTerritory(
-        //        conn,
-        //        workspaceKey,
-        //        _defaultTerritoryName);
-        
-        */
-        
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -1031,7 +926,14 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userEmailAddress: " + userEmailAddress
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 userKey = resultSet->getInt64("userKey");
@@ -1070,9 +972,9 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
             preparedStatement->setString(queryParameterIndex++, userCountry);
+			char        strExpirationDate [64];
             {
                 tm          tmDateTime;
-                char        strExpirationDate [64];
                 time_t utcTime = chrono::system_clock::to_time_t(userExpirationDate);
                 
                 localtime_r (&utcTime, &tmDateTime);
@@ -1088,7 +990,18 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 preparedStatement->setString(queryParameterIndex++, strExpirationDate);
             }
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", trimUserName: " + trimUserName
+				+ ", userEmailAddress: " + userEmailAddress
+				+ ", userPassword: " + userPassword
+				+ ", userCountry: " + userCountry
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             userKey = getLastInsertId(conn);
         }    
@@ -1183,7 +1096,17 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKeyToBeShared);
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", flags: " + flags
+				+ ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
+				+ ", confirmationCode: " + confirmationCode
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -1424,9 +1347,9 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
             preparedStatement->setString(queryParameterIndex++, userCountry);
+			char        strExpirationDate [64];
             {
                 tm          tmDateTime;
-                char        strExpirationDate [64];
                 time_t utcTime = chrono::system_clock::to_time_t(userExpirationDate);
                 
                 localtime_r (&utcTime, &tmDateTime);
@@ -1442,7 +1365,18 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 preparedStatement->setString(queryParameterIndex++, strExpirationDate);
             }
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userName: " + userName
+				+ ", userEmailAddress: " + userEmailAddress
+				+ ", userPassword: " + userPassword
+				+ ", userCountry: " + userCountry
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 
             userKey = getLastInsertId(conn);
         }
@@ -1929,12 +1863,12 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
 			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			char        strExpirationDate [64];
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
 
 				tm          tmDateTime;
-				char        strExpirationDate [64];
 				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
 
 				localtime_r (&utcTime, &tmDateTime);
@@ -1950,7 +1884,20 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				preparedStatementAPIKey->setString(queryParameterIndex++, strExpirationDate);
 			}
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			preparedStatementAPIKey->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", apiKey: " + apiKey
+				+ ", userKey: " + to_string(userKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", isOwner: " + to_string(isOwner)
+				+ ", isDefault: " + to_string(isDefault)
+				+ ", flags: " + flags
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
     }
     catch(sql::SQLException se)
@@ -2039,7 +1986,23 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             preparedStatement->setInt(queryParameterIndex++, maxStorageInMB);
             preparedStatement->setString(queryParameterIndex++, languageCode);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceName: " + workspaceName
+				+ ", workspaceDirectoryName: " + workspaceDirectoryName
+				+ ", workspaceType: " + to_string(static_cast<int>(workspaceType))
+				+ ", deliveryURL: " + deliveryURL
+				+ ", enabled: " + to_string(enabled)
+				+ ", maxEncodingPriority: " + MMSEngineDBFacade::toString(maxEncodingPriority)
+				+ ", encodingPeriod: " + toString(encodingPeriod)
+				+ ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
+				+ ", maxStorageInMB: " + to_string(maxStorageInMB)
+				+ ", languageCode: " + languageCode
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         workspaceKey = getLastInsertId(conn);
@@ -2052,7 +2015,16 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 			preparedStatement->setString(queryParameterIndex++, to_string(workspaceKey));
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done"
@@ -2153,7 +2125,17 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", flags: " + flags
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", confirmationCode: " + confirmationCode
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         {
@@ -2164,7 +2146,14 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         {
@@ -2176,7 +2165,15 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, _defaultContentProviderName);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", _defaultContentProviderName: " + _defaultContentProviderName
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         contentProviderKey = getLastInsertId(conn);
@@ -2268,7 +2265,15 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
             preparedStatement->setInt(queryParameterIndex++, _confirmationCodeRetentionInDays);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", confirmationCode: " + confirmationCode
+				+ ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 userKey = resultSet->getInt64("userKey");
@@ -2300,7 +2305,15 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             preparedStatement->setInt64(queryParameterIndex++, userKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 apiKey = resultSet->getString("apiKey");
@@ -2321,7 +2334,16 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 preparedStatement->setInt(queryParameterIndex++, enabled);
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", enabled: " + to_string(enabled)
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
                 if (rowsUpdated != 1)
                 {
                     string errorMessage = __FILEREF__ + "no update was done"
@@ -2347,7 +2369,14 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 name = resultSet->getString("name");
@@ -2388,12 +2417,12 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             preparedStatement->setInt(queryParameterIndex++, isOwner);
             preparedStatement->setInt(queryParameterIndex++, isDefault);
             preparedStatement->setString(queryParameterIndex++, flags);
+			char        strExpirationDate [64];
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
                         chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
 
                 tm          tmDateTime;
-                char        strExpirationDate [64];
                 time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
 
                 localtime_r (&utcTime, &tmDateTime);
@@ -2409,7 +2438,20 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 preparedStatement->setString(queryParameterIndex++, strExpirationDate);
             }
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", apiKey: " + apiKey
+				+ ", userKey: " + to_string(userKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", isOwner: " + to_string(isOwner)
+				+ ", isDefault: " + to_string(isDefault)
+				+ ", flags: " + flags
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         {
@@ -2634,7 +2676,15 @@ void MMSEngineDBFacade::deleteWorkspace(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 string flags = resultSet->getString("flags");
@@ -2664,7 +2714,14 @@ void MMSEngineDBFacade::deleteWorkspace(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -2879,7 +2936,14 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bo
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", apiKey: " + apiKey
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 userKey = resultSet->getInt64("userKey");
@@ -3026,7 +3090,15 @@ Json::Value MMSEngineDBFacade::login (
 			preparedStatement->setString(queryParameterIndex++, eMailAddress);
 			preparedStatement->setString(queryParameterIndex++, password);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", eMailAddress: " + eMailAddress
+				+ ", password: " + password
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				int64_t userKey = resultSet->getInt64("userKey");
@@ -3059,7 +3131,15 @@ Json::Value MMSEngineDBFacade::login (
 					int queryParameterIndex = 1;
 					preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", userKey: " + to_string(userKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
 					if (rowsUpdated != 1)
 					{
 						string errorMessage = __FILEREF__ + "no update was done"
@@ -3202,7 +3282,14 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             while (resultSet->next())
             {
                 Json::Value workspaceDetailRoot;
@@ -3394,7 +3481,15 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 string flags = resultSet->getString("flags");
@@ -3443,7 +3538,22 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             preparedStatement->setString(queryParameterIndex++, newLanguageCode);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEnabled: " + to_string(newEnabled)
+				+ ", newName: " + newName
+				+ ", newMaxEncodingPriority: " + newMaxEncodingPriority
+				+ ", newEncodingPeriod: " + newEncodingPeriod
+				+ ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
+				+ ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
+				+ ", newLanguageCode: " + newLanguageCode
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3474,7 +3584,17 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             preparedStatement->setString(queryParameterIndex++, newLanguageCode);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newName: " + newName
+				+ ", newLanguageCode: " + newLanguageCode
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3559,7 +3679,17 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", flags: " + flags
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
@@ -3651,7 +3781,15 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				/*
@@ -3765,7 +3903,15 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKeyToBeSetAsDefault);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKeyToBeSetAsDefault: " + to_string(workspaceKeyToBeSetAsDefault)
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 apiKey = resultSet->getString("apiKey");
@@ -3792,7 +3938,15 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         {
@@ -3804,7 +3958,15 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", apiKey: " + apiKey
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4032,7 +4194,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 if (resultSet->isNull("totalSizeInBytes"))
@@ -4049,7 +4218,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 maxStorageInMB = resultSet->getInt("maxStorageInMB");
@@ -4120,7 +4296,14 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 name = resultSet->getString("name");
@@ -4259,7 +4442,14 @@ Json::Value MMSEngineDBFacade::updateUser (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
 				savedPassword = resultSet->getString("password");
@@ -4308,7 +4498,19 @@ Json::Value MMSEngineDBFacade::updateUser (
 					preparedStatement->setString(queryParameterIndex++, newPassword);
 					preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", country: " + country
+						+ ", name: " + name
+						+ ", email: " + email
+						+ ", newPassword: " + newPassword
+						+ ", userKey: " + to_string(userKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
 				}
 				else
 				{
@@ -4325,7 +4527,18 @@ Json::Value MMSEngineDBFacade::updateUser (
 					preparedStatement->setString(queryParameterIndex++, email);
 					preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "SQL statistics"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", country: " + country
+						+ ", name: " + name
+						+ ", email: " + email
+						+ ", userKey: " + to_string(userKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
 				}
 			}
 			else // if (ldapEnabled)
@@ -4340,7 +4553,16 @@ Json::Value MMSEngineDBFacade::updateUser (
 				// preparedStatement->setString(queryParameterIndex++, expirationDate);
 				preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "SQL statistics"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", country: " + country
+					+ ", userKey: " + to_string(userKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
 			}
 
             if (rowsUpdated != 1)
@@ -4369,7 +4591,14 @@ Json::Value MMSEngineDBFacade::updateUser (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "SQL statistics"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
             if (resultSet->next())
             {
                 string field = "creationDate";
