@@ -2624,7 +2624,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		bool encodingFinished = false;
 		bool completedWithError = false;
 		string encodingErrorMessage;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		bool killedByUser = false;
 		bool urlForbidden = false;
@@ -2679,6 +2679,18 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -3954,7 +3966,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -4005,6 +4017,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -4898,7 +4922,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -4949,6 +4973,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -5819,7 +5855,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -5870,6 +5906,18 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{                    
@@ -6548,7 +6596,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -6599,6 +6647,18 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -7211,7 +7271,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -7262,6 +7322,18 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -7776,7 +7848,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
-		int maxEncodingStatusFailures = 1;
+		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
@@ -7827,6 +7899,18 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
 					throw runtime_error(errorMessage);
 				}
+
+				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+				//	Scenario:
+				//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+				//			returns 'timeout'.
+				//			Really the encoder was working fine, ffmpeg was also running fine,
+				//			just FastCGIAccept was not getting the request
+				//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+				//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+				//		This scenario creates problems and non-consistency between engine and encoder.
+				//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+				encodingStatusFailures = 0;
 			}
 			catch(...)
 			{
@@ -10064,7 +10148,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             bool encodingFinished = false;
 			bool completedWithError = false;
 			string encodingErrorMessage;
-            int maxEncodingStatusFailures = 10;
+            int maxEncodingStatusFailures = 5;	// consecutive errors
             int encodingStatusFailures = 0;
 			// string lastRecordedAssetFileName;
 
@@ -10118,6 +10202,18 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 						throw runtime_error(errorMessage);
 					}
+
+					// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
+					//	Scenario:
+					//		1. only sometimes (about once every two hours) an encoder (deployed on centos) running a LiveRecorder continuously,
+					//			returns 'timeout'.
+					//			Really the encoder was working fine, ffmpeg was also running fine,
+					//			just FastCGIAccept was not getting the request
+					//		2. these errors was increasing encodingStatusFailures and at the end, it reached the max failures
+					//			and this thread terminates, even if the encoder and ffmpeg was working fine.
+					//		This scenario creates problems and non-consistency between engine and encoder.
+					//		For this reason, if the getEncodingStatus is successful, encodingStatusFailures is reset.
+                    encodingStatusFailures = 0;
 
 					/*
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(

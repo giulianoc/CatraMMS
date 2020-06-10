@@ -188,7 +188,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", userKey: " + to_string(userKey)
 					+ ", thumbnailMediaItemKey: " + to_string(thumbnailMediaItemKey)
-					+ ", jsonWorkflow: " + jsonWorkflow
+					// + ", jsonWorkflow: " + jsonWorkflow
 					+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"

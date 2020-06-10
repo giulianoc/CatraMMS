@@ -845,7 +845,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								_logger->info(__FILEREF__ + "SQL statistics"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", deliveryTechnology: " + toString(deliveryTechnology)
-									+ ", jsonProfile: " + jsonProfile
+									// + ", jsonProfile: " + jsonProfile
 									+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 										chrono::system_clock::now() - startSql).count()) + "@"

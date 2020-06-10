@@ -5264,19 +5264,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL statistics (retentionOfIngestionData)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
-            if (rowsUpdated > 0)
-            {
-                _logger->info(__FILEREF__ + "Deletion obsolete IngestionWorkflows (MMS_IngestionRoot)"
-                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                );
-            }
         }
 
 		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
@@ -5303,7 +5297,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL statistics (retentionOfIngestionData)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
 				+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
