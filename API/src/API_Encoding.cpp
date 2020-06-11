@@ -1336,7 +1336,7 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 			+ _ffmpegEncoderKillEncodingURI
 			+ "/" + to_string(encodingJobKey)
 		;
-            
+
 		list<string> header;
 
 		{
@@ -1352,6 +1352,9 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 		request.setOpt(new curlpp::options::CustomRequest("DELETE"));
+
+		// timeout consistent with nginx configuration (fastcgi_read_timeout)
+		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
 		// if (_ffmpegEncoderProtocol == "https")
 		string httpsPrefix("https");
@@ -1435,7 +1438,7 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "killEncodingJob"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", response.str: " + response.str()
 		);
 

@@ -354,6 +354,10 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPassword: " + "..."
     );
+    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
+    );
     _ffmpegEncoderKillEncodingURI = _configuration["ffmpeg"].get("encoderKillEncodingURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI

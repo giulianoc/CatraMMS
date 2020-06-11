@@ -199,6 +199,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
+    _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
+    );
 
 	_waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
 		"waitingNFSSync_attemptNumber", 1);
@@ -760,7 +764,7 @@ void MMSEngineProcessor::operator ()()
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", event id: " + to_string(event->getEventKey().first)
 				+ ", _maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds)
-				+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+				+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 		);
     }
 
@@ -10322,6 +10326,9 @@ void MMSEngineProcessor::liveCutThread(
 			// Setting the URL to retrive.
 			request.setOpt(new curlpp::options::Url(mmsAPIURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
+
 			if (_mmsAPIProtocol == "https")
 			{
 				/*
@@ -10415,7 +10422,7 @@ void MMSEngineProcessor::liveCutThread(
 				string message = __FILEREF__ + "Ingested CutLive workflow response"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+					+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 					+ ", workflowMetadata: " + workflowMetadata
 					+ ", sResponse: " + sResponse
 					;
@@ -10426,7 +10433,7 @@ void MMSEngineProcessor::liveCutThread(
 				string message = __FILEREF__ + "Ingested CutLive workflow response"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+					+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 					+ ", workflowMetadata: " + workflowMetadata
 					+ ", sResponse: " + sResponse
 					+ ", responseCode: " + to_string(responseCode)
@@ -15701,7 +15708,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Content retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 
@@ -15879,7 +15886,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 
@@ -15918,7 +15925,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Delivery Authorization retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -15960,7 +15967,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Check Refresh Partition Free Size finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -16015,7 +16022,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Live Recording HA finished"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+				+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
         );
     }
 }
@@ -16499,6 +16506,9 @@ RESUMING FILE TRANSFERS
                 // to write result in a memory area
                 // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
+				// which timeout we have to use here???
+				// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
                 curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
                 curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
                 request.setOpt(curlDownloadCallbackFunction);
@@ -16611,6 +16621,9 @@ RESUMING FILE TRANSFERS
                 curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
                 request.setOpt(curlDownloadCallbackFunction);
                 request.setOpt(curlDownloadDataData);
+
+				// which timeout we have to use here???
+				// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
@@ -17061,6 +17074,9 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         request.setOpt(new curlpp::options::Verbose(false)); 
         request.setOpt(new curlpp::options::Upload(true)); 
         
+		// which timeout we have to use here???
+		// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
         request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
         request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t) sizeInBytes));
         
@@ -19777,7 +19793,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
-			+ ", movingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
+			+ ", MMS @statistics@ - movingDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count()) + "@"
         );                            
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
             ingestionJobKey, true);
@@ -19942,7 +19958,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
-			+ ", copingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count())
+			+ ", MMS @statistics@ - copingDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count()) + "@"
         );
 
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
@@ -20263,7 +20279,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Update Live Recorder Virtual VOD finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -20580,8 +20596,8 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 			_logger->info(__FILEREF__ + "TS copied"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", copingDuration (millisecs): "
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count())
+				+ ", MMS @statistics@ - copingDuration (millisecs): @"
+					+ to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count()) + "@"
 			);
 		}
 
@@ -20640,7 +20656,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End tar command "
 					+ ", executeCommand: " + executeCommand
-					+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+					+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 				);
 				if (executeCommandStatus != 0)
 				{
@@ -20975,6 +20991,9 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(mmsAPIURL));
 
+		// timeout consistent with nginx configuration (fastcgi_read_timeout)
+		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
+
 		if (_mmsAPIProtocol == "https")
 		{
 			/*
@@ -21064,7 +21083,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 		{
 			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				;
@@ -21074,7 +21093,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 		{
 			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				+ ", responseCode: " + to_string(responseCode)
@@ -21871,7 +21890,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "End tar command "
 			+ ", executeCommand: " + executeCommand
-			+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+			+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 		);
 		if (executeCommandStatus != 0)
 		{
@@ -21966,7 +21985,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
 					+ ", destDirectory: " + destDirectory
-					+ ", copyDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+					+ ", MMS @statistics@ - copyDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 
@@ -21980,7 +21999,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
-					+ ", removeDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+					+ ", MMS @statistics@ - removeDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 			catch(runtime_error e)

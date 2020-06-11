@@ -120,7 +120,7 @@ int APICommon::operator()()
                 + ", threadId: " + sThreadId
             );        
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
-            
+
             _logger->info(__FILEREF__ + "APICommon::listen"
                 + ", threadId: " + sThreadId
             );        

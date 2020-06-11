@@ -135,7 +135,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
@@ -184,7 +184,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", userKey: " + to_string(userKey)
 					+ ", thumbnailMediaItemKey: " + to_string(thumbnailMediaItemKey)
@@ -229,7 +229,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", userKey: " + to_string(userKey)
@@ -315,7 +315,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
 				+ ", userKey: " + to_string(userKey)
@@ -447,7 +447,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -481,7 +481,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -672,7 +672,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 			preparedStatement->setInt64(queryParameterIndex++, workflowLibraryKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", workflowLibraryKey: " + to_string(workflowLibraryKey)
@@ -805,7 +805,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 			preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label

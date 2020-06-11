@@ -135,6 +135,7 @@ private:
     // string								_mmsAPIUser;
     // string								_mmsAPIPassword;
     string								_mmsAPIIngestionURI;
+    int									_mmsAPITimeoutInSeconds;
 
     void encodeContent(
         // FCGX_Request& request,

@@ -139,6 +139,7 @@ private:
     // int                                 _ffmpegEncoderPort;
     string                              _ffmpegEncoderUser;
     string                              _ffmpegEncoderPassword;
+	int									_ffmpegEncoderTimeoutInSeconds;
     string                              _ffmpegEncoderProgressURI;
     string                              _ffmpegEncoderStatusURI;
     string								_ffmpegEncoderKillEncodingURI;

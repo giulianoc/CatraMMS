@@ -62,7 +62,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -116,7 +116,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -169,7 +169,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -200,7 +200,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -237,7 +237,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -266,7 +266,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -310,7 +310,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -349,7 +349,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -388,7 +388,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
 						+ ", processorMMS: " + processorMMS
@@ -436,7 +436,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -490,7 +490,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -543,7 +543,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -574,7 +574,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -611,7 +611,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -640,7 +640,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -684,7 +684,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -723,7 +723,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -762,7 +762,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
 						+ ", processorMMS: " + processorMMS
@@ -826,7 +826,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
@@ -884,7 +884,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -937,7 +937,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -968,7 +968,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> workspaceResultSet (
 							preparedStatementWorkspace->executeQuery());
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1005,7 +1005,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             int rowsUpdated = preparedStatementUpdate->executeUpdate();
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1045,7 +1045,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1091,7 +1091,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1117,7 +1117,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> encodingProfilesResultSet (
 								preparedStatementEncodingProfile->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1157,7 +1157,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1184,7 +1184,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (
 								preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1231,7 +1231,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1273,7 +1273,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1317,7 +1317,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1365,7 +1365,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1393,7 +1393,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (
 								preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceImagePhysicalPathKey: " + to_string(sourceImagePhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1434,7 +1434,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1460,7 +1460,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1508,7 +1508,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1550,7 +1550,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1587,7 +1587,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1630,7 +1630,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1654,7 +1654,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1698,7 +1698,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1737,7 +1737,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1774,7 +1774,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1817,7 +1817,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1841,7 +1841,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1885,7 +1885,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1924,7 +1924,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -1953,7 +1953,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1997,7 +1997,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2036,7 +2036,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2065,7 +2065,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2112,7 +2112,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2153,7 +2153,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2182,7 +2182,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2230,7 +2230,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2271,7 +2271,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2313,7 +2313,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2356,7 +2356,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2380,7 +2380,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2424,7 +2424,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2463,7 +2463,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2508,7 +2508,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> physicalPathResultSet (
 									preparedStatementPhysicalPath->executeQuery());
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2557,7 +2557,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 									chrono::system_clock::time_point startSql = chrono::system_clock::now();
 									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-									_logger->info(__FILEREF__ + "SQL statistics"
+									_logger->info(__FILEREF__ + "SQL @statistics@"
 										+ ", lastSQLCommand: " + lastSQLCommand
 										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2588,7 +2588,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> physicalPathResultSet (
 									preparedStatementPhysicalPath->executeQuery());
-							_logger->info(__FILEREF__ + "SQL statistics"
+							_logger->info(__FILEREF__ + "SQL @statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2637,7 +2637,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 									chrono::system_clock::time_point startSql = chrono::system_clock::now();
 									int rowsUpdated = preparedStatementUpdate->executeUpdate();
-									_logger->info(__FILEREF__ + "SQL statistics"
+									_logger->info(__FILEREF__ + "SQL @statistics@"
 										+ ", lastSQLCommand: " + lastSQLCommand
 										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2662,7 +2662,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2709,7 +2709,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 										chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-										_logger->info(__FILEREF__ + "SQL statistics"
+										_logger->info(__FILEREF__ + "SQL @statistics@"
 											+ ", lastSQLCommand: " + lastSQLCommand
 											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2748,7 +2748,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL statistics"
+								_logger->info(__FILEREF__ + "SQL @statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2791,7 +2791,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
                         int rowsUpdated = preparedStatementUpdate->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL statistics"
+						_logger->info(__FILEREF__ + "SQL @statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -2824,7 +2824,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", EncodingStatus::Processing: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
 						+ ", processorMMS: " + processorMMS
@@ -3154,7 +3154,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3222,7 +3222,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 					+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -3279,7 +3279,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3330,7 +3330,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3381,7 +3381,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3433,7 +3433,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3814,7 +3814,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -3860,7 +3860,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
 				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -3994,7 +3994,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4068,7 +4068,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingPriority: " + to_string(static_cast<int>(newEncodingPriority))
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4322,7 +4322,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4372,7 +4372,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEncodingStatus: " + toString(newEncodingStatus)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4410,7 +4410,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newIngestionStatus: " + toString(newIngestionStatus)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4655,7 +4655,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingPercentage: " + to_string(encodingPercentage)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4781,7 +4781,7 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4818,7 +4818,7 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", failuresNumber: " + to_string(failuresNumber)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4946,7 +4946,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", transcoder: " + transcoder
 				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
@@ -5071,7 +5071,7 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5116,7 +5116,7 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", otherEncodingJobKey: " + to_string(otherEncodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5253,7 +5253,7 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5328,7 +5328,7 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5535,7 +5535,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, type);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5596,7 +5596,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             preparedStatementEncodingJob->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5822,7 +5822,7 @@ int MMSEngineDBFacade::addEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5856,7 +5856,7 @@ int MMSEngineDBFacade::addEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5916,7 +5916,7 @@ int MMSEngineDBFacade::addEncodingJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -6168,7 +6168,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6200,7 +6200,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6234,7 +6234,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6268,7 +6268,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6352,7 +6352,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -6613,7 +6613,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6647,7 +6647,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -6713,7 +6713,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -7018,7 +7018,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -7311,7 +7311,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -7600,7 +7600,7 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -7881,7 +7881,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -8243,7 +8243,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingType: " + toString(encodingType)
@@ -8356,7 +8356,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingType: " + toString(encodingType)
@@ -8401,7 +8401,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
 					+ ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
@@ -8435,7 +8435,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", mainEncodingJobKey: " + to_string(mainEncodingJobKey)
 					+ ", backupEncodingJobKey: " + to_string(backupEncodingJobKey)
@@ -8763,7 +8763,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingType: " + toString(encodingType)
@@ -9016,7 +9016,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -9050,7 +9050,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -9108,7 +9108,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)
@@ -9362,7 +9362,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mainMediaItemKey: " + to_string(mainMediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -9396,7 +9396,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", overlayMediaItemKey: " + to_string(overlayMediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -9456,7 +9456,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingType: " + toString(encodingType)

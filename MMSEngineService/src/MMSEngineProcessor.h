@@ -125,6 +125,7 @@ private:
 	string					_mmsAPIHostname;
 	int						_mmsAPIPort;
 	string					_mmsAPIIngestionURI;
+    int						_mmsAPITimeoutInSeconds;
 
 	int						_waitingNFSSync_attemptNumber;
 	int						_waitingNFSSync_sleepTimeInSeconds;

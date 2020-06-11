@@ -216,8 +216,8 @@ void ActiveEncodingsManager::operator()()
 								chrono::hours(24))
 						{
 							_logger->error(__FILEREF__ + "EncodingJob is not finishing"
-								+ ", elapsed (hours): " + to_string(chrono::duration_cast<chrono::hours>(
-									chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+								+ ", MMS @statistics@ - elapsed (hours): @" + to_string(chrono::duration_cast<chrono::hours>(
+									chrono::system_clock::now() - encodingJob->_encodingJobStart).count()) + "@"
 								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
 								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -230,8 +230,8 @@ void ActiveEncodingsManager::operator()()
 						else
 						{
 							_logger->info(__FILEREF__ + "EncodingJob still running"
-								+ ", elapsed (minutes): " + 
-								to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+								+ ", MMS @statistics@ - elapsed (minutes): @" + 
+								to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count()) + "@"
 								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
 								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -260,8 +260,8 @@ void ActiveEncodingsManager::operator()()
                             processEncodingJob(encodingJob);
                             
                             _logger->info(__FILEREF__ + "processEncodingJob done"
-                                + ", elapsed (seconds): " + 
-                                    to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count())
+                                + ", MMS @statistics@ - elapsed (seconds): @" + 
+                                    to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@"
                                 + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -287,7 +287,7 @@ void ActiveEncodingsManager::operator()()
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
 			_logger->info(__FILEREF__ + "End checking encodingJobs"
-				+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+				+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 			);
         }
         catch(exception e)
@@ -476,7 +476,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 	_logger->warn(__FILEREF__ + "processEncodingJob"
 		+ ", encodingJob->_encodingItem->_encodingType: "
 			+ MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-		+ ", elapsed in seconds: " + to_string(elapsedInSeconds)
+		+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 	);
 }
 

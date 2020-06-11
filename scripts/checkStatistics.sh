@@ -34,8 +34,25 @@ echo "components: $components, logFileNumber: $logFileNumber, thresholdInSeconds
 for component in $components
 do
 	echo ""
-	echo "$component ..."
 
-	grep "SQL statistics" $(printLogFileName.sh $component $logFileNumber) | awk -v thresholdInSeconds="$thresholdInSeconds" 'BEGIN { FS="@" } { if($2 > thresholdInSeconds) printf("%s\n", $0) }'
+	logFilePathName=$(printLogFileName.sh $component $logFileNumber)
+
+	echo "$component --> $logFilePathName"
+
+	if [ "$logFilePathName" != "" ]
+	then
+		echo ""
+		echo "SQL statistics"
+		grep "SQL statistics" $(printLogFileName.sh $component $logFileNumber) | awk -v thresholdInSeconds="$thresholdInSeconds" 'BEGIN { FS="@" } { if($2 > thresholdInSeconds) printf("%s\n", $0) }'
+
+		echo ""
+		echo "MMS statistics"
+		grep "MMS statistics" $(printLogFileName.sh $component $logFileNumber) | awk -v thresholdInSeconds="$thresholdInSeconds" 'BEGIN { FS="@" } { if($2 > thresholdInSeconds) printf("%s\n", $0) }'
+
+		echo ""
+		echo "FFMPEG statistics"
+		grep "FFMPEG statistics" $(printLogFileName.sh $component $logFileNumber) | awk -v thresholdInSeconds="$thresholdInSeconds" 'BEGIN { FS="@" } { if($2 > thresholdInSeconds) printf("%s\n", $0) }'
+
+	fi
 done
 

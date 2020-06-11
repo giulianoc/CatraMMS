@@ -208,8 +208,8 @@ void API::ingestion(
         sendSuccess(request, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-        _logger->info(__FILEREF__ + "Ingestion statistics"
-            + ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+        _logger->info(__FILEREF__ + "Ingestion"
+            + ", MMS @statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
         );
     }
 	catch(AlreadyLocked e)
@@ -2730,7 +2730,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "End tar command "
 			+ ", executeCommand: " + executeCommand
-			+ ", tarDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
+			+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 		);
 		if (executeCommandStatus != 0)
 		{
@@ -2817,7 +2817,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
 					+ ", destDirectory: " + destDirectory
-					+ ", copyDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+					+ ", MMS @statistics@ - copyDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 
@@ -2830,7 +2830,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 				_logger->info(__FILEREF__ + "End removeDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
-					+ ", removeDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+					+ ", MMS @statistics@ - removeDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 			catch(runtime_error e)
@@ -2913,6 +2913,10 @@ void API::fileUploadProgressCheck()
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(progressURL));
+
+				int curlTimeoutInSeconds = 120;
+				request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
                 request.setOpt(new curlpp::options::HttpHeader(header));
                 request.setOpt(new curlpp::options::WriteStream(&response));
                 request.perform();

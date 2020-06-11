@@ -117,6 +117,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPassword: " + "..."
     );
+    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
+    );
     _ffmpegEncoderProgressURI = _configuration["ffmpeg"].get("encoderProgressURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProgressURI: " + _ffmpegEncoderProgressURI
@@ -2330,6 +2334,9 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -2726,7 +2733,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -3716,6 +3723,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -4064,7 +4074,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -4671,6 +4681,9 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -5038,7 +5051,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -5602,6 +5615,9 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -5971,7 +5987,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -6346,6 +6362,9 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
 			if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -6694,7 +6713,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -7020,6 +7039,9 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
@@ -7369,7 +7391,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -7595,6 +7617,9 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+			// timeout consistent with nginx configuration (fastcgi_read_timeout)
+			request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
 
             // if (_ffmpegEncoderProtocol == "https")
 			string httpsPrefix("https");
@@ -7946,7 +7971,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -8259,8 +8284,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", statistics duration (secs): "
-			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
+		+ ", MMS @statistics@ - duration (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
 	);
 
 	string faceRecognitionMediaPathName;
@@ -9124,8 +9149,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", statistics duration (secs): "
-			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count())
+		+ ", MMS @statistics@ - duration (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
 	);
 
 	string faceIdentificationMediaPathName;
@@ -9931,6 +9956,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+				// timeout consistent with nginx configuration (fastcgi_read_timeout)
+				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
 				// if (_ffmpegEncoderProtocol == "https")
 				string httpsPrefix("https");
 				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -10264,7 +10292,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", urlNotFound: " + to_string(urlNotFound)
-							+ ", encodingDurationInMinutes: " + to_string(encodingDurationInMinutes)
+							+ ", MMS @statistics@ - encodingDurationInMinutes: @" + to_string(encodingDurationInMinutes) + "@"
 							+ ", urlNotFoundFakeAfterMinutes: " + to_string(urlNotFoundFakeAfterMinutes)
 							+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -10326,7 +10354,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 			}
@@ -10339,7 +10367,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 
@@ -10994,6 +11022,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+				// timeout consistent with nginx configuration (fastcgi_read_timeout)
+				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
 				// if (_ffmpegEncoderProtocol == "https")
 				string httpsPrefix("https");
 				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -11456,7 +11487,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 			}
@@ -11841,6 +11872,10 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+				// timeout consistent with nginx configuration (fastcgi_read_timeout)
+				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
 				// if (_ffmpegEncoderProtocol == "https")
 				string httpsPrefix("https");
 				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -11926,7 +11961,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 				_logger->info(__FILEREF__ + "getEncodingProgress"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", response.str: " + response.str()
 				);
             
@@ -12155,6 +12190,9 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
         // Setting the URL to retrive.
         request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+		// timeout consistent with nginx configuration (fastcgi_read_timeout)
+		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
         // if (_ffmpegEncoderProtocol == "https")
 		string httpsPrefix("https");
 		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
@@ -12247,8 +12285,8 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                 + ", sResponse: " + sResponse
-                + ", encodingDuration (secs): " + to_string(
-					chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(
+					chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
         );
 
         try
@@ -12722,7 +12760,7 @@ void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t enco
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "killEncodingJob"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", response.str: " + response.str()
 		);
 

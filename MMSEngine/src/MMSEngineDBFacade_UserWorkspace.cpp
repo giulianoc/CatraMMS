@@ -25,7 +25,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-		_logger->info(__FILEREF__ + "SQL statistics"
+		_logger->info(__FILEREF__ + "SQL @statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", workspaceKey: " + to_string(workspaceKey)
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -150,7 +150,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 		preparedStatement->setString(queryParameterIndex++, workspaceName);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-		_logger->info(__FILEREF__ + "SQL statistics"
+		_logger->info(__FILEREF__ + "SQL @statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", workspaceName: " + workspaceName
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -353,7 +353,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", trimUserName: " + trimUserName
 				+ ", userEmailAddress: " + userEmailAddress
@@ -928,7 +928,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userEmailAddress: " + userEmailAddress
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -992,7 +992,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", trimUserName: " + trimUserName
 				+ ", userEmailAddress: " + userEmailAddress
@@ -1098,7 +1098,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", flags: " + flags
@@ -1367,7 +1367,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userName: " + userName
 				+ ", userEmailAddress: " + userEmailAddress
@@ -1886,7 +1886,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			preparedStatementAPIKey->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", apiKey: " + apiKey
 				+ ", userKey: " + to_string(userKey)
@@ -1988,7 +1988,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceName: " + workspaceName
 				+ ", workspaceDirectoryName: " + workspaceDirectoryName
@@ -2017,7 +2017,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
@@ -2127,7 +2127,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", flags: " + flags
@@ -2148,7 +2148,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2167,7 +2167,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", _defaultContentProviderName: " + _defaultContentProviderName
@@ -2267,7 +2267,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confirmationCode: " + confirmationCode
 				+ ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
@@ -2307,7 +2307,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
@@ -2336,7 +2336,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", enabled: " + to_string(enabled)
 					+ ", workspaceKey: " + to_string(workspaceKey)
@@ -2371,7 +2371,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2440,7 +2440,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", apiKey: " + apiKey
 				+ ", userKey: " + to_string(userKey)
@@ -2678,7 +2678,7 @@ void MMSEngineDBFacade::deleteWorkspace(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
@@ -2716,7 +2716,7 @@ void MMSEngineDBFacade::deleteWorkspace(
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2938,7 +2938,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bo
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", apiKey: " + apiKey
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3092,7 +3092,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", eMailAddress: " + eMailAddress
 				+ ", password: " + password
@@ -3133,7 +3133,7 @@ Json::Value MMSEngineDBFacade::login (
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", userKey: " + to_string(userKey)
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -3284,7 +3284,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3483,7 +3483,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
@@ -3540,7 +3540,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newEnabled: " + to_string(newEnabled)
 				+ ", newName: " + newName
@@ -3586,7 +3586,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newName: " + newName
 				+ ", newLanguageCode: " + newLanguageCode
@@ -3681,7 +3681,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", flags: " + flags
 				+ ", workspaceKey: " + to_string(workspaceKey)
@@ -3783,7 +3783,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
@@ -3905,7 +3905,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKeyToBeSetAsDefault: " + to_string(workspaceKeyToBeSetAsDefault)
 				+ ", userKey: " + to_string(userKey)
@@ -3940,7 +3940,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -3960,7 +3960,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", apiKey: " + apiKey
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -4196,7 +4196,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4220,7 +4220,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4298,7 +4298,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4444,7 +4444,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4500,7 +4500,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", country: " + country
 						+ ", name: " + name
@@ -4529,7 +4529,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "SQL statistics"
+					_logger->info(__FILEREF__ + "SQL @statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", country: " + country
 						+ ", name: " + name
@@ -4555,7 +4555,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", country: " + country
 					+ ", userKey: " + to_string(userKey)
@@ -4593,7 +4593,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(

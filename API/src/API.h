@@ -95,6 +95,7 @@ private:
     // int					_ffmpegEncoderPort;
     string				_ffmpegEncoderUser;
     string				_ffmpegEncoderPassword;
+	int					_ffmpegEncoderTimeoutInSeconds;
     string				_ffmpegEncoderKillEncodingURI;
 
 	int					_maxSecondsToWaitAPIIngestionLock;

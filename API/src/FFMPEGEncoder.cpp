@@ -183,6 +183,10 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->ingestionURI: " + _mmsAPIIngestionURI
     );
+    _mmsAPITimeoutInSeconds = JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
+    );
 
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
     {
@@ -3364,9 +3368,9 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", elapsed time: " + to_string(
+						+ ", MMS @statistics@ - elapsed time: @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
-						)
+						) + "@"
 					);
 				}
 			}
@@ -3790,8 +3794,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
 				+ ", dest: " + stagingContentsPath
-				+ ", movingDuration (millisecs): "
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
+				+ ", MMS @statistics@ - movingDuration (millisecs): @"
+					+ to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count()) + "@"
 			);
 		}
 	}
@@ -4051,6 +4055,9 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		// Setting the URL to retrive.
 		request.setOpt(new curlpp::options::Url(mmsAPIURL));
 
+		// timeout consistent with nginx configuration (fastcgi_read_timeout)
+		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
+
 		if (_mmsAPIProtocol == "https")
 		{
 			/*
@@ -4142,7 +4149,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				;
@@ -4152,7 +4159,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", ingestingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count())
+				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				+ ", responseCode: " + to_string(responseCode)
@@ -5653,9 +5660,9 @@ void FFMPEGEncoder::monitorThread()
 					_logger->info(__FILEREF__ + "liveProxyMonitorCheck"
 						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-						+ ", elapsed time: " + to_string(
+						+ ", MMS @statistics@ - elapsed time: @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
-						)
+						) + "@"
 					);
 				}
 			}

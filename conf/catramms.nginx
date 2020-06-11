@@ -228,6 +228,8 @@ server {
 	location /api {
 		internal;
 
+		fastcgi_read_timeout 120;
+
 		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
@@ -287,6 +289,8 @@ server {
 
 	location /encoder {
 		internal;
+
+		fastcgi_read_timeout 120;
 
 		fastcgi_pass   127.0.0.1:8020;
 		include /opt/catramms/nginx/conf/fastcgi_params;
@@ -369,6 +373,8 @@ server {
 
 	location /api {
 		internal;
+
+		fastcgi_read_timeout 120;
 
 		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;
@@ -507,6 +513,8 @@ server {
 
 	location /api {
 		internal;
+
+		fastcgi_read_timeout 120;
 
 		fastcgi_pass   127.0.0.1:8010;
 		include /opt/catramms/nginx/conf/fastcgi_params;

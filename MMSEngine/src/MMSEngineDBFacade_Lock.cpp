@@ -57,7 +57,7 @@ void MMSEngineDBFacade::setLock(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", sLockType: " + sLockType
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -179,7 +179,7 @@ void MMSEngineDBFacade::setLock(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL statistics"
+				_logger->info(__FILEREF__ + "SQL @statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", owner: " + owner
 					+ ", data: " + data
@@ -516,7 +516,7 @@ void MMSEngineDBFacade::releaseLock(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sLockType: " + sLockType
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -572,7 +572,7 @@ void MMSEngineDBFacade::releaseLock(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL statistics"
+			_logger->info(__FILEREF__ + "SQL @statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", data: " + data
 				+ ", sLockType: " + sLockType

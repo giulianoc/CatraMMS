@@ -1887,8 +1887,8 @@ string MMSStorage::moveAssetInMMSRepository(
                     S_IROTH | S_IXOTH);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Move directory statistics"
-				+ ", elapsed (secs): "
-				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+				+ ", MMS @statistics@ - elapsed (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 			*/
             _logger->info(__FILEREF__ + "Copy directory"
@@ -1903,8 +1903,8 @@ string MMSStorage::moveAssetInMMSRepository(
                     S_IROTH | S_IXOTH);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Copy directory statistics"
-				+ ", elapsed (secs): "
-				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+				+ ", MMS @statistics@ - elapsed (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 
 			try
@@ -1936,8 +1936,8 @@ string MMSStorage::moveAssetInMMSRepository(
             FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Move file statistics"
-				+ ", elapsed (secs): "
-				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+				+ ", MMS @statistics@ - elapsed (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
         }
     }
@@ -2141,8 +2141,8 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
-				+ ", elapsed (secs): "
-					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+				+ ", MMS @statistics@ - elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 		}
 
@@ -2181,8 +2181,8 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
-				+ ", elapsed (secs): "
-					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+				+ ", MMS @statistics@ - elapsed (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 		}
 
@@ -2207,8 +2207,8 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 			+ ", _maxStorageUsageInKB: " + to_string(partitionInfo._maxStorageUsageInKB)
 			+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
 			+ ", _lastUpdateFreeSize: " + to_string(chrono::system_clock::to_time_t(partitionInfo._lastUpdateFreeSize))
-			+ ", elapsed (secs): "
-				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+			+ ", MMS @statistics@ - elapsed (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 	);
 }
 
