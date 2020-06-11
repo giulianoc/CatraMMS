@@ -2138,9 +2138,17 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 					+ ", e.what(): " + e.what()
 				);
 			}
+			catch(exception e)
+			{
+				usedInBytes		= 0;
+
+				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+				);
+			}
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
+				+ ", usedInBytes: " + to_string(usedInBytes)
 				+ ", MMS @statistics@ - elapsed (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
@@ -2178,9 +2186,17 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 					+ ", e.what(): " + e.what()
 				);
 			}
+			catch(exception e)
+			{
+				usedInBytes		= 0;
+
+				_logger->error(__FILEREF__ + "FileIO::getDirectorySizeInBytes failed"
+				);
+			}
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
+				+ ", usedInBytes: " + to_string(usedInBytes)
 				+ ", MMS @statistics@ - elapsed (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
