@@ -17,11 +17,79 @@
 #include "APICommon.h"
 #include "FFMpeg.h"
 
+struct Encoding
+{
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>		_ffmpeg;
+		pid_t					_childPid;
+
+		string					_errorMessage;
+};
+
+struct LiveProxy
+{
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>		_ffmpeg;
+		pid_t					_childPid;
+        bool					_killedBecauseOfNotWorking;	// by monitorThread
+
+		string					_errorMessage;
+
+		int64_t					_ingestionJobKey;
+		string					_manifestFilePathName;
+		string					_outputType;
+		string					_configurationLabel;
+		chrono::system_clock::time_point	_proxyStart;
+};
+
+// no encoding, just copying the video/audio tracks
+struct LiveRecording
+{
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>      _ffmpeg;
+		pid_t					_childPid;
+
+		string					_errorMessage;
+
+		int64_t					_ingestionJobKey;
+		Json::Value				_encodingParametersRoot;
+		Json::Value				_liveRecorderParametersRoot;
+        string					_transcoderStagingContentsPath;
+        string					_stagingContentsPath;
+        string					_segmentListFileName;
+        string					_recordedFileNamePrefix;
+		string					_lastRecordedAssetFileName;
+		int						_lastRecordedAssetDurationInSeconds;
+};
+
+struct EncodingCompleted
+{
+		int64_t					_encodingJobKey;
+		bool					_completedWithError;
+		string					_errorMessage;
+		bool					_killedByUser;
+		bool					_urlForbidden;
+		bool					_urlNotFound;
+		chrono::system_clock::time_point	_timestamp;
+};
+
 class FFMPEGEncoder: public APICommon {
 public:
     FFMPEGEncoder(Json::Value configuration, 
-            mutex* fcgiAcceptMutex,
-            shared_ptr<spdlog::logger> logger);
+		mutex* fcgiAcceptMutex,
+		mutex* encodingMutex,
+		vector<shared_ptr<Encoding>>* encodingsCapability,
+		mutex* liveProxyMutex,
+		vector<shared_ptr<LiveProxy>>* liveProxiesCapability,
+		mutex* liveRecordingMutex,
+		vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
+		mutex* encodingCompletedMutex,
+		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
+		chrono::system_clock::time_point* lastEncodingCompletedCheck,
+		shared_ptr<spdlog::logger> logger);
     
     ~FFMPEGEncoder();
     
@@ -47,87 +115,34 @@ public:
             string requestBody,
             unordered_map<string, string>& requestDetails
     );
+
+	void liveRecorderChunksIngestionThread();
+	void stopLiveRecorderChunksIngestionThread();
+
+	void monitorThread();
+	void stopMonitorThread();
     
 private:
-    struct Encoding
-    {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>		_ffmpeg;
-		pid_t					_childPid;
+    mutex*						_encodingMutex;
+    // int                         _maxEncodingsCapability;
+    vector<shared_ptr<Encoding>>* _encodingsCapability;
 
-		string					_errorMessage;
-    };
-
-    struct LiveProxy
-    {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>		_ffmpeg;
-		pid_t					_childPid;
-        bool					_killedBecauseOfNotWorking;	// by monitorThread
-
-		string					_errorMessage;
-
-		int64_t					_ingestionJobKey;
-		string					_manifestFilePathName;
-		string					_outputType;
-		string					_configurationLabel;
-		chrono::system_clock::time_point	_proxyStart;
-    };
-
-	// no encoding, just copying the video/audio tracks
-    struct LiveRecording
-    {
-        bool                    _running;
-        int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>      _ffmpeg;
-		pid_t					_childPid;
-
-		string					_errorMessage;
-
-		int64_t					_ingestionJobKey;
-		Json::Value				_encodingParametersRoot;
-		Json::Value				_liveRecorderParametersRoot;
-        string					_transcoderStagingContentsPath;
-        string					_stagingContentsPath;
-        string					_segmentListFileName;
-        string					_recordedFileNamePrefix;
-		string					_lastRecordedAssetFileName;
-		int						_lastRecordedAssetDurationInSeconds;
-    };
-
-	struct EncodingCompleted
-	{
-		int64_t					_encodingJobKey;
-		bool					_completedWithError;
-		string					_errorMessage;
-		bool					_killedByUser;
-		bool					_urlForbidden;
-		bool					_urlNotFound;
-		chrono::system_clock::time_point	_timestamp;
-    };
-
-    mutex                       _encodingMutex;
-    int                         _maxEncodingsCapability;
-    vector<shared_ptr<Encoding>>    _encodingsCapability;
-
-    mutex						_liveProxyMutex;
-    int							_maxLiveProxiesCapability;
-    vector<shared_ptr<LiveProxy>>	_liveProxiesCapability;
+    mutex*						_liveProxyMutex;
+    // int							_maxLiveProxiesCapability;
+    vector<shared_ptr<LiveProxy>>* _liveProxiesCapability;
 	int							_monitorCheckInSeconds;
 	bool						_monitorThreadShutdown;
 
-    mutex                       _liveRecordingMutex;
-    int                         _maxLiveRecordingsCapability;
-    vector<shared_ptr<LiveRecording>>    _liveRecordingsCapability;
+    mutex*						_liveRecordingMutex;
+    // int                         _maxLiveRecordingsCapability;
+    vector<shared_ptr<LiveRecording>>* _liveRecordingsCapability;
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
 
-    mutex						_encodingCompletedMutex;
+    mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
-    map<int64_t, shared_ptr<EncodingCompleted>>		_encodingCompletedMap;
-	chrono::system_clock::time_point				_lastEncodingCompletedCheck;
+    map<int64_t, shared_ptr<EncodingCompleted>>*	_encodingCompletedMap;
+	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
 
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
@@ -172,7 +187,6 @@ private:
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
-	void liveRecorderChunksIngestionThread();
 	pair<string, int> liveRecorder_processLastGeneratedLiveRecorderFiles(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
@@ -207,7 +221,6 @@ private:
         shared_ptr<LiveProxy> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
-	void monitorThread();
 
 	void videoSpeed(
         // FCGX_Request& request,

@@ -32,119 +32,239 @@ extern char** environ;
 
 int main(int argc, char** argv) 
 {
-    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
-    if (configurationPathName == nullptr)
-    {
-        cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
-        
-        return 1;
-    }
-    
-    Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
-    
-    string logPathName =  configuration["log"]["encoder"].get("pathName", "XXX").asString();
-    bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
-    
-    std::vector<spdlog::sink_ptr> sinks;
-    auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
-    sinks.push_back(dailySink);
-    if (stdout)
-    {
-        auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
-        sinks.push_back(stdoutSink);
-    }
-    auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
-    
-    // shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
-    // shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
-    
-    // trigger flush if the log severity is error or higher
-    logger->flush_on(spdlog::level::trace);
-    
-    string logLevel =  configuration["log"]["encoder"].get("level", "XXX").asString();
-    if (logLevel == "debug")
-        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "info")
-        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "err")
-        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  configuration["log"]["encoder"].get("pattern", "XXX").asString();
-    spdlog::set_pattern(pattern);
-
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
-
-    /*
-    // the log is written in the apache error log (stderr)
-    _logger = spdlog::stderr_logger_mt("API");
-
-    // make sure only responses are written to the standard output
-    spdlog::set_level(spdlog::level::trace);
-    
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
-    
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
-     */
-
-	/*
-	 * FFMPEGEncoder has not to have access to DB
-	 *
-	size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();                    
-    logger->info(__FILEREF__ + "Configuration item"
-        + ", database->poolSize: " + to_string(dbPoolSize)
-    );
-    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-            );
-    shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, dbPoolSize, logger);
-	*/
-
+	try
 	{
-		// here the MMSStorage is instantiated just because it will create
-		// the local directories of the transcoder
-		logger->info(__FILEREF__ + "Creating MMSStorage"
+		const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+		if (configurationPathName == nullptr)
+		{
+			cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
+        
+			return 1;
+		}
+    
+		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
+    
+		string logPathName =  configuration["log"]["encoder"].get("pathName", "XXX").asString();
+		bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
+    
+		std::vector<spdlog::sink_ptr> sinks;
+		auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
+		sinks.push_back(dailySink);
+		if (stdout)
+		{
+			auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+			sinks.push_back(stdoutSink);
+		}
+		auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
+    
+		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
+		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+    
+		// trigger flush if the log severity is error or higher
+		logger->flush_on(spdlog::level::trace);
+    
+		string logLevel =  configuration["log"]["encoder"].get("level", "XXX").asString();
+		if (logLevel == "debug")
+			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "info")
+			spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "err")
+			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+		string pattern =  configuration["log"]["encoder"].get("pattern", "XXX").asString();
+		spdlog::set_pattern(pattern);
+
+		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+		// spdlog::register_logger(logger);
+
+		/*
+		// the log is written in the apache error log (stderr)
+		_logger = spdlog::stderr_logger_mt("API");
+
+		// make sure only responses are written to the standard output
+		spdlog::set_level(spdlog::level::trace);
+    
+		spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
+    
+		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+		// spdlog::register_logger(logger);
+		*/
+
+		/*
+		* FFMPEGEncoder has not to have access to DB
+		*
+		size_t dbPoolSize = configuration["database"].get("ffmpegEncoderPoolSize", 5).asInt();                    
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->poolSize: " + to_string(dbPoolSize)
+		);
+		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
+            );
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
+            configuration, dbPoolSize, logger);
+		*/
+
+		{
+			// here the MMSStorage is instantiated just because it will create
+			// the local directories of the transcoder
+			logger->info(__FILEREF__ + "Creating MMSStorage"
+				);
+			shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
+				configuration, logger);
+		}
+
+		FCGX_Init();
+
+		int threadsNumber = JSONUtils::asInt(configuration["ffmpeg"], "encoderThreadsNumber", 1);
+		logger->info(__FILEREF__ + "Configuration item"
+			+ ", ffmpeg->encoderThreadsNumber: " + to_string(threadsNumber)
+		);
+
+		mutex fcgiAcceptMutex;
+
+		// here is allocated all it is shared among FFMPEGEncoder threads
+		mutex encodingMutex;
+		vector<shared_ptr<Encoding>> encodingsCapability;
+
+		mutex liveProxyMutex;
+		vector<shared_ptr<LiveProxy>> liveProxiesCapability;
+
+		mutex liveRecordingMutex;
+		vector<shared_ptr<LiveRecording>> liveRecordingsCapability;
+
+		mutex encodingCompletedMutex;
+		map<int64_t, shared_ptr<EncodingCompleted>> encodingCompletedMap;
+		chrono::system_clock::time_point lastEncodingCompletedCheck;
+		{
+			int maxEncodingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxEncodingsCapability", 0);
+			logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
 			);
-		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			configuration, logger);
+
+			for (int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
+			{
+				shared_ptr<Encoding>    encoding = make_shared<Encoding>();
+				encoding->_running   = false;
+				encoding->_childPid		= 0;
+				encoding->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+
+				encodingsCapability.push_back(encoding);
+			}
+
+			int maxLiveProxiesCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxLiveProxiesCapability", 0);
+			logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
+			);
+
+			for (int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
+			{
+				shared_ptr<LiveProxy>    liveProxy = make_shared<LiveProxy>();
+				liveProxy->_running   = false;
+				liveProxy->_ingestionJobKey		= 0;
+				liveProxy->_childPid		= 0;
+				liveProxy->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+
+				liveProxiesCapability.push_back(liveProxy);
+			}
+
+			int maxLiveRecordingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
+			logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxEncodingsCapability)
+			);
+
+			for (int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability; liveRecordingIndex++)
+			{
+				shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
+				liveRecording->_running   = false;
+				liveRecording->_ingestionJobKey		= 0;
+				liveRecording->_encodingParametersRoot = Json::nullValue;
+				liveRecording->_childPid		= 0;
+				liveRecording->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+
+				liveRecordingsCapability.push_back(liveRecording);
+			}
+		}
+
+		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
+		vector<thread> ffmpegEncoderThreads;
+
+		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
+		{
+			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(configuration, 
+				&fcgiAcceptMutex,
+				&encodingMutex,
+				&encodingsCapability,
+				&liveProxyMutex,
+				&liveProxiesCapability,
+				&liveRecordingMutex,
+				&liveRecordingsCapability,
+				&encodingCompletedMutex,
+				&encodingCompletedMap,
+				&lastEncodingCompletedCheck,
+				logger
+			);
+
+			ffmpegEncoders.push_back(ffmpegEncoder);
+			ffmpegEncoderThreads.push_back(thread(&FFMPEGEncoder::operator(), ffmpegEncoder));
+		}
+
+		// shutdown should be managed in some way:
+		// - mod_fcgid send just one shutdown, so only one thread will go down
+		// - mod_fastcgi ???
+		if (threadsNumber > 0)
+		{
+			thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread,
+					ffmpegEncoders[0]);
+
+			thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
+
+			ffmpegEncoderThreads[0].join();
+        
+			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
+			ffmpegEncoders[0]->stopMonitorThread();
+		}
+
+		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
 	}
+    catch(runtime_error e)
+    {
+        cerr << __FILEREF__ + "main failed"
+            + ", e.what(): " + e.what()
+        ;
 
-    FCGX_Init();
+        // throw e;
+		return 1;
+    }
+    catch(exception e)
+    {
+        cerr << __FILEREF__ + "main failed"
+            + ", e.what(): " + e.what()
+        ;
 
-    mutex fcgiAcceptMutex;
+        // throw runtime_error(errorMessage);
+		return 1;
+    }
 
-    FFMPEGEncoder ffmpegEncoder(configuration, 
-            &fcgiAcceptMutex,
-            logger);
-
-    return ffmpegEncoder();
+    return 0;
 }
 
 FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration, 
         mutex* fcgiAcceptMutex,
+		mutex* encodingMutex,
+		vector<shared_ptr<Encoding>>* encodingsCapability,
+		mutex* liveProxyMutex,
+		vector<shared_ptr<LiveProxy>>* liveProxiesCapability,
+		mutex* liveRecordingMutex,
+		vector<shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		mutex* encodingCompletedMutex,
+		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
+		chrono::system_clock::time_point* lastEncodingCompletedCheck,
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
         fcgiAcceptMutex,
         logger) 
 {
-    _maxEncodingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxEncodingsCapability", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
-    );
-
-    _maxLiveProxiesCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveProxiesCapability", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
-    );
-
     _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
-    );
-
-    _maxLiveRecordingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
     _liveRecorderChunksIngestionCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
@@ -188,6 +308,22 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
 
+	_encodingMutex = encodingMutex;
+	_encodingsCapability = encodingsCapability;
+
+	_liveProxyMutex = liveProxyMutex;
+	_liveProxiesCapability = liveProxiesCapability;
+
+	_liveRecordingMutex = liveRecordingMutex;
+	_liveRecordingsCapability = liveRecordingsCapability;
+
+	_monitorThreadShutdown = false;
+	_liveRecorderChunksIngestionThreadShutdown = false;
+
+	_encodingCompletedMutex = encodingCompletedMutex;
+	_encodingCompletedMap = encodingCompletedMap;
+	_lastEncodingCompletedCheck = lastEncodingCompletedCheck;
+	/*
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
     {
         shared_ptr<Encoding>    encoding = make_shared<Encoding>();
@@ -222,18 +358,17 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     }
 
 	{
-		_liveRecorderChunksIngestionThreadShutdown = false;
 		thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread, this);
 		liveRecorderChunksIngestion.detach();
 	}
 
 	{
-		_monitorThreadShutdown = false;
 		thread monitor(&FFMPEGEncoder::monitorThread, this);
 		monitor.detach();
 	}
+	*/
 
-	_lastEncodingCompletedCheck = chrono::system_clock::now();
+	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
 
 FFMPEGEncoder::~FFMPEGEncoder() {
@@ -259,6 +394,10 @@ void FFMPEGEncoder::getBinaryAndResponse(
     throw runtime_error(errorMessage);
 }
 */
+
+// 2020-06-11: FFMPEGEncoder is just one thread, so make sure manageRequestAndResponse is very fast because
+//	the time used by manageRequestAndResponse is time FFMPEGEncoder is not listening
+//	for new connections (encodingStatus, ...)
 
 void FFMPEGEncoder::manageRequestAndResponse(
         FCGX_Request& request,
@@ -326,11 +465,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -425,11 +564,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -524,11 +663,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -623,11 +762,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -722,11 +861,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -821,11 +960,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_liveRecordingMutex);
+        lock_guard<mutex> locker(*_liveRecordingMutex);
 
         shared_ptr<LiveRecording>	selectedLiveRecording;
         bool						liveRecordingFound = false;
-        for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+        for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
         {
             if (!liveRecording->_running)
             {
@@ -920,11 +1059,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_liveProxyMutex);
+        lock_guard<mutex> locker(*_liveProxyMutex);
 
         shared_ptr<LiveProxy>    selectedLiveProxy;
         bool                    liveProxyFound = false;
-        for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+        for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
         {
             if (!liveProxy->_running)
             {
@@ -1019,11 +1158,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -1118,11 +1257,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(*_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        for (shared_ptr<Encoding> encoding: *_encodingsCapability)
         {
             if (!encoding->_running)
             {
@@ -1230,11 +1369,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
 
 		{
-			lock_guard<mutex> locker(_encodingCompletedMutex);
+			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
 			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
-				_encodingCompletedMap.find(encodingJobKey);
-			if (it != _encodingCompletedMap.end())
+				_encodingCompletedMap->find(encodingJobKey);
+			if (it != _encodingCompletedMap->end())
 			{
 				encodingCompleted = true;
 				selectedEncodingCompleted = it->second;
@@ -1243,9 +1382,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingCompleted)
 		{
-			lock_guard<mutex> locker(_encodingMutex);
+			lock_guard<mutex> locker(*_encodingMutex);
 
-			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -1258,9 +1397,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				lock_guard<mutex> locker(_liveProxyMutex);
+				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+				for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -1273,9 +1412,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				if (!liveProxyFound)
 				{
-					lock_guard<mutex> locker(_liveRecordingMutex);
+					lock_guard<mutex> locker(*_liveRecordingMutex);
 
-					for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+					for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 					{
 						if (liveRecording->_encodingJobKey == encodingJobKey)
 						{
@@ -1481,11 +1620,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool					liveProxyFound = false;
 
 		{
-			lock_guard<mutex> locker(_encodingCompletedMutex);
+			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
 			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
-				_encodingCompletedMap.find(encodingJobKey);
-			if (it != _encodingCompletedMap.end())
+				_encodingCompletedMap->find(encodingJobKey);
+			if (it != _encodingCompletedMap->end())
 			{
 				encodingCompleted = true;
 				selectedEncodingCompleted = it->second;
@@ -1494,9 +1633,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingCompleted)
 		{
-			lock_guard<mutex> locker(_encodingMutex);
+			lock_guard<mutex> locker(*_encodingMutex);
 
-			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -1509,9 +1648,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				lock_guard<mutex> locker(_liveProxyMutex);
+				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+				for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -1584,7 +1723,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			int encodingProgress;
 			try
 			{
-				encodingProgress = selectedLiveProxy->_ffmpeg->getEncodingProgress();
+				// 2020-06-11: it's a live, it does not have sense the encoding progress
+				// encodingProgress = selectedLiveProxy->_ffmpeg->getEncodingProgress();
+				encodingProgress = -1;
 			}
 			catch(FFMpegEncodingStatusNotAvailable e)
 			{
@@ -1696,9 +1837,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool			encodingFound = false;
 
 		{
-			lock_guard<mutex> locker(_encodingMutex);
+			lock_guard<mutex> locker(*_encodingMutex);
 
-			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -1712,9 +1853,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound)
 		{
-			lock_guard<mutex> locker(_liveProxyMutex);
+			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+			for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -1728,9 +1869,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound)
 		{
-			lock_guard<mutex> locker(_liveRecordingMutex);
+			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_encodingJobKey == encodingJobKey)
 				{
@@ -1797,10 +1938,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
         throw runtime_error(errorMessage);
     }
 
-	if (chrono::system_clock::now() - _lastEncodingCompletedCheck >=
+	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >=
 			chrono::seconds(_encodingCompletedRetentionInSeconds))
 	{
-		_lastEncodingCompletedCheck = chrono::system_clock::now();
+		*_lastEncodingCompletedCheck = chrono::system_clock::now();
 		encodingCompletedRetention();
 	}
 }
@@ -3291,9 +3432,9 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 	{
 		try
 		{
-			lock_guard<mutex> locker(_liveRecordingMutex);
+			lock_guard<mutex> locker(*_liveRecordingMutex);
 
-			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_running)
 				{
@@ -3394,6 +3535,13 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 
 		this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
 	}
+}
+
+void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
+{
+	_liveRecorderChunksIngestionThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
 }
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
@@ -4931,9 +5079,9 @@ void FFMPEGEncoder::monitorThread()
 	{
 		try
 		{
-			lock_guard<mutex> locker(_liveProxyMutex);
+			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			for (shared_ptr<LiveProxy> liveProxy: _liveProxiesCapability)
+			for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_running)
 				{
@@ -5688,6 +5836,14 @@ void FFMPEGEncoder::monitorThread()
 	}
 }
 
+void FFMPEGEncoder::stopMonitorThread()
+{
+
+	_monitorThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
+}
+
 void FFMPEGEncoder::videoSpeed(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
@@ -6127,7 +6283,7 @@ void FFMPEGEncoder::addEncodingCompleted(
 		string errorMessage,
 		bool killedByUser, bool urlForbidden, bool urlNotFound)
 {
-	lock_guard<mutex> locker(_encodingCompletedMutex);
+	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
 	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
 
@@ -6139,27 +6295,27 @@ void FFMPEGEncoder::addEncodingCompleted(
 	encodingCompleted->_urlNotFound			= urlNotFound;
 	encodingCompleted->_timestamp			= chrono::system_clock::now();
 
-	_encodingCompletedMap.insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
+	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
 
 	_logger->info(__FILEREF__ + "addEncodingCompleted"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
 			);
 }
 
 void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 {
 
-	lock_guard<mutex> locker(_encodingCompletedMutex);
+	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
 	map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
-		_encodingCompletedMap.find(encodingJobKey);
-	if (it != _encodingCompletedMap.end())
+		_encodingCompletedMap->find(encodingJobKey);
+	if (it != _encodingCompletedMap->end())
 	{
-		_encodingCompletedMap.erase(it);
+		_encodingCompletedMap->erase(it);
 
 		_logger->info(__FILEREF__ + "removeEncodingCompletedIfPresent"
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
 			);
 	}
 }
@@ -6167,21 +6323,21 @@ void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 void FFMPEGEncoder::encodingCompletedRetention()
 {
 
-	lock_guard<mutex> locker(_encodingCompletedMutex);
+	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
 	chrono::system_clock::time_point now = chrono::system_clock::now();
 
-	for(map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap.begin();
-			it != _encodingCompletedMap.end(); )
+	for(map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
+			it != _encodingCompletedMap->end(); )
 	{
 		if(now - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
-			it = _encodingCompletedMap.erase(it);
+			it = _encodingCompletedMap->erase(it);
 		else
 			it++;
 	}
 
 	_logger->info(__FILEREF__ + "encodingCompletedRetention"
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
 			);
 }
 

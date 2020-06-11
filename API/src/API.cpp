@@ -122,10 +122,10 @@ int main(int argc, char** argv)
 
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
-    
+
 		vector<shared_ptr<API>> apis;
 		vector<thread> apiThreads;
-    
+
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			shared_ptr<API> api = make_shared<API>(configuration, 
