@@ -542,7 +542,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn = nullptr;
-    bool autoCommit = true;
+    // bool autoCommit = true;
 
     try
     {
@@ -563,6 +563,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		/*
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -572,6 +573,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
+		*/
         
         {
 			// the setting of this variable is done also in EncoderVideoAudioProxy::processLiveRecorder
@@ -1184,6 +1186,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             }
         }
         
+		/*
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -1193,6 +1196,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             statement->execute(lastSQLCommand);
         }
         autoCommit = true;
+		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1220,12 +1224,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1275,12 +1281,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1330,12 +1338,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1384,12 +1394,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
+				/*
                 // conn->_sqlConnection->rollback(); OR execute ROLLBACK
                 if (!autoCommit)
                 {
                     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
                     statement->execute("ROLLBACK");
                 }
+				*/
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
