@@ -106,7 +106,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -127,7 +127,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL @statistics@"
+						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", lockType: " + toString(lockType)
 							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
@@ -149,7 +149,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -170,7 +170,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL @statistics@"
+						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", lockType: " + toString(lockType)
 							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
@@ -192,7 +192,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(lockType));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -213,7 +213,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL @statistics@"
+						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", lockType: " + toString(lockType)
 							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
@@ -237,7 +237,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					MMSEngineDBFacade::toString(lockType));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -259,7 +259,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "SQL @statistics@"
+						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", lockType: " + toString(lockType)
 							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
@@ -820,7 +820,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             preparedStatement->setString(queryParameterIndex++, label);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
                             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-							_logger->info(__FILEREF__ + "SQL @statistics@"
+							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 								+ ", label: " + label
@@ -842,7 +842,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 preparedStatement->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL @statistics@"
+								_logger->info(__FILEREF__ + "@SQL statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", deliveryTechnology: " + toString(deliveryTechnology)
 									// + ", jsonProfile: " + jsonProfile
@@ -868,7 +868,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
                                 preparedStatement->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL @statistics@"
+								_logger->info(__FILEREF__ + "@SQL statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", label: " + label
 									+ ", contentType: " + MMSEngineDBFacade::toString(contentType)

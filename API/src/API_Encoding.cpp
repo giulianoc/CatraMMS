@@ -1438,7 +1438,7 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "killEncodingJob"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", response.str: " + response.str()
 		);
 

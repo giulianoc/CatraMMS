@@ -420,7 +420,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -621,7 +621,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -823,7 +823,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -1061,7 +1061,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -1204,7 +1204,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -1348,7 +1348,7 @@ void FFMpeg::encodeContent(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
 				catch(runtime_error e)
@@ -1520,7 +1520,7 @@ void FFMpeg::encodeContent(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
                 catch(runtime_error e)
@@ -1638,7 +1638,7 @@ void FFMpeg::encodeContent(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
                 catch(runtime_error e)
@@ -1756,7 +1756,7 @@ void FFMpeg::encodeContent(
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
                 catch(runtime_error e)
@@ -2113,14 +2113,14 @@ void FFMpeg::overlayImageOnVideo(
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#else
                     _logger->info(__FILEREF__ + "overlayImageOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#endif
                 }
@@ -2535,14 +2535,14 @@ void FFMpeg::overlayTextOnVideo(
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#else
                     _logger->info(__FILEREF__ + "overlayTextOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#endif
                 }
@@ -3017,14 +3017,14 @@ void FFMpeg::videoSpeed(
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#else
                     _logger->info(__FILEREF__ + "videoSpeed: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#endif
                 }
@@ -3445,14 +3445,14 @@ void FFMpeg::pictureInPicture(
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#else
                     _logger->info(__FILEREF__ + "pictureInPicture: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
 				#endif
                 }
@@ -4941,7 +4941,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 
         _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            + ", FFMPEG @statistics@ - duration (secs): @"
+            + ", @FFMPEG statistics@ - duration (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
@@ -5737,13 +5737,13 @@ vector<string> FFMpeg::generateFramesToIngest(
         _logger->info(__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#else
         _logger->info(__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#endif
     }
@@ -5941,7 +5941,7 @@ void FFMpeg::generateConcatMediaToIngest(
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
@@ -6074,7 +6074,7 @@ void FFMpeg::generateCutMediaToIngest(
         _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
     catch(runtime_error e)
@@ -6242,13 +6242,13 @@ void FFMpeg::generateSlideshowMediaToIngest(
         _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#else
         _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#endif
     }
@@ -6399,7 +6399,7 @@ void FFMpeg::extractTrackMediaToIngest(
         _logger->info(__FILEREF__ + "extractTrackMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
     catch(runtime_error e)
@@ -6687,14 +6687,14 @@ void FFMpeg::liveRecorder(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#else
         _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 	#endif
 
@@ -7046,7 +7046,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-			+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
     }
     catch(runtime_error e)
@@ -7284,7 +7284,7 @@ void FFMpeg::liveProxyByCDN(
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-			+ ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
     }
     catch(runtime_error e)
@@ -7399,7 +7399,7 @@ void FFMpeg::changeFileFormat(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourceKey: " + to_string(sourceKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", FFMPEG @statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
     catch(runtime_error e)
@@ -8043,7 +8043,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
-				+ ", FFMPEG @statistics@ - duration (secs): @"
+				+ ", @FFMPEG statistics@ - duration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
 			);
 		}
@@ -8287,7 +8287,7 @@ format code  extension  resolution note
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
-				+ ", FFMPEG @statistics@ - duration (secs): @"
+				+ ", @FFMPEG statistics@ - duration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
 			);
 

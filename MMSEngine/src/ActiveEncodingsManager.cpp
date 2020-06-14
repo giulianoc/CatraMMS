@@ -216,7 +216,7 @@ void ActiveEncodingsManager::operator()()
 								chrono::hours(24))
 						{
 							_logger->error(__FILEREF__ + "EncodingJob is not finishing"
-								+ ", MMS @statistics@ - elapsed (hours): @" + to_string(chrono::duration_cast<chrono::hours>(
+								+ ", @MMS statistics@ - elapsed (hours): @" + to_string(chrono::duration_cast<chrono::hours>(
 									chrono::system_clock::now() - encodingJob->_encodingJobStart).count()) + "@"
 								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
 								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
@@ -230,8 +230,8 @@ void ActiveEncodingsManager::operator()()
 						else
 						{
 							_logger->info(__FILEREF__ + "EncodingJob still running"
-								+ ", MMS @statistics@ - elapsed (minutes): @" + 
-								to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count()) + "@"
+								+ "elapsed (minutes): " + 
+									to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
 								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
 								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -244,7 +244,7 @@ void ActiveEncodingsManager::operator()()
                     }
                     else // if (encodingJob._status == EncoderVideoAudioProxy::EncodingJobStatus::ToBeRun)
                     {
-                        chrono::system_clock::time_point        processingItemStart;
+                        chrono::system_clock::time_point        processingItemStart = chrono::system_clock::now();
 
                         _logger->info(__FILEREF__ + "processEncodingJob begin"
                                 + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
@@ -260,7 +260,7 @@ void ActiveEncodingsManager::operator()()
                             processEncodingJob(encodingJob);
                             
                             _logger->info(__FILEREF__ + "processEncodingJob done"
-                                + ", MMS @statistics@ - elapsed (seconds): @" + 
+                                + ", @MMS statistics@ - elapsed (seconds): @" + 
                                     to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@"
                                 + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
@@ -273,12 +273,29 @@ void ActiveEncodingsManager::operator()()
                         catch(runtime_error e)
                         {
                             _logger->error(__FILEREF__ + "processEncodingJob failed"
+                                + ", @MMS statistics@ - elapsed (seconds): @" + 
+                                    to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@"
+                                + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
+                                + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+                                + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+                                + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+                                + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                                 + ", runtime_error: " + e.what()
                             );
                         }
                         catch(exception e)
                         {
-                            _logger->error(__FILEREF__ + "processEncodingJob failed");
+                            _logger->error(__FILEREF__ + "processEncodingJob failed"
+                                + ", @MMS statistics@ - elapsed (seconds): @" + 
+                                    to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@"
+                                + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
+                                + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+                                + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+                                + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+                                + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+							);
                         }
                     }
                 }
@@ -287,7 +304,7 @@ void ActiveEncodingsManager::operator()()
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
 			_logger->info(__FILEREF__ + "End checking encodingJobs"
-				+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+				+ ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 			);
         }
         catch(exception e)
@@ -476,7 +493,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 	_logger->warn(__FILEREF__ + "processEncodingJob"
 		+ ", encodingJob->_encodingItem->_encodingType: "
 			+ MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-		+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+		+ ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 	);
 }
 

@@ -209,7 +209,7 @@ void API::ingestion(
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Ingestion"
-            + ", MMS @statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+            + ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
         );
     }
 	catch(AlreadyLocked e)
@@ -2730,7 +2730,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "End tar command "
 			+ ", executeCommand: " + executeCommand
-			+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+			+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 		);
 		if (executeCommandStatus != 0)
 		{
@@ -2817,7 +2817,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
 					+ ", destDirectory: " + destDirectory
-					+ ", MMS @statistics@ - copyDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
+					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 
@@ -2830,7 +2830,7 @@ void API::manageTarFileInCaseOfIngestionOfSegments(
 				_logger->info(__FILEREF__ + "End removeDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
-					+ ", MMS @statistics@ - removeDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
+					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 			catch(runtime_error e)

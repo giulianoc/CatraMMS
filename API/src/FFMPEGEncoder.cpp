@@ -102,6 +102,8 @@ int main(int argc, char** argv)
             configuration, dbPoolSize, logger);
 		*/
 
+		MMSStorage::createDirectories(configuration, logger);
+		/*
 		{
 			// here the MMSStorage is instantiated just because it will create
 			// the local directories of the transcoder
@@ -110,6 +112,7 @@ int main(int argc, char** argv)
 			shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
 				configuration, logger);
 		}
+		*/
 
 		FCGX_Init();
 
@@ -3509,7 +3512,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					_logger->info(__FILEREF__ + "liveRecorder_processLastGeneratedLiveRecorderFiles"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", MMS @statistics@ - elapsed time: @" + to_string(
+						+ ", @MMS statistics@ - elapsed time: @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
 						) + "@"
 					);
@@ -3942,8 +3945,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", source: " + transcoderStagingContentsPath + currentRecordedAssetFileName
 				+ ", dest: " + stagingContentsPath
-				+ ", MMS @statistics@ - movingDuration (millisecs): @"
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count()) + "@"
+				+ ", @MMS MOVE statistics@ - movingDuration (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
 			);
 		}
 	}
@@ -4297,7 +4300,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				;
@@ -4307,7 +4310,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		{
 			string message = __FILEREF__ + "Ingested recorded response"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				+ ", responseCode: " + to_string(responseCode)
@@ -5808,7 +5811,7 @@ void FFMPEGEncoder::monitorThread()
 					_logger->info(__FILEREF__ + "liveProxyMonitorCheck"
 						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-						+ ", MMS @statistics@ - elapsed time: @" + to_string(
+						+ ", @MMS statistics@ - elapsed time: @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
 						) + "@"
 					);

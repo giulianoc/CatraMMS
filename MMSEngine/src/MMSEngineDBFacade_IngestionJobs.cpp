@@ -93,7 +93,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
@@ -195,7 +195,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 					+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
@@ -304,7 +304,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 						+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
@@ -422,7 +422,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -452,7 +452,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -736,7 +736,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		shared_ptr<sql::ResultSet> resultSetDependency (
 			preparedStatementDependency->executeQuery());
-		_logger->info(__FILEREF__ + "SQL @statistics@"
+		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -764,7 +764,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -998,7 +998,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1108,7 +1108,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
  
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", rootType: " + rootType
@@ -1178,7 +1178,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1242,7 +1242,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", label: " + label
@@ -1351,7 +1351,7 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
             preparedStatement->setString(queryParameterIndex++, globalIngestionLabel);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", globalIngestionLabel: " + globalIngestionLabel
@@ -1456,7 +1456,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1495,7 +1495,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependOnSuccess: " + to_string(dependOnSuccess)
@@ -1562,7 +1562,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", metadataContent: " + metadataContent
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1643,7 +1643,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1733,7 +1733,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
             preparedStatement->setInt64(queryParameterIndex++, groupOfTasksIngestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", groupOfTasksIngestionJobKey: " + to_string(groupOfTasksIngestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1987,7 +1987,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
 				+ ", errorMessageForSQL: " + errorMessageForSQL
@@ -2043,7 +2043,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
 				+ ", errorMessageForSQL: " + errorMessageForSQL
@@ -2151,7 +2151,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", errorMessageForSQL: " + errorMessageForSQL
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2345,7 +2345,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", dependOnSuccess: " + to_string(dependOnSuccess)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2415,7 +2415,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", IngestionStatus::End_NotToBeExecuted: " + MMSEngineDBFacade::toString(IngestionStatus::End_NotToBeExecuted)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -2441,7 +2441,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2477,7 +2477,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2530,7 +2530,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 int rowsUpdated = preparedStatement->executeUpdate();
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", newIngestionRootStatus: " + MMSEngineDBFacade::toString(newIngestionRootStatus)
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -2918,7 +2918,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", downloadingPercentage: " + to_string(downloadingPercentage)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2951,7 +2951,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3074,7 +3074,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", uploadingPercentage: " + to_string(uploadingPercentage)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3107,7 +3107,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3229,7 +3229,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred ? 1 : 0)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3349,7 +3349,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
             preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -3471,7 +3471,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3683,7 +3683,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -3716,7 +3716,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -3795,7 +3795,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3958,7 +3958,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -3997,7 +3997,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (label != "")
-            sqlWhere += ("and label like ? ");
+            sqlWhere += ("and LOWER(label) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
         {
             string allStatus = "all";
             // compare case insensitive
@@ -4040,7 +4040,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -4100,7 +4100,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -4148,7 +4148,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     preparedStatementIngestionJob->setInt64(queryParameterIndex++, currentIngestionRootKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
                     shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", currentIngestionRootKey: " + to_string(currentIngestionRootKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4349,7 +4349,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, ingestionType);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4407,7 +4407,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4586,7 +4586,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             preparedStatementMediaItems->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSetMediaItems (preparedStatementMediaItems->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4678,7 +4678,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSetEncodingJob (
 				preparedStatementEncodingJob->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -4870,7 +4870,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5134,7 +5134,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", newPeriodStartDateTime: " + newPeriodStartDateTime
 				+ ", newPeriodEndDateTime: " + newPeriodEndDateTime
@@ -5264,7 +5264,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@ (retentionOfIngestionData)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -5297,7 +5297,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@ (retentionOfIngestionData)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", IngestionStatus::SourceDownloadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress)
 				+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)

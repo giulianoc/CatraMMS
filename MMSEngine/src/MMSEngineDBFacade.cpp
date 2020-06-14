@@ -327,7 +327,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", active: 0"
 				+ ", processorMMS: " + processorMMS
@@ -355,7 +355,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
 				+ ", processorMMS: " + processorMMS
@@ -381,7 +381,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -408,7 +408,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();            
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", processorMMS: " + processorMMS
@@ -432,7 +432,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", processorMMS: " + processorMMS
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -459,7 +459,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();            
-			_logger->info(__FILEREF__ + "SQL @statistics@ (resetProcessingJobsIfNeeded)"
+			_logger->info(__FILEREF__ + "@SQL statistics@ (resetProcessingJobsIfNeeded)"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", processorMMS: " + processorMMS
@@ -564,6 +564,9 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         );
 
 		/*
+		 * 2020-06-13: Transaction removed because:
+		 *	- it was causing several deadlock db error
+		 *	- it is not really needed
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -599,7 +602,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             preparedStatement->setInt(queryParameterIndex++, toleranceMinutes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", toleranceMinutes: " + to_string(toleranceMinutes)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -637,7 +640,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> resultSetChunkStartTime (
 						preparedStatementChunkStartTime->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -685,7 +688,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						shared_ptr<sql::ResultSet> resultSetMediaItemDetails (
 							preparedStatementMediaItemDetails->executeQuery());
-						_logger->info(__FILEREF__ + "SQL @statistics@"
+						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
@@ -880,7 +883,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
 								int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "SQL @statistics@"
+								_logger->info(__FILEREF__ + "@SQL statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", mediaItemKeyValidated: " + to_string(mediaItemKeyValidated)
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -959,7 +962,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
 								int rowsUpdated = preparedStatementUpdate->executeUpdate();            
-								_logger->info(__FILEREF__ + "SQL @statistics@"
+								_logger->info(__FILEREF__ + "@SQL statistics@"
 									+ ", lastSQLCommand: " + lastSQLCommand
 									+ ", mediaItemKeyNotValidated: " + to_string(mediaItemKeyNotValidated)
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -1036,7 +1039,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 					preparedStatementMediaItemKey->setInt(queryParameterIndex++, chunksToBeManagedWithinSeconds);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> resultSetMediaItemKey (preparedStatementMediaItemKey->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", chunksToBeManagedWithinSeconds: " + to_string(chunksToBeManagedWithinSeconds)
@@ -1074,7 +1077,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							shared_ptr<sql::ResultSet> resultSetCheckValidation (
 								preparedStatementCheckValidation->executeQuery());
-							_logger->info(__FILEREF__ + "SQL @statistics@"
+							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
@@ -1117,7 +1120,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							int rowsUpdated = preparedStatementUpdate->executeUpdate();            
-							_logger->info(__FILEREF__ + "SQL @statistics@"
+							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
 								+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -1470,7 +1473,7 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1598,7 +1601,7 @@ void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
 			preparedStatement->setInt(queryParameterIndex++, toleranceMinutes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", toleranceMinutes: " + to_string(toleranceMinutes)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1739,7 +1742,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1882,7 +1885,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
             preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1936,7 +1939,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2090,7 +2093,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
@@ -2144,7 +2147,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 				preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "SQL @statistics@"
+				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2183,7 +2186,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2355,7 +2358,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2396,7 +2399,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 					technologyPreparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> technologyResultSet (technologyPreparedStatement->executeQuery());
-					_logger->info(__FILEREF__ + "SQL @statistics@"
+					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2546,7 +2549,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", clientIPAddress: " + clientIPAddress
@@ -2659,7 +2662,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
             preparedStatement->setInt64(queryParameterIndex++, deliveryAuthorizationKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", deliveryAuthorizationKey: " + to_string(deliveryAuthorizationKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2731,7 +2734,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", deliveryAuthorizationKey: " + to_string(deliveryAuthorizationKey)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -2838,7 +2841,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
-			_logger->info(__FILEREF__ + "SQL @statistics@"
+			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", retention: " + to_string(retention)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -2932,7 +2935,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-		_logger->info(__FILEREF__ + "SQL @statistics@"
+		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"

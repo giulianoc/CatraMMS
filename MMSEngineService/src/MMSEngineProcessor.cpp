@@ -764,7 +764,7 @@ void MMSEngineProcessor::operator ()()
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", event id: " + to_string(event->getEventKey().first)
 				+ ", _maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds)
-				+ ", MMS @statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+				+ ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 		);
     }
 
@@ -10422,7 +10422,7 @@ void MMSEngineProcessor::liveCutThread(
 				string message = __FILEREF__ + "Ingested CutLive workflow response"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 					+ ", workflowMetadata: " + workflowMetadata
 					+ ", sResponse: " + sResponse
 					;
@@ -10433,7 +10433,7 @@ void MMSEngineProcessor::liveCutThread(
 				string message = __FILEREF__ + "Ingested CutLive workflow response"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+					+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 					+ ", workflowMetadata: " + workflowMetadata
 					+ ", sResponse: " + sResponse
 					+ ", responseCode: " + to_string(responseCode)
@@ -15708,7 +15708,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Content retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 
@@ -15886,7 +15886,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Ingestion Data retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 
@@ -15925,7 +15925,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Delivery Authorization retention finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -15967,7 +15967,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
 		chrono::system_clock::time_point end = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Check Refresh Partition Free Size finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -16022,7 +16022,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Live Recording HA finished"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
         );
     }
 }
@@ -19793,7 +19793,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
-			+ ", MMS @statistics@ - movingDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count()) + "@"
+			+ ", @MMS MOVE statistics@ - movingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
         );                            
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
             ingestionJobKey, true);
@@ -19958,7 +19958,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
-			+ ", MMS @statistics@ - copingDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count()) + "@"
+			+ ", @MMS COPY statistics@ - copingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
         );
 
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
@@ -20279,7 +20279,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 		chrono::system_clock::time_point end = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "Update Live Recorder Virtual VOD finished"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", MMS @statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
 }
@@ -20596,8 +20596,8 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 			_logger->info(__FILEREF__ + "TS copied"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-				+ ", MMS @statistics@ - copingDuration (millisecs): @"
-					+ to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count()) + "@"
+				+ ", @MMS COPY statistics@ - copingDuration (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
 			);
 		}
 
@@ -20656,7 +20656,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End tar command "
 					+ ", executeCommand: " + executeCommand
-					+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+					+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 				);
 				if (executeCommandStatus != 0)
 				{
@@ -21083,7 +21083,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 		{
 			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				;
@@ -21093,7 +21093,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 		{
 			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
 				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
-				+ ", MMS @statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
 				+ ", workflowMetadata: " + workflowMetadata
 				+ ", sResponse: " + sResponse
 				+ ", responseCode: " + to_string(responseCode)
@@ -21890,7 +21890,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "End tar command "
 			+ ", executeCommand: " + executeCommand
-			+ ", MMS @statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+			+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 		);
 		if (executeCommandStatus != 0)
 		{
@@ -21985,7 +21985,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
 					+ ", destDirectory: " + destDirectory
-					+ ", MMS @statistics@ - copyDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
+					+ ", @MMS COPY statistics@ - copyDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 
@@ -21999,7 +21999,7 @@ void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceDirectory: " + sourceDirectory
-					+ ", MMS @statistics@ - removeDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) + "@"
+					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
 			catch(runtime_error e)

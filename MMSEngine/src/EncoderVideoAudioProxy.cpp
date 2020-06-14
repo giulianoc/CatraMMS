@@ -2733,7 +2733,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -4074,7 +4074,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -5051,7 +5051,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -5987,7 +5987,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -6713,7 +6713,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -7391,7 +7391,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -7971,7 +7971,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 		);
 
@@ -8284,7 +8284,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", MMS @statistics@ - duration (secs): @"
+		+ ", @MMS statistics@ - duration (secs): @"
 			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
 	);
 
@@ -9149,7 +9149,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
 	_logger->info(__FILEREF__ + "capture.open"
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", MMS @statistics@ - duration (secs): @"
+		+ ", @MMS statistics@ - duration (secs): @"
 			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
 	);
 
@@ -10292,7 +10292,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							+ ", urlNotFound: " + to_string(urlNotFound)
-							+ ", MMS @statistics@ - encodingDurationInMinutes: @" + to_string(encodingDurationInMinutes) + "@"
+							+ ", @MMS statistics@ - encodingDurationInMinutes: @" + to_string(encodingDurationInMinutes) + "@"
 							+ ", urlNotFoundFakeAfterMinutes: " + to_string(urlNotFoundFakeAfterMinutes)
 							+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 							+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -10354,7 +10354,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+                    + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 			}
@@ -10367,7 +10367,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+                    + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 
@@ -11487,7 +11487,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                     + ", killedByUser: " + to_string(killedByUser)
-                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+                    + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
 			}
@@ -11949,7 +11949,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				request.setOpt(new curlpp::options::WriteStream(&response));
 
-				chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+				chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
 
 				_logger->info(__FILEREF__ + "getEncodingProgress"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -11957,11 +11957,11 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 				);
 				responseInitialized = true;
 				request.perform();
-				chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+				chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "getEncodingProgress"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+                    + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncodingProgress - startEncodingProgress).count()) + "@"
                     + ", response.str: " + response.str()
 				);
             
@@ -12266,7 +12266,7 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
 
         request.setOpt(new curlpp::options::WriteStream(&response));
 
-        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+        chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "getEncodingStatus"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -12274,7 +12274,7 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
         );
 		responseInitialized = true;
         request.perform();
-        chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+        chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
 
         string sResponse = response.str();
         // LF and CR create problems to the json parser...
@@ -12284,9 +12284,9 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
         _logger->info(__FILEREF__ + "getEncodingStatus"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                + ", sResponse: " + sResponse
-                + ", MMS @statistics@ - encodingDuration (secs): @" + to_string(
-					chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+                // + ", sResponse: " + sResponse
+                + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(
+					chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()) + "@"
         );
 
         try
@@ -12760,7 +12760,7 @@ void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t enco
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "killEncodingJob"
 			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-			+ ", MMS @statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+			+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 			+ ", response.str: " + response.str()
 		);
 

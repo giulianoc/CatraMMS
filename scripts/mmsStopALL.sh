@@ -15,5 +15,6 @@ echo "tomcat"
 
 echo "nginx"
 ~/nginx.sh stop
+sudo pkill nginx
 
 date

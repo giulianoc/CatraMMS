@@ -32,19 +32,34 @@ public:
 
     ~MMSStorage (void);
 
+	static void createDirectories(
+		Json::Value configuration,
+		shared_ptr<spdlog::logger> logger);
+
     string getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
     
     //    const char *getIPhoneAliasForLive (void);
 
-    string getMMSRootRepository (void);
+    static string getMMSRootRepository (string storage);
+    string getMMSRootRepository ();
 
     // string getStreamingRootRepository (void);
 
     // string getDownloadRootRepository (void);
 
-    string getIngestionRootRepository (void);
+    static string getIngestionRootRepository (string storage);
     
-    string getStagingRootRepository (void);
+    static string getStagingRootRepository (string storage);
+
+    static string getTranscoderStagingRootRepository (string storage);
+
+	static string getDirectoryForLiveContents();
+
+	static string getLiveRootRepository(string storage);
+
+	static string getFFMPEGArea(string storage);
+
+	static string getNginxArea(string storage);
 
     string getErrorRootRepository (void);
 
@@ -176,15 +191,15 @@ private:
     string                      _hostName;
 
     string                      _storage;
-    string                      _mmsRootRepository;
+    // string                      _mmsRootRepository;
     // string                      _downloadRootRepository;
     // string                      _streamingRootRepository;
-    string                      _stagingRootRepository;
-	string						_transcoderStagingRootRepository;
+    // string                      _stagingRootRepository;
+	// string						_transcoderStagingRootRepository;
 	// string						_deliveryFreeRootRepository;
-	string						_directoryForLiveContents;
-	string						_liveRootRepository;
-    string                      _ingestionRootRepository;
+	// string						_directoryForLiveContents;
+	// string						_liveRootRepository;
+    // string                      _ingestionRootRepository;
     // string                      _profilesRootRepository;
 
 	unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
