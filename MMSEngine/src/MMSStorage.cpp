@@ -1974,6 +1974,8 @@ string MMSStorage::moveAssetInMMSRepository(
                     S_IROTH | S_IXOTH);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Copy directory statistics"
+                + ", from: " + sourceAssetPathName
+                + ", to: " + mmsAssetPathName
 				+ ", @MMS COPY statistics@ - elapsed (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
@@ -2007,6 +2009,8 @@ string MMSStorage::moveAssetInMMSRepository(
             FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Move file statistics"
+                + ", from: " + sourceAssetPathName
+                + ", to: " + mmsAssetPathName
 				+ ", @MMS MOVE statistics@ - elapsed (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);

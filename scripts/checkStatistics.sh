@@ -13,16 +13,18 @@ then
 fi
 
 # A little magic, necessary when using getopt.
-eval set -- "$PARSED_OPTIONS"
+eval set -- "$options"
 
-components=""
+defaultComponents="engine"
 logFileNumber=1
 sqlThresholdInSeconds=1
 mmsThresholdInSeconds=-1
-copyThresholdInSeconds=1
-moveThresholdInSeconds=1
-removeThresholdInSeconds=1
+copyThresholdInSeconds=5
+moveThresholdInSeconds=5
+removeThresholdInSeconds=5
 ffmpegThresholdInSeconds=$((30*60))
+
+components=""
 
 # shift to analyse 1 argument at a time.
 # $1 identifies the first argument, and when we use shift we discard the first argument,
@@ -33,6 +35,7 @@ do
  
 		-h|--help)
 			echo "Usage $usage"
+			exit 0
 			shift;;
  
 		--engine)
@@ -133,7 +136,12 @@ then
         exit
 fi
 
-echo "components: $components, logFileNumber: $logFileNumber, sqlThresholdInSeconds: $sqlThresholdInSeconds"
+if [ "$components" == "" ]
+then
+	components="$defaultComponents"
+fi
+
+echo "components: $components, logFileNumber: $logFileNumber, sqlThresholdInSeconds: $sqlThresholdInSeconds, mmsThresholdInSeconds: $mmsThresholdInSeconds, copyThresholdInSeconds: $copyThresholdInSeconds, moveThresholdInSeconds: $moveThresholdInSeconds, removeThresholdInSeconds: $removeThresholdInSeconds, ffmpegThresholdInSeconds: $ffmpegThresholdInSeconds"
 
 for component in $components
 do
@@ -163,21 +171,21 @@ do
 		then
 			echo ""
 			echo "MMS COPY statistics"
-			grep "@MMS COPY statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v mmsCopyMoveThresholdInSeconds="$mmsCopyMoveThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > mmsCopyMoveThresholdInSeconds) printf("%s\n", $0) }'
+			grep "@MMS COPY statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v copyThresholdInSeconds="$copyThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > copyThresholdInSeconds) printf("%s\n", $0) }'
 		fi
 
 		if [ $moveThresholdInSeconds -ne -1 ]
 		then
 			echo ""
 			echo "MMS MOVE statistics"
-			grep "@MMS MOVE statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v mmsCopyMoveThresholdInSeconds="$mmsCopyMoveThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > mmsCopyMoveThresholdInSeconds) printf("%s\n", $0) }'
+			grep "@MMS MOVE statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v moveThresholdInSeconds="$moveThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > moveThresholdInSeconds) printf("%s\n", $0) }'
 		fi
 
 		if [ $removeThresholdInSeconds -ne -1 ]
 		then
 			echo ""
 			echo "MMS REMOVE statistics"
-			grep "@MMS REMOVE statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v mmsCopyMoveThresholdInSeconds="$mmsCopyMoveThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > mmsCopyMoveThresholdInSeconds) printf("%s\n", $0) }'
+			grep "@MMS REMOVE statistics@" $(printLogFileName.sh $component $logFileNumber) | awk -v removeThresholdInSeconds="$removeThresholdInSeconds" 'BEGIN { FS="@" } { if($4 > removeThresholdInSeconds) printf("%s\n", $0) }'
 		fi
 
 		if [ $ffmpegThresholdInSeconds -ne -1 ]
