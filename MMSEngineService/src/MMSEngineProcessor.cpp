@@ -9797,7 +9797,7 @@ void MMSEngineProcessor::liveCutThread(
 			int liveRecordingChunk = 1;
 			vector<string> tagsIn;
 			vector<string> tagsNotIn;
-			string ingestionDateOrder = "desc";
+			string orderBy = "";
 			bool admin = false;
 
 			string jsonCondition;
@@ -9835,7 +9835,7 @@ void MMSEngineProcessor::liveCutThread(
 
 				jsonCondition += ") )";
 			}
-			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime')";
+			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc";
 
 			long utcPreviousUtcChunkEndTime = -1;
 			bool firstChunk = true;
@@ -9854,7 +9854,7 @@ void MMSEngineProcessor::liveCutThread(
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
-					ingestionDateOrder, jsonOrderBy, admin);
+					orderBy, jsonOrderBy, admin);
 
 				string field = "response";
 				Json::Value responseRoot = mediaItemsListRoot[field];

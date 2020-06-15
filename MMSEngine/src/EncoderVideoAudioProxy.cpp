@@ -8915,7 +8915,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string title;
 		int liveRecordingChunk = -1;
 		string jsonCondition;
-		string ingestionDateOrder;
+		string orderBy;
 		string jsonOrderBy;
 		bool admin = true;
 
@@ -8935,7 +8935,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 				otherMediaItemsKey, start, rows, contentTypePresent, contentType,
 				startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 				title, liveRecordingChunk, jsonCondition, deepLearnedModelTags, tagsNotIn,
-				ingestionDateOrder, jsonOrderBy, admin);
+				orderBy, jsonOrderBy, admin);
 
 			field = "response";
 			Json::Value responseRoot = mediaItemsListRoot[field];

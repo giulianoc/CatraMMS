@@ -1371,7 +1371,7 @@ public:
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
-		string ingestionDateAndTitleOrder, string jsonOrderBy, bool admin);
+		string orderBy, string jsonOrderBy, bool admin);
 
 	Json::Value getTagsList (
         int64_t workspaceKey, int start, int rows,
@@ -1984,7 +1984,7 @@ private:
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
-        string ingestionDateOrder,   // "" or "asc" or "desc"
+        string orderBy,
 		string jsonOrderBy,
 		bool admin);
 
@@ -1998,7 +1998,7 @@ private:
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
-        string ingestionDateOrder,   // "" or "asc" or "desc"
+        string orderBy,
 		string jsonOrderBy,
 		bool admin);
 

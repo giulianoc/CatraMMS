@@ -486,8 +486,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
-        string ingestionDateOrder,   // "" or "asc" or "desc"
-		string jsonOrderBy,
+        string orderBy,			// i.e.: "", mi.ingestionDate desc"
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
 		bool admin
 )
 {
@@ -519,7 +519,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size())
             + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", jsonCondition: " + jsonCondition
-            + ", ingestionDateOrder: " + ingestionDateOrder
+            + ", orderBy: " + orderBy
             + ", jsonOrderBy: " + jsonOrderBy
         );
         
@@ -621,10 +621,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = jsonCondition;
             }
 
-            if (ingestionDateOrder != "")
+            if (orderBy != "")
             {
-                field = "ingestionDateOrder";
-                requestParametersRoot[field] = ingestionDateOrder;
+                field = "orderBy";
+                requestParametersRoot[field] = orderBy;
             }
 
             if (jsonOrderBy != "")
@@ -728,7 +728,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
 					tagsIn, tagsNotIn,
-					ingestionDateOrder,   // "" or "asc" or "desc"
+					orderBy,
 					jsonOrderBy,
 					admin
 				);
@@ -740,7 +740,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
-					ingestionDateOrder,   // "" or "asc" or "desc"
+					orderBy,
 					jsonOrderBy,
 					admin
 				);
@@ -1697,8 +1697,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
-        string ingestionDateOrder,   // "" or "asc" or "desc"
-		string jsonOrderBy,
+        string orderBy,			// i.e.: "", mi.ingestionDate desc"
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
 		bool admin
 )
 {
@@ -1800,21 +1800,21 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         
         {
 			string orderByCondition;
-			if (ingestionDateOrder == "" && jsonOrderBy == "")
+			if (orderBy == "" && jsonOrderBy == "")
 			{
 				orderByCondition = " ";
 			}
-			else if (ingestionDateOrder == "" && jsonOrderBy != "")
+			else if (orderBy == "" && jsonOrderBy != "")
 			{
 				orderByCondition = "order by " + jsonOrderBy + " ";
 			}
-			else if (ingestionDateOrder != "" && jsonOrderBy == "")
+			else if (orderBy != "" && jsonOrderBy == "")
 			{
-				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
+				orderByCondition = "order by " + orderBy + " ";
 			}
-			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
+			else // if (orderBy != "" && jsonOrderBy != "")
 			{
-				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
+				orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 			}
 
           	lastSQLCommand = 
@@ -1909,8 +1909,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
-        string ingestionDateOrder,   // "" or "asc" or "desc"
-		string jsonOrderBy,
+        string orderBy,			// i.e.: "", mi.ingestionDate desc"
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
 		bool admin
 )
 {
@@ -2083,21 +2083,21 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				;
 
 			string orderByCondition;
-			if (ingestionDateOrder == "" && jsonOrderBy == "")
+			if (orderBy == "" && jsonOrderBy == "")
 			{
 				orderByCondition = " ";
 			}
-			else if (ingestionDateOrder == "" && jsonOrderBy != "")
+			else if (orderBy == "" && jsonOrderBy != "")
 			{
 				orderByCondition = "order by " + jsonOrderBy + " ";
 			}
-			else if (ingestionDateOrder != "" && jsonOrderBy == "")
+			else if (orderBy != "" && jsonOrderBy == "")
 			{
-				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
+				orderByCondition = "order by " + orderBy + " ";
 			}
-			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
+			else // if (orderBy != "" && jsonOrderBy != "")
 			{
-				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
+				orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 			}
 
           	lastSQLCommand = 

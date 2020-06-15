@@ -2760,6 +2760,7 @@ void API::mediaItemsList(
 			*/
         }
 
+		/*
         string ingestionDateOrder;
         auto ingestionDateOrderIt = queryParameters.find("ingestionDateOrder");
         if (ingestionDateOrderIt != queryParameters.end() && ingestionDateOrderIt->second != "")
@@ -2769,6 +2770,19 @@ void API::mediaItemsList(
             else
                 _logger->warn(__FILEREF__ + "mediaItemsList: 'ingestionDateOrder' parameter is unknown"
                     + ", ingestionDateOrder: " + ingestionDateOrderIt->second);
+        }
+		*/
+        string orderBy;
+        auto orderByIt = queryParameters.find("orderBy");
+        if (orderByIt != queryParameters.end() && orderByIt->second != "")
+        {
+            orderBy = orderByIt->second;
+
+			string orderByDecoded = curlpp::unescape(orderBy);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			orderBy = regex_replace(orderByDecoded, regex(plus), plusDecoded);
         }
 
         string jsonOrderBy;
@@ -2810,7 +2824,7 @@ void API::mediaItemsList(
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     title, liveRecordingChunk, jsonCondition, tagsIn, tagsNotIn,
-					ingestionDateOrder, jsonOrderBy, admin);
+					orderBy, jsonOrderBy, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

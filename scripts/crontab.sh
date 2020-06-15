@@ -101,7 +101,7 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$threeDaysInMinutes
+			timeoutInMinutes=$sixHourInMinutes
 		fi
 
 		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMS_????/*/* -empty -mmin +$timeoutInMinutes -type d -delete"
