@@ -9835,7 +9835,7 @@ void MMSEngineProcessor::liveCutThread(
 
 				jsonCondition += ") )";
 			}
-			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc";
+			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc";
 
 			long utcPreviousUtcChunkEndTime = -1;
 			bool firstChunk = true;

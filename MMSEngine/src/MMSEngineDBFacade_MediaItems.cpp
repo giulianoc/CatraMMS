@@ -487,7 +487,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc"
-		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
 		bool admin
 )
 {
@@ -1698,7 +1698,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title, int liveRecordingChunk, string jsonCondition,
         string orderBy,			// i.e.: "", mi.ingestionDate desc"
-		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
 		bool admin
 )
 {
@@ -1910,7 +1910,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc"
-		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') desc
+		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
 		bool admin
 )
 {
