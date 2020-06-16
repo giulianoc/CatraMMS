@@ -19792,7 +19792,9 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", movingCompleted: " + to_string(true)
+            // + ", movingCompleted: " + to_string(true)
+            + ", sourcePathName: " + sourcePathName
+            + ", destBinaryPathName: " + destBinaryPathName
 			+ ", @MMS MOVE statistics@ - movingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
         );                            
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
@@ -19957,7 +19959,9 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         _logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", movingCompleted: " + to_string(true)
+            // + ", movingCompleted: " + to_string(true)
+            + ", sourcePathName: " + sourcePathName
+            + ", destBinaryPathName: " + destBinaryPathName
 			+ ", @MMS COPY statistics@ - copingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
         );
 
@@ -20224,7 +20228,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 				}
 				catch(runtime_error e)
 				{
-					_logger->error(__FILEREF__ + "UpdateLiveRecorderVirtualVOD failed"
+					_logger->error(__FILEREF__ + "ingest/update liveRecorderVirtualVOD failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -20234,7 +20238,7 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
 				}
 				catch(exception e)
 				{
-					_logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
+					_logger->error(__FILEREF__ + "ingest/update liveRecorderVirtualVOD failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)

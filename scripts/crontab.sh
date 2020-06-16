@@ -83,10 +83,10 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$threeDaysInMinutes
+			timeoutInMinutes=$oneHourInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/DownloadRepository/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 8 ]
 	then
@@ -110,7 +110,7 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$sixHourInMinutes
+			timeoutInMinutes=$oneHourInMinutes
 		fi
 
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
@@ -120,7 +120,7 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$sixHourInMinutes
+			timeoutInMinutes=$oneHourInMinutes
 		fi
 
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
