@@ -1588,7 +1588,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		bool highAvailability,
-		string configurationLabel, int64_t confKey, string liveURL,
+		string configurationLabel, int64_t confKey, string url,
 		string userAgent,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
@@ -1600,7 +1600,7 @@ public:
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		int64_t liveURLConfKey, string configurationLabel, string liveURL,
+		int64_t liveURLConfKey, string configurationLabel, string url,
 		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		EncodingPriority encodingPriority);
@@ -1823,7 +1823,7 @@ public:
     int64_t addLiveURLConf(
         int64_t workspaceKey,
         string label,
-        string liveURL,
+        string url,
         string type,
         string description,
         string channelName,
@@ -1835,7 +1835,7 @@ public:
         int64_t confKey,
         int64_t workspaceKey,
         string label,
-        string liveURL,
+        string url,
         string type,
         string description,
         string channelName,
@@ -1850,7 +1850,7 @@ public:
     Json::Value getLiveURLConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
-		string label, string type, string channelName, string channelRegion, string channelCountry, string liveURL,
+		string label, string type, string channelName, string channelRegion, string channelCountry, string url,
 		string labelOrder);
 
     pair<int64_t, string> getLiveURLConfDetails(

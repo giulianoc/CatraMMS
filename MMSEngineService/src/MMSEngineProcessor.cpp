@@ -8352,6 +8352,7 @@ void MMSEngineProcessor::httpCallbackTask(
             );
         }
 
+		// 2020-06-18: below we have a loop for the dependencies. If this is confirmed, callbackMedatada should be an array
         Json::Value callbackMedatada;
         {
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
@@ -19299,6 +19300,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 	int currentRetries = 0;
 	bool callbackSuccessful = false;
 	string errorMessage;
+	string sResponse;
 
 	while (!callbackSuccessful && currentRetries < maxRetries)
 	{
@@ -19307,7 +19309,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
 		currentRetries++;
 
 		string userURL;
-		string sResponse;
 
 		try
 		{
@@ -19712,9 +19713,11 @@ void MMSEngineProcessor::userHttpCallbackThread(
 			+ ", currentRetries: " + to_string(currentRetries)
 			+ ", maxRetries: " + to_string(maxRetries)
 		);                            
+		// 2020-06-18: in case of success, the response will be saved as 'errorMessage' of the ingestion job
 		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
 			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-			"" // errorMessage
+			// "" // errorMessage
+			"HTTP successful response: " + sResponse // errorMessage
 		);
 	}
 }

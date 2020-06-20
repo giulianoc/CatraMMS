@@ -19,8 +19,8 @@ defaultComponents="engine"
 logFileNumber=1
 sqlThresholdInSeconds=1
 mmsThresholdInSeconds=-1
-copyThresholdInSeconds=5
-moveThresholdInSeconds=5
+copyThresholdInSeconds=10
+moveThresholdInSeconds=10
 removeThresholdInSeconds=5
 ffmpegThresholdInSeconds=$((30*60))
 

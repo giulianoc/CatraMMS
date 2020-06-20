@@ -1914,24 +1914,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
-            string liveURLDataDefinition;
+            string channelDataDefinition;
             if (jsonTypeSupported)
-                liveURLDataDefinition = "JSON";
+                channelDataDefinition = "JSON";
             else
-                liveURLDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
                 
             lastSQLCommand = 
                 "create table if not exists MMS_Conf_LiveURL ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "liveURL					VARCHAR (1024) NOT NULL,"
+                    "url						VARCHAR (1024) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "channelName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "channelRegion				VARCHAR (128) NULL,"
                     "channelCountry				VARCHAR (128) NULL,"
-                    "liveURLData				" + liveURLDataDefinition + ","
+                    "liveURLData				" + channelDataDefinition + ","
                     "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

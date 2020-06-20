@@ -9584,7 +9584,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         field = "main";
         main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
-        field = "liveURL";
+        field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "userAgent";
@@ -10301,12 +10301,14 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+					_logger->error(__FILEREF__ + "getEncodingStatus failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
-                    );
+						+ ", liveURL: " + liveURL
+						+ ", main: " + to_string(main)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+				);
 
 					/*
 					 2019-05-03: commented because we saw the following scenario:
@@ -10348,6 +10350,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", liveURL: " + liveURL
+                    + ", main: " + to_string(main)
 					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNow)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
@@ -10363,6 +10367,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				_logger->info(__FILEREF__ + "LiveRecorder media file completed"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", liveURL: " + liveURL
+                    + ", main: " + to_string(main)
                     + ", autoRenew: " + to_string(autoRenew) 
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
@@ -10755,7 +10761,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         // configurationLabel = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
         configurationLabel = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "XXX").asString();
 
-        field = "liveURL";
+        field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
         field = "UserAgent";

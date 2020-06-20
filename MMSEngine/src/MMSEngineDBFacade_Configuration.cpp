@@ -1281,7 +1281,7 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
 int64_t MMSEngineDBFacade::addLiveURLConf(
     int64_t workspaceKey,
     string label,
-    string liveURL,
+    string url,
 	string type,
 	string description,
 	string channelName,
@@ -1310,7 +1310,7 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL, type, description, "
+                "insert into MMS_Conf_LiveURL(workspaceKey, label, url, type, description, "
 				"channelName, channelRegion, channelCountry, liveURLData) values ("
                 "?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -1318,7 +1318,7 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, liveURL);
+            preparedStatement->setString(queryParameterIndex++, url);
 			if (type == "")
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1350,7 +1350,7 @@ int64_t MMSEngineDBFacade::addLiveURLConf(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
-				+ ", liveURL: " + liveURL
+				+ ", url: " + url
 				+ ", type: " + type
 				+ ", description: " + description
 				+ ", channelName: " + channelName
@@ -1436,7 +1436,7 @@ void MMSEngineDBFacade::modifyLiveURLConf(
     int64_t confKey,
     int64_t workspaceKey,
     string label,
-    string liveURL,
+    string url,
 	string type,
 	string description,
 	string channelName,
@@ -1463,14 +1463,14 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 			}
 
             lastSQLCommand = 
-                "update MMS_Conf_LiveURL set label = ?, liveURL = ?, type = ?, description = ?, "
+                "update MMS_Conf_LiveURL set label = ?, url = ?, type = ?, description = ?, "
 				"channelName = ?, channelRegion = ?, channelCountry = ?, liveURLData = ? "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, liveURL);
+            preparedStatement->setString(queryParameterIndex++, url);
 			if (type == "")
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1503,7 +1503,7 @@ void MMSEngineDBFacade::modifyLiveURLConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label: " + label
-				+ ", liveURL: " + liveURL
+				+ ", url: " + url
 				+ ", type: " + type
 				+ ", description: " + description
 				+ ", channelName: " + channelName
@@ -1712,7 +1712,7 @@ void MMSEngineDBFacade::removeLiveURLConf(
 Json::Value MMSEngineDBFacade::getLiveURLConfList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
-	string label, string liveURL, string type, string channelName, string channelRegion, string channelCountry,
+	string label, string url, string type, string channelName, string channelRegion, string channelCountry,
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
@@ -1731,7 +1731,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", label: " + label
-            + ", liveURL: " + liveURL
+            + ", url: " + url
             + ", type: " + type
             + ", channelName: " + channelName
             + ", channelRegion: " + channelRegion
@@ -1774,10 +1774,10 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				requestParametersRoot[field] = label;
 			}
             
-            if (liveURL != "")
+            if (url != "")
 			{
-				field = "liveURL";
-				requestParametersRoot[field] = liveURL;
+				field = "url";
+				requestParametersRoot[field] = url;
 			}
 
             if (type != "")
@@ -1819,8 +1819,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 			sqlWhere += ("and confKey = ? ");
         if (label != "")
             sqlWhere += ("and LOWER(label) like LOWER(?) ");
-        if (liveURL != "")
-            sqlWhere += ("and liveURL like ? ");
+        if (url != "")
+            sqlWhere += ("and url like ? ");
         if (type != "")
             sqlWhere += ("and type = ? ");
         if (channelName != "")
@@ -1843,8 +1843,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
             if (label != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
-            if (liveURL != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
+            if (url != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + url + "%");
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
             if (channelName != "")
@@ -1859,7 +1859,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", liveURLKey: " + to_string(liveURLKey)
-				+ ", liveURL: " + "%" + liveURL + "%"
+				+ ", url: " + "%" + url + "%"
 				+ ", type: " + type
 				+ ", channelName: " + "%" + channelName + "%"
 				+ ", channelRegion: " + "%" + channelRegion + "%"
@@ -1889,7 +1889,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string ("select confKey, label, liveURL, type, description, channelName, channelRegion, channelCountry, "
+                string ("select confKey, label, url, type, description, channelName, channelRegion, channelCountry, "
 						"liveURLData from MMS_Conf_LiveURL ") 
                 + sqlWhere
 				+ orderByCondition
@@ -1902,8 +1902,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				preparedStatement->setInt64(queryParameterIndex++, liveURLKey);
             if (label != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
-            if (liveURL != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + liveURL + "%");
+            if (url != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + url + "%");
             if (type != "")
                 preparedStatement->setString(queryParameterIndex++, type);
             if (channelName != "")
@@ -1921,7 +1921,7 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", liveURLKey: " + to_string(liveURLKey)
 				+ ", label: " + "%" + label + "%"
-				+ ", liveURL: " + "%" + liveURL + "%"
+				+ ", url: " + "%" + url + "%"
 				+ ", type: " + type
 				+ ", channelName: " + "%" + channelName + "%"
 				+ ", channelRegion: " + "%" + channelRegion + "%"
@@ -1941,8 +1941,8 @@ Json::Value MMSEngineDBFacade::getLiveURLConfList (
                 field = "label";
                 liveURLConfRoot[field] = static_cast<string>(resultSet->getString("label"));
 
-                field = "liveURL";
-                liveURLConfRoot[field] = static_cast<string>(resultSet->getString("liveURL"));
+                field = "url";
+                liveURLConfRoot[field] = static_cast<string>(resultSet->getString("url"));
 
                 field = "type";
 				if (resultSet->isNull("type"))
@@ -2064,7 +2064,7 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
 {
     string      lastSQLCommand;
 	int64_t		confKey;
-    string      liveURL;
+    string      url;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2081,7 +2081,7 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
         );
         
         {
-            lastSQLCommand = string("select confKey, liveURL from MMS_Conf_LiveURL ")
+            lastSQLCommand = string("select confKey, url from MMS_Conf_LiveURL ")
 				+ "where workspaceKey = ? and label = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2110,7 +2110,7 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
             }
 
             confKey = resultSet->getInt64("confKey");
-            liveURL = resultSet->getString("liveURL");
+            url = resultSet->getString("url");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -2178,7 +2178,7 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
         throw e;
     } 
     
-    return make_pair(confKey, liveURL);
+    return make_pair(confKey, url);
 }
 
 tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
@@ -2201,11 +2201,11 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
-		string		liveURL;
+		string		url;
 		string		channelName;
 		string		liveURLData;
         {
-            lastSQLCommand = string("select liveURL, channelName, liveURLData from MMS_Conf_LiveURL ")
+            lastSQLCommand = string("select url, channelName, liveURLData from MMS_Conf_LiveURL ")
 				+ "where workspaceKey = ? and confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2234,7 +2234,7 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
                 throw runtime_error(errorMessage);
             }
 
-            liveURL = resultSet->getString("liveURL");
+            url = resultSet->getString("url");
             channelName = resultSet->getString("channelName");
             liveURLData = resultSet->getString("liveURLData");
         }
@@ -2245,7 +2245,7 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(liveURL, channelName, liveURLData);
+		return make_tuple(url, channelName, liveURLData);
     }
     catch(sql::SQLException se)
     {

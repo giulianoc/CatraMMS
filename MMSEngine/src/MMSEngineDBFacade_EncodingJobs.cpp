@@ -8095,7 +8095,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	bool highAvailability,
-	string configurationLabel, int64_t confKey, string liveURL,
+	string configurationLabel, int64_t confKey, string url,
 	string userAgent,
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
@@ -8118,7 +8118,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
-            + ", liveURL: " + liveURL
+            + ", url: " + url
             + ", userAgent: " + userAgent
             + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
             + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
@@ -8184,8 +8184,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "confKey";
 				parametersRoot[field] = confKey;
 
-				field = "liveURL";
-				parametersRoot[field] = liveURL;
+				field = "url";
+				parametersRoot[field] = url;
 
 				field = "userAgent";
 				parametersRoot[field] = userAgent;
@@ -8297,8 +8297,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "confKey";
 				parametersRoot[field] = confKey;
 
-				field = "liveURL";
-				parametersRoot[field] = liveURL;
+				field = "url";
+				parametersRoot[field] = url;
 
 				field = "userAgent";
 				parametersRoot[field] = userAgent;
@@ -8644,7 +8644,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	int64_t liveURLConfKey, string configurationLabel, string liveURL,
+	int64_t liveURLConfKey, string configurationLabel, string url,
 	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	EncodingPriority encodingPriority
@@ -8662,7 +8662,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
-            + ", liveURL: " + liveURL
+            + ", url: " + url
             + ", outputType: " + outputType
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
@@ -8716,8 +8716,8 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "configurationLabel";
 				parametersRoot[field] = configurationLabel;
 
-				field = "liveURL";
-				parametersRoot[field] = liveURL;
+				field = "url";
+				parametersRoot[field] = url;
 
 				field = "outputType";
 				parametersRoot[field] = outputType;
