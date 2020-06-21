@@ -1693,21 +1693,21 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         facebookConfList(request, workspace);
     }
-    else if (method == "addLiveURLConf")
+    else if (method == "addChannelConf")
     {
-        addLiveURLConf(request, workspace, queryParameters, requestBody);
+        addChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "modifyLiveURLConf")
+    else if (method == "modifyChannelConf")
     {
-        modifyLiveURLConf(request, workspace, queryParameters, requestBody);
+        modifyChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeLiveURLConf")
+    else if (method == "removeChannelConf")
     {
-        removeLiveURLConf(request, workspace, queryParameters);
+        removeChannelConf(request, workspace, queryParameters);
     }
-    else if (method == "liveURLConfList")
+    else if (method == "channelConfList")
     {
-        liveURLConfList(request, workspace, queryParameters);
+        channelConfList(request, workspace, queryParameters);
     }
     else if (method == "addFTPConf")
     {

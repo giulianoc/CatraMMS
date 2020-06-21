@@ -1921,19 +1921,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
                 
             lastSQLCommand = 
-                "create table if not exists MMS_Conf_LiveURL ("
+                "create table if not exists MMS_Conf_Channel ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "url						VARCHAR (1024) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "channelName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "channelRegion				VARCHAR (128) NULL,"
-                    "channelCountry				VARCHAR (128) NULL,"
-                    "liveURLData				" + channelDataDefinition + ","
-                    "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
-                    "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
+                    "name						VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "region						VARCHAR (128) NULL,"
+                    "country					VARCHAR (128) NULL,"
+                    "channelData				" + channelDataDefinition + ","
+                    "constraint MMS_Conf_Channel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_Channel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";

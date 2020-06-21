@@ -186,16 +186,16 @@ server {
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/liveURL/?$ /api?version=$1&method=addLiveURLConf last;
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/?$ /api?version=$1&method=addChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/liveURL/([0-9]+)/?$ /api?version=$1&method=modifyLiveURLConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=modifyChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/liveURL/([0-9]+)/?$ /api?version=$1&method=removeLiveURLConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=removeChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/liveURL/?([0-9]*)/?$ /api?version=$1&method=liveURLConfList&liveURLKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/?([0-9]*)/?$ /api?version=$1&method=channelConfList&liveURLKey=$2 last;
 		}
 
 		if ($request_method = POST) {

@@ -1820,37 +1820,37 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
-    int64_t addLiveURLConf(
+    int64_t addChannelConf(
         int64_t workspaceKey,
         string label,
         string url,
         string type,
         string description,
-        string channelName,
-        string channelRegion,
-        string channelCountry,
-		Json::Value liveURLData);
+        string name,
+        string region,
+        string country,
+		Json::Value channelData);
 
-    void modifyLiveURLConf(
+    void modifyChannelConf(
         int64_t confKey,
         int64_t workspaceKey,
         string label,
         string url,
         string type,
         string description,
-        string channelName,
-        string channelRegion,
-        string channelCountry,
-		Json::Value liveURLData);
+        string name,
+        string region,
+        string country,
+		Json::Value channelData);
 
-    void removeLiveURLConf(
+    void removeChannelConf(
         int64_t workspaceKey,
         int64_t confKey);
 
-    Json::Value getLiveURLConfList (
+    Json::Value getChannelConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
-		string label, string type, string channelName, string channelRegion, string channelCountry, string url,
+		string label, string type, string name, string region, string country, string url,
 		string labelOrder);
 
     pair<int64_t, string> getLiveURLConfDetails(

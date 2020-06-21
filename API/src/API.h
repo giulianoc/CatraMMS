@@ -404,24 +404,24 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
-    void addLiveURLConf(
+    void addChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void modifyLiveURLConf(
+    void modifyChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeLiveURLConf(
+    void removeChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void liveURLConfList(
+    void channelConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);

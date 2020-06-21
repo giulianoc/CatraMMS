@@ -929,13 +929,13 @@ void API::facebookConfList(
     }
 }
 
-void API::addLiveURLConf(
+void API::addChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addLiveURLConf";
+    string api = "addChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -945,13 +945,13 @@ void API::addLiveURLConf(
     try
     {
         string label;
-        string liveURL;
+        string url;
         string type;
         string description;
-        string channelName;
-        string channelRegion;
-        string channelCountry;
-        Json::Value liveURLData = Json::nullValue;
+        string name;
+        string region;
+        string country;
+        Json::Value channelData = Json::nullValue;
 
         try
         {
@@ -990,7 +990,7 @@ void API::addLiveURLConf(
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "LiveURL";
+            field = "Url";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -999,32 +999,32 @@ void API::addLiveURLConf(
 
                 throw runtime_error(errorMessage);
             }    
-            liveURL = requestBodyRoot.get(field, "XXX").asString();            
+            url = requestBodyRoot.get(field, "").asString();            
 
             field = "Type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				type = requestBodyRoot.get(field, "XXX").asString();            
+				type = requestBodyRoot.get(field, "").asString();            
 
             field = "Description";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				description = requestBodyRoot.get(field, "XXX").asString();            
+				description = requestBodyRoot.get(field, "").asString();            
 
-            field = "ChannelName";
+            field = "Name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelName = requestBodyRoot.get(field, "XXX").asString();            
+				name = requestBodyRoot.get(field, "").asString();            
 
-            field = "ChannelRegion";
+            field = "Region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
+				region = requestBodyRoot.get(field, "").asString();            
 
-            field = "ChannelCountry";
+            field = "Country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
+				country = requestBodyRoot.get(field, "").asString();            
 
-            field = "LiveURLData";
+            field = "ChannelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				liveURLData = requestBodyRoot[field];
+				channelData = requestBodyRoot[field];
             }
         }
         catch(runtime_error e)
@@ -1050,10 +1050,10 @@ void API::addLiveURLConf(
         string sResponse;
         try
         {
-            int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
-                workspace->_workspaceKey, label, liveURL, type, description,
-				channelName, channelRegion, channelCountry,
-				liveURLData);
+            int64_t confKey = _mmsEngineDBFacade->addChannelConf(
+                workspace->_workspaceKey, label, url, type, description,
+				name, region, country,
+				channelData);
 
             sResponse = (
                     string("{ ") 
@@ -1112,13 +1112,13 @@ void API::addLiveURLConf(
     }
 }
 
-void API::modifyLiveURLConf(
+void API::modifyChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "modifyLiveURLConf";
+    string api = "modifyChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1128,13 +1128,13 @@ void API::modifyLiveURLConf(
     try
     {
         string label;
-        string liveURL;
+        string url;
         string type;
         string description;
-        string channelName;
-        string channelRegion;
-        string channelCountry;
-        Json::Value liveURLData;
+        string name;
+        string region;
+        string country;
+        Json::Value channelData;
         
         try
         {
@@ -1173,7 +1173,7 @@ void API::modifyLiveURLConf(
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "LiveURL";
+            field = "Url";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1182,7 +1182,7 @@ void API::modifyLiveURLConf(
 
                 throw runtime_error(errorMessage);
             }    
-            liveURL = requestBodyRoot.get(field, "XXX").asString();            
+            url = requestBodyRoot.get(field, "").asString();            
 
             field = "Type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1192,22 +1192,22 @@ void API::modifyLiveURLConf(
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				description = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "ChannelName";
+            field = "Name";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelName = requestBodyRoot.get(field, "XXX").asString();            
+				name = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "ChannelRegion";
+            field = "Region";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelRegion = requestBodyRoot.get(field, "XXX").asString();            
+				region = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "ChannelCountry";
+            field = "Country";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-				channelCountry = requestBodyRoot.get(field, "XXX").asString();            
+				country = requestBodyRoot.get(field, "XXX").asString();            
 
-            field = "LiveURLData";
+            field = "ChannelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				liveURLData = requestBodyRoot[field];
+				channelData = requestBodyRoot[field];
             }
         }
         catch(runtime_error e)
@@ -1246,10 +1246,10 @@ void API::modifyLiveURLConf(
             }
             confKey = stoll(confKeyIt->second);
 
-            _mmsEngineDBFacade->modifyLiveURLConf(
-                confKey, workspace->_workspaceKey, label, liveURL, type, description,
-				channelName, channelRegion, channelCountry,
-				liveURLData);
+            _mmsEngineDBFacade->modifyChannelConf(
+                confKey, workspace->_workspaceKey, label, url, type, description,
+				name, region, country,
+				channelData);
 
             sResponse = (
                     string("{ ") 
@@ -1308,12 +1308,12 @@ void API::modifyLiveURLConf(
     }
 }
 
-void API::removeLiveURLConf(
+void API::removeChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeLiveURLConf";
+    string api = "removeChannelConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -1337,7 +1337,7 @@ void API::removeLiveURLConf(
             }
             confKey = stoll(confKeyIt->second);
             
-            _mmsEngineDBFacade->removeLiveURLConf(
+            _mmsEngineDBFacade->removeChannelConf(
                 workspace->_workspaceKey, confKey);
 
             sResponse = (
@@ -1348,7 +1348,7 @@ void API::removeLiveURLConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1356,7 +1356,7 @@ void API::removeLiveURLConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeLiveURLConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeChannelConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -1395,12 +1395,12 @@ void API::removeLiveURLConf(
     }
 }
 
-void API::liveURLConfList(
+void API::channelConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters)
 {
-    string api = "liveURLConfList";
+    string api = "channelConfList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1467,17 +1467,17 @@ void API::liveURLConfList(
 			*/                     
 		}
 
-		string liveURL;
-		auto liveURLIt = queryParameters.find("liveURL");
-		if (liveURLIt != queryParameters.end() && liveURLIt->second != "")
+		string url;
+		auto urlIt = queryParameters.find("url");
+		if (urlIt != queryParameters.end() && urlIt->second != "")
 		{
-			liveURL = liveURLIt->second;
+			url = urlIt->second;
 
-			string liveURLDecoded = curlpp::unescape(liveURL);
+			string urlDecoded = curlpp::unescape(url);
 			// still there is the '+' char
 			string plus = "\\+";
 			string plusDecoded = " ";
-			liveURL = regex_replace(liveURLDecoded, regex(plus), plusDecoded);
+			url = regex_replace(urlDecoded, regex(plus), plusDecoded);
 		}
 
 		string type;
@@ -1493,43 +1493,43 @@ void API::liveURLConfList(
 			type = regex_replace(typeDecoded, regex(plus), plusDecoded);
 		}
 
-		string channelName;
-		auto channelNameIt = queryParameters.find("channelName");
-		if (channelNameIt != queryParameters.end() && channelNameIt->second != "")
+		string name;
+		auto nameIt = queryParameters.find("name");
+		if (nameIt != queryParameters.end() && nameIt->second != "")
 		{
-			channelName = channelNameIt->second;
+			name = nameIt->second;
 
-			string channelNameDecoded = curlpp::unescape(channelName);
+			string nameDecoded = curlpp::unescape(name);
 			// still there is the '+' char
 			string plus = "\\+";
 			string plusDecoded = " ";
-			channelName = regex_replace(channelNameDecoded, regex(plus), plusDecoded);
+			name = regex_replace(nameDecoded, regex(plus), plusDecoded);
 		}
 
-		string channelRegion;
-		auto channelRegionIt = queryParameters.find("channelRegion");
-		if (channelRegionIt != queryParameters.end() && channelRegionIt->second != "")
+		string region;
+		auto regionIt = queryParameters.find("region");
+		if (regionIt != queryParameters.end() && regionIt->second != "")
 		{
-			channelRegion = channelRegionIt->second;
+			region = regionIt->second;
 
-			string channelRegionDecoded = curlpp::unescape(channelRegion);
+			string regionDecoded = curlpp::unescape(region);
 			// still there is the '+' char
 			string plus = "\\+";
 			string plusDecoded = " ";
-			channelRegion = regex_replace(channelRegionDecoded, regex(plus), plusDecoded);
+			region = regex_replace(regionDecoded, regex(plus), plusDecoded);
 		}
 
-		string channelCountry;
-		auto channelCountryIt = queryParameters.find("channelCountry");
-		if (channelCountryIt != queryParameters.end() && channelCountryIt->second != "")
+		string country;
+		auto countryIt = queryParameters.find("country");
+		if (countryIt != queryParameters.end() && countryIt->second != "")
 		{
-			channelCountry = channelCountryIt->second;
+			country = countryIt->second;
 
-			string channelCountryDecoded = curlpp::unescape(channelCountry);
+			string countryDecoded = curlpp::unescape(country);
 			// still there is the '+' char
 			string plus = "\\+";
 			string plusDecoded = " ";
-			channelCountry = regex_replace(channelCountryDecoded, regex(plus), plusDecoded);
+			country = regex_replace(countryDecoded, regex(plus), plusDecoded);
 		}
 
 		string labelOrder;
@@ -1545,13 +1545,12 @@ void API::liveURLConfList(
 
         {
             
-            Json::Value liveURLConfListRoot = _mmsEngineDBFacade->getLiveURLConfList(
+            Json::Value channelConfListRoot = _mmsEngineDBFacade->getChannelConfList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, 
-					liveURL, type, channelName, channelRegion, channelCountry,
-					labelOrder);
+					url, type, name, region, country, labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, liveURLConfListRoot);
+            string responseBody = Json::writeString(wbuilder, channelConfListRoot);
             
             sendSuccess(request, 200, responseBody);
         }
