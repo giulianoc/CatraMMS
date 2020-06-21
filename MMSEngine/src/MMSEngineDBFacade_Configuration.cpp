@@ -1287,6 +1287,9 @@ int64_t MMSEngineDBFacade::addChannelConf(
 	string name,
 	string region,
 	string country,
+	int64_t imageMediaItemKey,
+	string imageUniqueName,
+	int position,
 	Json::Value channelData)
 {
     string      lastSQLCommand;
@@ -1310,9 +1313,9 @@ int64_t MMSEngineDBFacade::addChannelConf(
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_Channel(workspaceKey, label, url, type, description, "
-				"name, region, country, channelData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "insert into MMS_Conf_Channel(workspaceKey, label, url, type, description, name, "
+				"region, country, imageMediaItemKey, imageUniqueName, position, channelData) values ("
+                "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1340,6 +1343,24 @@ int64_t MMSEngineDBFacade::addChannelConf(
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
 				preparedStatement->setString(queryParameterIndex++, country);
+			if (imageMediaItemKey == -1)
+			{
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+
+				if (imageUniqueName == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, imageUniqueName);
+			}
+			else
+			{
+				preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			}
+			if (position == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, position);
 			if (sChannelData == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1357,6 +1378,9 @@ int64_t MMSEngineDBFacade::addChannelConf(
 				+ ", name: " + name
 				+ ", region: " + region
 				+ ", country: " + country
+				+ ", imageMediaItemKey: " + to_string(imageMediaItemKey)
+				+ ", imageUniqueName: " + imageUniqueName
+				+ ", position: " + to_string(position)
 				+ ", sChannelData: " + sChannelData
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1443,6 +1467,9 @@ void MMSEngineDBFacade::modifyChannelConf(
 	string name,
 	string region,
 	string country,
+	int64_t imageMediaItemKey,
+	string imageUniqueName,
+	int position,
 	Json::Value channelData)
 {
     string      lastSQLCommand;
@@ -1464,8 +1491,9 @@ void MMSEngineDBFacade::modifyChannelConf(
 			}
 
             lastSQLCommand = 
-                "update MMS_Conf_Channel set label = ?, url = ?, type = ?, description = ?, "
-				"name = ?, region = ?, country = ?, channelData = ? "
+                "update MMS_Conf_Channel set label = ?, url = ?, type = ?, description = ?, name = ?, "
+				"region = ?, country = ?, imageMediaItemKey = ?, imageUniqueName = ?, position = ?, "
+				"channelData = ? "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -1493,6 +1521,24 @@ void MMSEngineDBFacade::modifyChannelConf(
 				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
 				preparedStatement->setString(queryParameterIndex++, country);
+			if (imageMediaItemKey == -1)
+			{
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+
+				if (imageUniqueName == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, imageUniqueName);
+			}
+			else
+			{
+				preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			}
+			if (position == -1)
+				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, position);
 			if (sChannelData == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 			else
@@ -1511,6 +1557,9 @@ void MMSEngineDBFacade::modifyChannelConf(
 				+ ", name: " + name
 				+ ", region: " + region
 				+ ", country: " + country
+				+ ", imageMediaItemKey: " + to_string(imageMediaItemKey)
+				+ ", imageUniqueName: " + imageUniqueName
+				+ ", position: " + to_string(position)
 				+ ", sChannelData: " + sChannelData
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
@@ -1892,8 +1941,9 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 				orderByCondition = "order by label " + labelOrder + " ";
 
             lastSQLCommand = 
-                string ("select confKey, label, url, type, description, name, region, country, "
-						"channelData from MMS_Conf_Channel ") 
+                string("select confKey, label, url, type, description, name, region, country, "
+						"imageMediaItemKey, imageUniqueName, position, channelData "
+						"from MMS_Conf_Channel ") 
                 + sqlWhere
 				+ orderByCondition
 				+ "limit ? offset ?";
@@ -1977,6 +2027,24 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 					channelConfRoot[field] = Json::nullValue;
 				else
 					channelConfRoot[field] = static_cast<string>(resultSet->getString("country"));
+
+                field = "imageMediaItemKey";
+				if (resultSet->isNull("imageMediaItemKey"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt64("imageMediaItemKey");
+
+                field = "imageUniqueName";
+				if (resultSet->isNull("imageUniqueName"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = static_cast<string>(resultSet->getString("imageUniqueName"));
+
+                field = "position";
+				if (resultSet->isNull("position"))
+					channelConfRoot[field] = Json::nullValue;
+				else
+					channelConfRoot[field] = resultSet->getInt("position");
 
                 field = "channelData";
 				if (resultSet->isNull("channelData"))

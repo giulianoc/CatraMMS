@@ -1829,6 +1829,9 @@ public:
         string name,
         string region,
         string country,
+		int64_t imageMediaItemKey,
+		string imageUniqueName,
+		int position,
 		Json::Value channelData);
 
     void modifyChannelConf(
@@ -1841,6 +1844,9 @@ public:
         string name,
         string region,
         string country,
+		int64_t imageMediaItemKey,
+		string imageUniqueName,
+		int position,
 		Json::Value channelData);
 
     void removeChannelConf(

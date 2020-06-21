@@ -951,6 +951,9 @@ void API::addChannelConf(
         string name;
         string region;
         string country;
+		int64_t imageMediaItemKey = -1;
+		string imageUniqueName;
+		int position = -1;
         Json::Value channelData = Json::nullValue;
 
         try
@@ -1021,6 +1024,18 @@ void API::addChannelConf(
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				country = requestBodyRoot.get(field, "").asString();            
 
+			field = "ImageMediaItemKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				imageMediaItemKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+			field = "ImageUniqueName";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				imageUniqueName = requestBodyRoot.get(field, "").asString();            
+
+			field = "Position";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
             field = "ChannelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -1052,7 +1067,7 @@ void API::addChannelConf(
         {
             int64_t confKey = _mmsEngineDBFacade->addChannelConf(
                 workspace->_workspaceKey, label, url, type, description,
-				name, region, country,
+				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				channelData);
 
             sResponse = (
@@ -1134,6 +1149,9 @@ void API::modifyChannelConf(
         string name;
         string region;
         string country;
+		int64_t imageMediaItemKey = -1;
+		string imageUniqueName;
+		int position = -1;
         Json::Value channelData;
         
         try
@@ -1204,6 +1222,18 @@ void API::modifyChannelConf(
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				country = requestBodyRoot.get(field, "XXX").asString();            
 
+			field = "ImageMediaItemKey";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				imageMediaItemKey = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
+			field = "ImageUniqueName";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				imageUniqueName = requestBodyRoot.get(field, "").asString();            
+
+			field = "Position";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				position = JSONUtils::asInt(requestBodyRoot, field, -1);            
+
             field = "ChannelData";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -1248,7 +1278,7 @@ void API::modifyChannelConf(
 
             _mmsEngineDBFacade->modifyChannelConf(
                 confKey, workspace->_workspaceKey, label, url, type, description,
-				name, region, country,
+				name, region, country, imageMediaItemKey, imageUniqueName, position,
 				channelData);
 
             sResponse = (
