@@ -235,6 +235,12 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
+	void manageLiveGrid(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot);
+
 	void liveCutThread(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,

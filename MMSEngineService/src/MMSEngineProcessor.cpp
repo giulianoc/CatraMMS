@@ -4353,6 +4353,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
+                        {
+                            try
+                            {
+								manageLiveGrid(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveGrid failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveGrid failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
                         {
 							try
@@ -9458,6 +9559,8 @@ void MMSEngineProcessor::manageLiveProxy(
 {
     try
     {
+		/*
+		 * commented because it will be High by default
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "EncodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9470,6 +9573,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			encodingPriority =
 				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 		}
+		*/
 
 		string configurationLabel;
 		string outputType;
@@ -9552,7 +9656,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			liveURLConfKey, configurationLabel, liveURL, outputType,
 			segmentDurationInSeconds, playlistEntriesNumber,
 			cdnURL,
-			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors, encodingPriority);
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)
     {
@@ -9569,6 +9673,170 @@ void MMSEngineProcessor::manageLiveProxy(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageLiveGrid(
+	int64_t ingestionJobKey,
+	MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot
+)
+{
+    try
+    {
+		/*
+		 * commented because it will be High by default
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+		*/
+
+		vector<pair<string, string>> channels;
+		int64_t encodingProfileKey = -1;
+		string outputType;
+		// string userAgent;
+		int segmentDurationInSeconds = 0;
+		int playlistEntriesNumber = 0;
+		long waitingSecondsBetweenAttemptsInCaseOfErrors;
+		long maxAttemptsNumberInCaseOfErrors;
+		string cdnURL;
+        {
+            string field = "ConfigurationLabels";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			Json::Value channelsRoot = parametersRoot[field];
+			for (int channelIndex = 0; channelIndex < channelsRoot.size(); channelIndex++)
+			{
+				string configurationLabel = channelsRoot[channelIndex].asString();
+
+				pair<int64_t, string> confKeyAndChannelURL = _mmsEngineDBFacade->getLiveURLConfDetails(
+					workspace->_workspaceKey, configurationLabel);            
+
+				int64_t channelConfKey;
+				string channelURL;
+				tie(channelConfKey, channelURL) = confKeyAndChannelURL;
+
+				channels.push_back(make_pair(configurationLabel, channelURL));
+			}
+
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
+
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", Field: " + keyField
+                    + ", Field: " + labelField
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+            field = "OutputType";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				outputType = "HLS";
+			else
+            	outputType = parametersRoot.get(field, "XXX").asString();
+
+			if (outputType == "HLS") // || outputType == "DASH")
+			{
+				field = "SegmentDurationInSeconds";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					segmentDurationInSeconds = 10;
+				else
+					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+
+				field = "PlaylistEntriesNumber";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					playlistEntriesNumber = 6;
+				else
+					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+			}
+			else if (outputType == "CDN77")
+			{
+				field = "CDN_URL";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				cdnURL = parametersRoot.get(field, "XXX").asString();
+			}
+
+			field = "MaxAttemptsNumberInCaseOfErrors";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				maxAttemptsNumberInCaseOfErrors = 3;
+			else
+				maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(parametersRoot, field, 0);
+
+			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
+			else
+				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
+        }
+
+		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
+			channels, encodingProfileKey, outputType,
+			segmentDurationInSeconds, playlistEntriesNumber, cdnURL,
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveGrid failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveGrid failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

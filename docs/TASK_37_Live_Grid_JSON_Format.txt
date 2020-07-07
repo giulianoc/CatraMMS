@@ -15,13 +15,13 @@
 		],
 
 		// mandatory: number of the columns of the grid
-		"columns": 2,
+		"Columns": 2,
 
 		// mandatory: grid width
-		"gridWidth": 1024,
+		"GridWidth": 1024,
 
 		// mandatory: grid heigth
-		"gridHeigth": 578,
+		"GridHeigth": 578,
 
 		// mandatory. It will represent the encoding profile to be used
 		// EncodingProfileKey or EncodingProfileLabel has to be present

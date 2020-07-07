@@ -964,6 +964,28 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Live-Grid")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::LiveGrid;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateLiveGridMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
+    }
     else if (type == "Live-Cut")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveCut;
@@ -1159,6 +1181,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
+    {
+        validateLiveGridMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
@@ -3672,6 +3699,107 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	}
 }
 
+void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot, bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+	vector<string> mandatoryFields = {
+		"ConfigurationLabels",
+		"Columns",
+		"GridWidth",
+		"GridHeigth"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string encodingProfileKeyField = "EncodingProfileKey";
+    string encodingProfileLabelField = "EncodingProfileLabel";
+    if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
+		&& !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
+    {
+        string errorMessage = __FILEREF__ + "Neither of the following fields are present"
+			+ ", Field: " + encodingProfileLabelField
+			+ ", Field: " + encodingProfileKeyField
+			+ ", label: " + label
+			;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    string field = "ConfigurationLabels";
+    Json::Value configurationLabelsRoot = parametersRoot[field];
+	if (configurationLabelsRoot.size() < 2)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels"
+			+ ", Field: " + field
+			+ ", configurationLabelsRoot.size: " + to_string(configurationLabelsRoot.size())
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+    field = "OutputType";
+	string liveGridOutputType;
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		liveGridOutputType = parametersRoot.get(field, "").asString();
+		if (!isLiveGridOutputTypeValid(liveGridOutputType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS)"
+                + ", Field: " + field
+                + ", liveGridOutputType: " + liveGridOutputType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	if (liveGridOutputType == "CDN77")
+	{
+		vector<string> mandatoryFields = {
+			"CDN_URL"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+}
+
 void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
@@ -4582,6 +4710,22 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
     for (string outputType: outputTypes)
     {
         if (liveProxyOutputType == outputType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isLiveGridOutputTypeValid(string liveGridOutputType)
+{
+    vector<string> outputTypes = {
+        "CDN77",
+        "HLS"
+    };
+
+    for (string outputType: outputTypes)
+    {
+        if (liveGridOutputType == outputType) 
             return true;
     }
     

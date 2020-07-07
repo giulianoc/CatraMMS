@@ -270,7 +270,8 @@ public:
 		LiveRecorder		= 8,
 		VideoSpeed			= 9,
 		PictureInPicture	= 10,
-		LiveProxy			= 11
+		LiveProxy			= 11,
+		LiveGrid			= 12
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -300,6 +301,8 @@ public:
                 return "PictureInPicture";
             case EncodingType::LiveProxy:
                 return "LiveProxy";
+            case EncodingType::LiveGrid:
+                return "LiveGrid";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -334,6 +337,8 @@ public:
             return EncodingType::PictureInPicture;
         else if (lowerCase == "liveproxy")
             return EncodingType::LiveProxy;
+        else if (lowerCase == "livegrid")
+            return EncodingType::LiveGrid;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -622,6 +627,11 @@ public:
 			Json::Value								_ingestedParametersRoot;
 		};
 
+		struct LiveGridData {
+			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_ingestedParametersRoot;
+		};
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
@@ -633,6 +643,7 @@ public:
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveProxyData>					_liveProxyData;
+		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
     enum class WorkspaceType {
@@ -670,6 +681,7 @@ public:
         PictureInPicture		= 25,
         LiveProxy				= 26,
         LiveCut					= 27,
+        LiveGrid				= 28,
 
         EmailNotification       = 30,
         MediaCrossReference		= 31,
@@ -738,6 +750,8 @@ public:
 				return "Live-Proxy";
 			case IngestionType::LiveCut:
 				return "Live-Cut";
+			case IngestionType::LiveGrid:
+				return "Live-Grid";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -817,6 +831,8 @@ public:
             return IngestionType::LiveProxy;
         else if (lowerCase == "live-cut")
             return IngestionType::LiveCut;
+        else if (lowerCase == "live-grid")
+            return IngestionType::LiveGrid;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1602,8 +1618,15 @@ public:
 		int64_t ingestionJobKey,
 		int64_t liveURLConfKey, string configurationLabel, string url,
 		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
-		EncodingPriority encodingPriority);
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+
+	int addEncoding_LiveGridJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		vector<pair<string, string>>& channels,
+		int64_t encodingProfileKey,
+		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
     int addEncoding_VideoSpeed (
         shared_ptr<Workspace> workspace,

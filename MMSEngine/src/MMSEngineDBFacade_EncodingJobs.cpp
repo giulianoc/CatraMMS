@@ -2768,6 +2768,125 @@ void MMSEngineDBFacade::getEncodingJobs(
                 {
                 }
 				*/
+				else if (encodingItem->_encodingType == EncodingType::LiveGrid)
+                {
+                    encodingItem->_liveGridData = make_shared<EncodingItem::LiveGridData>();
+                    
+                    {
+                        lastSQLCommand = 
+                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementIngestion->setInt64(queryParameterIndex++,
+							encodingItem->_ingestionJobKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+                        if (imgestionResultSet->next())
+                        {
+                            string liveGridParameters = imgestionResultSet->getString("metaDataContent");
+                            
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(liveGridParameters.c_str(),
+                                        liveGridParameters.c_str() + liveGridParameters.size(), 
+                                        &(encodingItem->_liveGridData->_ingestedParametersRoot), &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                            + ", errors: " + errors
+                                            + ", liveGridParameters: " + liveGridParameters
+                                            ;
+                                    _logger->error(errorMessage);
+
+                                    // in case an encoding job row generate an error, we have to make it to Failed
+                                    // otherwise we will indefinitely get this error
+                                    {
+										_logger->info(__FILEREF__ + "EncodingJob update"
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											);
+                                        lastSQLCommand = 
+                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+											conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        int queryParameterIndex = 1;
+                                        preparedStatementUpdate->setString(queryParameterIndex++,
+											MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++,
+											encodingItem->_encodingJobKey);
+
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "@SQL statistics@"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
+                                    }
+
+                                    continue;
+                                    // throw runtime_error(errorMessage);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+								_logger->info(__FILEREF__ + "EncodingJob update"
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									);
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
+
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "@SQL statistics@"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                }
                 else
                 {
                     string errorMessage = __FILEREF__ + "EncodingType is wrong"
@@ -8646,8 +8765,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t ingestionJobKey,
 	int64_t liveURLConfKey, string configurationLabel, string url,
 	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
-	EncodingPriority encodingPriority
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 )
 {
 
@@ -8669,7 +8787,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
             + ", cdnURL: " + cdnURL
-            + ", encodingPriority: " + toString(encodingPriority)
         );
 
         conn = _connectionPool->borrow();	
@@ -8690,22 +8807,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 		{
 			EncodingType encodingType = EncodingType::LiveProxy;
         
-			/*
-			string parameters = string()
-                + "{ "
-				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
-                + "\"liveURLConfKey\": " + to_string(liveURLConfKey)
-                + ", \"configurationLabel\": \"" + configurationLabel + "\""
-                + ", \"liveURL\": \"" + liveURL + "\""
-                + ", \"outputType\": \"" + outputType + "\""
-                + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds)
-                + ", \"playlistEntriesNumber\": " + to_string(playlistEntriesNumber)
-                + ", \"maxAttemptsNumberInCaseOfErrors\": " + to_string(maxAttemptsNumberInCaseOfErrors)
-                + ", \"waitingSecondsBetweenAttemptsInCaseOfErrors\": " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
-                + ", \"cdnURL\": \"" + cdnURL + "\""
-                + "} "
-                ;
-			*/
 			string parameters;
 			{
 				Json::Value parametersRoot;
@@ -8760,6 +8861,347 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				preparedStatement->setString(queryParameterIndex++, parameters);
 				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingType: " + toString(encodingType)
+					+ ", parameters: " + parameters
+					+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+
+			// int64_t encodingJobKey = getLastInsertId(conn);
+        
+			{
+				IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
+				string errorMessage;
+				string processorMMS;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+			}
+		}
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }        
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }
+}
+
+int MMSEngineDBFacade::addEncoding_LiveGridJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		vector<pair<string, string>>& channels,
+		int64_t encodingProfileKey,
+		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
+	)
+{
+
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+    bool autoCommit = true;
+
+    try
+    {
+        _logger->info(__FILEREF__ + "addEncoding_LiveGridJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", channels.size: " + to_string(channels.size())
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+            + ", outputType: " + outputType
+            + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+            + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+            + ", cdnURL: " + cdnURL
+            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+            + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
+		{
+			EncodingType encodingType = EncodingType::LiveGrid;
+
+			string parameters;
+			{
+				Json::Value parametersRoot;
+
+				string field;
+
+				{
+					Json::Value channelsRoot(Json::arrayValue);
+
+					for (int channelIndex = 0; channelIndex < channels.size(); channelIndex++)
+					{
+						pair<string, string> channel = channels[channelIndex];
+
+						string configurationLabel;
+						string channelURL;
+						tie(configurationLabel, channelURL) = channel;
+
+						Json::Value channelRoot;
+
+						field = "configurationLabel";
+						channelRoot[field] = configurationLabel;
+
+						field = "channelURL";
+						channelRoot[field] = channelURL;
+
+						channelsRoot.append(channelRoot);
+					}
+
+					field = "channels";
+					parametersRoot[field] = channelsRoot;
+				}
+
+				field = "encodingProfileKey";
+				parametersRoot[field] = encodingProfileKey;
+
+				field = "outputType";
+				parametersRoot[field] = outputType;
+
+				field = "segmentDurationInSeconds";
+				parametersRoot[field] = segmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				parametersRoot[field] = playlistEntriesNumber;
+
+				field = "cdnURL";
+				parametersRoot[field] = cdnURL;
+
+				field = "maxAttemptsNumberInCaseOfErrors";
+				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
+
+				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
+				Json::StreamWriterBuilder wbuilder;
+				parameters = Json::writeString(wbuilder, parametersRoot);
+			}
+
+			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+				+ ", parameters.length: " + to_string(parameters.length()));
+        
+			{
+				// 2019-11-06: we will force the encoding priority to high to be sure this EncodingJob
+				//	will be managed as soon as possible
+				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
+
+				lastSQLCommand = 
+					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+												"NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+				preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+				preparedStatement->setString(queryParameterIndex++, parameters);
+				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
+				preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();

@@ -54,6 +54,8 @@ public:
 
     bool isLiveProxyOutputTypeValid(string liveProxyOutputType);
 
+    bool isLiveGridOutputTypeValid(string liveGridOutputType);
+
     void validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root);
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot, bool validateDependenciesToo);
@@ -168,7 +170,12 @@ public:
     void validateLiveProxyMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
-    
+
+    void validateLiveGridMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
 	void validateLiveCutMetadata(int64_t workspaceKey, string label,
 		Json::Value parametersRoot, bool validateDependenciesToo,
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
