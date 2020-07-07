@@ -246,6 +246,24 @@ public:
 		string cdnURL,
 		pid_t* pChildPid);
 
+	void liveGridByHTTPStreaming(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string encodingProfileDetails,
+		string userAgent,
+		vector<pair<string,string>> channels,   // name,url
+		int gridColumns,
+		int gridWidth,  // i.e.: 1024
+		int gridHeight, // i.e.: 578
+
+		string outputType,  // HLS or DASH (only HLS is supported)
+
+		// next are parameters for the output
+		int segmentDurationInSeconds,
+		int playlistEntriesNumber,
+		string manifestDirectoryPathName,
+		pid_t* pChildPid);
+
 	void changeFileFormat(
 		int64_t ingestionJobKey,
 		int64_t sourceKey,
@@ -293,8 +311,6 @@ private:
     int				_waitingNFSSync_sleepTimeInSeconds;
 
     void settingFfmpegParameters(
-        string stagingEncodedAssetPathName,
-        
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
         

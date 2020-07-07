@@ -1,0 +1,60 @@
+"Task": {
+	// optional
+	"Label"="My Live Grid",
+
+	// mandatory
+	"Type": "Live-Grid",
+
+	"Parameters": {
+
+		// mandatory...
+		"ConfigurationLabels": [
+			"<conf label 1>",
+			"<conf label 2>",
+			"..."
+		],
+
+		// mandatory: number of the columns of the grid
+		"columns": 2,
+
+		// mandatory: grid width
+		"gridWidth": 1024,
+
+		// mandatory: grid heigth
+		"gridHeigth": 578,
+
+		// mandatory. It will represent the encoding profile to be used
+		// EncodingProfileKey or EncodingProfileLabel has to be present
+		"EncodingProfileKey": 1,
+		"EncodingProfileLabel": "Profile Logo",
+
+		// optional, possible values: HLS, CDN77. Default: HLS
+		"OutputType": "HLS"
+
+		// optional. To be set only in case a specific encoders pool has to be used
+		"EncodersPool": "",
+
+		// optional, used only in case of HLS, Default: 10
+		"SegmentDurationInSeconds": 10,
+
+		// optional, used only in case of HLS, Default: 6
+		"PlaylistEntriesNumber": 6,
+
+		// mandatory only in case of CDN77
+		"CDN_URL": "...",
+
+		// optional: user agent to be used when the URL is called
+		"UserAgent": "",
+
+		// optional. In case one of the URL fails, the LiveGrid task tries it again.
+		//		This parameter indicates how many times LiveGrid has to try.
+		//		Default: 2
+		"MaxAttemptsNumberInCaseOfErrors": 2,
+
+		// optional. In case one of the URL fails, the LiveGrid task tries it again.
+		//		This parameter indicates how many seconds LiveGrid has to wait before to try again.
+		//		Default: 600
+		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600
+	}
+}
+

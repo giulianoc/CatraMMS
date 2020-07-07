@@ -4316,7 +4316,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         if (ingestionJobKey != -1)
             sqlWhere += ("and ij.ingestionJobKey = ? ");
         if (label != "")
-            sqlWhere += ("and ij.label like ? ");
+			sqlWhere += ("and LOWER(ij.label) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (ingestionType != "")

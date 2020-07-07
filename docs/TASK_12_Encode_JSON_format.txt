@@ -37,7 +37,7 @@
 		"EncodingProfilesSetLabel": "Sport",
 		"EncodingProfilesSetKey": 1,
 		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "Profile Logo"
+		"EncodingProfileLabel": "Profile Logo",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [

@@ -1782,6 +1782,8 @@ void API::createDeliveryAuthorization(
         if (mediaItemKeyIt != queryParameters.end())
         {
 			mediaItemKey = stoll(mediaItemKeyIt->second);
+			if (mediaItemKey == 0)
+				mediaItemKey = -1;
         }
 
         int64_t encodingProfileKey = -1;
@@ -1789,6 +1791,19 @@ void API::createDeliveryAuthorization(
         if (encodingProfileKeyIt != queryParameters.end())
         {
 			encodingProfileKey = stoll(encodingProfileKeyIt->second);
+        }
+
+        string uniqueName;
+        auto uniqueNameIt = queryParameters.find("uniqueName");
+        if (uniqueNameIt != queryParameters.end())
+        {
+			uniqueName = uniqueNameIt->second;
+
+			string uniqueNameDecoded = curlpp::unescape(uniqueName);
+			// still there is the '+' char
+			string plus = "\\+";
+			string plusDecoded = " ";
+			uniqueName = regex_replace(uniqueNameDecoded, regex(plus), plusDecoded);
         }
 
 		// this is for live authorization
@@ -1799,10 +1814,11 @@ void API::createDeliveryAuthorization(
 			ingestionJobKey = stoll(ingestionJobKeyIt->second);
         }
 
-		if (physicalPathKey == -1 && (mediaItemKey == -1 || encodingProfileKey == -1)
+		if (physicalPathKey == -1
+				&& ((mediaItemKey == -1 && uniqueName == "") || encodingProfileKey == -1)
 				&& ingestionJobKey == -1)
 		{
-            string errorMessage = string("The 'physicalPathKey' or the mediaItemKey/encodingProfileKey or ingestionJobKey parameters have to be present");
+            string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/encodingProfileKey or ingestionJobKey parameters have to be present");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
@@ -1863,6 +1879,16 @@ void API::createDeliveryAuthorization(
 				}
 				else
 				{
+					if (uniqueName != "" && mediaItemKey == -1)
+					{
+						bool warningIfMissing = false;
+						pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+								requestWorkspace->_workspaceKey,
+								uniqueName, warningIfMissing);
+						tie(mediaItemKey, ignore) = mediaItemKeyDetails;
+					}
+
 					tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
 						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, mediaItemKey, encodingProfileKey, save,
 						requestWorkspace);

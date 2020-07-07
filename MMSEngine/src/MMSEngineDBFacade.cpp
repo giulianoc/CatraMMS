@@ -2562,7 +2562,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
-                    
+
         deliveryAuthorizationKey = getLastInsertId(conn);
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"

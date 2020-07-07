@@ -89,7 +89,7 @@ void FFMpeg::encodeContent(
 
     try
     {
-		_logger->info(__FILEREF__ + "Received encodeContent"
+		_logger->info(__FILEREF__ + "Received " + _currentApiName
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
@@ -132,8 +132,6 @@ void FFMpeg::encodeContent(
         _twoPasses = false;
         
         settingFfmpegParameters(
-            stagingEncodedAssetPathName,
-
             encodingProfileDetails,
             isVideo,
 
@@ -204,11 +202,10 @@ void FFMpeg::encodeContent(
 
 			Manifest will be like:
 			#EXTM3U
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="English",AUTOSELECT=YES, DEFAULT=YES,URI="eng/prog_index.m3u8"
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="sp",NAME="Espanol",AUTOSELECT=YES, DEFAULT=NO,URI="sp/prog_index.m3u8"
-
-			#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=195023,CODECS="avc1.42e00a,mp4a.40.2",AUDIO="audio"
-			lo/prog_index.m3u8
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
+			#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
+			0/8896718_1509416.m3u8
 
 
 			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
@@ -7337,6 +7334,638 @@ void FFMpeg::liveProxyByCDN(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::liveGridByHTTPStreaming(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	string encodingProfileDetails,
+	string userAgent,
+	vector<pair<string,string>> channels,	// name,url
+	int gridColumns,
+	int gridWidth,	// i.e.: 1024
+	int gridHeight, // i.e.: 578
+
+	string outputType,	// HLS or DASH
+
+	// next are parameters for the output
+	int segmentDurationInSeconds,
+	int playlistEntriesNumber,
+	string manifestDirectoryPathName,
+	pid_t* pChildPid)
+{
+	vector<string> ffmpegArgumentList;
+	ostringstream ffmpegArgumentListStream;
+	int iReturnedStatus = 0;
+	string segmentListPath;
+	chrono::system_clock::time_point startFfmpegCommand;
+	chrono::system_clock::time_point endFfmpegCommand;
+	time_t utcNow;
+
+	_currentApiName = "liveGridByHTTPStreaming";
+
+    try
+    {
+		_logger->info(__FILEREF__ + "Received " + _currentApiName
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			// + ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
+			// + ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
+		);
+
+		string outputTypeLowerCase;
+		outputTypeLowerCase.resize(outputType.size());
+		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
+				[](unsigned char c){return tolower(c); } );
+
+		if (outputTypeLowerCase != "hls") // && outputTypeLowerCase != "dash")
+		{
+			string errorMessage = __FILEREF__
+				+ "liveProxyByHTTPStreaming. Wrong output type (it has to be HLS or DASH)"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", outputType: " + outputType;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+		// I saw just once that the directory was not created and the liveencoder remains in the loop
+		// where:
+		//	1. the encoder returns an error becaise of the missing directory
+		//	2. EncoderVideoAudioProxy calls again the encoder
+		// So, for this reason, the below check is done
+		if (!FileIO::directoryExisting(manifestDirectoryPathName))
+		{
+			_logger->warn(__FILEREF__ + "manifestDirectoryPathName does not exist!!! It will be created"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+					);
+
+			_logger->info(__FILEREF__ + "Create directory"
+                + ", manifestDirectoryPathName: " + manifestDirectoryPathName
+            );
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(manifestDirectoryPathName,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IXGRP |
+				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+		}
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey) + "_"
+			+ to_string(encodingJobKey)
+			+ ".liveGrid.log"
+		;
+
+		/*
+			option 1 (using overlay/pad)
+			ffmpeg \
+				-i https://1673829767.rsc.cdn77.org/1673829767/index.m3u8 \
+				-i https://1696829226.rsc.cdn77.org/1696829226/index.m3u8 \
+				-i https://1681769566.rsc.cdn77.org/1681769566/index.m3u8 \
+				-i https://1452709105.rsc.cdn77.org/1452709105/index.m3u8 \
+				-filter_complex \
+				"[0:v]                 pad=width=$X:height=$Y                  [background]; \
+				 [0:v]                 scale=width=$X/2:height=$Y/2            [1]; \
+				 [1:v]                 scale=width=$X/2:height=$Y/2            [2]; \
+				 [2:v]                 scale=width=$X/2:height=$Y/2            [3]; \
+				 [3:v]                 scale=width=$X/2:height=$Y/2            [4]; \
+				 [background][1]       overlay=shortest=1:x=0:y=0              [background+1];
+				 [background+1][2]     overlay=shortest=1:x=$X/2:y=0           [1+2];
+				 [1+2][3]              overlay=shortest=1:x=0:y=$Y/2           [1+2+3];
+				 [1+2+3][4]            overlay=shortest=1:x=$X/2:y=$Y/2        [1+2+3+4]
+				" -map "[1+2+3+4]" -c:v:0 libx264 \
+				-map 0:a -c:a aac \
+				-map 1:a -c:a aac \
+				-map 2:a -c:a aac \
+				-map 3:a -c:a aac \
+				-t 30 multiple_input_grid.mp4
+
+			option 2: using hstack/vstack (faster than overlay/pad)
+			ffmpeg \
+				-i https://1673829767.rsc.cdn77.org/1673829767/index.m3u8 \
+				-i https://1696829226.rsc.cdn77.org/1696829226/index.m3u8 \
+				-i https://1681769566.rsc.cdn77.org/1681769566/index.m3u8 \
+				-i https://1452709105.rsc.cdn77.org/1452709105/index.m3u8 \
+				-filter_complex \
+				"[0:v]                  scale=width=$X/2:height=$Y/2            [0v]; \
+				 [1:v]                  scale=width=$X/2:height=$Y/2            [1v]; \
+				 [2:v]                  scale=width=$X/2:height=$Y/2            [2v]; \
+				 [3:v]                  scale=width=$X/2:height=$Y/2            [3v]; \
+				 [0v][1v]               hstack=inputs=2:shortest=1              [0r]; \	#r sta per row
+				 [2v][3v]               hstack=inputs=2:shortest=1              [1r]; \
+				 [0r][1r]               vstack=inputs=2:shortest=1              [0r+1r]
+				 " -map "[0r+1r]" -codec:v libx264 -b:v 800k -preset veryfast -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/low/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/low/test.m3u8 \
+				-map 0:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv1/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv1/test.m3u8 \
+				-map 1:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv2/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv2/test.m3u8 \
+				-map 2:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv3/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv3/test.m3u8 \
+				-map 3:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv4/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv4/test.m3u8
+		 */
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		ffmpegArgumentList.push_back("ffmpeg");
+		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
+		//		as fast as possible. This option will slow down the reading of the input(s)
+		//		to the native frame rate of the input(s). It is useful for real-time output
+		//		(e.g. live streaming).
+		// -hls_flags append_list: Append new segments into the end of old segment list
+		//		and remove the #EXT-X-ENDLIST from the old segment list
+		// -hls_time seconds: Set the target segment length in seconds. Segment will be cut on the next key frame
+		//		after this time has passed.
+		// -hls_list_size size: Set the maximum number of playlist entries. If set to 0 the list file
+		//		will contain all the segments. Default value is 5.
+		if (userAgent != "")
+		{
+			ffmpegArgumentList.push_back("-user_agent");
+			ffmpegArgumentList.push_back(userAgent);
+		}
+		ffmpegArgumentList.push_back("-re");
+		for(pair<string,string> channel: channels)
+		{
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(channel.second);
+		}
+		int channelsNumber = channels.size();
+		int gridRows = channelsNumber / gridColumns;
+		if (channelsNumber % gridColumns != 0)
+			gridRows += 1;
+		{
+			string ffmpegFilterComplex;
+
+			// [0:v]                  scale=width=$X/2:height=$Y/2            [0v];
+			for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+			{
+				ffmpegFilterComplex += (
+					"[" + to_string(channelIndex) + ":v]"
+					+ "scale=width=" + to_string(gridWidth) + "/" + to_string(gridColumns)
+						+ ":height=" + to_string(gridHeight) + "/" + to_string(gridRows)
+					+ "[" + to_string(channelIndex) + "v];"
+					);
+			}
+			// [0v][1v]               hstack=inputs=2:shortest=1              [0r]; #r sta per row
+			for (int gridRowIndex = 0, channelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
+			{
+				int columnsIntoTheRow;
+				if (gridRowIndex + 1 < gridRows)
+				{
+					// it is not the last row --> we have all the columns
+					columnsIntoTheRow = gridColumns;
+				}
+				else
+				{
+					if (channelsNumber % gridColumns != 0)
+						columnsIntoTheRow = channelsNumber % gridColumns;
+					else
+						columnsIntoTheRow = gridColumns;
+				}
+				for(int gridColumnIndex = 0; gridColumnIndex < columnsIntoTheRow; gridColumnIndex++)
+					ffmpegFilterComplex += ("[" + to_string(channelIndex++) + "v]");
+
+				ffmpegFilterComplex += (
+					"hstack=inputs=" + to_string(columnsIntoTheRow) + ":shortest=1["
+					+ to_string(gridRowIndex) + "r];"
+					);
+			}
+
+			// [0r][1r]               vstack=inputs=2:shortest=1              [out]
+			for (int gridRowIndex = 0, channelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
+				ffmpegFilterComplex += ("[" + to_string(gridRowIndex) + "r]");
+			ffmpegFilterComplex += (
+				"vstack=inputs=" + to_string(gridRows) + ":shortest=1[outVideo]"
+			);
+
+			ffmpegArgumentList.push_back("-filter_complex");
+			ffmpegArgumentList.push_back(ffmpegFilterComplex);
+		}
+
+		string manifestFileName = to_string(ingestionJobKey)
+			+ "_" + to_string(encodingJobKey)
+			+ ".m3u8";
+
+		// We will create:
+		//  - one m3u8 for each track (video and audio)
+		//  - one main m3u8 having a group for AUDIO
+		{
+			/*
+			Manifest will be like:
+			#EXTM3U
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
+			#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
+			0/8896718_1509416.m3u8
+
+			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
+			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
+
+			*/
+
+			{
+				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				{
+					string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+
+					string audioPathName = manifestDirectoryPathName + "/"
+						+ audioTrackDirectoryName;
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", audioPathName: " + audioPathName
+					);
+					FileIO::createDirectory(audioPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				{
+					string videoTrackDirectoryName = "0_video";
+					string videoPathName = manifestDirectoryPathName + "/" + videoTrackDirectoryName;
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", videoPathName: " + videoPathName
+					);
+					FileIO::createDirectory(videoPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
+			// create manifest file
+			{
+				string mainManifestPathName = manifestDirectoryPathName + "/"
+					+ manifestFileName;
+
+				string mainManifest;
+
+				mainManifest = string("#EXTM3U") + "\n";
+
+				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				{
+					string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+
+					pair<string, string> channel = channels[channelIndex];
+					string channelName = channel.first;
+
+					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
+						+ channelName + "\",NAME=\"" + channelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
+						+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
+
+					mainManifest += (audioManifestLine + "\n");
+				}
+
+				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO=\"audio\"";
+				mainManifest += (videoManifestLine + "\n");
+
+				string videoTrackDirectoryName = 0 + "_video";
+				mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
+
+				ofstream manifestFile(mainManifestPathName);
+				manifestFile << mainManifest;
+			}
+		}
+
+		{
+			string httpStreamingFileFormat;    
+			string ffmpegHttpStreamingParameter = "";
+
+			string ffmpegFileFormatParameter = "";
+
+			string ffmpegVideoCodecParameter = "";
+			string ffmpegVideoProfileParameter = "";
+			string ffmpegVideoResolutionParameter = "";
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoOtherParameters = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegVideoFrameRateParameter = "";
+			string ffmpegVideoKeyFramesRateParameter = "";
+
+			string ffmpegAudioCodecParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+			string ffmpegAudioOtherParameters = "";
+			string ffmpegAudioChannelsParameter = "";
+			string ffmpegAudioSampleRateParameter = "";
+
+
+			_currentlyAtSecondPass = false;
+
+			// we will set by default _twoPasses to false otherwise, since the ffmpeg class is reused
+			// it could remain set to true from a previous call
+			_twoPasses = false;
+        
+			settingFfmpegParameters(
+				encodingProfileDetails,
+				true,	// isVideo,
+
+				httpStreamingFileFormat,
+				ffmpegHttpStreamingParameter,
+
+				ffmpegFileFormatParameter,
+
+				ffmpegVideoCodecParameter,
+				ffmpegVideoProfileParameter,
+				ffmpegVideoResolutionParameter,
+				ffmpegVideoBitRateParameter,
+				ffmpegVideoOtherParameters,
+				_twoPasses,
+				ffmpegVideoMaxRateParameter,
+				ffmpegVideoBufSizeParameter,
+				ffmpegVideoFrameRateParameter,
+				ffmpegVideoKeyFramesRateParameter,
+
+				ffmpegAudioCodecParameter,
+				ffmpegAudioBitRateParameter,
+				ffmpegAudioOtherParameters,
+				ffmpegAudioChannelsParameter,
+				ffmpegAudioSampleRateParameter
+			);
+
+			{
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("[outVideo]");
+
+				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				// addToArguments(ffmpegVideoResolutionParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-threads");
+				ffmpegArgumentList.push_back("0");
+
+				if (outputTypeLowerCase == "hls")
+				{
+					ffmpegArgumentList.push_back("-hls_time");
+					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+
+					ffmpegArgumentList.push_back("-hls_list_size");
+					ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+					ffmpegArgumentList.push_back("-hls_delete_threshold");
+					ffmpegArgumentList.push_back(to_string(1));
+
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("delete_segments");
+
+					ffmpegArgumentList.push_back("-hls_start_number_source");
+					ffmpegArgumentList.push_back("datetime");
+
+					ffmpegArgumentList.push_back("-start_number");
+					ffmpegArgumentList.push_back(to_string(10));
+
+					{
+						string videoTrackDirectoryName = "0_video";
+
+						string segmentPathFileName =
+							manifestDirectoryPathName 
+							+ "/"
+							+ videoTrackDirectoryName
+							+ "/"
+							+ to_string(_currentIngestionJobKey)
+							+ "_"
+							+ to_string(_currentEncodingJobKey)
+							+ "_%04d.ts"
+						;
+						ffmpegArgumentList.push_back("-hls_segment_filename");
+						ffmpegArgumentList.push_back(segmentPathFileName);
+
+						ffmpegArgumentList.push_back("-f");
+						ffmpegArgumentList.push_back("hls");
+
+						string manifestFilePathName =
+							manifestDirectoryPathName 
+							+ "/"
+							+ videoTrackDirectoryName
+							+ "/"
+							+ to_string(_currentIngestionJobKey)
+							+ "_"
+							+ to_string(_currentEncodingJobKey)
+							+ ".m3u8"
+						;
+						ffmpegArgumentList.push_back(manifestFilePathName);
+					}
+				}
+				else if (outputTypeLowerCase == "dash")
+				{
+					/*
+					 * non so come si deve gestire nel caso di multi audio con DASH
+					*/
+				}
+
+				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						to_string(channelIndex) + ":a");
+
+					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+					if (outputTypeLowerCase == "hls")
+					{
+						{
+							ffmpegArgumentList.push_back("-hls_time");
+							ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+
+							ffmpegArgumentList.push_back("-hls_list_size");
+							ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+							ffmpegArgumentList.push_back("-hls_delete_threshold");
+							ffmpegArgumentList.push_back(to_string(1));
+
+							ffmpegArgumentList.push_back("-hls_flags");
+							ffmpegArgumentList.push_back("delete_segments");
+
+							ffmpegArgumentList.push_back("-hls_start_number_source");
+							ffmpegArgumentList.push_back("datetime");
+
+							ffmpegArgumentList.push_back("-start_number");
+							ffmpegArgumentList.push_back(to_string(10));
+						}
+
+						string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+
+						{
+							string segmentPathFileName =
+								manifestDirectoryPathName 
+								+ "/"
+								+ audioTrackDirectoryName
+								+ "/"
+								+ to_string(_currentIngestionJobKey)
+								+ "_"
+								+ to_string(_currentEncodingJobKey)
+								+ "_%04d.ts"
+							;
+							ffmpegArgumentList.push_back("-hls_segment_filename");
+							ffmpegArgumentList.push_back(segmentPathFileName);
+
+							ffmpegArgumentList.push_back("-f");
+							ffmpegArgumentList.push_back("hls");
+
+							string manifestFilePathName =
+								manifestDirectoryPathName
+								+ "/"
+								+ audioTrackDirectoryName
+								+ "/"
+								+ to_string(_currentIngestionJobKey)
+								+ "_"
+								+ to_string(_currentEncodingJobKey)
+								+ ".m3u8"
+							;
+							ffmpegArgumentList.push_back(manifestFilePathName);
+						}
+					}
+					else if (outputTypeLowerCase == "dash")
+					{
+						/*
+						 * non so come si deve gestire nel caso di multi audio con DASH
+						 */
+					}
+				}
+			}
+        }
+
+		if (!ffmpegArgumentList.empty())
+			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+				ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+		_logger->info(__FILEREF__ + "liveGrid: Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		);
+
+		startFfmpegCommand = chrono::system_clock::now();
+
+		bool redirectionStdOutput = true;
+		bool redirectionStdError = true;
+
+		ProcessUtility::forkAndExec (
+			_ffmpegPath + "/ffmpeg",
+			ffmpegArgumentList,
+			_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+			pChildPid, &iReturnedStatus);
+		if (iReturnedStatus != 0)
+		{
+			string errorMessage = __FILEREF__ + "liveGrid: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+           ;            
+           _logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+        
+		endFfmpegCommand = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "liveGrid: Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		);
+    }
+    catch(runtime_error e)
+    {
+		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+		if (manifestDirectoryPathName != "")
+    	{
+			try
+			{
+				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(manifestDirectoryPathName, bRemoveRecursively);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: remove directory failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// throw e;
+			}
+			catch(exception e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: remove directory failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				// throw e;
+			}
+		}
+
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else if (lastPartOfFfmpegOutputFile.find("403 Forbidden") != string::npos)
+			throw FFMpegURLForbidden();
+		else if (lastPartOfFfmpegOutputFile.find("404 Not Found") != string::npos)
+			throw FFMpegURLNotFound();
+		else
+			throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 // destinationPathName will end with the new file format
 void FFMpeg::changeFileFormat(
 	int64_t ingestionJobKey,
@@ -7432,8 +8061,6 @@ void FFMpeg::changeFileFormat(
 }
 
 void FFMpeg::settingFfmpegParameters(
-        string stagingEncodedAssetPathName,
-        
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
         

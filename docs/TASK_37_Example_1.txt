@@ -1,0 +1,20 @@
+"Task": {
+	"Label"="My Live Grid",
+
+	"Type": "Live-Grid",
+
+	"Parameters": {
+		"ConfigurationLabel": [
+			"conf label 1",
+			"conf label 1"
+		],
+
+		"columns": 2,
+
+		"gridWidth": 1024,
+
+		"gridHeigth": 578,
+
+		"EncodingProfileLabel": "fast encoding profile"
+	}
+}
