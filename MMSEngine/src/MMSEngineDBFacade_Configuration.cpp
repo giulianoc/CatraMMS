@@ -1460,17 +1460,16 @@ int64_t MMSEngineDBFacade::addChannelConf(
 void MMSEngineDBFacade::modifyChannelConf(
     int64_t confKey,
     int64_t workspaceKey,
-    string label,
-    string url,
-	string type,
-	string description,
-	string name,
-	string region,
-	string country,
-	int64_t imageMediaItemKey,
-	string imageUniqueName,
-	int position,
-	Json::Value channelData)
+    bool labelToBeModified, string label,
+    bool urlToBeModified, string url,
+	bool typeToBeModified, string type,
+	bool descriptionToBeModified, string description,
+	bool nameToBeModified, string name,
+	bool regionToBeModified, string region,
+	bool countryToBeModified, string country,
+	bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
+	bool positionToBeModified, int position,
+	bool channelDataToBeModified, Json::Value channelData)
 {
     string      lastSQLCommand;
     
@@ -1484,65 +1483,183 @@ void MMSEngineDBFacade::modifyChannelConf(
         );
         
         {
-			string sChannelData;
+			string setSQL = "set ";
+			bool oneParameterPresent = false;
+
+			if (labelToBeModified)
 			{
-				Json::StreamWriterBuilder wbuilder;
-				sChannelData = Json::writeString(wbuilder, channelData);
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("label = ?");
+				oneParameterPresent = true;
 			}
 
+			if (urlToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("url = ?");
+				oneParameterPresent = true;
+			}
+
+			if (typeToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("type = ?");
+				oneParameterPresent = true;
+			}
+
+			if (descriptionToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("description = ?");
+				oneParameterPresent = true;
+			}
+
+			if (nameToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("name = ?");
+				oneParameterPresent = true;
+			}
+
+			if (regionToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("region = ?");
+				oneParameterPresent = true;
+			}
+
+			if (countryToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("country = ?");
+				oneParameterPresent = true;
+			}
+
+			if (imageToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("imageMediaItemKey = ?, imageUniqueName = ?");
+				oneParameterPresent = true;
+			}
+
+			if (positionToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("position = ?");
+				oneParameterPresent = true;
+			}
+
+			string sChannelData;
+			if (channelDataToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("channelData = ?");
+				oneParameterPresent = true;
+
+				{
+					Json::StreamWriterBuilder wbuilder;
+					sChannelData = Json::writeString(wbuilder, channelData);
+				}
+			}
+
+			if (!oneParameterPresent)
+            {
+                string errorMessage = __FILEREF__ + "Wrong input, no parameters to be updated"
+                        + ", confKey: " + to_string(confKey)
+                        + ", oneParameterPresent: " + to_string(oneParameterPresent)
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+
             lastSQLCommand = 
-                "update MMS_Conf_Channel set label = ?, url = ?, type = ?, description = ?, name = ?, "
-				"region = ?, country = ?, imageMediaItemKey = ?, imageUniqueName = ?, position = ?, "
-				"channelData = ? "
+                string("update MMS_Conf_Channel ") + setSQL + " "
 				"where confKey = ? and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, url);
-			if (type == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, type);
-			if (description == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, description);
-			if (name == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, name);
-			if (region == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, region);
-			if (country == "")
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, country);
-			if (imageMediaItemKey == -1)
+			if (labelToBeModified)
+				preparedStatement->setString(queryParameterIndex++, label);
+			if (urlToBeModified)
+				preparedStatement->setString(queryParameterIndex++, url);
+			if (typeToBeModified)
 			{
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-
-				if (imageUniqueName == "")
+				if (type == "")
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 				else
-					preparedStatement->setString(queryParameterIndex++, imageUniqueName);
+					preparedStatement->setString(queryParameterIndex++, type);
 			}
-			else
+			if (descriptionToBeModified)
 			{
-				preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				if (description == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, description);
 			}
-			if (position == -1)
-				 preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
-			else
-				preparedStatement->setInt(queryParameterIndex++, position);
-			if (sChannelData == "")
-				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, sChannelData);
+			if (nameToBeModified)
+			{
+				if (name == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, name);
+			}
+			if (regionToBeModified)
+			{
+				if (region == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, region);
+			}
+			if (countryToBeModified)
+			{
+				if (country == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, country);
+			}
+			if (imageToBeModified)
+			{
+				if (imageMediaItemKey == -1)
+				{
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+
+					if (imageUniqueName == "")
+						preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+					else
+						preparedStatement->setString(queryParameterIndex++, imageUniqueName);
+				}
+				else
+				{
+					preparedStatement->setInt64(queryParameterIndex++, imageMediaItemKey);
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				}
+			}
+			if (positionToBeModified)
+			{
+				if (position == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+				else
+					preparedStatement->setInt(queryParameterIndex++, position);
+			}
+			if (channelDataToBeModified)
+			{
+				if (sChannelData == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, sChannelData);
+			}
             preparedStatement->setInt64(queryParameterIndex++, confKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -1550,17 +1667,17 @@ void MMSEngineDBFacade::modifyChannelConf(
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", label: " + label
-				+ ", url: " + url
-				+ ", type: " + type
-				+ ", description: " + description
-				+ ", name: " + name
-				+ ", region: " + region
-				+ ", country: " + country
-				+ ", imageMediaItemKey: " + to_string(imageMediaItemKey)
-				+ ", imageUniqueName: " + imageUniqueName
-				+ ", position: " + to_string(position)
-				+ ", sChannelData: " + sChannelData
+				+ ", label (" + to_string(labelToBeModified) + "): " + label
+				+ ", url (" + to_string(urlToBeModified) + "): " + url
+				+ ", type (" + to_string(typeToBeModified) + "): " + type
+				+ ", description (" + to_string(descriptionToBeModified) + "): " + description
+				+ ", name (" + to_string(nameToBeModified) + "): " + name
+				+ ", region (" + to_string(regionToBeModified) + "): " + region
+				+ ", country (" + to_string(countryToBeModified) + "): " + country
+				+ ", imageMediaItemKey (" + to_string(imageToBeModified) + "): " + to_string(imageMediaItemKey)
+				+ ", imageUniqueName (" + to_string(imageToBeModified) + "): " + imageUniqueName
+				+ ", position (" + to_string(positionToBeModified) + "): " + to_string(position)
+				+ ", sChannelData (" + to_string(channelDataToBeModified) + "): " + sChannelData
 				+ ", confKey: " + to_string(confKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -2131,7 +2248,8 @@ Json::Value MMSEngineDBFacade::getChannelConfList (
 }
 
 pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
-    int64_t workspaceKey, string label
+    int64_t workspaceKey, string label,
+	bool warningIfMissing
 )
 {
     string      lastSQLCommand;
@@ -2171,14 +2289,16 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
 			);
             if (!resultSet->next())
             {
-                string errorMessage = __FILEREF__ + "select from MMS_Conf_Channel failed"
+                string errorMessage = __FILEREF__ + "Configuration label is not found"
                     + ", workspaceKey: " + to_string(workspaceKey)
                     + ", label: " + label
                 ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
 
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
+				throw ConfKeyNotFound(errorMessage);                    
             }
 
             confKey = resultSet->getInt64("confKey");
@@ -2212,6 +2332,30 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
 
         throw se;
     }    
+    catch(ConfKeyNotFound e)
+    {
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "ConfKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+        else
+            _logger->error(__FILEREF__ + "ConfKeyNotFound SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+            );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+        
+        throw e;
+    }
     catch(runtime_error e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"

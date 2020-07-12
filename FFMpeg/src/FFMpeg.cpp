@@ -72,7 +72,7 @@ void FFMpeg::encodeContent(
         int64_t durationInMilliSeconds,
         // string encodedFileName,
         string stagingEncodedAssetPathName,
-        string encodingProfileDetails,
+        Json::Value encodingProfileDetailsRoot,
         bool isVideo,   // if false it means is audio
 		Json::Value videoTracksRoot,
 		Json::Value audioTracksRoot,
@@ -132,7 +132,7 @@ void FFMpeg::encodeContent(
         _twoPasses = false;
         
         settingFfmpegParameters(
-            encodingProfileDetails,
+            encodingProfileDetailsRoot,
             isVideo,
 
             httpStreamingFileFormat,
@@ -3730,8 +3730,12 @@ int FFMpeg::getEncodingProgress()
 
     try
     {
-		if (_currentApiName == "liveProxyByHTTPStreaming"
-				|| _currentApiName == "liveProxyByCDN")
+		if (
+				_currentApiName == "liveProxyByHTTPStreaming"
+				|| _currentApiName == "liveProxyByCDN"
+				|| _currentApiName == "liveGridByHTTPStreaming"
+				|| _currentApiName == "liveGridByCDN"
+				)
 		{
 			// it's a live
 
@@ -6866,7 +6870,8 @@ void FFMpeg::liveProxyByHTTPStreaming(
 	// next are parameters for the output
 	int segmentDurationInSeconds,
 	int playlistEntriesNumber,
-	string manifestFilePathName,
+	string manifestDirectoryPath,
+	string manifestFileName,
 	pid_t* pChildPid)
 {
 	vector<string> ffmpegArgumentList;
@@ -6879,7 +6884,6 @@ void FFMpeg::liveProxyByHTTPStreaming(
 
 	_currentApiName = "liveProxyByHTTPStreaming";
 
-	string manifestDirectoryPathName;
     try
     {
 		string outputTypeLowerCase;
@@ -6898,18 +6902,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			throw runtime_error(errorMessage);
 		}
 
-		size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
-		if (manifestFilePathIndex == string::npos)
-		{
-			string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the manifest file path name"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestFilePathName: " + manifestFilePathName;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
+		string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
 		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
 		// I saw just once that the directory was not created and the liveencoder remains in the loop
@@ -6917,20 +6910,20 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		//	1. the encoder returns an error becaise of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (!FileIO::directoryExisting(manifestDirectoryPathName))
+		if (!FileIO::directoryExisting(manifestDirectoryPath))
 		{
-			_logger->warn(__FILEREF__ + "manifestDirectoryPathName does not exist!!! It will be created"
+			_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
 					);
 
 			_logger->info(__FILEREF__ + "Create directory"
-                + ", manifestDirectoryPathName: " + manifestDirectoryPathName
+                + ", manifestDirectoryPath: " + manifestDirectoryPath
             );
 			bool noErrorIfExists = true;
 			bool recursive = true;
-			FileIO::createDirectory(manifestDirectoryPathName,
+			FileIO::createDirectory(manifestDirectoryPath,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP |
 				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
@@ -6980,6 +6973,27 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
 			ffmpegArgumentList.push_back("-hls_list_size");
 			ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
+
+			// Set the number of unreferenced segments to keep on disk
+			// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+			// to download segments which were recently referenced in the playlist.
+			// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+			ffmpegArgumentList.push_back("-hls_delete_threshold");
+			ffmpegArgumentList.push_back(to_string(1));
+
+			// Segment files removed from the playlist are deleted after a period of time equal
+			// to the duration of the segment plus the duration of the playlist.
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("delete_segments");
+
+			// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+			// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+			// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+			ffmpegArgumentList.push_back("-hls_start_number_source");
+			ffmpegArgumentList.push_back("datetime");
+
+			ffmpegArgumentList.push_back("-start_number");
+			ffmpegArgumentList.push_back(to_string(10));
 		}
 		else if (outputTypeLowerCase == "dash")
 		{
@@ -7078,65 +7092,43 @@ void FFMpeg::liveProxyByHTTPStreaming(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		if (manifestDirectoryPathName != "")
+		if (manifestDirectoryPath != "")
     	{
-        	// get files from file system
-    
-        	FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        	shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-					manifestDirectoryPathName + "/");
-
-        	bool scanDirectoryFinished = false;
-        	while (!scanDirectoryFinished)
-        	{
-            	string directoryEntry;
-            	try
-            	{
-                	string directoryEntry = FileIO::readDirectory (directory,
-                    	&detDirectoryEntryType);
-                
-                	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    	continue;
-
-					{
-						string segmentPathNameToBeRemoved =
-							manifestDirectoryPathName + "/" + directoryEntry;
-        				_logger->info(__FILEREF__ + "Remove"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-            				+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-        				FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-					}
-            	}
-            	catch(DirectoryListFinished e)
-            	{
-                	scanDirectoryFinished = true;
-            	}
-            	catch(runtime_error e)
-            	{
-                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+			if (FileIO::directoryExisting(manifestDirectoryPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
-                       	+ ", e.what(): " + e.what()
-                	;
-                	_logger->error(errorMessage);
-
-                	// throw e;
-            	}
-            	catch(exception e)
-            	{
-                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
 						+ ", e.what(): " + e.what()
-                	;
-                	_logger->error(errorMessage);
+					;
+					_logger->error(errorMessage);
 
-                	// throw e;
-            	}
-        	}
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
 
-        	FileIO::closeDirectory (directory);
+					// throw e;
+				}
+			}
     	}
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
@@ -7337,9 +7329,9 @@ void FFMpeg::liveProxyByCDN(
 void FFMpeg::liveGridByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	string encodingProfileDetails,
+	Json::Value encodingProfileDetailsRoot,
 	string userAgent,
-	vector<pair<string,string>> channels,	// name,url
+	Json::Value inputChannelsRoot,	// name,url
 	int gridColumns,
 	int gridWidth,	// i.e.: 1024
 	int gridHeight, // i.e.: 578
@@ -7349,7 +7341,8 @@ void FFMpeg::liveGridByHTTPStreaming(
 	// next are parameters for the output
 	int segmentDurationInSeconds,
 	int playlistEntriesNumber,
-	string manifestDirectoryPathName,
+	string manifestDirectoryPath,
+	string manifestFileName,
 	pid_t* pChildPid)
 {
 	vector<string> ffmpegArgumentList;
@@ -7394,20 +7387,20 @@ void FFMpeg::liveGridByHTTPStreaming(
 		//	1. the encoder returns an error becaise of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (!FileIO::directoryExisting(manifestDirectoryPathName))
+		if (!FileIO::directoryExisting(manifestDirectoryPath))
 		{
-			_logger->warn(__FILEREF__ + "manifestDirectoryPathName does not exist!!! It will be created"
+			_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
 					);
 
 			_logger->info(__FILEREF__ + "Create directory"
-                + ", manifestDirectoryPathName: " + manifestDirectoryPathName
+                + ", manifestDirectoryPath: " + manifestDirectoryPath
             );
 			bool noErrorIfExists = true;
 			bool recursive = true;
-			FileIO::createDirectory(manifestDirectoryPathName,
+			FileIO::createDirectory(manifestDirectoryPath,
 				S_IRUSR | S_IWUSR | S_IXUSR |
 				S_IRGRP | S_IXGRP |
 				S_IROTH | S_IXOTH, noErrorIfExists, recursive);
@@ -7469,6 +7462,8 @@ void FFMpeg::liveGridByHTTPStreaming(
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
+		int inputChannelsNumber = inputChannelsRoot.size();
+
 		ffmpegArgumentList.push_back("ffmpeg");
 		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
 		//		as fast as possible. This option will slow down the reading of the input(s)
@@ -7486,30 +7481,94 @@ void FFMpeg::liveGridByHTTPStreaming(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 		ffmpegArgumentList.push_back("-re");
-		for(pair<string,string> channel: channels)
+		for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 		{
+			Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
+			string inputChannelURL = inputChannelRoot.get("inputChannelURL", "").asString();
+
 			ffmpegArgumentList.push_back("-i");
-			ffmpegArgumentList.push_back(channel.second);
+			ffmpegArgumentList.push_back(inputChannelURL);
 		}
-		int channelsNumber = channels.size();
-		int gridRows = channelsNumber / gridColumns;
-		if (channelsNumber % gridColumns != 0)
+		int gridRows = inputChannelsNumber / gridColumns;
+		if (inputChannelsNumber % gridColumns != 0)
 			gridRows += 1;
 		{
 			string ffmpegFilterComplex;
 
 			// [0:v]                  scale=width=$X/2:height=$Y/2            [0v];
-			for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+			int scaleWidth = gridWidth / gridColumns;
+			int scaleHeight = gridHeight / gridRows;
+
+			// some codecs, like h264, requires even total width/heigth
+			bool evenTotalWidth = true;
+			if ((scaleWidth * gridColumns) % 2 != 0)
+				evenTotalWidth = false;
+
+			bool evenTotalHeight = true;
+			if ((scaleHeight * gridRows) % 2 != 0)
+				evenTotalHeight = false;
+
+			for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 			{
+				bool lastColumn;
+				if ((inputChannelIndex + 1) % gridColumns == 0)
+					lastColumn = true;
+				else
+					lastColumn = false;
+
+				bool lastRow;
+				{
+					int startChannelIndexOfLastRow = inputChannelsNumber / gridColumns;
+					if (inputChannelsNumber % gridColumns == 0)
+						startChannelIndexOfLastRow--;
+					startChannelIndexOfLastRow *= gridColumns;
+
+					if (inputChannelIndex >= startChannelIndexOfLastRow)
+						lastRow = true;
+					else
+						lastRow = false;
+				}
+
+				int width;
+				if (!evenTotalWidth && lastColumn)
+					width = scaleWidth + 1;
+				else
+					width = scaleWidth;
+
+				int height;
+				if (!evenTotalHeight && lastRow)
+					height = scaleHeight + 1;
+				else
+					height = scaleHeight;
+
+				_logger->info(__FILEREF__ + "Widthhhhhhh"
+					+ ", inputChannelIndex: " + to_string(inputChannelIndex)
+					+ ", gridWidth: " + to_string(gridWidth)
+					+ ", gridColumns: " + to_string(gridColumns)
+					+ ", evenTotalWidth: " + to_string(evenTotalWidth)
+					+ ", lastColumn: " + to_string(lastColumn)
+					+ ", scaleWidth: " + to_string(scaleWidth)
+					+ ", width: " + to_string(width)
+				);
+
+				_logger->info(__FILEREF__ + "Heightttttttt"
+					+ ", inputChannelIndex: " + to_string(inputChannelIndex)
+					+ ", gridHeight: " + to_string(gridHeight)
+					+ ", gridRows: " + to_string(gridRows)
+					+ ", evenTotalHeight: " + to_string(evenTotalHeight)
+					+ ", lastRow: " + to_string(lastRow)
+					+ ", scaleHeight: " + to_string(scaleHeight)
+					+ ", height: " + to_string(height)
+				);
+
 				ffmpegFilterComplex += (
-					"[" + to_string(channelIndex) + ":v]"
-					+ "scale=width=" + to_string(gridWidth) + "/" + to_string(gridColumns)
-						+ ":height=" + to_string(gridHeight) + "/" + to_string(gridRows)
-					+ "[" + to_string(channelIndex) + "v];"
+					"[" + to_string(inputChannelIndex) + ":v]"
+					+ "scale=width=" + to_string(width) + ":height=" + to_string(height)
+					+ "[" + to_string(inputChannelIndex) + "v];"
 					);
 			}
 			// [0v][1v]               hstack=inputs=2:shortest=1              [0r]; #r sta per row
-			for (int gridRowIndex = 0, channelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
+			for (int gridRowIndex = 0, inputChannelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
 			{
 				int columnsIntoTheRow;
 				if (gridRowIndex + 1 < gridRows)
@@ -7519,34 +7578,52 @@ void FFMpeg::liveGridByHTTPStreaming(
 				}
 				else
 				{
-					if (channelsNumber % gridColumns != 0)
-						columnsIntoTheRow = channelsNumber % gridColumns;
+					if (inputChannelsNumber % gridColumns != 0)
+						columnsIntoTheRow = inputChannelsNumber % gridColumns;
 					else
 						columnsIntoTheRow = gridColumns;
 				}
 				for(int gridColumnIndex = 0; gridColumnIndex < columnsIntoTheRow; gridColumnIndex++)
-					ffmpegFilterComplex += ("[" + to_string(channelIndex++) + "v]");
+					ffmpegFilterComplex += ("[" + to_string(inputChannelIndex++) + "v]");
 
 				ffmpegFilterComplex += (
-					"hstack=inputs=" + to_string(columnsIntoTheRow) + ":shortest=1["
-					+ to_string(gridRowIndex) + "r];"
+					"hstack=inputs=" + to_string(columnsIntoTheRow) + ":shortest=1"
 					);
+
+				if (gridRows == 1 && gridRowIndex == 0)
+				{
+					// in case there is just one row, vstack has NOT to be added 
+					ffmpegFilterComplex += (
+						"[outVideo]"
+					);
+				}
+				else
+				{
+					ffmpegFilterComplex += (
+						"[" + to_string(gridRowIndex) + "r];"
+					);
+				}
 			}
 
-			// [0r][1r]               vstack=inputs=2:shortest=1              [out]
-			for (int gridRowIndex = 0, channelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
-				ffmpegFilterComplex += ("[" + to_string(gridRowIndex) + "r]");
-			ffmpegFilterComplex += (
-				"vstack=inputs=" + to_string(gridRows) + ":shortest=1[outVideo]"
-			);
+			if (gridRows > 1)
+			{
+				// [0r][1r]               vstack=inputs=2:shortest=1              [outVideo]
+				for (int gridRowIndex = 0, inputChannelIndex = 0; gridRowIndex < gridRows; gridRowIndex++)
+					ffmpegFilterComplex += ("[" + to_string(gridRowIndex) + "r]");
+				ffmpegFilterComplex += (
+					"vstack=inputs=" + to_string(gridRows) + ":shortest=1[outVideo]"
+				);
+			}
 
 			ffmpegArgumentList.push_back("-filter_complex");
 			ffmpegArgumentList.push_back(ffmpegFilterComplex);
 		}
 
+		/*
 		string manifestFileName = to_string(ingestionJobKey)
 			+ "_" + to_string(encodingJobKey)
 			+ ".m3u8";
+		*/
 
 		// We will create:
 		//  - one m3u8 for each track (video and audio)
@@ -7566,11 +7643,11 @@ void FFMpeg::liveGridByHTTPStreaming(
 			*/
 
 			{
-				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 				{
-					string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
 
-					string audioPathName = manifestDirectoryPathName + "/"
+					string audioPathName = manifestDirectoryPath + "/"
 						+ audioTrackDirectoryName;
 
 					bool noErrorIfExists = true;
@@ -7585,7 +7662,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 
 				{
 					string videoTrackDirectoryName = "0_video";
-					string videoPathName = manifestDirectoryPathName + "/" + videoTrackDirectoryName;
+					string videoPathName = manifestDirectoryPath + "/" + videoTrackDirectoryName;
 
 					bool noErrorIfExists = true;
 					bool recursive = true;
@@ -7598,24 +7675,24 @@ void FFMpeg::liveGridByHTTPStreaming(
 				}
 			}
 
-			// create manifest file
+			// create main manifest file
 			{
-				string mainManifestPathName = manifestDirectoryPathName + "/"
+				string mainManifestPathName = manifestDirectoryPath + "/"
 					+ manifestFileName;
 
 				string mainManifest;
 
 				mainManifest = string("#EXTM3U") + "\n";
 
-				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 				{
-					string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
 
-					pair<string, string> channel = channels[channelIndex];
-					string channelName = channel.first;
+					Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
+					string inputChannelName = inputChannelRoot.get("inputConfigurationLabel", "").asString();
 
 					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
-						+ channelName + "\",NAME=\"" + channelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
+						+ inputChannelName + "\",NAME=\"" + inputChannelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
 						+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
 
 					mainManifest += (audioManifestLine + "\n");
@@ -7624,7 +7701,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO=\"audio\"";
 				mainManifest += (videoManifestLine + "\n");
 
-				string videoTrackDirectoryName = 0 + "_video";
+				string videoTrackDirectoryName = "0_video";
 				mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
 
 				ofstream manifestFile(mainManifestPathName);
@@ -7660,9 +7737,9 @@ void FFMpeg::liveGridByHTTPStreaming(
 			// we will set by default _twoPasses to false otherwise, since the ffmpeg class is reused
 			// it could remain set to true from a previous call
 			_twoPasses = false;
-        
+
 			settingFfmpegParameters(
-				encodingProfileDetails,
+				encodingProfileDetailsRoot,
 				true,	// isVideo,
 
 				httpStreamingFileFormat,
@@ -7718,6 +7795,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("delete_segments");
 
+					// 2020-07-11: without -hls_start_number_source we have video-audio out of sync
 					ffmpegArgumentList.push_back("-hls_start_number_source");
 					ffmpegArgumentList.push_back("datetime");
 
@@ -7728,13 +7806,13 @@ void FFMpeg::liveGridByHTTPStreaming(
 						string videoTrackDirectoryName = "0_video";
 
 						string segmentPathFileName =
-							manifestDirectoryPathName 
+							manifestDirectoryPath 
 							+ "/"
 							+ videoTrackDirectoryName
 							+ "/"
-							+ to_string(_currentIngestionJobKey)
+							+ to_string(ingestionJobKey)
 							+ "_"
-							+ to_string(_currentEncodingJobKey)
+							+ to_string(encodingJobKey)
 							+ "_%04d.ts"
 						;
 						ffmpegArgumentList.push_back("-hls_segment_filename");
@@ -7744,14 +7822,11 @@ void FFMpeg::liveGridByHTTPStreaming(
 						ffmpegArgumentList.push_back("hls");
 
 						string manifestFilePathName =
-							manifestDirectoryPathName 
+							manifestDirectoryPath 
 							+ "/"
 							+ videoTrackDirectoryName
 							+ "/"
-							+ to_string(_currentIngestionJobKey)
-							+ "_"
-							+ to_string(_currentEncodingJobKey)
-							+ ".m3u8"
+							+ manifestFileName
 						;
 						ffmpegArgumentList.push_back(manifestFilePathName);
 					}
@@ -7763,11 +7838,11 @@ void FFMpeg::liveGridByHTTPStreaming(
 					*/
 				}
 
-				for (int channelIndex = 0; channelIndex < channelsNumber; channelIndex++)
+				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 				{
 					ffmpegArgumentList.push_back("-map");
 					ffmpegArgumentList.push_back(
-						to_string(channelIndex) + ":a");
+						to_string(inputChannelIndex) + ":a");
 
 					addToArguments(ffmpegAudioCodecParameter, ffmpegArgumentList);
 					addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
@@ -7790,6 +7865,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 							ffmpegArgumentList.push_back("-hls_flags");
 							ffmpegArgumentList.push_back("delete_segments");
 
+							// 2020-07-11: without -hls_start_number_source we have video-audio out of sync
 							ffmpegArgumentList.push_back("-hls_start_number_source");
 							ffmpegArgumentList.push_back("datetime");
 
@@ -7797,17 +7873,17 @@ void FFMpeg::liveGridByHTTPStreaming(
 							ffmpegArgumentList.push_back(to_string(10));
 						}
 
-						string audioTrackDirectoryName = to_string(channelIndex) + "_audio";
+						string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
 
 						{
 							string segmentPathFileName =
-								manifestDirectoryPathName 
+								manifestDirectoryPath 
 								+ "/"
 								+ audioTrackDirectoryName
 								+ "/"
-								+ to_string(_currentIngestionJobKey)
+								+ to_string(ingestionJobKey)
 								+ "_"
-								+ to_string(_currentEncodingJobKey)
+								+ to_string(encodingJobKey)
 								+ "_%04d.ts"
 							;
 							ffmpegArgumentList.push_back("-hls_segment_filename");
@@ -7817,14 +7893,11 @@ void FFMpeg::liveGridByHTTPStreaming(
 							ffmpegArgumentList.push_back("hls");
 
 							string manifestFilePathName =
-								manifestDirectoryPathName
+								manifestDirectoryPath
 								+ "/"
 								+ audioTrackDirectoryName
 								+ "/"
-								+ to_string(_currentIngestionJobKey)
-								+ "_"
-								+ to_string(_currentEncodingJobKey)
-								+ ".m3u8"
+								+ manifestFileName
 							;
 							ffmpegArgumentList.push_back(manifestFilePathName);
 						}
@@ -7915,14 +7988,14 @@ void FFMpeg::liveGridByHTTPStreaming(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		if (manifestDirectoryPathName != "")
+		if (manifestDirectoryPath != "")
     	{
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove directory"
-					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName);
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath);
 				Boolean_t bRemoveRecursively = true;
-				FileIO::removeDirectory(manifestDirectoryPathName, bRemoveRecursively);
+				FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
 			}
 			catch(runtime_error e)
 			{
@@ -8061,7 +8134,7 @@ void FFMpeg::changeFileFormat(
 }
 
 void FFMpeg::settingFfmpegParameters(
-        string encodingProfileDetails,
+        Json::Value encodingProfileDetailsRoot,
         bool isVideo,   // if false it means is audio
         
         string& httpStreamingFileFormat,
@@ -8088,6 +8161,7 @@ void FFMpeg::settingFfmpegParameters(
 )
 {
     string field;
+	/*
     Json::Value encodingProfileRoot;
     try
     {
@@ -8117,13 +8191,14 @@ void FFMpeg::settingFfmpegParameters(
                 + ", encodingProfileDetails: " + encodingProfileDetails
                 );
     }
+	*/
 
     // fileFormat
     string fileFormat;
 	string fileFormatLowerCase;
     {
 		field = "FileFormat";
-		if (!isMetadataPresent(encodingProfileRoot, field))
+		if (!isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
 				+ ", Field: " + field;
@@ -8132,7 +8207,7 @@ void FFMpeg::settingFfmpegParameters(
             throw runtime_error(errorMessage);
         }
 
-        fileFormat = encodingProfileRoot.get(field, "XXX").asString();
+        fileFormat = encodingProfileDetailsRoot.get(field, "XXX").asString();
 		fileFormatLowerCase.resize(fileFormat.size());
 		transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
 			[](unsigned char c){return tolower(c); } );
@@ -8150,9 +8225,9 @@ void FFMpeg::settingFfmpegParameters(
 			long segmentDurationInSeconds = 10;
 
 			field = "HLS";
-			if (isMetadataPresent(encodingProfileRoot, field))
+			if (isMetadataPresent(encodingProfileDetailsRoot, field))
 			{
-				Json::Value hlsRoot = encodingProfileRoot[field]; 
+				Json::Value hlsRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "SegmentDuration";
 				if (isMetadataPresent(hlsRoot, field))
@@ -8177,9 +8252,9 @@ void FFMpeg::settingFfmpegParameters(
 			long segmentDurationInSeconds = 10;
 
 			field = "DASH";
-			if (isMetadataPresent(encodingProfileRoot, field))
+			if (isMetadataPresent(encodingProfileDetailsRoot, field))
 			{
-				Json::Value dashRoot = encodingProfileRoot[field]; 
+				Json::Value dashRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "SegmentDuration";
 				if (isMetadataPresent(dashRoot, field))
@@ -8228,7 +8303,7 @@ void FFMpeg::settingFfmpegParameters(
     if (isVideo)
     {
         field = "Video";
-        if (!isMetadataPresent(encodingProfileRoot, field))
+        if (!isMetadataPresent(encodingProfileDetailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", Field: " + field;
@@ -8237,7 +8312,7 @@ void FFMpeg::settingFfmpegParameters(
             throw runtime_error(errorMessage);
         }
 
-        Json::Value videoRoot = encodingProfileRoot[field]; 
+        Json::Value videoRoot = encodingProfileDetailsRoot[field]; 
 
         // codec
         string codec;
@@ -8435,7 +8510,7 @@ void FFMpeg::settingFfmpegParameters(
     // if (contentType == "video" || contentType == "audio")
     {
         field = "Audio";
-        if (!isMetadataPresent(encodingProfileRoot, field))
+        if (!isMetadataPresent(encodingProfileDetailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", Field: " + field;
@@ -8444,7 +8519,7 @@ void FFMpeg::settingFfmpegParameters(
             throw runtime_error(errorMessage);
         }
 
-        Json::Value audioRoot = encodingProfileRoot[field]; 
+        Json::Value audioRoot = encodingProfileDetailsRoot[field]; 
 
         // codec
         {

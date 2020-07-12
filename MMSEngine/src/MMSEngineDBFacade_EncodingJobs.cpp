@@ -2769,9 +2769,79 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
 				*/
 				else if (encodingItem->_encodingType == EncodingType::LiveGrid)
-                {
-                    encodingItem->_liveGridData = make_shared<EncodingItem::LiveGridData>();
-                    
+				{
+					encodingItem->_liveGridData = make_shared<EncodingItem::LiveGridData>();
+
+					string field = "encodingProfileKey";
+					int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
+
+					{
+						lastSQLCommand = 
+							"select deliveryTechnology, jsonProfile from MMS_EncodingProfile "
+							"where encodingProfileKey = ?";
+						shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						shared_ptr<sql::ResultSet> encodingProfilesResultSet (
+							preparedStatementEncodingProfile->executeQuery());
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						if (encodingProfilesResultSet->next())
+						{
+							encodingItem->_liveGridData->_deliveryTechnology =
+								toDeliveryTechnology(encodingProfilesResultSet->getString("deliveryTechnology"));
+							encodingItem->_liveGridData->_jsonProfile =
+								encodingProfilesResultSet->getString("jsonProfile");
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "select failed"
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								+ ", lastSQLCommand: " + lastSQLCommand
+							;
+							_logger->error(errorMessage);
+
+							// in case an encoding job row generate an error, we have to make it to Failed
+							// otherwise we will indefinitely get this error
+							{
+								_logger->info(__FILEREF__ + "EncodingJob update"
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								);
+								lastSQLCommand = 
+									"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+								shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+								int queryParameterIndex = 1;
+								preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+								preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
+								int rowsUpdated = preparedStatementUpdate->executeUpdate();
+								_logger->info(__FILEREF__ + "@SQL statistics@"
+									+ ", lastSQLCommand: " + lastSQLCommand
+									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - startSql).count()) + "@"
+								);
+							}
+
+							continue;
+							// throw runtime_error(errorMessage);
+						}
+					}
+
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
@@ -2792,7 +2862,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                         if (imgestionResultSet->next())
                         {
                             string liveGridParameters = imgestionResultSet->getString("metaDataContent");
-                            
+
                             {
                                 Json::CharReaderBuilder builder;
                                 Json::CharReader* reader = builder.newCharReader();
@@ -2844,6 +2914,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                                     // throw runtime_error(errorMessage);
                                 }
                             }
+
                         }
                         else
                         {
@@ -9080,9 +9151,10 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 int MMSEngineDBFacade::addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		vector<pair<string, string>>& channels,
+		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
-		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
+		string outputType, int64_t outputHLSChannelConfKey,
+		int segmentDurationInSeconds, int playlistEntriesNumber,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 	)
 {
@@ -9096,12 +9168,12 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveGridJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", channels.size: " + to_string(channels.size())
+            + ", inputChannels.size: " + to_string(inputChannels.size())
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
             + ", outputType: " + outputType
+            + ", outputHLSChannelConfKey: " + to_string(outputHLSChannelConfKey)
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
-            + ", cdnURL: " + cdnURL
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
         );
@@ -9131,29 +9203,33 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 				string field;
 
 				{
-					Json::Value channelsRoot(Json::arrayValue);
+					Json::Value inputChannelsRoot(Json::arrayValue);
 
-					for (int channelIndex = 0; channelIndex < channels.size(); channelIndex++)
+					for (int inputChannelIndex = 0; inputChannelIndex < inputChannels.size(); inputChannelIndex++)
 					{
-						pair<string, string> channel = channels[channelIndex];
+						tuple<int64_t, string, string> inputChannel = inputChannels[inputChannelIndex];
 
-						string configurationLabel;
-						string channelURL;
-						tie(configurationLabel, channelURL) = channel;
+						int64_t inputChannelConfKey;
+						string inputConfigurationLabel;
+						string inputChannelURL;
+						tie(inputChannelConfKey, inputConfigurationLabel, inputChannelURL) = inputChannel;
 
-						Json::Value channelRoot;
+						Json::Value inputChannelRoot;
 
-						field = "configurationLabel";
-						channelRoot[field] = configurationLabel;
+						field = "inputChannelConfKey";
+						inputChannelRoot[field] = inputChannelConfKey;
 
-						field = "channelURL";
-						channelRoot[field] = channelURL;
+						field = "inputConfigurationLabel";
+						inputChannelRoot[field] = inputConfigurationLabel;
 
-						channelsRoot.append(channelRoot);
+						field = "inputChannelURL";
+						inputChannelRoot[field] = inputChannelURL;
+
+						inputChannelsRoot.append(inputChannelRoot);
 					}
 
-					field = "channels";
-					parametersRoot[field] = channelsRoot;
+					field = "inputChannels";
+					parametersRoot[field] = inputChannelsRoot;
 				}
 
 				field = "encodingProfileKey";
@@ -9162,14 +9238,14 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 				field = "outputType";
 				parametersRoot[field] = outputType;
 
+				field = "outputHLSChannelConfKey";
+				parametersRoot[field] = outputHLSChannelConfKey;
+
 				field = "segmentDurationInSeconds";
 				parametersRoot[field] = segmentDurationInSeconds;
 
 				field = "playlistEntriesNumber";
 				parametersRoot[field] = playlistEntriesNumber;
-
-				field = "cdnURL";
-				parametersRoot[field] = cdnURL;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;

@@ -78,22 +78,30 @@ public:
 			int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
 
 	tuple<int64_t, string, string> getVODDeliveryURI(
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey,
+		int64_t encodingProfileKey, bool save,
+		shared_ptr<Workspace> requestWorkspace);
+
+	string getLiveDeliveryAssetPath(
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		string directoryId,
 		shared_ptr<Workspace> requestWorkspace);
 
 	string getLiveDeliveryAssetPathName(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t liveURLConfKey,
+		string directoryId,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
 
-	pair<string, string> getLiveDeliveryURI(
+	tuple<string, string, string> getLiveDeliveryDetails(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t liveURLConfKey, string liveFileExtension,
+		string directoryId, string liveFileExtension,
 		shared_ptr<Workspace> requestWorkspace);
 
-    void removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey);
+    void removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t physicalPathKey);
     
-    void removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey);
+    void removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		int64_t mediaItemKey);
 
     void refreshPartitionsFreeSizes();
 

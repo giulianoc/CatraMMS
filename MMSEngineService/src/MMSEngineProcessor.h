@@ -119,6 +119,9 @@ private:
     string                  _youTubeDataAPIClientId;
     string                  _youTubeDataAPIClientSecret;
 
+	string					_deliveryProtocol;
+	string					_deliveryHost;
+
     bool                    _localCopyTaskEnabled;
 
 	string					_mmsAPIProtocol;

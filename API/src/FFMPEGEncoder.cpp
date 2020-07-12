@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 		vector<shared_ptr<Encoding>> encodingsCapability;
 
 		mutex liveProxyMutex;
-		vector<shared_ptr<LiveProxy>> liveProxiesCapability;
+		vector<shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
 
 		mutex liveRecordingMutex;
 		vector<shared_ptr<LiveRecording>> liveRecordingsCapability;
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
 
 			for (int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
 			{
-				shared_ptr<LiveProxy>    liveProxy = make_shared<LiveProxy>();
+				shared_ptr<LiveProxyAndGrid>    liveProxy = make_shared<LiveProxyAndGrid>();
 				liveProxy->_running   = false;
 				liveProxy->_ingestionJobKey		= 0;
 				liveProxy->_childPid		= 0;
@@ -254,7 +254,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 		mutex* encodingMutex,
 		vector<shared_ptr<Encoding>>* encodingsCapability,
 		mutex* liveProxyMutex,
-		vector<shared_ptr<LiveProxy>>* liveProxiesCapability,
+		vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
 		mutex* liveRecordingMutex,
 		vector<shared_ptr<LiveRecording>>* liveRecordingsCapability,
 		mutex* encodingCompletedMutex,
@@ -326,50 +326,6 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 	_encodingCompletedMutex = encodingCompletedMutex;
 	_encodingCompletedMap = encodingCompletedMap;
 	_lastEncodingCompletedCheck = lastEncodingCompletedCheck;
-	/*
-    for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
-    {
-        shared_ptr<Encoding>    encoding = make_shared<Encoding>();
-        encoding->_running   = false;
-        encoding->_childPid		= 0;
-        encoding->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
-
-        _encodingsCapability.push_back(encoding);
-    }
-
-    for (int liveProxyIndex = 0; liveProxyIndex < _maxLiveProxiesCapability; liveProxyIndex++)
-    {
-        shared_ptr<LiveProxy>    liveProxy = make_shared<LiveProxy>();
-        liveProxy->_running   = false;
-        liveProxy->_ingestionJobKey		= 0;
-        liveProxy->_childPid		= 0;
-        liveProxy->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
-
-        _liveProxiesCapability.push_back(liveProxy);
-    }
-
-    for (int liveRecordingIndex = 0; liveRecordingIndex < _maxLiveRecordingsCapability; liveRecordingIndex++)
-    {
-        shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
-        liveRecording->_running   = false;
-        liveRecording->_ingestionJobKey		= 0;
-		liveRecording->_encodingParametersRoot = Json::nullValue;
-        liveRecording->_childPid		= 0;
-        liveRecording->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
-
-        _liveRecordingsCapability.push_back(liveRecording);
-    }
-
-	{
-		thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread, this);
-		liveRecorderChunksIngestion.detach();
-	}
-
-	{
-		thread monitor(&FFMPEGEncoder::monitorThread, this);
-		monitor.detach();
-	}
-	*/
 
 	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
@@ -431,7 +387,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
     if (method == "status")
     {
         try
-        {            
+        {
             string responseBody = string("{ ")
                     + "\"status\": \"Encoder up and running\" "
                     + "}";
@@ -1047,7 +1003,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-    else if (method == "liveProxy")
+    else if (method == "liveProxy" || method == "liveGrid")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
@@ -1064,9 +1020,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         lock_guard<mutex> locker(*_liveProxyMutex);
 
-        shared_ptr<LiveProxy>    selectedLiveProxy;
+        shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
         bool                    liveProxyFound = false;
-        for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
+        for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
         {
             if (!liveProxy->_running)
             {
@@ -1095,12 +1051,24 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedLiveProxy->_running = true;
             selectedLiveProxy->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating liveProxy thread"
-                + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-            );
-            thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedLiveProxy, encodingJobKey, requestBody);
-            liveProxyThread.detach();
+			if (method == "liveProxy")
+			{
+				_logger->info(__FILEREF__ + "Creating liveProxy thread"
+					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
+					+ ", requestBody: " + requestBody
+				);
+				thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedLiveProxy, encodingJobKey, requestBody);
+				liveProxyThread.detach();
+			}
+			else // if (method == "liveGrid")
+			{
+				_logger->info(__FILEREF__ + "Creating liveGrid thread"
+					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
+					+ ", requestBody: " + requestBody
+				);
+				thread liveGridThread(&FFMPEGEncoder::liveGrid, this, selectedLiveProxy, encodingJobKey, requestBody);
+				liveGridThread.detach();
+			}
         }
         catch(exception e)
         {
@@ -1108,6 +1076,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedLiveProxy->_childPid = 0;
             
             _logger->error(__FILEREF__ + "liveProxyThread failed"
+                + ", method: " + method
                 + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1133,6 +1102,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "liveProxyThread failed"
+                + ", method: " + method
                 + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1363,7 +1333,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		shared_ptr<Encoding>    selectedEncoding;
 
 		bool                    liveProxyFound = false;
-		shared_ptr<LiveProxy>	selectedLiveProxy;
+		shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
 
 		bool                    liveRecordingFound = false;
 		shared_ptr<LiveRecording>    selectedLiveRecording;
@@ -1402,7 +1372,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
+				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -1619,7 +1589,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		shared_ptr<Encoding>    selectedEncoding;
 		bool                    encodingFound = false;
 
-		shared_ptr<LiveProxy>	selectedLiveProxy;
+		shared_ptr<LiveProxyAndGrid>	selectedLiveProxy;
 		bool					liveProxyFound = false;
 
 		{
@@ -1653,7 +1623,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				lock_guard<mutex> locker(*_liveProxyMutex);
 
-				for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
+				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 				{
 					if (liveProxy->_encodingJobKey == encodingJobKey)
 					{
@@ -1858,7 +1828,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -2024,12 +1994,15 @@ void FFMPEGEncoder::encodeContent(
         int64_t durationInMilliSeconds = JSONUtils::asInt64(encodingMedatada, "durationInMilliSeconds", -1);
         // string encodedFileName = encodingMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = encodingMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
+		/*
         string encodingProfileDetails;
         {
             Json::StreamWriterBuilder wbuilder;
             
             encodingProfileDetails = Json::writeString(wbuilder, encodingMedatada["encodingProfileDetails"]);
         }
+		*/
+		Json::Value encodingProfileDetailsRoot = encodingMedatada["encodingProfileDetails"];
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(encodingMedatada.get("contentType", "XXX").asString());
         int64_t physicalPathKey = JSONUtils::asInt64(encodingMedatada, "physicalPathKey", -1);
         string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "XXX").asString();
@@ -2052,7 +2025,7 @@ void FFMPEGEncoder::encodeContent(
                 durationInMilliSeconds,
                 // encodedFileName,
                 stagingEncodedAssetPathName,
-                encodingProfileDetails,
+                encodingProfileDetailsRoot,
                 contentType == MMSEngineDBFacade::ContentType::Video,
 				videoTracksRoot,
 				audioTracksRoot,
@@ -4647,7 +4620,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 
 void FFMPEGEncoder::liveProxy(
 	// FCGX_Request& request,
-	shared_ptr<LiveProxy> liveProxy,
+	shared_ptr<LiveProxyAndGrid> liveProxy,
 	int64_t encodingJobKey,
 	string requestBody)
 {
@@ -4710,102 +4683,49 @@ void FFMPEGEncoder::liveProxy(
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
 		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
-		liveProxy->_manifestFilePathName = liveProxyMetadata.get("manifestFilePathName", "").asString();
-		liveProxy->_configurationLabel = liveProxyMetadata.get("configurationLabel", "").asString();
+		liveProxy->_channelLabel = liveProxyMetadata.get("configurationLabel", "").asString();
+		string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
+		string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
+
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_manifestFilePathNames.push_back(manifestDirectoryPath + "/" + manifestFileName);
 
 		if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 		{
-			size_t manifestFilePathIndex = liveProxy->_manifestFilePathName.find_last_of("/");
-			if (manifestFilePathIndex == string::npos)
+			if (FileIO::directoryExisting(manifestDirectoryPath))
 			{
-				string errorMessage = string("manifestFilePathName not well format")
-                    + ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", manifestFilePathName: " + liveProxy->_manifestFilePathName
-                    ;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string manifestDirectoryPathName = liveProxy->_manifestFilePathName.substr(0, manifestFilePathIndex);
-
-			if (!FileIO::directoryExisting(manifestDirectoryPathName))
-			{
-				bool noErrorIfExists = true;
-				bool recursive = true;
-
-				_logger->info(__FILEREF__ + "Creating directory (if needed)"
-					+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-				);
-				FileIO::createDirectory(manifestDirectoryPathName,
-					S_IRUSR | S_IWUSR | S_IXUSR |
-					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-			}
-			else
-			{
-				// clean directory removing files
-
-				FileIO::DirectoryEntryType_t detDirectoryEntryType;
-				shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-					manifestDirectoryPathName + "/");
-
-				bool scanDirectoryFinished = false;
-				while (!scanDirectoryFinished)
+				try
 				{
-					string directoryEntry;
-					try
-					{
-						string directoryEntry = FileIO::readDirectory (directory,
-							&detDirectoryEntryType);
-
-						if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-							continue;
-
-						{
-							bool exceptionInCaseOfError = false;
-
-							string segmentPathNameToBeRemoved =                                                   
-								manifestDirectoryPathName + "/" + directoryEntry;                                     
-							_logger->info(__FILEREF__ + "Remove"
-								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-							FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
-						}
-					}
-					catch(DirectoryListFinished e)
-					{
-						scanDirectoryFinished = true;
-					}
-					catch(runtime_error e)
-					{
-						string errorMessage = __FILEREF__ + "listing directory failed"
-							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						scanDirectoryFinished = true;
-
-						// throw e;
-					}
-					catch(exception e)
-					{
-						string errorMessage = __FILEREF__ + "listing directory failed"
-							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-							+ ", encodingJobKey: " + to_string(encodingJobKey)
-							+ ", e.what(): " + e.what()
-						;
-						_logger->error(errorMessage);
-
-						scanDirectoryFinished = true;
-
-						// throw e;
-					}
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
 				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
 
-				FileIO::closeDirectory (directory);
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
 			}
 
 			liveProxy->_proxyStart = chrono::system_clock::now();
@@ -4818,7 +4738,8 @@ void FFMPEGEncoder::liveProxy(
 				liveProxy->_outputType,
 				segmentDurationInSeconds,
 				playlistEntriesNumber,
-				liveProxy->_manifestFilePathName,
+				manifestDirectoryPath,
+				manifestFileName,
 				&(liveProxy->_childPid));
 		}
 		else
@@ -4841,7 +4762,7 @@ void FFMPEGEncoder::liveProxy(
         _logger->info(__FILEREF__ + "_ffmpeg->liveProxyByHTTPStreaming finished"
 			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", manifestFilePathName: " + liveProxy->_manifestFilePathName
+            + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
         );
 
 		bool completedWithError			= false;
@@ -4853,18 +4774,18 @@ void FFMPEGEncoder::liveProxy(
 				urlForbidden, urlNotFound);
 
 		liveProxy->_ingestionJobKey = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
         liveProxy->_running = false;
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
 
 		char strDateTime [64];
 		{
@@ -4910,9 +4831,9 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_running = false;
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -4952,9 +4873,9 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_running = false;
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -4994,9 +4915,9 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_running = false;
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -5036,9 +4957,411 @@ void FFMPEGEncoder::liveProxy(
         liveProxy->_running = false;
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
-		liveProxy->_manifestFilePathName = "";
+		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_outputType = "";
-		liveProxy->_configurationLabel = "";
+		liveProxy->_channelLabel = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+
+void FFMPEGEncoder::liveGrid(
+	// FCGX_Request& request,
+	shared_ptr<LiveProxyAndGrid> liveProxy,
+	int64_t encodingJobKey,
+	string requestBody)
+{
+    string api = "liveGrid";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+		liveProxy->_killedBecauseOfNotWorking = false;
+		liveProxy->_errorMessage = "";
+        liveProxy->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value liveGridMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &liveGridMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveGridMetadata, "ingestionJobKey", -1);
+
+		Json::Value inputChannelsRoot = liveGridMetadata["inputChannels"];
+		string userAgent = liveGridMetadata.get("userAgent", "").asString();
+		Json::Value encodingProfileDetailsRoot = liveGridMetadata["encodingProfileDetails"];
+		int gridColumns = JSONUtils::asInt(liveGridMetadata, "gridColumns", 0);
+		int gridWidth = JSONUtils::asInt(liveGridMetadata, "gridWidth", 0);
+		int gridHeight = JSONUtils::asInt(liveGridMetadata, "gridHeight", 0);
+		liveProxy->_outputType = liveGridMetadata.get("outputType", "").asString();
+		int segmentDurationInSeconds = JSONUtils::asInt(liveGridMetadata, "segmentDurationInSeconds", 10);
+		int playlistEntriesNumber = JSONUtils::asInt(liveGridMetadata, "playlistEntriesNumber", 6);
+		string cdnURL = liveGridMetadata.get("cdnURL", "").asString();
+		string manifestDirectoryPath = liveGridMetadata.get("manifestDirectoryPath", "").asString();
+		string manifestFileName = liveGridMetadata.get("manifestFileName", "").asString();
+		liveProxy->_channelLabel = manifestFileName;
+
+		liveProxy->_manifestFilePathNames.clear();
+		for(int inputChannelIndex = 0; inputChannelIndex < inputChannelsRoot.size(); inputChannelIndex++)
+		{
+			string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
+			
+			string audioPathName = manifestDirectoryPath + "/"
+				+ audioTrackDirectoryName + "/" + manifestFileName;
+
+			liveProxy->_manifestFilePathNames.push_back(audioPathName);
+		}
+		{
+			string videoTrackDirectoryName = "0_video";
+
+			string videoPathName = manifestDirectoryPath + "/"
+				+ videoTrackDirectoryName + "/" + manifestFileName;
+
+			liveProxy->_manifestFilePathNames.push_back(videoPathName);
+		}
+
+		if (liveProxy->_outputType == "HLS") // || liveProxy->_outputType == "DASH")
+		{
+			if (FileIO::directoryExisting(manifestDirectoryPath))
+			{
+				try
+				{
+					_logger->info(__FILEREF__ + "removeDirectory"
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+					Boolean_t bRemoveRecursively = true;
+					FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "remove directory failed"
+						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					// throw e;
+				}
+			}
+
+			liveProxy->_proxyStart = chrono::system_clock::now();
+
+			liveProxy->_ffmpeg->liveGridByHTTPStreaming(
+				liveProxy->_ingestionJobKey,
+				encodingJobKey,
+				encodingProfileDetailsRoot,
+				userAgent,
+				inputChannelsRoot,
+				gridColumns,
+				gridWidth,
+				gridHeight,
+				liveProxy->_outputType,
+				segmentDurationInSeconds,
+				playlistEntriesNumber,
+				manifestDirectoryPath,
+				manifestFileName,
+				&(liveProxy->_childPid));
+		}
+		else
+		{
+			liveProxy->_proxyStart = chrono::system_clock::now();
+
+			/*
+			liveProxy->_ffmpeg->liveGridByCDN(
+				liveProxy->_ingestionJobKey,
+				encodingJobKey,
+				liveURL, userAgent, inputTimeOffset,
+				otherOutputOptions,
+				cdnURL,
+				&(liveProxy->_childPid));
+			*/
+		}
+
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
+		liveProxy->_killedBecauseOfNotWorking = false;
+        
+        _logger->info(__FILEREF__ + "_ffmpeg->liveGridBy... finished"
+			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", liveProxy->_channelLabel: " + liveProxy->_channelLabel
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		liveProxy->_ingestionJobKey = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser;
+		if (liveProxy->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			completedWithError			= true;
+			liveProxy->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser				= true;
+		}
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(liveProxy->_encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+    }
+    catch(FFMpegURLForbidden e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLForbidden)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= true;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(FFMpegURLNotFound e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (URLNotFound)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(runtime_error e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_outputType = "";
+		liveProxy->_channelLabel = "";
 		liveProxy->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
@@ -5084,7 +5407,7 @@ void FFMPEGEncoder::monitorThread()
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
-			for (shared_ptr<LiveProxy> liveProxy: *_liveProxiesCapability)
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_running)
 				{
@@ -5102,35 +5425,35 @@ void FFMPEGEncoder::monitorThread()
 					{
 						try
 						{
-							// First health check (HLS/DASH) looking the manifest path name timestamp
+							// First health check (HLS/DASH) looking the manifests path name timestamp
 
-							if (liveProxy->_manifestFilePathName != "")
+							chrono::system_clock::time_point now = chrono::system_clock::now();
+							int64_t liveProxyLiveTimeInMinutes =
+								chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
+
+							// check id done after 3 minutes LiveProxy started, in order to be sure
+							// the manifest file was already created
+							if (liveProxyLiveTimeInMinutes > 3)
 							{
-								chrono::system_clock::time_point now = chrono::system_clock::now();
-								int64_t liveProxyLiveTimeInMinutes =
-									chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
-
-								// check id done after 3 minutes LiveProxy started, in order to be sure
-								// the manifest file was already created
-								if (liveProxyLiveTimeInMinutes > 3)
+								for (string manifestFilePathName: liveProxy->_manifestFilePathNames)
 								{
 									bool liveProxyWorking = true;
 
-									if(!FileIO::fileExisting(liveProxy->_manifestFilePathName))
+									if(!FileIO::fileExisting(manifestFilePathName))
 									{
 										liveProxyWorking = false;
 
 										_logger->error(__FILEREF__ + "liveProxyMonitor. Manifest file does not exist"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
+											+ ", manifestFilePathName: " + manifestFilePathName
 										);
 									}
 									else
 									{
 										time_t utcManifestFileLastModificationTime;
 
-										FileIO::getFileTime (liveProxy->_manifestFilePathName.c_str(),
+										FileIO::getFileTime (manifestFilePathName.c_str(),
 											&utcManifestFileLastModificationTime);
 
 										unsigned long long	ullNow = 0;
@@ -5151,7 +5474,7 @@ void FFMPEGEncoder::monitorThread()
 												+ "in the last " + to_string(maxLastManifestFileUpdateInSeconds) + " seconds"
 												+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 												+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-												+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
+												+ ", manifestFilePathName: " + manifestFilePathName
 												+ ", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago"
 											);
 										}
@@ -5162,8 +5485,8 @@ void FFMPEGEncoder::monitorThread()
 										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (manifest file is missing or was not updated). LiveProxy (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
-											+ ", configurationLabel: " + liveProxy->_configurationLabel
+											+ ", manifestFilePathName: " + manifestFilePathName
+											+ ", channelLabel: " + liveProxy->_channelLabel
 											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 										);
 
@@ -5187,7 +5510,7 @@ void FFMPEGEncoder::monitorThread()
 														tmDateTime. tm_sec);
 												}
 												liveProxy->_errorMessage = string(strDateTime) + " "
-													+ liveProxy->_configurationLabel +
+													+ liveProxy->_channelLabel +
 													" restarted because of 'manifest file is missing or was not updated'";
 											}
 										}
@@ -5201,16 +5524,10 @@ void FFMPEGEncoder::monitorThread()
 													;
 											_logger->error(__FILEREF__ + errorMessage);
 										}
+
+										break;
 									}
 								}
-							}
-							else
-							{
-								_logger->error(__FILEREF__ + "liveProxyMonitor. Live Proxy (HLS or DASH) does not have any manifest file name!!!"
-									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
-								);
 							}
 						}
 						catch(runtime_error e)
@@ -5246,7 +5563,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", configurationLabel: " + liveProxy->_configurationLabel
+									+ ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -5270,7 +5587,7 @@ void FFMPEGEncoder::monitorThread()
 												tmDateTime. tm_sec);
 										}
 										liveProxy->_errorMessage = string(strDateTime) + " "
-											+ liveProxy->_configurationLabel +
+											+ liveProxy->_channelLabel +
 											" restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 									}
 								}
@@ -5313,6 +5630,8 @@ void FFMPEGEncoder::monitorThread()
 					//		HLS/DASH:	kill if segments were not generated
 					//					frame increasing check
 					//					it is also implemented the retention of segments too old (10 minutes)
+					//						This is already implemented by the HLS parameters (into the ffmpeg command)
+					//						We do it for the DASH option and in case ffmpeg does not work
 					//		CDN:		frame increasing check
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
@@ -5330,213 +5649,220 @@ void FFMPEGEncoder::monitorThread()
 							// 3. kill ffmpeg in case no segments were generated
 							if (liveProxyLiveTimeInMinutes > 3)
 							{
-								vector<string>	chunksTooOldToBeRemoved;
-								bool chunksWereNotGenerated = false;
-
-								string manifestDirectoryPathName;
+								for (string manifestFilePathName: liveProxy->_manifestFilePathNames)
 								{
-									size_t manifestFilePathIndex = liveProxy->_manifestFilePathName.find_last_of("/");
-									if (manifestFilePathIndex == string::npos)
+									vector<string>	chunksTooOldToBeRemoved;
+									bool chunksWereNotGenerated = false;
+
+									string manifestDirectoryPathName;
 									{
-										string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
-											+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName;
-										_logger->error(errorMessage);
-
-										throw runtime_error(errorMessage);
-									}
-									manifestDirectoryPathName = liveProxy->_manifestFilePathName.substr(0, manifestFilePathIndex);
-								}
-
-								chrono::system_clock::time_point lastChunkTimestamp = liveProxy->_proxyStart;
-								bool firstChunkRead = false;
-
-								try
-								{
-									if (FileIO::directoryExisting(manifestDirectoryPathName))
-									{
-										FileIO::DirectoryEntryType_t detDirectoryEntryType;
-										shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
-											manifestDirectoryPathName + "/");
-
-										// chunks will be removed 10 minutes after the "capacity" of the playlist
-										// long liveProxyChunkRetentionInSeconds =
-										// 	(segmentDurationInSeconds * playlistEntriesNumber)
-										// 	+ 10 * 60;	// 10 minutes
-										long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
-
-										bool scanDirectoryFinished = false;
-										while (!scanDirectoryFinished)
+										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+										if (manifestFilePathIndex == string::npos)
 										{
-											string directoryEntry;
-											try
-											{
-												string directoryEntry = FileIO::readDirectory (directory,
-													&detDirectoryEntryType);
-                
-												if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-													continue;
+											string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
+												+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+												+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+												+ ", manifestFilePathName: " + manifestFilePathName;
+											_logger->error(errorMessage);
 
-												string dashPrefixInitFiles ("init-stream");
-												if (liveProxy->_outputType == "DASH"
-														&&
-													directoryEntry.size() >= dashPrefixInitFiles.size()
-														&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
-												)
-													continue;
-
-												{
-													string segmentPathNameToBeRemoved =
-														manifestDirectoryPathName + "/" + directoryEntry;
-
-													chrono::system_clock::time_point fileLastModification =
-														FileIO::getFileTime (segmentPathNameToBeRemoved);
-													chrono::system_clock::time_point now = chrono::system_clock::now();
-
-													if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
-														> liveProxyChunkRetentionInSeconds)
-													{
-														chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
-													}
-
-													if (!firstChunkRead
-															|| fileLastModification > lastChunkTimestamp)
-														lastChunkTimestamp = fileLastModification;
-
-													firstChunkRead = true;
-												}
-											}
-											catch(DirectoryListFinished e)
-											{
-												scanDirectoryFinished = true;
-											}
-											catch(runtime_error e)
-											{
-												string errorMessage = __FILEREF__ + "listing directory failed"
-													+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-													+ ", e.what(): " + e.what()
-												;
-												_logger->error(errorMessage);
-
-												// throw e;
-											}
-											catch(exception e)
-											{
-												string errorMessage = __FILEREF__ + "listing directory failed"
-													+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-													+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-													+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-													+ ", e.what(): " + e.what()
-												;
-												_logger->error(errorMessage);
-
-												// throw e;
-											}
+											throw runtime_error(errorMessage);
 										}
-
-										FileIO::closeDirectory (directory);
+										manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 									}
-								}
-								catch(runtime_error e)
-								{
-									_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-										+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-										+ ", e.what(): " + e.what()
-									);
-								}
-								catch(...)
-								{
-									_logger->error(__FILEREF__ + "scan LiveProxy files failed"
-										+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-									);
-								}
-					
-								if (!firstChunkRead
-									|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
-								{
-									// if we are here, it means the ffmpeg command is not generating the ts files
 
-									_logger->error(__FILEREF__ + "liveProxyMonitor. Chunks were not generated"
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
-										+ ", firstChunkRead: " + to_string(firstChunkRead)
-									);
-
-									chunksWereNotGenerated = true;
-
-									_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
-										+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", manifestFilePathName: " + liveProxy->_manifestFilePathName
-										+ ", configurationLabel: " + liveProxy->_configurationLabel
-										+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-									);
+									chrono::system_clock::time_point lastChunkTimestamp = liveProxy->_proxyStart;
+									bool firstChunkRead = false;
 
 									try
 									{
-										ProcessUtility::killProcess(liveProxy->_childPid);
-										liveProxy->_killedBecauseOfNotWorking = true;
+										if (FileIO::directoryExisting(manifestDirectoryPathName))
 										{
-											char strDateTime [64];
+											FileIO::DirectoryEntryType_t detDirectoryEntryType;
+											shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (
+												manifestDirectoryPathName + "/");
+
+											// chunks will be removed 10 minutes after the "capacity" of the playlist
+											// long liveProxyChunkRetentionInSeconds =
+											// 	(segmentDurationInSeconds * playlistEntriesNumber)
+											// 	+ 10 * 60;	// 10 minutes
+											long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
+
+											bool scanDirectoryFinished = false;
+											while (!scanDirectoryFinished)
 											{
-												time_t utcTime = chrono::system_clock::to_time_t(
-													chrono::system_clock::now());
-												tm tmDateTime;
-												localtime_r (&utcTime, &tmDateTime);
-												sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-													tmDateTime. tm_year + 1900,
-													tmDateTime. tm_mon + 1,
-													tmDateTime. tm_mday,
-													tmDateTime. tm_hour,
-													tmDateTime. tm_min,
-													tmDateTime. tm_sec);
+												string directoryEntry;
+												try
+												{
+													string directoryEntry = FileIO::readDirectory (directory,
+													&detDirectoryEntryType);
+
+													if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+														continue;
+
+													string dashPrefixInitFiles ("init-stream");
+													if (liveProxy->_outputType == "DASH"
+															&&
+														directoryEntry.size() >= dashPrefixInitFiles.size()
+															&& 0 == directoryEntry.compare(0, dashPrefixInitFiles.size(), dashPrefixInitFiles)
+													)
+														continue;
+
+													{
+														string segmentPathNameToBeRemoved =
+															manifestDirectoryPathName + "/" + directoryEntry;
+
+														chrono::system_clock::time_point fileLastModification =
+															FileIO::getFileTime (segmentPathNameToBeRemoved);
+														chrono::system_clock::time_point now = chrono::system_clock::now();
+
+														if (chrono::duration_cast<chrono::seconds>(now - fileLastModification).count()
+															> liveProxyChunkRetentionInSeconds)
+														{
+															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
+														}
+
+														if (!firstChunkRead
+															|| fileLastModification > lastChunkTimestamp)
+															lastChunkTimestamp = fileLastModification;
+
+														firstChunkRead = true;
+													}
+												}
+												catch(DirectoryListFinished e)
+												{
+													scanDirectoryFinished = true;
+												}
+												catch(runtime_error e)
+												{
+													string errorMessage = __FILEREF__ + "listing directory failed"
+														+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+														+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+														+ ", e.what(): " + e.what()
+													;
+													_logger->error(errorMessage);
+
+													// throw e;
+												}
+												catch(exception e)
+												{
+													string errorMessage = __FILEREF__ + "listing directory failed"
+														+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+														+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+														+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+														+ ", e.what(): " + e.what()
+													;
+													_logger->error(errorMessage);
+
+													// throw e;
+												}
 											}
-											liveProxy->_errorMessage = string(strDateTime) + " "
-												+ liveProxy->_configurationLabel +
-												" restarted because of 'no segments were generated'";
+
+											FileIO::closeDirectory (directory);
 										}
 									}
 									catch(runtime_error e)
 									{
-										string errorMessage = string("ProcessUtility::killProcess failed")
+										_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+											+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+											+ ", e.what(): " + e.what()
+										);
+									}
+									catch(...)
+									{
+										_logger->error(__FILEREF__ + "scan LiveProxy files failed"
+											+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+										);
+									}
+					
+									if (!firstChunkRead
+										|| lastChunkTimestamp < chrono::system_clock::now() - chrono::minutes(1))
+									{
+										// if we are here, it means the ffmpeg command is not generating the ts files
+
+										_logger->error(__FILEREF__ + "liveProxyMonitor. Chunks were not generated"
+											+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+											+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+											+ ", manifestDirectoryPathName: " + manifestDirectoryPathName
+											+ ", firstChunkRead: " + to_string(firstChunkRead)
+										);
+
+										chunksWereNotGenerated = true;
+
+										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor. Live Proxy is not working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+											+ ", manifestFilePathName: " + manifestFilePathName
+											+ ", channelLabel: " + liveProxy->_channelLabel
 											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-											+ ", e.what(): " + e.what()
-												;
-										_logger->error(__FILEREF__ + errorMessage);
-									}
-								}
+										);
 
-								{
-									bool exceptionInCaseOfError = false;
-
-									for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
-									{
 										try
 										{
-											_logger->info(__FILEREF__ + "liveProxyMonitor. Remove chunk because too old"
-												+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-												+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-												+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
-											FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+											ProcessUtility::killProcess(liveProxy->_childPid);
+											liveProxy->_killedBecauseOfNotWorking = true;
+											{
+												char strDateTime [64];
+												{
+													time_t utcTime = chrono::system_clock::to_time_t(
+														chrono::system_clock::now());
+													tm tmDateTime;
+													localtime_r (&utcTime, &tmDateTime);
+													sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+														tmDateTime. tm_year + 1900,
+														tmDateTime. tm_mon + 1,
+														tmDateTime. tm_mday,
+														tmDateTime. tm_hour,
+														tmDateTime. tm_min,
+														tmDateTime. tm_sec);
+												}
+												liveProxy->_errorMessage = string(strDateTime) + " "
+													+ liveProxy->_channelLabel +
+													" restarted because of 'no segments were generated'";
+											}
 										}
 										catch(runtime_error e)
 										{
-											_logger->error(__FILEREF__ + "remove failed"
-												+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-												+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-												+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+											string errorMessage = string("ProcessUtility::killProcess failed")
+												+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+												+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+												+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 												+ ", e.what(): " + e.what()
-											);
+												;
+											_logger->error(__FILEREF__ + errorMessage);
+										}
+
+										// we killed the process, we do not care to remove the too old segments
+										// since we will remove the entore directory
+										break;
+									}
+
+									{
+										bool exceptionInCaseOfError = false;
+
+										for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
+										{
+											try
+											{
+												_logger->info(__FILEREF__ + "liveProxyMonitor. Remove chunk because too old"
+													+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+													+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+												FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+											}
+											catch(runtime_error e)
+											{
+												_logger->error(__FILEREF__ + "remove failed"
+													+ ", _ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+													+ ", _encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+													+ ", e.what(): " + e.what()
+												);
+											}
 										}
 									}
 								}
@@ -5573,7 +5899,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", configurationLabel: " + liveProxy->_configurationLabel
+									+ ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -5597,7 +5923,7 @@ void FFMPEGEncoder::monitorThread()
 												tmDateTime. tm_sec);
 										}
 										liveProxy->_errorMessage = string(strDateTime) + " "
-											+ liveProxy->_configurationLabel +
+											+ liveProxy->_channelLabel +
 											" restarted because of 'frame is not increasing'";
 									}
 								}
@@ -5653,7 +5979,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", configurationLabel: " + liveProxy->_configurationLabel
+									+ ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -5677,7 +6003,7 @@ void FFMPEGEncoder::monitorThread()
 												tmDateTime. tm_sec);
 										}
 										liveProxy->_errorMessage = string(strDateTime) + " "
-											+ liveProxy->_configurationLabel +
+											+ liveProxy->_channelLabel +
 											" restarted because of 'frame is not increasing'";
 									}
 								}
@@ -5739,7 +6065,7 @@ void FFMPEGEncoder::monitorThread()
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-									+ ", configurationLabel: " + liveProxy->_configurationLabel
+									+ ", channelLabel: " + liveProxy->_channelLabel
 									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
 								);
 
@@ -5763,7 +6089,7 @@ void FFMPEGEncoder::monitorThread()
 												tmDateTime. tm_sec);
 										}
 										liveProxy->_errorMessage = string(strDateTime) + " "
-											+ liveProxy->_configurationLabel +
+											+ liveProxy->_channelLabel +
 											" restarted because of 'HTTP error 403 Forbidden'";
 									}
 								}

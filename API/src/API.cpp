@@ -1979,8 +1979,9 @@ void API::createDeliveryAuthorization(
 					outputType = "HLS";
 
 				int64_t liveURLConfKey;
+				bool warningIfMissing = false;
 				pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
-					requestWorkspace->_workspaceKey, configurationLabel);
+					requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
 				tie(liveURLConfKey, ignore) = liveURLConfDetails;
 
 				string deliveryURI;
@@ -1989,12 +1990,12 @@ void API::createDeliveryAuthorization(
 					liveFileExtension = "m3u8";
 				else
 					liveFileExtension = "mpd";
-				pair<string, string> deliveryURIAndDeliveryFileName
-					= _mmsStorage->getLiveDeliveryURI(
-					_mmsEngineDBFacade, liveURLConfKey,
+				tuple<string, string, string> liveDeliveryDetails
+					= _mmsStorage->getLiveDeliveryDetails(
+					_mmsEngineDBFacade, to_string(liveURLConfKey),
 					liveFileExtension, requestWorkspace);
-				tie(deliveryURI, deliveryFileName) =
-					deliveryURIAndDeliveryFileName;
+				tie(deliveryURI, ignore, deliveryFileName) =
+					liveDeliveryDetails;
 
 				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey,

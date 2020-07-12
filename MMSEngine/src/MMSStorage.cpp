@@ -711,45 +711,72 @@ string MMSStorage::getDeliveryFreeAssetPathName(
 
 string MMSStorage::getLiveDeliveryAssetPathName(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t liveURLConfKey,
+		string directoryId,
 		string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
 {
-	pair<string, string> deliveryURIAndDeliveryFileName = getLiveDeliveryURI(
-			mmsEngineDBFacade, liveURLConfKey,
+	tuple<string, string, string> liveDeliveryDetails = getLiveDeliveryDetails(
+			mmsEngineDBFacade, directoryId,
 			liveFileExtension, requestWorkspace);
 
-	string deliveryURI;
+	string deliveryPath;
+	string deliveryPathName;
 	string deliveryFileName;
 
-	tie(deliveryURI, deliveryFileName) = deliveryURIAndDeliveryFileName;
+	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
 
-	string deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage) + deliveryURI.substr(1);
+	string deliveryAssetPathName = MMSStorage::getMMSRootRepository(_storage)
+		+ deliveryPathName.substr(1);
 
 	return deliveryAssetPathName;
 }
 
-pair<string, string> MMSStorage::getLiveDeliveryURI(
+string MMSStorage::getLiveDeliveryAssetPath(
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	string directoryId, shared_ptr<Workspace> requestWorkspace)
+{
+	string liveFileExtension = "xxx";
+
+	tuple<string, string, string> liveDeliveryDetails = getLiveDeliveryDetails(
+		mmsEngineDBFacade, directoryId,
+		liveFileExtension, requestWorkspace);
+
+	string deliveryPath;
+	string deliveryPathName;
+	string deliveryFileName;
+
+	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
+
+	string deliveryAssetPath = MMSStorage::getMMSRootRepository(_storage)
+		+ deliveryPath.substr(1);
+
+	return deliveryAssetPath;
+}
+
+tuple<string, string, string> MMSStorage::getLiveDeliveryDetails(
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		int64_t liveURLConfKey, string liveFileExtension,
+		string directoryId, string liveFileExtension,
 		shared_ptr<Workspace> requestWorkspace)
 {
-	string deliveryURI;
+	string deliveryPath;
+	string deliveryPathName;
 	string deliveryFileName;
 
 	try
 	{
 		// if (liveURLType == "LiveProxy")
 		{
-			deliveryFileName = to_string(liveURLConfKey) + "." + liveFileExtension;
+			deliveryFileName = directoryId + "." + liveFileExtension;
 
-			deliveryURI = "/" + MMSStorage::getDirectoryForLiveContents() + "/" + requestWorkspace->_directoryName
-				+ "/" + to_string(liveURLConfKey) + "/" + deliveryFileName;
+			deliveryPath = "/" + MMSStorage::getDirectoryForLiveContents()
+				+ "/" + requestWorkspace->_directoryName + "/" + directoryId;
+
+			deliveryPathName = deliveryPath + "/" + deliveryFileName;
 		}
     }
     catch(runtime_error e)
     {
-        string errorMessage = string("getLiveDeliveryURI failed")
-            + ", liveURLConfKey: " + to_string(liveURLConfKey)
+        string errorMessage = string("getLiveDeliveryDetails failed")
+            + ", directoryId: " + directoryId
 			+ ", e.what(): " + e.what()
         ;
         
@@ -759,8 +786,8 @@ pair<string, string> MMSStorage::getLiveDeliveryURI(
     }
     catch(exception e)
     {
-        string errorMessage = string("getLiveDeliveryURI failed")
-            + ", liveURLConfKey: " + to_string(liveURLConfKey)
+        string errorMessage = string("getLiveDeliveryDetails failed")
+            + ", directoryId: " + directoryId
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
@@ -768,7 +795,7 @@ pair<string, string> MMSStorage::getLiveDeliveryURI(
         throw e;
     }
 
-	return make_pair(deliveryURI, deliveryFileName);
+	return make_tuple(deliveryPathName, deliveryPath, deliveryFileName);
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)

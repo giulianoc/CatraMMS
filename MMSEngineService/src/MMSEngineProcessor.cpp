@@ -204,6 +204,15 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
 
+    _deliveryProtocol  = _configuration["api"]["delivery"].get("deliveryProtocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
+    );
+    _deliveryHost  = _configuration["api"]["delivery"].get("deliveryHost", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->deliveryHost: " + _deliveryHost
+    );
+
 	_waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
 		"waitingNFSSync_attemptNumber", 1);
 	_logger->info(__FILEREF__ + "Configuration item"
@@ -9503,8 +9512,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
+		bool warningIfMissing = false;
         pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-                workspace->_workspaceKey, configurationLabel);            
+                workspace->_workspaceKey, configurationLabel, warningIfMissing);            
 		int64_t confKey;
 		string liveURL;
 		tie(confKey, liveURL) = confKeyAndLiveURL;
@@ -9645,8 +9655,9 @@ void MMSEngineProcessor::manageLiveProxy(
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
         }
 
+		bool warningIfMissing = false;
         pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-			workspace->_workspaceKey, configurationLabel);            
+			workspace->_workspaceKey, configurationLabel, warningIfMissing);            
 
 		int64_t liveURLConfKey;
         string liveURL;
@@ -9708,17 +9719,18 @@ void MMSEngineProcessor::manageLiveGrid(
 		}
 		*/
 
-		vector<pair<string, string>> channels;
+		vector<tuple<int64_t, string, string>> inputChannels;
 		int64_t encodingProfileKey = -1;
 		string outputType;
 		// string userAgent;
 		int segmentDurationInSeconds = 0;
 		int playlistEntriesNumber = 0;
+		string outputChannelLabel;
+		int64_t outputHLSChannelConfKey = -1;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
-		string cdnURL;
         {
-            string field = "ConfigurationLabels";
+            string field = "InputConfigurationLabels";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9728,19 +9740,20 @@ void MMSEngineProcessor::manageLiveGrid(
 
                 throw runtime_error(errorMessage);
             }
-			Json::Value channelsRoot = parametersRoot[field];
-			for (int channelIndex = 0; channelIndex < channelsRoot.size(); channelIndex++)
+			Json::Value inputChannelsRoot = parametersRoot[field];
+			for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsRoot.size(); inputChannelIndex++)
 			{
-				string configurationLabel = channelsRoot[channelIndex].asString();
+				string inputConfigurationLabel = inputChannelsRoot[inputChannelIndex].asString();
 
+				bool warningIfMissing = false;
 				pair<int64_t, string> confKeyAndChannelURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-					workspace->_workspaceKey, configurationLabel);            
+					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);            
 
-				int64_t channelConfKey;
-				string channelURL;
-				tie(channelConfKey, channelURL) = confKeyAndChannelURL;
+				int64_t inputChannelConfKey;
+				string inputChannelURL;
+				tie(inputChannelConfKey, inputChannelURL) = confKeyAndChannelURL;
 
-				channels.push_back(make_pair(configurationLabel, channelURL));
+				inputChannels.push_back(make_tuple(inputChannelConfKey, inputConfigurationLabel, inputChannelURL));
 			}
 
 			string keyField = "EncodingProfileKey";
@@ -9772,10 +9785,83 @@ void MMSEngineProcessor::manageLiveGrid(
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputType = "HLS";
 			else
-            	outputType = parametersRoot.get(field, "XXX").asString();
+            	outputType = parametersRoot.get(field, "").asString();
 
 			if (outputType == "HLS") // || outputType == "DASH")
 			{
+				string liveGridURL;
+				{
+					liveGridURL = _deliveryProtocol + "://" + _deliveryHost;
+					liveGridURL += ("/" + workspace->_directoryName + "/");
+				}
+
+				{
+					field = "OutputChannelLabel";
+					outputChannelLabel = parametersRoot.get(field, "XXX").asString();
+					bool channelConfigurationPresent = true;
+					try
+					{
+						bool warningIfMissing = true;
+
+						pair<int64_t, string> confDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
+							workspace->_workspaceKey, outputChannelLabel,
+							warningIfMissing);
+
+						tie(outputHLSChannelConfKey, ignore) = confDetails;
+					}
+					catch(ConfKeyNotFound e)
+					{
+						channelConfigurationPresent = false;
+					}
+
+					if (!channelConfigurationPresent)
+					{
+						string type;
+						string description = "Channel generated by Live-Grid";
+						string name = outputChannelLabel;
+						string region;
+						string country;
+						int64_t imageMediaItemKey = -1;
+						string imageUniqueName;
+						int position = -1;
+						Json::Value channelData = Json::nullValue;
+
+						outputHLSChannelConfKey = _mmsEngineDBFacade->addChannelConf(
+							workspace->_workspaceKey,
+							outputChannelLabel,
+							liveGridURL,
+							type,
+							description,
+							name,
+							region,
+							country,
+							imageMediaItemKey,
+							imageUniqueName,
+							position,
+							channelData
+						);
+
+						string manifestFileName = to_string(outputHLSChannelConfKey) + ".m3u8";
+
+						liveGridURL += (to_string(outputHLSChannelConfKey) + "/" + manifestFileName);
+
+						_mmsEngineDBFacade->modifyChannelConf(
+							outputHLSChannelConfKey,
+							workspace->_workspaceKey,
+							false, "",
+							true, liveGridURL,
+							false, "",
+							false, "",
+							false, "",
+							false, "",
+							false, "",
+							false, -1, "",
+							false, -1,
+							false, Json::nullValue
+						);
+					}
+				}
+
 				field = "SegmentDurationInSeconds";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					segmentDurationInSeconds = 10;
@@ -9790,18 +9876,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			}
 			else if (outputType == "CDN77")
 			{
-				field = "CDN_URL";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				cdnURL = parametersRoot.get(field, "XXX").asString();
+				// not implemented
 			}
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
@@ -9814,12 +9889,13 @@ void MMSEngineProcessor::manageLiveGrid(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
 			else
-				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
+				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
+					parametersRoot, field, 0);
         }
 
 		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
-			channels, encodingProfileKey, outputType,
-			segmentDurationInSeconds, playlistEntriesNumber, cdnURL,
+			inputChannels, encodingProfileKey, outputType, outputHLSChannelConfKey,
+			segmentDurationInSeconds, playlistEntriesNumber,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)
@@ -10032,8 +10108,9 @@ void MMSEngineProcessor::liveCutThread(
 		 */
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
 
+		bool warningIfMissing = false;
         pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-                workspace->_workspaceKey, configurationLabel);
+                workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		int64_t confKey;
 		string liveURL;
 		tie(confKey, liveURL) = confKeyAndLiveURL;

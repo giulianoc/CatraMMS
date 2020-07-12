@@ -63,6 +63,21 @@ struct MediaItemKeyNotFound: public exception {
     }; 
 };
 
+struct ConfKeyNotFound: public exception { 
+    
+    string _errorMessage;
+    
+    ConfKeyNotFound(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+    
+    char const* what() const throw() 
+    {
+        return _errorMessage.c_str();
+    }; 
+};
+
 struct AlreadyLocked: public exception {    
     string _errorMessage;
     
@@ -630,6 +645,9 @@ public:
 		struct LiveGridData {
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
+
+			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
+			string									_jsonProfile;
 		};
 
         shared_ptr<EncodeData>                      _encodeData;
@@ -1623,9 +1641,10 @@ public:
 	int addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		vector<pair<string, string>>& channels,
+		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
-		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
+		string outputType, int64_t outputHLSChannelConfKey,
+		int segmentDurationInSeconds, int playlistEntriesNumber,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
     int addEncoding_VideoSpeed (
@@ -1857,20 +1876,19 @@ public:
 		int position,
 		Json::Value channelData);
 
-    void modifyChannelConf(
-        int64_t confKey,
-        int64_t workspaceKey,
-        string label,
-        string url,
-        string type,
-        string description,
-        string name,
-        string region,
-        string country,
-		int64_t imageMediaItemKey,
-		string imageUniqueName,
-		int position,
-		Json::Value channelData);
+	void modifyChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+		bool labelToBeModified, string label,
+		bool urlToBeModified, string url,
+		bool typeToBeModified, string type,
+		bool descriptionToBeModified, string description,
+		bool nameToBeModified, string name,
+		bool regionToBeModified, string region,
+		bool countryToBeModified, string country,
+		bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
+		bool positionToBeModified, int position,
+		bool channelDataToBeModified, Json::Value channelData);
 
     void removeChannelConf(
         int64_t workspaceKey,
@@ -1883,7 +1901,8 @@ public:
 		string labelOrder);
 
     pair<int64_t, string> getLiveURLConfDetails(
-        int64_t workspaceKey, string liveURLConfigurationLabel);
+        int64_t workspaceKey, string label,
+		bool warningIfMissing);
 
 	tuple<string, string, string> getLiveURLConfDetails(
 		int64_t workspaceKey, int64_t confKey);

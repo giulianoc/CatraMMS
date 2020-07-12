@@ -7,11 +7,10 @@
 
 	"Parameters": {
 
-		// mandatory...
-		"ConfigurationLabels": [
-			"<conf label 1>",
-			"<conf label 2>",
-			"..."
+		// mandatory. Channels to be added into the Live-Grid video
+		"InputConfigurationLabels": [
+			"TV 1",
+			"TV 2"
 		],
 
 		// mandatory: number of the columns of the grid
@@ -21,27 +20,26 @@
 		"GridWidth": 1024,
 
 		// mandatory: grid heigth
-		"GridHeigth": 578,
+		"GridHeight": 578,
 
 		// mandatory. It will represent the encoding profile to be used
 		// EncodingProfileKey or EncodingProfileLabel has to be present
 		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "Profile Logo",
+		"EncodingProfileLabel": "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
 
-		// optional, possible values: HLS, CDN77. Default: HLS
-		"OutputType": "HLS"
+		// mandatory. This channel will have the URL to be used for the delivery of the Live-Grid channel.
+		//	When the Live-Grid task will start, in case the OutputChannelLabel does not exist,
+		//	Live-Grid will add it and set his channel URL
+		"OutputChannelLabel": "TV1 and TV 2",
 
 		// optional. To be set only in case a specific encoders pool has to be used
 		"EncodersPool": "",
 
-		// optional, used only in case of HLS, Default: 10
+		// optional. Default: 10
 		"SegmentDurationInSeconds": 10,
 
-		// optional, used only in case of HLS, Default: 6
+		// optional. Default: 6
 		"PlaylistEntriesNumber": 6,
-
-		// mandatory only in case of CDN77
-		"CDN_URL": "...",
 
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",

@@ -27,7 +27,7 @@ struct Encoding
 		string					_errorMessage;
 };
 
-struct LiveProxy
+struct LiveProxyAndGrid
 {
         bool                    _running;
         int64_t                 _encodingJobKey;
@@ -38,9 +38,9 @@ struct LiveProxy
 		string					_errorMessage;
 
 		int64_t					_ingestionJobKey;
-		string					_manifestFilePathName;
 		string					_outputType;
-		string					_configurationLabel;
+		string					_channelLabel;
+		vector<string>			_manifestFilePathNames;
 		chrono::system_clock::time_point	_proxyStart;
 };
 
@@ -83,7 +83,7 @@ public:
 		mutex* encodingMutex,
 		vector<shared_ptr<Encoding>>* encodingsCapability,
 		mutex* liveProxyMutex,
-		vector<shared_ptr<LiveProxy>>* liveProxiesCapability,
+		vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
 		mutex* liveRecordingMutex,
 		vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
 		mutex* encodingCompletedMutex,
@@ -129,7 +129,7 @@ private:
 
     mutex*						_liveProxyMutex;
     // int							_maxLiveProxiesCapability;
-    vector<shared_ptr<LiveProxy>>* _liveProxiesCapability;
+    vector<shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
 	int							_monitorCheckInSeconds;
 	bool						_monitorThreadShutdown;
 
@@ -218,7 +218,13 @@ private:
 
 	void liveProxy(
         // FCGX_Request& request,
-        shared_ptr<LiveProxy> liveProxy,
+        shared_ptr<LiveProxyAndGrid> liveProxy,
+        int64_t encodingJobKey,
+        string requestBody);
+
+	void liveGrid(
+        // FCGX_Request& request,
+        shared_ptr<LiveProxyAndGrid> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 

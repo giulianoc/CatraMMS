@@ -150,6 +150,7 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegLiveProxyURI;
+    string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
 
@@ -243,6 +244,10 @@ private:
 	bool liveProxy();
 	bool liveProxy_through_ffmpeg();
     void processLiveProxy(bool killedByUser);
+
+	bool liveGrid();
+	bool liveGrid_through_ffmpeg();
+    void processLiveGrid(bool killedByUser);
 
     pair<string, bool> videoSpeed();
     pair<string, bool> videoSpeed_through_ffmpeg();

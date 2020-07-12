@@ -3705,7 +3705,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 {
         
 	vector<string> mandatoryFields = {
-		"ConfigurationLabels",
+		"InputConfigurationLabels",
 		"Columns",
 		"GridWidth",
 		"GridHeigth"
@@ -3743,13 +3743,55 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    string field = "ConfigurationLabels";
-    Json::Value configurationLabelsRoot = parametersRoot[field];
-	if (configurationLabelsRoot.size() < 2)
+    string field = "InputConfigurationLabels";
+    Json::Value inputConfigurationLabelsRoot = parametersRoot[field];
+	if (inputConfigurationLabelsRoot.size() < 2)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels"
 			+ ", Field: " + field
-			+ ", configurationLabelsRoot.size: " + to_string(configurationLabelsRoot.size())
+			+ ", inputConfigurationLabelsRoot.size: " + to_string(inputConfigurationLabelsRoot.size())
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+    field = "Columns";
+	int columns = JSONUtils::asInt(parametersRoot, field, 0);
+	if (columns < 1)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
+			+ ", Field: " + field
+			+ ", columns: " + to_string(columns)
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+    field = "GridWidth";
+	int gridWidth = JSONUtils::asInt(parametersRoot, field, 0);
+	if (gridWidth < 1)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
+			+ ", Field: " + field
+			+ ", gridWidth: " + to_string(gridWidth)
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+    field = "GridHeigth";
+	int gridHeigth = JSONUtils::asInt(parametersRoot, field, 0);
+	if (gridHeigth < 1)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
+			+ ", Field: " + field
+			+ ", gridHeigth: " + to_string(gridHeigth)
 			+ ", label: " + label
 		;
 		_logger->error(__FILEREF__ + errorMessage);
@@ -3779,6 +3821,29 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 	{
 		vector<string> mandatoryFields = {
 			"CDN_URL"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (liveGridOutputType == "HLS")
+	{
+		vector<string> mandatoryFields = {
+			"OutputConfigurationLabel"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{

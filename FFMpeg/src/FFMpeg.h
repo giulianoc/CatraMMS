@@ -82,7 +82,7 @@ public:
         int64_t durationInMilliSeconds,
         // string encodedFileName,
         string stagingEncodedAssetPathName,
-        string encodingProfileDetails,
+        Json::Value encodingProfileDetailsRoot,
         bool isVideo,   // if false it means is audio
 		Json::Value videoTracksRoot,
 		Json::Value audioTracksRoot,
@@ -234,7 +234,8 @@ public:
 		// next are parameters for the output
 		int segmentDurationInSeconds,
 		int playlistEntriesNumber,
-		string manifestFilePathName,
+		string manifestDirectoryPath,                                                                        
+		string manifestFileName,
 		pid_t* pChildPid);
 
 	void liveProxyByCDN(
@@ -249,9 +250,9 @@ public:
 	void liveGridByHTTPStreaming(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		string encodingProfileDetails,
+		Json::Value encodingProfileDetailsRoot,
 		string userAgent,
-		vector<pair<string,string>> channels,   // name,url
+		Json::Value inputChannelsRoot,	// name,url
 		int gridColumns,
 		int gridWidth,  // i.e.: 1024
 		int gridHeight, // i.e.: 578
@@ -261,7 +262,8 @@ public:
 		// next are parameters for the output
 		int segmentDurationInSeconds,
 		int playlistEntriesNumber,
-		string manifestDirectoryPathName,
+		string manifestDirectoryPath,
+		string manifestFileName,
 		pid_t* pChildPid);
 
 	void changeFileFormat(
@@ -311,7 +313,7 @@ private:
     int				_waitingNFSSync_sleepTimeInSeconds;
 
     void settingFfmpegParameters(
-        string encodingProfileDetails,
+        Json::Value encodingProfileDetailsRoot,
         bool isVideo,   // if false it means is audio
         
 		string& httpStreamingFileFormat,

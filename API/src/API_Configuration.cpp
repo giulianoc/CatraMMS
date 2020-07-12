@@ -1276,10 +1276,29 @@ void API::modifyChannelConf(
             }
             confKey = stoll(confKeyIt->second);
 
+			bool labelToBeModified = true;
+			bool urlToBeModified = true;
+			bool typeToBeModified = true;
+			bool descriptionToBeModified = true;
+			bool nameToBeModified = true;
+			bool regionToBeModified = true;
+			bool countryToBeModified = true;
+			bool imageToBeModified = true;
+			bool positionToBeModified = true;
+			bool channelDataToBeModified = true;
+
             _mmsEngineDBFacade->modifyChannelConf(
-                confKey, workspace->_workspaceKey, label, url, type, description,
-				name, region, country, imageMediaItemKey, imageUniqueName, position,
-				channelData);
+                confKey, workspace->_workspaceKey,
+				labelToBeModified, label,
+				urlToBeModified, url,
+				typeToBeModified, type,
+				descriptionToBeModified, description,
+				nameToBeModified, name,
+				regionToBeModified, region,
+				countryToBeModified, country,
+				imageToBeModified, imageMediaItemKey, imageUniqueName,
+				positionToBeModified, position,
+				channelDataToBeModified, channelData);
 
             sResponse = (
                     string("{ ") 
