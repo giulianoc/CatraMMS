@@ -25,5 +25,7 @@ then
 elif [ "$command" == "stop" ]
 then
 	sudo systemctl stop tomcat
+	echo "rm -rf /opt/catramms/tomcat/work/Catalina"
+	rm -rf /opt/catramms/tomcat/work/Catalina
 fi
 

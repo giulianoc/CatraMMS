@@ -3708,7 +3708,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		"InputConfigurationLabels",
 		"Columns",
 		"GridWidth",
-		"GridHeigth"
+		"GridHeight"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3785,13 +3785,13 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "GridHeigth";
-	int gridHeigth = JSONUtils::asInt(parametersRoot, field, 0);
-	if (gridHeigth < 1)
+    field = "GridHeight";
+	int gridHeight = JSONUtils::asInt(parametersRoot, field, 0);
+	if (gridHeight < 1)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
 			+ ", Field: " + field
-			+ ", gridHeigth: " + to_string(gridHeigth)
+			+ ", gridHeight: " + to_string(gridHeight)
 			+ ", label: " + label
 		;
 		_logger->error(__FILEREF__ + errorMessage);

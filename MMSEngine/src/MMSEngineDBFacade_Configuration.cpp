@@ -1566,6 +1566,7 @@ void MMSEngineDBFacade::modifyChannelConf(
 				setSQL += ("channelData = ?");
 				oneParameterPresent = true;
 
+				if (channelData != Json::nullValue)
 				{
 					Json::StreamWriterBuilder wbuilder;
 					sChannelData = Json::writeString(wbuilder, channelData);
