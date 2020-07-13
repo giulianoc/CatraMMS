@@ -1643,7 +1643,7 @@ public:
 		int64_t ingestionJobKey,
 		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
-		string outputType, int64_t outputHLSChannelConfKey,
+		string outputType, string outputChannelLabel, int64_t outputChannelConfKey,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 

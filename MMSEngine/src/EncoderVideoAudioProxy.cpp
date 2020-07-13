@@ -11791,7 +11791,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 	int gridHeight;
 	Json::Value inputChannelsRoot;
 	string outputType;
-	int64_t outputHLSChannelConfKey;
+	int64_t outputChannelConfKey;
 	int segmentDurationInSeconds;
 	int playlistEntriesNumber;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
@@ -11823,8 +11823,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
-        field = "outputHLSChannelConfKey";
-        outputHLSChannelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+        field = "outputChannelConfKey";
+        outputChannelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "segmentDurationInSeconds";
         segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
@@ -12014,14 +12014,14 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					if (outputType == "HLS") // || outputType == "DASH")
 					{
 						// 2020-07-11: just as reminder, in case of Live-Grid (HLS),
-						//	the URL of the outputHLSChannelConfKey channel is update
+						//	the URL of the outputChannelConfKey channel is update
 						//	from MMSEngineProcessor.cpp and this URL is the same as the one built
 						//	in the next statements
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							_mmsEngineDBFacade, to_string(outputHLSChannelConfKey),
+							_mmsEngineDBFacade, to_string(outputChannelConfKey),
 							_encodingItem->_workspace);
 
-						manifestFileName = to_string(outputHLSChannelConfKey) + ".m3u8";
+						manifestFileName = to_string(outputChannelConfKey) + ".m3u8";
 					}
 
 					Json::Value encodingProfileDetailsRoot;

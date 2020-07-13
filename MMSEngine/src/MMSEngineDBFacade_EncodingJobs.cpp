@@ -9153,7 +9153,8 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 		int64_t ingestionJobKey,
 		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
-		string outputType, int64_t outputHLSChannelConfKey,
+		string outputType,
+		string outputChannelLabel, int64_t outputChannelConfKey,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 	)
@@ -9171,7 +9172,8 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
             + ", inputChannels.size: " + to_string(inputChannels.size())
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
             + ", outputType: " + outputType
-            + ", outputHLSChannelConfKey: " + to_string(outputHLSChannelConfKey)
+            + ", outputChannelLabel: " + outputChannelLabel
+            + ", outputChannelConfKey: " + to_string(outputChannelConfKey)
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
@@ -9238,8 +9240,11 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 				field = "outputType";
 				parametersRoot[field] = outputType;
 
-				field = "outputHLSChannelConfKey";
-				parametersRoot[field] = outputHLSChannelConfKey;
+				field = "outputChannelLabel";
+				parametersRoot[field] = outputChannelLabel;
+
+				field = "outputChannelConfKey";
+				parametersRoot[field] = outputChannelConfKey;
 
 				field = "segmentDurationInSeconds";
 				parametersRoot[field] = segmentDurationInSeconds;

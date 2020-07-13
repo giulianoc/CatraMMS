@@ -9726,7 +9726,7 @@ void MMSEngineProcessor::manageLiveGrid(
 		int segmentDurationInSeconds = 0;
 		int playlistEntriesNumber = 0;
 		string outputChannelLabel;
-		int64_t outputHLSChannelConfKey = -1;
+		int64_t outputChannelConfKey = -1;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
         {
@@ -9807,7 +9807,7 @@ void MMSEngineProcessor::manageLiveGrid(
 							workspace->_workspaceKey, outputChannelLabel,
 							warningIfMissing);
 
-						tie(outputHLSChannelConfKey, ignore) = confDetails;
+						tie(outputChannelConfKey, ignore) = confDetails;
 					}
 					catch(ConfKeyNotFound e)
 					{
@@ -9826,7 +9826,7 @@ void MMSEngineProcessor::manageLiveGrid(
 						int position = -1;
 						Json::Value channelData = Json::nullValue;
 
-						outputHLSChannelConfKey = _mmsEngineDBFacade->addChannelConf(
+						outputChannelConfKey = _mmsEngineDBFacade->addChannelConf(
 							workspace->_workspaceKey,
 							outputChannelLabel,
 							liveGridURL,
@@ -9841,12 +9841,12 @@ void MMSEngineProcessor::manageLiveGrid(
 							channelData
 						);
 
-						string manifestFileName = to_string(outputHLSChannelConfKey) + ".m3u8";
+						string manifestFileName = to_string(outputChannelConfKey) + ".m3u8";
 
-						liveGridURL += (to_string(outputHLSChannelConfKey) + "/" + manifestFileName);
+						liveGridURL += (to_string(outputChannelConfKey) + "/" + manifestFileName);
 
 						_mmsEngineDBFacade->modifyChannelConf(
-							outputHLSChannelConfKey,
+							outputChannelConfKey,
 							workspace->_workspaceKey,
 							false, "",
 							true, liveGridURL,
@@ -9894,7 +9894,7 @@ void MMSEngineProcessor::manageLiveGrid(
         }
 
 		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
-			inputChannels, encodingProfileKey, outputType, outputHLSChannelConfKey,
+			inputChannels, encodingProfileKey, outputType, outputChannelLabel, outputChannelConfKey,
 			segmentDurationInSeconds, playlistEntriesNumber,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
