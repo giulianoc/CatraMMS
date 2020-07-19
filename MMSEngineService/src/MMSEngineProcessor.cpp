@@ -10581,13 +10581,14 @@ void MMSEngineProcessor::liveCutThread(
 				field = "Retention";
 				cutParametersRoot[field] = liveCutParametersRoot.get(field, "").asString();
 
-				double startTimeInSeconds =
-					(utcCutPeriodStartTimeInMilliSeconds - (utcFirstChunkStartTime * 1000)) / 1000;
+				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
+					- (utcFirstChunkStartTime * 1000);
+				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
 				field = "StartTimeInSeconds";
 				cutParametersRoot[field] = startTimeInSeconds;
 
-				double endTimeInSeconds =
-					(utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000)) / 1000;
+				double endTimeInMilliSeconds = utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000);
+				double endTimeInSeconds = endTimeInMilliSeconds / 1000;
 				field = "EndTimeInSeconds";
 				cutParametersRoot[field] = endTimeInSeconds;
 
@@ -10598,11 +10599,13 @@ void MMSEngineProcessor::liveCutThread(
 				field = "KeyFrameSeeking";
 				cutParametersRoot[field] = keyFrameSeeking;
 
+				bool fixEndTimeIfOvercomeDuration;
 				if (!errorIfAChunkIsMissing)
-				{
-					field = "FixEndTimeIfOvercomeDuration";
-					cutParametersRoot[field] = true;
-				}
+					fixEndTimeIfOvercomeDuration = true;
+				else
+					fixEndTimeIfOvercomeDuration = false;
+				field = "FixEndTimeIfOvercomeDuration";
+				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
 
 				field = "Parameters";
 				cutRoot[field] = cutParametersRoot;
