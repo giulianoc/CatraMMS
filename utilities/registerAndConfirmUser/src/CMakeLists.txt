@@ -61,6 +61,11 @@ if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
+endif()
+if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
+	#ffmpeg-4.2.2 is missing because libopencv needs the one installed by yum (so inside the /opt/lib dir)
+	# that it is ffmpeg-4.1.3
+elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
 endif()
 
