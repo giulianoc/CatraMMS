@@ -105,6 +105,7 @@ void FFMpeg::encodeContent(
         string ffmpegVideoCodecParameter = "";
         string ffmpegVideoProfileParameter = "";
         string ffmpegVideoResolutionParameter = "";
+		int videoBitRateInKbps = -1;
         string ffmpegVideoBitRateParameter = "";
         string ffmpegVideoOtherParameters = "";
         string ffmpegVideoMaxRateParameter = "";
@@ -143,6 +144,7 @@ void FFMpeg::encodeContent(
             ffmpegVideoCodecParameter,
             ffmpegVideoProfileParameter,
             ffmpegVideoResolutionParameter,
+			videoBitRateInKbps,
             ffmpegVideoBitRateParameter,
             ffmpegVideoOtherParameters,
             _twoPasses,
@@ -6989,11 +6991,13 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
 			// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
 			// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-			ffmpegArgumentList.push_back("-hls_start_number_source");
-			ffmpegArgumentList.push_back("datetime");
+			// 2020-07-19: commented, if it is needed just test it
+			// ffmpegArgumentList.push_back("-hls_start_number_source");
+			// ffmpegArgumentList.push_back("datetime");
 
-			ffmpegArgumentList.push_back("-start_number");
-			ffmpegArgumentList.push_back(to_string(10));
+			// 2020-07-19: commented, if it is needed just test it
+			// ffmpegArgumentList.push_back("-start_number");
+			// ffmpegArgumentList.push_back(to_string(10));
 		}
 		else if (outputTypeLowerCase == "dash")
 		{
@@ -7541,6 +7545,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 				else
 					height = scaleHeight;
 
+				/*
 				_logger->info(__FILEREF__ + "Widthhhhhhh"
 					+ ", inputChannelIndex: " + to_string(inputChannelIndex)
 					+ ", gridWidth: " + to_string(gridWidth)
@@ -7560,6 +7565,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 					+ ", scaleHeight: " + to_string(scaleHeight)
 					+ ", height: " + to_string(height)
 				);
+				*/
 
 				ffmpegFilterComplex += (
 					"[" + to_string(inputChannelIndex) + ":v]"
@@ -7625,90 +7631,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 			+ ".m3u8";
 		*/
 
-		// We will create:
-		//  - one m3u8 for each track (video and audio)
-		//  - one main m3u8 having a group for AUDIO
-		{
-			/*
-			Manifest will be like:
-			#EXTM3U
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
-			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
-			#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO="audio"
-			0/8896718_1509416.m3u8
-
-			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
-			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
-
-			*/
-
-			{
-				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
-				{
-					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
-
-					string audioPathName = manifestDirectoryPath + "/"
-						+ audioTrackDirectoryName;
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory (if needed)"
-						+ ", audioPathName: " + audioPathName
-					);
-					FileIO::createDirectory(audioPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-
-				{
-					string videoTrackDirectoryName = "0_video";
-					string videoPathName = manifestDirectoryPath + "/" + videoTrackDirectoryName;
-
-					bool noErrorIfExists = true;
-					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory (if needed)"
-						+ ", videoPathName: " + videoPathName
-					);
-					FileIO::createDirectory(videoPathName,
-						S_IRUSR | S_IWUSR | S_IXUSR |
-						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-				}
-			}
-
-			// create main manifest file
-			{
-				string mainManifestPathName = manifestDirectoryPath + "/"
-					+ manifestFileName;
-
-				string mainManifest;
-
-				mainManifest = string("#EXTM3U") + "\n";
-
-				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
-				{
-					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
-
-					Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
-					string inputChannelName = inputChannelRoot.get("inputConfigurationLabel", "").asString();
-
-					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
-						+ inputChannelName + "\",NAME=\"" + inputChannelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
-						+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
-
-					mainManifest += (audioManifestLine + "\n");
-				}
-
-				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO=\"audio\"";
-				mainManifest += (videoManifestLine + "\n");
-
-				string videoTrackDirectoryName = "0_video";
-				mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
-
-				ofstream manifestFile(mainManifestPathName);
-				manifestFile << mainManifest;
-			}
-		}
-
+		int videoBitRateInKbps = -1;
 		{
 			string httpStreamingFileFormat;    
 			string ffmpegHttpStreamingParameter = "";
@@ -7750,6 +7673,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 				ffmpegVideoCodecParameter,
 				ffmpegVideoProfileParameter,
 				ffmpegVideoResolutionParameter,
+				videoBitRateInKbps,
 				ffmpegVideoBitRateParameter,
 				ffmpegVideoOtherParameters,
 				_twoPasses,
@@ -7765,6 +7689,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 				ffmpegAudioSampleRateParameter
 			);
 
+			// -map for video and audio
 			{
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[outVideo]");
@@ -7911,6 +7836,95 @@ void FFMpeg::liveGridByHTTPStreaming(
 				}
 			}
         }
+
+		// We will create:
+		//  - one m3u8 for each track (video and audio)
+		//  - one main m3u8 having a group for AUDIO
+		{
+			/*
+			Manifest will be like:
+			#EXTM3U
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="ita",NAME="ita",AUTOSELECT=YES, DEFAULT=YES,URI="ita/8896718_1509416.m3u8"
+			#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES, DEFAULT=YES,URI="eng/8896718_1509416.m3u8"
+			#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=195023,AUDIO="audio"
+			0/8896718_1509416.m3u8
+
+			https://developer.apple.com/documentation/http_live_streaming/example_playlists_for_http_live_streaming/adding_alternate_media_to_a_playlist#overview
+			https://github.com/videojs/http-streaming/blob/master/docs/multiple-alternative-audio-tracks.md
+
+			*/
+
+			{
+				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
+				{
+					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
+
+					string audioPathName = manifestDirectoryPath + "/"
+						+ audioTrackDirectoryName;
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", audioPathName: " + audioPathName
+					);
+					FileIO::createDirectory(audioPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				{
+					string videoTrackDirectoryName = "0_video";
+					string videoPathName = manifestDirectoryPath + "/" + videoTrackDirectoryName;
+
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					_logger->info(__FILEREF__ + "Creating directory (if needed)"
+						+ ", videoPathName: " + videoPathName
+					);
+					FileIO::createDirectory(videoPathName,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+			}
+
+			// create main manifest file
+			{
+				string mainManifestPathName = manifestDirectoryPath + "/"
+					+ manifestFileName;
+
+				string mainManifest;
+
+				mainManifest = string("#EXTM3U") + "\n";
+
+				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
+				{
+					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
+
+					Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
+					string inputChannelName = inputChannelRoot.get("inputConfigurationLabel", "").asString();
+
+					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
+						+ inputChannelName + "\",NAME=\"" + inputChannelName + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
+						+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
+
+					mainManifest += (audioManifestLine + "\n");
+				}
+
+				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1";
+				if (videoBitRateInKbps != -1)
+					videoManifestLine += (",BANDWIDTH=" + to_string(videoBitRateInKbps * 1000));
+				videoManifestLine += ",AUDIO=\"audio\"";
+
+				mainManifest += (videoManifestLine + "\n");
+
+				string videoTrackDirectoryName = "0_video";
+				mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
+
+				ofstream manifestFile(mainManifestPathName);
+				manifestFile << mainManifest;
+			}
+		}
+
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -8145,6 +8159,7 @@ void FFMpeg::settingFfmpegParameters(
         string& ffmpegVideoCodecParameter,
         string& ffmpegVideoProfileParameter,
         string& ffmpegVideoResolutionParameter,
+		int& videoBitRateInKbps,
         string& ffmpegVideoBitRateParameter,
         string& ffmpegVideoOtherParameters,
         bool& twoPasses,
@@ -8411,14 +8426,15 @@ void FFMpeg::settingFfmpegParameters(
         }
 
         // bitRate
+		videoBitRateInKbps = -1;
         {
             field = "KBitRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                int bitRate = asInt(videoRoot, field, 0);
+                videoBitRateInKbps = asInt(videoRoot, field, 0);
 
                 ffmpegVideoBitRateParameter =
-                        "-b:v " + to_string(bitRate) + "k "
+                        "-b:v " + to_string(videoBitRateInKbps) + "k "
                 ;
             }
         }

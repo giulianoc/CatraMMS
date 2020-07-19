@@ -324,6 +324,7 @@ private:
         string& ffmpegVideoCodecParameter,
         string& ffmpegVideoProfileParameter,
         string& ffmpegVideoResolutionParameter,
+		int& videoBitRateInKbps,
         string& ffmpegVideoBitRateParameter,
         string& ffmpegVideoOtherParameters,
         bool& twoPasses,

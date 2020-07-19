@@ -10109,8 +10109,8 @@ void MMSEngineProcessor::liveCutThread(
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
 
 		bool warningIfMissing = false;
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-                workspace->_workspaceKey, configurationLabel, warningIfMissing);
+		pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
+			workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		int64_t confKey;
 		string liveURL;
 		tie(confKey, liveURL) = confKeyAndLiveURL;
@@ -10125,7 +10125,8 @@ void MMSEngineProcessor::liveCutThread(
 
 		bool allChunksAvailable = false;
 		while (!allChunksAvailable
-			&& (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
+			&& (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+				- startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
 		)
 		{
 			int64_t mediaItemKey = -1;
@@ -10589,6 +10590,13 @@ void MMSEngineProcessor::liveCutThread(
 					(utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000)) / 1000;
 				field = "EndTimeInSeconds";
 				cutParametersRoot[field] = endTimeInSeconds;
+
+				// 2020-07-19: keyFrameSeeking by default it is true.
+				//	Result is that the cut is a bit over (in my test it was about one second more).
+				//	Using keyFrameSeeking false the Cut is accurate.
+				bool keyFrameSeeking = false;
+				field = "KeyFrameSeeking";
+				cutParametersRoot[field] = keyFrameSeeking;
 
 				if (!errorIfAChunkIsMissing)
 				{
