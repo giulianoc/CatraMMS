@@ -67,7 +67,7 @@ add_subdirectory(predefinedWorkflowLibrary)
 add_subdirectory(predefinedImages)
 
 add_subdirectory(utilities/registerAndConfirmUser/src)
-add_subdirectory(utilities/confirmUser/src)
+add_subdirectory(utilities/confirmUser)
 add_subdirectory(utilities/cvCaptureTest/src)
 add_subdirectory(utilities/lockTest/src)
 add_subdirectory(utilities/sendEmail/src)
