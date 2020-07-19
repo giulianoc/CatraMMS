@@ -61,7 +61,7 @@ if (APPLE)
 else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-49/lib")
 endif()
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.1.3/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 
 add_executable(lockTest ${SOURCES} ${HEADERS})

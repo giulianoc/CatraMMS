@@ -61,7 +61,7 @@ if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
-	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.1.3/lib")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
 endif()
 
 add_executable(addWorkspaceToActiveDirectoryUser ${SOURCES} ${HEADERS})

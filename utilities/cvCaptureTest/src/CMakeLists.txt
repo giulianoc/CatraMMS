@@ -40,7 +40,7 @@ endif()
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.1.3/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
 
 add_executable(cvCaptureTest ${SOURCES} ${HEADERS})
 
