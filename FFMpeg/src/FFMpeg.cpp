@@ -5929,16 +5929,26 @@ void FFMpeg::generateConcatMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
+			// 2020-07-20: added the log of the input file
+			string inputBuffer;
+			{
+				ifstream inputFile(concatenationListPathName);
+				stringstream input;
+				input << inputFile.rdbuf();
+
+				inputBuffer = input.str();
+			}
             string errorMessage = __FILEREF__ + "generateConcatMediaToIngest: ffmpeg command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+				+ ", inputBuffer: " + inputBuffer
             ;
 
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
-        
+
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
@@ -5952,8 +5962,9 @@ void FFMpeg::generateConcatMediaToIngest(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		// 2020-07-20: log of ffmpegExecuteCommand commented because already added into the catched exception
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                // + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                 + ", e.what(): " + e.what()
         ;
@@ -5963,11 +5974,12 @@ void FFMpeg::generateConcatMediaToIngest(
         _logger->info(__FILEREF__ + "Remove"
             + ", concatenationListPathName: " + concatenationListPathName);
         FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
+
         _logger->info(__FILEREF__ + "Remove"
             + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-        throw e;
+		throw runtime_error(errorMessage);
     }
 
     bool exceptionInCaseOfError = false;
