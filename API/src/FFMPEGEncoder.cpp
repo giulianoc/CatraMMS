@@ -5893,8 +5893,7 @@ void FFMPEGEncoder::monitorThread()
 						{
 							// Second health check (HLS/DASH), looks if the frame is increasing
 							int secondsToWaitBetweenSamples = 3;
-							if (!liveProxy->_ffmpeg->isFrameIncreasing(
-								secondsToWaitBetweenSamples))
+							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
 							{
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
@@ -5973,8 +5972,7 @@ void FFMPEGEncoder::monitorThread()
 						{
 							// Second health check (CDN), looks if the frame is increasing
 							int secondsToWaitBetweenSamples = 3;
-							if (!liveProxy->_ffmpeg->isFrameIncreasing(
-								secondsToWaitBetweenSamples))
+							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
 							{
 								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)

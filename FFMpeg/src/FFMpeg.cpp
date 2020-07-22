@@ -50,16 +50,21 @@ FFMpeg::FFMpeg(Json::Value configuration,
     );
 	*/
 
+    _startCheckingFrameInfoInMinutes = asInt(configuration["ffmpeg"],
+		"startCheckingFrameInfoInMinutes", 5);
+
     _charsToBeReadFromFfmpegErrorOutput     = 1024;
     
     _twoPasses = false;
     _currentlyAtSecondPass = false;
 
-    _currentDurationInMilliSeconds      = -1;
-    _currentMMSSourceAssetPathName      = "";
-    _currentStagingEncodedAssetPathName = "";
-    _currentIngestionJobKey             = -1;
-    _currentEncodingJobKey              = -1;
+    _currentIngestionJobKey             = -1;	// just for log
+    _currentEncodingJobKey              = -1;	// just for log
+    _currentDurationInMilliSeconds      = -1;	// in case of some functionalities, it is important for getEncodingProgress
+    _currentMMSSourceAssetPathName      = "";	// just for log
+    _currentStagingEncodedAssetPathName = "";	// just for log
+
+	_startFFMpegMethod = chrono::system_clock::now();
 }
 
 FFMpeg::~FFMpeg() 
@@ -86,6 +91,14 @@ void FFMpeg::encodeContent(
 	int iReturnedStatus = 0;
 
 	_currentApiName = "encodeContent";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		durationInMilliSeconds,
+		mmsSourceAssetPathName,
+		stagingEncodedAssetPathName
+	);
 
     try
     {
@@ -120,11 +133,11 @@ void FFMpeg::encodeContent(
         string ffmpegAudioSampleRateParameter = "";
 
 
-        _currentDurationInMilliSeconds      = durationInMilliSeconds;
-        _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;
-        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        _currentIngestionJobKey             = ingestionJobKey;
-        _currentEncodingJobKey              = encodingJobKey;
+        // _currentDurationInMilliSeconds      = durationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
         
         _currentlyAtSecondPass = false;
 
@@ -1967,13 +1980,21 @@ void FFMpeg::overlayImageOnVideo(
 
 	_currentApiName = "overlayImageOnVideo";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		videoDurationInMilliSeconds,
+		mmsSourceVideoAssetPathName,
+		stagingEncodedAssetPathName
+	);
+
     try
     {
-        _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-        _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
-        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        _currentIngestionJobKey             = ingestionJobKey;
-        _currentEncodingJobKey              = encodingJobKey;
+        // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
         
 
         _outputFfmpegPathFileName =
@@ -2353,13 +2374,21 @@ void FFMpeg::overlayTextOnVideo(
 
 	_currentApiName = "overlayTextOnVideo";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		videoDurationInMilliSeconds,
+		mmsSourceVideoAssetPathName,
+		stagingEncodedAssetPathName
+	);
+
     try
     {
-        _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-        _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
-        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        _currentIngestionJobKey             = ingestionJobKey;
-        _currentEncodingJobKey              = encodingJobKey;
+        // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
         
 
         _outputFfmpegPathFileName =
@@ -2764,14 +2793,21 @@ void FFMpeg::videoSpeed(
 
 	_currentApiName = "videoSpeed";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		videoDurationInMilliSeconds,
+		mmsSourceVideoAssetPathName,
+		stagingEncodedAssetPathName
+	);
+
     try
     {
-        _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-        _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
-        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        _currentIngestionJobKey             = ingestionJobKey;
-        _currentEncodingJobKey              = encodingJobKey;
-        
+        // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
 
         _outputFfmpegPathFileName =
                 _ffmpegTempDir + "/"
@@ -3248,6 +3284,14 @@ void FFMpeg::pictureInPicture(
 
 	_currentApiName = "pictureInPicture";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		mainVideoDurationInMilliSeconds,
+		mmsMainVideoAssetPathName,
+		stagingEncodedAssetPathName
+	);
+
     try
     {
 		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds)
@@ -3263,11 +3307,11 @@ void FFMpeg::pictureInPicture(
 			throw runtime_error(errorMessage);
 		}
 
-        _currentDurationInMilliSeconds      = mainVideoDurationInMilliSeconds;
-        _currentMMSSourceAssetPathName      = mmsMainVideoAssetPathName;
-        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
-        _currentIngestionJobKey             = ingestionJobKey;
-        _currentEncodingJobKey              = encodingJobKey;
+        // _currentDurationInMilliSeconds      = mainVideoDurationInMilliSeconds;
+        // _currentMMSSourceAssetPathName      = mmsMainVideoAssetPathName;
+        // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        // _currentIngestionJobKey             = ingestionJobKey;
+        // _currentEncodingJobKey              = encodingJobKey;
         
 
         _outputFfmpegPathFileName =
@@ -3658,557 +3702,6 @@ void FFMpeg::pictureInPicture(
 
         throw e;
     }
-}
-
-void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
-{
-    try
-    {
-        FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (directoryName + "/");
-
-        bool scanDirectoryFinished = false;
-        while (!scanDirectoryFinished)
-        {
-            string directoryEntry;
-            try
-            {
-                string directoryEntry = FileIO::readDirectory (directory,
-                    &detDirectoryEntryType);
-
-                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                    continue;
-
-                if (directoryEntry.size() >= prefixFileName.size() && directoryEntry.compare(0, prefixFileName.size(), prefixFileName) == 0) 
-                {
-                    bool exceptionInCaseOfError = false;
-                    string pathFileName = directoryName + "/" + directoryEntry;
-                    _logger->info(__FILEREF__ + "Remove"
-                        + ", pathFileName: " + pathFileName);
-                    FileIO::remove(pathFileName, exceptionInCaseOfError);
-                }
-            }
-            catch(DirectoryListFinished e)
-            {
-                scanDirectoryFinished = true;
-            }
-            catch(runtime_error e)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
-                       + ", e.what(): " + e.what()
-                ;
-                _logger->error(errorMessage);
-
-                throw e;
-            }
-        }
-
-        FileIO::closeDirectory (directory);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
-            + ", e.what(): " + e.what()
-        );
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed");
-    }
-}
-
-int FFMpeg::getEncodingProgress()
-{
-    int encodingPercentage = 0;
-
-    try
-    {
-		if (
-				_currentApiName == "liveProxyByHTTPStreaming"
-				|| _currentApiName == "liveProxyByCDN"
-				|| _currentApiName == "liveGridByHTTPStreaming"
-				|| _currentApiName == "liveGridByCDN"
-				)
-		{
-			// it's a live
-
-			return -1;
-		}
-
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
-        {
-            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-        string ffmpegEncodingStatus;
-        try
-        {
-            int lastCharsToBeRead = 512;
-            
-            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-        {
-            // frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x    
-            
-            smatch m;   // typedef std:match_result<string>
-
-            regex e("time=([^ ]+)");
-
-            bool match = regex_search(ffmpegEncodingStatus, m, e);
-
-            // m is where the result is saved
-            // we will have three results: the entire match, the first submatch, the second submatch
-            // giving the following input: <email>user@gmail.com<end>
-            // m.prefix(): everything is in front of the matched string (<email> in the previous example)
-            // m.suffix(): everything is after the matched string (<end> in the previous example)
-
-            /*
-            _logger->info(string("m.size(): ") + to_string(m.size()) + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus);
-            for (int n = 0; n < m.size(); n++)
-            {
-                _logger->info(string("m[") + to_string(n) + "]: str()=" + m[n].str());
-            }
-            cout << "m.prefix().str(): " << m.prefix().str() << endl;
-            cout << "m.suffix().str(): " << m.suffix().str() << endl;
-             */
-
-            if (m.size() >= 2)
-            {
-                string duration = m[1].str();   // 00:01:47.87
-
-                stringstream ss(duration);
-                string hours;
-                string minutes;
-                string seconds;
-                string roughMicroSeconds;    // microseconds???
-                char delim = ':';
-
-                getline(ss, hours, delim); 
-                getline(ss, minutes, delim); 
-
-                delim = '.';
-                getline(ss, seconds, delim); 
-                getline(ss, roughMicroSeconds, delim); 
-
-                int iHours = atoi(hours.c_str());
-                int iMinutes = atoi(minutes.c_str());
-                int iSeconds = atoi(seconds.c_str());
-                int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
-
-                double encodingSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
-                double currentTimeInMilliSeconds = (encodingSeconds * 1000) + (_currentlyAtSecondPass ? _currentDurationInMilliSeconds : 0);
-                //  encodingSeconds : _encodingItem->videoOrAudioDurationInMilliSeconds = x : 100
-                
-                encodingPercentage = 100 * currentTimeInMilliSeconds / (_currentDurationInMilliSeconds * (_twoPasses ? 2 : 1));
-
-				if (encodingPercentage > 100 || encodingPercentage < 0)
-				{
-					_logger->error(__FILEREF__ + "Encoding status too big"
-						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-						+ ", duration: " + duration
-						+ ", encodingSeconds: " + to_string(encodingSeconds)
-						+ ", _twoPasses: " + to_string(_twoPasses)
-						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
-						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
-						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
-						+ ", encodingPercentage: " + to_string(encodingPercentage)
-						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-					);
-
-					encodingPercentage		= 0;
-				}
-				else
-				{
-					_logger->info(__FILEREF__ + "Encoding status"
-						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-						+ ", duration: " + duration
-						+ ", encodingSeconds: " + to_string(encodingSeconds)
-						+ ", _twoPasses: " + to_string(_twoPasses)
-						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
-						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
-						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
-						+ ", encodingPercentage: " + to_string(encodingPercentage)
-						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-					);
-				}
-            }
-        }
-    }
-    catch(FFMpegEncodingStatusNotAvailable e)
-    {
-        _logger->info(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", e.what(): " + e.what()
-        );
-
-        throw FFMpegEncodingStatusNotAvailable();
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-        );
-
-        throw e;
-    }
-    
-    return encodingPercentage;
-}
-
-bool FFMpeg::nonMonotonousDTSInOutputLog()
-{
-    try
-    {
-		if (_currentApiName != "liveProxyByCDN")
-		{
-			// actually we need this check just for liveProxyByCDN
-
-			return false;
-		}
-
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
-        {
-            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-        string ffmpegEncodingStatus;
-        try
-        {
-            int lastCharsToBeRead = 512;
-            
-            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-		string lowerCaseFfmpegEncodingStatus;
-		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
-		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(), lowerCaseFfmpegEncodingStatus.begin(), [](unsigned char c){return tolower(c); } );
-
-		// [flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-		if (lowerCaseFfmpegEncodingStatus.find("non-monotonous dts in output stream") != string::npos
-				&& lowerCaseFfmpegEncodingStatus.find("incorrect timestamps") != string::npos)
-			return true;
-		else
-			return false;
-    }
-    catch(FFMpegEncodingStatusNotAvailable e)
-    {
-        _logger->info(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", e.what(): " + e.what()
-        );
-
-        throw FFMpegEncodingStatusNotAvailable();
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-        );
-
-        throw e;
-    }
-}
-
-bool FFMpeg::forbiddenErrorInOutputLog()
-{
-    try
-    {
-		if (_currentApiName != "liveProxyByCDN")
-		{
-			// actually we need this check just for liveProxyByCDN
-
-			return false;
-		}
-
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
-        {
-            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-        string ffmpegEncodingStatus;
-        try
-        {
-            int lastCharsToBeRead = 512;
-            
-            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-		string lowerCaseFfmpegEncodingStatus;
-		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
-		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(),
-			lowerCaseFfmpegEncodingStatus.begin(),
-			[](unsigned char c)
-			{
-				return tolower(c);
-			}
-		);
-
-		// [https @ 0x555a8e428a00] HTTP error 403 Forbidden
-		if (lowerCaseFfmpegEncodingStatus.find("http error 403 forbidden") != string::npos)
-			return true;
-		else
-			return false;
-    }
-    catch(FFMpegEncodingStatusNotAvailable e)
-    {
-        _logger->info(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", e.what(): " + e.what()
-        );
-
-        throw FFMpegEncodingStatusNotAvailable();
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-        );
-
-        throw e;
-    }
-}
-
-bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
-{
-
-	bool frameIncreasing = true;
-
-    try
-    {
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
-        {
-            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
-                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            );
-
-            throw FFMpegEncodingStatusNotAvailable();
-        }
-
-		long firstFramesValue;
-		{
-			string ffmpegEncodingStatus;
-			try
-			{
-				int lastCharsToBeRead = 512;
-
-				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
-					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-				);
-
-				throw FFMpegEncodingStatusNotAvailable();
-			}
-
-			firstFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
-		}
-
-		this_thread::sleep_for(chrono::seconds(secondsToWaitBetweenSamples));
-
-		long secondFramesValue;
-		{
-			string ffmpegEncodingStatus;
-			try
-			{
-				int lastCharsToBeRead = 512;
-
-				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
-			}
-			catch(exception e)
-			{
-				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
-					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-				);
-
-				throw FFMpegEncodingStatusNotAvailable();
-			}
-
-			secondFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
-		}
-
-		frameIncreasing = (firstFramesValue == secondFramesValue ? false : true);
-
-        _logger->info(__FILEREF__ + "ffmpeg: frame monitoring"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", firstFramesValue: " + to_string(firstFramesValue)
-            + ", secondFramesValue: " + to_string(secondFramesValue)
-            + ", frameIncreasing: " + to_string(frameIncreasing)
-        );
-    }
-    catch(FFMpegEncodingStatusNotAvailable e)
-    {
-        _logger->info(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", e.what(): " + e.what()
-        );
-
-        throw FFMpegEncodingStatusNotAvailable();
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
-            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-        );
-
-        throw e;
-    }
-    
-    return frameIncreasing;
-}
-
-long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
-{
-	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x    
-
-	string frameToSearch = "frame=";
-	size_t startFrameIndex = ffmpegEncodingStatus.rfind(frameToSearch);
-	if (startFrameIndex == string::npos)
-	{
-		_logger->warn(__FILEREF__ + "ffmpeg: frame info was not found"
-			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-			+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-			+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-			+ ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
-		);
-
-		throw FFMpegEncodingStatusNotAvailable();
-	}
-	ffmpegEncodingStatus = ffmpegEncodingStatus.substr(startFrameIndex + frameToSearch.size());
-	size_t endFrameIndex = ffmpegEncodingStatus.find(" fps=");
-	if (endFrameIndex == string::npos)
-	{
-		_logger->error(__FILEREF__ + "ffmpeg: fps info was not found"
-			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-			+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-			+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-			+ ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
-		);
-
-		throw FFMpegEncodingStatusNotAvailable();
-	}
-	ffmpegEncodingStatus = ffmpegEncodingStatus.substr(0, endFrameIndex);
-	ffmpegEncodingStatus = StringUtils::trim(ffmpegEncodingStatus);
-
-	return stol(ffmpegEncodingStatus);
 }
 
 /*
@@ -5553,6 +5046,14 @@ vector<string> FFMpeg::generateFramesToIngest(
 {
 	_currentApiName = "generateFramesToIngest";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		// stagingEncodedAssetPathName
+	);
+
     _logger->info(__FILEREF__ + "generateFramesToIngest"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5571,10 +5072,10 @@ vector<string> FFMpeg::generateFramesToIngest(
     
 	int iReturnedStatus = 0;
 
-    _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
-    _currentMMSSourceAssetPathName      = mmsAssetPathName;
-    _currentIngestionJobKey             = ingestionJobKey;
-    _currentEncodingJobKey              = encodingJobKey;
+    // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+    // _currentMMSSourceAssetPathName      = mmsAssetPathName;
+    // _currentIngestionJobKey             = ingestionJobKey;
+    // _currentEncodingJobKey              = encodingJobKey;
         
     vector<string> generatedFramesFileNames;
     
@@ -5876,6 +5377,16 @@ void FFMpeg::generateConcatMediaToIngest(
 {
 	_currentApiName = "generateConcatMediaToIngest";
 
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     string concatenationListPathName =
         _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
@@ -6003,6 +5514,16 @@ void FFMpeg::generateCutMediaToIngest(
 
 	_currentApiName = "generateCutMediaToIngest";
 
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
@@ -6127,6 +5648,16 @@ void FFMpeg::generateSlideshowMediaToIngest(
 		pid_t* pChildPid)
 {
 	_currentApiName = "generateSlideshowMediaToIngest";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
 
 	int iReturnedStatus = 0;
 
@@ -6333,6 +5864,16 @@ void FFMpeg::extractTrackMediaToIngest(
 {
 	_currentApiName = "extractTrackMediaToIngest";
 
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
@@ -6455,6 +5996,16 @@ void FFMpeg::liveRecorder(
 		pid_t* pChildPid)
 {
 	_currentApiName = "liveRecorder";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
 
 #ifdef __EXECUTE__
 	string ffmpegExecuteCommand;
@@ -6898,6 +6449,16 @@ void FFMpeg::liveProxyByHTTPStreaming(
 
 	_currentApiName = "liveProxyByHTTPStreaming";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     try
     {
 		string outputTypeLowerCase;
@@ -7184,6 +6745,16 @@ void FFMpeg::liveProxyByCDN(
 
 	_currentApiName = "liveProxyByCDN";
 
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     try
     {
 		_outputFfmpegPathFileName =
@@ -7370,6 +6941,16 @@ void FFMpeg::liveGridByHTTPStreaming(
 	time_t utcNow;
 
 	_currentApiName = "liveGridByHTTPStreaming";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey
+		/*
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
 
     try
     {
@@ -8076,6 +7657,16 @@ void FFMpeg::changeFileFormat(
 
 	_currentApiName = "changeFileFormat";
 
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
     try
     {
 		_outputFfmpegPathFileName =
@@ -8157,6 +7748,603 @@ void FFMpeg::changeFileFormat(
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
+{
+    try
+    {
+        FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (directoryName + "/");
+
+        bool scanDirectoryFinished = false;
+        while (!scanDirectoryFinished)
+        {
+            string directoryEntry;
+            try
+            {
+                string directoryEntry = FileIO::readDirectory (directory,
+                    &detDirectoryEntryType);
+
+                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    continue;
+
+                if (directoryEntry.size() >= prefixFileName.size() && directoryEntry.compare(0, prefixFileName.size(), prefixFileName) == 0) 
+                {
+                    bool exceptionInCaseOfError = false;
+                    string pathFileName = directoryName + "/" + directoryEntry;
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", pathFileName: " + pathFileName);
+                    FileIO::remove(pathFileName, exceptionInCaseOfError);
+                }
+            }
+            catch(DirectoryListFinished e)
+            {
+                scanDirectoryFinished = true;
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+        }
+
+        FileIO::closeDirectory (directory);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
+            + ", e.what(): " + e.what()
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed");
+    }
+}
+
+int FFMpeg::getEncodingProgress()
+{
+    int encodingPercentage = 0;
+
+    try
+    {
+		if (
+				_currentApiName == "liveProxyByHTTPStreaming"
+				|| _currentApiName == "liveProxyByCDN"
+				|| _currentApiName == "liveGridByHTTPStreaming"
+				|| _currentApiName == "liveGridByCDN"
+				)
+		{
+			// it's a live
+
+			return -1;
+		}
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        string ffmpegEncodingStatus;
+        try
+        {
+			int lastCharsToBeReadToGetInfo = 10000;
+            
+            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        {
+            // frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x    
+            
+            smatch m;   // typedef std:match_result<string>
+
+            regex e("time=([^ ]+)");
+
+            bool match = regex_search(ffmpegEncodingStatus, m, e);
+
+            // m is where the result is saved
+            // we will have three results: the entire match, the first submatch, the second submatch
+            // giving the following input: <email>user@gmail.com<end>
+            // m.prefix(): everything is in front of the matched string (<email> in the previous example)
+            // m.suffix(): everything is after the matched string (<end> in the previous example)
+
+            /*
+            _logger->info(string("m.size(): ") + to_string(m.size()) + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus);
+            for (int n = 0; n < m.size(); n++)
+            {
+                _logger->info(string("m[") + to_string(n) + "]: str()=" + m[n].str());
+            }
+            cout << "m.prefix().str(): " << m.prefix().str() << endl;
+            cout << "m.suffix().str(): " << m.suffix().str() << endl;
+             */
+
+            if (m.size() >= 2)
+            {
+                string duration = m[1].str();   // 00:01:47.87
+
+                stringstream ss(duration);
+                string hours;
+                string minutes;
+                string seconds;
+                string roughMicroSeconds;    // microseconds???
+                char delim = ':';
+
+                getline(ss, hours, delim); 
+                getline(ss, minutes, delim); 
+
+                delim = '.';
+                getline(ss, seconds, delim); 
+                getline(ss, roughMicroSeconds, delim); 
+
+                int iHours = atoi(hours.c_str());
+                int iMinutes = atoi(minutes.c_str());
+                int iSeconds = atoi(seconds.c_str());
+                int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
+
+                double encodingSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
+                double currentTimeInMilliSeconds = (encodingSeconds * 1000) + (_currentlyAtSecondPass ? _currentDurationInMilliSeconds : 0);
+                //  encodingSeconds : _encodingItem->videoOrAudioDurationInMilliSeconds = x : 100
+                
+                encodingPercentage = 100 * currentTimeInMilliSeconds / (_currentDurationInMilliSeconds * (_twoPasses ? 2 : 1));
+
+				if (encodingPercentage > 100 || encodingPercentage < 0)
+				{
+					_logger->error(__FILEREF__ + "Encoding status too big"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+						+ ", duration: " + duration
+						+ ", encodingSeconds: " + to_string(encodingSeconds)
+						+ ", _twoPasses: " + to_string(_twoPasses)
+						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
+						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
+						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
+						+ ", encodingPercentage: " + to_string(encodingPercentage)
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					);
+
+					encodingPercentage		= 0;
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "Encoding status"
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+						+ ", duration: " + duration
+						+ ", encodingSeconds: " + to_string(encodingSeconds)
+						+ ", _twoPasses: " + to_string(_twoPasses)
+						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
+						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
+						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
+						+ ", encodingPercentage: " + to_string(encodingPercentage)
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					);
+				}
+            }
+        }
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+    
+    return encodingPercentage;
+}
+
+bool FFMpeg::nonMonotonousDTSInOutputLog()
+{
+    try
+    {
+		if (_currentApiName != "liveProxyByCDN")
+		{
+			// actually we need this check just for liveProxyByCDN
+
+			return false;
+		}
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        string ffmpegEncodingStatus;
+        try
+        {
+			int lastCharsToBeReadToGetInfo = 10000;
+            
+            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+		string lowerCaseFfmpegEncodingStatus;
+		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
+		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(), lowerCaseFfmpegEncodingStatus.begin(), [](unsigned char c){return tolower(c); } );
+
+		// [flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+		if (lowerCaseFfmpegEncodingStatus.find("non-monotonous dts in output stream") != string::npos
+				&& lowerCaseFfmpegEncodingStatus.find("incorrect timestamps") != string::npos)
+			return true;
+		else
+			return false;
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+}
+
+bool FFMpeg::forbiddenErrorInOutputLog()
+{
+    try
+    {
+		if (_currentApiName != "liveProxyByCDN")
+		{
+			// actually we need this check just for liveProxyByCDN
+
+			return false;
+		}
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->warn(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+        string ffmpegEncodingStatus;
+        try
+        {
+			int lastCharsToBeReadToGetInfo = 10000;
+            
+            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+		string lowerCaseFfmpegEncodingStatus;
+		lowerCaseFfmpegEncodingStatus.resize(ffmpegEncodingStatus.size());
+		transform(ffmpegEncodingStatus.begin(), ffmpegEncodingStatus.end(),
+			lowerCaseFfmpegEncodingStatus.begin(),
+			[](unsigned char c)
+			{
+				return tolower(c);
+			}
+		);
+
+		// [https @ 0x555a8e428a00] HTTP error 403 Forbidden
+		if (lowerCaseFfmpegEncodingStatus.find("http error 403 forbidden") != string::npos)
+			return true;
+		else
+			return false;
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+}
+
+bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
+{
+
+	bool frameIncreasing = true;
+
+    try
+    {
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		long minutesSinceBeginningPassed =
+			chrono::duration_cast<chrono::minutes>(now - _startFFMpegMethod).count();
+		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
+			return frameIncreasing;
+
+        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+        {
+            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+				+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+            );
+
+            throw FFMpegEncodingStatusNotAvailable();
+        }
+
+		int lastCharsToBeReadToGetInfo = 10000;
+
+		long firstFramesValue;
+		{
+			string ffmpegEncodingStatus;
+			try
+			{
+				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+				);
+
+				throw FFMpegEncodingStatusNotAvailable();
+			}
+
+			try
+			{
+				firstFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
+			}
+			catch(FFMpegFrameInfoNotAvailable e)
+			{
+				frameIncreasing = false;
+
+				_logger->info(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (1)"
+					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+					+ ", frameIncreasing: " + to_string(frameIncreasing)
+				);
+
+				// return frameIncreasing;
+				throw FFMpegEncodingStatusNotAvailable();
+			}
+		}
+
+		this_thread::sleep_for(chrono::seconds(secondsToWaitBetweenSamples));
+
+		long secondFramesValue;
+		{
+			string ffmpegEncodingStatus;
+			try
+			{
+				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+				);
+
+				throw FFMpegEncodingStatusNotAvailable();
+			}
+
+			try
+			{
+				secondFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
+			}
+			catch(FFMpegFrameInfoNotAvailable e)
+			{
+				frameIncreasing = false;
+
+				_logger->info(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (2)"
+					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+					+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+					+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+					+ ", frameIncreasing: " + to_string(frameIncreasing)
+				);
+
+				// return frameIncreasing;
+				throw FFMpegEncodingStatusNotAvailable();
+			}
+		}
+
+		frameIncreasing = (firstFramesValue == secondFramesValue ? false : true);
+
+        _logger->info(__FILEREF__ + "ffmpeg: frame monitoring"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", firstFramesValue: " + to_string(firstFramesValue)
+            + ", secondFramesValue: " + to_string(secondFramesValue)
+			+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+            + ", frameIncreasing: " + to_string(frameIncreasing)
+        );
+    }
+    catch(FFMpegEncodingStatusNotAvailable e)
+    {
+        _logger->info(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: isFrameIncreasing failed"
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+    
+    return frameIncreasing;
+}
+
+long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
+{
+	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x    
+
+	string frameToSearch = "frame=";
+	size_t startFrameIndex = ffmpegEncodingStatus.rfind(frameToSearch);
+	if (startFrameIndex == string::npos)
+	{
+		_logger->warn(__FILEREF__ + "ffmpeg: frame info was not found"
+			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+			+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			+ ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+		);
+
+		throw FFMpegFrameInfoNotAvailable();
+	}
+	ffmpegEncodingStatus = ffmpegEncodingStatus.substr(startFrameIndex + frameToSearch.size());
+	size_t endFrameIndex = ffmpegEncodingStatus.find(" fps=");
+	if (endFrameIndex == string::npos)
+	{
+		_logger->error(__FILEREF__ + "ffmpeg: fps info was not found"
+			+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+			+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+			+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+			+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			+ ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+		);
+
+		throw FFMpegEncodingStatusNotAvailable();
+	}
+	ffmpegEncodingStatus = ffmpegEncodingStatus.substr(0, endFrameIndex);
+	ffmpegEncodingStatus = StringUtils::trim(ffmpegEncodingStatus);
+
+	return stol(ffmpegEncodingStatus);
 }
 
 void FFMpeg::settingFfmpegParameters(
@@ -9285,5 +9473,23 @@ bool FFMpeg::asBool(Json::Value root, string field, bool defaultValue)
 		else
 			return root.get(field, defaultValue).asBool();
 	}
+}
+
+void FFMpeg::setStatus(
+	int64_t ingestionJobKey,
+	int64_t encodingJobKey,
+	int64_t durationInMilliSeconds,
+	string mmsSourceAssetPathName,
+	string stagingEncodedAssetPathName
+)
+{
+
+    _currentIngestionJobKey             = ingestionJobKey;	// just for log
+    _currentEncodingJobKey              = encodingJobKey;	// just for log
+    _currentDurationInMilliSeconds      = durationInMilliSeconds;	// in case of some functionalities, it is important for getEncodingProgress
+    _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;	// just for log
+    _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;	// just for log
+
+	_startFFMpegMethod = chrono::system_clock::now();
 }
 

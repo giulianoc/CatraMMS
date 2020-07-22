@@ -15,6 +15,7 @@
 #define FFMpeg_h
 
 #include <string>
+#include <chrono>
 #include "spdlog/spdlog.h"
 #include "json/json.h"
 
@@ -32,6 +33,13 @@ struct FFMpegEncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
     {
         return "Encoding status not available";
+    }; 
+};
+
+struct FFMpegFrameInfoNotAvailable: public exception {
+    char const* what() const throw() 
+    {
+        return "Frame Info not available";
     }; 
 };
 
@@ -309,8 +317,19 @@ private:
     int64_t         _currentIngestionJobKey;
     int64_t         _currentEncodingJobKey;
 
+	chrono::system_clock::time_point	_startFFMpegMethod;
+	int				_startCheckingFrameInfoInMinutes;
+
     int				_waitingNFSSync_attemptNumber;
     int				_waitingNFSSync_sleepTimeInSeconds;
+
+	void setStatus(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey = -1,
+		int64_t durationInMilliSeconds = -1,
+		string mmsSourceAssetPathName = "",
+		string stagingEncodedAssetPathName = ""
+	);
 
     void settingFfmpegParameters(
         Json::Value encodingProfileDetailsRoot,

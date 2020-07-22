@@ -31,5 +31,6 @@ then
 	#echo $PIDFILE
 	#sudo start-stop-daemon --stop --quiet  --retry=TERM/30/KILL/5 --pidfile $PID --name nginx
 	sudo kill -QUIT $( cat $PIDFILE )
+	sudo pkill nginx
 fi
 
