@@ -53,7 +53,7 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _startCheckingFrameInfoInMinutes = asInt(configuration["ffmpeg"],
 		"startCheckingFrameInfoInMinutes", 5);
 
-    _charsToBeReadFromFfmpegErrorOutput     = 1024;
+    _charsToBeReadFromFfmpegErrorOutput     = 2024;
     
     _twoPasses = false;
     _currentlyAtSecondPass = false;
@@ -8208,7 +8208,7 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 			{
 				frameIncreasing = false;
 
-				_logger->info(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (1)"
+				_logger->error(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (1)"
 					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
@@ -8217,8 +8217,8 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 					+ ", frameIncreasing: " + to_string(frameIncreasing)
 				);
 
-				// return frameIncreasing;
-				throw FFMpegEncodingStatusNotAvailable();
+				return frameIncreasing;
+				// throw FFMpegEncodingStatusNotAvailable();
 			}
 		}
 
@@ -8253,7 +8253,7 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 			{
 				frameIncreasing = false;
 
-				_logger->info(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (2)"
+				_logger->error(__FILEREF__ + "ffmpeg: frame monitoring. Frame info not available (2)"
 					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 					+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 					+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
@@ -8262,8 +8262,8 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 					+ ", frameIncreasing: " + to_string(frameIncreasing)
 				);
 
-				// return frameIncreasing;
-				throw FFMpegEncodingStatusNotAvailable();
+				return frameIncreasing;
+				// throw FFMpegEncodingStatusNotAvailable();
 			}
 		}
 
