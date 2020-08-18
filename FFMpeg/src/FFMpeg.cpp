@@ -6811,8 +6811,9 @@ void FFMpeg::liveProxyByCDN(
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-bsf:a");
 		ffmpegArgumentList.push_back("aac_adtstoasc");
-		ffmpegArgumentList.push_back("-vcodec");
-		ffmpegArgumentList.push_back("copy");
+		// 2020-08-13: commented bacause -c:v copy is already present
+		// ffmpegArgumentList.push_back("-vcodec");
+		// ffmpegArgumentList.push_back("copy");
 
 		// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
 		ffmpegArgumentList.push_back("-f");

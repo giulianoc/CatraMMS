@@ -11717,6 +11717,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) 
+            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) 
 			+ ", configurationLabel: " + configurationLabel
             ;
 		_logger->error(errorMessage);
@@ -12748,6 +12750,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) 
+            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) 
             ;
 		_logger->error(errorMessage);
         
