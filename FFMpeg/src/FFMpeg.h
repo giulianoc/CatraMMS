@@ -174,6 +174,14 @@ public:
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 
+	void getLiveStreamingInfo(
+		string liveURL,
+		string userAgent,
+		int64_t ingestionJobKey,
+		vector<tuple<int, string, string, string, string, int, int>>& videoTracks,
+		vector<tuple<int, string, string, string, int, bool>>& audioTracks
+	);
+
     vector<string> generateFramesToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,

@@ -384,7 +384,8 @@ void FFMpeg::encodeContent(
 				//
 				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("mp4");
+				// 2020-08-21: changed from mp4 to null
+				ffmpegArgumentList.push_back("null");
 
 				ffmpegArgumentList.push_back("/dev/null");
 
@@ -1025,7 +1026,8 @@ void FFMpeg::encodeContent(
 				//
 				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("mp4");
+				// 2020-08-21: changed from mp4 to null
+				ffmpegArgumentList.push_back("null");
 
 				ffmpegArgumentList.push_back("/dev/null");
 
@@ -1485,8 +1487,14 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegAudioOtherParameters, ffmpegArgumentList);
 				addToArguments(ffmpegAudioChannelsParameter, ffmpegArgumentList);
 				addToArguments(ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+
+				// 2020-08-21: changed from ffmpegFileFormatParameter to -f null
+				// addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("null");
+
 				ffmpegArgumentList.push_back("/dev/null");
+
 
                 try
                 {
@@ -4678,14 +4686,19 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 field = "codec_name";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					field = "codec_tag_string";
+					if (!isMetadataPresent(streamRoot, field))
+					{
+						string errorMessage =
+							__FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
-                    _logger->error(errorMessage);
+						_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
+						throw runtime_error(errorMessage);
+					}
                 }
-                videoCodecName = streamRoot.get(field, "XXX").asString();
+                videoCodecName = streamRoot.get(field, "").asString();
 
 				if (firstVideoCodecName == "")
 					firstVideoCodecName = videoCodecName;
@@ -5026,6 +5039,523 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 	*/
 
 	return make_pair(durationInMilliSeconds, bitRate);
+}
+
+void FFMpeg::getLiveStreamingInfo(
+	string liveURL,
+	string userAgent,
+	int64_t ingestionJobKey,
+	vector<tuple<int, string, string, string, string, int, int>>& videoTracks,
+	vector<tuple<int, string, string, string, int, bool>>& audioTracks
+)
+{
+
+	_logger->info(__FILEREF__ + "getLiveStreamingInfo"
+		+ ", liveURL: " + liveURL
+		+ ", userAgent: " + userAgent
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+	);
+
+	string outputFfmpegPathFileName;
+	string ffmpegExecuteCommand;
+
+    try
+    {
+		outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ ".liveStreamingInfo.log"
+		;
+
+		int liveDurationInSeconds = 5;
+
+		ffmpegExecuteCommand = _ffmpegPath
+			+ "/ffmpeg "
+			+ "-nostdin "
+			+ (userAgent == "" ? "" : "-user_agent " + userAgent + " ")
+			+ "-re -i " + liveURL + " "
+			+ "-t " + to_string(liveDurationInSeconds) + " "
+			+ "-c:v copy "
+			+ "-c:a copy "
+			+ "-f null "
+			+ "/dev/null "
+			+ "> " + outputFfmpegPathFileName 
+			+ " 2>&1"
+		;
+
+		#ifdef __APPLE__
+			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+		#endif
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+		if (executeCommandStatus != 0)
+		{
+			string errorMessage = __FILEREF__ +
+				"getLiveStreamingInfo failed"
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "getLiveStreamingInfo: Executed ffmpeg command"
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+			outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+		string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
+			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
+		;
+		_logger->error(errorMessage);
+
+		if (FileIO::isFileExisting(outputFfmpegPathFileName.c_str()))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+		}
+
+		throw e;
+	}
+
+	try
+	{
+		if (!FileIO::isFileExisting(outputFfmpegPathFileName.c_str()))
+		{
+			_logger->info(__FILEREF__ + "ffmpeg: ffmpeg status not available"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+			);
+
+			throw FFMpegEncodingStatusNotAvailable();
+		}
+
+		ifstream ifPathFileName(outputFfmpegPathFileName);
+
+		int charsToBeRead = 200000;
+
+		// get size/length of file:
+		ifPathFileName.seekg (0, ifPathFileName.end);
+		int fileSize = ifPathFileName.tellg();
+		if (fileSize <= charsToBeRead)
+			charsToBeRead = fileSize;
+
+		ifPathFileName.seekg (0, ifPathFileName.beg);
+
+		string firstPartOfFile;
+		{
+			char* buffer = new char [charsToBeRead];
+			ifPathFileName.read (buffer, charsToBeRead);
+			if (ifPathFileName)
+			{
+				// all characters read successfully
+				firstPartOfFile.assign(buffer, charsToBeRead);
+			}
+			else
+			{
+				// error: only is.gcount() could be read";
+				firstPartOfFile.assign(buffer, ifPathFileName.gcount());
+			}
+			ifPathFileName.close();
+
+			delete[] buffer;
+		}
+
+		/*
+  Program 0
+    Metadata:
+      variant_bitrate : 200000
+    Stream #0:0: Video: h264 (Main) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709), 320x180 [SAR 1:1 DAR 16:9], 15 fps, 15 tbr, 90k tbn, 30 tbc
+    Metadata:
+      variant_bitrate : 200000
+    Stream #0:1: Audio: aac (LC) ([15][0][0][0] / 0x000F), 32000 Hz, stereo, fltp
+    Metadata:
+      variant_bitrate : 200000
+    Stream #0:2: Data: timed_id3 (ID3  / 0x20334449)
+    Metadata:
+      variant_bitrate : 200000
+  Program 1
+    Metadata:
+      variant_bitrate : 309000
+    Stream #0:3: Video: h264 (Main) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709), 480x270 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 90k tbn, 50 tbc
+    Metadata:
+      variant_bitrate : 309000
+    Stream #0:4: Audio: aac (LC) ([15][0][0][0] / 0x000F), 32000 Hz, stereo, fltp
+    Metadata:
+      variant_bitrate : 309000
+    Stream #0:5: Data: timed_id3 (ID3  / 0x20334449)
+    Metadata:
+      variant_bitrate : 309000
+...
+Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMGBKQCH':
+		 */
+		string programLabel = "  Program ";
+		string outputLabel = "Output #0,";
+		string streamLabel = "    Stream #";
+		string videoLabel = "Video: ";
+		string audioLabel = "Audio: ";
+		string stereoLabel = ", stereo,";
+
+		int startToLookForProgram = 0;
+		bool programFound = true;
+		int programId = 0;
+		while(programFound)
+		{
+			string program;
+			{
+				/*
+				_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Looking Program"
+					+ ", programId: " + to_string(programId)
+					+ ", startToLookForProgram: " + to_string(startToLookForProgram)
+				);
+				*/
+				size_t programBeginIndex = firstPartOfFile.find(programLabel, startToLookForProgram);
+				if (programBeginIndex == string::npos)
+				{
+					programFound = false;
+
+					continue;
+				}
+
+				startToLookForProgram = (programBeginIndex + programLabel.size());
+				size_t programEndIndex = firstPartOfFile.find(programLabel, startToLookForProgram);
+				if (programEndIndex == string::npos)
+				{
+					programEndIndex = firstPartOfFile.find(outputLabel, startToLookForProgram);
+					if (programEndIndex == string::npos)
+					{
+						/*
+						_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. This is the last Program"
+							+ ", programId: " + to_string(programId)
+							+ ", startToLookForProgram: " + to_string(startToLookForProgram)
+						);
+						*/
+
+						programFound = false;
+
+						continue;
+					}
+				}
+
+				program = firstPartOfFile.substr(programBeginIndex,
+					programEndIndex - programBeginIndex);
+
+				/*
+				_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Program"
+					+ ", programId: " + to_string(programId)
+					+ ", programBeginIndex: " + to_string(programBeginIndex)
+					+ ", programEndIndex: " + to_string(programEndIndex)
+					+ ", program: " + program
+				);
+				*/
+			}
+
+			stringstream programStream(program);
+			string line;
+
+			while (getline(programStream, line))
+			{
+				// start with
+				if (line.size() >= streamLabel.size()
+					&& 0 == line.compare(0, streamLabel.size(), streamLabel))
+				{
+					size_t codecStartIndex;
+					if ((codecStartIndex = line.find(videoLabel)) != string::npos)
+					{
+						//     Stream #0:0: Video: h264 (Main) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709), 320x180 [SAR 1:1 DAR 16:9], 15 fps, 15 tbr, 90k tbn, 30 tbc
+
+						// video
+						string videoStreamId;
+						string videoStreamDescription;
+						string videoCodec;
+						string videoYUV;
+						int videoWidth = -1;
+						int videoHeight = -1;
+
+						// stream id
+						{
+							string streamIdEndLabel = ": ";
+							size_t streamIdEndIndex;
+							if ((streamIdEndIndex = line.find(streamIdEndLabel, streamLabel.size())) != string::npos)
+							{
+								size_t streamIdStartIndex = streamLabel.size();
+
+								// Stream #0:2(des): Audio: aac (LC), 44100 Hz, stereo, fltp, 168 kb/s
+								//	or
+								// Stream #0:2: Audio: aac (LC), 44100 Hz, stereo, fltp, 168 kb/s
+								string localStreamId = line.substr(streamIdStartIndex,
+									streamIdEndIndex - streamIdStartIndex);
+
+								string streamDescriptionStartLabel = "(";
+								size_t streamDescriptionStartIndex;
+								if ((streamDescriptionStartIndex = localStreamId.find(streamDescriptionStartLabel, 0)) != string::npos)
+								{
+									// 0:2(des)
+									videoStreamId = localStreamId.substr(0, streamDescriptionStartIndex);
+									videoStreamDescription = localStreamId.substr(streamDescriptionStartIndex + 1,
+											(localStreamId.size() - 2) - streamDescriptionStartIndex);
+								}
+								else
+								{
+									// 0:2
+									videoStreamId = localStreamId;
+								}
+							}
+						}
+
+						// codec
+						size_t codecEndIndex;
+						{
+							string codecEndLabel = ", yuv";
+							if ((codecEndIndex = line.find(codecEndLabel, codecStartIndex)) != string::npos)
+							{
+								codecStartIndex += videoLabel.size();
+
+								videoCodec = line.substr(codecStartIndex, codecEndIndex - codecStartIndex);
+							}
+						}
+
+						// yuv
+						size_t yuvEndIndex;
+						{
+							// h264 (Main) ([27][0][0][0] / 0x001B), yuv420p(tv), 624x352
+							//	or
+							// h264 (Main) ([27][0][0][0] / 0x001B), yuv420p, 928x522
+							//  or
+							// h264 (Main) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709), 320x180
+							string yuvEndLabel_1 = "), ";
+							string yuvEndLabel_2 = ", ";
+							if ((yuvEndIndex = line.find(yuvEndLabel_1, codecEndIndex + 1)) != string::npos)
+							{
+								videoYUV = line.substr(codecEndIndex + 2,
+										(yuvEndIndex + 1) - (codecEndIndex + 2));
+							}
+							else if ((yuvEndIndex = line.find(yuvEndLabel_2, codecEndIndex + 1)) != string::npos)
+							{
+								videoYUV = line.substr(codecEndIndex + 2,
+										yuvEndIndex - (codecEndIndex + 2));
+							}
+						}
+
+						// width & height
+						if (yuvEndIndex != string::npos)
+						{
+							string widthEndLabel = "x";
+							size_t widthEndIndex;
+							if ((widthEndIndex = line.find(widthEndLabel, yuvEndIndex + 2)) != string::npos)
+							{
+								string sWidth = line.substr(yuvEndIndex + 2,
+									widthEndIndex - (yuvEndIndex + 2));
+								try
+								{
+									videoWidth = stoi(sWidth);
+								}
+								catch(exception e)
+								{
+									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
+										+ ", line: " + line
+										+ ", yuvEndIndex: " + to_string(yuvEndIndex)
+										+ ", sWidth: " + sWidth
+										+ ", e.what(): " + e.what()
+									;
+									_logger->error(errorMessage);
+								}
+							}
+
+							string heightEndLabel = " ";
+							size_t heightEndIndex;
+							if ((heightEndIndex = line.find(heightEndLabel, widthEndIndex)) != string::npos)
+							{
+								string sHeight = line.substr(widthEndIndex + 1,
+									heightEndIndex - (widthEndIndex + 1));
+								try
+								{
+									videoHeight = stoi(sHeight);
+								}
+								catch(exception e)
+								{
+									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
+										+ ", line: " + line
+										+ ", sHeight: " + sHeight
+										+ ", e.what(): " + e.what()
+									;
+									_logger->error(errorMessage);
+								}
+							}
+						}
+
+						{
+							videoTracks.push_back(
+								make_tuple(programId, videoStreamId, videoStreamDescription,
+									videoCodec, videoYUV, videoWidth, videoHeight)
+							);
+
+							_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Video track"
+								+ ", programId: " + to_string(programId)
+								+ ", videoStreamId: " + videoStreamId
+								+ ", videoStreamDescription: " + videoStreamDescription
+								+ ", videoCodec: " + videoCodec
+								+ ", videoYUV: " + videoYUV
+								+ ", videoWidth: " + to_string(videoWidth)
+								+ ", videoHeight: " + to_string(videoHeight)
+							);
+						}
+					}
+					else if ((codecStartIndex = line.find(audioLabel)) != string::npos)
+					{
+						// Stream #0:1: Audio: aac (LC) ([15][0][0][0] / 0x000F), 32000 Hz, stereo, fltp
+
+						// audio
+						string audioStreamId;
+						string audioStreamDescription;
+						string audioCodec;
+						int audioSamplingRate = -1;
+						bool audioStereo = false;
+
+						// stream id
+						{
+							string streamIdEndLabel = ": ";
+							size_t streamIdEndIndex;
+							if ((streamIdEndIndex = line.find(streamIdEndLabel, streamLabel.size())) != string::npos)
+							{
+								size_t streamIdStartIndex = streamLabel.size();
+
+								// Stream #0:2(des): Audio: aac (LC), 44100 Hz, stereo, fltp, 168 kb/s
+								//	or
+								// Stream #0:2: Audio: aac (LC), 44100 Hz, stereo, fltp, 168 kb/s
+								string localStreamId = line.substr(streamIdStartIndex,
+									streamIdEndIndex - streamIdStartIndex);
+
+								string streamDescriptionStartLabel = "(";
+								size_t streamDescriptionStartIndex;
+								if ((streamDescriptionStartIndex = localStreamId.find(streamDescriptionStartLabel, 0)) != string::npos)
+								{
+									// 0:2(des)
+									audioStreamId = localStreamId.substr(0, streamDescriptionStartIndex);
+									audioStreamDescription = localStreamId.substr(streamDescriptionStartIndex + 1,
+											(localStreamId.size() - 2) - streamDescriptionStartIndex);
+								}
+								else
+								{
+									// 0:2
+									audioStreamId = localStreamId;
+								}
+							}
+						}
+
+						// codec
+						size_t codecEndIndex;
+						{
+							string codecEndLabel = ", ";
+							if ((codecEndIndex = line.find(codecEndLabel, codecStartIndex)) != string::npos)
+							{
+								codecStartIndex += audioLabel.size();
+
+								audioCodec = line.substr(codecStartIndex, codecEndIndex - codecStartIndex);
+							}
+						}
+
+						// samplingRate
+						size_t samplingEndIndex = 0;
+						{
+							string samplingEndLabel = " Hz";
+							if ((samplingEndIndex = line.find(samplingEndLabel, codecEndIndex)) != string::npos)
+							{
+								string sSamplingRate = line.substr(codecEndIndex + 2,
+									samplingEndIndex - (codecEndIndex + 2));
+								try
+								{
+									audioSamplingRate = stoi(sSamplingRate);
+								}
+								catch(exception e)
+								{
+									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
+										+ ", line: " + line
+										+ ", sSamplingRate: " + sSamplingRate
+										+ ", e.what(): " + e.what()
+									;
+									_logger->error(errorMessage);
+								}
+							}
+						}
+
+						// stereo
+						{
+							if (line.find(stereoLabel, samplingEndIndex) != string::npos)
+								audioStereo = true;
+							else
+								audioStereo = false;
+						}
+
+						{
+							audioTracks.push_back(
+								make_tuple(programId, audioStreamId, audioStreamDescription,
+									audioCodec, audioSamplingRate, audioStereo)
+							);
+
+							_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Audio track"
+								+ ", programId: " + to_string(programId)
+								+ ", audioStreamId: " + audioStreamId
+								+ ", audioStreamDescription: " + audioStreamDescription
+								+ ", audioCodec: " + audioCodec
+								+ ", audioSamplingRate: " + to_string(audioSamplingRate)
+								+ ", audioStereo: " + to_string(audioStereo)
+							);
+						}
+					}
+				}
+			}
+
+			programId++;
+		}
+
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+	}
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+		bool exceptionInCaseOfError = false;
+		FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
 }
 
 vector<string> FFMpeg::generateFramesToIngest(
@@ -6536,10 +7066,18 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
-		ffmpegArgumentList.push_back("-c:v");
-		ffmpegArgumentList.push_back("copy");
-		ffmpegArgumentList.push_back("-c:a");
-		ffmpegArgumentList.push_back("copy");
+		if (otherOutputOptions.find("-filter:v") == string::npos)
+		{
+			// it is not possible to have -c:v copy and -filter:v toghether
+			ffmpegArgumentList.push_back("-c:v");
+			ffmpegArgumentList.push_back("copy");
+		}
+		if (otherOutputOptions.find("-filter:a") == string::npos)
+		{
+			// it is not possible to have -c:a copy and -filter:a toghether
+			ffmpegArgumentList.push_back("-c:a");
+			ffmpegArgumentList.push_back("copy");
+		}
 		if (outputTypeLowerCase == "hls")
 		{
 			ffmpegArgumentList.push_back("-hls_flags");
@@ -6805,10 +7343,18 @@ void FFMpeg::liveProxyByCDN(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
-		ffmpegArgumentList.push_back("-c:v");
-		ffmpegArgumentList.push_back("copy");
-		ffmpegArgumentList.push_back("-c:a");
-		ffmpegArgumentList.push_back("copy");
+		if (otherOutputOptions.find("-filter:v") == string::npos)
+		{
+			// it is not possible to have -c:v copy and -filter:v toghether
+			ffmpegArgumentList.push_back("-c:v");
+			ffmpegArgumentList.push_back("copy");
+		}
+		if (otherOutputOptions.find("-filter:a") == string::npos)
+		{
+			// it is not possible to have -c:a copy and -filter:a toghether
+			ffmpegArgumentList.push_back("-c:a");
+			ffmpegArgumentList.push_back("copy");
+		}
 		ffmpegArgumentList.push_back("-bsf:a");
 		ffmpegArgumentList.push_back("aac_adtstoasc");
 		// 2020-08-13: commented bacause -c:v copy is already present
