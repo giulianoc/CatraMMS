@@ -9508,6 +9508,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", youTubeExecuteCommand: " + youTubeExecuteCommand
+				+ ", detailsYouTubeProfilesPath size: " + to_string(FileIO::getFileSizeInBytes(detailsYouTubeProfilesPath, false))
 				+ ", @FFMPEG statistics@ - duration (secs): @"
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
 			);
