@@ -605,6 +605,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", toleranceMinutes: " + to_string(toleranceMinutes)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -643,6 +644,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", resultSetChunkStartTime->rowsCount: " + to_string(resultSetChunkStartTime->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -692,6 +694,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+							+ ", resultSetMediaItemDetails->rowsCount: " + to_string(resultSetMediaItemDetails->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1043,6 +1046,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", chunksToBeManagedWithinSeconds: " + to_string(chunksToBeManagedWithinSeconds)
+						+ ", resultSetMediaItemKey->rowsCount: " + to_string(resultSetMediaItemKey->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -1081,6 +1085,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+								+ ", resultSetCheckValidation->rowsCount: " + to_string(resultSetCheckValidation->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -1476,6 +1481,7 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1604,6 +1610,7 @@ void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", toleranceMinutes: " + to_string(toleranceMinutes)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1745,6 +1752,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1888,6 +1896,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1942,6 +1951,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2097,6 +2107,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2150,6 +2161,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -2189,6 +2201,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2361,6 +2374,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2402,6 +2416,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+						+ ", technologyResultSet->rowsCount: " + to_string(technologyResultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -2665,6 +2680,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", deliveryAuthorizationKey: " + to_string(deliveryAuthorizationKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2937,6 +2953,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);

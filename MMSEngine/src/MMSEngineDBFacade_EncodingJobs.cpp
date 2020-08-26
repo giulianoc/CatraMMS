@@ -41,6 +41,12 @@ void MMSEngineDBFacade::getEncodingJobs(
             statement->execute(lastSQLCommand);
         }
 
+		int liveProxyToBeEncoded = 0;
+		int liveRecorderToBeEncoded = 0;
+		int othersToBeEncoded = 0;
+
+		encodingItems.clear();
+
 		// first Live-Proxy because if we have many Live-Recording, Live-Proxy will never start
         {
 			_logger->info(__FILEREF__ + "getEncodingJobs for LiveProxy");
@@ -65,6 +71,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", encodingResultSet->rowsCount: " + to_string(encodingResultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -203,6 +210,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", workspaceResultSet->rowsCount: " + to_string(workspaceResultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -269,6 +277,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -366,6 +375,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
 
                 encodingItems.push_back(encodingItem);
+				liveProxyToBeEncoded++;
 
                 {
 					_logger->info(__FILEREF__ + "EncodingJob update"
@@ -439,6 +449,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", encodingResultSet->rowsCount: " + to_string(encodingResultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -577,6 +588,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", workspaceResultSet->rowsCount: " + to_string(workspaceResultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -643,6 +655,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -740,6 +753,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
 
                 encodingItems.push_back(encodingItem);
+				liveRecorderToBeEncoded++;
 
                 {
 					_logger->info(__FILEREF__ + "EncodingJob update"
@@ -831,6 +845,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
 				+ ", startRow: " + to_string(startRow)
+				+ ", encodingResultSet->rowsCount: " + to_string(encodingResultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -971,6 +986,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+						+ ", workspaceResultSet->rowsCount: " + to_string(workspaceResultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -1048,6 +1064,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1120,6 +1137,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1187,6 +1205,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1320,6 +1339,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1396,6 +1416,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceImagePhysicalPathKey: " + to_string(sourceImagePhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1463,6 +1484,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1590,6 +1612,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1657,6 +1680,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1777,6 +1801,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1844,6 +1869,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -1956,6 +1982,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2068,6 +2095,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2185,6 +2213,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2316,6 +2345,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+							+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2383,6 +2413,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2511,6 +2542,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", mainVideoPhysicalPathKey: " + to_string(mainVideoPhysicalPathKey)
+								+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -2591,6 +2623,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", overlayVideoPhysicalPathKey: " + to_string(overlayVideoPhysicalPathKey)
+								+ ", physicalPathResultSet->rowsCount: " + to_string(physicalPathResultSet->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -2665,6 +2698,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2790,6 +2824,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+							+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2856,6 +2891,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", imgestionResultSet->rowsCount: " + to_string(imgestionResultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -2996,6 +3032,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 }
                 
                 encodingItems.push_back(encodingItem);
+				othersToBeEncoded++;
 
                 {
 					_logger->info(__FILEREF__ + "EncodingJob update"
@@ -3057,6 +3094,11 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 		_logger->info(__FILEREF__ + "getEncodingJobs statistics"
+			+ ", encodingItems.size: " + to_string(encodingItems.size())
+			+ ", maxEncodingsNumber: " + to_string(maxEncodingsNumber)
+			+ ", liveProxyToBeEncoded: " + to_string(liveProxyToBeEncoded)
+			+ ", liveRecorderToBeEncoded: " + to_string(liveRecorderToBeEncoded)
+			+ ", othersToBeEncoded: " + to_string(othersToBeEncoded)
 			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
         );
     }
@@ -3347,6 +3389,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -4187,6 +4230,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4515,6 +4559,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4974,6 +5019,7 @@ long MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5264,6 +5310,7 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5309,6 +5356,7 @@ string MMSEngineDBFacade::getLiveRecorderOtherTranscoder (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", otherEncodingJobKey: " + to_string(otherEncodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5446,6 +5494,7 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5521,6 +5570,7 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5734,6 +5784,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", startEncodingDate: " + startEncodingDate
 				+ ", endEncodingDate: " + endEncodingDate
 				+ ", type: " + type
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5797,6 +5848,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", type: " + type
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSetEncodingJob->rowsCount: " + to_string(resultSetEncodingJob->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6015,6 +6067,7 @@ int MMSEngineDBFacade::addEncodingJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6049,6 +6102,7 @@ int MMSEngineDBFacade::addEncodingJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6361,6 +6415,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6393,6 +6448,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6427,6 +6483,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_1: " + to_string(mediaItemKey_1)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6461,6 +6518,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey_2: " + to_string(mediaItemKey_2)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6806,6 +6864,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6840,6 +6899,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -9542,6 +9602,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -9576,6 +9637,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -9888,6 +9950,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mainMediaItemKey: " + to_string(mainMediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -9922,6 +9985,7 @@ int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", overlayMediaItemKey: " + to_string(overlayMediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

@@ -28,6 +28,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);
@@ -153,6 +154,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", workspaceName: " + workspaceName
+			+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);
@@ -931,6 +933,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userEmailAddress: " + userEmailAddress
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2271,6 +2274,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confirmationCode: " + confirmationCode
 				+ ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2311,6 +2315,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2374,6 +2379,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2682,6 +2688,7 @@ void MMSEngineDBFacade::deleteWorkspace(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2941,6 +2948,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bo
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", apiKey: " + apiKey
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3096,6 +3104,7 @@ Json::Value MMSEngineDBFacade::login (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", eMailAddress: " + eMailAddress
 				+ ", password: " + password
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3287,6 +3296,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3487,6 +3497,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3787,6 +3798,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3909,6 +3921,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKeyToBeSetAsDefault: " + to_string(workspaceKeyToBeSetAsDefault)
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4199,6 +4212,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4223,6 +4237,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4301,6 +4316,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4447,6 +4463,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4596,6 +4613,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

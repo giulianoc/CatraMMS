@@ -27,6 +27,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 				+ ", label: " + label
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -222,6 +223,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 				+ ", label: " + label
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -299,6 +301,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -315,6 +318,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -531,6 +535,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 				+ ", label: " + label
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -566,6 +571,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -582,6 +588,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSet(
 						_logger->info(__FILEREF__ + "@SQL statistics@"
 							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+							+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 								chrono::system_clock::now() - startSql).count()) + "@"
 						);
@@ -839,6 +846,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -876,6 +884,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -911,6 +920,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", localEncodingProfilesSetKey: " + to_string(localEncodingProfilesSetKey)
+						+ ", resultSetProfile->rowsCount: " + to_string(resultSetProfile->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -1127,6 +1137,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1165,6 +1176,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1337,6 +1349,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1380,6 +1393,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1488,6 +1502,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", label: " + label
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1520,6 +1535,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1632,6 +1648,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 				+ ", encodingProfileLabel: " + encodingProfileLabel
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1757,6 +1774,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

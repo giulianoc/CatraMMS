@@ -59,6 +59,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 		chrono::system_clock::time_point pointAfterLive;
 		chrono::system_clock::time_point pointAfterNotLive;
 
+		int liveProxyToBeIngested = 0;
+		int liveRecorderToBeIngested = 0;
+		int othersToBeIngested = 0;
+
         // ingested jobs that do not have to wait a dependency
         {
 			// first Live-Proxy (because if we have many many Live-Recorder, Live-Proxy will never start
@@ -100,6 +104,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
 					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
 					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -141,6 +146,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 									   ingestionType, ingestionStatus);
 
 						ingestionsToBeManaged.push_back(ingestionToBeManaged);
+						liveProxyToBeIngested++;
 					}
 					else
 					{
@@ -203,6 +209,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
 					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
 					+ ", minutesAheadToConsiderLiveRecorder: " + to_string(minutesAheadToConsiderLiveRecorder)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -244,6 +251,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 									   ingestionType, ingestionStatus);
 
 						ingestionsToBeManaged.push_back(ingestionToBeManaged);
+						liveRecorderToBeIngested++;
 					}
 					else
 					{
@@ -314,6 +322,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", _doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 						+ ", mysqlRowCount: " + to_string(mysqlRowCount)
 						+ ", mysqlOffset: " + to_string(mysqlOffset)
+						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -361,6 +370,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 										ingestionType, ingestionStatus);
 
 							ingestionsToBeManaged.push_back(ingestionToBeManaged);
+							othersToBeIngested++;
+
 							if (ingestionsToBeManaged.size() >= maxIngestionJobs)
 								break;
 						}
@@ -473,6 +484,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			+ ", select not live elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(pointAfterNotLive - pointAfterLive).count())
 			+ ", processing entries elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - pointAfterNotLive).count())
 			+ ", ingestionsToBeManaged.size: " + to_string(ingestionsToBeManaged.size())
+			+ ", maxIngestionJobs: " + to_string(maxIngestionJobs)
+			+ ", liveProxyToBeIngested: " + to_string(liveProxyToBeIngested)
+			+ ", liveRecorderToBeIngested: " + to_string(liveRecorderToBeIngested)
+			+ ", othersToBeIngested: " + to_string(othersToBeIngested)
         );
     }
     catch(sql::SQLException se)
@@ -739,6 +754,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		_logger->info(__FILEREF__ + "@SQL statistics@"
 			+ ", lastSQLCommand: " + lastSQLCommand
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", resultSetDependency->rowsCount: " + to_string(resultSetDependency->rowsCount())
 			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 				chrono::system_clock::now() - startSql).count()) + "@"
 		);
@@ -767,6 +783,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+					+ ", resultSetIngestionJob->rowsCount: " + to_string(resultSetIngestionJob->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -1181,6 +1198,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1355,6 +1373,7 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", globalIngestionLabel: " + globalIngestionLabel
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1459,6 +1478,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1736,6 +1756,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", groupOfTasksIngestionJobKey: " + to_string(groupOfTasksIngestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2348,6 +2369,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", dependOnSuccess: " + to_string(dependOnSuccess)
+						+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -2444,6 +2466,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -2480,6 +2503,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -2954,6 +2978,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3110,6 +3135,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3353,6 +3379,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3474,6 +3501,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3798,6 +3826,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3962,6 +3991,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4047,6 +4077,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", label: " + "%" + label + "%"
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4109,6 +4140,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 				+ ", label: " + "%" + label + "%"
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4151,6 +4183,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", currentIngestionRootKey: " + to_string(currentIngestionRootKey)
+						+ ", resultSetIngestionJob->rowsCount: " + to_string(resultSetIngestionJob->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -4357,6 +4390,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", ingestionType: " + ingestionType
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4417,6 +4451,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				+ ", ingestionType: " + ingestionType
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4589,6 +4624,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSetMediaItems->rowsCount: " + to_string(resultSetMediaItems->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4682,6 +4718,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSetEncodingJob->rowsCount: " + to_string(resultSetEncodingJob->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4874,6 +4911,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -5305,6 +5343,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
 				+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
 				+ ", _contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

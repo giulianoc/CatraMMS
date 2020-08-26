@@ -109,6 +109,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -152,6 +153,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -195,6 +197,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -240,6 +243,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -824,6 +828,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 								+ ", label: " + label
+								+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -1925,7 +1930,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "url						VARCHAR (1024) NOT NULL,"
+                    "url						VARCHAR (2048) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
                     "description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "name						VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"

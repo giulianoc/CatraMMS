@@ -158,15 +158,28 @@ void ActiveEncodingsManager::operator()()
                     maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
                 }
 
+				int freeEncodingJobsNumber = 0;
+				int runningEncodingJobsNumber = 0;
+				int goingToRunEncodingJobsNumber = 0;
+				int toBeRunEncodingJobsNumber = 0;
                 for (int encodingJobIndex = 0; encodingJobIndex < maxEncodingsToBeManaged; encodingJobIndex++)
                 {
                     EncodingJob* encodingJob = &(encodingJobs[encodingJobIndex]);
 
                     if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Free)
+					{
+						freeEncodingJobsNumber++;
+
                         continue;
+					}
                     else if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running
 						|| encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun)
                     {
+						if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running)
+							runningEncodingJobsNumber++;
+						else
+							goingToRunEncodingJobsNumber++;
+
 						/*
 						// We will start to check the encodingProgress after at least XXX seconds.
 						// This is because the status is set to EncodingJobStatus::Running as soon as it is created
@@ -244,6 +257,8 @@ void ActiveEncodingsManager::operator()()
                     }
                     else // if (encodingJob._status == EncoderVideoAudioProxy::EncodingJobStatus::ToBeRun)
                     {
+						toBeRunEncodingJobsNumber++;
+
                         chrono::system_clock::time_point        processingItemStart = chrono::system_clock::now();
 
                         _logger->info(__FILEREF__ + "processEncodingJob begin"
@@ -299,6 +314,15 @@ void ActiveEncodingsManager::operator()()
                         }
                     }
                 }
+
+				_logger->info(__FILEREF__ + "Processing encoding jobs statistics"
+					+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
+					+ ", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged)
+					+ ", freeEncodingJobsNumber: " + to_string(freeEncodingJobsNumber)
+					+ ", runningEncodingJobsNumber: " + to_string(runningEncodingJobsNumber)
+					+ ", goingToRunEncodingJobsNumber: " + to_string(goingToRunEncodingJobsNumber)
+					+ ", toBeRunEncodingJobsNumber: " + to_string(toBeRunEncodingJobsNumber)
+				);
             }
 
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
@@ -948,7 +972,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
 
 void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
-    
+
     EncodingJob*    encodingJobs;
     int             maxEncodingsToBeManaged;
 
@@ -981,10 +1005,15 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
             break;
         }
     }
-    
+
     if (encodingJobIndex == maxEncodingsToBeManaged)
     {
-        _logger->warn(__FILEREF__ + "Max Encodings Manager capacity reached");
+		_logger->warn(__FILEREF__ + "Max Encodings Manager capacity reached"
+			+ ", workspace->_name: " + encodingItem->_workspace->_name
+			+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+			+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingItem->_encodingPriority)
+		);
         
         throw MaxEncodingsManagerCapacityReached();
     }

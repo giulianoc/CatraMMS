@@ -55,6 +55,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", maxMediaItemKeysNumber: " + to_string(maxMediaItemKeysNumber)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -429,6 +430,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", resultSetDependency->rowsCount: " + to_string(resultSetDependency->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -654,6 +656,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", physicalPathKey: " + to_string(physicalPathKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -688,6 +691,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", uniqueName: " + uniqueName
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -829,6 +833,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", contentProviderKey: " + to_string(contentProviderKey)
+						+ ", resultSetProviders->rowsCount: " + to_string(resultSetProviders->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -865,6 +870,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", workspaceKey: " + to_string(workspaceKey)
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+						+ ", resultSetUniqueName->rowsCount: " + to_string(resultSetUniqueName->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -894,6 +900,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+						+ ", resultSetTags->rowsCount: " + to_string(resultSetTags->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -928,6 +935,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -1016,6 +1024,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							_logger->info(__FILEREF__ + "@SQL statistics@"
 								+ ", lastSQLCommand: " + lastSQLCommand
 								+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+								+ ", resultSetCrossReferences->rowsCount: " + to_string(resultSetCrossReferences->rowsCount())
 								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									chrono::system_clock::now() - startSql).count()) + "@"
 							);
@@ -1118,6 +1127,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", localMediaItemKey: " + to_string(localMediaItemKey)
+						+ ", resultSetProfiles->rowsCount: " + to_string(resultSetProfiles->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -1781,6 +1791,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", title: " + "%" + title + "%"
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1858,6 +1869,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", title: " + "%" + title + "%"
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2060,6 +2072,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2120,6 +2133,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2197,6 +2211,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2355,6 +2370,7 @@ tuple<int64_t, int, string, string, int64_t, bool> MMSEngineDBFacade::getSourceP
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2548,6 +2564,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", contentType: " + toString(contentType)
 				+ ", encodingProfileLabel: " + encodingProfileLabel
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2583,6 +2600,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2733,6 +2751,7 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -2901,6 +2920,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3068,6 +3088,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3133,6 +3154,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3154,6 +3176,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", lastSQLCommand: " + lastSQLCommand
 						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", resultSetMediaItem->rowsCount: " + to_string(resultSetMediaItem->rowsCount())
 						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 							chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -3315,6 +3338,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", referenceUniqueName: " + referenceUniqueName
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3463,6 +3487,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3508,6 +3533,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3659,6 +3685,7 @@ void MMSEngineDBFacade::getVideoDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3699,6 +3726,7 @@ void MMSEngineDBFacade::getVideoDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3748,6 +3776,7 @@ void MMSEngineDBFacade::getVideoDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3898,6 +3927,7 @@ void MMSEngineDBFacade::getAudioDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -3937,6 +3967,7 @@ void MMSEngineDBFacade::getAudioDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4076,6 +4107,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4117,6 +4149,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4279,6 +4312,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", contentProviderName: " + contentProviderName
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -4810,6 +4844,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
@@ -5586,6 +5621,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6750,6 +6786,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -6791,6 +6828,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
