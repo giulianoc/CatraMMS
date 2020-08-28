@@ -4677,7 +4677,8 @@ void FFMPEGEncoder::liveProxy(
 
 		string liveURL = liveProxyMetadata.get("liveURL", "").asString();
 		string userAgent = liveProxyMetadata.get("userAgent", "").asString();
-		double inputTimeOffset = JSONUtils::asDouble(liveProxyMetadata, "inputTimeOffset", -2.0);
+		int maxWidth = JSONUtils::asInt(liveProxyMetadata, "maxWidth", -1);
+		string otherInputOptions = liveProxyMetadata.get("otherInputOptions", "").asString();
 		string otherOutputOptions = liveProxyMetadata.get("otherOutputOptions", "").asString();
 		liveProxy->_outputType = liveProxyMetadata.get("outputType", "").asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
@@ -4749,7 +4750,9 @@ void FFMPEGEncoder::liveProxy(
 			liveProxy->_ffmpeg->liveProxyByCDN(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
-				liveURL, userAgent, inputTimeOffset,
+				maxWidth,
+				liveURL, userAgent,
+				otherInputOptions,
 				otherOutputOptions,
 				cdnURL,
 				&(liveProxy->_childPid));

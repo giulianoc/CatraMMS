@@ -691,7 +691,7 @@ void EncoderVideoAudioProxy::operator()()
             *_status = EncodingJobStatus::Free;
         }
 
-        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished (url not found)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10761,7 +10761,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
-	double inputTimeOffset = 0.0;
+	int maxWidth = -1;
+	string otherInputOptions;
 	string otherOutputOptions;
 	string cdnURL;
 	{
@@ -10783,9 +10784,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
-        field = "InputTimeOffset";
+        field = "MaxInput";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
-			inputTimeOffset = JSONUtils::asDouble(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -2.0);
+			maxWidth = JSONUtils::asInt(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+
+        field = "OtherInputOptions";
+		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
+			otherInputOptions = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "OtherOutputOptions";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
@@ -10994,7 +10999,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["userAgent"] = userAgent;
-					liveProxyMetadata["inputTimeOffset"] = inputTimeOffset;
+					liveProxyMetadata["maxWidth"] = maxWidth;
+					liveProxyMetadata["otherInputOptions"] = otherInputOptions;
 					liveProxyMetadata["otherOutputOptions"] = otherOutputOptions;
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;

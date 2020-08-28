@@ -257,8 +257,10 @@ public:
 	void liveProxyByCDN(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
+		int maxWidth,
 		string liveURL, string userAgent,
-		double itsoffset,
+		// double itsoffset,
+		string otherInputOptions,
 		string otherOutputOptions,
 		string cdnURL,
 		pid_t* pChildPid);

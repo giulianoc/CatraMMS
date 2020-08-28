@@ -28,11 +28,16 @@
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",
 
-		// optional: The offset is added to the video timestamps of the input files.
-		//	It can be used to sync the video and audio streams.
-		//	Specifying a positive offset means that the corresponding streams are delayed
-		//	by the time duration specified in offset
-		"InputTimeOffset": -2.0,
+		// optional: If it is present, in case the live streaming provides several tracks,
+		//	this parameter is used to select the track to be proxied having
+		//	the biggest width smaller or equal than MaxWidth
+		//	The audio track selected is the one related with the selected video track
+		"MaxWidth": -1,
+
+		// optional: It is possible to use this field to specify any other input options.
+		// Examples:
+		//	-itsoffset -2.0
+		"OtherInputOptions": "",
 
 		// optional: It is possible to use this field to specify any other output options.
 		// Examples:

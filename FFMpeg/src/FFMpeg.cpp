@@ -7267,8 +7267,9 @@ void FFMpeg::liveProxyByHTTPStreaming(
 void FFMpeg::liveProxyByCDN(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
+	int maxWidth,
 	string liveURL, string userAgent,
-	double inputTimeOffset,
+	string otherInputOptions,
 	string otherOutputOptions,
 	string cdnURL,
 	pid_t* pChildPid)
@@ -7293,6 +7294,16 @@ void FFMpeg::liveProxyByCDN(
 		*/
 	);
 
+	if (maxWidth != -1)
+	{
+		/*
+		 * getLiveStreamingInfo
+		 * loop per ogni traccia video
+		 * seleziono la traccia video e la corrispondente traccia audio
+		 * aggiungo a otherOutputOptions il corrispondente map
+		 */
+	}
+
     try
     {
 		_outputFfmpegPathFileName =
@@ -7310,6 +7321,7 @@ void FFMpeg::liveProxyByCDN(
 		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 		// sample: ffmpeg -re -i http://80.211.238.33/restream/fiera.m3u8 -c copy -bsf:a aac_adtstoasc -vcodec copy -f flv rtmp://1.s.cdn77.eu:1936/static/LS-PRG-43330-22?password=hrpiTIFmsK3R
 
+		/*
 		string sInputTimeOffset;
 
 		if (inputTimeOffset != 0.0)
@@ -7319,6 +7331,7 @@ void FFMpeg::liveProxyByCDN(
 
 			sInputTimeOffset = buffer;
 		}
+		*/
 
 		ffmpegArgumentList.push_back("ffmpeg");
 		// -re (input) Read input at native frame rate. By default ffmpeg attempts to read the input(s)
@@ -7332,6 +7345,7 @@ void FFMpeg::liveProxyByCDN(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 		ffmpegArgumentList.push_back("-re");
+		/*
 		if (sInputTimeOffset != "")
 		{
 			ffmpegArgumentList.push_back("-itsoffset");
@@ -7340,6 +7354,8 @@ void FFMpeg::liveProxyByCDN(
 			// ffmpegArgumentList.push_back("-2.0");
 			ffmpegArgumentList.push_back(sInputTimeOffset);
 		}
+		*/
+		addToArguments(otherInputOptions, ffmpegArgumentList);
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
