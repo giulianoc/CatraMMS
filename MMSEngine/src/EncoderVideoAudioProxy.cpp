@@ -10784,7 +10784,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			userAgent = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
 
-        field = "MaxInput";
+        field = "MaxWidth";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			maxWidth = JSONUtils::asInt(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
 

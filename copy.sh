@@ -54,6 +54,10 @@ if [ "$deploy" == "y" ]; then
 	echo "cibortv-mms-transcoder-itaita-1"
 	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-itaita-1:/opt/catramms
 	date
+
+	echo "cibortv-mms-transcoder-es-1"
+	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-es-1:/opt/catramms
+	date
 fi
 
 

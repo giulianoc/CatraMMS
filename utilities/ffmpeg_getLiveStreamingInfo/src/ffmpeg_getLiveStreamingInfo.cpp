@@ -43,6 +43,52 @@ int main (int iArgc, char *pArgv [])
 			videoTracks,
 			audioTracks
 		);
+
+		for(tuple<int, string, string, string, string, int, int> videoTrack: videoTracks)
+		{
+			int videoProgramId;
+			string videoStreamId;
+			string videoStreamDescription;
+			string videoCodec;
+			string videoYUV;
+			int videoWidth;
+			int videoHeight;
+
+			tie(videoProgramId, videoStreamId, videoStreamDescription,
+				videoCodec, videoYUV, videoWidth, videoHeight) = videoTrack;
+
+			cout << endl;
+			cout << "videoProgramId: " << videoProgramId << endl;
+			cout << "videoStreamId: " << videoStreamId << endl;
+			cout << "videoStreamDescription: " << videoStreamDescription << endl;
+			cout << "videoCodec: " << videoCodec << endl;
+			cout << "videoYUV: " << videoYUV << endl;
+			cout << "videoWidth: " << videoWidth << endl;
+			cout << "videoHeight: " << videoHeight << endl;
+		}
+
+		for (tuple<int, string, string, string, int, bool> audioTrack: audioTracks)
+		{
+			int audioProgramId;
+			string audioStreamId;
+			string audioStreamDescription;
+			string audioCodec;
+			int audioSamplingRate;
+			bool audioStereo;
+
+			tie(audioProgramId, audioStreamId, audioStreamDescription,
+				audioCodec, audioSamplingRate, audioStereo) = audioTrack;
+
+			cout << endl;
+			cout << "audioProgramId: " << audioProgramId << endl;
+			cout << "audioStreamId: " << audioStreamId << endl;
+			cout << "audioStreamDescription: " << audioStreamDescription << endl;
+			cout << "audioCodec: " << audioCodec << endl;
+			cout << "audioSamplingRate: " << audioSamplingRate << endl;
+			cout << "audioStereo: " << audioStereo << endl;
+		}
+
+		cout << endl;
 	}
 	catch(exception e)
 	{
