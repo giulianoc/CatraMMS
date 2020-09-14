@@ -2341,7 +2341,7 @@ pair<int64_t, string> MMSEngineDBFacade::getLiveURLConfDetails(
         }
 
         throw se;
-    }    
+    }
     catch(ConfKeyNotFound e)
     {
         if (warningIfMissing)
@@ -2431,7 +2431,7 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
 		string		channelName;
 		string		liveURLData;
         {
-            lastSQLCommand = string("select url, channelName, liveURLData from MMS_Conf_Channel ")
+            lastSQLCommand = string("select url, name, channelData from MMS_Conf_Channel ")
 				+ "where workspaceKey = ? and confKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2462,8 +2462,8 @@ tuple<string, string, string> MMSEngineDBFacade::getLiveURLConfDetails(
             }
 
             url = resultSet->getString("url");
-            channelName = resultSet->getString("channelName");
-            liveURLData = resultSet->getString("liveURLData");
+            channelName = resultSet->getString("name");
+            liveURLData = resultSet->getString("channelData");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"

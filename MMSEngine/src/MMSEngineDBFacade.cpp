@@ -57,6 +57,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->server: " + dbServer
     );
+    string defaultCharacterSet = configuration["database"].get("defaultCharacterSet", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->defaultCharacterSet: " + defaultCharacterSet
+    );
     _dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
@@ -157,7 +161,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
 	bool reconnect = true;
-	string defaultCharacterSet = "utf8";
+	// string defaultCharacterSet = "utf8";
     _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             reconnect, defaultCharacterSet, selectTestingConnection);

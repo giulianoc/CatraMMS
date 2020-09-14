@@ -6957,6 +6957,7 @@ void FFMpeg::liveRecorder(
 void FFMpeg::liveProxyByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
+	int maxWidth,
 	string liveURL, string userAgent,
 	string otherOutputOptions,
 
@@ -6988,6 +6989,115 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		stagingEncodedAssetPathName
 		*/
 	);
+
+	if (maxWidth != -1 && otherOutputOptions.find("-map") == string::npos)
+	{
+		try
+		{
+			_logger->info(__FILEREF__ + "liveProxy: setting dynamic -map option"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", maxWidth: " + to_string(maxWidth)
+				+ ", otherOutputOptions: " + otherOutputOptions
+			);
+
+			vector<tuple<int, string, string, string, string, int, int>>	videoTracks;
+			vector<tuple<int, string, string, string, int, bool>>			audioTracks;
+			getLiveStreamingInfo(
+				liveURL,
+				userAgent,
+				ingestionJobKey,
+				videoTracks,
+				audioTracks
+			);
+
+			int currentVideoWidth = -1;
+			string selectedVideoStreamId;
+			string selectedAudioStreamId;
+			for(tuple<int, string, string, string, string, int, int> videoTrack: videoTracks)
+			{
+				int videoProgramId;
+				string videoStreamId;
+				string videoStreamDescription;
+				string videoCodec;
+				string videoYUV;
+				int videoWidth;
+				int videoHeight;
+
+				tie(videoProgramId, videoStreamId, videoStreamDescription,                  
+					videoCodec, videoYUV, videoWidth, videoHeight) = videoTrack;
+
+				if (videoStreamId != ""
+					&& videoWidth != -1 && videoWidth <= maxWidth
+					&& (currentVideoWidth == -1 || videoWidth > currentVideoWidth)
+				)
+				{
+					// look an audio belonging to the same Program
+					for (tuple<int, string, string, string, int, bool> audioTrack: audioTracks)
+					{
+						int audioProgramId;
+						string audioStreamId;
+						string audioStreamDescription;
+						string audioCodec;
+						int audioSamplingRate;
+						bool audioStereo;
+
+						tie(audioProgramId, audioStreamId, audioStreamDescription,
+							audioCodec, audioSamplingRate, audioStereo) = audioTrack;
+
+						if (audioStreamDescription.find("eng") != string::npos
+							|| audioStreamDescription.find("des") != string::npos
+						   )
+						{
+							_logger->info(__FILEREF__ + "liveProxy: audio track discarded"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", audioStreamId: " + audioStreamId
+								+ ", audioStreamDescription: " + audioStreamDescription
+							);
+
+							continue;
+						}
+
+						if (videoProgramId == audioProgramId
+							&& audioStreamId != "")
+						{
+							selectedVideoStreamId = videoStreamId;
+							selectedAudioStreamId = audioStreamId;
+
+							currentVideoWidth = videoWidth;
+
+							break;
+						}
+					}
+				}
+			}
+
+			string previousOtherOutputOptions = otherOutputOptions;
+
+			if (selectedVideoStreamId != "" && selectedAudioStreamId != "")
+				otherOutputOptions += (" -map " + selectedVideoStreamId + " -map " + selectedAudioStreamId);
+
+			_logger->info(__FILEREF__ + "liveProxy: new other output options"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", maxWidth: " + to_string(maxWidth)
+				+ ", previous otherOutputOptions: " + previousOtherOutputOptions
+				+ ", current otherOutputOptions: " + otherOutputOptions
+			);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo or associate processing failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw e;
+		}
+	}
 
     try
     {

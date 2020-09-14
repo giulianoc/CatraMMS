@@ -242,6 +242,7 @@ public:
 	void liveProxyByHTTPStreaming(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
+		int maxWidth,
 		string liveURL, string userAgent,
 		string otherOutputOptions,
 

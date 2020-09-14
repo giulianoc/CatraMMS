@@ -4731,6 +4731,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 field = "encodingJobKey";
                 encodingJobRoot[field] = encodingJobKey;
 
+                field = "ingestionJobKey";
+                encodingJobRoot[field] = ingestionJobKey;
+
                 field = "type";
                 encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
 

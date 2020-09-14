@@ -245,6 +245,13 @@ private:
 	bool liveProxy_through_ffmpeg();
     void processLiveProxy(bool killedByUser);
 
+	void updateChannelDataWithNewYouTubeURL(
+		int64_t ingestionKey,
+		int64_t encodingJobKey,
+		int64_t workspaceKey,
+		int64_t liveURLConfKey,
+		string streamingYouTubeLiveURL);
+
 	bool liveGrid();
 	bool liveGrid_through_ffmpeg();
     void processLiveGrid(bool killedByUser);

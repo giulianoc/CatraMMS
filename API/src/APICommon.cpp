@@ -521,6 +521,7 @@ bool APICommon::basicAuthenticationRequired(
             || method == "confirmRegistration"
             || method == "login"
             || method == "manageHTTPStreamingManifest"
+            || method == "status"	// often used as healthy check
             )
     {
         basicAuthenticationRequired = false;

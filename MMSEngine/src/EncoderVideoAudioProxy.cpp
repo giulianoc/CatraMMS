@@ -9579,6 +9579,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
 	string encodersPool;
+	int64_t channelConfKey;
 	bool highAvailability;
 	bool main;
 	string liveURL;
@@ -9592,6 +9593,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         string field = "EncodersPool";
         encodersPool = _encodingItem->_liveRecorderData->
 			_ingestedParametersRoot.get(field, "").asString();
+
+        field = "confKey";
+        channelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "highAvailability";
         highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
@@ -9888,9 +9892,32 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", channelConfKey: " + to_string(channelConfKey)
 									+ ", initial YouTube URL: " + liveURL
 									+ ", streaming YouTube Live URL: " + localLiveURL
 								);
+
+								try
+								{
+									updateChannelDataWithNewYouTubeURL(
+										_encodingItem->_ingestionJobKey,
+										_encodingItem->_encodingJobKey,
+										_encodingItem->_workspace->_workspaceKey,
+										channelConfKey,
+										localLiveURL);
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = __FILEREF__
+										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", YouTube URL: " + localLiveURL
+									;
+									_logger->error(errorMessage);
+								}
 							}
 							catch(runtime_error e)
 							{
@@ -10943,11 +10970,34 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 									+ ", initial YouTube URL: " + liveURL
 									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 								);
 
 								liveURL = streamingYouTubeLiveURL;
+
+								try
+								{
+									updateChannelDataWithNewYouTubeURL(
+										_encodingItem->_ingestionJobKey,
+										_encodingItem->_encodingJobKey,
+										_encodingItem->_workspace->_workspaceKey,
+										liveURLConfKey,
+										streamingYouTubeLiveURL);
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = __FILEREF__
+										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+										+ ", YouTube URL: " + streamingYouTubeLiveURL
+									;
+									_logger->error(errorMessage);
+								}
 							}
 							catch(runtime_error e)
 							{
@@ -11771,6 +11821,163 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
     }
 }
 
+void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
+	int64_t ingestionKey,
+	int64_t encodingJobKey,
+	int64_t workspaceKey,
+	int64_t liveURLConfKey,
+	string streamingYouTubeLiveURL
+)
+{
+	try
+	{
+		tuple<string, string, string> channelDetails =
+			_mmsEngineDBFacade->getLiveURLConfDetails(
+			_encodingItem->_workspace->_workspaceKey,
+			liveURLConfKey);
+
+		string channelData;
+
+		tie(ignore, ignore, channelData) = channelDetails;
+
+		Json::Value channelDataRoot;
+		try
+		{
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
+
+			bool parsingSuccessful = reader->parse(channelData.c_str(),
+				channelData.c_str() + channelData.size(),
+				&channelDataRoot, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = __FILEREF__ + "failed to parse channelData"
+					+ ", ingestionKey: " + to_string(ingestionKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", channelData: " + channelData
+					+ ", errors: " + errors
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		catch(...)
+		{
+			string errorMessage = string("channelData json is not well format")
+				+ ", ingestionKey: " + to_string(ingestionKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", channelData: " + channelData
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// add streamingYouTubeLiveURL info to the channelData
+		{
+			string field;
+
+			Json::Value youTubeLiveURLRoot;
+			{
+				char strNow[64];
+				{
+					time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+
+					tm tmNow;
+
+					localtime_r (&utcNow, &tmNow);
+					sprintf (strNow, "%04d-%02d-%02d %02d:%02d:%02d",
+						tmNow. tm_year + 1900,
+						tmNow. tm_mon + 1,
+						tmNow. tm_mday,
+						tmNow. tm_hour,
+						tmNow. tm_min,
+						tmNow. tm_sec);
+				}
+				field = "timestamp";
+				youTubeLiveURLRoot[field] = strNow;
+
+				field = "youTubeURL";
+				youTubeLiveURLRoot[field] = streamingYouTubeLiveURL;
+			}
+
+			Json::Value mmsDataRoot;
+			{
+				field = "mmsData";
+				if (JSONUtils::isMetadataPresent(channelDataRoot, field))
+					mmsDataRoot = channelDataRoot[field];
+			}
+
+			Json::Value youTubeURLsRoot(Json::arrayValue);
+			{
+				field = "youTubeURLs";
+				if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
+					youTubeURLsRoot = mmsDataRoot[field];
+			}
+
+			youTubeURLsRoot.append(youTubeLiveURLRoot);
+
+			field = "youTubeURLs";
+			mmsDataRoot[field] = youTubeURLsRoot;
+
+			field = "mmsData";
+			channelDataRoot[field] = mmsDataRoot;
+		}
+
+		bool labelToBeModified = false;
+		string label;
+		bool urlToBeModified = false;
+		string url;
+		bool typeToBeModified = false;
+		string type;
+		bool descriptionToBeModified = false;
+		string description;
+		bool nameToBeModified = false;
+		string name;
+		bool regionToBeModified = false;
+		string region;
+		bool countryToBeModified = false;
+		string country;
+		bool imageToBeModified = false;
+		int64_t imageMediaItemKey = -1;
+		string imageUniqueName;
+		bool positionToBeModified = false;
+		int position = -1;
+		bool channelDataToBeModified = true;
+
+		_mmsEngineDBFacade->modifyChannelConf(
+			liveURLConfKey,
+			_encodingItem->_workspace->_workspaceKey,
+			labelToBeModified, label,
+			urlToBeModified, url,
+			typeToBeModified, type,
+			descriptionToBeModified, description,
+			nameToBeModified, name,
+			regionToBeModified, region,
+			countryToBeModified, country,
+			imageToBeModified, imageMediaItemKey, imageUniqueName,
+			positionToBeModified, position,
+			channelDataToBeModified, channelDataRoot);
+	}
+	catch(...)
+	{
+		string errorMessage = string("updateChannelDataWithNewYouTubeURL failed")
+			+ ", ingestionKey: " + to_string(ingestionKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+			+ ", streamingYouTubeLiveURL: " + streamingYouTubeLiveURL
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
 bool EncoderVideoAudioProxy::liveGrid()
 {
 
@@ -11941,6 +12148,9 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						string inputChannelURLField = "inputChannelURL";
 						string liveURL = inputChannelRoot.get(inputChannelURLField, "").asString();
 
+						string inputChannelConfKeyField = "inputChannelConfKey";
+						int64_t channelConfKey = JSONUtils::asInt64(inputChannelRoot, inputChannelConfKeyField, 0);
+
 						string youTubePrefix1 ("https://www.youtube.com/");
 						string youTubePrefix2 ("https://youtu.be/");
 						if (
@@ -11967,11 +12177,34 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", channelConfKey: " + to_string(channelConfKey)
 									+ ", initial YouTube URL: " + liveURL
 									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
 								);
 
 								inputChannelRoot[inputChannelURLField] = streamingYouTubeLiveURL;
+
+								try
+								{
+									updateChannelDataWithNewYouTubeURL(
+										_encodingItem->_ingestionJobKey,
+										_encodingItem->_encodingJobKey,
+										_encodingItem->_workspace->_workspaceKey,
+										channelConfKey,
+										streamingYouTubeLiveURL);
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = __FILEREF__
+										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", YouTube URL: " + streamingYouTubeLiveURL
+									;
+									_logger->error(errorMessage);
+								}
 							}
 							catch(runtime_error e)
 							{

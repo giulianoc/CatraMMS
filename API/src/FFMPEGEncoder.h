@@ -51,6 +51,7 @@ struct LiveRecording
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>      _ffmpeg;
 		pid_t					_childPid;
+        bool					_killedBecauseOfNotWorking;	// by monitorThread
 
 		string					_errorMessage;
 
@@ -63,6 +64,8 @@ struct LiveRecording
         string					_recordedFileNamePrefix;
 		string					_lastRecordedAssetFileName;
 		int						_lastRecordedAssetDurationInSeconds;
+		string					_channelLabel;
+		chrono::system_clock::time_point	_recordingStart;
 };
 
 struct EncodingCompleted

@@ -5806,7 +5806,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         Json::Value encodingJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, "
+                "select ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, "
 				"ej.processorMMS, ej.transcoder, ej.failuresNumber, ej.encodingPriority, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
@@ -5860,6 +5860,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 
                 field = "encodingJobKey";
                 encodingJobRoot[field] = encodingJobKey;
+
+                field = "ingestionJobKey";
+                encodingJobRoot[field] = resultSetEncodingJob->getInt64("ingestionJobKey");
 
                 field = "type";
                 encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));

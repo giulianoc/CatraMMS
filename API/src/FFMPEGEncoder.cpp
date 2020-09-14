@@ -3043,6 +3043,7 @@ void FFMPEGEncoder::liveRecorder(
 
     try
     {
+        liveRecording->_killedBecauseOfNotWorking = false;
         liveRecording->_encodingJobKey = encodingJobKey;
 		liveRecording->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
@@ -3098,6 +3099,7 @@ void FFMPEGEncoder::liveRecorder(
 		//		checks this field is set before to see if there are chunks to be ingested
 		liveRecording->_encodingParametersRoot = liveRecorderMedatada["encodingParametersRoot"];
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
+		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
         // string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
         string liveURL = liveRecorderMedatada.get("liveURL", "").asString();
@@ -3123,6 +3125,8 @@ void FFMPEGEncoder::liveRecorder(
 		//		(see the secondsToStartEarly variable inside _ffmpeg->liveRecorder)
 		//		For this reason the above decrement was commented
 
+		liveRecording->_recordingStart = chrono::system_clock::now();
+
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
 			encodingJobKey,
@@ -3142,6 +3146,7 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_childPid = 0;
+        liveRecording->_killedBecauseOfNotWorking = false;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
             + ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
@@ -3149,6 +3154,7 @@ void FFMPEGEncoder::liveRecorder(
         );
 
         liveRecording->_ingestionJobKey		= 0;
+		liveRecording->_channelLabel		= "";
 
 		bool completedWithError			= false;
 		bool killedByUser				= false;
@@ -3174,6 +3180,7 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
 
 		char strDateTime [64];
 		{
@@ -3194,7 +3201,19 @@ void FFMPEGEncoder::liveRecorder(
         _logger->error(__FILEREF__ + errorMessage);
 
 		bool completedWithError			= false;
-		bool killedByUser				= true;
+		bool killedByUser;
+		if (liveRecording->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			completedWithError			= true;
+			liveRecording->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser                = true;
+		}
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
@@ -3219,6 +3238,8 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
 		{
@@ -3266,6 +3287,8 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
 		{
@@ -3313,6 +3336,8 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
 		{
@@ -3360,6 +3385,8 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
         liveRecording->_childPid = 0;
+		liveRecording->_channelLabel		= "";
+		liveRecording->_killedBecauseOfNotWorking = false;
 
 		char strDateTime [64];
 		{
@@ -4734,6 +4761,7 @@ void FFMPEGEncoder::liveProxy(
 			liveProxy->_ffmpeg->liveProxyByHTTPStreaming(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
+				maxWidth,
 				liveURL, userAgent,
 				otherOutputOptions,
 				liveProxy->_outputType,
@@ -6140,6 +6168,168 @@ void FFMPEGEncoder::monitorThread()
 						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 						+ ", @MMS statistics@ - elapsed time: @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
+						) + "@"
+					);
+				}
+			}
+
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			{
+				if (liveRecording->_running)
+				{
+					_logger->info(__FILEREF__ + "liveRecordingMonitor..."
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+					);
+
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+
+					// First health check
+					//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
+					try
+					{
+						// looking the manifests path name timestamp
+
+						chrono::system_clock::time_point now = chrono::system_clock::now();
+						int64_t liveRecordingLiveTimeInMinutes =
+							chrono::duration_cast<chrono::minutes>(now - liveRecording->_recordingStart).count();
+
+						int segmentDurationInSeconds;
+						string field = "segmentDurationInSeconds";
+						segmentDurationInSeconds = JSONUtils::asInt(
+							liveRecording->_encodingParametersRoot, field, 0);
+
+						// check id done after 3 minutes + segmentDurationInSeconds LiveRecording started,
+						// in order to be sure the file was already created
+						if (liveRecordingLiveTimeInMinutes > (segmentDurationInSeconds / 60) + 3)
+						{
+							string segmentListPathName = liveRecording->_transcoderStagingContentsPath
+								+ liveRecording->_segmentListFileName;
+
+							{
+								bool liveRecordingWorking = true;
+
+								if(!FileIO::fileExisting(segmentListPathName))
+								{
+									liveRecordingWorking = false;
+
+									_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist"
+										+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+										+ ", segmentListPathName: " + segmentListPathName
+									);
+								}
+								else
+								{
+									time_t utcSegmentListFileLastModificationTime;
+
+									FileIO::getFileTime (segmentListPathName.c_str(),
+										&utcSegmentListFileLastModificationTime);
+
+									unsigned long long	ullNow = 0;
+									unsigned long		ulAdditionalMilliSecs;
+									long				lTimeZoneDifferenceInHours;
+
+									DateTime:: nowUTCInMilliSecs (&ullNow, &ulAdditionalMilliSecs,
+										&lTimeZoneDifferenceInHours);
+
+									long maxLastSegmentListFileUpdateInSeconds
+										= segmentDurationInSeconds * 2;
+
+									unsigned long long lastSegmentListFileUpdateInSeconds
+										= ullNow - utcSegmentListFileLastModificationTime;
+									if (lastSegmentListFileUpdateInSeconds
+										> maxLastSegmentListFileUpdateInSeconds)
+									{
+										liveRecordingWorking = false;
+
+										_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file was not updated "
+											+ "in the last " + to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds"
+											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											+ ", segmentListPathName: " + segmentListPathName
+											+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
+										);
+									}
+								}
+
+								if (!liveRecordingWorking)
+								{
+									_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
+										+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+										+ ", segmentListPathName: " + segmentListPathName
+										+ ", channelLabel: " + liveRecording->_channelLabel
+										+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)
+									);
+
+									try
+									{
+										ProcessUtility::killProcess(liveRecording->_childPid);
+										liveRecording->_killedBecauseOfNotWorking = true;
+										{
+											char strDateTime [64];
+											{
+												time_t utcTime = chrono::system_clock::to_time_t(
+													chrono::system_clock::now());
+												tm tmDateTime;
+												localtime_r (&utcTime, &tmDateTime);
+												sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+													tmDateTime. tm_year + 1900,
+													tmDateTime. tm_mon + 1,
+													tmDateTime. tm_mday,
+													tmDateTime. tm_hour,
+													tmDateTime. tm_min,
+													tmDateTime. tm_sec);
+											}
+											liveRecording->_errorMessage = string(strDateTime) + " "
+												+ liveRecording->_channelLabel +
+												" restarted because of 'segment list file is missing or was not updated'";
+										}
+									}
+									catch(runtime_error e)
+									{
+										string errorMessage = string("ProcessUtility::killProcess failed")
+											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)
+											+ ", e.what(): " + e.what()
+												;
+										_logger->error(__FILEREF__ + errorMessage);
+									}
+
+									break;
+								}
+							}
+						}
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecordingMonitorCheck on path name failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+
+					_logger->info(__FILEREF__ + "liveRecordingMonitorCheck"
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", @MMS statistics@ - elapsed time: @" + to_string(
+							chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - now).count()
 						) + "@"
 					);
 				}
