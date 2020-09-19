@@ -440,7 +440,8 @@ int APICommon::operator()()
                 continue;
             }
         }
-        
+
+		chrono::system_clock::time_point startManageRequest = chrono::system_clock::now();
         try
         {
             unordered_map<string, string>::iterator it;
@@ -480,11 +481,26 @@ int APICommon::operator()()
                 + ", e: " + e.what()
             );
         }
+		{
+			string method;
+
+			auto methodIt = queryParameters.find("method");
+			if (methodIt != queryParameters.end())
+				method = methodIt->second;
+			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "manageRequestAndResponse"
+				+ ", method: " + method
+				+ ", requestURI: " + requestURI
+				+ ", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent)
+				+ ", @MMS statistics@ - manageRequestDuration (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endManageRequest - startManageRequest).count()) + "@"
+			);
+		}
 
         _logger->info(__FILEREF__ + "APICommon::request finished"
             + ", threadId: " + sThreadId
         );
-        
+
         FCGX_Finish_r(&request);
 
          // Note: the fcgi_streambuf destructor will auto flush

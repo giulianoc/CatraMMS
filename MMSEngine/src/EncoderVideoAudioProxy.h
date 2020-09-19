@@ -29,6 +29,13 @@
 #define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
+struct YouTubeURLNotRetrieved: public exception {
+    char const* what() const throw() 
+    {
+        return "YouTube URL was not retrieved";
+    }; 
+};
+
 struct MaxConcurrentJobsReached: public exception {
     char const* what() const throw() 
     {

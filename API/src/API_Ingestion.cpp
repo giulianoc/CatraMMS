@@ -3620,13 +3620,44 @@ void API::cancelIngestionJob(
 		}
 		ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
+		/*
+		 * This parameter was added because of this Scenario:
+		 *	1. Live proxy ingestion job.
+		 *	2. the ffmpeg command will never start, may be because of a wrong url
+		 *	In this scenario there is no way to cancel the job because:
+		 *		1. The EncoderVideoAudioProxy thread will never exit from his loop
+		 *			because it is a Live Proxy. The only way to exit is through the kill of the encoding job
+		 *			(kill of the ffmpeg command)
+		 *		2. The encoding job cannot be killed because the ffmpeg process will never start
+		 *
+		 *  Really I discovered later that the above scenario was already managed
+		 *  by the kill encoding job method.
+		 *  In fact, this method set the encodingStatusFailures into DB to -100.
+		 *  The EncoderVideoAudioProxy thread checks this number and, if it is negative, exit for his
+		 *  internal look
+		 *
+		 *  For this reason, it would be better to avoid to use the forceCancel parameter because
+		 *  it is set the ingestionJob status to End_CancelledByUser but it could leave
+		 *  the EncoderVideoAudioProxy thread allocated and/or the ffmpeg process running.
+		 *
+		 */
+        bool forceCancel = false;
+        auto forceCancelIt = queryParameters.find("forceCancel");
+        if (forceCancelIt != queryParameters.end() && forceCancelIt->second != "")
+        {
+            if (forceCancelIt->second == "true")
+                forceCancel = true;
+            else
+                forceCancel = false;
+        }
+
 		MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
 		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
 		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
 
-		if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+		if (!forceCancel && ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 		{
 			string errorMessage = string("The IngestionJob cannot be removed because of his Status")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)

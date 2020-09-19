@@ -426,6 +426,65 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
+    catch(YouTubeURLNotRetrieved e)
+    {
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		);
+
+		try
+		{
+			// 2020-09-17: in case of YouTubeURLNotRetrieved there is no retries
+			//	just a failure of the ingestion job
+			bool forceEncodingToBeFailed = true;
+
+			_logger->info(__FILEREF__ + "updateEncodingJob PunctualError"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+				+ ", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
+			);
+
+			int64_t mediaItemKey = -1;
+			int64_t encodedPhysicalPathKey = -1;
+			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError, 
+                mediaItemKey, encodedPhysicalPathKey,
+                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				forceEncodingToBeFailed);
+		}
+		catch(...)
+		{
+			_logger->error(__FILEREF__ + "updateEncodingJob PunctualError FAILED"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
+			);
+		}
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        // throw e;
+        return;
+    }
     catch(EncoderError e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
@@ -11038,7 +11097,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 								// 2020-04-21: let's go ahead because it would be managed
 								// the killing of the encodingJob
-								// throw e;
+								// 2020-09-17: it does not have sense to continue if we do not have the right URL
+								throw YouTubeURLNotRetrieved();
 							}
 						}
 					}
@@ -11337,6 +11397,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						urlForbidden, urlNotFound) = encodingStatus;
+					_logger->info(__FILEREF__ + "getEncodingStatus"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", completedWithError: " + to_string(completedWithError)
+						+ ", urlForbidden: " + to_string(urlForbidden)
+						+ ", urlNotFound: " + to_string(urlNotFound)
+					);
+
 
 					// health check and retention is done by ffmpegEncoder.cpp
 					
@@ -11564,6 +11634,20 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                 + ", e.what(): " + e.what()
                 ;
             _logger->warn(__FILEREF__ + errorMessage);
+
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// is finished or not. This task will come back by the MMS system
+            throw e;
+        }
+		catch(YouTubeURLNotRetrieved e)
+		{
+            string errorMessage = string("YouTubeURLNotRetrieved")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+                + ", e.what(): " + e.what()
+                ;
+            _logger->error(__FILEREF__ + errorMessage);
 
 			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
 			// is finished or not. This task will come back by the MMS system
@@ -13154,7 +13238,13 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
 				// timeout consistent with nginx configuration (fastcgi_read_timeout)
-				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+				// request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
+				// 2020-09-16: this is just getEncodingProgress, we do not have to lose much time
+				// otherwise the loop inside ActiveEncodingsManager will not process
+				// in a fast way the other encodings (processEncodingJob method)
+				int encodingProgressTimeoutInSeconds = 2;
+				request.setOpt(new curlpp::options::Timeout(encodingProgressTimeoutInSeconds));
 
 				// if (_ffmpegEncoderProtocol == "https")
 				string httpsPrefix("https");

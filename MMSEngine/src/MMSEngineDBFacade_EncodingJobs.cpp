@@ -5478,8 +5478,8 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
         {
             lastSQLCommand = 
                 "select ingestionJobKey, type, transcoder, status, "
-				"JSON_EXTRACT(parameters, '$.highAvailability') as highAvailability, "
-				"JSON_EXTRACT(parameters, '$.main') as main, "
+				"CAST(JSON_EXTRACT(parameters, '$.highAvailability') AS SIGNED INTEGER) as highAvailability, "
+				"CAST(JSON_EXTRACT(parameters, '$.main') AS SIGNED INTEGER) as main, "
 				"JSON_EXTRACT(parameters, '$.mainEncodingJobKey') as mainEncodingJobKey, "
 				"JSON_EXTRACT(parameters, '$.backupEncodingJobKey') as backupEncodingJobKey "
 				"from MMS_EncodingJob "

@@ -27,6 +27,18 @@ then
 else
 	if [ $commandIndex -eq 1 ]
 	then
+		#first manage catalina.out file size if present
+		file=/var/catramms/logs/tomcat-gui/catalina.out
+		if [ -f "$file" ]
+		then
+			fileSizeInMegaBytes=$(du -m "$file" | awk '{print $1}')
+			if [ $fileSizeInMegaBytes -gt 1000 ]
+			then
+				echo "" > $file
+			fi
+		fi
+
+
 		if [ "$timeoutInMinutes" == "" ]
 		then
 			timeoutInMinutes=$threeDaysInMinutes
