@@ -27,6 +27,8 @@
 #include "catralibraries/LdapWrapper.h"
 #include "EMailSender.h"
 #include "API.h"
+#include <iterator>
+#include <vector>
 
 
 void API::registerUser(
@@ -1189,8 +1191,9 @@ void API::login(
 					);
 
 					string email;
-					bool testCredentialsSuccessful = true;
+					bool testCredentialsSuccessful = false;
 
+					/*
 					if (userName == "catramgi")
 						email = "Giuliano.Catrambone@rsi.ch";
 					else if (userName == "valentst")
@@ -1242,16 +1245,45 @@ void API::login(
 					else if (userName == "bragugcl")
 						email = "Claudio.Braguglia@rsi.ch";
 					else
+					*/
 					{
-						LdapWrapper ldapWrapper;
+						istringstream iss(_ldapURL);                                                                                
+						vector<string> ldapURLs;                                                                                 
+						copy(                                                                                                 
+							istream_iterator<std::string>(iss),                                                               
+							istream_iterator<std::string>(),                                                                  
+							back_inserter(ldapURLs)                                                                              
+						);
 
-						ldapWrapper.init(_ldapURL, _ldapCertificatePathName,
-							_ldapManagerUserName, _ldapManagerPassword);
+						for(string ldapURL: ldapURLs)
+						{
+							try
+							{
+								_logger->error(__FILEREF__ + " ldap URL"
+									+ ", ldapURL: " + ldapURL
+									+ ", userName: " + userName
+								);
 
-						pair<bool, string> testCredentialsSuccessfulAndEmail =
-							ldapWrapper.testCredentials(userName, password, _ldapBaseDn);
+								LdapWrapper ldapWrapper;
 
-						tie(testCredentialsSuccessful, email) = testCredentialsSuccessfulAndEmail;
+								ldapWrapper.init(ldapURL, _ldapCertificatePathName,
+									_ldapManagerUserName, _ldapManagerPassword);
+
+								pair<bool, string> testCredentialsSuccessfulAndEmail =
+									ldapWrapper.testCredentials(userName, password, _ldapBaseDn);
+
+								tie(testCredentialsSuccessful, email) = testCredentialsSuccessfulAndEmail;
+
+								break;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + " ldap URL failed"
+									+ ", ldapURL: " + ldapURL
+									+ ", e.what(): " + e.what()
+								);
+							}
+						}
 					}
 
 					if (!testCredentialsSuccessful)
