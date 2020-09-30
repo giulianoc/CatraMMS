@@ -5072,7 +5072,7 @@ void FFMpeg::getLiveStreamingInfo(
 		ffmpegExecuteCommand = _ffmpegPath
 			+ "/ffmpeg "
 			+ "-nostdin "
-			+ (userAgent == "" ? "" : "-user_agent " + userAgent + " ")
+			+ (userAgent == "" ? "" : "-user_agent \"" + userAgent + "\" ")
 			+ "-re -i \"" + liveURL + "\" "
 			+ "-t " + to_string(liveDurationInSeconds) + " "
 			+ "-c:v copy "
@@ -5114,7 +5114,7 @@ void FFMpeg::getLiveStreamingInfo(
     {
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 			outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
+		string errorMessage = __FILEREF__ + "getLiveStreamingInfo failed"
 			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
 			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 			+ ", e.what(): " + e.what()
@@ -7095,7 +7095,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			;
 			_logger->error(errorMessage);
 
-			throw e;
+			// throw e;
 		}
 	}
 
@@ -7509,7 +7509,7 @@ void FFMpeg::liveProxyByCDN(
 			;
 			_logger->error(errorMessage);
 
-			throw e;
+			// throw e;
 		}
 	}
 

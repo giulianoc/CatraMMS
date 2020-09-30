@@ -1978,7 +1978,7 @@ private:
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
     int                             _contentRetentionInMinutesDefaultValue;
-	int								_contentNotTransferredRetentionInDays;
+	int								_contentNotTransferredRetentionInHours;
 
 	int								_maxSecondsToWaitUpdateIngestionJobLock;
 	int								_maxSecondsToWaitUpdateEncodingJobLock;

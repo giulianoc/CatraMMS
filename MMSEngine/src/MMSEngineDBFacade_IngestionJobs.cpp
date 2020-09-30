@@ -5322,7 +5322,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			lastSQLCommand = 
 				"select ingestionJobKey from MMS_IngestionJob "
 				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
-				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW() "
+				"and DATE_ADD(startProcessing, INTERVAL ? HOUR) <= NOW() "
 				;
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5335,7 +5335,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 			preparedStatement->setString(queryParameterIndex++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInDays);
+			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInHours);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -5345,7 +5345,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
 				+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
 				+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
-				+ ", _contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
+				+ ", _contentNotTransferredRetentionInHours: " + to_string(_contentNotTransferredRetentionInHours)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"

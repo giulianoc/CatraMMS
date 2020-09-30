@@ -2883,6 +2883,8 @@ void API::fileUploadProgressCheck()
                 _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because of too many call failures"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+                    + ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                 );
@@ -2893,15 +2895,23 @@ void API::fileUploadProgressCheck()
             
             try 
             {
-                string progressURL = string("http://127.0.0.1:") + to_string(_webServerPort) + _progressURI;
+                string progressURL = string("http://:")
+					+ itr->_binaryListenHost
+					+ ":"
+					+ to_string(_webServerPort)
+					+ _progressURI;
                 string progressIdHeader = string("X-Progress-ID: ") + itr->_progressId;
+                string hostHeader = string("Host: ") + itr->_binaryVirtualHostName;
 
                 _logger->info(__FILEREF__ + "Call for upload progress"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+                    + ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", progressURL: " + progressURL
                     + ", progressIdHeader: " + progressIdHeader
+                    + ", hostHeader: " + hostHeader
                 );
 
                 curlpp::Cleanup cleaner;
@@ -2910,6 +2920,7 @@ void API::fileUploadProgressCheck()
 
                 list<string> header;
                 header.push_back(progressIdHeader);
+                header.push_back(hostHeader);	// important for the nginx virtual host
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(progressURL));
@@ -2930,6 +2941,8 @@ void API::fileUploadProgressCheck()
                 _logger->info(__FILEREF__ + "Call for upload progress response"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+                    + ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", sResponse: " + sResponse
                 );
@@ -2988,6 +3001,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Upload just finished"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", relativeProgress: " + to_string(relativeProgress)
                                 + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
@@ -3000,6 +3015,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Upload just finished"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", relativeProgress: " + to_string(relativeProgress)
                                 + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
@@ -3011,6 +3028,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                             );                            
                             _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -3021,6 +3040,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                             );                            
                             _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -3036,6 +3057,8 @@ void API::fileUploadProgressCheck()
                         _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because state is 'error'"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", progressId: " + itr->_progressId
+							+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+							+ ", binaryListenHost: " + itr->_binaryListenHost
                             + ", callFailures: " + to_string(itr->_callFailures)
                             + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                         );
@@ -3070,6 +3093,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", relativeProgress: " + to_string(relativeProgress)
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
@@ -3086,6 +3111,8 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+								+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+								+ ", binaryListenHost: " + itr->_binaryListenHost
                                 + ", progress: " + to_string(relativeProgress)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
                                 + ", received: " + to_string(relativeReceived)
@@ -3101,6 +3128,8 @@ void API::fileUploadProgressCheck()
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                     + ", progressId: " + itr->_progressId
+									+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+									+ ", binaryListenHost: " + itr->_binaryListenHost
                                     + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -3116,6 +3145,8 @@ void API::fileUploadProgressCheck()
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                     + ", progressId: " + itr->_progressId
+									+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+									+ ", binaryListenHost: " + itr->_binaryListenHost
                                     + ", uploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -3131,6 +3162,8 @@ void API::fileUploadProgressCheck()
                             + ", state: " + state
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", progressId: " + itr->_progressId
+							+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+							+ ", binaryListenHost: " + itr->_binaryListenHost
                             + ", callFailures: " + to_string(itr->_callFailures)
                             + ", progressURL: " + progressURL
                             + ", progressIdHeader: " + progressIdHeader
@@ -3155,6 +3188,8 @@ void API::fileUploadProgressCheck()
                 _logger->error(__FILEREF__ + "Call for upload progress failed (LogicError)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+					+ ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -3166,6 +3201,8 @@ void API::fileUploadProgressCheck()
                 _logger->error(__FILEREF__ + "Call for upload progress failed (RuntimeError)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+					+ ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -3177,6 +3214,8 @@ void API::fileUploadProgressCheck()
                 _logger->error(__FILEREF__ + "Call for upload progress failed (runtime_error)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+					+ ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -3188,6 +3227,8 @@ void API::fileUploadProgressCheck()
                 _logger->error(__FILEREF__ + "Call for upload progress failed (exception)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                     + ", progressId: " + itr->_progressId
+                    + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
+					+ ", binaryListenHost: " + itr->_binaryListenHost
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );

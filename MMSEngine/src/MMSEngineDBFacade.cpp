@@ -111,9 +111,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
     );
-    _contentNotTransferredRetentionInDays    = JSONUtils::asInt(configuration["mms"], "contentNotTransferredRetentionInDays", 1);
+    _contentNotTransferredRetentionInHours    = JSONUtils::asInt(configuration["mms"], "contentNotTransferredRetentionInHours", 1);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
+        + ", mms->contentNotTransferredRetentionInHours: " + to_string(_contentNotTransferredRetentionInHours)
     );
     
     _maxSecondsToWaitUpdateIngestionJobLock    = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);

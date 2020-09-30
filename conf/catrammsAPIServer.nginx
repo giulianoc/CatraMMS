@@ -1,0 +1,200 @@
+
+	access_log   /var/catramms/logs/nginx/mms-api.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-api.error.log error;
+
+	location /catramms {
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/status/?$ /api?version=$1&method=status last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/mmsSupport/?$ /api?version=$1&method=mmsSupport last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/login/?$ /api?version=$1&method=login last;
+		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;
+		}
+		if ($request_method = PUT) {
+			#Source User Key is retrieved from the request authorization
+			#Dest User details are in the body
+			rewrite ^/catramms/(v[0-9]+)/workspace/share/?$ /api?version=$1&method=shareWorkspace last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/default/([0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/usage/?$ /api?version=$1&method=workspaceUsage last;
+		}
+
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=saveWorkflowAsLibrary last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=removeWorkflowAsLibrary&workflowLibraryKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=workflowsAsLibraryList last;
+			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=workflowAsLibraryContent&workflowLibraryKey=$2 last;
+		}
+
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/ingestionRoots/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestionRoot/metaDataContent/([0-9]+)/?$ /api?version=$1&method=ingestionRootMetaDataContent&ingestionRootKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/([0-9]*)/?$ /api?version=$1&method=cancelIngestionJob&ingestionJobKey=$2 last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/([0-9]*)/?$ /api?version=$1&method=killOrCancelEncodingJob&encodingJobKey=$2 last;
+		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/mediaItems/?([0-9]*)/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2&physicalPathKey=$3 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/tags/?$ /api?version=$1&method=tagsList last;
+		}
+
+
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=encodingProfilesList&encodingProfileKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/([0-9]+)/?$ /api?version=$1&method=encodingProfilesSetsList&encodingProfilesSetKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=video&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=video&encodingProfileKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=audio&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=audio&encodingProfileKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=image&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
+			rewrite ^/catramms/(v[0-9]+)/profile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;
+			rewrite ^/catramms/(v[0-9]+)/profile/audio/?$ /api?version=$1&method=addEncodingProfile&contentType=audio last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/image/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=image last;
+			rewrite ^/catramms/(v[0-9]+)/profile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfile&encodingProfileKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfilesSet&encodingProfilesSetKey=$2 last;
+		}
+
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&confKey=$2 last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=modifyYouTubeConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=removeYouTubeConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeConfList last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=addFacebookConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=modifyFacebookConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=removeFacebookConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=facebookConfList last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/?$ /api?version=$1&method=addChannelConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=modifyChannelConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=removeChannelConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/channel/?([0-9]*)/?$ /api?version=$1&method=channelConfList&liveURLKey=$2 last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=modifyFTPConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=removeFTPConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=ftpConfList last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=addEMailConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=modifyEMailConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=removeEMailConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=emailConfList last;
+		}
+	}
+
+	location /api {
+		internal;
+
+		fastcgi_read_timeout 120;
+
+		fastcgi_pass   127.0.0.1:8010;
+		include /opt/catramms/nginx/conf/fastcgi_params;
+	}
+

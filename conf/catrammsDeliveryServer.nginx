@@ -1,0 +1,69 @@
+
+	access_log   /var/catramms/logs/nginx/mms-delivery.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-delivery.error.log error;
+
+	root /var/catramms/storage/MMSRepository/;
+
+	location ~ .(m3u8|mpd)$ {
+		if ($request_method = GET) {
+			#live
+			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;                 
+			#vod
+			rewrite ^/MMS_ /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;                 
+		}
+	}
+
+	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
+		if ($arg_token) {
+			set $token "$arg_token---$cookie_mmsInfo";
+		}
+		if ($arg_deliveryFileName) {
+			add_header Content-Disposition 'attachment; filename="$arg_deliveryFileName"';
+		}
+
+		auth_request /catramms/delivery/checkAuthorization;
+
+		if ($request_method = 'GET') {
+			add_header 'Access-Control-Allow-Origin' 'https://$guiHostName';
+			add_header 'Access-Control-Allow-Credentials' 'true';
+			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+			add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
+		}
+	}
+
+	location = /catramms/delivery/checkAuthorization {
+		internal;
+
+		proxy_pass http://$deliveryHostName/catramms/delivery/authorization;
+		#$host will be mms-delivery.restream.ovh
+		proxy_set_header Host $host;
+		proxy_pass_request_body off;
+		proxy_set_header Content-Length "";
+		#proxy_set_header X-Original-METHOD $request_method;
+		proxy_set_header X-Original-METHOD $token;
+		proxy_set_header X-Original-URI $request_uri;
+	}
+
+	location /catramms/delivery/authorization {
+		allow 127.0.0.1;
+		deny all;
+		if ($request_method = GET) {
+			rewrite ^/catramms/delivery/authorization/?$ /api?method=deliveryAuthorization last;
+		}
+	}
+
+	location /api {
+		internal;
+
+		fastcgi_read_timeout 120;
+
+		fastcgi_pass   127.0.0.1:8010;
+		include /opt/catramms/nginx/conf/fastcgi_params;
+	}
+
+	location / {
+		return 403;
+		break;
+	}
+

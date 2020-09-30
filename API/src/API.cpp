@@ -501,10 +501,16 @@ void API::manageRequestAndResponse(
     {
         // since we are here, for sure user is authorized
         
+		auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
+		auto binaryListenHostIt = queryParameters.find("binaryListenHost");
+
         // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
         auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
         auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-        if (progressIdIt != requestDetails.end() && originalURIIt != requestDetails.end())
+        if (binaryVirtualHostNameIt != queryParameters.end()
+				&& binaryListenHostIt != queryParameters.end()
+				&& progressIdIt != requestDetails.end()
+				&& originalURIIt != requestDetails.end())
         {
             int ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
             if (ingestionJobKeyIndex != string::npos)
@@ -514,6 +520,9 @@ void API::manageRequestAndResponse(
                     struct FileUploadProgressData::RequestData requestData;
 
                     requestData._progressId = progressIdIt->second;
+                    requestData._binaryListenHost = binaryListenHostIt->second;
+                    requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
+					// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
                     requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
                     requestData._lastPercentageUpdated = 0;
                     requestData._callFailures = 0;
@@ -561,6 +570,8 @@ void API::manageRequestAndResponse(
                     _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
                         + ", _progressId: " + requestData._progressId
+                        + ", _binaryVirtualHostName: " + requestData._binaryVirtualHostName
+                        + ", _binaryListenHost: " + requestData._binaryListenHost
                     );
                 }
                 catch (exception e)

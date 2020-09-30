@@ -12,3 +12,5 @@ echo "MMS Engine status"
 #echo "Tomcat status"
 #~/tomcat.sh status
 
+echo "nginx status"
+ps -ef | grep nginx

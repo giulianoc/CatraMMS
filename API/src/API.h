@@ -24,6 +24,8 @@ public:
         struct RequestData {
             int64_t     _ingestionJobKey;
             string      _progressId;
+            string      _binaryVirtualHostName;
+            string      _binaryListenHost;
             double      _lastPercentageUpdated;
             int         _callFailures;
             bool        _contentRangePresent;

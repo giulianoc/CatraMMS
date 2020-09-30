@@ -23,6 +23,12 @@
 SET (CONFs
 	nginx.conf
 	catramms.nginx
+	catrammsAPIServer.nginx
+	catrammsGUIServer.nginx
+	catrammsDeliveryServer.nginx
+	catrammsDelivery-fServer.nginx
+	catrammsBinaryServer.nginx
+	catrammsEncoderServer.nginx
 	mms.cfg
 	crontab.txt
 )

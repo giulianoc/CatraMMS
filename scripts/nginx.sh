@@ -2,16 +2,16 @@
 
 if [ $# -ne 1 ]
 then
-	echo "Usage $0 start | stop | status"
+	echo "Usage $0 start | stop | status | reload"
 
 	exit
 fi
 
 command=$1
 
-if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" ]
+if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" -a "$command" != "reload" ]
 then
-	echo "Usage $0 start | stop  | status[nodaemon]"
+	echo "Usage $0 start | stop  | status | reload[nodaemon]"
 
 	exit
 fi
@@ -32,5 +32,9 @@ then
 	#sudo start-stop-daemon --stop --quiet  --retry=TERM/30/KILL/5 --pidfile $PID --name nginx
 	sudo kill -QUIT $( cat $PIDFILE )
 	sudo pkill nginx
+elif [ "$command" == "reload" ]
+then
+	#LD_LIBRARY_PATH with ffmpeg was set because I guess it could be used by nginx-vod-module
+	sudo sh -c 'export CatraMMS_PATH=/opt/catramms && export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg-4.2.2/lib:$CatraMMS_PATH/ffmpeg-4.2.2/lib64 && $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx -s reload'
 fi
 

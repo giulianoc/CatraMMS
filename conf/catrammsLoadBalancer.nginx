@@ -1,0 +1,155 @@
+
+#it is the same in catrammsBinaryServer.nginx
+client_max_body_size 1G;
+
+upstream api {
+	least_conn;
+	server cibortv-mms-api-gui-1;
+	server cibortv-mms-api-gui-2;
+}
+
+server {
+	server_name mms-api.restream.ovh;
+	listen 443 ssl http2;
+
+	access_log   /var/catramms/logs/nginx/mms-api-load-balancer.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-api-load-balancer.error.log error;
+
+	ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	location / {
+		proxy_pass http://api;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Real-IP $remote_addr;
+		#proxy_set_header Upgrade $http_upgrade;
+		#proxy_set_header Connection "upgrade";
+	}
+}
+
+upstream gui {
+	ip_hash;
+	server cibortv-mms-api-gui-1;
+	server cibortv-mms-api-gui-2;
+}
+
+server {
+	server_name mms-gui.restream.ovh;
+	listen 443 ssl http2;
+
+	access_log   /var/catramms/logs/nginx/mms-gui-load-balancer.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-gui-load-balancer.error.log error;
+
+	ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	location / {
+		proxy_pass http://gui;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Real-IP $remote_addr;
+		#proxy_set_header Upgrade $http_upgrade;
+		#proxy_set_header Connection "upgrade";
+	}
+}
+
+upstream delivery {
+	least_conn;
+	server cibortv-mms-api-gui-1;
+	server cibortv-mms-api-gui-2;
+}
+
+server {
+	server_name mms-delivery.restream.ovh;
+	listen 443 ssl http2;
+
+	access_log   /var/catramms/logs/nginx/mms-delivery-load-balancer.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-delivery-load-balancer.error.log error;
+
+	ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	location / {
+		proxy_pass http://delivery;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Real-IP $remote_addr;
+		#proxy_set_header Upgrade $http_upgrade;
+		#proxy_set_header Connection "upgrade";
+	}
+}
+
+upstream delivery-f {
+	least_conn;
+	server cibortv-mms-api-gui-1;
+	server cibortv-mms-api-gui-2;
+}
+
+server {
+	server_name mms-delivery-f.restream.ovh;
+	listen 443 ssl http2;
+
+	access_log   /var/catramms/logs/nginx/mms-delivery-f-load-balancer.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-delivery-f-load-balancer.error.log error;
+
+	ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	location / {
+		proxy_pass http://delivery-f;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Real-IP $remote_addr;
+		#proxy_set_header Upgrade $http_upgrade;
+		#proxy_set_header Connection "upgrade";
+	}
+}
+
+upstream binary {
+	least_conn;
+	server cibortv-mms-api-gui-1;
+	server cibortv-mms-api-gui-2;
+}
+
+server {
+	server_name mms-binary.restream.ovh;
+	#listen 443 ssl http2;
+	listen 80;
+
+	access_log   /var/catramms/logs/nginx/mms-binary-load-balancer.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-binary-load-balancer.error.log error;
+
+	#ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	#ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
+	#ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
+	#include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	location / {
+		proxy_pass http://binary;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Real-IP $remote_addr;
+		#proxy_set_header Upgrade $http_upgrade;
+		#proxy_set_header Connection "upgrade";
+	}
+}
+

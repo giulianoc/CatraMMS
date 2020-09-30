@@ -1,0 +1,106 @@
+
+	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
+
+	#it is the same in nginx.conf of LoadBalancer
+	client_max_body_size 1G;
+
+	#1. POST http://mms-binary.restream.ovh/catramms/v1/binary/1991788 goes through:
+	#	#2, #3, #4, #5, #7 (fcgi: /catramms/binary/authorization --> add monitoring with progressId...)
+	#2. once the upload is finished, /catramms/uploadedBinary?version=v1&method=uploadedBinary&ingestionJobKey=1989409&X-Progress-ID=1601367441.975 is called, it goes through:
+	#	#1, #7
+
+	#1
+	location /catramms {
+		if ($request_method = POST) {
+			#this request will receive the URL parameters
+			#set by 'toBeAuthorized' redirect
+			rewrite ^/catramms/uploadedBinary/?$ /api last;
+		}
+	}
+
+	#2
+	location ~ /catramms/(v[0-9]+)/binary {
+		if ($request_method = POST) {
+			set $XProgressID "$msec";
+			rewrite ^/catramms/(v[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
+		}
+	}
+
+	#3
+	location /catramms/binary/toBeAuthorized {
+		internal;
+
+		auth_request /catramms/binary/checkAuthorization;
+		#auth_request_set $auth_status $upstream_status;
+
+		client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository;
+
+		# When set to the value on, temporary files are not removed after request processing
+		#The value clean does it.
+		client_body_in_file_only clean;
+
+
+		#It is called when nginx completed to upload the binary,
+		#all the URL parameters are inherit from the 'toBeAuthorized' redirect
+		proxy_pass http://$binaryHostName/catramms/uploadedBinary$is_args$args;
+		proxy_http_version 1.1;
+		#$host will be mms-binary.restream.ovh
+		proxy_set_header Host $host;
+		proxy_pass_request_headers on;
+		proxy_redirect off;
+		proxy_set_body off;
+		# filename where the POST data was written to
+		proxy_set_header X-FILE $request_body_file;
+
+
+		## Track uploads for this location on the zone defined
+		## up to 30 seconds after they have been finished
+		## In case of Upload using Content-Range, the X-Progress-Id (ingestionKey) will be the same,
+		## so two upload requests using Content-Range has to be done at least with 5 seconds of interval
+		## otherwise the 'upload progress' module will return an error.
+		## This directive must be the last directive of the location.
+		track_uploads uploads 30s;
+	}
+
+	#4
+	location = /catramms/binary/checkAuthorization {
+		internal;
+
+		proxy_pass http://$binaryHostName/catramms/binary/authorization?binaryListen=$binaryHostName&binaryVirtualHostName=$host;
+		#$host will be mms-binary.restream.ovh
+		proxy_set_header Host $host;
+		proxy_pass_request_body off;
+		proxy_set_header Content-Length "";
+		#proxy_set_header X-Original-METHOD $request_method;
+		proxy_set_header X-Original-METHOD $XProgressID;
+		proxy_set_header X-Original-URI $request_uri;
+	}
+
+	#5
+	location /catramms/binary/authorization {
+		allow 127.0.0.1;
+		deny all;
+		if ($request_method = GET) {
+			rewrite ^/catramms/binary/authorization/?$ /api?method=binaryAuthorization last;
+		}
+	}
+
+	#6
+	location ^~ /catramms/binary/uploadProgress {
+		allow 127.0.0.1;
+		deny all;
+		upload_progress_json_output;
+		report_uploads uploads;
+	}
+
+	#7
+	location /api {
+		internal;
+
+		fastcgi_read_timeout 120;
+
+		fastcgi_pass   127.0.0.1:8010;
+		include /opt/catramms/nginx/conf/fastcgi_params;
+	}
+

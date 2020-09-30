@@ -32,7 +32,7 @@ else
 		if [ -f "$file" ]
 		then
 			fileSizeInMegaBytes=$(du -m "$file" | awk '{print $1}')
-			if [ $fileSizeInMegaBytes -gt 1000 ]
+			if [ $fileSizeInMegaBytes -gt 500 ]
 			then
 				echo "" > $file
 			fi

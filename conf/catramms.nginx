@@ -19,222 +19,37 @@ server {
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 }
 
+#api
+#in case of nginx load balancer
 server {
-	server_name mms-api.catrasoft.cloud;
-	listen 80;
+        server_name mms-api-1.restream.ovh;
+        listen 192.168.1.105:80;
+
+        include /opt/catramms/CatraMMS/conf/catrammsAPIServer.nginx;
+}
+
+#in case of direct call from client
+server {
+	server_name mms-api-1.catrasoft.cloud;
+	listen mms-api-1.catrasoft.cloud:80;
 
 	return 301 https://mms-api.catrasoft.cloud$request_uri;
 }
 
+#in case of direct call from client
 server {
+	server_name mms-api-1.catrasoft.cloud;
 	listen 443 ssl http2;
-	server_name mms-api.catrasoft.cloud;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
-	access_log   /var/catramms/logs/nginx/mms-api.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-api.error.log notice;
-
-	location /catramms {
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/status/?$ /api?version=$1&method=status last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/mmsSupport/?$ /api?version=$1&method=mmsSupport last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/login/?$ /api?version=$1&method=login last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;
-		}
-		if ($request_method = PUT) {
-			#Source User Key is retrieved from the request authorization
-			#Dest User details are in the body
-			rewrite ^/catramms/(v[0-9]+)/workspace/share/?$ /api?version=$1&method=shareWorkspace last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/default/([0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/workspace/usage/?$ /api?version=$1&method=workspaceUsage last;
-		}
-
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=saveWorkflowAsLibrary last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=removeWorkflowAsLibrary&workflowLibraryKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=workflowsAsLibraryList last;
-			rewrite ^/catramms/(v[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=workflowAsLibraryContent&workflowLibraryKey=$2 last;
-		}
-
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/ingestionRoots/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/ingestionRoot/metaDataContent/([0-9]+)/?$ /api?version=$1&method=ingestionRootMetaDataContent&ingestionRootKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/([0-9]*)/?$ /api?version=$1&method=cancelIngestionJob&ingestionJobKey=$2 last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/([0-9]*)/?$ /api?version=$1&method=killOrCancelEncodingJob&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/mediaItems/?([0-9]*)/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2&physicalPathKey=$3 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/tags/?$ /api?version=$1&method=tagsList last;
-		}
-
-
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=encodingProfilesList&encodingProfileKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/([0-9]+)/?$ /api?version=$1&method=encodingProfilesSetsList&encodingProfilesSetKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSets/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=video&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profiles/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=video&encodingProfileKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSets/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=audio&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profiles/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=audio&encodingProfileKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSets/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=image&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profiles/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
-			rewrite ^/catramms/(v[0-9]+)/profile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;
-			rewrite ^/catramms/(v[0-9]+)/profile/audio/?$ /api?version=$1&method=addEncodingProfile&contentType=audio last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/image/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=image last;
-			rewrite ^/catramms/(v[0-9]+)/profile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfile&encodingProfileKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfilesSet&encodingProfilesSetKey=$2 last;
-		}
-
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
-			rewrite ^/catramms/(v[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&confKey=$2 last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=modifyYouTubeConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=removeYouTubeConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeConfList last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=addFacebookConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=modifyFacebookConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=removeFacebookConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=facebookConfList last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/?$ /api?version=$1&method=addChannelConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=modifyChannelConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=removeChannelConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/?([0-9]*)/?$ /api?version=$1&method=channelConfList&liveURLKey=$2 last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=modifyFTPConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=removeFTPConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=ftpConfList last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=addEMailConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=modifyEMailConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=removeEMailConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=emailConfList last;
-		}
-	}
-
-	location /api {
-		internal;
-
-		fastcgi_read_timeout 120;
-
-		fastcgi_pass   127.0.0.1:8010;
-		include /opt/catramms/nginx/conf/fastcgi_params;
-	}
+	include /opt/catramms/CatraMMS/conf/catrammsAPIServer.nginx;
 }
 
+#encoder
 server {
 	listen 80;
 
@@ -242,64 +57,80 @@ server {
 	#we should call the encoder machine as encoder-1, encoder-2, ...
 	server_name mmsengine-1;
 
-	access_log   /var/catramms/logs/nginx/mms-encoder.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-encoder.error.log notice;
-
-	location /catramms {
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?version=$1&method=status last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/?$ /encoder?version=$1&method=overlayImageOnVideo&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayTextOnVideo/([0-9]+)/?$ /encoder?version=$1&method=overlayTextOnVideo&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/?$ /encoder?version=$1&method=generateFrames&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/?$ /encoder?version=$1&method=slideShow&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&encodingJobKey=$2 last;
-		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/?$ /encoder?version=$1&method=pictureInPicture&encodingJobKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/?$ /encoder?version=$1&method=encodingStatus&encodingJobKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /encoder?version=$1&method=killEncodingJob&encodingJobKey=$2 last;
-		}
-	}
-
-	location /encoder {
-		internal;
-
-		fastcgi_read_timeout 120;
-
-		fastcgi_pass   127.0.0.1:8020;
-		include /opt/catramms/nginx/conf/fastcgi_params;
-	}
+	include /opt/catramms/CatraMMS/conf/catrammsEncoderServer.nginx;
 }
 
+#delivery
+#in case of nginx load balancer
+server {
+	server_name mms-delivery-1.restream.ovh;
+	listen 192.168.1.105:80;
+
+	set $serverIp 192.168.1.105;
+	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+}
+
+#in case of direct call from client
+server {
+	server_name mms-delivery-1.catrasoft.cloud;
+	#listen 80;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	set $deliveryHostName 127.0.0.1;
+	set $guiHostName mms-gui.catrasoft.cloud;
+	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+}
+
+#in case of direct call from client
+server {
+    server_name mms-delivery.catrasoft.cloud;
+    listen 127.0.0.1:80;
+
+    set $deliveryHostName 127.0.0.1;
+    set $guiHostName mms-gui.catrasoft.cloud;
+    include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+}
+
+
+#delivery-f
+#in case of nginx load balancer
+server {
+	server_name mms-delivery-f.restream.ovh;
+	listen 192.168.1.105:80;
+
+	include /opt/catramms/CatraMMS/conf/catrammsDelivery-fServer.nginx;
+}
+
+#in case of direct call from client
+server {
+	server_name mms-delivery-f.catrasoft.cloud;
+	#listen 80;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	include /opt/catramms/CatraMMS/conf/catrammsDelivery-fServer.nginx;
+}
+
+#binary
+#in case of nginx load balancer
+server {
+	server_name mms-binary.restream.ovh;
+	listen 192.168.1.105:80;
+
+	set $serverIp 192.168.1.105;
+	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
+}
+
+#in case of direct call from client
 server {
 	server_name mms-binary.catrasoft.cloud;
 	listen 443;
@@ -312,229 +143,46 @@ server {
 	return 301 http://mms-binary.catrasoft.cloud$request_uri;
 }
 
+#in case of direct call from client
 server {
-	server_name mms-delivery.catrasoft.cloud;
-	#listen 80;
-	listen 443;
+	server_name mms-binary-1.restream.ovh;
+	listen mms-binary-1.restream.ovh:80;
 
-	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
-	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
-
-	access_log   /var/catramms/logs/nginx/mms-delivery.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-delivery.error.log notice;
-
-	root /var/catramms/storage/MMSRepository/;
-
-	location ~ .(m3u8|mpd)$ {
-		if ($request_method = GET) {
-			#live
-			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;
-			#vod
-			rewrite ^/MMS_ /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;
-		}
-	}
-
-	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
-		if ($arg_token) {
-			set $token "$arg_token---$cookie_mmsInfo";
-		}
-		if ($arg_deliveryFileName) {
-			add_header Content-Disposition 'attachment; filename="$arg_deliveryFileName"';
-		}
-
-		auth_request /catramms/delivery/checkAuthorization;
-
-		if ($request_method = 'GET') {
-			add_header 'Access-Control-Allow-Origin' 'https://mms-gui.catrasoft.cloud';
-			add_header 'Access-Control-Allow-Credentials' 'true';
-			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-			add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-		}
-	}
-
-	location = /catramms/delivery/checkAuthorization {
-		internal;
-
-		proxy_pass https://mms-delivery.catrasoft.cloud/catramms/delivery/authorization;
-		proxy_pass_request_body off;
-		proxy_set_header Content-Length "";
-		#proxy_set_header X-Original-METHOD $request_method;
-		proxy_set_header X-Original-METHOD $token;
-		proxy_set_header X-Original-URI $request_uri;
-	}
-
-	location /catramms/delivery/authorization {
-		allow 127.0.0.1;
-		deny all;
-		if ($request_method = GET) {
-			rewrite ^/catramms/delivery/authorization/?$ /api?method=deliveryAuthorization last;
-		}
-	}
-
-	location /api {
-		internal;
-
-		fastcgi_read_timeout 120;
-
-		fastcgi_pass   127.0.0.1:8010;
-		include /opt/catramms/nginx/conf/fastcgi_params;
-	}
-
-	location / {
-		return 403;
-		break;
-	}
+	set $binaryHostName 127.0.0.1;
+	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 
+#in case of direct call from client
 server {
-	server_name mms-delivery-f.catrasoft.cloud;
-	#listen 80;
-	listen 443;
+	server_name mms-binary-1.restream.ovh;
+	listen 127.0.0.1:80;
 
-	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
-	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
-
-	access_log   /var/catramms/logs/nginx/mms-delivery-f.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-delivery-f.error.log notice;
-
-	root /var/catramms/storage/MMSRepository-free/;
-
-	location / {
-#		if ($request_method = 'OPTIONS') {
-#			add_header 'Access-Control-Allow-Origin' '*';
-#			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-#			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-#			add_header 'Access-Control-Max-Age' 1728000;
-#			add_header 'Content-Type' 'text/plain; charset=utf-8';
-#			add_header 'Content-Length' 0;
-#			return 204;
-#		}
-#		if ($request_method = 'POST') {
-#			add_header 'Access-Control-Allow-Origin' '*';
-#			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-#			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-#			add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-#		}
-		if ($request_method = 'GET') {
-			add_header 'Access-Control-Allow-Origin' '*';
-			add_header 'Access-Control-Allow-Credentials' 'true';
-			add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-			add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-			add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-		}
-	}
+	set $binaryHostName 127.0.0.1;
+	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 
-server {
-	listen 80;
-
-	server_name mms-binary.catrasoft.cloud 127.0.0.1;
-
-	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
-
-	client_max_body_size 1G;
-
-	location /catramms {
-		if ($request_method = POST) {
-			#this request will receive the URL parameters
-			#set by 'toBeAuthorized' redirect
-			rewrite ^/catramms/uploadedBinary/?$ /api last;
-		}
-	}
-
-	location ~ /catramms/(v[0-9]+)/binary {
-		if ($request_method = POST) {
-			set $XProgressID "$msec";
-			rewrite ^/catramms/(v[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
-		}
-	}
-
-	location /catramms/binary/toBeAuthorized {
-		internal;
-
-		auth_request /catramms/binary/checkAuthorization;
-		#auth_request_set $auth_status $upstream_status;
-
-		client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository;
-
-		# When set to the value on, temporary files are not removed after request processing
-		#The value clean does it.
-		client_body_in_file_only clean;
-
-		proxy_pass_request_headers on;
-
-		# filename where the POST data was written to
-		proxy_set_header X-FILE $request_body_file;
-
-		proxy_redirect off;
-		proxy_set_body off;
-		proxy_http_version 1.1;
-		#It is called when nginx completed to upload the binary,
-		#all the URL parameters are inherit from the 'toBeAuthorized' redirect
-		proxy_pass http://127.0.0.1/catramms/uploadedBinary;
-
-		## Track uploads for this location on the zone defined
-		## up to 30 seconds after they have been finished
-		## In case of Upload using Content-Range, the X-Progress-Id (ingestionKey) will be the same,
-		## so two upload requests using Content-Range has to be done at least with 5 seconds of interval
-		## otherwise the 'upload progress' module will return an error.
-		## This directive must be the last directive of the location.
-		track_uploads uploads 30s;
-	}
-
-	location = /catramms/binary/checkAuthorization {
-		internal;
-
-		proxy_pass http://127.0.0.1/catramms/binary/authorization;
-		proxy_pass_request_body off;
-		proxy_set_header Content-Length "";
-		#proxy_set_header X-Original-METHOD $request_method;
-		proxy_set_header X-Original-METHOD $XProgressID;
-		proxy_set_header X-Original-URI $request_uri;
-	}
-
-	location /catramms/binary/authorization {
-		allow 127.0.0.1;
-		deny all;
-		if ($request_method = GET) {
-			rewrite ^/catramms/binary/authorization/?$ /api?method=binaryAuthorization last;
-		}
-	}
-
-	location ^~ /catramms/binary/uploadProgress {
-		allow 127.0.0.1;
-		deny all;
-		upload_progress_json_output;
-		report_uploads uploads;
-	}
-
-	location /api {
-		internal;
-
-		fastcgi_read_timeout 120;
-
-		fastcgi_pass   127.0.0.1:8010;
-		include /opt/catramms/nginx/conf/fastcgi_params;
-	}
-}
 
 #tomcat
+#in case of nginx load balancer
 server {
-	server_name mms-gui.catrasoft.cloud;
-	listen 80;
+	server_name mms-gui.restream.ovh;
+	listen 192.168.1.105:80;
 
-	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
-	return 301 https://mms-gui.catrasoft.cloud$request_uri;
+	include /opt/catramms/CatraMMS/conf/catrammsGUIServer.nginx;
 }
 
+#in case of direct call from client
 server {
-	server_name mms-gui.catrasoft.cloud;
+	server_name mms-gui-1.catrasoft.cloud;
+	listen mms-gui-1.restream.ovh:80;
+
+	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
+	return 301 https://mms-gui-1.catrasoft.cloud$request_uri;
+}
+
+#in case of direct call from client
+server {
+	server_name mms-gui-1.catrasoft.cloud;
 	listen 443 ssl http2;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
@@ -542,22 +190,6 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
-	access_log   /var/catramms/logs/nginx/mms-gui.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-gui.error.log notice;
-
-	#used when from mms-gui it is 'Add-Content' using the Push method
-	client_max_body_size 1G;
-
-	root /opt/catramms/tomcat/webapps;
-
-	#proxy_cache one;
-
-	location / {
-		proxy_set_header X-Forwarded-Host $host;
-		proxy_set_header X-Forwarded-Server $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-		proxy_pass http://127.0.0.1:8080/;
-	}
+	include /opt/catramms/CatraMMS/conf/catrammsGUIServer.nginx;
 }
 
