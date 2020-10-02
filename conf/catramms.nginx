@@ -66,7 +66,8 @@ server {
 	server_name mms-delivery-1.restream.ovh;
 	listen 192.168.1.105:80;
 
-	set $serverIp 192.168.1.105;
+	set $deliveryHostName 192.168.1.105;
+	set $guiHostName mms-gui.catrasoft.cloud;
 	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
 }
 
@@ -126,7 +127,7 @@ server {
 	server_name mms-binary.restream.ovh;
 	listen 192.168.1.105:80;
 
-	set $serverIp 192.168.1.105;
+	set $binaryHostName 192.168.1.105;
 	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
 }
 

@@ -323,7 +323,17 @@ void ActiveEncodingsManager::operator()()
 					+ ", goingToRunEncodingJobsNumber: " + to_string(goingToRunEncodingJobsNumber)
 					+ ", toBeRunEncodingJobsNumber: " + to_string(toBeRunEncodingJobsNumber)
 				);
-            }
+
+				if (freeEncodingJobsNumber == 0)
+					_logger->warn(__FILEREF__ + "maxEncodingsToBeManaged should to be increased"
+						+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
+						+ ", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged)
+						+ ", freeEncodingJobsNumber: " + to_string(freeEncodingJobsNumber)
+						+ ", runningEncodingJobsNumber: " + to_string(runningEncodingJobsNumber)
+						+ ", goingToRunEncodingJobsNumber: " + to_string(goingToRunEncodingJobsNumber)
+						+ ", toBeRunEncodingJobsNumber: " + to_string(toBeRunEncodingJobsNumber)
+					);
+			}
 
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
