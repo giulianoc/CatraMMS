@@ -4292,7 +4292,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 		string sResponse = response.str();
 		// LF and CR create problems to the json parser...
-		while (sResponse.back() == 10 || sResponse.back() == 13)
+		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 			sResponse.pop_back();
 
 		long responseCode = curlpp::infos::ResponseCode::get(request);

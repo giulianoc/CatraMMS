@@ -3982,7 +3982,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 
         string mediaDetails = buffer.str();
         // LF and CR create problems to the json parser...
-        while (mediaDetails.back() == 10 || mediaDetails.back() == 13)
+        while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
         Json::Value detailsRoot;
@@ -4590,7 +4590,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 
         string mediaDetails = buffer.str();
         // LF and CR create problems to the json parser...
-        while (mediaDetails.back() == 10 || mediaDetails.back() == 13)
+        while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
         Json::Value detailsRoot;

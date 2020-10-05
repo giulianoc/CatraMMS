@@ -179,7 +179,7 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", computerVision->cascadePath: " + _computerVisionCascadePath
     );
-	if (_computerVisionCascadePath.back() == '/')
+	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
     _computerVisionDefaultScale				= JSONUtils::asDouble(configuration["computerVision"], "defaultScale", 1.1);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -2497,7 +2497,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value encodeContentResponse;
@@ -3885,7 +3885,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value overlayContentResponse;
@@ -4843,7 +4843,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value overlayTextContentResponse;
@@ -5777,7 +5777,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value videoSpeedContentResponse;
@@ -6524,7 +6524,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value pictureInPictureContentResponse;
@@ -7202,7 +7202,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value generateFramesContentResponse;
@@ -7780,7 +7780,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 
             string sResponse = response.str();
             // LF and CR create problems to the json parser...
-            while (sResponse.back() == 10 || sResponse.back() == 13)
+            while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                 sResponse.pop_back();
 
             Json::Value slideShowContentResponse;
@@ -10144,7 +10144,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				string sResponse = response.str();
 				// LF and CR create problems to the json parser...
-				while (sResponse.back() == 10 || sResponse.back() == 13)
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
 				Json::Value liveRecorderContentResponse;
@@ -11230,7 +11230,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string sResponse = response.str();
 				// LF and CR create problems to the json parser...
-				while (sResponse.back() == 10 || sResponse.back() == 13)
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
 				Json::Value liveProxyContentResponse;
@@ -12519,7 +12519,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
 				string sResponse = response.str();
 				// LF and CR create problems to the json parser...
-				while (sResponse.back() == 10 || sResponse.back() == 13)
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
 
 				Json::Value liveGridResponseRoot;
@@ -13337,7 +13337,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
             
 				string sResponse = response.str();
 				// LF and CR create problems to the json parser...
-				while (sResponse.back() == 10 || sResponse.back() == 13)
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 					sResponse.pop_back();
             
 				try
@@ -13648,7 +13648,7 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
 
         string sResponse = response.str();
         // LF and CR create problems to the json parser...
-        while (sResponse.back() == 10 || sResponse.back() == 13)
+        while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
             sResponse.pop_back();
 
         _logger->info(__FILEREF__ + "getEncodingStatus"
@@ -14136,15 +14136,15 @@ void EncoderVideoAudioProxy::killEncodingJob(string transcoderHost, int64_t enco
 
 		string sResponse = response.str();
 
-		// LF and CR create problems to the json parser...                                                    
-		while (sResponse.back() == 10 || sResponse.back() == 13)                                              
-			sResponse.pop_back();                                                                             
+		// LF and CR create problems to the json parser...
+		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+			sResponse.pop_back();
 
 		{
-			string message = __FILEREF__ + "Kill encoding response"                                       
-				+ ", encodingJobKey: " + to_string(encodingJobKey)          
-				+ ", sResponse: " + sResponse                                                                 
-			;                                                                                             
+			string message = __FILEREF__ + "Kill encoding response"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sResponse: " + sResponse
+			;
 			_logger->info(message);
 		}
 

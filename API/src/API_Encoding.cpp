@@ -1444,15 +1444,15 @@ void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
 
 		string sResponse = response.str();
 
-		// LF and CR create problems to the json parser...                                                    
-		while (sResponse.back() == 10 || sResponse.back() == 13)                                              
-			sResponse.pop_back();                                                                             
+		// LF and CR create problems to the json parser...
+		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+			sResponse.pop_back();
 
 		{
-			string message = __FILEREF__ + "Kill encoding response"                                       
-				+ ", encodingJobKey: " + to_string(encodingJobKey)          
-				+ ", sResponse: " + sResponse                                                                 
-			;                                                                                             
+			string message = __FILEREF__ + "Kill encoding response"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sResponse: " + sResponse
+			;
 			_logger->info(message);
 		}
 

@@ -4830,7 +4830,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
         
         // LF and CR create problems to the json parser...
-        while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
+        while (sMetadataContent.size() > 0
+			&& (sMetadataContent.back() == 10 || sMetadataContent.back() == 13))
             sMetadataContent.pop_back();
         
         bool parsingSuccessful = reader->parse(sMetadataContent.c_str(),
@@ -10770,7 +10771,7 @@ void MMSEngineProcessor::liveCutThread(
 
 			string sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.back() == 10 || sResponse.back() == 13)
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
@@ -21438,7 +21439,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 		string sResponse = response.str();
 		// LF and CR create problems to the json parser...
-		while (sResponse.back() == 10 || sResponse.back() == 13)
+		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 			sResponse.pop_back();
 
 		long responseCode = curlpp::infos::ResponseCode::get(request);

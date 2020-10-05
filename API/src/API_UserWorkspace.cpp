@@ -1259,7 +1259,7 @@ void API::login(
 						{
 							try
 							{
-								_logger->error(__FILEREF__ + " ldap URL"
+								_logger->error(__FILEREF__ + "ldap URL"
 									+ ", ldapURL: " + ldapURL
 									+ ", userName: " + userName
 								);
@@ -1278,7 +1278,7 @@ void API::login(
 							}
 							catch(runtime_error e)
 							{
-								_logger->error(__FILEREF__ + " ldap URL failed"
+								_logger->error(__FILEREF__ + "ldap URL failed"
 									+ ", ldapURL: " + ldapURL
 									+ ", e.what(): " + e.what()
 								);

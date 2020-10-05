@@ -21,7 +21,7 @@ MMSStorage::MMSStorage(
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + _storage
 		);
-		if (_storage.back() != '/')
+		if (_storage.size() > 0 && _storage.back() != '/')
 			_storage.push_back('/');
 
 		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 5);
@@ -177,7 +177,7 @@ void MMSStorage::createDirectories(
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + storage
 		);
-		if (storage.back() != '/')
+		if (storage.size() > 0 && storage.back() != '/')
 			storage.push_back('/');
 
 		// string ingestionRootRepository = MMSStorage::getIngestionRootRepository(storage);
@@ -1217,7 +1217,7 @@ string MMSStorage::creatingDirsUsingTerritories(
                 S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
-    if (mmsAssetPathName.back() != '/')
+    if (mmsAssetPathName.size() > 0 && mmsAssetPathName.back() != '/')
         mmsAssetPathName.append("/");
 
 	/*
@@ -1835,7 +1835,8 @@ string MMSStorage::moveAssetInMMSRepository(
 {
     FileIO::DirectoryEntryType_t detSourceFileType;
 
-    if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
+    if ((relativePath.size() > 0 && relativePath.front() != '/')
+			|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
 		string errorMessage = string("Wrong argument")                                                          
             + ", relativePath: " + relativePath;

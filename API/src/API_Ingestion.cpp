@@ -2935,7 +2935,7 @@ void API::fileUploadProgressCheck()
                 string sResponse = response.str();
 
                 // LF and CR create problems to the json parser...
-                while (sResponse.back() == 10 || sResponse.back() == 13)
+                while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
                     sResponse.pop_back();
                 
                 _logger->info(__FILEREF__ + "Call for upload progress response"
