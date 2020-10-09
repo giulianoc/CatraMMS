@@ -46,6 +46,14 @@
 		//	-map 0:v: specify to take all video from the first input (0) to be used in the output
 		"OtherOutputOptions": "-map 0:1",
 
+		// optional: this parameter is needed only in case the streaming has to be encoded before proxying
+		//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
+		//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+		//		Possible values for the ContentType are: video, audio
+		"EncodingProfileKey": 1,
+		"EncodingProfileLabel": "Profile sport",
+		"ContentType": "video",
+
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
 		//		Default: 2

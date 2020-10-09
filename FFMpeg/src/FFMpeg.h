@@ -246,6 +246,9 @@ public:
 		string liveURL, string userAgent,
 		string otherOutputOptions,
 
+		Json::Value encodingProfileDetailsRoot,
+		bool isVideo,
+
 		string outputType,	// HLS or DASH
 
 		// next are parameters for the output
@@ -263,6 +266,10 @@ public:
 		// double itsoffset,
 		string otherInputOptions,
 		string otherOutputOptions,
+
+		Json::Value encodingProfileDetailsRoot,
+		bool isVideo,
+
 		string cdnURL,
 		pid_t* pChildPid);
 

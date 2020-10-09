@@ -11103,6 +11103,48 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 					}
 
+					Json::Value encodingProfileDetails = Json::nullValue;
+					if (_encodingItem->_liveProxyData->_jsonEncodingProfile != "")
+					{
+						try
+						{
+							Json::CharReaderBuilder builder;
+							Json::CharReader* reader = builder.newCharReader();
+							string errors;
+
+							bool parsingSuccessful = reader->parse(_encodingItem->_liveProxyData->_jsonEncodingProfile.c_str(),
+								_encodingItem->_liveProxyData->_jsonEncodingProfile.c_str() + _encodingItem->_liveProxyData->_jsonEncodingProfile.size(), 
+								&encodingProfileDetails, &errors);
+							delete reader;
+
+							if (!parsingSuccessful)
+							{
+								string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
+                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                                    + ", errors: " + errors
+                                    + ", _liveProxyData->_jsonEncodingProfile: " + _encodingItem->_liveProxyData->_jsonEncodingProfile
+                                    ;
+								_logger->error(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						catch(...)
+						{
+							string errorMessage = string("_encodingItem->_jsonEncodingProfile json is not well format")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                                + ", _liveProxyData->_jsonEncodingProfile: " + _encodingItem->_liveProxyData->_jsonEncodingProfile
+                                ;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+
 					Json::Value liveProxyMetadata;
 
 					liveProxyMetadata["ingestionJobKey"] =
@@ -11119,6 +11161,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
 					liveProxyMetadata["manifestFileName"] = manifestFileName;
 					liveProxyMetadata["configurationLabel"] = configurationLabel;
+					if (encodingProfileDetails != Json::nullValue)
+					{
+						liveProxyMetadata["encodingProfileDetails"] = encodingProfileDetails;
+						liveProxyMetadata["encodingProfileKey"] = _encodingItem->_liveProxyData->_encodingProfileKey;
+						liveProxyMetadata["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_liveProxyData->_contentType);
+					}
 
 					{
 						Json::StreamWriterBuilder wbuilder;

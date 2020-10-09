@@ -43,8 +43,20 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-engine-db-1:/opt/catramms
 	date
 
+	echo "cibortv-mms-transcoder-es-1"
+	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-es-1:/opt/catramms
+	date
+
 	echo "cibortv-mms-transcoder-fr-1"
 	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-fr-1:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-2"
+	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-fr-2:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-3"
+	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-fr-3:/opt/catramms
 	date
 
 	echo "cibortv-mms-transcoder-ita-1"
@@ -57,10 +69,6 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-transcoder-itaita-1"
 	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-itaita-1:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-es-1"
-	scp -P 9255 /opt/catrasoftware/deploy/CatraMMS-ubuntu-18.04.tar.gz mms@cibortv-mms-transcoder-es-1:/opt/catramms
 	date
 fi
 

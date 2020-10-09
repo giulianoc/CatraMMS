@@ -4715,6 +4715,16 @@ void FFMPEGEncoder::liveProxy(
 		string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
 
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+        MMSEngineDBFacade::ContentType contentType;
+		int64_t encodingProfileKey;
+        if (JSONUtils::isMetadataPresent(liveProxyMetadata, "encodingProfileDetails"))
+		{
+			encodingProfileDetailsRoot = liveProxyMetadata["encodingProfileDetails"];
+			contentType = MMSEngineDBFacade::toContentType(liveProxyMetadata.get("contentType", "").asString());
+			encodingProfileKey = JSONUtils::asInt64(liveProxyMetadata, "encofingProfileKey", -1);
+		}
+
 		liveProxy->_manifestFilePathNames.clear();
 		liveProxy->_manifestFilePathNames.push_back(manifestDirectoryPath + "/" + manifestFileName);
 
@@ -4764,6 +4774,8 @@ void FFMPEGEncoder::liveProxy(
 				maxWidth,
 				liveURL, userAgent,
 				otherOutputOptions,
+				encodingProfileDetailsRoot,
+                encodingProfileDetailsRoot != Json::nullValue ? contentType == MMSEngineDBFacade::ContentType::Video : false,
 				liveProxy->_outputType,
 				segmentDurationInSeconds,
 				playlistEntriesNumber,
@@ -4782,6 +4794,8 @@ void FFMPEGEncoder::liveProxy(
 				liveURL, userAgent,
 				otherInputOptions,
 				otherOutputOptions,
+				encodingProfileDetailsRoot,
+                encodingProfileDetailsRoot != Json::nullValue ? contentType == MMSEngineDBFacade::ContentType::Video : false,
 				cdnURL,
 				&(liveProxy->_childPid));
 		}

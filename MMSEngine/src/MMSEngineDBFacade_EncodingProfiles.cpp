@@ -1616,7 +1616,8 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
     shared_ptr<Workspace> workspace,
     MMSEngineDBFacade::ContentType contentType,
-    string encodingProfileLabel
+    string encodingProfileLabel,
+	bool contentTypeToBeUsed
 )
 {
 
@@ -1633,12 +1634,19 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
         );
 
         {
-            lastSQLCommand = 
-                "select encodingProfileKey from MMS_EncodingProfile where (workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
+			if (contentTypeToBeUsed)
+				lastSQLCommand = 
+					"select encodingProfileKey from MMS_EncodingProfile where "
+					"(workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
+			else
+				lastSQLCommand = 
+					"select encodingProfileKey from MMS_EncodingProfile where "
+					"(workspaceKey = ? or workspaceKey is null) and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+			if (contentTypeToBeUsed)
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1646,7 +1654,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+				+ (contentTypeToBeUsed ? (string(", contentType: ") + MMSEngineDBFacade::toString(contentType)) : "")
 				+ ", encodingProfileLabel: " + encodingProfileLabel
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -1655,14 +1663,28 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             if (resultSet->next())
             {
                 encodingProfileKey = resultSet->getInt64("encodingProfileKey");
+				if (!contentTypeToBeUsed && resultSet->next())
+				{
+					string errorMessage = __FILEREF__ + "contentType has to be used because the label is not unique"
+                        + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+                        + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                        + ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed)
+                        + ", encodingProfileLabel: " + encodingProfileLabel
+                        + ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
             }
             else
             {
                 string errorMessage = __FILEREF__ + "encodingProfileKey not found "
-                        + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-                        + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                        + ", encodingProfileLabel: " + encodingProfileLabel
-                        + ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
+					+ ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed)
+					+ ", encodingProfileLabel: " + encodingProfileLabel
+					+ ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
 

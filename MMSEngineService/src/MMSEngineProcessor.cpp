@@ -9594,6 +9594,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
 		string cdnURL;
+		int64_t encodingProfileKey = -1;
         {
             string field = "ConfigurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9654,6 +9655,33 @@ void MMSEngineProcessor::manageLiveProxy(
 				waitingSecondsBetweenAttemptsInCaseOfErrors = 5;
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
+
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			string contentTypeField = "ContentType";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				MMSEngineDBFacade::ContentType contentType;
+				if (JSONUtils::isMetadataPresent(parametersRoot, contentTypeField))
+				{
+					contentType = MMSEngineDBFacade::toContentType(
+						parametersRoot.get(contentTypeField, "").asString());
+
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace, contentType, encodingProfileLabel);
+				}
+				else
+				{
+					bool contentTypeToBeUsed = false;
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+				}
+
+			}
         }
 
 		bool warningIfMissing = false;
@@ -9668,7 +9696,8 @@ void MMSEngineProcessor::manageLiveProxy(
 			liveURLConfKey, configurationLabel, liveURL, outputType,
 			segmentDurationInSeconds, playlistEntriesNumber,
 			cdnURL,
-			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
+			encodingProfileKey);
 	}
     catch(runtime_error e)
     {
@@ -10607,6 +10636,31 @@ void MMSEngineProcessor::liveCutThread(
 					fixEndTimeIfOvercomeDuration = false;
 				field = "FixEndTimeIfOvercomeDuration";
 				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
+
+				{
+					Json::Value userDataRoot;
+
+					field = "UserData";
+					if (JSONUtils::isMetadataPresent(cutParametersRoot, field))
+						userDataRoot = cutParametersRoot[field];
+
+					Json::Value mmsDataRoot;
+
+					field = "LiveCutUtcStartTimeInMilliSecs";
+					mmsDataRoot[field] = utcCutPeriodStartTimeInMilliSeconds;
+
+					field = "LiveCutUtcEndTimeInMilliSecs";
+					mmsDataRoot[field] = utcCutPeriodEndTimeInMilliSeconds;
+
+					field = "ConfigurationLabel";
+					mmsDataRoot[field] = configurationLabel;
+
+					field = "mmsData";
+					userDataRoot["mmsData"] = mmsDataRoot;
+
+					field = "UserData";
+					cutParametersRoot[field] = userDataRoot;
+				}
 
 				field = "Parameters";
 				cutRoot[field] = cutParametersRoot;
@@ -14242,11 +14296,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 }
 
 void MMSEngineProcessor::manageEncodeTask(
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
-			dependencies
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+		dependencies
 )
 {
     try

@@ -638,6 +638,10 @@ public:
         };
 
 		struct LiveProxyData {
+			int64_t									_encodingProfileKey;
+            string									_jsonEncodingProfile;
+			ContentType								_contentType;
+
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
 		};
@@ -1544,7 +1548,8 @@ public:
 	int64_t getEncodingProfileKeyByLabel (
 		shared_ptr<Workspace> workspace,
 		MMSEngineDBFacade::ContentType contentType,
-		string encodingProfileLabel);
+		string encodingProfileLabel,
+		bool contentTypeToBeUsed = true);
 
     int addEncodingJob (
         shared_ptr<Workspace> workspace,
@@ -1636,7 +1641,8 @@ public:
 		int64_t ingestionJobKey,
 		int64_t liveURLConfKey, string configurationLabel, string url,
 		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+		int64_t encodingProfileKey);
 
 	int addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,

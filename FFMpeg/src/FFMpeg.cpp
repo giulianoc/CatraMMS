@@ -6961,6 +6961,11 @@ void FFMpeg::liveProxyByHTTPStreaming(
 	string liveURL, string userAgent,
 	string otherOutputOptions,
 
+	// in case the streaming is not a copy but it has to be encoded
+	//	encodingProfileDetailsRoot == Json::nullValue if it has not to be encoded
+	Json::Value encodingProfileDetailsRoot,
+	bool isVideo,	// if false it means is audio
+
 	string outputType,	// HLS or DASH
 
 	// next are parameters for the output
@@ -7099,6 +7104,116 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		}
 	}
 
+	vector<string> ffmpegEncodingProfileArgumentList;
+	if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		try
+		{
+			string httpStreamingFileFormat;    
+			string ffmpegHttpStreamingParameter = "";
+
+			string ffmpegFileFormatParameter = "";
+
+			string ffmpegVideoCodecParameter = "";
+			string ffmpegVideoProfileParameter = "";
+			string ffmpegVideoResolutionParameter = "";
+			int videoBitRateInKbps = -1;
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoOtherParameters = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegVideoFrameRateParameter = "";
+			string ffmpegVideoKeyFramesRateParameter = "";
+			bool twoPasses;
+
+			string ffmpegAudioCodecParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+			string ffmpegAudioOtherParameters = "";
+			string ffmpegAudioChannelsParameter = "";
+			string ffmpegAudioSampleRateParameter = "";
+
+
+			settingFfmpegParameters(
+				encodingProfileDetailsRoot,
+				isVideo,
+
+				httpStreamingFileFormat,
+				ffmpegHttpStreamingParameter,
+
+				ffmpegFileFormatParameter,
+
+				ffmpegVideoCodecParameter,
+				ffmpegVideoProfileParameter,
+				ffmpegVideoResolutionParameter,
+				videoBitRateInKbps,
+				ffmpegVideoBitRateParameter,
+				ffmpegVideoOtherParameters,
+				twoPasses,
+				ffmpegVideoMaxRateParameter,
+				ffmpegVideoBufSizeParameter,
+				ffmpegVideoFrameRateParameter,
+				ffmpegVideoKeyFramesRateParameter,
+
+				ffmpegAudioCodecParameter,
+				ffmpegAudioBitRateParameter,
+				ffmpegAudioOtherParameters,
+				ffmpegAudioChannelsParameter,
+				ffmpegAudioSampleRateParameter
+			);
+
+			if (httpStreamingFileFormat != "")
+			{
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (twoPasses)
+			{
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			ffmpegEncodingProfileArgumentList.clear();
+
+			addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+			ffmpegEncodingProfileArgumentList.push_back("-threads");
+			ffmpegEncodingProfileArgumentList.push_back("0");
+			addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw e;
+		}
+	}
+
     try
     {
 		string outputTypeLowerCase;
@@ -7176,17 +7291,25 @@ void FFMpeg::liveProxyByHTTPStreaming(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
-		if (otherOutputOptions.find("-filter:v") == string::npos)
+		if (ffmpegEncodingProfileArgumentList.size() > 0)
 		{
-			// it is not possible to have -c:v copy and -filter:v toghether
-			ffmpegArgumentList.push_back("-c:v");
-			ffmpegArgumentList.push_back("copy");
+			for (string parameter: ffmpegEncodingProfileArgumentList)
+				addToArguments(parameter, ffmpegArgumentList);
 		}
-		if (otherOutputOptions.find("-filter:a") == string::npos)
+		else
 		{
-			// it is not possible to have -c:a copy and -filter:a toghether
-			ffmpegArgumentList.push_back("-c:a");
-			ffmpegArgumentList.push_back("copy");
+			if (otherOutputOptions.find("-filter:v") == string::npos)
+			{
+				// it is not possible to have -c:v copy and -filter:v toghether
+				ffmpegArgumentList.push_back("-c:v");
+				ffmpegArgumentList.push_back("copy");
+			}
+			if (otherOutputOptions.find("-filter:a") == string::npos)
+			{
+				// it is not possible to have -c:a copy and -filter:a toghether
+				ffmpegArgumentList.push_back("-c:a");
+				ffmpegArgumentList.push_back("copy");
+			}
 		}
 		if (outputTypeLowerCase == "hls")
 		{
@@ -7381,6 +7504,12 @@ void FFMpeg::liveProxyByCDN(
 	string liveURL, string userAgent,
 	string otherInputOptions,
 	string otherOutputOptions,
+
+	// in case the streaming is not a copy but it has to be encoded
+	//	encodingProfileDetailsRoot == Json::nullValue if it has not to be encoded
+	Json::Value encodingProfileDetailsRoot,
+	bool isVideo,	// if false it means is audio
+
 	string cdnURL,
 	pid_t* pChildPid)
 {
@@ -7513,6 +7642,116 @@ void FFMpeg::liveProxyByCDN(
 		}
 	}
 
+	vector<string> ffmpegEncodingProfileArgumentList;
+	if (encodingProfileDetailsRoot != Json::nullValue)
+	{
+		try
+		{
+			string httpStreamingFileFormat;    
+			string ffmpegHttpStreamingParameter = "";
+
+			string ffmpegFileFormatParameter = "";
+
+			string ffmpegVideoCodecParameter = "";
+			string ffmpegVideoProfileParameter = "";
+			string ffmpegVideoResolutionParameter = "";
+			int videoBitRateInKbps = -1;
+			string ffmpegVideoBitRateParameter = "";
+			string ffmpegVideoOtherParameters = "";
+			string ffmpegVideoMaxRateParameter = "";
+			string ffmpegVideoBufSizeParameter = "";
+			string ffmpegVideoFrameRateParameter = "";
+			string ffmpegVideoKeyFramesRateParameter = "";
+			bool twoPasses;
+
+			string ffmpegAudioCodecParameter = "";
+			string ffmpegAudioBitRateParameter = "";
+			string ffmpegAudioOtherParameters = "";
+			string ffmpegAudioChannelsParameter = "";
+			string ffmpegAudioSampleRateParameter = "";
+
+
+			settingFfmpegParameters(
+				encodingProfileDetailsRoot,
+				isVideo,
+
+				httpStreamingFileFormat,
+				ffmpegHttpStreamingParameter,
+
+				ffmpegFileFormatParameter,
+
+				ffmpegVideoCodecParameter,
+				ffmpegVideoProfileParameter,
+				ffmpegVideoResolutionParameter,
+				videoBitRateInKbps,
+				ffmpegVideoBitRateParameter,
+				ffmpegVideoOtherParameters,
+				twoPasses,
+				ffmpegVideoMaxRateParameter,
+				ffmpegVideoBufSizeParameter,
+				ffmpegVideoFrameRateParameter,
+				ffmpegVideoKeyFramesRateParameter,
+
+				ffmpegAudioCodecParameter,
+				ffmpegAudioBitRateParameter,
+				ffmpegAudioOtherParameters,
+				ffmpegAudioChannelsParameter,
+				ffmpegAudioSampleRateParameter
+			);
+
+			if (httpStreamingFileFormat != "")
+			{
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (twoPasses)
+			{
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			ffmpegEncodingProfileArgumentList.clear();
+
+			addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+			ffmpegEncodingProfileArgumentList.push_back("-threads");
+			ffmpegEncodingProfileArgumentList.push_back("0");
+			addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+			addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw e;
+		}
+	}
+
     try
     {
 		_outputFfmpegPathFileName =
@@ -7568,17 +7807,25 @@ void FFMpeg::liveProxyByCDN(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
-		if (otherOutputOptions.find("-filter:v") == string::npos)
+		if (ffmpegEncodingProfileArgumentList.size() > 0)
 		{
-			// it is not possible to have -c:v copy and -filter:v toghether
-			ffmpegArgumentList.push_back("-c:v");
-			ffmpegArgumentList.push_back("copy");
+			for (string parameter: ffmpegEncodingProfileArgumentList)
+				addToArguments(parameter, ffmpegArgumentList);
 		}
-		if (otherOutputOptions.find("-filter:a") == string::npos)
+		else
 		{
-			// it is not possible to have -c:a copy and -filter:a toghether
-			ffmpegArgumentList.push_back("-c:a");
-			ffmpegArgumentList.push_back("copy");
+			if (otherOutputOptions.find("-filter:v") == string::npos)
+			{
+				// it is not possible to have -c:v copy and -filter:v toghether
+				ffmpegArgumentList.push_back("-c:v");
+				ffmpegArgumentList.push_back("copy");
+			}
+			if (otherOutputOptions.find("-filter:a") == string::npos)
+			{
+				// it is not possible to have -c:a copy and -filter:a toghether
+				ffmpegArgumentList.push_back("-c:a");
+				ffmpegArgumentList.push_back("copy");
+			}
 		}
 		ffmpegArgumentList.push_back("-bsf:a");
 		ffmpegArgumentList.push_back("aac_adtstoasc");
