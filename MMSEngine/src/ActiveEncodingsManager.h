@@ -79,7 +79,7 @@ private:
 
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;
-    
+
     EncodingJob     _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
     EncodingJob     _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
     EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
@@ -87,6 +87,8 @@ private:
     #ifdef __LOCALENCODER__
         int                 _runningEncodingsNumber;
     #endif
+
+	void getEncodingsProgressThread();
 
     void processEncodingJob(EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);

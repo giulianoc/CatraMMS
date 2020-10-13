@@ -273,7 +273,7 @@ public:
 		string cdnURL,
 		pid_t* pChildPid);
 
-	void liveGridByHTTPStreaming(
+	void liveGrid(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		Json::Value encodingProfileDetailsRoot,
@@ -283,13 +283,17 @@ public:
 		int gridWidth,  // i.e.: 1024
 		int gridHeight, // i.e.: 578
 
-		string outputType,  // HLS or DASH (only HLS is supported)
+		string outputType,
 
-		// next are parameters for the output
+		// next are parameters for the hls output
 		int segmentDurationInSeconds,
 		int playlistEntriesNumber,
 		string manifestDirectoryPath,
 		string manifestFileName,
+
+		// next are parameters for the hls output
+		string srtURL,
+
 		pid_t* pChildPid);
 
 	void changeFileFormat(

@@ -100,9 +100,12 @@ ActiveEncodingsManager::~ActiveEncodingsManager()
 void ActiveEncodingsManager::operator()()
 {
     bool shutdown = false;
-    
+
+	thread getEncodingsProgressThread(&ActiveEncodingsManager::getEncodingsProgressThread, this);
+	getEncodingsProgressThread.detach();
+
     chrono::seconds secondsToBlock(5);
-    
+
     vector<MMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
         MMSEngineDBFacade::EncodingPriority::High,
         MMSEngineDBFacade::EncodingPriority::Medium,
@@ -190,13 +193,14 @@ void ActiveEncodingsManager::operator()()
 
 						2019-03-31: Above commented because it was introduced the GoingToRun status
 						*/
+						/*
 						if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running)
                         {
                             try
                             {
                                 int encodingPercentage =
 									encodingJob->_encoderVideoAudioProxy
-									.getEncodingProgress(/* encodingJob->_encodingItem */);
+									.getEncodingProgress();
 
 								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
 										+ ", encodingJobKey: "
@@ -221,6 +225,7 @@ void ActiveEncodingsManager::operator()()
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed");
                             }
                         }
+						*/
 
 						if (encodingJob->_encodingItem->_encodingType !=
 							MMSEngineDBFacade::EncodingType::LiveRecorder
@@ -344,6 +349,115 @@ void ActiveEncodingsManager::operator()()
         catch(exception e)
         {
             _logger->info(__FILEREF__ + "ActiveEncodingsManager loop failed");
+        }
+    }
+}
+
+void ActiveEncodingsManager::getEncodingsProgressThread()
+{
+    bool shutdown = false;
+
+	chrono::seconds secondsToSleep(5);
+  
+    vector<MMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
+        MMSEngineDBFacade::EncodingPriority::High,
+        MMSEngineDBFacade::EncodingPriority::Medium,
+        MMSEngineDBFacade::EncodingPriority::Low
+    };
+        
+    while (!shutdown)
+    {
+        try
+        {
+			chrono::system_clock::time_point startEvent = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Begin getEncodingsProgressThread");
+
+            for (MMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
+            {
+                EncodingJob*    encodingJobs;
+                int             maxEncodingsToBeManaged;
+
+                if (encodingPriority == MMSEngineDBFacade::EncodingPriority::High)
+                {
+                    // _logger->info(__FILEREF__ + "Processing the high encodings...");
+
+                    encodingJobs            = _highPriorityEncodingJobs;
+                    maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
+                }
+                else if (encodingPriority == MMSEngineDBFacade::EncodingPriority::Medium)
+                {
+                    // _logger->info(__FILEREF__ + "Processing the default encodings...");
+
+                    encodingJobs = _mediumPriorityEncodingJobs;
+                    maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
+                }
+                else // if (encodingPriority == MMSEngineDBFacade::EncodingPriority::Low)
+                {
+                    // _logger->info(__FILEREF__ + "Processing the low encodings...");
+
+                    encodingJobs = _lowPriorityEncodingJobs;
+                    maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
+                }
+
+                for (int encodingJobIndex = 0; encodingJobIndex < maxEncodingsToBeManaged; encodingJobIndex++)
+                {
+                    EncodingJob* encodingJob = &(encodingJobs[encodingJobIndex]);
+
+                    if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running)
+                    {
+						/*
+						// We will start to check the encodingProgress after at least XXX seconds.
+						// This is because the status is set to EncodingJobStatus::Running as soon as it is created
+						// the encoderVideoAudioProxyThread thread. Many times the thread returns soon because
+						// of 'No encoding available' and in this case getEncodingProgress will return 'No encoding job key found'
+
+                        if (chrono::system_clock::now() - encodingJob->_encodingJobStart >= chrono::seconds(secondsToBlock))
+
+						2019-03-31: Above commented because it was introduced the GoingToRun status
+						*/
+						try
+						{
+							int encodingPercentage =
+								encodingJob->_encoderVideoAudioProxy.getEncodingProgress();
+
+							_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+								+ ", encodingJobKey: "
+								+ to_string(encodingJob->_encodingItem->_encodingJobKey)
+								+ ", encodingPercentage: " + to_string(encodingPercentage)
+							);
+							_mmsEngineDBFacade->updateEncodingJobProgress (
+								encodingJob->_encodingItem->_encodingJobKey, encodingPercentage);
+						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingProgress failed"
+								+ ", runtime_error: " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "getEncodingProgress failed");
+						}
+                    }
+                }
+			}
+
+			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
+			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
+			_logger->info(__FILEREF__ + "End getEncodingsProgressThread"
+				+ ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+			);
+
+			this_thread::sleep_for(secondsToSleep);
+        }
+        catch(exception e)
+        {
+            _logger->info(__FILEREF__ + "getEncodingsProgressThread loop failed");
         }
     }
 }

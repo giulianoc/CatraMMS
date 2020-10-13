@@ -1651,6 +1651,7 @@ public:
 		int64_t encodingProfileKey,
 		string outputType, string outputChannelLabel, int64_t outputChannelConfKey,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
+		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
     int addEncoding_VideoSpeed (

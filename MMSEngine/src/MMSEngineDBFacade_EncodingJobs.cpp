@@ -9302,6 +9302,7 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 		string outputType,
 		string outputChannelLabel, int64_t outputChannelConfKey,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
+		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 	)
 {
@@ -9322,6 +9323,7 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
             + ", outputChannelConfKey: " + to_string(outputChannelConfKey)
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+            + ", srtURL: " + srtURL
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
         );
@@ -9397,6 +9399,9 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
 
 				field = "playlistEntriesNumber";
 				parametersRoot[field] = playlistEntriesNumber;
+
+				field = "srtURL";
+				parametersRoot[field] = srtURL;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;

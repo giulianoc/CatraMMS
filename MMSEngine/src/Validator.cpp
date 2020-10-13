@@ -3806,7 +3806,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		liveGridOutputType = parametersRoot.get(field, "").asString();
 		if (!isLiveGridOutputTypeValid(liveGridOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be SRT or HLS)"
                 + ", Field: " + field
                 + ", liveGridOutputType: " + liveGridOutputType
                 + ", label: " + label
@@ -3817,10 +3817,10 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	if (liveGridOutputType == "CDN77")
+	if (liveGridOutputType == "SRT")
 	{
 		vector<string> mandatoryFields = {
-			"CDN_URL"
+			"SRT_URL"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -3843,7 +3843,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 	else if (liveGridOutputType == "HLS")
 	{
 		vector<string> mandatoryFields = {
-			"OutputConfigurationLabel"
+			"OutputChannelLabel"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -4784,7 +4784,7 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 bool Validator::isLiveGridOutputTypeValid(string liveGridOutputType)
 {
     vector<string> outputTypes = {
-        "CDN77",
+        "SRT",
         "HLS"
     };
 

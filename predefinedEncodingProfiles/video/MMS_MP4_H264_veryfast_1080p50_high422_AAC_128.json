@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_MP4_H264_veryfast_1080p50_high422_AAC_128",
+	"FileFormat" : "mp4",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "high422",
+		"Width" : 1920,
+		"Height" : 1080,
+		"FrameRate": 50,
+		"TwoPasses" : false,
+		"KBitRate" : 5000,
+		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 128,
+		"ChannelsNumber": 2
+	}
+}

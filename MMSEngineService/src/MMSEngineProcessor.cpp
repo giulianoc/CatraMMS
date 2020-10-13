@@ -9759,6 +9759,7 @@ void MMSEngineProcessor::manageLiveGrid(
 		int64_t outputChannelConfKey = -1;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
+		string srtURL;
         {
             string field = "InputConfigurationLabels";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9822,7 +9823,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string liveGridURL;
 				{
 					liveGridURL = _deliveryProtocol + "://" + _deliveryHost;
-					liveGridURL += ("/" + workspace->_directoryName + "/");
+					liveGridURL += ("/MMSLive/" + workspace->_directoryName + "/");
 				}
 
 				{
@@ -9871,7 +9872,12 @@ void MMSEngineProcessor::manageLiveGrid(
 							channelData
 						);
 
-						string manifestFileName = to_string(outputChannelConfKey) + ".m3u8";
+						// 2020-10-10: we will add .-m3u8 and not .m3u8 because otherwise the WEB APP GUI
+						//	will not call getLiveDeliveryURL and it will use directly the url
+						//	that will return an authorization denied
+						//	See the code in the WEB APP GUI, inside the Player::prepareLiveStream method
+						// string manifestFileName = to_string(outputChannelConfKey) + ".m3u8";
+						string manifestFileName = to_string(outputChannelConfKey) + ".-m3u8";
 
 						liveGridURL += (to_string(outputChannelConfKey) + "/" + manifestFileName);
 
@@ -9904,9 +9910,20 @@ void MMSEngineProcessor::manageLiveGrid(
 				else
 					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
 			}
-			else if (outputType == "CDN77")
+			else if (outputType == "SRT")
 			{
-				// not implemented
+				field = "SRT_URL";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				srtURL = parametersRoot.get(field, "XXX").asString();
 			}
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
@@ -9925,7 +9942,7 @@ void MMSEngineProcessor::manageLiveGrid(
 
 		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
 			inputChannels, encodingProfileKey, outputType, outputChannelLabel, outputChannelConfKey,
-			segmentDurationInSeconds, playlistEntriesNumber,
+			segmentDurationInSeconds, playlistEntriesNumber, srtURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)

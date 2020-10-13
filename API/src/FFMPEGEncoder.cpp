@@ -5105,9 +5105,10 @@ void FFMPEGEncoder::liveGrid(
 		int gridWidth = JSONUtils::asInt(liveGridMetadata, "gridWidth", 0);
 		int gridHeight = JSONUtils::asInt(liveGridMetadata, "gridHeight", 0);
 		liveProxy->_outputType = liveGridMetadata.get("outputType", "").asString();
+		string srtURL = liveGridMetadata.get("srtURL", "").asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveGridMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveGridMetadata, "playlistEntriesNumber", 6);
-		string cdnURL = liveGridMetadata.get("cdnURL", "").asString();
+		// string cdnURL = liveGridMetadata.get("cdnURL", "").asString();
 		string manifestDirectoryPath = liveGridMetadata.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = liveGridMetadata.get("manifestFileName", "").asString();
 		liveProxy->_channelLabel = manifestFileName;
@@ -5131,9 +5132,10 @@ void FFMPEGEncoder::liveGrid(
 			liveProxy->_manifestFilePathNames.push_back(videoPathName);
 		}
 
-		if (liveProxy->_outputType == "HLS") // || liveProxy->_outputType == "DASH")
+		// if (liveProxy->_outputType == "HLS") // || liveProxy->_outputType == "DASH")
 		{
-			if (FileIO::directoryExisting(manifestDirectoryPath))
+			if (liveProxy->_outputType == "HLS"
+				&& FileIO::directoryExisting(manifestDirectoryPath))
 			{
 				try
 				{
@@ -5171,7 +5173,7 @@ void FFMPEGEncoder::liveGrid(
 
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
-			liveProxy->_ffmpeg->liveGridByHTTPStreaming(
+			liveProxy->_ffmpeg->liveGrid(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				encodingProfileDetailsRoot,
@@ -5185,13 +5187,14 @@ void FFMPEGEncoder::liveGrid(
 				playlistEntriesNumber,
 				manifestDirectoryPath,
 				manifestFileName,
+				srtURL,
 				&(liveProxy->_childPid));
 		}
+		/*
 		else
 		{
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
-			/*
 			liveProxy->_ffmpeg->liveGridByCDN(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
@@ -5199,8 +5202,8 @@ void FFMPEGEncoder::liveGrid(
 				otherOutputOptions,
 				cdnURL,
 				&(liveProxy->_childPid));
-			*/
 		}
+		*/
 
         liveProxy->_running = false;
         liveProxy->_childPid = 0;
@@ -5465,7 +5468,7 @@ void FFMPEGEncoder::monitorThread()
 
 					// First health check
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-					//		CDN:	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+					//		CDN(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
 						try
@@ -5596,7 +5599,7 @@ void FFMPEGEncoder::monitorThread()
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
-					else
+					else	// CDN (Proxy) or SRT (Grid)
 					{
 						try
 						{
@@ -5677,7 +5680,7 @@ void FFMPEGEncoder::monitorThread()
 					//					it is also implemented the retention of segments too old (10 minutes)
 					//						This is already implemented by the HLS parameters (into the ffmpeg command)
 					//						We do it for the DASH option and in case ffmpeg does not work
-					//		CDN:		frame increasing check
+					//		CDN(Proxy)/SRT(Grid):		frame increasing check
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
 						try
@@ -6015,7 +6018,7 @@ void FFMPEGEncoder::monitorThread()
 					{
 						try
 						{
-							// Second health check (CDN), looks if the frame is increasing
+							// Second health check, CDN(Proxy)/SRT(Grid), looks if the frame is increasing
 							int secondsToWaitBetweenSamples = 3;
 							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
 							{
@@ -6093,7 +6096,7 @@ void FFMPEGEncoder::monitorThread()
 
 					// Third health 
 					//		HLS/DASH:	
-					//		CDN:		the ffmpeg is up and running, it is not working and,
+					//		CDN(Proxy)/SRT(Grid):	the ffmpeg is up and running, it is not working and,
 					//			looking in the output log file, we have:
 					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")

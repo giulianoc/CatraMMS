@@ -7932,7 +7932,7 @@ void FFMpeg::liveProxyByCDN(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::liveGridByHTTPStreaming(
+void FFMpeg::liveGrid(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	Json::Value encodingProfileDetailsRoot,
@@ -7942,13 +7942,17 @@ void FFMpeg::liveGridByHTTPStreaming(
 	int gridWidth,	// i.e.: 1024
 	int gridHeight, // i.e.: 578
 
-	string outputType,	// HLS or DASH
+	string outputType,	// HLS or SRT (DASH not implemented yet)
 
-	// next are parameters for the output
+	// next are parameters for the hls output
 	int segmentDurationInSeconds,
 	int playlistEntriesNumber,
 	string manifestDirectoryPath,
 	string manifestFileName,
+
+	// next are parameters for the srt output
+	string srtURL,
+
 	pid_t* pChildPid)
 {
 	vector<string> ffmpegArgumentList;
@@ -7959,7 +7963,7 @@ void FFMpeg::liveGridByHTTPStreaming(
 	chrono::system_clock::time_point endFfmpegCommand;
 	time_t utcNow;
 
-	_currentApiName = "liveGridByHTTPStreaming";
+	_currentApiName = "liveGrid";
 
 	setStatus(
 		ingestionJobKey,
@@ -7971,24 +7975,22 @@ void FFMpeg::liveGridByHTTPStreaming(
 		*/
 	);
 
+	string outputTypeLowerCase;
     try
     {
 		_logger->info(__FILEREF__ + "Received " + _currentApiName
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			// + ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
-			// + ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
 		);
 
-		string outputTypeLowerCase;
 		outputTypeLowerCase.resize(outputType.size());
 		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
 				[](unsigned char c){return tolower(c); } );
 
-		if (outputTypeLowerCase != "hls") // && outputTypeLowerCase != "dash")
+		if (outputTypeLowerCase != "hls" && outputTypeLowerCase != "srt")
 		{
 			string errorMessage = __FILEREF__
-				+ "liveProxyByHTTPStreaming. Wrong output type (it has to be HLS or DASH)"
+				+ "liveProxy. Wrong output type (it has to be HLS or DASH)"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", outputType: " + outputType;
@@ -8000,10 +8002,10 @@ void FFMpeg::liveGridByHTTPStreaming(
 		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
 		// I saw just once that the directory was not created and the liveencoder remains in the loop
 		// where:
-		//	1. the encoder returns an error becaise of the missing directory
+		//	1. the encoder returns an error because of the missing directory
 		//	2. EncoderVideoAudioProxy calls again the encoder
 		// So, for this reason, the below check is done
-		if (!FileIO::directoryExisting(manifestDirectoryPath))
+		if (outputTypeLowerCase == "hls" && !FileIO::directoryExisting(manifestDirectoryPath))
 		{
 			_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8072,6 +8074,27 @@ void FFMpeg::liveGridByHTTPStreaming(
 				-map 1:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv2/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv2/test.m3u8 \
 				-map 2:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv3/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv3/test.m3u8 \
 				-map 3:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 -hls_delete_threshold 1 -hls_flags delete_segments -hls_start_number_source datetime -start_number 10 -hls_segment_filename /var/catramms/storage/MMSRepository-free/1/test/tv4/test_%04d.ts -f hls /var/catramms/storage/MMSRepository-free/1/test/tv4/test.m3u8
+
+		In case of output SRT:
+			ffmpeg \
+				-i https://1673829767.rsc.cdn77.org/1673829767/index.m3u8 \
+				-i https://1696829226.rsc.cdn77.org/1696829226/index.m3u8 \
+				-i https://1681769566.rsc.cdn77.org/1681769566/index.m3u8 \
+				-i https://1452709105.rsc.cdn77.org/1452709105/index.m3u8 \
+				-filter_complex \
+				"[0:v]                  scale=width=$X/2:height=$Y/2            [0v]; \
+				 [1:v]                  scale=width=$X/2:height=$Y/2            [1v]; \
+				 [2:v]                  scale=width=$X/2:height=$Y/2            [2v]; \
+				 [3:v]                  scale=width=$X/2:height=$Y/2            [3v]; \
+				 [0v][1v]               hstack=inputs=2:shortest=1              [0r]; \	#r sta per row
+				 [2v][3v]               hstack=inputs=2:shortest=1              [1r]; \
+				 [0r][1r]               vstack=inputs=2:shortest=1              [0r+1r]
+				 " -map "[0r+1r]" -codec:v libx264 -b:v 800k -preset veryfast \
+				-map 0:a -acodec aac -b:a 92k -ac 2 \
+				-map 1:a -acodec aac -b:a 92k -ac 2 \
+				-map 2:a -acodec aac -b:a 92k -ac 2 \
+				-map 3:a -acodec aac -b:a 92k -ac 2 \
+				-f mpegts "srt://Video-ret.srgssr.ch:32010?pkt_size=1316&mode=caller"
 		 */
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -8236,12 +8259,6 @@ void FFMpeg::liveGridByHTTPStreaming(
 			ffmpegArgumentList.push_back("-filter_complex");
 			ffmpegArgumentList.push_back(ffmpegFilterComplex);
 		}
-
-		/*
-		string manifestFileName = to_string(ingestionJobKey)
-			+ "_" + to_string(encodingJobKey)
-			+ ".m3u8";
-		*/
 
 		int videoBitRateInKbps = -1;
 		{
@@ -8446,12 +8463,20 @@ void FFMpeg::liveGridByHTTPStreaming(
 						 */
 					}
 				}
+
+				if (outputTypeLowerCase == "srt")
+				{
+					ffmpegArgumentList.push_back("-f");
+					ffmpegArgumentList.push_back("mpegts");
+					ffmpegArgumentList.push_back(srtURL);
+				}
 			}
         }
 
 		// We will create:
 		//  - one m3u8 for each track (video and audio)
 		//  - one main m3u8 having a group for AUDIO
+		if (outputTypeLowerCase == "hls")
 		{
 			/*
 			Manifest will be like:
@@ -8614,7 +8639,7 @@ void FFMpeg::liveGridByHTTPStreaming(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		if (manifestDirectoryPath != "")
+		if (outputTypeLowerCase == "hls" && manifestDirectoryPath != "")
     	{
 			try
 			{
@@ -8660,9 +8685,9 @@ void FFMpeg::liveGridByHTTPStreaming(
     _logger->info(__FILEREF__ + "Remove"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-    bool exceptionInCaseOfError = false;
-    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+		+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	bool exceptionInCaseOfError = false;
+	FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
 // destinationPathName will end with the new file format

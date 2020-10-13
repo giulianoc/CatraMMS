@@ -8227,6 +8227,8 @@ string EncoderVideoAudioProxy::faceRecognition()
 		*_status = EncodingJobStatus::Running;
 	}
 
+	_localEncodingProgress = 0;
+
 	if (_faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
 	{
 		string errorMessage = string("MaxConcurrentJobsReached")
@@ -8959,6 +8961,8 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 		*_status = EncodingJobStatus::Running;
 	}
+
+	_localEncodingProgress = 0;
 
 	// build the deep learned model
 	vector<cv::Mat> images;
@@ -12144,7 +12148,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
-	string cdnURL;
+	string srtURL;
 	{
         string field = "EncodersPool";
         encodersPool = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
@@ -12161,8 +12165,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
         gridHeight = JSONUtils::asInt(_encodingItem->_liveGridData->_ingestedParametersRoot,
 			field, 0);
 
-        field = "CDN_URL";
-        cdnURL = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
+        field = "SRT_URL";
+        srtURL = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "inputChannels";
         inputChannelsRoot = _encodingItem->_encodingParametersRoot[field];
@@ -12453,7 +12457,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					liveGridMetadata["outputType"] = outputType;
 					liveGridMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveGridMetadata["playlistEntriesNumber"] = playlistEntriesNumber;
-					liveGridMetadata["cdnURL"] = cdnURL;
+					liveGridMetadata["srtURL"] = srtURL;
 					liveGridMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
 					liveGridMetadata["manifestFileName"] = manifestFileName;
 
