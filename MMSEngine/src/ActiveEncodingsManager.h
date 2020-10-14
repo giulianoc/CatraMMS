@@ -88,7 +88,7 @@ private:
         int                 _runningEncodingsNumber;
     #endif
 
-	void getEncodingsProgressThread();
+	// void getEncodingsProgressThread();
 
     void processEncodingJob(EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);

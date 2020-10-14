@@ -2710,16 +2710,17 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		bool killedByUser = false;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -2759,6 +2760,34 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -4050,6 +4079,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -4058,9 +4088,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -4100,6 +4131,34 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -5009,6 +5068,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -5017,9 +5077,10 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -5059,6 +5120,34 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -5945,6 +6034,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -5953,9 +6043,10 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -5995,6 +6086,34 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -6689,6 +6808,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -6697,9 +6817,10 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -6739,6 +6860,34 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -7367,6 +7516,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -7375,9 +7525,10 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -7417,6 +7568,34 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -7538,7 +7717,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 }
 
 void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
-{    
+{
     // here we do not have just a profile to be added into MMS but we have
     // one or more MediaItemKeys that have to be ingested
     // One MIK in case of a .mjpeg
@@ -7947,6 +8126,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		string encodingErrorMessage;
 		bool urlForbidden = false;
 		bool urlNotFound = false;
+		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
@@ -7955,9 +8135,10 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -7997,6 +8178,34 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+				}
+
+				// encodingProgress
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingProgress: " + to_string(encodingProgress)
+						);
+						_mmsEngineDBFacade->updateEncodingJobProgress (
+							_encodingItem->_encodingJobKey, encodingProgress);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 
 				// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -8441,6 +8650,10 @@ string EncoderVideoAudioProxy::faceRecognition()
 	// ingestion
 	string lastImageSourceFileName;
 
+	int progressNotificationPeriodInSeconds = 2;
+	chrono::system_clock::time_point lastProgressNotification =
+		chrono::system_clock::now() - chrono::seconds(progressNotificationPeriodInSeconds + 1);
+
 	long currentFrameIndex = 0;
 	long framesContainingFaces = 0;
 
@@ -8450,6 +8663,51 @@ string EncoderVideoAudioProxy::faceRecognition()
 		long initialFrameIndex = 0;
 		while (initialFrameIndex++ < initialFramesNumberToBeSkipped)
 		{
+			if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastProgressNotification).count()
+				> progressNotificationPeriodInSeconds)
+			{
+				lastProgressNotification = chrono::system_clock::now();
+
+				_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
+
+				try
+				{
+					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingProgress: " + to_string(_localEncodingProgress)
+					);
+					_mmsEngineDBFacade->updateEncodingJobProgress (
+						_encodingItem->_encodingJobKey, _localEncodingProgress);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+				}
+
+				_logger->info(__FILEREF__ + "generating Face Recognition progress"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", cascadeName: " + faceRecognitionCascadeName
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath
+					+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+					+ ", currentFrameIndex: " + to_string(currentFrameIndex)
+					+ ", totalFramesNumber: " + to_string(totalFramesNumber)
+					+ ", _localEncodingProgress: " + to_string(_localEncodingProgress)
+				);
+			}
+
 			capture >> bgrFrame;
 			currentFrameIndex++;
 			if (bgrFrame.empty())
@@ -8464,6 +8722,56 @@ string EncoderVideoAudioProxy::faceRecognition()
 	bool frameContainingFaceFound = false;
 	while(!bgrFrameEmpty)
 	{
+		if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastProgressNotification).count()
+				> progressNotificationPeriodInSeconds)
+		{
+			lastProgressNotification = chrono::system_clock::now();
+
+			/*
+			double progress = (currentFrameIndex / totalFramesNumber) * 100;
+			// this is to have one decimal in the percentage
+			double faceRecognitionPercentage = ((double) ((int) (progress * 10))) / 10;
+			*/
+			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
+
+			try
+			{
+				_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingProgress: " + to_string(_localEncodingProgress)
+				);
+				_mmsEngineDBFacade->updateEncodingJobProgress (
+					_encodingItem->_encodingJobKey, _localEncodingProgress);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", e.what(): " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				);
+			}
+
+			_logger->info(__FILEREF__ + "generating Face Recognition progress"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", cascadeName: " + faceRecognitionCascadeName
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
+				+ ", totalFramesNumber: " + to_string(totalFramesNumber)
+				+ ", _localEncodingProgress: " + to_string(_localEncodingProgress)
+			);
+		}
+
 		if (faceRecognitionOutput == "FrameContainingFace"
 			&& oneFramePerSecond)
 		{
@@ -8490,30 +8798,6 @@ string EncoderVideoAudioProxy::faceRecognition()
 			bgrFrameEmpty = true;
 
 			continue;
-		}
-
-		{
-			/*
-			double progress = (currentFrameIndex / totalFramesNumber) * 100;
-			// this is to have one decimal in the percentage
-			double faceRecognitionPercentage = ((double) ((int) (progress * 10))) / 10;
-			*/
-			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
-		}
-
-		if (currentFrameIndex % 100 == 0)
-		{
-			_logger->info(__FILEREF__ + "generating Face Recognition progress"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", cascadeName: " + faceRecognitionCascadeName
-				+ ", sourcePhysicalPath: " + sourcePhysicalPath
-				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
-				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
-				+ ", totalFramesNumber: " + to_string(totalFramesNumber)
-				+ ", _localEncodingProgress: " + to_string(_localEncodingProgress)
-			);
 		}
 
 		currentFrameIndex++;
@@ -9285,6 +9569,10 @@ string EncoderVideoAudioProxy::faceIdentification()
             + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
 	);
 
+	int progressNotificationPeriodInSeconds = 2;
+	chrono::system_clock::time_point lastProgressNotification =
+		chrono::system_clock::now() - chrono::seconds(progressNotificationPeriodInSeconds + 1);
+
 	cv::Mat bgrFrame;
 	cv::Mat grayFrame;
 	cv::Mat smallFrame;
@@ -9292,12 +9580,43 @@ string EncoderVideoAudioProxy::faceIdentification()
 	long currentFrameIndex = 0;
 	while(true)
 	{
-		capture >> bgrFrame;
-		if (bgrFrame.empty())
-			break;
-
-		if (currentFrameIndex % 100 == 0)
+		if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastProgressNotification).count()
+				> progressNotificationPeriodInSeconds)
 		{
+			lastProgressNotification = chrono::system_clock::now();
+
+			/*
+			double progress = (currentFrameIndex / totalFramesNumber) * 100;
+			// this is to have one decimal in the percentage
+			double faceRecognitionPercentage = ((double) ((int) (progress * 10))) / 10;
+			*/
+			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
+
+			try
+			{
+				_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingProgress: " + to_string(_localEncodingProgress)
+				);
+				_mmsEngineDBFacade->updateEncodingJobProgress (
+					_encodingItem->_encodingJobKey, _localEncodingProgress);
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", e.what(): " + e.what()
+				);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				);
+			}
+
 			_logger->info(__FILEREF__ + "generating Face Recognition"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -9310,14 +9629,10 @@ string EncoderVideoAudioProxy::faceIdentification()
 			);
 		}
 
-		{
-			/*
-			double progress = (currentFrameIndex / totalFramesNumber) * 100;
-			// this is to have one decimal in the percentage
-			double faceRecognitionPercentage = ((double) ((int) (progress * 10))) / 10;
-			*/
-			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
-		}
+		capture >> bgrFrame;
+		if (bgrFrame.empty())
+			break;
+
 		currentFrameIndex++;
 
 		cv::cvtColor(bgrFrame, grayFrame, cv::COLOR_BGR2GRAY);
@@ -10293,8 +10608,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                 try
                 {
-					tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound) = encodingStatus;
+					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
+						urlForbidden, urlNotFound, ignore) = encodingStatus;
 
 					if (encodingErrorMessage != "")
 					{
@@ -10334,6 +10651,50 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
+					}
+
+					// encodingProgress
+					{
+						try
+						{
+							time_t utcNow;
+							{
+								chrono::system_clock::time_point now = chrono::system_clock::now();
+								utcNow = chrono::system_clock::to_time_t(now);
+							}
+
+							int encodingProgress;
+
+							if (utcNow < utcRecordingPeriodStart)
+								encodingProgress = 0;
+							else if (utcRecordingPeriodStart < utcNow && utcNow < utcRecordingPeriodEnd)
+								encodingProgress = ((utcNow - utcRecordingPeriodStart) * 100) /
+									(utcRecordingPeriodEnd - utcRecordingPeriodStart);
+							else
+								encodingProgress = 100;
+
+							_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingProgress: " + to_string(encodingProgress)
+							);
+							_mmsEngineDBFacade->updateEncodingJobProgress (
+								_encodingItem->_encodingJobKey, encodingProgress);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							);
+						}
 					}
 
 					// 2020-06-10: encodingStatusFailures is reset since getEncodingStatus was successful.
@@ -11431,6 +11792,36 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			}
 			*/
 
+			// encodingProgress: fixed to -1 (LIVE)
+			{
+				try
+				{
+					int encodingProgress = -1;
+
+					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingProgress: " + to_string(encodingProgress)
+					);
+					_mmsEngineDBFacade->updateEncodingJobProgress (
+						_encodingItem->_encodingJobKey, encodingProgress);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+				}
+			}
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
@@ -11446,9 +11837,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				try
 				{
-					tuple<bool, bool, bool, string, bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, ignore) = encodingStatus;
 					_logger->info(__FILEREF__ + "getEncodingStatus"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -12701,6 +13093,36 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(
 				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, "");
 
+			// encodingProgress: fixed to -1 (LIVE)
+			{
+				try
+				{
+					int encodingProgress = -1;
+
+					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingProgress: " + to_string(encodingProgress)
+					);
+					_mmsEngineDBFacade->updateEncodingJobProgress (
+						_encodingItem->_encodingJobKey, encodingProgress);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					);
+				}
+			}
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
 			bool completedWithError = false;
@@ -12716,10 +13138,10 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
 				try
 				{
-					tuple<bool, bool, bool, string, bool, bool> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound) = encodingStatus;
+						urlForbidden, urlNotFound, ignore) = encodingStatus;
 
 					// health check and retention is done by ffmpegEncoder.cpp
 
@@ -13172,6 +13594,7 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
     }
 }
 
+/*
 int EncoderVideoAudioProxy::getEncodingProgress()
 {
     int encodingProgress = 0;
@@ -13303,58 +13726,6 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
 					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
-					/*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-					*/
-                                                                                                  
-                
-					/*
-					// cert is stored PEM coded in file... 
-					// since PEM is default, we needn't set it for PEM 
-					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-					curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-					equest.setOpt(sslCertType);
-
-					// set the cert for client authentication
-					// "testcert.pem"
-					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-					curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-					request.setOpt(sslCert);
-					*/
-
-					/*
-					// sorry, for engine we must set the passphrase
-					//   (if the key has one...)
-					// const char *pPassphrase = NULL;
-					if(pPassphrase)
-					curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-					// if we use a key stored in a crypto engine,
-					//   we must set the key type to "ENG"
-					// pKeyType  = "PEM";
-					curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-					// set the private key (file or ID in engine)
-					// pKeyName  = "testkey.pem";
-					curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-					// set the file with the certs vaildating the server
-					// *pCACertFile = "cacert.pem";
-					curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-					*/
-                
 					// disconnect if we can't validate server's cert
 					bool bSslVerifyPeer = false;
 					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -13570,8 +13941,9 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
     return encodingProgress;
 }
+*/
 
-tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingStatus()
+tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;
@@ -13579,6 +13951,7 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
 	string encoderErrorMessage;
 	bool urlNotFound;
 	bool urlForbidden;
+	int encodingProgress;
     
     string ffmpegEncoderURL;
     ostringstream response;
@@ -13771,6 +14144,12 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
 				urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 			else
 				urlNotFound = false;
+
+			field = "encodingProgress";
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				encodingProgress = JSONUtils::asInt(encodeStatusResponse, field, -1);
+			else
+				encodingProgress = 0;
         }
         catch(...)
         {
@@ -13834,7 +14213,8 @@ tuple<bool, bool, bool, string, bool, bool> EncoderVideoAudioProxy::getEncodingS
         throw e;
     }
 
-    return make_tuple(encodingFinished, killedByUser, completedWithError, encoderErrorMessage, urlForbidden, urlNotFound);
+    return make_tuple(encodingFinished, killedByUser, completedWithError,
+		encoderErrorMessage, urlForbidden, urlNotFound, encodingProgress);
 }
 
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(

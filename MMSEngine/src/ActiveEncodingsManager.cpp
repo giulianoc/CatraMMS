@@ -101,8 +101,8 @@ void ActiveEncodingsManager::operator()()
 {
     bool shutdown = false;
 
-	thread getEncodingsProgressThread(&ActiveEncodingsManager::getEncodingsProgressThread, this);
-	getEncodingsProgressThread.detach();
+	// thread getEncodingsProgressThread(&ActiveEncodingsManager::getEncodingsProgressThread, this);
+	// getEncodingsProgressThread.detach();
 
     chrono::seconds secondsToBlock(5);
 
@@ -353,6 +353,7 @@ void ActiveEncodingsManager::operator()()
     }
 }
 
+/*
 void ActiveEncodingsManager::getEncodingsProgressThread()
 {
     bool shutdown = false;
@@ -406,16 +407,14 @@ void ActiveEncodingsManager::getEncodingsProgressThread()
 
                     if (encodingJob->_status == EncoderVideoAudioProxy::EncodingJobStatus::Running)
                     {
-						/*
 						// We will start to check the encodingProgress after at least XXX seconds.
 						// This is because the status is set to EncodingJobStatus::Running as soon as it is created
 						// the encoderVideoAudioProxyThread thread. Many times the thread returns soon because
 						// of 'No encoding available' and in this case getEncodingProgress will return 'No encoding job key found'
 
-                        if (chrono::system_clock::now() - encodingJob->_encodingJobStart >= chrono::seconds(secondsToBlock))
+                        // if (chrono::system_clock::now() - encodingJob->_encodingJobStart >= chrono::seconds(secondsToBlock))
 
-						2019-03-31: Above commented because it was introduced the GoingToRun status
-						*/
+						// 2019-03-31: Above commented because it was introduced the GoingToRun status
 						try
 						{
 							int encodingPercentage =
@@ -461,6 +460,7 @@ void ActiveEncodingsManager::getEncodingsProgressThread()
         }
     }
 }
+*/
 
 void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {

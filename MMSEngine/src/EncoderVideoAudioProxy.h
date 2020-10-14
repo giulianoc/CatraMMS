@@ -118,7 +118,7 @@ public:
 
     void operator ()();
 
-	int getEncodingProgress();
+	// int getEncodingProgress();
 
 private:
     shared_ptr<spdlog::logger>          _logger;
@@ -271,7 +271,7 @@ private:
     pair<string, bool> pictureInPicture_through_ffmpeg();
     void processPictureInPicture(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    tuple<bool, bool, bool, string, bool, bool> getEncodingStatus();
+    tuple<bool, bool, bool, string, bool, bool, int> getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

@@ -8880,7 +8880,7 @@ int FFMpeg::getEncodingProgress()
 
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {
-            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
+            _logger->info(__FILEREF__ + "ffmpeg: Encoding progress not available"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
                 + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -8900,7 +8900,7 @@ int FFMpeg::getEncodingProgress()
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding progress file"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
                 + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -8967,7 +8967,7 @@ int FFMpeg::getEncodingProgress()
 
 				if (encodingPercentage > 100 || encodingPercentage < 0)
 				{
-					_logger->error(__FILEREF__ + "Encoding status too big"
+					_logger->error(__FILEREF__ + "Encoding progress too big"
 						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 						+ ", duration: " + duration
@@ -8985,7 +8985,7 @@ int FFMpeg::getEncodingProgress()
 				}
 				else
 				{
-					_logger->info(__FILEREF__ + "Encoding status"
+					_logger->info(__FILEREF__ + "Encoding progress"
 						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
 						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
 						+ ", duration: " + duration

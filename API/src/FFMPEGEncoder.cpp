@@ -1417,6 +1417,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", \"pid\": 0"
 				+ ", \"killedByUser\": false"
                 + ", \"encodingFinished\": true "
+                + ", \"encodingProgress\": 100 "
                 + "}";
         }
         else
@@ -1462,11 +1463,54 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingFinished";
 				responseBodyRoot[field] = true;
 
+				field = "encodingProgress";
+				responseBodyRoot[field] = 100;
+
 				Json::StreamWriterBuilder wbuilder;
 				responseBody = Json::writeString(wbuilder, responseBodyRoot);
 			}
 			else if (encodingFound)
 			{
+				int encodingProgress = -2;
+				try
+				{
+					chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
+
+					encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+
+					chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
+					_logger->info(__FILEREF__ + "getEncodingProgress statistics"
+							+ ", @MMS statistics@ - encodingProgress (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									endEncodingProgress - startEncodingProgress).count()) + "@"
+							);
+				}
+				catch(FFMpegEncodingStatusNotAvailable e)
+				{
+					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->info(__FILEREF__ + errorMessage);
+
+					// sendError(request, 500, errorMessage);
+
+					// throw e;
+					// return;
+				}
+				catch(exception e)
+				{
+					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+                    ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					// sendError(request, 500, errorMessage);
+
+					// throw e;
+					// return;
+				}
+
 				Json::Value responseBodyRoot;
 
 				string field = "encodingJobKey";
@@ -1489,6 +1533,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				field = "encodingFinished";
 				responseBodyRoot[field] = !selectedEncoding->_running;
+
+				field = "encodingProgress";
+				if (encodingProgress == -2)
+					responseBodyRoot[field] = Json::nullValue;
+				else
+					responseBodyRoot[field] = encodingProgress;
 
 				Json::StreamWriterBuilder wbuilder;
 				responseBody = Json::writeString(wbuilder, responseBodyRoot);
@@ -1518,6 +1568,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingFinished";
 				responseBodyRoot[field] = !selectedLiveProxy->_running;
 
+				// 2020-06-11: it's a live, it does not have sense the encoding progress
+				field = "encodingProgress";
+				responseBodyRoot[field] = Json::nullValue;
+
 				Json::StreamWriterBuilder wbuilder;
 				responseBody = Json::writeString(wbuilder, responseBodyRoot);
 			}
@@ -1546,6 +1600,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "encodingFinished";
 				responseBodyRoot[field] = !selectedLiveRecording->_running;
 
+				// 2020-10-13: we do not have here the information to calculate the encoding progress,
+				//	it is calculated in EncoderVideoAudioProxy.cpp
+				field = "encodingProgress";
+				responseBodyRoot[field] = Json::nullValue;
+
 				Json::StreamWriterBuilder wbuilder;
 				responseBody = Json::writeString(wbuilder, responseBodyRoot);
 			}
@@ -1555,6 +1614,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodingProgress")
     {
+		// 2020-10-13: The encodingProgress API is not called anymore
+		// because it is the encodingStatus API returning the encodingProgress
+
         /*
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
