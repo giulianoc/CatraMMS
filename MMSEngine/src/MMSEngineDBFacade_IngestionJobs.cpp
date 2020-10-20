@@ -4683,7 +4683,25 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         if (resultSet->isNull("errorMessage"))
             ingestionJobRoot[field] = Json::nullValue;
         else
-            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
+		{
+			int maxErrorMessageLength = 2000;
+
+			string errorMessage = resultSet->getString("errorMessage");
+			if (errorMessage.size() > maxErrorMessageLength)
+			{
+				ingestionJobRoot[field] = errorMessage.substr(0, maxErrorMessageLength);
+
+				field = "errorMessageTruncated";
+				ingestionJobRoot[field] = true;
+			}
+			else
+			{
+				ingestionJobRoot[field] = errorMessage;
+
+				field = "errorMessageTruncated";
+				ingestionJobRoot[field] = true;
+			}
+		}
 
         if (ingestionType == IngestionType::Encode 
                 || ingestionType == IngestionType::OverlayImageOnVideo

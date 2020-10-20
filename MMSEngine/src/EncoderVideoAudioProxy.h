@@ -166,6 +166,8 @@ private:
     int									_waitingNFSSync_attemptNumber;
     int									_waitingNFSSync_sleepTimeInSeconds;
 
+	long								_retrieveStreamingYouTubeURLPeriodInHours;
+
 	/*
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;
@@ -251,6 +253,12 @@ private:
 	bool liveProxy();
 	bool liveProxy_through_ffmpeg();
     void processLiveProxy(bool killedByUser);
+
+	pair<long,string> getLastYouTubeURLDetails(
+		int64_t ingestionKey,
+		int64_t encodingJobKey,
+		int64_t workspaceKey,
+		int64_t liveURLConfKey);
 
 	void updateChannelDataWithNewYouTubeURL(
 		int64_t ingestionKey,

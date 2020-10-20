@@ -5743,7 +5743,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
-        bool asc, string status, string type
+        bool asc, string status, string types
 )
 {
     string      lastSQLCommand;
@@ -5796,16 +5796,37 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             field = "status";
             requestParametersRoot[field] = status;
 
-			if (type != "")
+			if (types != "")
 			{
-				field = "type";
-				requestParametersRoot[field] = type;
+				field = "types";
+				requestParametersRoot[field] = types;
 			}
 
             field = "requestParameters";
             statusListRoot[field] = requestParametersRoot;
         }
         
+		// manage types
+		vector<string> vTypes;
+		string typesArgument;
+		if (types != "")
+		{
+			stringstream ss(types);
+			string type;
+			char delim = ',';	// types comma separator
+			while (getline(ss, type, delim))
+			{
+				if (!type.empty())
+				{
+					vTypes.push_back(type);
+					if (typesArgument == "")
+						typesArgument = ("'" + type + "'");
+					else
+						typesArgument += (", '" + type + "'");
+				}
+			}
+		}
+
         string sqlWhere = string ("where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey ");
         sqlWhere += ("and ir.workspaceKey = ? ");
         if (encodingJobKey != -1)
@@ -5822,8 +5843,13 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             sqlWhere += ("and ej.status = 'Processing' ");
         else if (status == "ToBeProcessed")
             sqlWhere += ("and ej.status = 'ToBeProcessed' ");
-        if (type != "")
-            sqlWhere += ("and ej.type = ? ");
+        if (types != "")
+		{
+			if (vTypes.size() == 1)
+				sqlWhere += ("and ej.type = ? ");
+			else
+				sqlWhere += ("and ej.type in (" + typesArgument + ")");
+		}
         
         Json::Value responseRoot;
         {
@@ -5846,8 +5872,11 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startEncodingDate);
                 preparedStatement->setString(queryParameterIndex++, endEncodingDate);
             }
-            if (type != "")
-                preparedStatement->setString(queryParameterIndex++, type);
+            if (types != "")
+			{
+				if (vTypes.size() == 1)
+					preparedStatement->setString(queryParameterIndex++, types);
+			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -5858,7 +5887,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startEncodingDate: " + startEncodingDate
 				+ ", endEncodingDate: " + endEncodingDate
-				+ ", type: " + type
+				+ ", types: " + types
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -5906,8 +5935,11 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatementEncodingJob->setString(queryParameterIndex++, startEncodingDate);
                 preparedStatementEncodingJob->setString(queryParameterIndex++, endEncodingDate);
             }
-            if (type != "")
-                preparedStatementEncodingJob->setString(queryParameterIndex++, type);
+            if (types != "")
+			{
+				if (vTypes.size() == 1)
+					preparedStatementEncodingJob->setString(queryParameterIndex++, types);
+			}
             preparedStatementEncodingJob->setInt(queryParameterIndex++, rows);
             preparedStatementEncodingJob->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5920,7 +5952,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startEncodingDate: " + startEncodingDate
 				+ ", endEncodingDate: " + endEncodingDate
-				+ ", type: " + type
+				+ ", types: " + types
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSetEncodingJob->rowsCount: " + to_string(resultSetEncodingJob->rowsCount())

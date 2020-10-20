@@ -240,6 +240,8 @@ void EncoderVideoAudioProxy::init(
     );
 	*/
 
+	_retrieveStreamingYouTubeURLPeriodInHours = 5;	// 5 hours
+
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
         
@@ -10255,89 +10257,150 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 							)
 						{
+							string streamingYouTubeLiveURL;
+							long hoursFromLastCalculatedURL;
+							pair<long,string> lastYouTubeURLDetails;
 							try
 							{
-								FFMpeg ffmpeg (_configuration, _logger);
-								pair<string, string> streamingLiveURLDetails =
-									ffmpeg.retrieveStreamingYouTubeURL(
+								lastYouTubeURLDetails = getLastYouTubeURLDetails(
 									_encodingItem->_ingestionJobKey,
 									_encodingItem->_encodingJobKey,
-									liveURL);
+									_encodingItem->_workspace->_workspaceKey,
+									channelConfKey);
 
-								tie(localLiveURL, ignore) = streamingLiveURLDetails;
+								string lastCalculatedURL;
 
-								_logger->info(__FILEREF__ + "LiveRecorder. Retrieve streaming YouTube URL"
+								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
+
+								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
+									streamingYouTubeLiveURL = lastCalculatedURL;
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__
+									+ "LiveRecorder. youTubeURLCalculate. getLastYouTubeURLDetails failed"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", YouTube URL: " + streamingYouTubeLiveURL
+								;
+								_logger->error(errorMessage);
+							}
+
+							if (streamingYouTubeLiveURL == "")
+							{
+								try
+								{
+									FFMpeg ffmpeg (_configuration, _logger);
+									pair<string, string> streamingLiveURLDetails =
+										ffmpeg.retrieveStreamingYouTubeURL(
+										_encodingItem->_ingestionJobKey,
+										_encodingItem->_encodingJobKey,
+										liveURL);
+
+									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+
+									_logger->info(__FILEREF__ + "LiveRecorder. youTubeURLCalculate. Retrieve streaming YouTube URL"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", initial YouTube URL: " + liveURL
+										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									);
+								}
+								catch(runtime_error e)
+								{
+									// in case ffmpeg.retrieveStreamingYouTubeURL fails
+									// we will use the last saved URL
+									tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
+
+									string errorMessage = __FILEREF__
+										+ "LiveRecorder. youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", YouTube URL: " + streamingYouTubeLiveURL
+									;
+									_logger->error(errorMessage);
+
+									try
+									{
+										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+											_encodingItem->_ingestionJobKey, errorMessage);
+									}
+									catch(runtime_error e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+											+ ", e.what(): " + e.what()
+										);
+									}
+									catch(exception e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+										);
+									}
+
+									if (streamingYouTubeLiveURL == "")
+									{
+										// 2020-04-21: let's go ahead because it would be managed
+										// the killing of the encodingJob
+										// 2020-09-17: it does not have sense to continue
+										//	if we do not have the right URL (m3u8)
+										throw YouTubeURLNotRetrieved();
+									}
+								}
+
+								if (streamingYouTubeLiveURL != "")
+								{
+									try
+									{
+										updateChannelDataWithNewYouTubeURL(
+											_encodingItem->_ingestionJobKey,
+											_encodingItem->_encodingJobKey,
+											_encodingItem->_workspace->_workspaceKey,
+											channelConfKey,
+											streamingYouTubeLiveURL);
+									}
+									catch(runtime_error e)
+									{
+										string errorMessage = __FILEREF__
+											+ "LiveRecorder. youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
+											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", channelConfKey: " + to_string(channelConfKey)
+											+ ", YouTube URL: " + streamingYouTubeLiveURL
+										;
+										_logger->error(errorMessage);
+									}
+								}
+							}
+							else
+							{
+								_logger->info(__FILEREF__ + "LiveRecorder. youTubeURLCalculate. Reuse a previous streaming YouTube URL"
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", channelConfKey: " + to_string(channelConfKey)
 									+ ", initial YouTube URL: " + liveURL
-									+ ", streaming YouTube Live URL: " + localLiveURL
+									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
 								);
-
-								try
-								{
-									updateChannelDataWithNewYouTubeURL(
-										_encodingItem->_ingestionJobKey,
-										_encodingItem->_encodingJobKey,
-										_encodingItem->_workspace->_workspaceKey,
-										channelConfKey,
-										localLiveURL);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = __FILEREF__
-										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
-										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-										+ ", channelConfKey: " + to_string(channelConfKey)
-										+ ", YouTube URL: " + localLiveURL
-									;
-									_logger->error(errorMessage);
-								}
 							}
-							catch(runtime_error e)
-							{
-								string errorMessage = __FILEREF__
-									+ "LiveRecorder. ffmpeg.retrieveStreamingYouTubeURL failed"
-									+ ", may be YouTube URL is not available anymore"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", YouTube URL: " + liveURL
-								;
-								_logger->error(errorMessage);
 
-								try
-								{
-									_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-										_encodingItem->_ingestionJobKey, errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									);
-								}
-								catch(exception e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-									);
-								}
-
-								// 2020-04-21: let's go ahead because it would be managed
-								// the killing of the encodingJob
-								// throw e;
-							}
+							localLiveURL = streamingYouTubeLiveURL;
 						}
 					}
 
@@ -11378,42 +11441,69 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 							)
 						{
+							string streamingYouTubeLiveURL;
+							long hoursFromLastCalculatedURL;
+							pair<long,string> lastYouTubeURLDetails;
 							try
 							{
-								FFMpeg ffmpeg (_configuration, _logger);
-								pair<string, string> streamingLiveURLDetails =
-									ffmpeg.retrieveStreamingYouTubeURL(
+								lastYouTubeURLDetails = getLastYouTubeURLDetails(
 									_encodingItem->_ingestionJobKey,
 									_encodingItem->_encodingJobKey,
-									liveURL);
+									_encodingItem->_workspace->_workspaceKey,
+									liveURLConfKey);
 
-								string streamingYouTubeLiveURL;
-								tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+								string lastCalculatedURL;
 
-								_logger->info(__FILEREF__ + "LiveProxy. Retrieve streaming YouTube URL"
+								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
+
+								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
+									streamingYouTubeLiveURL = lastCalculatedURL;
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__
+									+ "LiveProxy. youTubeURLCalculate. getLastYouTubeURLDetails failed"
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", liveURLConfKey: " + to_string(liveURLConfKey)
-									+ ", initial YouTube URL: " + liveURL
-									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-								);
+									+ ", YouTube URL: " + streamingYouTubeLiveURL
+								;
+								_logger->error(errorMessage);
+							}
 
-								liveURL = streamingYouTubeLiveURL;
-
+							if (streamingYouTubeLiveURL == "")
+							{
+								// last calculated URL "expired" or not saved
 								try
 								{
-									updateChannelDataWithNewYouTubeURL(
+									FFMpeg ffmpeg (_configuration, _logger);
+									pair<string, string> streamingLiveURLDetails =
+										ffmpeg.retrieveStreamingYouTubeURL(
 										_encodingItem->_ingestionJobKey,
 										_encodingItem->_encodingJobKey,
-										_encodingItem->_workspace->_workspaceKey,
-										liveURLConfKey,
-										streamingYouTubeLiveURL);
+										liveURL);
+
+									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+
+									_logger->info(__FILEREF__ + "LiveProxy. youTubeURLCalculate. Retrieve streaming YouTube URL"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+										+ ", initial YouTube URL: " + liveURL
+										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									);
 								}
 								catch(runtime_error e)
 								{
+									// in case ffmpeg.retrieveStreamingYouTubeURL fails
+									// we will use the last saved URL
+									tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
+
 									string errorMessage = __FILEREF__
-										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
+										+ "LiveProxy. youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -11421,50 +11511,81 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 										+ ", YouTube URL: " + streamingYouTubeLiveURL
 									;
 									_logger->error(errorMessage);
+
+									try
+									{
+										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+											_encodingItem->_ingestionJobKey, errorMessage);
+									}
+									catch(runtime_error e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+											+ ", e.what(): " + e.what()
+										);
+									}
+									catch(exception e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+										);
+									}
+
+									if (streamingYouTubeLiveURL == "")
+									{
+										// 2020-04-21: let's go ahead because it would be managed
+										// the killing of the encodingJob
+										// 2020-09-17: it does not have sense to continue
+										//	if we do not have the right URL (m3u8)
+										throw YouTubeURLNotRetrieved();
+									}
+								}
+
+								if (streamingYouTubeLiveURL != "")
+								{
+									try
+									{
+										updateChannelDataWithNewYouTubeURL(
+											_encodingItem->_ingestionJobKey,
+											_encodingItem->_encodingJobKey,
+											_encodingItem->_workspace->_workspaceKey,
+											liveURLConfKey,
+											streamingYouTubeLiveURL);
+									}
+									catch(runtime_error e)
+									{
+										string errorMessage = __FILEREF__
+											+ "LiveProxy. youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
+											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+											+ ", YouTube URL: " + streamingYouTubeLiveURL
+										;
+										_logger->error(errorMessage);
+									}
 								}
 							}
-							catch(runtime_error e)
+							else
 							{
-								string errorMessage = __FILEREF__
-									+ "LiveProxy. ffmpeg.retrieveStreamingYouTubeURL failed"
-									+ ", may be YouTube URL is not available anymore"
+								_logger->info(__FILEREF__ + "LiveProxy. youTubeURLCalculate. Reuse a previous streaming YouTube URL"
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", YouTube URL: " + liveURL
-								;
-								_logger->error(errorMessage);
-
-								try
-								{
-									_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-										_encodingItem->_ingestionJobKey, errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									);
-								}
-								catch(exception e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-									);
-								}
-
-								// 2020-04-21: let's go ahead because it would be managed
-								// the killing of the encodingJob
-								// 2020-09-17: it does not have sense to continue if we do not have the right URL
-								throw YouTubeURLNotRetrieved();
+									+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+									+ ", initial YouTube URL: " + liveURL
+									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+								);
 							}
+
+							liveURL = streamingYouTubeLiveURL;
 						}
 					}
 
@@ -12349,6 +12470,191 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
     }
 }
 
+pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
+	int64_t ingestionKey,
+	int64_t encodingJobKey,
+	int64_t workspaceKey,
+	int64_t liveURLConfKey
+)
+{
+	long hoursFromLastCalculatedURL = -1;
+	string lastCalculatedURL;
+
+	try
+	{
+		tuple<string, string, string> channelDetails =
+			_mmsEngineDBFacade->getLiveURLConfDetails(
+			_encodingItem->_workspace->_workspaceKey,
+			liveURLConfKey);
+
+		string channelData;
+
+		tie(ignore, ignore, channelData) = channelDetails;
+
+		Json::Value channelDataRoot;
+		try
+		{
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
+
+			bool parsingSuccessful = reader->parse(channelData.c_str(),
+				channelData.c_str() + channelData.size(),
+				&channelDataRoot, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = __FILEREF__ + "failed to parse channelData"
+					+ ", ingestionKey: " + to_string(ingestionKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", channelData: " + channelData
+					+ ", errors: " + errors
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		catch(...)
+		{
+			string errorMessage = string("channelData json is not well format")
+				+ ", ingestionKey: " + to_string(ingestionKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", channelData: " + channelData
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+
+		string field;
+
+		Json::Value mmsDataRoot;
+		{
+			field = "mmsData";
+			if (!JSONUtils::isMetadataPresent(channelDataRoot, field))
+			{
+				_logger->info(__FILEREF__ + "no mmsData present"                
+					+ ", ingestionKey: " + to_string(ingestionKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+				);
+
+				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
+			}
+
+			mmsDataRoot = channelDataRoot[field];
+		}
+
+		Json::Value youTubeURLsRoot(Json::arrayValue);
+		{
+			field = "youTubeURLs";
+			if (!JSONUtils::isMetadataPresent(mmsDataRoot, field))
+			{
+				_logger->info(__FILEREF__ + "no youTubeURLs present"                
+					+ ", ingestionKey: " + to_string(ingestionKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+				);
+
+				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
+			}
+
+			youTubeURLsRoot = mmsDataRoot[field];
+		}
+
+		if (youTubeURLsRoot.size() == 0)
+		{
+			_logger->info(__FILEREF__ + "no youTubeURL present"                
+				+ ", ingestionKey: " + to_string(ingestionKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+			);
+
+			return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
+		}
+
+		{
+			Json::Value youTubeLiveURLRoot = youTubeURLsRoot[youTubeURLsRoot.size() - 1];
+
+			time_t tNow;
+			time_t tLastCalculatedURLTime;
+			{
+				unsigned long       ulYear;
+				unsigned long		ulMonth;
+				unsigned long		ulDay;
+				unsigned long		ulHour;
+				unsigned long		ulMinutes;
+				unsigned long		ulSeconds;
+				int					sscanfReturn;
+
+				field = "timestamp";
+				string timestamp = youTubeLiveURLRoot.get(field, "").asString();
+
+				if ((sscanfReturn = sscanf (timestamp.c_str(),
+					"%4lu-%2lu-%2lu %2lu:%2lu:%2lu",
+					&ulYear,
+					&ulMonth,
+					&ulDay,
+					&ulHour,
+					&ulMinutes,
+					&ulSeconds)) != 6)
+				{
+					string errorMessage = __FILEREF__ + "timestamp has a wrong format (sscanf failed)"                
+						+ ", ingestionKey: " + to_string(ingestionKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+						+ ", sscanfReturn: " + to_string(sscanfReturn)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+				tm tmLastCalculatedURL;
+
+				localtime_r (&utcNow, &tmLastCalculatedURL);
+				tNow = mktime(&tmLastCalculatedURL);
+
+				tmLastCalculatedURL.tm_year	= ulYear - 1900;
+				tmLastCalculatedURL.tm_mon	= ulMonth - 1;
+				tmLastCalculatedURL.tm_mday	= ulDay;
+				tmLastCalculatedURL.tm_hour	= ulHour;
+				tmLastCalculatedURL.tm_min	= ulMinutes;
+				tmLastCalculatedURL.tm_sec	= ulSeconds;
+
+				tLastCalculatedURLTime = mktime(&tmLastCalculatedURL);
+			}
+
+			hoursFromLastCalculatedURL = (tNow - tLastCalculatedURLTime) / 3600;
+
+			field = "youTubeURL";
+			lastCalculatedURL = youTubeLiveURLRoot.get(field, "").asString();
+		}
+
+		return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
+	}
+	catch(...)
+	{
+		string errorMessage = string("getLastYouTubeURLDetails failed")
+			+ ", ingestionKey: " + to_string(ingestionKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", workspaceKey: " + to_string(workspaceKey)
+			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
 void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 	int64_t ingestionKey,
 	int64_t encodingJobKey,
@@ -12440,13 +12746,23 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 					mmsDataRoot = channelDataRoot[field];
 			}
 
-			Json::Value youTubeURLsRoot(Json::arrayValue);
+			Json::Value previousYouTubeURLsRoot(Json::arrayValue);
 			{
 				field = "youTubeURLs";
 				if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
-					youTubeURLsRoot = mmsDataRoot[field];
+					previousYouTubeURLsRoot = mmsDataRoot[field];
 			}
 
+			Json::Value youTubeURLsRoot(Json::arrayValue);
+
+			// maintain the last 10 URLs
+			int youTubeURLIndex;
+			if (previousYouTubeURLsRoot.size() > 10)
+				youTubeURLIndex = 10;
+			else
+				youTubeURLIndex = previousYouTubeURLsRoot.size();
+			for (; youTubeURLIndex >= 0; youTubeURLIndex--)
+				youTubeURLsRoot.append(previousYouTubeURLsRoot[youTubeURLIndex]);
 			youTubeURLsRoot.append(youTubeLiveURLRoot);
 
 			field = "youTubeURLs";
@@ -12689,42 +13005,68 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 								&& 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2))
 							)
 						{
+							string streamingYouTubeLiveURL;
+							long hoursFromLastCalculatedURL;
+							pair<long,string> lastYouTubeURLDetails;
 							try
 							{
-								FFMpeg ffmpeg (_configuration, _logger);
-								pair<string, string> streamingLiveURLDetails =
-									ffmpeg.retrieveStreamingYouTubeURL(
+								lastYouTubeURLDetails = getLastYouTubeURLDetails(
 									_encodingItem->_ingestionJobKey,
 									_encodingItem->_encodingJobKey,
-									liveURL);
+									_encodingItem->_workspace->_workspaceKey,
+									channelConfKey);
 
-								string streamingYouTubeLiveURL;
-								tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+								string lastCalculatedURL;
 
-								_logger->info(__FILEREF__ + "LiveGrid. Retrieve streaming YouTube URL"
+								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
+
+								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
+									streamingYouTubeLiveURL = lastCalculatedURL;
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = __FILEREF__
+									+ "LiveGrid. youTubeURLCalculate. getLastYouTubeURLDetails failed"
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", channelConfKey: " + to_string(channelConfKey)
-									+ ", initial YouTube URL: " + liveURL
-									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
-								);
+									+ ", YouTube URL: " + streamingYouTubeLiveURL
+								;
+								_logger->error(errorMessage);
+							}
 
-								inputChannelRoot[inputChannelURLField] = streamingYouTubeLiveURL;
-
+							if (streamingYouTubeLiveURL == "")
+							{
 								try
 								{
-									updateChannelDataWithNewYouTubeURL(
+									FFMpeg ffmpeg (_configuration, _logger);
+									pair<string, string> streamingLiveURLDetails =
+										ffmpeg.retrieveStreamingYouTubeURL(
 										_encodingItem->_ingestionJobKey,
 										_encodingItem->_encodingJobKey,
-										_encodingItem->_workspace->_workspaceKey,
-										channelConfKey,
-										streamingYouTubeLiveURL);
+										liveURL);
+
+									tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
+
+									_logger->info(__FILEREF__ + "LiveGrid. youTubeURLCalculate. Retrieve streaming YouTube URL"
+										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", channelConfKey: " + to_string(channelConfKey)
+										+ ", initial YouTube URL: " + liveURL
+										+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+										+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									);
 								}
 								catch(runtime_error e)
 								{
+									// in case ffmpeg.retrieveStreamingYouTubeURL fails
+									// we will use the last saved URL
+									tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
+
 									string errorMessage = __FILEREF__
-										+ "LiveProxy. updateChannelDataWithNewYouTubeURL failed"
+										+ "LiveGrid. youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
 										+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -12732,49 +13074,81 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 										+ ", YouTube URL: " + streamingYouTubeLiveURL
 									;
 									_logger->error(errorMessage);
+
+									try
+									{
+										_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+											_encodingItem->_ingestionJobKey, errorMessage);
+									}
+									catch(runtime_error e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+											+ ", e.what(): " + e.what()
+										);
+									}
+									catch(exception e)
+									{
+										_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+											+ ", _ingestionJobKey: " +
+												to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: "
+												+ to_string(_encodingItem->_encodingJobKey)
+										);
+									}
+
+									if (streamingYouTubeLiveURL == "")
+									{
+										// 2020-04-21: let's go ahead because it would be managed
+										// the killing of the encodingJob
+										// 2020-09-17: it does not have sense to continue
+										//	if we do not have the right URL (m3u8)
+										throw YouTubeURLNotRetrieved();
+									}
+								}
+
+								if (streamingYouTubeLiveURL != "")
+								{
+									try
+									{
+										updateChannelDataWithNewYouTubeURL(
+											_encodingItem->_ingestionJobKey,
+											_encodingItem->_encodingJobKey,
+											_encodingItem->_workspace->_workspaceKey,
+											channelConfKey,
+											streamingYouTubeLiveURL);
+									}
+									catch(runtime_error e)
+									{
+										string errorMessage = __FILEREF__
+											+ "LiveGrid. youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
+											+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+											+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+											+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+											+ ", channelConfKey: " + to_string(channelConfKey)
+											+ ", YouTube URL: " + streamingYouTubeLiveURL
+										;
+										_logger->error(errorMessage);
+									}
 								}
 							}
-							catch(runtime_error e)
+							else
 							{
-								string errorMessage = __FILEREF__
-									+ "LiveGrid. ffmpeg.retrieveStreamingYouTubeURL failed"
-									+ ", may be YouTube URL is not available anymore"
+								_logger->info(__FILEREF__ + "LiveGrid. youTubeURLCalculate. Reuse a previous streaming YouTube URL"
 									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", YouTube URL: " + liveURL
-								;
-								_logger->error(errorMessage);
-
-								try
-								{
-									_mmsEngineDBFacade->appendIngestionJobErrorMessage(
-										_encodingItem->_ingestionJobKey, errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									);
-								}
-								catch(exception e)
-								{
-									_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
-										+ ", _ingestionJobKey: " +
-											to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-									);
-								}
-
-								// 2020-04-21: let's go ahead because it would be managed
-								// the killing of the encodingJob
-								// throw e;
+									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", initial YouTube URL: " + liveURL
+									+ ", streaming YouTube Live URL: " + streamingYouTubeLiveURL
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+								);
 							}
+
+							inputChannelRoot[inputChannelURLField] = streamingYouTubeLiveURL;
 						}
 					}
 

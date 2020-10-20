@@ -104,11 +104,11 @@ void API::encodingJobsStatus(
             status = statusIt->second;
         }
 
-        string type = "";
-        auto typeIt = queryParameters.find("type");
-        if (typeIt != queryParameters.end() && typeIt->second != "")
+        string types = "";
+        auto typesIt = queryParameters.find("types");
+        if (typesIt != queryParameters.end() && typesIt->second != "")
         {
-            type = typeIt->second;
+            types = typesIt->second;
         }
 
         {
@@ -117,7 +117,7 @@ void API::encodingJobsStatus(
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     startAndEndEncodingDatePresent, startEncodingDate, endEncodingDate,
-                    asc, status, type
+                    asc, status, types
                     );
 
             Json::StreamWriterBuilder wbuilder;
