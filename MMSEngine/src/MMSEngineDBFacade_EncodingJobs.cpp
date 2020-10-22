@@ -9005,7 +9005,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	int64_t liveURLConfKey, string configurationLabel, string url,
-	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, string cdnURL,
+	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, // string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	int64_t encodingProfileKey
 )
@@ -9028,7 +9028,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
-            + ", cdnURL: " + cdnURL
+            // + ", cdnURL: " + cdnURL
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
         );
 
@@ -9078,8 +9078,8 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				field = "cdnURL";
-				parametersRoot[field] = cdnURL;
+				// field = "cdnURL";
+				// parametersRoot[field] = cdnURL;
 
 				if (encodingProfileKey != -1)
 				{

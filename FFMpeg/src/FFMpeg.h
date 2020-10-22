@@ -268,7 +268,7 @@ public:
 		string manifestFileName,
 		pid_t* pChildPid);
 
-	void liveProxyByCDN(
+	void liveProxyByStream(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		int maxWidth,
@@ -285,7 +285,7 @@ public:
 		Json::Value encodingProfileDetailsRoot,
 		bool isVideo,
 
-		string cdnURL,
+		string rtmpUrl,
 		pid_t* pChildPid);
 
 	void liveGrid(

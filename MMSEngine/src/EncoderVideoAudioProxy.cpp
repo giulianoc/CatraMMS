@@ -11278,7 +11278,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	int maxWidth = -1;
 	string otherInputOptions;
 	string otherOutputOptions;
-	string cdnURL;
 	{
         string field = "EncodersPool";
         encodersPool = _encodingItem->_liveProxyData->
@@ -11324,9 +11323,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
         field = "maxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
-
-        field = "cdnURL";
-        cdnURL = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
 	}
 
 	bool killedByUser = false;
@@ -11643,7 +11639,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["outputType"] = outputType;
 					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
 					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;
-					liveProxyMetadata["cdnURL"] = cdnURL;
 					liveProxyMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
 					liveProxyMetadata["manifestFileName"] = manifestFileName;
 					liveProxyMetadata["configurationLabel"] = configurationLabel;

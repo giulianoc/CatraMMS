@@ -3663,7 +3663,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		liveProxyOutputType = parametersRoot.get(field, "").asString();
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be CDN77 or HLS or DASH)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
                 + ", Field: " + field
                 + ", liveProxyOutputType: " + liveProxyOutputType
                 + ", label: " + label
@@ -3674,10 +3674,10 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	if (liveProxyOutputType == "CDN77")
+	if (liveProxyOutputType == "RTMP_Stream")
 	{
 		vector<string> mandatoryFields = {
-			"CDN_URL"
+			"RtmpUrl"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -4767,7 +4767,7 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
 bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
     vector<string> outputTypes = {
-        "CDN77",
+        "RTMP_Stream",
         "HLS",
         "DASH"
     };

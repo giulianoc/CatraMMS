@@ -4778,12 +4778,12 @@ void FFMPEGEncoder::liveProxy(
 		liveProxy->_outputType = liveProxyMetadata.get("outputType", "").asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveProxyMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveProxyMetadata, "playlistEntriesNumber", 6);
-		string cdnURL = liveProxyMetadata.get("cdnURL", "").asString();
 		liveProxy->_channelLabel = liveProxyMetadata.get("configurationLabel", "").asString();
 		string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
 
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
+		string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 		bool actAsServer = liveProxy->_ingestedParametersRoot.get("ActAsServer", false).asBool();
 		int listenTimeoutInSeconds = liveProxy->_ingestedParametersRoot.get("ListenTimeout", -1).asInt();
 
@@ -4862,7 +4862,7 @@ void FFMPEGEncoder::liveProxy(
 		{
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
-			liveProxy->_ffmpeg->liveProxyByCDN(
+			liveProxy->_ffmpeg->liveProxyByStream(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				maxWidth,
@@ -4874,7 +4874,7 @@ void FFMPEGEncoder::liveProxy(
 				otherOutputOptions,
 				encodingProfileDetailsRoot,
                 encodingProfileDetailsRoot != Json::nullValue ? contentType == MMSEngineDBFacade::ContentType::Video : false,
-				cdnURL,
+				rtmpUrl,
 				&(liveProxy->_childPid));
 		}
 
@@ -5186,7 +5186,6 @@ void FFMPEGEncoder::liveGrid(
 		string srtURL = liveGridMetadata.get("srtURL", "").asString();
 		int segmentDurationInSeconds = JSONUtils::asInt(liveGridMetadata, "segmentDurationInSeconds", 10);
 		int playlistEntriesNumber = JSONUtils::asInt(liveGridMetadata, "playlistEntriesNumber", 6);
-		// string cdnURL = liveGridMetadata.get("cdnURL", "").asString();
 		string manifestDirectoryPath = liveGridMetadata.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = liveGridMetadata.get("manifestFileName", "").asString();
 		liveProxy->_channelLabel = manifestFileName;
@@ -5546,7 +5545,7 @@ void FFMPEGEncoder::monitorThread()
 
 					// First health check
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
-					//		CDN(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+					//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
 						try
@@ -5677,16 +5676,16 @@ void FFMPEGEncoder::monitorThread()
 							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
-					else	// CDN (Proxy) or SRT (Grid)
+					else	// rtmp (Proxy) or SRT (Grid)
 					{
 						try
 						{
-							// First health check (CDN), looks the log and check there is no message like
+							// First health check (rtmp), looks the log and check there is no message like
 							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
 							//	This message causes proxy not working
 							if (liveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
 							{
-								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 									+ ", channelLabel: " + liveProxy->_channelLabel
@@ -5731,7 +5730,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(runtime_error e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) Non-monotonous DTS failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -5741,7 +5740,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(exception e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) Non-monotonous DTS failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -5758,7 +5757,7 @@ void FFMPEGEncoder::monitorThread()
 					//					it is also implemented the retention of segments too old (10 minutes)
 					//						This is already implemented by the HLS parameters (into the ffmpeg command)
 					//						We do it for the DASH option and in case ffmpeg does not work
-					//		CDN(Proxy)/SRT(Grid):		frame increasing check
+					//		rtmp(Proxy)/SRT(Grid):		frame increasing check
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
 					{
 						try
@@ -6096,11 +6095,11 @@ void FFMPEGEncoder::monitorThread()
 					{
 						try
 						{
-							// Second health check, CDN(Proxy)/SRT(Grid), looks if the frame is increasing
+							// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
 							int secondsToWaitBetweenSamples = 3;
 							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
 							{
-								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 									+ ", channelLabel: " + liveProxy->_channelLabel
@@ -6145,7 +6144,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(FFMpegEncodingStatusNotAvailable e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -6154,7 +6153,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(runtime_error e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -6163,7 +6162,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(exception e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) frame increasing check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -6174,7 +6173,7 @@ void FFMPEGEncoder::monitorThread()
 
 					// Third health 
 					//		HLS/DASH:	
-					//		CDN(Proxy)/SRT(Grid):	the ffmpeg is up and running, it is not working and,
+					//		rtmp(Proxy)/SRT(Grid):	the ffmpeg is up and running, it is not working and,
 					//			looking in the output log file, we have:
 					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
 					if (liveProxy->_outputType == "HLS" || liveProxy->_outputType == "DASH")
@@ -6186,7 +6185,7 @@ void FFMPEGEncoder::monitorThread()
 						{
 							if (liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 							{
-								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (CDN). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 									+ ", channelLabel: " + liveProxy->_channelLabel
@@ -6231,7 +6230,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(FFMpegEncodingStatusNotAvailable e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -6240,7 +6239,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(runtime_error e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()
@@ -6249,7 +6248,7 @@ void FFMPEGEncoder::monitorThread()
 						}
 						catch(exception e)
 						{
-							string errorMessage = string ("liveProxyMonitorCheck (CDN) HTTP error 403 Forbidden check failed")
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
 								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
 								+ ", e.what(): " + e.what()

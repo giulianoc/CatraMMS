@@ -7536,7 +7536,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::liveProxyByCDN(
+void FFMpeg::liveProxyByStream(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	int maxWidth,
@@ -7558,7 +7558,7 @@ void FFMpeg::liveProxyByCDN(
 	Json::Value encodingProfileDetailsRoot,
 	bool isVideo,	// if false it means is audio
 
-	string cdnURL,
+	string rtmpUrl,
 	pid_t* pChildPid)
 {
 	vector<string> ffmpegArgumentList;
@@ -7569,7 +7569,7 @@ void FFMpeg::liveProxyByCDN(
 	chrono::system_clock::time_point endFfmpegCommand;
 	time_t utcNow;
 
-	_currentApiName = "liveProxyByCDN";
+	_currentApiName = "liveProxyByStream";
 
 	setStatus(
 		ingestionJobKey,
@@ -7895,7 +7895,7 @@ void FFMpeg::liveProxyByCDN(
 		// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
 		ffmpegArgumentList.push_back("-f");
 		ffmpegArgumentList.push_back("flv");
-		ffmpegArgumentList.push_back(cdnURL);
+		ffmpegArgumentList.push_back(rtmpUrl);
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),

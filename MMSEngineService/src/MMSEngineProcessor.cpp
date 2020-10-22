@@ -9593,7 +9593,6 @@ void MMSEngineProcessor::manageLiveProxy(
 		int playlistEntriesNumber = 0;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
-		string cdnURL;
 		int64_t encodingProfileKey = -1;
         {
             string field = "ConfigurationLabel";
@@ -9628,6 +9627,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				else
 					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
 			}
+			/*
 			else if (outputType == "CDN77")
 			{
 				field = "CDN_URL";
@@ -9643,6 +9643,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				cdnURL = parametersRoot.get(field, "XXX").asString();
 			}
+			*/
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9695,7 +9696,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			liveURLConfKey, configurationLabel, liveURL, outputType,
 			segmentDurationInSeconds, playlistEntriesNumber,
-			cdnURL,
+			// cdnURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			encodingProfileKey);
 	}

@@ -10,7 +10,7 @@
 		// mandatory...
 		"ConfigurationLabel": "",
 
-		// optional, possible values: HLS, DASH, CDN77. Default: HLS
+		// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
 		"OutputType": "HLS"
 
 		// optional. To be set only in case a specific encoders pool has to be used
@@ -22,8 +22,8 @@
 		// optional, used only in case of HLS, Default: 6
 		"PlaylistEntriesNumber": 6,
 
-		// mandatory only in case of CDN77
-		"CDN_URL": "...",
+		// mandatory only in case of RTMP_Stream
+		"RtmpUrl": "...",
 
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",
