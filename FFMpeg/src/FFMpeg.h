@@ -232,7 +232,12 @@ public:
         int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
-        string liveURL, string userAgent,
+
+		bool actAsServer,
+        string liveURL,
+		int listenTimeoutInSeconds,
+
+		string userAgent,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
@@ -243,7 +248,12 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		int maxWidth,
-		string liveURL, string userAgent,
+
+		bool actAsServer,
+        string liveURL,
+		int listenTimeoutInSeconds,
+
+		string userAgent,
 		string otherOutputOptions,
 
 		Json::Value encodingProfileDetailsRoot,
@@ -262,7 +272,12 @@ public:
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
 		int maxWidth,
-		string liveURL, string userAgent,
+
+		bool actAsServer,
+        string liveURL,
+		int listenTimeoutInSeconds,
+
+		string userAgent,
 		// double itsoffset,
 		string otherInputOptions,
 		string otherOutputOptions,

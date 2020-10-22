@@ -11647,6 +11647,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
 					liveProxyMetadata["manifestFileName"] = manifestFileName;
 					liveProxyMetadata["configurationLabel"] = configurationLabel;
+					liveProxyMetadata["liveProxyIngestedParametersRoot"] = _encodingItem->_liveProxyData->_ingestedParametersRoot;
 					if (encodingProfileDetails != Json::nullValue)
 					{
 						liveProxyMetadata["encodingProfileDetails"] = encodingProfileDetails;

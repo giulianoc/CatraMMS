@@ -38,6 +38,7 @@ struct LiveProxyAndGrid
 		string					_errorMessage;
 
 		int64_t					_ingestionJobKey;
+		Json::Value				_ingestedParametersRoot;
 		string					_outputType;
 		string					_channelLabel;
 		vector<string>			_manifestFilePathNames;

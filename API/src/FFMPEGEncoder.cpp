@@ -3163,6 +3163,9 @@ void FFMPEGEncoder::liveRecorder(
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
+		bool actAsServer =  liveRecording->_liveRecorderParametersRoot.get("ActAsServer", false).asBool();
+		int listenTimeoutInSeconds = liveRecording->_liveRecorderParametersRoot.get("ListenTimeout", -1).asInt();
+
         // string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
         string liveURL = liveRecorderMedatada.get("liveURL", "").asString();
         time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodStart", -1);
@@ -3194,7 +3197,10 @@ void FFMPEGEncoder::liveRecorder(
 			encodingJobKey,
 			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
-			liveURL, userAgent,
+			actAsServer,
+			liveURL,
+			listenTimeoutInSeconds,
+			userAgent,
 			utcRecordingPeriodStart,
 			utcRecordingPeriodEnd,
 			segmentDurationInSeconds,
@@ -4777,6 +4783,10 @@ void FFMPEGEncoder::liveProxy(
 		string manifestDirectoryPath = liveProxyMetadata.get("manifestDirectoryPath", "").asString();
 		string manifestFileName = liveProxyMetadata.get("manifestFileName", "").asString();
 
+		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
+		bool actAsServer = liveProxy->_ingestedParametersRoot.get("ActAsServer", false).asBool();
+		int listenTimeoutInSeconds = liveProxy->_ingestedParametersRoot.get("ListenTimeout", -1).asInt();
+
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
         MMSEngineDBFacade::ContentType contentType;
 		int64_t encodingProfileKey;
@@ -4834,7 +4844,10 @@ void FFMPEGEncoder::liveProxy(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				maxWidth,
-				liveURL, userAgent,
+				actAsServer,
+				liveURL,
+				listenTimeoutInSeconds,
+				userAgent,
 				otherOutputOptions,
 				encodingProfileDetailsRoot,
                 encodingProfileDetailsRoot != Json::nullValue ? contentType == MMSEngineDBFacade::ContentType::Video : false,
@@ -4853,7 +4866,10 @@ void FFMPEGEncoder::liveProxy(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				maxWidth,
-				liveURL, userAgent,
+				actAsServer,
+				liveURL,
+				listenTimeoutInSeconds,
+				userAgent,
 				otherInputOptions,
 				otherOutputOptions,
 				encodingProfileDetailsRoot,

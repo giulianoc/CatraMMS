@@ -6518,7 +6518,16 @@ void FFMpeg::liveRecorder(
         int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
-        string liveURL, string userAgent,
+
+		// if actAsServer (true) means the liveURL should be like rtmp://<local transcoder IP to bind>:<port>
+		//		listening for an incoming connection
+		// if actAsServer (false) means the liveURL is "any thing" referring a stream
+		bool actAsServer,
+        string liveURL,
+		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
+		int listenTimeoutInSeconds,
+
+		string userAgent,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
@@ -6695,13 +6704,23 @@ void FFMpeg::liveRecorder(
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
 	#else
-
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
 		if (userAgent != "")
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
+		}
+		if (actAsServer)
+		{
+			ffmpegArgumentList.push_back("-listen");
+			ffmpegArgumentList.push_back("1");
+			if (listenTimeoutInSeconds > 0)
+			{
+				// no timeout means it will listen infinitely
+				ffmpegArgumentList.push_back("-timeout");
+				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
+			}
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
@@ -6958,7 +6977,16 @@ void FFMpeg::liveProxyByHTTPStreaming(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	int maxWidth,
-	string liveURL, string userAgent,
+
+	// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
+	//		listening for an incoming connection
+	// if actAsServer (false) means the liveURL is "any thing" referring a stream
+	bool actAsServer,
+	string liveURL,
+	// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
+	int listenTimeoutInSeconds,
+
+	string userAgent,
 	string otherOutputOptions,
 
 	// in case the streaming is not a copy but it has to be encoded
@@ -7288,6 +7316,17 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 		ffmpegArgumentList.push_back("-re");
+		if (actAsServer)
+		{
+			ffmpegArgumentList.push_back("-listen");
+			ffmpegArgumentList.push_back("1");
+			if (listenTimeoutInSeconds > 0)
+			{
+				// no timeout means it will listen infinitely
+				ffmpegArgumentList.push_back("-timeout");
+				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
+			}
+		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);
@@ -7501,7 +7540,16 @@ void FFMpeg::liveProxyByCDN(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
 	int maxWidth,
-	string liveURL, string userAgent,
+
+	// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
+	//		listening for an incoming connection
+	// if actAsServer (false) means the liveURL is "any thing" referring a stream
+	bool actAsServer,
+	string liveURL,
+	// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
+	int listenTimeoutInSeconds,
+
+	string userAgent,
 	string otherInputOptions,
 	string otherOutputOptions,
 
@@ -7804,6 +7852,17 @@ void FFMpeg::liveProxyByCDN(
 		}
 		*/
 		addToArguments(otherInputOptions, ffmpegArgumentList);
+		if (actAsServer)
+		{
+			ffmpegArgumentList.push_back("-listen");
+			ffmpegArgumentList.push_back("1");
+			if (listenTimeoutInSeconds > 0)
+			{
+				// no timeout means it will listen infinitely
+				ffmpegArgumentList.push_back("-timeout");
+				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
+			}
+		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		addToArguments(otherOutputOptions, ffmpegArgumentList);

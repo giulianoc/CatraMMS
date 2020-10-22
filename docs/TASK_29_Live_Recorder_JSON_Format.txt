@@ -10,6 +10,16 @@
 		// mandatory: it refers the Live URL configuration
 		"ConfigurationLabel": "",
 
+		// default is false. If true the Task act as server listening for an incoming connection (i.e.: rtmp)
+		//	In this case the ConfigurationLabel should refer a URL like:
+		//		rtmp://<local transcoder IP to bind>:<port>
+		"ActAsServer": false,
+
+		// It is used only in case of ActAsServer true, it is the max time in seconds
+		//	waiting an incoming connection.
+		//	Default: 300
+		"ListenTimeout": 300,
+
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",
 
