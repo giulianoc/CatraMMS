@@ -10635,6 +10635,11 @@ void MMSEngineProcessor::liveCutThread(
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
 
+			_logger->info(__FILEREF__ + "Preparing workflow to ingest (3)..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+
 			Json::Value cutRoot;
 			{
 				string field = "Label";
@@ -10726,6 +10731,11 @@ void MMSEngineProcessor::liveCutThread(
 				}
 			}
 
+			_logger->info(__FILEREF__ + "Preparing workflow to ingest (4)..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+
 			Json::Value concatOnSuccessRoot;
 			{
 				Json::Value cutTaskRoot;
@@ -10735,6 +10745,11 @@ void MMSEngineProcessor::liveCutThread(
 				field = "OnSuccess";
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
+
+			_logger->info(__FILEREF__ + "Preparing workflow to ingest (5)..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
 
 			Json::Value workflowRoot;
 			{
@@ -10750,10 +10765,21 @@ void MMSEngineProcessor::liveCutThread(
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
+			_logger->info(__FILEREF__ + "Preparing workflow to ingest (6)..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+
 			{
 				Json::StreamWriterBuilder wbuilder;
 				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
 			}
+
+			_logger->info(__FILEREF__ + "Preparing workflow to ingest (7)..."
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
+
 		}
 
 		{
