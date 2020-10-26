@@ -10543,7 +10543,7 @@ void MMSEngineProcessor::liveCutThread(
 			}
 		}
 
-		_logger->info(__FILEREF__ + "Preparing workflow to ingest (1)..."
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest..."
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -10578,19 +10578,6 @@ void MMSEngineProcessor::liveCutThread(
 					liveCutOnComplete = internalMMSRoot[field];
 			}
 		}
-
-		_logger->info(__FILEREF__ + "Preparing workflow to ingest (2)..."
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", utcFirstChunkStartTime: " + to_string(utcFirstChunkStartTime)
-				+ " (" + firstChunkStartTime + ")"
-			+ ", utcLastChunkEndTime: " + to_string(utcLastChunkEndTime)
-				+ " (" + lastChunkEndTime + ")"
-			+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
-				+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
-			+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
-				+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
-		);
 
 		// create workflow to ingest
 		string workflowMetadata;
@@ -10634,11 +10621,6 @@ void MMSEngineProcessor::liveCutThread(
 				field = "Parameters";
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
-
-			_logger->info(__FILEREF__ + "Preparing workflow to ingest (3)..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
 
 			Json::Value cutRoot;
 			{
@@ -10691,7 +10673,61 @@ void MMSEngineProcessor::liveCutThread(
 
 					field = "UserData";
 					if (JSONUtils::isMetadataPresent(cutParametersRoot, field))
-						userDataRoot = cutParametersRoot[field];
+					{
+						string sUserData = cutParametersRoot.get(field, "").asString();
+
+						if (sUserData != "")
+						{
+							try
+							{
+								Json::CharReaderBuilder builder;                                  
+								Json::CharReader* reader = builder.newCharReader();               
+								string errors;                                                    
+
+								bool parsingSuccessful = reader->parse(                           
+									sUserData.c_str(),                             
+									sUserData.c_str() + sUserData.size(),
+									&userDataRoot, &errors);                      
+								delete reader;
+
+								if (!parsingSuccessful)                                           
+								{
+									string errorMessage = __FILEREF__ + "failed to parse the userData"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", errors: " + errors
+										+ ", sUserData: " + sUserData
+									;
+									_logger->error(errorMessage);
+
+									throw runtime_error(errors);
+								}
+							}
+							catch(runtime_error e)
+							{
+								string errorMessage = string("userData json is not well format")
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", sUserData: " + sUserData
+									+ ", e.what(): " + e.what()
+								;
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							catch(exception e)
+							{
+								string errorMessage = string("userData json is not well format")
+									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", sUserData: " + sUserData
+								;
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+					}
 
 					Json::Value mmsDataRoot;
 
@@ -10731,11 +10767,6 @@ void MMSEngineProcessor::liveCutThread(
 				}
 			}
 
-			_logger->info(__FILEREF__ + "Preparing workflow to ingest (4)..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
-
 			Json::Value concatOnSuccessRoot;
 			{
 				Json::Value cutTaskRoot;
@@ -10745,11 +10776,6 @@ void MMSEngineProcessor::liveCutThread(
 				field = "OnSuccess";
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
-
-			_logger->info(__FILEREF__ + "Preparing workflow to ingest (5)..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
 
 			Json::Value workflowRoot;
 			{
@@ -10765,21 +10791,10 @@ void MMSEngineProcessor::liveCutThread(
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
-			_logger->info(__FILEREF__ + "Preparing workflow to ingest (6)..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
-
 			{
 				Json::StreamWriterBuilder wbuilder;
 				workflowMetadata = Json::writeString(wbuilder, workflowRoot);
 			}
-
-			_logger->info(__FILEREF__ + "Preparing workflow to ingest (7)..."
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
-
 		}
 
 		{
