@@ -701,10 +701,13 @@ void EncoderVideoAudioProxy::operator()()
 		try
 		{
 			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder
+					|| _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
 			{
 				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up
 				// to the end of the recording
+				// 2020-10-25: Added also LiveProxy to be here, in case of LiveProxy and URL not found error
+				//	does not have sense to retry, we need the generation of a new URL (restream-auto case)
 				forceEncodingToBeFailed = true;
 			}
 			else

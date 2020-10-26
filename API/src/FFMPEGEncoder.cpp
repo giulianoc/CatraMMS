@@ -1020,6 +1020,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         lock_guard<mutex> locker(*_liveProxyMutex);
 
+		// look for a free LiveProxyAndGrid structure
         shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
         bool                    liveProxyFound = false;
         for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
@@ -5532,10 +5533,14 @@ void FFMPEGEncoder::monitorThread()
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
+			int liveProxyAndGridRunningCounter = 0;
+			int liveProxyAndGridNotRunningCounter = 0;
 			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (liveProxy->_running)
 				{
+					liveProxyAndGridRunningCounter++;
+
 					_logger->info(__FILEREF__ + "liveProxyMonitor..."
 						+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
@@ -6265,12 +6270,25 @@ void FFMPEGEncoder::monitorThread()
 						) + "@"
 					);
 				}
+				else
+				{
+					liveProxyAndGridNotRunningCounter++;
+				}
 			}
+			_logger->info(__FILEREF__ + "monitoringThread, LiveProxyAndGrid"
+				+ ", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter)
+				+ ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter)
+				+ ", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
+			);
 
+			int liveRecordingRunningCounter = 0;
+			int liveRecordingNotRunningCounter = 0;
 			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (liveRecording->_running)
 				{
+					liveRecordingRunningCounter++;
+
 					_logger->info(__FILEREF__ + "liveRecordingMonitor..."
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
@@ -6427,7 +6445,16 @@ void FFMPEGEncoder::monitorThread()
 						) + "@"
 					);
 				}
+				else
+				{
+					liveRecordingNotRunningCounter++;
+				}
 			}
+			_logger->info(__FILEREF__ + "monitoringThread, LiveRecording"
+				+ ", total LiveRecording: " + to_string(liveRecordingRunningCounter + liveRecordingNotRunningCounter)
+				+ ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter)
+				+ ", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+			);
 		}
 		catch(runtime_error e)
 		{
@@ -6913,7 +6940,7 @@ void FFMPEGEncoder::addEncodingCompleted(
 
 	_logger->info(__FILEREF__ + "addEncodingCompleted"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
+			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
 			);
 }
 
@@ -6929,7 +6956,8 @@ void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
 		_encodingCompletedMap->erase(it);
 
 		_logger->info(__FILEREF__ + "removeEncodingCompletedIfPresent"
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
 			);
 	}
 }
@@ -6951,7 +6979,7 @@ void FFMPEGEncoder::encodingCompletedRetention()
 	}
 
 	_logger->info(__FILEREF__ + "encodingCompletedRetention"
-			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap->size())
+			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
 			);
 }
 

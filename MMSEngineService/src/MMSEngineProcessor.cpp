@@ -10171,8 +10171,9 @@ void MMSEngineProcessor::liveCutThread(
 
 		chrono::system_clock::time_point startLookingForChunks = chrono::system_clock::now();
 
-		bool allChunksAvailable = false;
-		while (!allChunksAvailable
+		bool firstRequestedChunk = false;
+		bool lastRequestedChunk = false;
+		while (!lastRequestedChunk
 			&& (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
 				- startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
 		)
@@ -10194,6 +10195,9 @@ void MMSEngineProcessor::liveCutThread(
 			vector<string> tagsNotIn;
 			string orderBy = "";
 			bool admin = false;
+
+			firstRequestedChunk = false;
+			lastRequestedChunk = false;
 
 			string jsonCondition;
 			{
@@ -10233,8 +10237,7 @@ void MMSEngineProcessor::liveCutThread(
 			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc";
 
 			long utcPreviousUtcChunkEndTime = -1;
-			bool firstChunk = true;
-			bool lastChunk = false;
+			bool firstRetrievedChunk = true;
 
 			// retrieve the reference of all the MediaItems to be concatenate
 			mediaItemKeyReferencesRoot.clear();
@@ -10422,15 +10425,17 @@ void MMSEngineProcessor::liveCutThread(
 					}
 
 					// check if it is the first chunk
-					if (firstChunk)
+					if (firstRetrievedChunk)
 					{
-						firstChunk = false;
+						firstRetrievedChunk = false;
 
 						// check that it is the first chunk
 
 						if (!(currentUtcChunkStartTime * 1000 <= utcCutPeriodStartTimeInMilliSeconds
 							&& utcCutPeriodStartTimeInMilliSeconds < currentUtcChunkEndTime * 1000))
 						{
+							firstRequestedChunk = false;
+
 							// it is not the first chunk
 							string errorMessage = string("First chunk was not found")
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10453,6 +10458,10 @@ void MMSEngineProcessor::liveCutThread(
 								_logger->warn(__FILEREF__ + errorMessage);
 							}
 						}
+						else
+						{
+							firstRequestedChunk = true;
+						}
 
 						utcFirstChunkStartTime = currentUtcChunkStartTime;
 						firstChunkStartTime = currentChunkStartTime;
@@ -10472,10 +10481,10 @@ void MMSEngineProcessor::liveCutThread(
 
 						if (!(currentUtcChunkStartTime * 1000 < utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 								&& utcCutPeriodEndTimeInMilliSecondsPlusOneSecond <= currentUtcChunkEndTime * 1000))
-							lastChunk = false;
+							lastRequestedChunk = false;
 						else
 						{
-							lastChunk = true;
+							lastRequestedChunk = true;
 							utcLastChunkEndTime = currentUtcChunkEndTime;
 							lastChunkEndTime = currentChunkEndTime;
 						}
@@ -10492,12 +10501,13 @@ void MMSEngineProcessor::liveCutThread(
 					+ ", start: " + to_string(start)
 					+ ", rows: " + to_string(rows)
 					+ ", mediaItemsRoot.size: " + to_string(mediaItemsRoot.size())
+					+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
 				);
 			}
 			while(mediaItemsRoot.size() == rows);
 
 			// just waiting if the last chunk was not finished yet
-			if (!lastChunk)
+			if (!lastRequestedChunk)
 			{
 				if (chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startLookingForChunks).count() < maxWaitingForLastChunkInSeconds)
@@ -10507,17 +10517,15 @@ void MMSEngineProcessor::liveCutThread(
 					this_thread::sleep_for(chrono::seconds(secondsToWaitLastChunk));
 				}
 			}
-			else
-			{
-				allChunksAvailable = true;
-			}
 		}
 
-		if (!allChunksAvailable)
+		if (!firstRequestedChunk || !lastRequestedChunk)
 		{
 			string errorMessage = string("Chunks not available")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
+				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
 				+ ", configurationLabel: " + configurationLabel
 				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
@@ -10534,6 +10542,11 @@ void MMSEngineProcessor::liveCutThread(
 				_logger->warn(__FILEREF__ + errorMessage);
 			}
 		}
+
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest (1)..."
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
 
 		Json::Value liveCutOnSuccess = Json::nullValue;
 		Json::Value liveCutOnError = Json::nullValue;
@@ -10565,6 +10578,19 @@ void MMSEngineProcessor::liveCutThread(
 					liveCutOnComplete = internalMMSRoot[field];
 			}
 		}
+
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest (2)..."
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", utcFirstChunkStartTime: " + to_string(utcFirstChunkStartTime)
+				+ " (" + firstChunkStartTime + ")"
+			+ ", utcLastChunkEndTime: " + to_string(utcLastChunkEndTime)
+				+ " (" + lastChunkEndTime + ")"
+			+ ", utcCutPeriodStartTimeInMilliSeconds: " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				+ " (" + cutPeriodStartTimeInMilliSeconds + ")"
+			+ ", utcCutPeriodEndTimeInMilliSeconds: " + to_string(utcCutPeriodEndTimeInMilliSeconds)
+				+ " (" + cutPeriodEndTimeInMilliSeconds + ")"
+		);
 
 		// create workflow to ingest
 		string workflowMetadata;
