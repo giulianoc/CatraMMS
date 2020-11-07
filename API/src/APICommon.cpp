@@ -19,7 +19,6 @@
 #include <curl/curl.h>
 #include "catralibraries/Convert.h"
 #include "catralibraries/System.h"
-#include "catralibraries/Encrypt.h"
 #include "APICommon.h"
 #include <regex>
 
