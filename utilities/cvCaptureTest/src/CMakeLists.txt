@@ -40,12 +40,8 @@ endif()
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
-if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
-	#ffmpeg-4.2.2 is missing because libopencv needs the one installed by yum (so inside the /opt/lib dir)
-	# that it is ffmpeg-4.1.3
-elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
-endif()
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib64")
 
 add_executable(cvCaptureTest ${SOURCES} ${HEADERS})
 

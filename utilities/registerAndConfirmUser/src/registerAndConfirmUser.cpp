@@ -3,6 +3,7 @@
 #include "EMailSender.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
 
@@ -18,7 +19,7 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
-    auto logger = spdlog::stdout_logger_mt("registerAndConfirmUser");
+    auto logger = spdlog::stdout_color_mt("registerAndConfirmUser");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);

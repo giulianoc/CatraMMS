@@ -2,6 +2,7 @@
 #include <fstream>
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
 
@@ -20,7 +21,7 @@ int main (int iArgc, char *pArgv [])
 	string userEmailAddress = pArgv[3];
 	int64_t workspaceKey = stoll(pArgv[4]);
 
-    auto logger = spdlog::stdout_logger_mt("addWorkspaceToActiveDirectoryUser");
+    auto logger = spdlog::stdout_color_mt("addWorkspaceToActiveDirectoryUser");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);

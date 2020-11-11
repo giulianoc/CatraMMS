@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "FFMpeg.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
-    auto logger = spdlog::stdout_logger_mt("ffmpeg_getLiveStreamingInfo");
+    auto logger = spdlog::stdout_color_mt("ffmpeg_getLiveStreamingInfo");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);

@@ -15,6 +15,8 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/daily_file_sink.h"
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -63,7 +65,8 @@ int main(int argc, char** argv)
 		sinks.push_back(dailySink);
 		if (stdout)
 		{
-			auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			// auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
 			sinks.push_back(stdoutSink);
 		}
 		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));

@@ -20,6 +20,8 @@
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
 #include "Magick++.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/daily_file_sink.h"
 
 Json::Value loadConfigurationFile(string configurationPathName);
 
@@ -96,7 +98,8 @@ int main (int iArgc, char *pArgv [])
     sinks.push_back(dailySink);
     if (stdout)
     {
-        auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+	auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        // auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
         sinks.push_back(stdoutSink);
     }
     auto logger = std::make_shared<spdlog::logger>("mmsEngineService", begin(sinks), end(sinks));

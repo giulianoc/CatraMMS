@@ -48,7 +48,7 @@ else()
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-49/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
@@ -63,12 +63,8 @@ if (APPLE)
 else()
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 endif()
-if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
-	#ffmpeg-4.2.2 is missing because libopencv needs the one installed by yum (so inside the /opt/lib dir)
-	# that it is ffmpeg-4.1.3
-elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg-4.2.2/lib")
-endif()
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib64")
 
 add_executable(ffmpeg_getLiveStreamingInfo ${SOURCES} ${HEADERS})
 
