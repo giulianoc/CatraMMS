@@ -14,6 +14,8 @@
 #include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/daily_file_sink.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
 #include "catralibraries/Convert.h"
@@ -52,7 +54,7 @@ int main(int argc, char** argv)
 		sinks.push_back(dailySink);
 		if (stdout)
 		{
-			auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
 			sinks.push_back(stdoutSink);
 		}
 		auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
