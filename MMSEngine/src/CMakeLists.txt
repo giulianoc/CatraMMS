@@ -74,9 +74,10 @@ endif()
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
-	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
+	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/mageMagick-7")
 else()
-	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick-7.0.8-49/include/ImageMagick-7")
+	# ImageMagick, inside the deploy dir, is a link to the real version: ImageMagick -> ImageMagick-7.0.10
+	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/include/ImageMagick-7")
 	include_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 endif()
 
