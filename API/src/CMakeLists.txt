@@ -80,6 +80,7 @@ endif()
 # ffmpeg, inside the deploy dir, is a link to the real version: ffmpeg -> ffmpeg-4.3.1
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib64")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
