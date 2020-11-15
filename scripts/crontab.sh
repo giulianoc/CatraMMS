@@ -23,7 +23,14 @@ timeoutInMinutes=$2
 if [ $commandIndex -eq 0 ]
 then
 	#update certificate
-	sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
+	#certbot path is different in case of ubuntu 18.04 or 20.04
+	ubuntuVersion=$(cat /etc/lsb-release | grep -i RELEASE | cut -d'=' -f2 | cut -d'.' -f1)
+	if [ $ubuntuVersion -eq 18 ]
+	then
+		sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
+	else
+		export LD_LIBRARY_PATH=/opt/catramms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/catramms/nginx/sbin/nginx --nginx-server-root /opt/catramms/nginx/conf
+	fi
 else
 	if [ $commandIndex -eq 1 ]
 	then

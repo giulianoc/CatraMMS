@@ -75,6 +75,7 @@ if (APPLE)
 else()
 	# ImageMagick, inside the deploy dir, is a link to the real version: ImageMagick -> ImageMagick-7.0.10
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
+	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 endif()
 # ffmpeg, inside the deploy dir, is a link to the real version: ffmpeg -> ffmpeg-4.3.1

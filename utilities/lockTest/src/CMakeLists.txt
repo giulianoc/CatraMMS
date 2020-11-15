@@ -63,6 +63,7 @@ else()
 endif()
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib64")
+link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 
 add_executable(lockTest ${SOURCES} ${HEADERS})

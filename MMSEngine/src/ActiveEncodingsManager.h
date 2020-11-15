@@ -23,9 +23,9 @@
 #include "spdlog/spdlog.h"
 #include "Magick++.h"
 
-#define MAXHIGHENCODINGSTOBEMANAGED     100
-#define MAXMEDIUMENCODINGSTOBEMANAGED  100
-#define MAXLOWENCODINGSTOBEMANAGED      100
+#define MAXHIGHENCODINGSTOBEMANAGED     200
+#define MAXMEDIUMENCODINGSTOBEMANAGED  200
+#define MAXLOWENCODINGSTOBEMANAGED      200
 
 struct MaxEncodingsManagerCapacityReached: public exception {    
     char const* what() const throw() 

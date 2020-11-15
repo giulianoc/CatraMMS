@@ -36,8 +36,8 @@ fi
 CatraMMS_PATH=/opt/catramms
 
 #used by ImageMagick to look for the configuration files
-export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick-7.0.8-49/etc/ImageMagick-7
-export MAGICK_HOME=$CatraMMS_PATH/ImageMagick-7.0.8-49
+export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick/etc/ImageMagick-7
+export MAGICK_HOME=$CatraMMS_PATH/ImageMagick
 
 #When Image Magick read a png file we had the error 'error bad parameters to zlib'
 #This is probable because of more than one libz available or it is related
@@ -45,7 +45,7 @@ export MAGICK_HOME=$CatraMMS_PATH/ImageMagick-7.0.8-49
 #we can try to remove the next export
 export LD_PRELOAD=libz.so.1
 
-export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick-7.0.8-49/lib:$CatraMMS_PATH/curlpp/lib:$CatraMMS_PATH/curlpp/lib64:$CatraMMS_PATH/ffmpeg-4.2.2/lib:$CatraMMS_PATH/ffmpeg-4.2.2/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64
+export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/curlpp/lib:$CatraMMS_PATH/curlpp/lib64:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib
 
 if [ "$command" == "start" ]
 then
