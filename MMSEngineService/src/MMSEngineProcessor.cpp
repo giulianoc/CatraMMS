@@ -10677,69 +10677,74 @@ void MMSEngineProcessor::liveCutThread(
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type())) == 7 means objectValue 
 						//		(see Json::ValueType definition: http://jsoncpp.sourceforge.net/value_8h_source.html)
 
+						Json::ValueType valueType = liveCutParametersRoot[field].type();
+
 						_logger->info(__FILEREF__ + "Preparing workflow to ingest... (2)"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", type: " + to_string(static_cast<int>(liveCutParametersRoot[field].type()))
+							+ ", type: " + to_string(static_cast<int>(valueType))
 						);
 
-						userDataRoot = liveCutParametersRoot[field];
-
-						/*
-						string sUserData = liveCutParametersRoot.get(field, "").asString();
-
-						if (sUserData != "")
+						if (valueType == Json::ValueType::stringValue)
 						{
-							try
+							string sUserData = liveCutParametersRoot.get(field, "").asString();
+
+							if (sUserData != "")
 							{
-								Json::CharReaderBuilder builder;                                  
-								Json::CharReader* reader = builder.newCharReader();               
-								string errors;                                                    
-
-								bool parsingSuccessful = reader->parse(                           
-									sUserData.c_str(),                             
-									sUserData.c_str() + sUserData.size(),
-									&userDataRoot, &errors);                      
-								delete reader;
-
-								if (!parsingSuccessful)                                           
+								try
 								{
-									string errorMessage = __FILEREF__ + "failed to parse the userData"
+									Json::CharReaderBuilder builder;                                  
+									Json::CharReader* reader = builder.newCharReader();               
+									string errors;                                                    
+
+									bool parsingSuccessful = reader->parse(                           
+										sUserData.c_str(),                             
+										sUserData.c_str() + sUserData.size(),
+										&userDataRoot, &errors);                      
+									delete reader;
+
+									if (!parsingSuccessful)                                           
+									{
+										string errorMessage = __FILEREF__ + "failed to parse the userData"
+											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+											+ ", errors: " + errors
+											+ ", sUserData: " + sUserData
+										;
+										_logger->error(errorMessage);
+
+										throw runtime_error(errors);
+									}
+								}
+								catch(runtime_error e)
+								{
+									string errorMessage = string("userData json is not well format")
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-										+ ", errors: " + errors
+										+ ", sUserData: " + sUserData
+										+ ", e.what(): " + e.what()
+									;
+									_logger->error(__FILEREF__ + errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								catch(exception e)
+								{
+									string errorMessage = string("userData json is not well format")
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", sUserData: " + sUserData
 									;
-									_logger->error(errorMessage);
+									_logger->error(__FILEREF__ + errorMessage);
 
-									throw runtime_error(errors);
+									throw runtime_error(errorMessage);
 								}
 							}
-							catch(runtime_error e)
-							{
-								string errorMessage = string("userData json is not well format")
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", sUserData: " + sUserData
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(__FILEREF__ + errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-							catch(exception e)
-							{
-								string errorMessage = string("userData json is not well format")
-									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", sUserData: " + sUserData
-								;
-								_logger->error(__FILEREF__ + errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
 						}
-						*/
+						else // if (valueType == Json::ValueType::objectValue)
+						{
+							userDataRoot = liveCutParametersRoot[field];
+						}
 					}
 
 					Json::Value mmsDataRoot;
