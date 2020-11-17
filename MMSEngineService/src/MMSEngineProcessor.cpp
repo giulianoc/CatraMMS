@@ -10672,20 +10672,21 @@ void MMSEngineProcessor::liveCutThread(
 					Json::Value userDataRoot;
 
 					field = "UserData";
-					if (JSONUtils::isMetadataPresent(cutParametersRoot, field))
+					if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 					{
-		_logger->info(__FILEREF__ + "Preparing workflow to ingest... (2)"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		);
+						// to_string(static_cast<int>(liveCutParametersRoot[field].type())) == 7 means objectValue 
+						//		(see Json::ValueType definition: http://jsoncpp.sourceforge.net/value_8h_source.html)
 
-						string sUserData = cutParametersRoot.get(field, "").asString();
-		_logger->info(__FILEREF__ + "Preparing workflow to ingest... (3)"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", sUserData: " + sUserData
-		);
+						_logger->info(__FILEREF__ + "Preparing workflow to ingest... (2)"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", type: " + to_string(static_cast<int>(liveCutParametersRoot[field].type()))
+						);
 
+						userDataRoot = liveCutParametersRoot[field];
+
+						/*
+						string sUserData = liveCutParametersRoot.get(field, "").asString();
 
 						if (sUserData != "")
 						{
@@ -10738,6 +10739,7 @@ void MMSEngineProcessor::liveCutThread(
 								throw runtime_error(errorMessage);
 							}
 						}
+						*/
 					}
 
 					Json::Value mmsDataRoot;
