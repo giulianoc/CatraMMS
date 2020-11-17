@@ -74,6 +74,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     {
         string encryptedPassword = configuration["database"].get("password", "XXX").asString();
         dbPassword = Encrypt::decrypt(encryptedPassword);        
+		// dbPassword = encryptedPassword;
     }    
     string dbName = configuration["database"].get("dbName", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
