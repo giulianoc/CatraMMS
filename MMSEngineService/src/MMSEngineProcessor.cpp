@@ -10674,7 +10674,18 @@ void MMSEngineProcessor::liveCutThread(
 					field = "UserData";
 					if (JSONUtils::isMetadataPresent(cutParametersRoot, field))
 					{
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest... (2)"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
+
 						string sUserData = cutParametersRoot.get(field, "").asString();
+		_logger->info(__FILEREF__ + "Preparing workflow to ingest... (3)"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sUserData: " + sUserData
+		);
+
 
 						if (sUserData != "")
 						{
