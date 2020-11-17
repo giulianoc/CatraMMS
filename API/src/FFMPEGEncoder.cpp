@@ -6313,9 +6313,9 @@ void FFMPEGEncoder::monitorThread()
 						segmentDurationInSeconds = JSONUtils::asInt(
 							liveRecording->_encodingParametersRoot, field, 0);
 
-						// check id done after 3 minutes + segmentDurationInSeconds LiveRecording started,
+						// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 						// in order to be sure the file was already created
-						if (liveRecordingLiveTimeInMinutes > (segmentDurationInSeconds / 60) + 3)
+						if (liveRecordingLiveTimeInMinutes > (segmentDurationInSeconds / 60) + 5)
 						{
 							string segmentListPathName = liveRecording->_transcoderStagingContentsPath
 								+ liveRecording->_segmentListFileName;
@@ -6330,6 +6330,7 @@ void FFMPEGEncoder::monitorThread()
 									_logger->error(__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist"
 										+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 										+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
 										+ ", segmentListPathName: " + segmentListPathName
 									);
 								}
@@ -6361,6 +6362,7 @@ void FFMPEGEncoder::monitorThread()
 											+ "in the last " + to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds"
 											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+											+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
 											+ ", segmentListPathName: " + segmentListPathName
 											+ ", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago"
 										);
@@ -6372,6 +6374,7 @@ void FFMPEGEncoder::monitorThread()
 									_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveRecordingMonitor. Live Recording is not working (segment list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
 										+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 										+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+										+ ", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes)
 										+ ", segmentListPathName: " + segmentListPathName
 										+ ", channelLabel: " + liveRecording->_channelLabel
 										+ ", liveRecording->_childPid: " + to_string(liveRecording->_childPid)
