@@ -994,8 +994,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
-                    "label                      VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "metaDataContent			MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "label                      VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
+                    "metaDataContent			MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "ingestionDate              DATETIME NOT NULL,"
                     "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"
@@ -1063,8 +1063,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL,"
                     "parentGroupOfTasksIngestionJobKey	BIGINT UNSIGNED NULL,"
-                    "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
+                    "metaDataContent            TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
                     "startProcessing            DATETIME NULL,"
                     "endProcessing              DATETIME NULL,"
@@ -1073,7 +1073,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "sourceBinaryTransferred    INT NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
-                    "errorMessage               VARCHAR (20480) NULL,"	// 1024 * 20
+                    "errorMessage               MEDIUMTEXT NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				
@@ -1211,9 +1211,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					//	- belong to MMS scope (workspaceKey is NULL)
 					"creatorUserKey			BIGINT UNSIGNED NULL,"
 					"lastUpdateUserKey		BIGINT UNSIGNED NULL,"
-                    "label					VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "label					VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "thumbnailMediaItemKey	BIGINT UNSIGNED NULL,"
-                    "jsonWorkflow			MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "jsonWorkflow			MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "constraint MMS_WorkflowLibrary_PK PRIMARY KEY (workflowLibraryKey), "
                     "constraint MMS_WorkflowLibrary_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -1363,7 +1363,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             if (jsonTypeSupported)
                 userDataDefinition = "JSON";
             else
-                userDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                userDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
                 
             
             // workspaceKey is the owner of the content
@@ -1377,7 +1377,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "mediaItemKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey           BIGINT UNSIGNED NOT NULL,"
                     "contentProviderKey     BIGINT UNSIGNED NOT NULL,"
-                    "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "title                  VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
                     "userData               " + userDataDefinition + ","
                     "deliveryFileName       VARCHAR (128) NULL,"
@@ -1500,7 +1500,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_ExternalUniqueName ("
                     "workspaceKey			BIGINT UNSIGNED NOT NULL,"
-                    "uniqueName      		VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "uniqueName      		VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "mediaItemKey  			BIGINT UNSIGNED NOT NULL,"
                     "constraint MMS_ExternalUniqueName_PK PRIMARY KEY (workspaceKey, uniqueName), "
                     "constraint MMS_ExternalUniqueName_FK foreign key (workspaceKey) "
@@ -1548,7 +1548,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             if (jsonTypeSupported)
                 deliveryInfoDefinition = "JSON";
             else
-                deliveryInfoDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                deliveryInfoDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
 
             // DRM. 0: NO DRM, 1: YES DRM
             // EncodedFileName and EncodedRelativePath are NULL only if the content is un-compressed.
@@ -1567,7 +1567,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "mediaItemKey				BIGINT UNSIGNED NOT NULL,"
                     "drm	             		TINYINT NOT NULL,"
                     "externalReadOnlyStorage	TINYINT NOT NULL DEFAULT 0,"
-                    "fileName					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "fileName					VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "relativePath				VARCHAR (256) NOT NULL,"
                     "partitionNumber			INT NULL,"
                     "sizeInBytes				BIGINT UNSIGNED NOT NULL,"
@@ -1923,17 +1923,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             if (jsonTypeSupported)
                 channelDataDefinition = "JSON";
             else
-                channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
                 
             lastSQLCommand = 
                 "create table if not exists MMS_Conf_Channel ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
-                    "label						VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "url						VARCHAR (2048) NOT NULL,"
                     "type						VARCHAR (128) NULL,"
-                    "description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "name						VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "description				TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
+                    "name						VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "region						VARCHAR (128) NULL,"
                     "country					VARCHAR (128) NULL,"
                     "imageMediaItemKey			BIGINT UNSIGNED NULL,"
@@ -2181,9 +2181,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
-					"parameters					LONGTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+					"parameters					LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "encodingPriority			TINYINT NOT NULL,"
-                    "encodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "encodingJobStart			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                     "encodingJobEnd             DATETIME NULL,"
                     "encodingProgress           INT NULL,"
                     "status           			VARCHAR (64) NOT NULL,"

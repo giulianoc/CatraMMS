@@ -9,6 +9,7 @@ twelveHoursInMinutes=720
 oneDayInMinutes=1440
 twoDaysInMinutes=2880
 threeDaysInMinutes=4320
+tenDaysInMinutes=14400
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
@@ -182,6 +183,19 @@ else
 		fi
 
 		commandToBeExecuted="find /var/catramms/storage/MMSRepository-free/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		timeoutValue="1h"
+	elif [ $commandIndex -eq 15 ]
+	then
+		dumpDirectory=/var/catramms/storage/dbDump
+		dumpFileName=$(date +"%Y-%m-%d").sql
+		mysqldump -u mms -pf_-nI*eD-17-R*U -h 192.168.1.102 mms > $dumpDirectory/$dumpFileName && gzip $dumpDirectory/$dumpFileName
+
+		if [ "$timeoutInMinutes" == "" ]
+		then
+			timeoutInMinutes=$tenDaysInMinutes
+		fi
+		commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete"
+
 		timeoutValue="1h"
 	else
 		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
