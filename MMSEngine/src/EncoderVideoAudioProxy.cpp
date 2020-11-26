@@ -11949,9 +11949,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// string lastRecordedAssetFileName;
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
-			// see the comment few lines below (2019-05-03)
-            // while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
-            while(!encodingFinished)
+			int maxEncoderNotReachableFailures = 5;	// consecutive errors
+			int encoderNotReachableFailures = 0;
+
+			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
+			//  in case the transcoder is down (once I had to upgrade his operative system),
+			//  the engine has to select another encoder and not remain in the next loop indefinitely
+            while(!(encodingFinished || encoderNotReachableFailures >= maxEncoderNotReachableFailures))
+            // while(!encodingFinished)
             {
 				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
 
@@ -11971,6 +11976,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", urlNotFound: " + to_string(urlNotFound)
 					);
 
+					encoderNotReachableFailures = 0;
 
 					// health check and retention is done by ffmpegEncoder.cpp
 					
@@ -12161,6 +12167,28 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					}
 					*/
                 }
+				catch(EncoderNotReachable e)
+				{
+					encoderNotReachableFailures++;
+
+					// 2020-11-23. Scenario:
+					//	1. I shutdown the encoder because I had to upgrade OS version
+					//	2. this thread remained in this loop (while(!encodingFinished))
+					//		and the channel did not work until the Encoder was working again
+					//	In this scenario, so when the encoder is not reachable at all, the engine
+					//	has to select a new encoder.
+					//	For this reason we added this EncoderNotReachable catch
+					//	and the encoderNotReachableFailures variable
+
+					_logger->error(__FILEREF__ + "Transcoder is not reachable at all, let's select another encoder"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
+						+ ", maxEncoderNotReachableFailures: " + to_string(maxEncoderNotReachableFailures)
+						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+					);
+				}
                 catch(...)
                 {
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
@@ -12168,6 +12196,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 					);
                 }
             }
@@ -13503,9 +13532,14 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 			// string lastRecordedAssetFileName;
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
-			// see the comment few lines below (2019-05-03)
-            // while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
-            while(!encodingFinished)
+			int maxEncoderNotReachableFailures = 5;	// consecutive errors
+			int encoderNotReachableFailures = 0;
+
+			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
+			//  in case the transcoder is down (once I had to upgrade his operative system),
+			//  the engine has to select another encoder and not remain in the next loop indefinitely
+            while(!(encodingFinished || encoderNotReachableFailures >= maxEncoderNotReachableFailures))
+            // while(!encodingFinished)
             {
 				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
 
@@ -13515,6 +13549,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						urlForbidden, urlNotFound, ignore) = encodingStatus;
+
+					encoderNotReachableFailures = 0;
 
 					// health check and retention is done by ffmpegEncoder.cpp
 
@@ -13676,6 +13712,27 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						}
 					}
                 }
+				catch(EncoderNotReachable e)
+				{
+					encoderNotReachableFailures++;
+
+					// 2020-11-23. Scenario:
+					//	1. I shutdown the encoder because I had to upgrade OS version
+					//	2. this thread remained in this loop (while(!encodingFinished))
+					//		and the channel did not work until the Encoder was working again
+					//	In this scenario, so when the encoder is not reachable at all, the engine
+					//	has to select a new encoder.
+					//	For this reason we added this EncoderNotReachable catch
+					//	and the encoderNotReachableFailures variable
+
+					_logger->error(__FILEREF__ + "Transcoder is not reachable at all, let's select another encoder"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
+						+ ", maxEncoderNotReachableFailures: " + to_string(maxEncoderNotReachableFailures)
+						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+					);
+				}
                 catch(...)
                 {
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
@@ -14563,15 +14620,30 @@ tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEnco
     }
     catch (runtime_error e)
     {
-        _logger->error(__FILEREF__ + "Status URL failed (exception)"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
-            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
-            + ", exception: " + e.what()
-			+ ", response.str(): " + (responseInitialized ? response.str() : "")
-        );
+		if (response.str().find("502 Bad Gateway") != string::npos)
+		{
+			_logger->error(__FILEREF__ + "Encoder is not reachable, is it down?"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
 
-        throw e;
+			throw EncoderNotReachable();
+		}
+		else
+		{
+			_logger->error(__FILEREF__ + "Status URL failed (exception)"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+				+ ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+			);
+
+			throw e;
+		}
     }
     catch (exception e)
     {

@@ -57,6 +57,13 @@ struct EncodingKilledByUser: public exception {
     };
 };
 
+struct EncoderNotReachable: public exception {
+    char const* what() const throw()
+    {
+        return "Encoder not reachable";
+    };
+};
+
 /*
 struct EncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
