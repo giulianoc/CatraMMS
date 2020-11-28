@@ -4,6 +4,10 @@ eventName=$1
 channelDirectory=$2
 fileName=$3
 
+
+storageServer=cibortv-mms-api-gui-1
+
+
 #Example of events using debug:
 #IN_CREATE --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 #IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
@@ -35,8 +39,6 @@ fi
 #we synchronize when .m3u8 is changed
 if [ $eventName == "IN_MOVED_TO" ]
 then
-	storageServer=cibortv-mms-api-gui-1
-
 	if [ $debug -eq 1 ]
 	then
 		echo "rsync -az -e \"ssh -p 9255\" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory)" >> /tmp/change.txt

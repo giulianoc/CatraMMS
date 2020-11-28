@@ -36,6 +36,7 @@ SET (SCRIPTs
 	mmsTail.sh
 	printLogFileName.sh
 	crontab.sh
+	incrontab.sh
 	sqlQueries.txt
 	checkStatistics.sh
 )
