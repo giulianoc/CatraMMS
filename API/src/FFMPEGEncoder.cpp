@@ -1989,6 +1989,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	chrono::system_clock::time_point endEncodingCompletedRetention = chrono::system_clock::now();
 
 	_logger->info(__FILEREF__ + "FFMPEGEncoder request"
+		+ ", method: " + method
 		+ ", @MMS statistics@ - duration request processing (secs): @"
 			+ to_string(chrono::duration_cast<chrono::seconds>(endRequest - start).count()) + "@"
 		+ ", @MMS statistics@ - duration encodingCompleted retention processing (secs): @"
