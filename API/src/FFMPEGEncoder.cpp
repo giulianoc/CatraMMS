@@ -373,7 +373,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string>& requestDetails
 )
 {
-    
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {
@@ -1976,12 +1977,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
         throw runtime_error(errorMessage);
     }
 
+	chrono::system_clock::time_point endRequest = chrono::system_clock::now();
+
 	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >=
 			chrono::seconds(_encodingCompletedRetentionInSeconds))
 	{
 		*_lastEncodingCompletedCheck = chrono::system_clock::now();
 		encodingCompletedRetention();
 	}
+
+	chrono::system_clock::time_point endEncodingCompletedRetention = chrono::system_clock::now();
+
+	_logger->info(__FILEREF__ + "FFMPEGEncoder request"
+		+ ", @MMS statistics@ - duration request processing (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(endRequest - start).count()) + "@"
+		+ ", @MMS statistics@ - duration encodingCompleted retention processing (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(endEncodingCompletedRetention - endRequest).count()) + "@"
+	);
 }
 
 void FFMPEGEncoder::encodeContent(
