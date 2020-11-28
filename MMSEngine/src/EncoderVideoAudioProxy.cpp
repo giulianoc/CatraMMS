@@ -242,6 +242,8 @@ void EncoderVideoAudioProxy::init(
 
 	_retrieveStreamingYouTubeURLPeriodInHours = 5;	// 5 hours
 
+	_maxEncoderNotReachableFailures = 10;	// consecutive errors
+
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
         
@@ -11949,13 +11951,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// string lastRecordedAssetFileName;
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
-			int maxEncoderNotReachableFailures = 5;	// consecutive errors
 			int encoderNotReachableFailures = 0;
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
 			//  the engine has to select another encoder and not remain in the next loop indefinitely
-            while(!(encodingFinished || encoderNotReachableFailures >= maxEncoderNotReachableFailures))
+            while(!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
             // while(!encodingFinished)
             {
 				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -12185,7 +12186,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", configurationLabel: " + configurationLabel
 						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
-						+ ", maxEncoderNotReachableFailures: " + to_string(maxEncoderNotReachableFailures)
+						+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
 						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 					);
 				}
@@ -13532,13 +13533,12 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 			// string lastRecordedAssetFileName;
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
-			int maxEncoderNotReachableFailures = 5;	// consecutive errors
 			int encoderNotReachableFailures = 0;
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
 			//  the engine has to select another encoder and not remain in the next loop indefinitely
-            while(!(encodingFinished || encoderNotReachableFailures >= maxEncoderNotReachableFailures))
+            while(!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
             // while(!encodingFinished)
             {
 				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -13729,7 +13729,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
-						+ ", maxEncoderNotReachableFailures: " + to_string(maxEncoderNotReachableFailures)
+						+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
 						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 					);
 				}

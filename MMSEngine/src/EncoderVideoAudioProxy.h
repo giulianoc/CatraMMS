@@ -174,6 +174,7 @@ private:
     int									_waitingNFSSync_sleepTimeInSeconds;
 
 	long								_retrieveStreamingYouTubeURLPeriodInHours;
+	int									_maxEncoderNotReachableFailures;
 
 	/*
     string								_mmsAPIProtocol;

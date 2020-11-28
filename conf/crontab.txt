@@ -14,6 +14,8 @@
 20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
 22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 13
 24 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 14
+0 3 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 15
+
 #StreamingRepository is not used
 #16 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 8
 
