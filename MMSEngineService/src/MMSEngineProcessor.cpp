@@ -261,6 +261,15 @@ MMSEngineProcessor::~MMSEngineProcessor()
     
 }
 
+bool MMSEngineProcessor::isMaintenanceMode()
+{
+	string maintenancePathName = "/tmp/mmsMaintenanceMode.txt";
+
+	ifstream f(maintenancePathName.c_str());
+
+    return f.good();
+}
+
 void MMSEngineProcessor::operator ()() 
 {
     bool blocking = true;
@@ -787,6 +796,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
     try
     {
+		if (isMaintenanceMode())
+		{
+			_logger->info(__FILEREF__ + "Received handleCheckIngestionEvent, not managed it because of MaintenanceMode"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			);
+
+			return;
+		}
+
         vector<tuple<int64_t,shared_ptr<Workspace>,string, string,
 			MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
@@ -16018,6 +16036,15 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
 	try
 	{
+		if (isMaintenanceMode())
+		{
+			_logger->info(__FILEREF__ + "Received handleCheckEncodingEvent, not managed it because of MaintenanceMode"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			);
+
+			return;
+		}
+
 		_logger->info(__FILEREF__ + "Received handleCheckEncodingEvent"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		);

@@ -137,6 +137,8 @@ private:
 
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
+	bool isMaintenanceMode();
+
     void handleCheckIngestionEvent();
 
     void handleLocalAssetIngestionEventThread (
