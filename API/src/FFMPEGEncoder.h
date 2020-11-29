@@ -84,15 +84,23 @@ class FFMPEGEncoder: public APICommon {
 public:
     FFMPEGEncoder(Json::Value configuration, 
 		mutex* fcgiAcceptMutex,
+
 		mutex* encodingMutex,
-		vector<shared_ptr<Encoding>>* encodingsCapability,
+		// vector<shared_ptr<Encoding>>* encodingsCapability,
+		map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
+
 		mutex* liveProxyMutex,
-		vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		// vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+
 		mutex* liveRecordingMutex,
-		vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
+		// vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
+		map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
+
 		mutex* encodingCompletedMutex,
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
+
 		shared_ptr<spdlog::logger> logger);
     
     ~FFMPEGEncoder();
@@ -128,18 +136,20 @@ public:
     
 private:
     mutex*						_encodingMutex;
-    // int                         _maxEncodingsCapability;
-    vector<shared_ptr<Encoding>>* _encodingsCapability;
+    // vector<shared_ptr<Encoding>>* _encodingsCapability;
+	map<int64_t, shared_ptr<Encoding>>* _encodingsCapability;
+	int							_maxEncodingsCapability;
 
     mutex*						_liveProxyMutex;
-    // int							_maxLiveProxiesCapability;
-    vector<shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
-	int							_monitorCheckInSeconds;
-	bool						_monitorThreadShutdown;
+    // vector<shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
+	map<int64_t, shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
+	int							_maxLiveProxiesCapability;
 
     mutex*						_liveRecordingMutex;
     // int                         _maxLiveRecordingsCapability;
-    vector<shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+    // vector<shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+	map<int64_t, shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+	int							_maxLiveRecordingsCapability;
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
 
@@ -147,6 +157,9 @@ private:
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<EncodingCompleted>>*	_encodingCompletedMap;
 	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
+
+	int							_monitorCheckInSeconds;
+	bool						_monitorThreadShutdown;
 
     string								_mmsAPIProtocol;
     string								_mmsAPIHostname;

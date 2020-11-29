@@ -78,6 +78,13 @@ struct NoEncodingAvailable: public exception {
     }; 
 };
 
+struct EncodingIsAlreadyRunning: public exception {
+    char const* what() const throw() 
+    {
+        return "Encoding is already running";
+    }; 
+};
+
 class FFMpeg {
 public:
     FFMpeg(Json::Value configuration,
