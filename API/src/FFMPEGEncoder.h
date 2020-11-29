@@ -156,37 +156,37 @@ private:
     string								_mmsAPIIngestionURI;
     int									_mmsAPITimeoutInSeconds;
 
-    void encodeContent(
+    void encodeContentThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
             int64_t encodingJobKey,
         string requestBody);
     
-    void overlayImageOnVideo(
+    void overlayImageOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
             int64_t encodingJobKey,
         string requestBody);
 
-    void overlayTextOnVideo(
+    void overlayTextOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
-    void generateFrames(
+    void generateFramesThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
-    void slideShow(
+    void slideShowThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
-	void liveRecorder(
+	void liveRecorderThread(
         // FCGX_Request& request,
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
@@ -220,25 +220,25 @@ private:
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
 
-	void liveProxy(
+	void liveProxyThread(
         // FCGX_Request& request,
         shared_ptr<LiveProxyAndGrid> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 
-	void liveGrid(
+	void liveGridThread(
         // FCGX_Request& request,
         shared_ptr<LiveProxyAndGrid> liveProxy,
         int64_t encodingJobKey,
         string requestBody);
 
-	void videoSpeed(
+	void videoSpeedThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody);
 
-	void pictureInPicture(
+	void pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,

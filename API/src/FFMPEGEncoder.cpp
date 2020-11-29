@@ -373,8 +373,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string>& requestDetails
 )
 {
-	chrono::system_clock::time_point start = chrono::system_clock::now();
-
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {
@@ -464,7 +462,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, selectedEncoding, encodingJobKey, requestBody);
+            thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this, selectedEncoding, encodingJobKey, requestBody);
             encodeContentThread.detach();
         }
         catch(exception e)
@@ -559,11 +557,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedEncoding->_running = true;
             selectedEncoding->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+            _logger->info(__FILEREF__ + "Creating overlayImageOnVideo thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideo, this, selectedEncoding, encodingJobKey, requestBody);
+            thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideoThread, this, selectedEncoding, encodingJobKey, requestBody);
             overlayImageOnVideoThread.detach();
         }
         catch(exception e)
@@ -622,7 +620,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_encodingMutex);
@@ -658,11 +655,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedEncoding->_running = true;
             selectedEncoding->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+            _logger->info(__FILEREF__ + "Creating overlayTextOnVideo thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideo, this, selectedEncoding, encodingJobKey, requestBody);
+            thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideoThread, this, selectedEncoding, encodingJobKey, requestBody);
             overlayTextOnVideoThread.detach();
         }
         catch(exception e)
@@ -721,7 +718,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_encodingMutex);
@@ -761,7 +757,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread generateFramesThread(&FFMPEGEncoder::generateFrames, this, selectedEncoding, encodingJobKey, requestBody);
+            thread generateFramesThread(&FFMPEGEncoder::generateFramesThread, this, selectedEncoding, encodingJobKey, requestBody);
             generateFramesThread.detach();
         }
         catch(exception e)
@@ -820,7 +816,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_encodingMutex);
@@ -860,7 +855,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread slideShowThread(&FFMPEGEncoder::slideShow, this, selectedEncoding, encodingJobKey, requestBody);
+            thread slideShowThread(&FFMPEGEncoder::slideShowThread, this, selectedEncoding, encodingJobKey, requestBody);
             slideShowThread.detach();
         }
         catch(exception e)
@@ -919,7 +914,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_liveRecordingMutex);
@@ -959,7 +953,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread liveRecorderThread(&FFMPEGEncoder::liveRecorder, this, selectedLiveRecording, encodingJobKey, requestBody);
+            thread liveRecorderThread(&FFMPEGEncoder::liveRecorderThread, this, selectedLiveRecording, encodingJobKey, requestBody);
             liveRecorderThread.detach();
         }
         catch(exception e)
@@ -1018,7 +1012,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_liveProxyMutex);
@@ -1061,7 +1054,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
-				thread liveProxyThread(&FFMPEGEncoder::liveProxy, this, selectedLiveProxy, encodingJobKey, requestBody);
+				thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, encodingJobKey, requestBody);
 				liveProxyThread.detach();
 			}
 			else // if (method == "liveGrid")
@@ -1070,7 +1063,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
-				thread liveGridThread(&FFMPEGEncoder::liveGrid, this, selectedLiveProxy, encodingJobKey, requestBody);
+				thread liveGridThread(&FFMPEGEncoder::liveGridThread, this, selectedLiveProxy, encodingJobKey, requestBody);
 				liveGridThread.detach();
 			}
         }
@@ -1132,7 +1125,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_encodingMutex);
@@ -1168,11 +1160,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedEncoding->_running = true;
             selectedEncoding->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+            _logger->info(__FILEREF__ + "Creating videoSpeed thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread videoSpeedThread(&FFMPEGEncoder::videoSpeed, this, selectedEncoding, encodingJobKey, requestBody);
+            thread videoSpeedThread(&FFMPEGEncoder::videoSpeedThread, this, selectedEncoding, encodingJobKey, requestBody);
             videoSpeedThread.detach();
         }
         catch(exception e)
@@ -1205,7 +1197,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "videoSpeedThread failed"
+            _logger->error(__FILEREF__ + "sendSuccess failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1231,7 +1223,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(*_encodingMutex);
@@ -1267,11 +1258,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
             selectedEncoding->_running = true;
             selectedEncoding->_childPid = 0;
 
-            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+            _logger->info(__FILEREF__ + "Creating pictureInPicture thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread pictureInPictureThread(&FFMPEGEncoder::pictureInPicture, this, selectedEncoding, encodingJobKey, requestBody);
+            thread pictureInPictureThread(&FFMPEGEncoder::pictureInPictureThread, this, selectedEncoding, encodingJobKey, requestBody);
             pictureInPictureThread.detach();
         }
         catch(exception e)
@@ -1304,7 +1295,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "videoSpeedThread failed"
+            _logger->error(__FILEREF__ + "sendSuccess failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -1330,9 +1321,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
+		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
+
 		bool                    encodingFound = false;
 		shared_ptr<Encoding>    selectedEncoding;
 
@@ -1359,31 +1351,37 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingCompleted)
 		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// next \{ is to make the lock free as soon as the check is done
 			{
-				if (encoding->_encodingJobKey == encodingJobKey)
+				lock_guard<mutex> locker(*_encodingMutex);
+
+				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
+					if (encoding->_encodingJobKey == encodingJobKey)
+					{
+						encodingFound = true;
+						selectedEncoding = encoding;
                 
-					break;
+						break;
+					}
 				}
 			}
 
 			if (!encodingFound)
 			{
-				lock_guard<mutex> locker(*_liveProxyMutex);
-
-				for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+				// next \{ is to make the lock free as soon as the check is done
 				{
-					if (liveProxy->_encodingJobKey == encodingJobKey)
+					lock_guard<mutex> locker(*_liveProxyMutex);
+
+					for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 					{
-						liveProxyFound = true;
-						selectedLiveProxy = liveProxy;
+						if (liveProxy->_encodingJobKey == encodingJobKey)
+						{
+							liveProxyFound = true;
+							selectedLiveProxy = liveProxy;
                 
-						break;
+							break;
+						}
 					}
 				}
 
@@ -1397,7 +1395,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						{
 							liveRecordingFound = true;
 							selectedLiveRecording = liveRecording;
-                
+               
 							break;
 						}
 					}
@@ -1405,13 +1403,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
 		}
 
-		_logger->info(__FILEREF__ + "Encoding Status"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", encodingFound: " + to_string(encodingFound)
-				+ ", liveProxyFound: " + to_string(liveProxyFound)
-				+ ", liveRecordingFound: " + to_string(liveRecordingFound)
-				+ ", encodingCompleted: " + to_string(encodingCompleted)
-				);
+		chrono::system_clock::time_point endLookingForEncodingStatus = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "encodingStatus"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", encodingFound: " + to_string(encodingFound)
+			+ ", liveProxyFound: " + to_string(liveProxyFound)
+			+ ", liveRecordingFound: " + to_string(liveRecordingFound)
+			+ ", encodingCompleted: " + to_string(encodingCompleted)
+			+ ", @MMS statistics@ - duration looking for encodingStatus (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()) + "@"
+		);
+
         string responseBody;
         if (!encodingFound && !liveProxyFound && !liveRecordingFound && !encodingCompleted)
         {
@@ -1614,6 +1617,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
         }
 
+		chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "encodingStatus"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", encodingFound: " + to_string(encodingFound)
+			+ ", liveProxyFound: " + to_string(liveProxyFound)
+			+ ", liveRecordingFound: " + to_string(liveRecordingFound)
+			+ ", encodingCompleted: " + to_string(encodingCompleted)
+			+ ", @MMS statistics@ - duration encodingStatus (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()) + "@"
+		);
+
         sendSuccess(request, 200, responseBody);
     }
     else if (method == "encodingProgress")
@@ -1672,16 +1687,19 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingCompleted)
 		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// next \{ is to make the lock free as soon as the check is done
 			{
-				if (encoding->_encodingJobKey == encodingJobKey)
+				lock_guard<mutex> locker(*_encodingMutex);
+
+				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
+					if (encoding->_encodingJobKey == encodingJobKey)
+					{
+						encodingFound = true;
+						selectedEncoding = encoding;
                 
-					break;
+						break;
+					}
 				}
 			}
 
@@ -1865,12 +1883,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
 		_logger->info(__FILEREF__ + "Received killEncodingJob"
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				);
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+		);
 
 		pid_t			pidToBeKilled;
 		bool			encodingFound = false;
@@ -1942,7 +1959,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         try
         {
+			chrono::system_clock::time_point startKillProcess = chrono::system_clock::now();
+
 			ProcessUtility::killProcess(pidToBeKilled);
+
+			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "killProcess statistics"
+				+ ", @MMS statistics@ - killProcess (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					endKillProcess - startKillProcess).count()) + "@"
+			);
         }
         catch(runtime_error e)
         {
@@ -1977,27 +2002,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
         throw runtime_error(errorMessage);
     }
 
-	chrono::system_clock::time_point endRequest = chrono::system_clock::now();
-
 	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >=
 			chrono::seconds(_encodingCompletedRetentionInSeconds))
 	{
 		*_lastEncodingCompletedCheck = chrono::system_clock::now();
 		encodingCompletedRetention();
 	}
-
-	chrono::system_clock::time_point endEncodingCompletedRetention = chrono::system_clock::now();
-
-	_logger->info(__FILEREF__ + "FFMPEGEncoder request"
-		+ ", method: " + method
-		+ ", @MMS statistics@ - duration request processing (secs): @"
-			+ to_string(chrono::duration_cast<chrono::seconds>(endRequest - start).count()) + "@"
-		+ ", @MMS statistics@ - duration encodingCompleted retention processing (secs): @"
-			+ to_string(chrono::duration_cast<chrono::seconds>(endEncodingCompletedRetention - endRequest).count()) + "@"
-	);
 }
 
-void FFMPEGEncoder::encodeContent(
+void FFMPEGEncoder::encodeContentThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -2246,7 +2259,7 @@ void FFMPEGEncoder::encodeContent(
     }
 }
 
-void FFMPEGEncoder::overlayImageOnVideo(
+void FFMPEGEncoder::overlayImageOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -2456,7 +2469,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
     }
 }
 
-void FFMPEGEncoder::overlayTextOnVideo(
+void FFMPEGEncoder::overlayTextOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -2719,7 +2732,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
     }
 }
 
-void FFMPEGEncoder::generateFrames(
+void FFMPEGEncoder::generateFramesThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -2917,7 +2930,7 @@ void FFMPEGEncoder::generateFrames(
     }
 }
 
-void FFMPEGEncoder::slideShow(
+void FFMPEGEncoder::slideShowThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -3106,7 +3119,7 @@ void FFMPEGEncoder::slideShow(
     }
 }
 
-void FFMPEGEncoder::liveRecorder(
+void FFMPEGEncoder::liveRecorderThread(
         // FCGX_Request& request,
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
@@ -4729,7 +4742,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 	return utcCurrentRecordedFileLastModificationTime;
 }
 
-void FFMPEGEncoder::liveProxy(
+void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
 	shared_ptr<LiveProxyAndGrid> liveProxy,
 	int64_t encodingJobKey,
@@ -5135,7 +5148,7 @@ void FFMPEGEncoder::liveProxy(
     }
 }
 
-void FFMPEGEncoder::liveGrid(
+void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
 	shared_ptr<LiveProxyAndGrid> liveProxy,
 	int64_t encodingJobKey,
@@ -6503,7 +6516,7 @@ void FFMPEGEncoder::stopMonitorThread()
 	this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
 }
 
-void FFMPEGEncoder::videoSpeed(
+void FFMPEGEncoder::videoSpeedThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -6713,7 +6726,7 @@ void FFMPEGEncoder::videoSpeed(
     }
 }
 
-void FFMPEGEncoder::pictureInPicture(
+void FFMPEGEncoder::pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
@@ -6985,19 +6998,23 @@ void FFMPEGEncoder::encodingCompletedRetention()
 
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	chrono::system_clock::time_point now = chrono::system_clock::now();
+	chrono::system_clock::time_point start = chrono::system_clock::now();
 
 	for(map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap->begin();
 			it != _encodingCompletedMap->end(); )
 	{
-		if(now - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
+		if(start - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
 			it = _encodingCompletedMap->erase(it);
 		else
 			it++;
 	}
 
+	chrono::system_clock::time_point end = chrono::system_clock::now();
+
 	_logger->info(__FILEREF__ + "encodingCompletedRetention"
-			+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
-			);
+		+ ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
+		+ ", @MMS statistics@ - duration encodingCompleted retention processing (secs): @"
+			+ to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+	);
 }
 
