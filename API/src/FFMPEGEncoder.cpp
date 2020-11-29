@@ -1337,8 +1337,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		bool                    encodingCompleted = false;
 		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
 
+		int encodingCompletedMutexDuration = -1;
+		int encodingMutexDuration = -1;
+		int liveProxyMutexDuration = -1;
+		int liveRecordingMutexDuration = -1;
 		{
+			chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
+			chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
+			encodingCompletedMutexDuration = chrono::duration_cast<chrono::seconds>(
+				endLockTime - startLockTime).count();
 
 			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
 				_encodingCompletedMap->find(encodingJobKey);
@@ -1353,7 +1361,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			// next \{ is to make the lock free as soon as the check is done
 			{
+				chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 				lock_guard<mutex> locker(*_encodingMutex);
+				chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
+				encodingMutexDuration = chrono::duration_cast<chrono::seconds>(
+					endLockTime - startLockTime).count();
 
 				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 				{
@@ -1371,7 +1383,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				// next \{ is to make the lock free as soon as the check is done
 				{
+					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 					lock_guard<mutex> locker(*_liveProxyMutex);
+					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
+					liveProxyMutexDuration = chrono::duration_cast<chrono::seconds>(
+						endLockTime - startLockTime).count();
 
 					for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 					{
@@ -1387,7 +1403,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				if (!liveProxyFound)
 				{
+					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 					lock_guard<mutex> locker(*_liveRecordingMutex);
+					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
+					liveRecordingMutexDuration = chrono::duration_cast<chrono::seconds>(
+						endLockTime - startLockTime).count();
 
 					for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 					{
@@ -1411,6 +1431,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			+ ", liveProxyFound: " + to_string(liveProxyFound)
 			+ ", liveRecordingFound: " + to_string(liveRecordingFound)
 			+ ", encodingCompleted: " + to_string(encodingCompleted)
+			+ ", encodingCompletedMutexDuration: " + to_string(encodingCompletedMutexDuration)
+			+ ", encodingMutexDuration: " + to_string(encodingMutexDuration)
+			+ ", liveProxyMutexDuration: " + to_string(liveProxyMutexDuration)
+			+ ", liveRecordingMutexDuration: " + to_string(liveRecordingMutexDuration)
 			+ ", @MMS statistics@ - duration looking for encodingStatus (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()) + "@"
 		);
