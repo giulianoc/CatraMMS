@@ -44,7 +44,13 @@ then
 		pgrep -f mmsEngineService > /dev/null
 		toBeRestarted=$?
 	else
-		toBeRestarted=$(curl -k -s --max-time 30 "$healthCheckURL" | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+		serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
+		if [ "$serviceStatus" == "" ]
+		then
+			toBeRestarted=1
+		else
+			toBeRestarted=$(cat $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+		fi
 	fi
 	if [ $toBeRestarted -eq 1 ]
 	then
