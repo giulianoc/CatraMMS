@@ -11,19 +11,21 @@ twoDaysInMinutes=2880
 threeDaysInMinutes=4320
 tenDaysInMinutes=14400
 
-if [ $# -ne 1 -a $# -ne 2 ]
+if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 ]
 then
-    echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>]" >> /tmp/crontab.log
+    echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [<engine OR healthCheckURL>]" >> /tmp/crontab.log
 
     exit
 fi
 
 commandIndex=$1
 timeoutInMinutes=$2
+healthCheckURL=$3
 
 if [ $commandIndex -eq 0 ]
 then
 	#update certificate
+
 	#certbot path is different in case of ubuntu 18.04 or 20.04
 	ubuntuVersion=$(cat /etc/lsb-release | grep -i RELEASE | cut -d'=' -f2 | cut -d'.' -f1)
 	if [ $ubuntuVersion -eq 18 ]
@@ -32,7 +34,33 @@ then
 	else
 		export LD_LIBRARY_PATH=/opt/catramms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/catramms/nginx/sbin/nginx --nginx-server-root /opt/catramms/nginx/conf
 	fi
+elif [ $commandIndex -eq 16 -a "$healthCheckURL" != "" ]
+then
+	#mms service health check
+
+	toBeRestarted=0
+	if [ "$healthCheckURL" == "engine" ]
+	then
+		pgrep -f mmsEngineService > /dev/null
+		toBeRestarted=$?
+	else
+		toBeRestarted=$(curl -k -s --max-time 30 "$healthCheckURL" | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+	fi
+	if [ $toBeRestarted -eq 1 ]
+	then
+		#restart
+
+		echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART" >> ~/zz_MMS_RESTART.txt
+
+		#~/mmsStopALL.sh
+		#sleep 2
+		#~/mmsStartALL.sh
+
+		echo "$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/zz_MMS_RESTART.txt
+	fi
 else
+	#files retention
+
 	if [ $commandIndex -eq 1 ]
 	then
 		#first manage catalina.out file size if present
