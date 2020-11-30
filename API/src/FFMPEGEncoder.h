@@ -17,6 +17,11 @@
 #include "APICommon.h"
 #include "FFMpeg.h"
 
+#define __VECTOR__
+
+// see comment 2020-11-30
+#define __VECTOR__NO_LOCK_FOR_ENCODINGSTATUS
+
 struct Encoding
 {
         bool                    _running;
@@ -86,16 +91,25 @@ public:
 		mutex* fcgiAcceptMutex,
 
 		mutex* encodingMutex,
-		// vector<shared_ptr<Encoding>>* encodingsCapability,
-		map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<Encoding>>* encodingsCapability,
+		#else	// __MAP__
+			map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
+		#endif
 
 		mutex* liveProxyMutex,
-		// vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
-		map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#endif
 
 		mutex* liveRecordingMutex,
-		// vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
-		map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveRecording>>* liveRecordingsCapability, 
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		#endif
 
 		mutex* encodingCompletedMutex,
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
@@ -136,19 +150,27 @@ public:
     
 private:
     mutex*						_encodingMutex;
-    // vector<shared_ptr<Encoding>>* _encodingsCapability;
-	map<int64_t, shared_ptr<Encoding>>* _encodingsCapability;
+	#ifdef __VECTOR__
+		vector<shared_ptr<Encoding>>* _encodingsCapability;
+	#else	// __MAP__
+		map<int64_t, shared_ptr<Encoding>>* _encodingsCapability;
+	#endif
 	int							_maxEncodingsCapability;
 
     mutex*						_liveProxyMutex;
-    // vector<shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
-	map<int64_t, shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
+	#ifdef __VECTOR__
+		vector<shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
+	#else	// __MAP__
+		map<int64_t, shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
+	#endif
 	int							_maxLiveProxiesCapability;
 
     mutex*						_liveRecordingMutex;
-    // int                         _maxLiveRecordingsCapability;
-    // vector<shared_ptr<LiveRecording>>* _liveRecordingsCapability;
-	map<int64_t, shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+	#ifdef __VECTOR__
+		vector<shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+	#else	// __MAP__
+		map<int64_t, shared_ptr<LiveRecording>>* _liveRecordingsCapability;
+	#endif
 	int							_maxLiveRecordingsCapability;
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;

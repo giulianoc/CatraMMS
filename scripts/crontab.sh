@@ -188,7 +188,7 @@ else
 	then
 		dumpDirectory=/var/catramms/storage/dbDump
 		dumpFileName=$(date +"%Y-%m-%d").sql
-		mysqldump -u mms -pf_-nI*eD-17-R*U -h 192.168.1.102 mms > $dumpDirectory/$dumpFileName && gzip $dumpDirectory/$dumpFileName
+		mysqldump -u mms -pf_-nI*eD-17-R*U -h db-server-active mms > $dumpDirectory/$dumpFileName && gzip $dumpDirectory/$dumpFileName
 
 		if [ "$timeoutInMinutes" == "" ]
 		then

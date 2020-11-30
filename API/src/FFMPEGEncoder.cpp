@@ -128,22 +128,31 @@ int main(int argc, char** argv)
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
-		// vector<shared_ptr<Encoding>> encodingsCapability;
-		map<int64_t, shared_ptr<Encoding>> encodingsCapability;
+		#ifdef __VECTOR__
+			vector<shared_ptr<Encoding>> encodingsCapability;
+		#else	// __MAP__
+			map<int64_t, shared_ptr<Encoding>> encodingsCapability;
+		#endif
 
 		mutex liveProxyMutex;
-		// vector<shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
-		map<int64_t, shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveProxyAndGrid>> liveProxiesCapability;
+		#endif
 
 		mutex liveRecordingMutex;
-		// vector<shared_ptr<LiveRecording>> liveRecordingsCapability;
-		map<int64_t, shared_ptr<LiveRecording>> liveRecordingsCapability;
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveRecording>> liveRecordingsCapability;
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveRecording>> liveRecordingsCapability;
+		#endif
 
 		mutex encodingCompletedMutex;
 		map<int64_t, shared_ptr<EncodingCompleted>> encodingCompletedMap;
 		chrono::system_clock::time_point lastEncodingCompletedCheck;
 
-		/*
+		#ifdef __VECTOR__
 		{
 			int maxEncodingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxEncodingsCapability", 0);
 			logger->info(__FILEREF__ + "Configuration item"
@@ -194,7 +203,8 @@ int main(int argc, char** argv)
 
 			}
 		}
-		*/
+		#else	// __MAP__
+		#endif
 
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
 		vector<thread> ffmpegEncoderThreads;
@@ -268,16 +278,25 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         mutex* fcgiAcceptMutex,
 
 		mutex* encodingMutex,
-		// vector<shared_ptr<Encoding>>* encodingsCapability,
-		map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<Encoding>>* encodingsCapability,
+		#else	// __MAP__
+			map<int64_t, shared_ptr<Encoding>>* encodingsCapability,
+		#endif
 
 		mutex* liveProxyMutex,
-		// vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
-		map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveProxyAndGrid>>* liveProxiesCapability,
+		#endif
 
 		mutex* liveRecordingMutex,
-		// vector<shared_ptr<LiveRecording>>* liveRecordingsCapability,
-		map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		#ifdef __VECTOR__
+			vector<shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		#else	// __MAP__
+			map<int64_t, shared_ptr<LiveRecording>>* liveRecordingsCapability,
+		#endif
 
 		mutex* encodingCompletedMutex,
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
@@ -460,6 +479,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -487,16 +532,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating encodeContent thread"
@@ -506,13 +555,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this, selectedEncoding, encodingJobKey, requestBody);
 				encodeContentThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (encodeContent)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "encodeContentThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -570,6 +628,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -597,16 +681,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating overlayImageOnVideo thread"
@@ -617,13 +705,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				overlayImageOnVideoThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (overlayImageOnVideo)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -681,6 +778,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -708,16 +831,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating overlayTextOnVideo thread"
@@ -728,13 +855,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				overlayTextOnVideoThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (overlayTextOnVideo)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -792,6 +928,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -819,16 +981,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating generateFrames thread"
@@ -839,13 +1005,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				generateFramesThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (generateFrames)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "generateFrames failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -903,6 +1078,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -930,16 +1131,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating slideShow thread"
@@ -950,13 +1155,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				slideShowThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (slideShow)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "slideShow failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -1014,6 +1228,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -1041,16 +1281,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating videoSpeed thread"
@@ -1061,13 +1305,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				videoSpeedThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (videoSpeed)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "videoSpeedThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -1125,6 +1378,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<Encoding>    selectedEncoding;
+			bool                    encodingFound = false;
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (!encoding->_running)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
+              
+					break;
+				}
+			}
+			if (!encodingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_encodingsCapability->size() >= _maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -1152,16 +1431,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<Encoding> selectedEncoding = make_shared<Encoding>();
 				selectedEncoding->_running		 = false;
 				selectedEncoding->_childPid		= 0;
 				selectedEncoding->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedEncoding->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedEncoding->_running = true;
+				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating pictureInPicture thread"
@@ -1172,13 +1455,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					this, selectedEncoding, encodingJobKey, requestBody);
 				pictureInPictureThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_encodingsCapability->insert(make_pair(selectedEncoding->_encodingJobKey, selectedEncoding));
 				_logger->info(__FILEREF__ + "_encodingsCapability->insert (pictureInPicture)"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedEncoding->_running = false;
+				selectedEncoding->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "pictureInPictureThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -1236,6 +1528,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<LiveRecording>    selectedLiveRecording;
+			bool						liveRecordingFound = false;
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			{
+				if (!liveRecording->_running)
+				{
+					liveRecordingFound = true;
+					selectedLiveRecording = liveRecording;
+
+					break;
+				}
+			}
+			if (!liveRecordingFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_liveRecordingsCapability->size() >= _maxLiveRecordingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -1263,34 +1581,47 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{            
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<LiveRecording> selectedLiveRecording = make_shared<LiveRecording>();
 				selectedLiveRecording->_running		 = false;
 				selectedLiveRecording->_encodingParametersRoot = Json::nullValue;
 				selectedLiveRecording->_childPid		= 0;
 				selectedLiveRecording->_ffmpeg		= make_shared<FFMpeg>(_configuration, _logger);
-				selectedLiveRecording->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedLiveRecording->_running = true;
+				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 				selectedLiveRecording->_childPid = 0;
 
 				_logger->info(__FILEREF__ + "Creating liveRecorder thread"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
 				thread liveRecorderThread(&FFMPEGEncoder::liveRecorderThread,
 					this, selectedLiveRecording, encodingJobKey, requestBody);
 				liveRecorderThread.detach();
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_liveRecordingsCapability->insert(make_pair(selectedLiveRecording->_encodingJobKey, selectedLiveRecording));
 				_logger->info(__FILEREF__ + "_liveRecordingsCapability->insert"
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(selectedLiveRecording->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedLiveRecording->_running = false;
+				selectedLiveRecording->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "liveRecorder failed"
 					+ ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
@@ -1348,6 +1679,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
+			#ifdef __VECTOR__
+			shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
+			bool                    liveProxyFound = false;
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			{
+				if (!liveProxy->_running)
+				{
+					liveProxyFound = true;
+					selectedLiveProxy = liveProxy;
+
+					break;
+				}
+			}
+
+			if (!liveProxyFound)
+			{
+				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+					+ ", " + EncodingIsAlreadyRunning().what();
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
+			}
+			#else	// __MAP__
 			if (_liveProxiesCapability->size() >= _maxLiveProxiesCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
@@ -1375,17 +1733,21 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw runtime_error(noEncodingAvailableMessage);
 				return;
 			}
+			#endif
 
 			try
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<LiveProxyAndGrid>    selectedLiveProxy = make_shared<LiveProxyAndGrid>();
 				selectedLiveProxy->_running   = false;
 				selectedLiveProxy->_childPid		= 0;
 				selectedLiveProxy->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 				selectedLiveProxy->_ingestionJobKey		= 0;
-				selectedLiveProxy->_encodingJobKey = encodingJobKey;
+				#endif
 
 				selectedLiveProxy->_running = true;
+				selectedLiveProxy->_encodingJobKey = encodingJobKey;
 				selectedLiveProxy->_childPid = 0;
 
 				if (method == "liveProxy")
@@ -1409,13 +1771,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					liveGridThread.detach();
 				}
 
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				_liveProxiesCapability->insert(make_pair(selectedLiveProxy->_encodingJobKey, selectedLiveProxy));
 				_logger->info(__FILEREF__ + "_liveProxiesCapability->insert"
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey)
 				);
+				#endif
 			}
 			catch(exception e)
 			{
+				#ifdef __VECTOR__
+				selectedLiveProxy->_running = false;
+				selectedLiveProxy->_childPid = 0;
+				#else	// __MAP__
+				#endif
+
 				_logger->error(__FILEREF__ + "liveProxyThread failed"
 					+ ", method: " + method
 					+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1510,12 +1881,28 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			// next \{ is to make the lock free as soon as the check is done
 			{
+				// see comment 2020-11-30
+				#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+				#else
 				chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 				lock_guard<mutex> locker(*_encodingMutex);
 				chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
 				encodingMutexDuration = chrono::duration_cast<chrono::seconds>(
 					endLockTime - startLockTime).count();
+				#endif
 
+				#ifdef __VECTOR__
+				for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+					{
+						encodingFound = true;
+						selectedEncoding = encoding;
+
+						break;
+					}
+				}
+				#else	// __MAP__
 				map<int64_t, shared_ptr<Encoding>>::iterator it =
 					_encodingsCapability->find(encodingJobKey);
 				if (it != _encodingsCapability->end())
@@ -1523,18 +1910,54 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					encodingFound = true;
 					selectedEncoding = it->second;
 				}
+				#endif
 			}
 
 			if (!encodingFound)
 			{
 				// next \{ is to make the lock free as soon as the check is done
 				{
+/*
+ * 2020-11-30
+ * CIBORTV PROJECT. SCENARIO:
+ *	- The encodingStatus is called by the mmsEngine periodically for each running transcoding.
+ *		Often this method takes a lot of times to answer, depend on the period encodingStatus is called,
+ *		50 secs in case it is called every 5 seconds, 35 secs in case it is called every 30 secs.
+ *		This because the Lock (lock_guard) does not provide any guarantee, in case there are a lot of threads,
+ *		as it is our case, may be a thread takes the lock and the OS switches to another thread. It could
+ *		take time the OS re-switch on the previous thread in order to release the lock.
+ *
+ *	To solve this issue we should found an algorithm that guarantees the Lock is managed
+ *	in a fast way also in case of a lot of threads. I do not have now a solution for this.
+ *	For this since I thought:
+ *	- in case of __VECTOR__ all the structure is "fixes", every thing is allocated at the beggining
+ *		and do not change
+ *	- so for this method, since it checks some attribute in a "static" structure,
+ *		WE MAY AVOID THE USING OF THE LOCK
+ *
+ */
+					// see comment 2020-11-30
+					#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+					#else
 					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 					lock_guard<mutex> locker(*_liveProxyMutex);
 					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
 					liveProxyMutexDuration = chrono::duration_cast<chrono::seconds>(
 						endLockTime - startLockTime).count();
+					#endif
 
+					#ifdef __VECTOR__
+					for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+					{
+						if (liveProxy->_encodingJobKey == encodingJobKey)
+						{
+							liveProxyFound = true;
+							selectedLiveProxy = liveProxy;
+
+							break;
+						}
+					}
+					#else	// __MAP__
 					map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
 						_liveProxiesCapability->find(encodingJobKey);
 					if (it != _liveProxiesCapability->end())
@@ -1542,16 +1965,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						liveProxyFound = true;
 						selectedLiveProxy = it->second;
 					}
+					#endif
 				}
 
 				if (!liveProxyFound)
 				{
+					// see comment 2020-11-30
+					#if defined(__VECTOR__) && defined(__VECTOR__NO_LOCK_FOR_ENCODINGSTATUS)
+					#else
 					chrono::system_clock::time_point startLockTime = chrono::system_clock::now();
 					lock_guard<mutex> locker(*_liveRecordingMutex);
 					chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
 					liveRecordingMutexDuration = chrono::duration_cast<chrono::seconds>(
 						endLockTime - startLockTime).count();
+					#endif
 
+					#ifdef __VECTOR__
+					for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+					{
+						if (liveRecording->_encodingJobKey == encodingJobKey)
+						{
+							liveRecordingFound = true;
+							selectedLiveRecording = liveRecording;
+
+							break;
+						}
+					}
+					#else	// __MAP__
 					map<int64_t, shared_ptr<LiveRecording>>::iterator it =
 						_liveRecordingsCapability->find(encodingJobKey);
 					if (it != _liveRecordingsCapability->end())
@@ -1559,6 +1999,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						liveRecordingFound = true;
 						selectedLiveRecording = it->second;
 					}
+					#endif
 				}
 			}
 		}
@@ -1834,6 +2275,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
+			#ifdef __VECTOR__
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (encoding->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = encoding->_childPid;
+
+					break;
+				}
+			}
+			#else	// __MAP__
 			map<int64_t, shared_ptr<Encoding>>::iterator it =
 				_encodingsCapability->find(encodingJobKey);
 			if (it != _encodingsCapability->end())
@@ -1841,12 +2294,25 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				encodingFound = true;
 				pidToBeKilled = it->second->_childPid;
 			}
+			#endif
 		}
 
 		if (!encodingFound)
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			{
+				if (liveProxy->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = liveProxy->_childPid;
+
+					break;
+				}
+			}
+			#else	// __MAP__
 			map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it =
 				_liveProxiesCapability->find(encodingJobKey);
 			if (it != _liveProxiesCapability->end())
@@ -1854,12 +2320,25 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				encodingFound = true;
 				pidToBeKilled = it->second->_childPid;
 			}
+			#endif
 		}
 
 		if (!encodingFound)
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			{
+				if (liveRecording->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = liveRecording->_childPid;
+
+					break;
+				}
+			}
+			#else	// __MAP__
 			map<int64_t, shared_ptr<LiveRecording>>::iterator it =
 				_liveRecordingsCapability->find(encodingJobKey);
 			if (it != _liveRecordingsCapability->end())
@@ -1867,6 +2346,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				encodingFound = true;
 				pidToBeKilled = it->second->_childPid;
 			}
+			#endif
 		}
 
         if (!encodingFound)
@@ -2296,6 +2776,8 @@ void FFMPEGEncoder::encodeContentThread(
 			completedWithError, encoding->_errorMessage, killedByUser,
 			urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2311,6 +2793,7 @@ void FFMPEGEncoder::encodeContentThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -2343,6 +2826,8 @@ void FFMPEGEncoder::encodeContentThread(
 			completedWithError, encoding->_errorMessage, killedByUser,
 			urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2358,6 +2843,7 @@ void FFMPEGEncoder::encodeContentThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -2392,6 +2878,8 @@ void FFMPEGEncoder::encodeContentThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2407,6 +2895,7 @@ void FFMPEGEncoder::encodeContentThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2446,6 +2935,8 @@ void FFMPEGEncoder::encodeContentThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2461,6 +2952,7 @@ void FFMPEGEncoder::encodeContentThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2571,6 +3063,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2586,6 +3080,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -2618,6 +3113,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2633,6 +3130,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -2667,6 +3165,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2682,6 +3182,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2721,6 +3222,8 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2736,6 +3239,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -2899,6 +3403,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2914,6 +3420,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -2946,6 +3453,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -2961,6 +3470,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -2995,6 +3505,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3010,6 +3522,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -3049,6 +3562,8 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3064,6 +3579,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -3170,6 +3686,8 @@ void FFMPEGEncoder::generateFramesThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3185,6 +3703,7 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3217,6 +3736,8 @@ void FFMPEGEncoder::generateFramesThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3232,6 +3753,7 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -3266,6 +3788,8 @@ void FFMPEGEncoder::generateFramesThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3281,6 +3805,7 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(exception e)
     {
@@ -3315,6 +3840,8 @@ void FFMPEGEncoder::generateFramesThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3330,6 +3857,7 @@ void FFMPEGEncoder::generateFramesThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 }
 
@@ -3422,6 +3950,8 @@ void FFMPEGEncoder::slideShowThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3437,6 +3967,7 @@ void FFMPEGEncoder::slideShowThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3469,6 +4000,8 @@ void FFMPEGEncoder::slideShowThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3484,6 +4017,7 @@ void FFMPEGEncoder::slideShowThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -3518,6 +4052,8 @@ void FFMPEGEncoder::slideShowThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3533,6 +4069,7 @@ void FFMPEGEncoder::slideShowThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(exception e)
     {
@@ -3567,6 +4104,8 @@ void FFMPEGEncoder::slideShowThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3582,6 +4121,7 @@ void FFMPEGEncoder::slideShowThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 }
 
@@ -3687,6 +4227,8 @@ void FFMPEGEncoder::videoSpeedThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3702,6 +4244,7 @@ void FFMPEGEncoder::videoSpeedThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3734,6 +4277,8 @@ void FFMPEGEncoder::videoSpeedThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3749,6 +4294,7 @@ void FFMPEGEncoder::videoSpeedThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -3783,6 +4329,8 @@ void FFMPEGEncoder::videoSpeedThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3798,6 +4346,7 @@ void FFMPEGEncoder::videoSpeedThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -3837,6 +4386,8 @@ void FFMPEGEncoder::videoSpeedThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3852,6 +4403,7 @@ void FFMPEGEncoder::videoSpeedThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -3976,6 +4528,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -3991,6 +4545,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -4023,6 +4578,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -4038,6 +4595,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -4072,6 +4630,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -4087,6 +4647,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4126,6 +4687,8 @@ void FFMPEGEncoder::pictureInPictureThread(
 				completedWithError, encoding->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
@@ -4141,6 +4704,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -4300,6 +4864,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4315,6 +4881,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -4374,6 +4941,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ liveRecording->_segmentListFileName, exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4389,6 +4958,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(FFMpegURLForbidden e)
     {
@@ -4439,6 +5009,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4454,6 +5026,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(FFMpegURLNotFound e)
     {
@@ -4504,6 +5077,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4519,6 +5094,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(runtime_error e)
     {
@@ -4569,6 +5145,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4584,6 +5162,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(exception e)
     {
@@ -4632,6 +5211,8 @@ void FFMPEGEncoder::liveRecorderThread(
 					exceptionInCaseOfError);
 		}
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
@@ -4647,6 +5228,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 }
 
@@ -4659,10 +5241,17 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			#else	// __MAP__
 			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
 				it != _liveRecordingsCapability->end(); it++)
+			#endif
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<LiveRecording> liveRecording = it->second;
+				#endif
 
 				if (liveRecording->_running)
 				{
@@ -6057,6 +6646,8 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_outputType = "";
 		liveProxy->_channelLabel = "";
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6072,6 +6663,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -6121,6 +6713,8 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6136,6 +6730,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(FFMpegURLForbidden e)
     {
@@ -6175,6 +6770,8 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6190,6 +6787,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6234,6 +6832,8 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6249,6 +6849,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6293,6 +6894,8 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6308,6 +6911,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6352,6 +6956,8 @@ void FFMPEGEncoder::liveProxyThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6367,6 +6973,7 @@ void FFMPEGEncoder::liveProxyThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6560,6 +7167,8 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_outputType = "";
 		liveProxy->_channelLabel = "";
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6575,6 +7184,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -6624,6 +7234,8 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6639,6 +7251,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
     }
     catch(FFMpegURLForbidden e)
     {
@@ -6678,6 +7291,8 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6693,6 +7308,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6737,6 +7353,8 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6752,6 +7370,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6796,6 +7415,8 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6811,6 +7432,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6855,6 +7477,8 @@ void FFMPEGEncoder::liveGridThread(
 				completedWithError, liveProxy->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		#ifdef __VECTOR__
+		#else	// __MAP__
 		{
 			lock_guard<mutex> locker(*_liveProxyMutex);
 
@@ -6870,6 +7494,7 @@ void FFMPEGEncoder::liveGridThread(
 					+ ", erase: " + to_string(erase)
 				);
 		}
+		#endif
 
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
@@ -6889,10 +7514,17 @@ void FFMPEGEncoder::monitorThread()
 
 			int liveProxyAndGridRunningCounter = 0;
 			int liveProxyAndGridNotRunningCounter = 0;
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			#else	// __MAP__
 			for(map<int64_t, shared_ptr<LiveProxyAndGrid>>::iterator it = _liveProxiesCapability->begin();
 				it != _liveProxiesCapability->end(); it++)
+			#endif
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<LiveProxyAndGrid> liveProxy = it->second;
+				#endif
 
 				if (liveProxy->_running)
 				{
@@ -7661,10 +8293,17 @@ void FFMPEGEncoder::monitorThread()
 
 			int liveRecordingRunningCounter = 0;
 			int liveRecordingNotRunningCounter = 0;
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			#else	// __MAP__
 			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
 				it != _liveRecordingsCapability->end(); it++)
+			#endif
 			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
 				shared_ptr<LiveRecording> liveRecording = it->second;
+				#endif
 
 				if (liveRecording->_running)
 				{
