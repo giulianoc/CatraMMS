@@ -32,6 +32,10 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", youTubeDl->path: " + _youTubeDlPath
     );
+    _pythonPathName = configuration["youTubeDl"].get("pythonPathName", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", youTubeDl->pythonPathName: " + _pythonPathName
+    );
 
     _waitingNFSSync_attemptNumber = asInt(configuration["storage"],
 		"waitingNFSSync_attemptNumber", 1);
@@ -10010,7 +10014,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 			+ "-youTubeProfiles.txt";
     
 		string youTubeExecuteCommand =
-			_youTubeDlPath + "/youtube-dl "
+			_pythonPathName + " " + _youTubeDlPath + "/youtube-dl "
 			+ "--list-formats "
 			+ youTubeURL + " "
 			+ " > " + detailsYouTubeProfilesPath
@@ -10266,7 +10270,7 @@ format code  extension  resolution note
 			+ "-youTubeUrl.txt";
 
 		string youTubeExecuteCommand =
-			_youTubeDlPath + "/youtube-dl "
+			_pythonPathName + " " + _youTubeDlPath + "/youtube-dl "
 			+ "-f " + to_string(selectedFormatCode) + " "
 			+ "-g " + youTubeURL + " "
 			+ " > " + detailsYouTubeURLPath

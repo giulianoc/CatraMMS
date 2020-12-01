@@ -10277,6 +10277,15 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
 
+								_logger->info(__FILEREF__
+									+ "LiveRecorder. check youTubeURLCalculate"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
+								);
 								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
 									streamingYouTubeLiveURL = lastCalculatedURL;
 							}
@@ -11457,6 +11466,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
 
+								_logger->info(__FILEREF__
+									+ "LiveProxy. check youTubeURLCalculate"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", liveURLConfKey: " + to_string(liveURLConfKey)
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
+								);
 								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
 									streamingYouTubeLiveURL = lastCalculatedURL;
 							}
@@ -12612,6 +12630,14 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 			Json::Value youTubeLiveURLRoot = youTubeURLsRoot[youTubeURLsRoot.size() - 1];
 
 			time_t tNow;
+			{
+				time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+				tm tmNow;
+
+				localtime_r (&utcNow, &tmNow);
+				tNow = mktime(&tmNow);
+			}
+
 			time_t tLastCalculatedURLTime;
 			{
 				unsigned long       ulYear;
@@ -12650,7 +12676,6 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 				tm tmLastCalculatedURL;
 
 				localtime_r (&utcNow, &tmLastCalculatedURL);
-				tNow = mktime(&tmLastCalculatedURL);
 
 				tmLastCalculatedURL.tm_year	= ulYear - 1900;
 				tmLastCalculatedURL.tm_mon	= ulMonth - 1;
@@ -13049,6 +13074,15 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
 								tie(hoursFromLastCalculatedURL, lastCalculatedURL) = lastYouTubeURLDetails;
 
+								_logger->info(__FILEREF__
+									+ "LiveGrid. check youTubeURLCalculate"
+									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", channelConfKey: " + to_string(channelConfKey)
+									+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+									+ ", _retrieveStreamingYouTubeURLPeriodInHours: " + to_string(_retrieveStreamingYouTubeURLPeriodInHours)
+								);
 								if (hoursFromLastCalculatedURL < _retrieveStreamingYouTubeURLPeriodInHours)
 									streamingYouTubeLiveURL = lastCalculatedURL;
 							}

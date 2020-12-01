@@ -352,6 +352,7 @@ private:
     bool            _currentlyAtSecondPass;
     
 	string			_youTubeDlPath;
+	string			_pythonPathName;
 
 	string			_currentApiName;
 
