@@ -43,6 +43,10 @@ then
 	then
 		pgrep -f mmsEngineService > /dev/null
 		toBeRestarted=$?
+	elif [ "$healthCheckURL" == "load-balancer" ]
+	then
+		pgrep -f nginx > /dev/null
+		toBeRestarted=$?
 	else
 		serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
 		if [ "$serviceStatus" == "" ]
@@ -56,13 +60,13 @@ then
 	then
 		#restart
 
-		echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART" >> ~/zz_MMS_RESTART.txt
+		echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART" >> ~/MMS_RESTART.txt
 
-		#~/mmsStopALL.sh
-		#sleep 2
-		#~/mmsStartALL.sh
+		~/mmsStopALL.sh
+		sleep 1
+		~/mmsStartALL.sh
 
-		echo "$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/zz_MMS_RESTART.txt
+		echo "$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
 	fi
 else
 	#files retention
