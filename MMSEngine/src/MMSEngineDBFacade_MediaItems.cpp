@@ -4237,7 +4237,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
         }
         
         throw e;
-    }    
+    }
 }
 
 pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(

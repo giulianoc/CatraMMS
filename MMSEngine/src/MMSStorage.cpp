@@ -488,7 +488,8 @@ pair<string, string> MMSStorage::getVODDeliveryURI(
 {
     try
     {
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
+		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
+			string, string, int64_t, bool> storageDetails =
 			mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;

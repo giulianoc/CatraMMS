@@ -1,36 +1,53 @@
 {
   "Variables": {
-    "ImageRetention": {
-      "Type": "string",
-      "Value": "1d"
-    },
-    "ImageTags": {
-      "Description": "Comma separated tags",
-      "Type": "string",
-      "Value": "FACE"
-    },
-    "Ingester": {
-      "Type": "string",
-      "Value": "Admin"
-    },
-    "InitialFramesNumberToBeSkipped": {
-      "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
-      "Type": "integer",
-      "Value": 1500
-    },
-    "InstantInSeconds": {
-      "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
-      "Type": "decimal",
-      "Value": 60
-    },
     "Label": {
+      "Position": 0,
       "Type": "string",
       "Value": "Image label"
     },
     "Title": {
+      "Position": 1,
       "Description": "Title of the Picture",
       "Type": "string",
       "Value": "My Title"
+    },
+    "ImageTags": {
+      "Position": 2,
+      "Description": "Comma separated tags",
+      "Type": "string",
+      "Value": "FACE"
+    },
+    "InstantInSeconds": {
+      "Position": 3,
+      "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
+      "Type": "decimal",
+      "Value": 60
+    },
+    "UniqueName": {
+      "Position": 4,
+      "Type": "string",
+      "Value": ""
+    },
+    "AllowUniqueNameOverride": {
+      "Position": 5,
+      "Type": "boolean",
+      "Value": false
+    },
+    "ImageRetention": {
+      "Position": 6,
+      "Type": "string",
+      "Value": "1d"
+    },
+    "Ingester": {
+      "Position": 7,
+      "Type": "string",
+      "Value": "Admin"
+    },
+    "InitialFramesNumberToBeSkipped": {
+      "Position": 8,
+      "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
+      "Type": "integer",
+      "Value": 1500
     }
   },
   "Label": "Best Picture of the Video",
@@ -60,7 +77,8 @@
             "Type": "Encode"
           }},
           "Parameters": {
-            "AllowUniqueNameOverride": false,
+            "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
+            "UniqueName": "${UniqueName}",
             "Height": 480,
             "Ingester": "Giuliano",
             "InstantInSeconds": "${InstantInSeconds}",
@@ -80,7 +98,8 @@
           "Type": "Encode"
         }},
         "Parameters": {
-          "AllowUniqueNameOverride": false,
+          "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
+          "UniqueName": "${UniqueName}",
           "CascadeName": "haarcascade_frontalface_alt_tree",
           "EncodingPriority": "High",
           "Ingester": "Giuliano",

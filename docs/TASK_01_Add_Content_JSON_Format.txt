@@ -7,6 +7,11 @@
 
 	"Parameters": {
 		// mandatory in case of a pull (http/https/ftp/ftps/move/copy/externalStorage)
+		//	externalStorage means that the relative path is referring a content that is into
+		//		an external storage. The external storage is mounted inside /var/catramms/storage/MMSRepository
+		//		as ExternalStorage_<workspace key>, in the RSI customer, inside /var/catramms/storage/MMSRepository
+		//		we have ExternalStorage_8 -> /mnt/soa/.
+		//		The external storage, from the MMS point of view, it is just a 'read only' storage.
 		"SourceURL": "http://myhost/example.mp4",
 
 		// mandatory: extension of the file
@@ -30,7 +35,7 @@
 		"VariantOfReferencedLabel": "...",
 
 		// optional: Both the below parameters have to be specified in case this content has to be delivered using an external
-		//	delivery platform (i.e.: Wowza).
+		//	delivery platform (i.e.: Wowza or YouTube).
 		//	- ExternalDeliveryTechnology indicates the technology delivered by the external delivery platform
 		//	- ExternalDeliveryURL indicates the URL to be used for this delivery
 		"ExternalDeliveryTechnology": "hls",
