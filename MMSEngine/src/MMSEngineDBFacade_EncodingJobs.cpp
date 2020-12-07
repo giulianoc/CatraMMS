@@ -57,6 +57,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and ij.ingestionType = 'Live-Proxy' "
 				;
@@ -509,6 +510,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and ij.ingestionType = 'Live-Recorder' "
 				"order by JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') asc"
@@ -889,6 +891,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
+				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
 				"order by ej.encodingPriority desc, ir.ingestionDate asc, ej.failuresNumber asc "

@@ -11,16 +11,17 @@ twoDaysInMinutes=2880
 threeDaysInMinutes=4320
 tenDaysInMinutes=14400
 
-if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 ]
+if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 -a $# -ne 4 ]
 then
-    echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [<engine OR healthCheckURL>]" >> /tmp/crontab.log
+    echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [load-balancer OR engine OR api OR encoder] [<healthCheckURL>]" >> /tmp/crontab.log
 
     exit
 fi
 
 commandIndex=$1
 timeoutInMinutes=$2
-healthCheckURL=$3
+healthCheckType=$3
+healthCheckURL=$4
 
 if [ $commandIndex -eq 0 ]
 then
@@ -34,28 +35,64 @@ then
 	else
 		export LD_LIBRARY_PATH=/opt/catramms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/catramms/nginx/sbin/nginx --nginx-server-root /opt/catramms/nginx/conf
 	fi
-elif [ $commandIndex -eq 16 -a "$healthCheckURL" != "" ]
+elif [ $commandIndex -eq 16 -a "$healthCheckType" != "" ]
 then
 	#mms service health check
 
 	toBeRestarted=0
-	if [ "$healthCheckURL" == "engine" ]
+	if [ "$healthCheckType" == "engine" ]
 	then
 		pgrep -f mmsEngineService > /dev/null
 		toBeRestarted=$?
-	elif [ "$healthCheckURL" == "load-balancer" ]
+	elif [ "$healthCheckType" == "load-balancer" ]
 	then
 		pgrep -f nginx > /dev/null
 		toBeRestarted=$?
-	else
+	elif [ "$healthCheckURL" != "" ]
+	then
 		serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
 		if [ "$serviceStatus" == "" ]
 		then
 			toBeRestarted=1
 		else
-			toBeRestarted=$(cat $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+			toBeRestarted=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+		fi
+
+		failuresNumberFileName=/tmp/failuresNumber.$healthCheckType.txt
+		maxFailuresNumber=2
+		if [ $toBeRestarted -eq 1 ]
+		then
+			#curl failed, check failuresNumber
+
+			if [ -s $failuresNumberFileName ]
+			then
+				#exist and is not empty
+				failuresNumber=$(cat $failuresNumberFileName)
+
+				if [ $failuresNumber -ge $maxFailuresNumber ]
+				then
+					toBeRestarted=1
+
+					echo "0" > $failuresNumberFileName
+				else
+					toBeRestarted=0
+
+					failuresNumber=$((failuresNumber+1))
+
+					echo "$failuresNumber" > $failuresNumberFileName
+				fi
+			else
+				#first failure
+
+				toBeRestarted=0
+
+				echo "1" > $failuresNumberFileName
+			fi
+		else
+			echo "0" > $failuresNumberFileName
 		fi
 	fi
+
 	if [ $toBeRestarted -eq 1 ]
 	then
 		#restart
@@ -66,10 +103,9 @@ then
 		sleep 1
 		~/mmsStartALL.sh
 
-		echo "$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
+		echo "	$(date +'%Y-%m-%d %H-%M-%S') MMS SERVICE RESTARTED BY HEALTH CHECK" >> ~/MMS_RESTART.txt
 	fi
 else
-	#files retention
 
 	if [ $commandIndex -eq 1 ]
 	then

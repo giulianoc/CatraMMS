@@ -878,7 +878,7 @@ public:
 
     enum class IngestionStatus {
         Start_TaskQueued,    
-        
+
         SourceDownloadingInProgress,
         SourceMovingInProgress,
         SourceCopingInProgress,
