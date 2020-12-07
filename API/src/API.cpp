@@ -2241,6 +2241,17 @@ int64_t API::manageDeliveryAuthorization(
 			string sTokenComingFromCookie = Encrypt::decrypt(cookie);
 			int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
+			_logger->info(__FILEREF__ + "check token info"
+				+ ", encryptedToken: " + encryptedToken
+				+ ", manifestLineAndToken: " + manifestLineAndToken
+				+ ", manifestLine: " + manifestLine
+				+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+				+ ", cookie: " + cookie
+				+ ", sTokenComingFromCookie: " + sTokenComingFromCookie
+				+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+				+ ", contentURI: " + contentURI
+			);
+
 			if (tokenComingFromCookie != tokenComingFromURL
 
 					// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
