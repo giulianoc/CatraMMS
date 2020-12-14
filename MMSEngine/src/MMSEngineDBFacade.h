@@ -1104,6 +1104,8 @@ public:
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
 
+	Json::Value getWorkspaceList(int start, int rows);
+
     tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
         string userEmailAddress,
@@ -1142,7 +1144,7 @@ public:
         string userCountry,
         bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
@@ -1154,7 +1156,7 @@ public:
 		string userCountry,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		string defaultWorkspaceKeys,
 		chrono::system_clock::time_point userExpirationDate
 	);
@@ -1164,12 +1166,12 @@ public:
 		string userEmailAddress,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		int64_t workspaceKey);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
-    tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool,bool,bool,bool,bool,bool,bool>
+    tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 		checkAPIKey (string apiKey);
 
     Json::Value login (string eMailAddress, string password);
@@ -1188,7 +1190,7 @@ public:
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding,
-		bool newCancelIngestionJob);
+		bool newCancelIngestionJob, bool newEditEncodersPool);
 
 	Json::Value setWorkspaceAsDefault (
 		int64_t userKey,
@@ -1975,6 +1977,63 @@ public:
 
 	void releaseLock(LockType lockType, string label, string data = "no data");
 
+	int64_t addEncoder(
+		string label,
+		string protocol,
+		string serverName,
+		int port,
+		int maxTranscodingCapability,
+		int maxLiveProxiesCapabilities,
+		int maxLiveRecordingCapabilities
+	);
+
+	void modifyEncoder(
+		int64_t encoderKey,
+		bool labelToBeModified, string label,
+		bool protocolToBeModified, string protocol,
+		bool serverNameToBeModified, string serverName,
+		bool portToBeModified, int port,
+		bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
+		bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
+		bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
+	);
+
+	void removeEncoder(
+		int64_t encoderKey);
+
+	void addAssociationWorkspaceEncoder(
+		int64_t workspaceKey, int64_t encoderKey);
+
+	void removeAssociationWorkspaceEncoder(
+		int64_t workspaceKey, int64_t encoderKey);
+
+	Json::Value getEncoderList (
+		int start, int rows,
+		bool allEncoders, int64_t workspaceKey, int64_t encoderKey,
+		string label, string serverName, int port,
+		string labelOrder	// "" or "asc" or "desc"
+	);
+
+	Json::Value getEncodersPoolList (
+		int start, int rows,
+		int64_t workspaceKey, int64_t encodersPoolKey, string label,
+		string labelOrder	// "" or "asc" or "desc"
+	);
+
+	int64_t addEncodersPool(
+		int64_t workspaceKey,
+		string label,
+		vector<int64_t>& encoderKeys);
+
+	int64_t modifyEncodersPool(
+		int64_t encodersPoolKey,
+		int64_t workspaceKey,
+		string newLabel,
+		vector<int64_t>& newEncoderKeys);
+
+	void removeEncodersPool(
+		int64_t encodersPoolKey);
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
@@ -2012,7 +2071,7 @@ private:
 		string userEmailAddress,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		int64_t workspaceKey);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
@@ -2077,6 +2136,7 @@ private:
 		bool editConfiguration,
 		bool killEncoding,
 		bool cancelIngestionJob,
+		bool editEncodersPool,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,
@@ -2165,6 +2225,15 @@ private:
     pair<int64_t,int64_t> getWorkspaceUsage(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey);
+
+	Json::Value getWorkspaceDetailsRoot (
+		shared_ptr<MySQLConnection> conn,
+		shared_ptr<sql::ResultSet> resultSet,
+		bool userAPIKeyInfo,
+		bool encoders);
+
+	Json::Value getEncoderRoot (
+		shared_ptr<sql::ResultSet> resultSet);
 
     void createTablesIfNeeded();
 

@@ -257,6 +257,172 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     }
 }
 
+Json::Value MMSEngineDBFacade::getWorkspaceList(int start, int rows)
+{
+    string  lastSQLCommand;
+	Json::Value workspaceListRoot;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+		conn = _connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+
+		string field;
+		{
+			Json::Value requestParametersRoot;
+
+			field = "start";
+			requestParametersRoot[field] = start;
+
+			field = "rows";
+			requestParametersRoot[field] = rows;
+
+			field = "requestParameters";
+			workspaceListRoot[field] = requestParametersRoot;
+		}
+
+		Json::Value responseRoot;
+		{
+			lastSQLCommand =
+				"select count(*) from MMS_Workspace ";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (resultSet->next())
+			{
+				field = "numFound";
+				responseRoot[field] = resultSet->getInt64(1);
+			}
+			else
+			{
+				string errorMessage ("select count(*) failed");
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		Json::Value workspacesRoot(Json::arrayValue);
+		{
+			lastSQLCommand =
+				"select workspaceKey, isEnabled, name, maxEncodingPriority, "
+				"encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, "
+				"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+				"from MMS_Workspace "
+                "limit ? offset ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", rows: " + to_string(rows)
+				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			bool userAPIKeyInfo = false;
+			bool encoders = true;
+			while(resultSet->next())
+			{
+                Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
+					conn, resultSet, userAPIKeyInfo, encoders);
+
+				workspacesRoot.append(workspaceDetailRoot);
+			}
+		}
+
+		field = "workspaces";
+		responseRoot[field] = workspacesRoot;
+
+		field = "response";
+		workspaceListRoot[field] = responseRoot;
+
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		_connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+
+	return workspaceListRoot;
+}
+
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     string userName,
     string userEmailAddress,
@@ -380,6 +546,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool editConfiguration = true;
             bool killEncoding = true;
             bool cancelIngestionJob = true;
+            bool editEncodersPool = false;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -395,6 +562,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 					editConfiguration,
 					killEncoding,
 					cancelIngestionJob,
+					editEncodersPool,
                     trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
@@ -659,6 +827,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
             bool editConfiguration = true;
             bool killEncoding = true;
             bool cancelIngestionJob = true;
+            bool editEncodersPool = false;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -674,6 +843,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 					editConfiguration,
 					killEncoding,
 					cancelIngestionJob,
+					editEncodersPool,
                     trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
@@ -886,7 +1056,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     string userCountry,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
     int64_t workspaceKeyToBeShared,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1086,6 +1256,13 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("CANCEL_INGESTIONJOB");
+                }
+
+                if (editEncodersPool)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_ENCODERSPOOL");
                 }
             }
 
@@ -1307,7 +1484,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     string userCountry,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	string defaultWorkspaceKeys,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1407,7 +1584,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						userEmailAddress,
 						createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia,
-						editConfiguration, killEncoding, cancelIngestionJob,
+						editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 						llDefaultWorkspaceKey);
 					if (apiKey.empty())
 						apiKey = localApiKey;
@@ -1639,7 +1816,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     string userEmailAddress,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	int64_t workspaceKey
 )
 {
@@ -1660,7 +1837,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			userEmailAddress,
 			createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia,
-			editConfiguration, killEncoding, cancelIngestionJob,
+			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 			workspaceKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -1758,7 +1935,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     string userEmailAddress,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
-	bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 	int64_t workspaceKey
 )
 {
@@ -1841,6 +2018,13 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
                     if (flags != "")
                        flags.append(",");
                     flags.append("CANCEL_INGESTIONJOB");
+                }
+
+                if (editEncodersPool)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_ENCODERSPOOL");
                 }
             }
 
@@ -1944,7 +2128,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         int64_t userKey,
         bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
         bool shareWorkspace, bool editMedia,
-        bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
+        bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,
@@ -2116,6 +2300,13 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                        flags.append(",");
                     flags.append("CANCEL_INGESTIONJOB");
                 }
+
+                if (editEncodersPool)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_ENCODERSPOOL");
+                }
             }
             
             lastSQLCommand = 
@@ -2145,7 +2336,8 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             lastSQLCommand = 
                     "insert into MMS_WorkspaceMoreInfo (workspaceKey, currentDirLevel1, currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, currentIngestionsNumber) values ("
                     "?, 0, 0, 0, NOW(), NOW(), 0)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
@@ -2157,6 +2349,33 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+        }
+
+		// insert EncodersPool with label null.
+		// This is used for the default encoders pool for the actual workspace
+		// The default encoders will be all the internal encoders associated to the workspace
+		// These encoders will not be saved in MMS_EncoderEncodersPoolMapping but they
+		// will be retrieved directly by MMS_EncoderWorkspaceMapping
+        {
+            lastSQLCommand = 
+                "insert into MMS_EncodersPool(workspaceKey, label, lastEncoderIndexUsed) values ( "
+                "?, NULL, 0)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + "null"
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+
+			// encodersPoolKey = getLastInsertId(conn);
         }
 
         {
@@ -2917,7 +3136,7 @@ void MMSEngineDBFacade::deleteWorkspace(
     // return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bool>
+tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 	MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
@@ -3068,7 +3287,9 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bo
         flags.find("SHARE_WORKSPACE") == string::npos ? false : true,
         flags.find("EDIT_MEDIA") == string::npos ? false : true,
         flags.find("EDIT_CONFIGURATION") == string::npos ? false : true,
-        flags.find("KILL_ENCODING") == string::npos ? false : true
+        flags.find("KILL_ENCODING") == string::npos ? false : true,
+        flags.find("CANCEL_INGESTIONJOB") == string::npos ? false : true,
+        flags.find("EDIT_ENCODERSPOOL") == string::npos ? false : true
     );
 }
 
@@ -3300,91 +3521,12 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+			bool userAPIKeyInfo = true;
+			bool encoders = true;
             while (resultSet->next())
             {
-                Json::Value workspaceDetailRoot;
-
-				int64_t workspaceKey = resultSet->getInt64("workspaceKey");
-
-                string field = "workspaceKey";
-                workspaceDetailRoot[field] = workspaceKey;
-                
-                field = "isEnabled";
-                workspaceDetailRoot[field] = resultSet->getInt("isEnabled") == 1 ? "true" : "false";
-
-                field = "workspaceName";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("name"));
-
-                field = "maxEncodingPriority";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("maxEncodingPriority"));
-
-                field = "encodingPeriod";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("encodingPeriod"));
-
-                field = "maxIngestionsNumber";
-                workspaceDetailRoot[field] = resultSet->getInt("maxIngestionsNumber");
-
-                field = "maxStorageInMB";
-                workspaceDetailRoot[field] = resultSet->getInt("maxStorageInMB");
-
-				{
-					int64_t workSpaceUsageInBytes;
-
-					pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
-					tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
-                                                                                                              
-					int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
-
-					field = "workSpaceUsageInMB";
-					workspaceDetailRoot[field] = workSpaceUsageInMB;
-				}
-
-                field = "languageCode";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("languageCode"));
-
-                field = "creationDate";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
-
-                field = "apiKey";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
-
-                field = "owner";
-                workspaceDetailRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
-
-                field = "default";
-                workspaceDetailRoot[field] = resultSet->getInt("isDefault") == 1 ? "true" : "false";
-
-                string flags = resultSet->getString("flags");
-                
-                field = "admin";
-                workspaceDetailRoot[field] = flags.find("ADMIN") == string::npos ? false : true;
-                
-                field = "createRemoveWorkspace";
-                workspaceDetailRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos ? false : true;
-
-                field = "ingestWorkflow";
-                workspaceDetailRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos ? false : true;
-
-                field = "createProfiles";
-                workspaceDetailRoot[field] = flags.find("CREATE_PROFILES") == string::npos ? false : true;
-
-                field = "deliveryAuthorization";
-                workspaceDetailRoot[field] = flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true;
-
-                field = "shareWorkspace";
-                workspaceDetailRoot[field] = flags.find("SHARE_WORKSPACE") == string::npos ? false : true;
-
-                field = "editMedia";
-                workspaceDetailRoot[field] = flags.find("EDIT_MEDIA") == string::npos ? false : true;
-                
-                field = "editConfiguration";
-                workspaceDetailRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos ? false : true;
-
-                field = "killEncoding";
-                workspaceDetailRoot[field] = flags.find("KILL_ENCODING") == string::npos ? false : true;
-
-                field = "cancelIngestionJob";
-                workspaceDetailRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos ? false : true;
+                Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
+					conn, resultSet, userAPIKeyInfo, encoders);
 
                 workspaceDetailsRoot.append(workspaceDetailRoot);                        
             }
@@ -3458,6 +3600,190 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
     return workspaceDetailsRoot;
 }
 
+Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
+	shared_ptr<MySQLConnection> conn,
+	shared_ptr<sql::ResultSet> resultSet,
+	bool userAPIKeyInfo,
+	bool encoders)
+{
+    Json::Value     workspaceDetailRoot;
+
+    try
+    {
+		int64_t workspaceKey = resultSet->getInt64("workspaceKey");
+
+		string field = "workspaceKey";
+		workspaceDetailRoot[field] = workspaceKey;
+                
+		field = "isEnabled";
+		workspaceDetailRoot[field] = resultSet->getInt("isEnabled") == 1 ? "true" : "false";
+
+		field = "workspaceName";
+		workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("name"));
+
+		field = "maxEncodingPriority";
+		workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("maxEncodingPriority"));
+
+		field = "encodingPeriod";
+		workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("encodingPeriod"));
+
+		field = "maxIngestionsNumber";
+		workspaceDetailRoot[field] = resultSet->getInt("maxIngestionsNumber");
+
+		field = "maxStorageInMB";
+		workspaceDetailRoot[field] = resultSet->getInt("maxStorageInMB");
+
+		{
+			int64_t workSpaceUsageInBytes;
+
+			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB =
+				getWorkspaceUsage(conn, workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
+
+			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
+
+			field = "workSpaceUsageInMB";
+			workspaceDetailRoot[field] = workSpaceUsageInMB;
+		}
+
+		field = "languageCode";
+		workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("languageCode"));
+
+		field = "creationDate";
+		workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+
+		if (userAPIKeyInfo)
+		{
+			Json::Value     userAPIKeyRoot;
+
+			field = "apiKey";
+			userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
+
+			field = "owner";
+			userAPIKeyRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
+
+			field = "default";
+			userAPIKeyRoot[field] = resultSet->getInt("isDefault") == 1
+				? "true" : "false";
+
+			string flags = resultSet->getString("flags");
+                
+			field = "admin";
+			userAPIKeyRoot[field] = flags.find("ADMIN") == string::npos ? false : true;
+
+			field = "createRemoveWorkspace";
+			userAPIKeyRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos 
+				? false : true;
+
+			field = "ingestWorkflow";
+			userAPIKeyRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos
+				? false : true;
+
+			field = "createProfiles";
+			userAPIKeyRoot[field] = flags.find("CREATE_PROFILES") == string::npos
+				? false : true;
+
+			field = "deliveryAuthorization";
+			userAPIKeyRoot[field] = flags.find("DELIVERY_AUTHORIZATION") == string::npos 
+				? false : true;
+
+			field = "shareWorkspace";
+			userAPIKeyRoot[field] = flags.find("SHARE_WORKSPACE") == string::npos
+				? false : true;
+
+			field = "editMedia";
+			userAPIKeyRoot[field] = flags.find("EDIT_MEDIA") == string::npos
+				? false : true;
+                
+			field = "editConfiguration";
+			userAPIKeyRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos
+				? false : true;
+
+			field = "killEncoding";
+			userAPIKeyRoot[field] = flags.find("KILL_ENCODING") == string::npos
+				? false : true;
+
+			field = "cancelIngestionJob";
+			userAPIKeyRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos
+				? false : true;
+
+			field = "editEncodersPool";
+			userAPIKeyRoot[field] = flags.find("EDIT_ENCODERSPOOL") == string::npos
+				? false : true;
+
+			field = "userAPIKey";
+			workspaceDetailRoot[field] = userAPIKeyRoot;
+		}
+
+		if (encoders)
+		{
+			Json::Value encodersRoot(Json::arrayValue);
+			{
+				string lastSQLCommand =
+					"select e.encoderKey, e.label, e.protocol, e.serverName, e.port, "
+					"e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
+					"e.maxLiveRecordingCapabilities "
+					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm "
+					"where e.encoderKey = ewm.encoderKey "
+					"and ewm.workspaceKey = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatementEncoders (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatementEncoders->setInt64(queryParameterIndex++, workspaceKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSetEncoders (
+					preparedStatementEncoders->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", resultSetEncoders->rowsCount: " + to_string(resultSetEncoders->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				while(resultSetEncoders->next())
+				{
+					Json::Value encoderRoot = getEncoderRoot(resultSetEncoders);
+
+					encodersRoot.append(encoderRoot);
+				}
+			}
+
+			field = "encoders";
+			workspaceDetailRoot[field] = encodersRoot;
+		}
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    
+    return workspaceDetailRoot;
+}
+
 Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t userKey,
         int64_t workspaceKey,
@@ -3466,7 +3792,8 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t newMaxStorageInMB, string newLanguageCode,
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
-        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob)
+        bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
+		bool newEditEncodersPool)
 {
     Json::Value workspaceDetailRoot;
     string          lastSQLCommand;
@@ -3681,6 +4008,13 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("CANCEL_INGESTIONJOB");
             }
 
+            if (newEditEncodersPool)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("EDIT_ENCODERSPOOL");
+            }
+
             lastSQLCommand = 
                 "update MMS_APIKey set flags = ? "
                 "where workspaceKey = ? and userKey = ?";
@@ -3782,6 +4116,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         field = "cancelIngestionJob";
         workspaceDetailRoot[field] = newCancelIngestionJob ? true : false;
         
+        field = "editEncodersPool";
+        workspaceDetailRoot[field] = newEditEncodersPool ? true : false;
+
         {
             lastSQLCommand = 
                 "select w.name, a.apiKey, a.isOwner, "

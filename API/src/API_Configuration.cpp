@@ -11,14 +11,6 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-/*
-#include <fstream>
-#include <sstream>
-#include "catralibraries/Convert.h"
-#include "catralibraries/LdapWrapper.h"
-#include "Validator.h"
-#include "EMailSender.h"
-*/
 #include "JSONUtils.h"
 #include <regex>
 #include <curlpp/cURLpp.hpp>

@@ -20,6 +20,8 @@
 #include "spdlog/spdlog.h"
 #include "json/json.h"
 #include "Workspace.h"
+#include "MMSEngineDBFacade.h"
+
 
 using namespace std;
 
@@ -34,6 +36,7 @@ using namespace std;
 class EncodersLoadBalancer {
 public:
     EncodersLoadBalancer(
+			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             Json::Value configuration,
             shared_ptr<spdlog::logger> logger);
 
@@ -49,7 +52,9 @@ private:
     shared_ptr<spdlog::logger>          _logger;
     
     map<string, EncodersPoolDetails>    _encodersPools;
+	shared_ptr<MMSEngineDBFacade>		_mmsEngineDBFacade;
 
+	void init();
 };
 
 #endif

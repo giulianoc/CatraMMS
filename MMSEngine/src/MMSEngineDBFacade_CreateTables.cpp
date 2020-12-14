@@ -396,7 +396,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						"'EDIT_MEDIA', "
 						"'EDIT_CONFIGURATION', "
 						"'KILL_ENCODING', "
-						"'CANCEL_INGESTIONJOB'"
+						"'CANCEL_INGESTIONJOB', "
+						"'EDIT_ENCODERSPOOL'"
 						") NOT NULL,"
                     "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate		DATETIME NOT NULL,"
@@ -456,7 +457,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						"'EDIT_MEDIA', "
 						"'EDIT_CONFIGURATION', "
 						"'KILL_ENCODING', "
-						"'CANCEL_INGESTIONJOB'"
+						"'CANCEL_INGESTIONJOB', "
+						"'EDIT_ENCODERSPOOL'"
 						") NOT NULL,"
                     "workspaceKey                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "isSharedWorkspace              TINYINT (1) NOT NULL,"
@@ -577,7 +579,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
 
         try
         {
@@ -986,7 +988,120 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-        
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_Encoder ("
+                    "encoderKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "label					VARCHAR (128) NOT NULL,"
+                    "protocol				VARCHAR (16) NOT NULL,"
+                    "serverName				VARCHAR (64) NOT NULL,"
+                    "port					INT UNSIGNED NOT NULL,"
+                    "maxTranscodingCapability		INT UNSIGNED NOT NULL,"
+                    "maxLiveProxiesCapabilities		INT UNSIGNED NOT NULL,"
+                    "maxLiveRecordingCapabilities	INT UNSIGNED NOT NULL,"
+                    "constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
+                    "UNIQUE (label)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand =
+                "create table if not exists MMS_EncoderWorkspaceMapping ("
+                    "encoderKey					BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey				BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_EncoderWorkspaceMapping_PK PRIMARY KEY (encoderKey, workspaceKey), "
+                    "constraint MMS_EncoderWorkspaceMapping_FK1 foreign key (encoderKey) "
+                        "references MMS_Encoder (encoderKey) on delete cascade, "
+                    "constraint MMS_EncoderWorkspaceMapping_FK2 foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_EncodersPool ("
+                    "encodersPoolKey			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey				BIGINT UNSIGNED NOT NULL,"
+                    "label						VARCHAR (64) NULL,"
+                    "lastEncoderIndexUsed		INT UNSIGNED NOT NULL,"
+                    "constraint MMS_EncodersPool_PK PRIMARY KEY (encodersPoolKey),"
+                    "constraint MMS_EncodersPool_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+			// mapping between Encoder and EncodersPool
+            lastSQLCommand =
+                "create table if not exists MMS_EncoderEncodersPoolMapping ("
+                    "encodersPoolKey			BIGINT UNSIGNED NOT NULL,"
+                    "encoderKey					BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_EncoderEncodersPoolMapping_PK PRIMARY KEY (encodersPoolKey, encoderKey), "
+                    "constraint MMS_EncoderEncodersPoolMapping_FK1 foreign key (encodersPoolKey) "
+                        "references MMS_EncodersPool (encodersPoolKey) on delete cascade, "
+                    "constraint MMS_EncoderEncodersPoolMapping_FK2 foreign key (encoderKey) "
+                        "references MMS_Encoder (encoderKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 

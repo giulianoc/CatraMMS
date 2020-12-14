@@ -27,8 +27,8 @@ ActiveEncodingsManager::ActiveEncodingsManager(
     _configuration = configuration;
     _mmsEngineDBFacade = mmsEngineDBFacade;
     _mmsStorage = mmsStorage; 
-    
-    _encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_configuration, _logger);
+
+    _encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_mmsEngineDBFacade, _configuration, _logger);
 
 	_hostName				= System::getHostName();
 

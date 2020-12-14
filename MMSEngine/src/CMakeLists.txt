@@ -25,6 +25,7 @@ SET (SOURCES
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
+	MMSEngineDBFacade_EncodersPool.cpp
 	MMSEngineDBFacade_CreateTables.cpp
 	MMSEngineDBFacade_EncodingJobs.cpp
 	MMSEngineDBFacade_EncodingProfiles.cpp

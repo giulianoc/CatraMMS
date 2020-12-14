@@ -24,25 +24,43 @@
 			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
 		}
 
+#Workspace
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;
+			rewrite ^/catramms/(v[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=addAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
 		}
 		if ($request_method = PUT) {
 			#Source User Key is retrieved from the request authorization
 			#Dest User details are in the body
 			rewrite ^/catramms/(v[0-9]+)/workspace/share/?$ /api?version=$1&method=shareWorkspace last;
-		}
-		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/default/([0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
-		}
-		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
+			rewrite ^/catramms/(v[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/workspace/usage/?$ /api?version=$1&method=workspaceUsage last;
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=workspaceList last;
+		}
+
+#Encoders and EncodersPool
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/?([0-9]*)/?$ /api?version=$1&method=encoderList&encoderKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodersPool/?([0-9]*)/?$ /api?version=$1&method=encodersPoolList&encodersPoolKey=$2 last;
+		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/?$ /api?version=$1&method=addEncoder last;
+			rewrite ^/catramms/(v[0-9]+)/encodersPool/?$ /api?version=$1&method=addEncodersPool last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /api?version=$1&method=modifyEncoder&encoderKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodersPool/([0-9]+)/?$ /api?version=$1&method=modifyEncodersPool&encodersPoolKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /api?version=$1&method=removeEncoder&encoderKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodersPool/([0-9]+)/?$ /api?version=$1&method=removeEncodersPool&encodersPoolKey=$2 last;
 		}
 
 		if ($request_method = PUT) {

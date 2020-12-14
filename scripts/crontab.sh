@@ -126,7 +126,7 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/logs -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 2 ]
 	then
@@ -135,7 +135,7 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 3 ]
 	then
@@ -162,7 +162,7 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 6 ]
 	then
@@ -171,7 +171,7 @@ else
 			timeoutInMinutes=$oneHourInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 7 ]
 	then
@@ -180,7 +180,7 @@ else
 			timeoutInMinutes=$oneHourInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 8 ]
 	then
@@ -238,7 +238,7 @@ else
 			timeoutInMinutes=$twoDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/logs/nginx -mmin +$timeoutInMinutes -type d -exec rm -rv {} +"
+		commandToBeExecuted="find /var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d -exec rm -rv {} +"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 13 ]
 	then
@@ -260,9 +260,11 @@ else
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
 	then
-		dumpDirectory=/var/catramms/storage/dbDump
+		#2020-12-09: added / at the end of dumpDirectory (because it is a link,
+		#'find' would not work)
+		dumpDirectory=/var/catramms/storage/dbDump/
 		dumpFileName=$(date +"%Y-%m-%d").sql
-		mysqldump -u mms -pf_-nI*eD-17-R*U -h db-server-active mms > $dumpDirectory/$dumpFileName && gzip $dumpDirectory/$dumpFileName
+		mysqldump -u mms -pf_-nI*eD-17-R*U -h db-server-active mms > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
 
 		if [ "$timeoutInMinutes" == "" ]
 		then

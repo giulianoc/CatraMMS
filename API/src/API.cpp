@@ -405,7 +405,7 @@ void API::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool, bool, bool,bool,bool,bool,bool,bool>&
+        tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
 			userKeyWorkspaceAndFlags,
 		string apiKey,
         unsigned long contentLength,
@@ -425,11 +425,14 @@ void API::manageRequestAndResponse(
     bool editMedia;
     bool editConfiguration;
     bool killEncoding;
+    bool cancelIngestionJob_;
+    bool editEncodersPool;
 
     if (basicAuthenticationPresent)
     {
         tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles,
-				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding) 
+				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding,
+				cancelIngestionJob_, editEncodersPool) 
                 = userKeyWorkspaceAndFlags;
 
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
@@ -448,6 +451,8 @@ void API::manageRequestAndResponse(
             + ", editMedia: " + to_string(editMedia)
             + ", editConfiguration: " + to_string(editConfiguration)
             + ", killEncoding: " + to_string(killEncoding)
+            + ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
+            + ", editEncodersPool: " + to_string(editEncodersPool)
         );        
     }
 
@@ -1473,9 +1478,161 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
         shareWorkspace_(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "workspaceList")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		workspaceList(request, workspace, queryParameters);
+    }
     else if (method == "confirmRegistration")
     {
         confirmRegistration(request, queryParameters);
+    }
+    else if (method == "addEncoder")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		addEncoder(request, workspace, requestBody);
+    }
+    else if (method == "removeEncoder")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		removeEncoder(request, workspace, queryParameters);
+    }
+    else if (method == "modifyEncoder")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		modifyEncoder(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "encoderList")
+    {
+		encoderList(request, workspace, admin, queryParameters);
+    }
+    else if (method == "encodersPoolList")
+    {
+		encodersPoolList(request, workspace, admin, queryParameters);
+    }
+    else if (method == "addEncodersPool")
+    {
+        if (!editEncodersPool)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editEncodersPool: " + to_string(editEncodersPool)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		addEncodersPool(request, workspace, requestBody);
+    }
+    else if (method == "modifyEncodersPool")
+    {
+        if (!editEncodersPool)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editEncodersPool: " + to_string(editEncodersPool)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		modifyEncodersPool(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeEncodersPool")
+    {
+        if (!editEncodersPool)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editEncodersPool: " + to_string(editEncodersPool)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		removeEncodersPool(request, workspace, queryParameters);
+    }
+    else if (method == "addAssociationWorkspaceEncoder")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		addAssociationWorkspaceEncoder(request, workspace, queryParameters);
+    }
+    else if (method == "removeAssociationWorkspaceEncoder")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		removeAssociationWorkspaceEncoder(request, workspace, queryParameters);
     }
     else if (method == "createDeliveryAuthorization")
     {
@@ -1551,6 +1708,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "cancelIngestionJob")
     {
+        if (!cancelIngestionJob_)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         cancelIngestionJob(request, workspace, queryParameters, requestBody);
     }
     else if (method == "encodingJobsStatus")
@@ -1563,6 +1732,18 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "killOrCancelEncodingJob")
     {
+        if (!killEncoding)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", killEncoding: " + to_string(killEncoding)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         killOrCancelEncodingJob(request, workspace, queryParameters, requestBody);
     }
     else if (method == "mediaItemsList")
@@ -1647,7 +1828,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
             throw runtime_error(errorMessage);
         }
-                
+
         removeEncodingProfilesSet(request, workspace,
             queryParameters);
     }
@@ -1677,14 +1858,50 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addYouTubeConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         addYouTubeConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyYouTubeConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         modifyYouTubeConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeYouTubeConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         removeYouTubeConf(request, workspace, queryParameters);
     }
     else if (method == "youTubeConfList")
@@ -1693,14 +1910,50 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addFacebookConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         addFacebookConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyFacebookConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         modifyFacebookConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeFacebookConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         removeFacebookConf(request, workspace, queryParameters);
     }
     else if (method == "facebookConfList")
@@ -1709,14 +1962,50 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addChannelConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         addChannelConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyChannelConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         modifyChannelConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeChannelConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         removeChannelConf(request, workspace, queryParameters);
     }
     else if (method == "channelConfList")
@@ -1725,14 +2014,50 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addFTPConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         addFTPConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyFTPConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         modifyFTPConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeFTPConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         removeFTPConf(request, workspace, queryParameters);
     }
     else if (method == "ftpConfList")
@@ -1741,14 +2066,50 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addEMailConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         addEMailConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "modifyEMailConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         modifyEMailConf(request, workspace, queryParameters, requestBody);
     }
     else if (method == "removeEMailConf")
     {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         removeEMailConf(request, workspace, queryParameters);
     }
     else if (method == "emailConfList")

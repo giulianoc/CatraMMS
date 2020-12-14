@@ -33,6 +33,7 @@ SET (SOURCES_API
 	API_WorkflowLibrary.cpp
 	API_UserWorkspace.cpp
 	API_Configuration.cpp
+	API_EncodersPool.cpp
 )
 
 #SET (SOURCES_UPLOADBINARY

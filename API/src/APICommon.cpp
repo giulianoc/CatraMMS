@@ -301,7 +301,7 @@ int APICommon::operator()()
                 requestURI = it->second;
         }
 
-        tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool, bool, bool, bool, bool, bool, bool>
+        tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 			userKeyWorkspaceAndFlags;
         bool basicAuthenticationPresent = basicAuthenticationRequired(requestURI, queryParameters);
 		string apiKey;

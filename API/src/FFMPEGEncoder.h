@@ -135,7 +135,7 @@ public:
             string requestMethod,
             unordered_map<string, string> queryParameters,
             bool basicAuthenticationPresent,
-            tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool, bool, bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+            tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>& userKeyWorkspaceAndFlags,
 			string apiKey,
             unsigned long contentLength,
             string requestBody,

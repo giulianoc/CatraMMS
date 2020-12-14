@@ -47,13 +47,14 @@ int main (int iArgc, char *pArgv [])
 		bool editConfiguration = false;
 		bool killEncoding = false;
 		bool cancelIngestionJob = false;
+		bool editEncodersPool = false;
 
 		mmsEngineDBFacade->createAPIKeyForActiveDirectoryUser(
                 userKey,
                 userEmailAddress,
                 createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
                 shareWorkspace, editMedia,
-                editConfiguration, killEncoding, cancelIngestionJob,
+                editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
                 workspaceKey);
 	}
 

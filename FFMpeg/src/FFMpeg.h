@@ -185,6 +185,7 @@ public:
 		string liveURL,
 		string userAgent,
 		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
 		vector<tuple<int, string, string, string, string, int, int>>& videoTracks,
 		vector<tuple<int, string, string, string, int, bool>>& audioTracks
 	);

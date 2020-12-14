@@ -4549,7 +4549,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 {
     Json::Value ingestionJobRoot;
     string      lastSQLCommand;
-    
+
 
     try
     {
@@ -4844,6 +4844,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
+		/*
         if (conn != nullptr)
         {
             _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4852,6 +4853,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             _connectionPool->unborrow(conn);
 			conn = nullptr;
         }
+		*/
 
         throw se;
     }    
@@ -4863,6 +4865,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
+		/*
         if (conn != nullptr)
         {
             _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4871,6 +4874,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             _connectionPool->unborrow(conn);
 			conn = nullptr;
         }
+		*/
 
         throw e;
     } 
@@ -4881,6 +4885,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
+		/*
         if (conn != nullptr)
         {
             _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4889,6 +4894,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             _connectionPool->unborrow(conn);
 			conn = nullptr;
         }
+		*/
 
         throw e;
     } 

@@ -41,6 +41,7 @@ int main (int iArgc, char *pArgv [])
 			liveURL,
 			"",	// userAgent
 			0,	// ingestionJobKey,
+			0,	// encodingJobKey,
 			videoTracks,
 			audioTracks
 		);

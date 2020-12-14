@@ -63,7 +63,7 @@ public:
             string requestMethod,
             unordered_map<string, string> queryParameters,
             bool basicAuthenticationPresent,
-            tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool, bool, bool,bool,bool,bool,bool>&
+            tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
 				userKeyWorkspaceAndFlags,
 			string apiKey,
             unsigned long contentLength,
@@ -162,6 +162,11 @@ private:
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
+
+    void workspaceList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
 
     void confirmRegistration(
         FCGX_Request& request,
@@ -475,6 +480,58 @@ private:
         long long& contentRangeEnd,
         long long& contentRangeSize);
     
+	void addEncoder(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		string requestBody);
+
+	void modifyEncoder(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters,
+		string requestBody);
+
+	void removeEncoder(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
+	void encoderList(
+		FCGX_Request& request, 
+		shared_ptr<Workspace> workspace, bool admin,
+		unordered_map<string, string> queryParameters);
+
+	void encodersPoolList(
+		FCGX_Request& request, 
+		shared_ptr<Workspace> workspace, bool admin,
+		unordered_map<string, string> queryParameters);
+
+	void addEncodersPool(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		string requestBody);
+
+	void modifyEncodersPool(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters,
+		string requestBody);
+
+	void removeEncodersPool(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
+	void addAssociationWorkspaceEncoder(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
+	void removeAssociationWorkspaceEncoder(
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
 };
 
 #endif /* POSTCUSTOMER_H */
