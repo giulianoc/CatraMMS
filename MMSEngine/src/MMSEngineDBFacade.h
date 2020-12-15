@@ -1979,6 +1979,8 @@ public:
 
 	int64_t addEncoder(
 		string label,
+		bool external,
+		bool enabled,
 		string protocol,
 		string serverName,
 		int port,
@@ -1990,6 +1992,8 @@ public:
 	void modifyEncoder(
 		int64_t encoderKey,
 		bool labelToBeModified, string label,
+		bool externalToBeModified, bool external,
+		bool enabledToBeModified, bool enabled,
 		bool protocolToBeModified, string protocol,
 		bool serverNameToBeModified, string serverName,
 		bool portToBeModified, int port,

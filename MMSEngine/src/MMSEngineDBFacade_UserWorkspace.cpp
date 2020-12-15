@@ -3720,8 +3720,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			Json::Value encodersRoot(Json::arrayValue);
 			{
 				string lastSQLCommand =
-					"select e.encoderKey, e.label, e.protocol, e.serverName, e.port, "
-					"e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
+					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
+					"e.serverName, e.port, e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
 					"e.maxLiveRecordingCapabilities "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm "
 					"where e.encoderKey = ewm.encoderKey "

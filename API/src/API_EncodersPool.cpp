@@ -32,6 +32,8 @@ void API::addEncoder(
     try
     {
         string label;
+		bool external;
+		bool enabled;
         string protocol;
         string serverName;
         int port;
@@ -75,6 +77,18 @@ void API::addEncoder(
                 throw runtime_error(errorMessage);
             }    
             label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "External";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				external = requestBodyRoot.get(field, false).asBool();            
+			else
+				external = false;
+
+            field = "true";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				enabled = requestBodyRoot.get(field, true).asBool();            
+			else
+				enabled = true;
 
             field = "Protocol";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -153,7 +167,7 @@ void API::addEncoder(
         try
         {
 			int64_t encoderKey = _mmsEngineDBFacade->addEncoder(
-                label, protocol, serverName, port, maxTranscodingCapability,
+                label, external, enabled, protocol, serverName, port, maxTranscodingCapability,
 				maxLiveProxiesCapabilities, maxLiveRecordingCapabilities);
 
             sResponse = (
@@ -231,6 +245,12 @@ void API::modifyEncoder(
         string label;
 		bool labelToBeModified;
 
+        bool external;
+		bool externalToBeModified;
+
+        bool enabled;
+		bool enabledToBeModified;
+
         string protocol;
 		bool protocolToBeModified;
 
@@ -283,6 +303,24 @@ void API::modifyEncoder(
 			}
 			else
 				labelToBeModified = false;
+
+            field = "External";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				external = requestBodyRoot.get(field, false).asBool();            
+				externalToBeModified = true;
+			}
+			else
+				externalToBeModified = false;
+
+            field = "Enabled";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				enabled = requestBodyRoot.get(field, true).asBool();            
+				enabledToBeModified = true;
+			}
+			else
+				enabledToBeModified = false;
 
             field = "Protocol";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -377,6 +415,8 @@ void API::modifyEncoder(
             _mmsEngineDBFacade->modifyEncoder(
                 encoderKey,
 				labelToBeModified, label,
+				externalToBeModified, external,
+				enabledToBeModified, enabled,
 				protocolToBeModified, protocol,
 				serverNameToBeModified, serverName,
 				portToBeModified, port,

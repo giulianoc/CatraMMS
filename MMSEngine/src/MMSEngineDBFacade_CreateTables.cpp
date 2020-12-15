@@ -995,6 +995,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_Encoder ("
                     "encoderKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "label					VARCHAR (128) NOT NULL,"
+					"external				TINYINT (1) NOT NULL,"
+					"enabled				TINYINT (1) NOT NULL,"
                     "protocol				VARCHAR (16) NOT NULL,"
                     "serverName				VARCHAR (64) NOT NULL,"
                     "port					INT UNSIGNED NOT NULL,"
@@ -1270,7 +1272,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionJobDependency ("
                     "ingestionJobDependencyKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
+                    "ingestionJobKey					BIGINT UNSIGNED NOT NULL,"
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
                     "orderNumber                        INT UNSIGNED NOT NULL,"

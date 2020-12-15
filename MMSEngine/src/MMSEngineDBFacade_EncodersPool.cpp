@@ -5,6 +5,8 @@
 
 int64_t MMSEngineDBFacade::addEncoder(
     string label,
+	bool external,
+	bool enabled,
     string protocol,
 	string serverName,
 	int port,
@@ -27,15 +29,17 @@ int64_t MMSEngineDBFacade::addEncoder(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Encoder(label, protocol, serverName, port, "
+                "insert into MMS_Encoder(label, external, enabled, protocol, serverName, port, "
 				"maxTranscodingCapability, maxLiveProxiesCapabilities, "
 				"maxLiveRecordingCapabilities) values ("
-                "?, ?, ?, ?, ?, ?, ?)";
+                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setInt(queryParameterIndex++, external ? 1 : 0);
+            preparedStatement->setInt(queryParameterIndex++, enabled ? 1 : 0);
             preparedStatement->setString(queryParameterIndex++, protocol);
             preparedStatement->setString(queryParameterIndex++, serverName);
             preparedStatement->setInt(queryParameterIndex++, port);
@@ -48,6 +52,8 @@ int64_t MMSEngineDBFacade::addEncoder(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label: " + label
+				+ ", external: " + to_string(external)
+				+ ", enabled: " + to_string(enabled)
 				+ ", protocol: " + protocol
 				+ ", serverName: " + serverName
 				+ ", port: " + to_string(port)
@@ -132,6 +138,8 @@ int64_t MMSEngineDBFacade::addEncoder(
 void MMSEngineDBFacade::modifyEncoder(
     int64_t encoderKey,
     bool labelToBeModified, string label,
+    bool externalToBeModified, bool external,
+    bool enabledToBeModified, bool enabled,
     bool protocolToBeModified, string protocol,
 	bool serverNameToBeModified, string serverName,
 	bool portToBeModified, int port,
@@ -160,6 +168,22 @@ void MMSEngineDBFacade::modifyEncoder(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += ("label = ?");
+				oneParameterPresent = true;
+			}
+
+			if (externalToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("external = ?");
+				oneParameterPresent = true;
+			}
+
+			if (enabledToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("enabled = ?");
 				oneParameterPresent = true;
 			}
 
@@ -231,6 +255,10 @@ void MMSEngineDBFacade::modifyEncoder(
             int queryParameterIndex = 1;
 			if (labelToBeModified)
 				preparedStatement->setString(queryParameterIndex++, label);
+			if (externalToBeModified)
+				preparedStatement->setInt(queryParameterIndex++, external ? 1 : 0);
+			if (enabledToBeModified)
+				preparedStatement->setInt(queryParameterIndex++, enabled ? 1 : 0);
 			if (protocolToBeModified)
 				preparedStatement->setString(queryParameterIndex++, protocol);
 			if (serverNameToBeModified)
@@ -250,6 +278,8 @@ void MMSEngineDBFacade::modifyEncoder(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", label (" + to_string(labelToBeModified) + "): " + label
+				+ ", external (" + to_string(externalToBeModified) + "): " + to_string(external)
+				+ ", enabled (" + to_string(enabledToBeModified) + "): " + to_string(enabled)
 				+ ", protocol (" + to_string(protocolToBeModified) + "): " + protocol
 				+ ", serverName (" + to_string(serverNameToBeModified) + "): " + serverName
 				+ ", port (" + to_string(portToBeModified) + "): " + to_string(port)
@@ -800,8 +830,12 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 		else
 		{
 			// join with MMS_EncoderWorkspaceMapping
-			sqlWhere = "where e.encoderKey = ewm.encoderKey "
-				"and ewm.workspaceKey = ? " + sqlWhere;
+			if (sqlWhere != "")
+				sqlWhere = "where e.encoderKey = ewm.encoderKey "
+					"and ewm.workspaceKey = ? and " + sqlWhere;
+			else
+				sqlWhere = "where e.encoderKey = ewm.encoderKey "
+					"and ewm.workspaceKey = ? ";
 		}
 
         Json::Value responseRoot;
@@ -867,18 +901,18 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 
 			if (allEncoders)
 				lastSQLCommand = 
-					string("select e.encoderKey, e.label, e.protocol, e.serverName, e.port, "
-						"e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
-						"e.maxLiveRecordingCapabilities "
+					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
+						"e.serverName, e.port, e.maxTranscodingCapability, "
+						"e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e ") 
                 + sqlWhere
 				+ orderByCondition
 				+ "limit ? offset ?";
 			else
 				lastSQLCommand = 
-					string("select e.encoderKey, e.label, e.protocol, e.serverName, e.port, "
-						"e.maxTranscodingCapability, e.maxLiveProxiesCapabilities, "
-						"e.maxLiveRecordingCapabilities "
+					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
+						"e.serverName, e.port, e.maxTranscodingCapability, "
+						"e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm ") 
                 + sqlWhere
 				+ orderByCondition
@@ -1010,6 +1044,12 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 		field = "label";
 		encoderRoot[field] = static_cast<string>(resultSet->getString("label"));
 
+		field = "external";
+		encoderRoot[field] = resultSet->getInt("external") == 1 ? true : false;
+
+		field = "enabled";
+		encoderRoot[field] = resultSet->getInt("enabled") == 1 ? true : false;
+
 		field = "protocol";
 		encoderRoot[field] = static_cast<string>(resultSet->getString("protocol"));
 
@@ -1133,8 +1173,8 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
             encodersPoolListRoot[field] = requestParametersRoot;
         }
         
-		// label == NULL is the "internal" EncodersPool representing the default encoders pool,
-		// the one using all the internal encoders of the workspace
+		// label == NULL is the "internal" EncodersPool representing the default encoders pool
+		// for a workspace, the one using all the internal encoders associated to the workspace
 		string sqlWhere = "where workspaceKey = ? and label is not NULL ";
         if (encodersPoolKey != -1)
 			sqlWhere += ("and encodersPoolKey = ? ");
@@ -1176,9 +1216,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
             }
 
             field = "numFound";
-            responseRoot[field] = resultSet->getInt64(1) - 1;	// we have to remove the EncodersPool
-				// with label NULL, the one used by default for the Workspace. This is like an internal
-				// EncodersPool and does not have to be known to the client/end-user
+            responseRoot[field] = resultSet->getInt64(1);
         }
 
         Json::Value encodersPoolsRoot(Json::arrayValue);
@@ -1255,9 +1293,9 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
 						{
 							lastSQLCommand = 
-								string("select encoderKey, label, protocol, serverName, port, "
-									"maxTranscodingCapability, maxLiveProxiesCapabilities, "
-									"maxLiveRecordingCapabilities "
+								string("select encoderKey, label, external, enabled, protocol, "
+									"serverName, port, maxTranscodingCapability, "
+									"maxLiveProxiesCapabilities, maxLiveRecordingCapabilities "
 									"from MMS_Encoder ")
 								+ "where encoderKey = ? ";
 
