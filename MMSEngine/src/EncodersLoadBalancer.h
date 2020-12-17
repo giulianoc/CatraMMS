@@ -44,6 +44,10 @@ public:
 
     string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string encoderToSkip);
     
+	pair<int64_t, string> getEncoderURL(
+		string encodersPoolLabel, shared_ptr<Workspace> workspace,
+		int64_t encoderKeyToBeSkipped);
+
 private:
     struct EncodersPoolDetails {
         vector<string>          _encoders;

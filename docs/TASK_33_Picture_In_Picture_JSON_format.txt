@@ -56,7 +56,8 @@
 		"Overlay_Width_InPixel": "overlayVideo_width/5",                                  
 		"Overlay_Height_InPixel": "overlayVideo_height/5",                                
 
-		// optional. To be set only in case a specific encoders pool has to be used
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
 		"EncodersPool": "",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow

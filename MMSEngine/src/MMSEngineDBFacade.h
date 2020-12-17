@@ -536,6 +536,7 @@ public:
         EncodingType                            _encodingType;
         string                                  _encodingParameters;
 		string									_transcoder;
+		int64_t									_encoderKey;
 		string									_stagingEncodedAssetPathName;
         // MMS_EncodingJob -> parameters
         Json::Value                             _encodingParametersRoot;
@@ -1707,9 +1708,10 @@ public:
     void updateEncodingJobTranscoder (
 		int64_t encodingJobKey,
 		string transcoder,
+		int64_t encoderKey,
 		string stagingEncodedAssetPathName);
 
-	string getLiveRecorderOtherTranscoder (
+	pair<int64_t, string> getLiveRecorderOtherTranscoder (
 		bool isEncodingJobKeyMain, int64_t encodingJobKey);
 
 	tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
@@ -2023,6 +2025,10 @@ public:
 		int64_t workspaceKey, int64_t encodersPoolKey, string label,
 		string labelOrder	// "" or "asc" or "desc"
 	);
+
+	tuple<int64_t, string, string, int> getEncoderByEncodersPool(
+      int64_t workspaceKey, string encodersPoolLabel,
+      int64_t encoderKeyToBeSkipped);
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

@@ -191,6 +191,7 @@ private:
         int                             _ffmpegMaxCapacity;
     #else
         string                          _currentUsedFFMpegEncoderHost;
+		int64_t							_currentUsedFFMpegEncoderKey;
     #endif
 
 	// used only in case of face recognition/identification video generation

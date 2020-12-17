@@ -32,7 +32,8 @@
 		//	Live-Grid will add it and set his channel URL
 		"OutputChannelLabel": "TV1 and TV 2",
 
-		// optional. To be set only in case a specific encoders pool has to be used
+		// optional. To be set with the EncodersPool label only in case a specific 
+		// encoders pool has to be used
 		"EncodersPool": "",
 
 		// optional. Default: 10

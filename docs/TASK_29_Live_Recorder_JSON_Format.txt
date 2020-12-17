@@ -51,7 +51,8 @@
 		//		Default value is 'ts'.
 		"OutputFileFormat": "ts",
 
-		// optional. To be set only in case a specific encoders pool has to be used
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
 		"EncodersPool": "",
 
 		// optional. the LiveRecorderVOD is the Media Item updated continuously containing

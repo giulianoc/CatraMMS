@@ -26,7 +26,8 @@
 		//   the MaxEncodingPriority of the Workspace will be used.
 		"EncodingPriority": "Low",
 
-		// optional. To be set only in case a specific encoders pool has to be used
+		// optional. To be set with the EncodersPool label only in case a specific 
+		// encoders pool has to be used
 		"EncodersPool": "",
 
 		// mandatory: just one, EncodingProfilesSetKey, EncodingProfilesSetLabel,

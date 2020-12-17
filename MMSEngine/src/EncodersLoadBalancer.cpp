@@ -86,3 +86,65 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
     return it->second._encoders[it->second._lastEncoderUsed];
 }
 
+pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
+	string encodersPoolLabel, shared_ptr<Workspace> workspace,
+	int64_t encoderKeyToBeSkipped)
+{
+
+    _logger->info(__FILEREF__ + "Received getEncoderURL"
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", encodersPoolLabel: " + encodersPoolLabel
+			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+    );
+
+	try
+	{
+		tuple<int64_t, string, string, int> encoderByEncodersPool =
+			_mmsEngineDBFacade->getEncoderByEncodersPool(
+			workspace->_workspaceKey, encodersPoolLabel,
+			encoderKeyToBeSkipped);
+
+		int64_t encoderKey;
+		string protocol;
+		string serverName;
+		int port;
+
+		tie(encoderKey, protocol, serverName, port) = encoderByEncodersPool;
+
+		string encoderURL = protocol + "://" + serverName + ":" + to_string(port);
+
+        _logger->info(__FILEREF__ + "getEncoderURL"
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", encodersPoolLabel: " + encodersPoolLabel
+			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+			+ ", encoderKey: " + to_string(encoderKey)
+			+ ", encoderURL: " + encoderURL
+        );
+
+		return make_pair(encoderKey, encoderURL);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getEncoderURL failed"
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", encodersPool: " + encodersPoolLabel
+			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("getEncoderURL failed")
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", encodersPool: " + encodersPoolLabel
+			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+            + ", e.what(): " + e.what()
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+

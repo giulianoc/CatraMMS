@@ -13,7 +13,8 @@
 		// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
 		"OutputType": "HLS"
 
-		// optional. To be set only in case a specific encoders pool has to be used
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
 		"EncodersPool": "",
 
 		// optional, used only in case of HLS, Default: 10

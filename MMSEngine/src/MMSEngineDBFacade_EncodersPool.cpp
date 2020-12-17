@@ -1901,3 +1901,313 @@ void MMSEngineDBFacade::removeEncodersPool(
     }        
 }
 
+tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
+	int64_t workspaceKey, string encodersPoolLabel,
+	int64_t encoderKeyToBeSkipped)
+{
+    string      lastSQLCommand;
+    Json::Value encodersPoolListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getEncoderByEncodersPool"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", encodersPoolLabel: " + encodersPoolLabel
+            + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		int lastEncoderIndexUsed;
+		int64_t encodersPoolKey;
+        {
+			if (encodersPoolLabel == "")
+				lastSQLCommand = 
+					string("select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool ") 
+					+ "where workspaceKey = ? "
+					+ "and label is null ";
+			else
+				lastSQLCommand = 
+					string("select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool ") 
+					+ "where workspaceKey = ? "
+					+ "and label = ? ";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodersPoolLabel != "")
+				preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (!resultSet->next())
+			{
+				string errorMessage = string("lastEncoderIndexUsed was not found")
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", encodersPoolLabel: " + encodersPoolLabel
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			lastEncoderIndexUsed = resultSet->getInt("lastEncoderIndexUsed");
+			encodersPoolKey = resultSet->getInt64("encodersPoolKey");
+        }
+
+		int encodersNumber;
+		{
+			if (encodersPoolLabel == "")
+				lastSQLCommand = string("select count(*) from MMS_EncoderWorkspaceMapping ")
+					+ "where workspaceKey = ? ";
+			else
+				lastSQLCommand = string("select count(*) from MMS_EncoderEncodersPoolMapping ")
+					+ "where encodersPoolKey = ? ";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (encodersPoolLabel == "")
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (!resultSet->next())
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            encodersNumber = resultSet->getInt64(1);
+        }
+
+		int newLastEncoderIndexUsed = lastEncoderIndexUsed;
+
+		int64_t encoderKey;
+		string protocol;
+		string serverName;
+		int port;
+		bool encoderFound = false;
+		int encoderIndex = 0;
+		while(!encoderFound && encoderIndex < encodersNumber)
+		{
+			encoderIndex++;
+
+			newLastEncoderIndexUsed = (newLastEncoderIndexUsed + 1) % encodersNumber;
+
+			if (encodersPoolLabel == "")
+				lastSQLCommand = 
+					string("select e.encoderKey, e.protocol, e.serverName, e.port ")
+					+ "from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm " 
+					+ "where e.encoderKey = ewm.encoderKey and ewm.workspaceKey = ? "
+					+ "and e.enabled = 1 order by e.serverName "
+					+ "limit 1 offset ?";
+			else
+				lastSQLCommand = 
+					string("select e.encoderKey, e.protocol, e.serverName, e.port ")
+					+ "from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm " 
+					+ "where e.encoderKey = eepm.encoderKey and eepm.encodersPoolKey = ? "
+					+ "and e.enabled = 1 order by e.serverName "
+					+ "limit 1 offset ?";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (encodersPoolLabel == "")
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
+			preparedStatement->setInt(queryParameterIndex++, newLastEncoderIndexUsed);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+				+ ", newLastEncoderIndexUsed: " + to_string(newLastEncoderIndexUsed)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (resultSet->next())
+			{
+				encoderKey = resultSet->getInt64("encoderKey");
+
+				if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
+				{
+					_logger->info(__FILEREF__ + "getEncoderByEncodersPool, skipped encoderKey"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encodersPoolLabel: " + encodersPoolLabel
+						+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+					);
+
+					continue;
+				}
+
+				protocol = resultSet->getString("protocol");
+				serverName = resultSet->getString("serverName");
+				port = resultSet->getInt("port");
+
+				encoderFound = true;
+			}
+			else
+			{
+				string errorMessage = string("Encoder details not found")
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (!encoderFound)
+		{
+			string errorMessage = string("Encoder was not found")
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+        {
+            lastSQLCommand = 
+                string("update MMS_EncodersPool set lastEncoderIndexUsed = ? ") +
+				"where encodersPoolKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			preparedStatement->setInt(queryParameterIndex++, newLastEncoderIndexUsed);
+            preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newLastEncoderIndexUsed: " + to_string(newLastEncoderIndexUsed)
+				+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+					+ ", newLastEncoderIndexUsed: " + to_string(newLastEncoderIndexUsed)
+					+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+				// in case of one encoder, no update is done
+				// because newLastEncoderIndexUsed is always the same
+
+                // throw runtime_error(errorMessage);                    
+			}
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+
+		return make_tuple(encoderKey, protocol, serverName, port);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+}
+
