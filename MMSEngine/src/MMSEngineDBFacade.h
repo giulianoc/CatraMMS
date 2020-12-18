@@ -1401,6 +1401,7 @@ public:
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
+		int64_t encoderKey,
         bool asc, string status, string types);
 
     Json::Value getMediaItemsList (

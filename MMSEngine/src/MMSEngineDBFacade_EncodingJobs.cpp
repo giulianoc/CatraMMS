@@ -5778,11 +5778,12 @@ tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
 }
 
 Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
-        shared_ptr<Workspace> workspace, int64_t encodingJobKey,
-        int start, int rows,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
-        bool asc, string status, string types
+	shared_ptr<Workspace> workspace, int64_t encodingJobKey,
+	int start, int rows,
+	bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+	bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
+	int64_t encoderKey,
+	bool asc, string status, string types
 )
 {
     string      lastSQLCommand;
@@ -5832,6 +5833,12 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 requestParametersRoot[field] = endEncodingDate;
             }
             
+            if (encoderKey != -1)
+            {
+                field = "encoderKey";
+                requestParametersRoot[field] = encoderKey;
+            }
+            
             field = "status";
             requestParametersRoot[field] = status;
 
@@ -5874,6 +5881,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (startAndEndEncodingDatePresent)
             sqlWhere += ("and ej.encodingJobStart >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ej.encodingJobStart <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (encoderKey != -1)
+            sqlWhere += ("and ej.encoderKey = ? ");
         if (status == "All")
             ;
         else if (status == "Completed")
@@ -5911,6 +5920,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startEncodingDate);
                 preparedStatement->setString(queryParameterIndex++, endEncodingDate);
             }
+            if (encoderKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encoderKey);
             if (types != "")
 			{
 				if (vTypes.size() == 1)
@@ -5926,6 +5937,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startEncodingDate: " + startEncodingDate
 				+ ", endEncodingDate: " + endEncodingDate
+				+ ", encoderKey: " + to_string(encoderKey)
 				+ ", types: " + types
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -5974,6 +5986,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 preparedStatementEncodingJob->setString(queryParameterIndex++, startEncodingDate);
                 preparedStatementEncodingJob->setString(queryParameterIndex++, endEncodingDate);
             }
+            if (encoderKey != -1)
+                preparedStatementEncodingJob->setInt64(queryParameterIndex++, encoderKey);
             if (types != "")
 			{
 				if (vTypes.size() == 1)
@@ -5991,6 +6005,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				+ ", endIngestionDate: " + endIngestionDate
 				+ ", startEncodingDate: " + startEncodingDate
 				+ ", endEncodingDate: " + endEncodingDate
+				+ ", encoderKey: " + to_string(encoderKey)
 				+ ", types: " + types
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)

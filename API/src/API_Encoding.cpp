@@ -87,6 +87,13 @@ void API::encodingJobsStatus(
             startAndEndEncodingDatePresent = true;
         }
 
+        int64_t encoderKey = -1;
+        auto encoderKeyIt = queryParameters.find("encoderKey");
+        if (encoderKeyIt != queryParameters.end() && encoderKeyIt->second != "")
+        {
+            encoderKey = stoll(encoderKeyIt->second);
+        }
+
         bool asc = true;
         auto ascIt = queryParameters.find("asc");
         if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -117,6 +124,7 @@ void API::encodingJobsStatus(
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     startAndEndEncodingDatePresent, startEncodingDate, endEncodingDate,
+					encoderKey,
                     asc, status, types
                     );
 
