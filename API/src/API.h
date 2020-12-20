@@ -225,7 +225,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-	void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
+	void killEncodingJob(int64_t encoderKey, int64_t encodingJobKey);
 
     void mediaItemsList(
         FCGX_Request& request,

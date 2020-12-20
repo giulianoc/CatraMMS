@@ -63,6 +63,21 @@ struct MediaItemKeyNotFound: public exception {
     }; 
 };
 
+struct EncoderNotFound: public exception { 
+
+    string _errorMessage;
+
+    EncoderNotFound(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+
+    char const* what() const throw() 
+    {
+        return _errorMessage.c_str();
+    }; 
+};
+
 struct ConfKeyNotFound: public exception { 
     
     string _errorMessage;
@@ -535,7 +550,6 @@ public:
         EncodingPriority                        _encodingPriority;
         EncodingType                            _encodingType;
         string                                  _encodingParameters;
-		string									_transcoder;
 		int64_t									_encoderKey;
 		string									_stagingEncodedAssetPathName;
         // MMS_EncodingJob -> parameters
@@ -1708,15 +1722,14 @@ public:
 
     void updateEncodingJobTranscoder (
 		int64_t encodingJobKey,
-		string transcoder,
 		int64_t encoderKey,
 		string stagingEncodedAssetPathName);
 
-	pair<int64_t, string> getLiveRecorderOtherTranscoder (
+	int64_t getLiveRecorderOtherTranscoder (
 		bool isEncodingJobKeyMain, int64_t encodingJobKey);
 
-	tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
-		string, MMSEngineDBFacade::EncodingStatus, int64_t>
+	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
+		int64_t, MMSEngineDBFacade::EncodingStatus, int64_t>
 		getEncodingJobDetails (int64_t encodingJobKey);
 
     void checkWorkspaceStorageAndMaxIngestionNumber (int64_t workspaceKey);
@@ -2030,6 +2043,11 @@ public:
 	tuple<int64_t, string, string, int> getEncoderByEncodersPool(
       int64_t workspaceKey, string encodersPoolLabel,
       int64_t encoderKeyToBeSkipped);
+
+	int getEncodersNumberByEncodersPool(
+      int64_t workspaceKey, string encodersPoolLabel);
+
+	string getEncoderURL(int64_t encoderKey);
 
 	int64_t addEncodersPool(
 		int64_t workspaceKey,

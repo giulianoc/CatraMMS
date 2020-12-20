@@ -95,7 +95,7 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
 			+ ", encodersPoolLabel: " + encodersPoolLabel
 			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
-    );
+	);
 
 	try
 	{
@@ -123,6 +123,17 @@ pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 
 		return make_pair(encoderKey, encoderURL);
 	}
+    catch(EncoderNotFound e)
+    {
+        _logger->error(__FILEREF__ + "getEncoderURL failed"
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			+ ", encodersPool: " + encodersPoolLabel
+			+ ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "getEncoderURL failed"

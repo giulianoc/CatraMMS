@@ -2104,7 +2104,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 	bool responseInitialized = false;
 	try
 	{
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -2679,17 +2679,17 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -2717,8 +2717,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
 
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -3715,7 +3714,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
 
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -4063,17 +4062,17 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -4101,8 +4100,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
 
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -4719,7 +4717,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -5063,17 +5061,17 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -5101,8 +5099,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
 
 		bool killedByUser = false;
 		// loop waiting the end of the encoding
@@ -5704,7 +5701,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 	{
 		string stagingEncodedAssetPathName;
 
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -6040,17 +6037,17 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -6078,8 +6075,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
 
 		bool killedByUser = false;
 
@@ -6471,7 +6467,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		string stagingEncodedAssetPathName;
 		bool killedByUser = false;
 
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -6828,17 +6824,17 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -6866,8 +6862,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			stagingEncodedAssetPathName);
+			_currentUsedFFMpegEncoderKey, stagingEncodedAssetPathName);
 
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -7253,7 +7248,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 	bool responseInitialized = false;
 	try
 	{
-		if (_encodingItem->_transcoder == "") // || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1) // || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -7548,17 +7543,17 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			// stagingEncodedAssetPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -7586,8 +7581,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			"");
+			_currentUsedFFMpegEncoderKey, "");
 
 		// loop waiting the end of the encoding
 		bool encodingFinished = false;
@@ -7874,7 +7868,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 	{
 		string slideShowMediaPathName;
 
-		if (_encodingItem->_transcoder == "" || _encodingItem->_stagingEncodedAssetPathName == "")
+		if (_encodingItem->_encoderKey == -1 || _encodingItem->_stagingEncodedAssetPathName == "")
 		{
 			/*
 			string encoderToSkip;
@@ -8168,17 +8162,17 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", transcoder: " + _encodingItem->_transcoder
+				+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				+ ", stagingEncodedAssetPathName: " + _encodingItem->_stagingEncodedAssetPathName
 			);
 
-			_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+			_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 			_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 			slideShowMediaPathName = _encodingItem->_stagingEncodedAssetPathName;
 
-			// we have to reset _encodingItem->_transcoder because in case we will come back
+			// we have to reset _encodingItem->_encoderKey because in case we will come back
 			// in the above 'while' loop, we have to select another encoder
-			_encodingItem->_transcoder	= "";
+			_encodingItem->_encoderKey	= -1;
 
 			// ffmpegEncoderURL = 
             //        _ffmpegEncoderProtocol
@@ -8206,8 +8200,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 			+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 		);
 		_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-			_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-			slideShowMediaPathName);
+			_currentUsedFFMpegEncoderKey, slideShowMediaPathName);
 
 		bool killedByUser = false;
 
@@ -10108,9 +10101,11 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
-			if (_encodingItem->_transcoder == "")
+			if (_encodingItem->_encoderKey == -1)
 			{
-				// In case of HighAvailability, main and backup should run on different server
+				// In case of HighAvailability, main and backup should run on different server.
+				// The below algorithm assigns first the main transcoder and, only
+				// once the main transcoder is assigned, trying to assign the backup transcoder
 				// case Main:
 				//		1. look for the transcoder of the backup
 				//		2. if it is no defined
@@ -10120,28 +10115,27 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				// case Backup:
 				//		1. look for the mainTransocder
 				//		2. if present
-				//			a transcoder different by the mainTranscoder (if exist) is used
+				//				a transcoder different by the mainTranscoder (if exist) is used
 				//		   else
-				//		    sleep and come back to 1. The loop 1. and 2. is executed up to 60 secs
+				//				sleep waiting main transcoder is assigned and come back to 1. The loop 1. and 2. is executed up to 60 secs
 				if (highAvailability)
 				{
 					if (main)
 					{
-						string backupTranscoder;
-						int64_t backupEncoderKey;
-						pair<int64_t, string> otherTranscoder =
-							_mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-								main, _encodingItem->_encodingJobKey);
-						tie(backupEncoderKey, backupTranscoder) = otherTranscoder;
+						/*
+						int64_t backupEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+							main, _encodingItem->_encodingJobKey);
 
-						if (backupTranscoder == "")
+						if (backupEncoderKey == -1)
+						*/
 						{
-							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). BackupTranscoder is not selected yet. Just get a transcoder"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", highAvailability: " + to_string(highAvailability)
-									+ ", main: " + to_string(main)
-								);
+							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
+								+ "BackupTranscoder is not selected yet. Just get a transcoder"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", highAvailability: " + to_string(highAvailability)
+								+ ", main: " + to_string(main)
+							);
 
 							/*
 							string transcoderToSKip;
@@ -10150,31 +10144,29 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							*/
 							int64_t encoderKeyToBeSkipped = -1;
 							pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-									encodersPool, _encodingItem->_workspace,
-									encoderKeyToBeSkipped);
+								encodersPool, _encodingItem->_workspace,
+								encoderKeyToBeSkipped);
 							tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 						}
+						/*
 						else
 						{
-							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). BackupTranscoder is already selected. Just get another transcoder"
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", highAvailability: " + to_string(highAvailability)
-									+ ", main: " + to_string(main)
-									+ ", backupTranscoder: " + backupTranscoder
-								);
+							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
+								+ "BackupTranscoder is already selected. Just get another transcoder"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", highAvailability: " + to_string(highAvailability)
+								+ ", main: " + to_string(main)
+								+ ", backupEncoderKey: " + to_string(backupEncoderKey)
+							);
 
-							/*
-							string transcoderToSKip = backupTranscoder;
-							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-									encodersPool, _encodingItem->_workspace, transcoderToSKip);
-							*/
 							int64_t encoderKeyToBeSkipped = backupEncoderKey;
 							pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 									encodersPool, _encodingItem->_workspace,
 									encoderKeyToBeSkipped);
 							tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 						}
+						*/
 					}
 					else
 					{
@@ -10189,31 +10181,34 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 						while (!transcoderFound)
 						{
+							/*
 							string mainTranscoder;
 							int64_t mainEncoderKey;
 							pair<int64_t, string> otherTranscoder =
 								_mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
 									main, _encodingItem->_encodingJobKey);
 							tie(mainEncoderKey, mainTranscoder) = otherTranscoder;
+							*/
+							int64_t mainEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+									main, _encodingItem->_encodingJobKey);
 
-							if (mainTranscoder == "")
+							if (mainEncoderKey == -1)
 							{
 								if (chrono::duration_cast<chrono::seconds>(
 									(chrono::system_clock::now() + chrono::seconds (intervalInSecondsToWaitLiveRecorderMainTranscoder)) - startPoint).count() >
 										maxWaitInSecondsForLiveRecorderMainTranscoder)
 								{
-									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is not selected and time expired, Just get a transcoder"
+									string errorMessage = string("LiveRecorder. Selection of the transcoder (backup). ")
+										+ "Main Transcoder is not selected and time expired, set this encodingJob as failed"
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 										+ ", highAvailability: " + to_string(highAvailability)
 										+ ", main: " + to_string(main)
-									);
+									;
+									_logger->info(__FILEREF__ + errorMessage);
 
+									throw EncoderNotFound(errorMessage);
 									/*
-									string transcoderToSKip;
-									_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-										encodersPool, _encodingItem->_workspace, transcoderToSKip);
-									*/
 									int64_t encoderKeyToBeSkipped = -1;
 									pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 											encodersPool, _encodingItem->_workspace,
@@ -10221,10 +10216,12 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
 									transcoderFound = true;
+									*/
 								}
 								else
 								{
-									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is not selected. Just wait a bit"
+									_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). "
+										+ "Main Transcoder is not selected. Just wait a bit"
 										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 										+ ", highAvailability: " + to_string(highAvailability)
@@ -10239,12 +10236,13 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							}
 							else
 							{
-								_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). Main Transcoder is already selected. Just get another transcoder"
+								_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (backup). "
+									+ "Main Transcoder is already selected. Just get another transcoder"
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", highAvailability: " + to_string(highAvailability)
 									+ ", main: " + to_string(main)
-									+ ", mainTranscoder: " + mainTranscoder
+									+ ", mainEncoderKey: " + to_string(mainEncoderKey)
 								);
 
 								/*
@@ -10761,15 +10759,15 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", transcoder: " + _encodingItem->_transcoder
+					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 
-				// we have to reset _encodingItem->_transcoder because in case we will come back
+				// we have to reset _encodingItem->_encoderKey because in case we will come back
 				// in the above 'while' loop, we have to select another encoder
-				_encodingItem->_transcoder	= "";
+				_encodingItem->_encoderKey	= -1;
 
 				// ffmpegEncoderURL = 
                 //     _ffmpegEncoderProtocol
@@ -10797,8 +10795,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 			);
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
-				_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-				"");
+				_currentUsedFFMpegEncoderKey, "");
 
             // loop waiting the end of the encoding
             bool encodingFinished = false;
@@ -11084,6 +11081,19 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				}
 			}
 		}
+		catch(EncoderNotFound e)
+		{
+            string errorMessage = string("EncoderNotFound")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", e.what(): " + e.what()
+                ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// is finished or not. This encodingJob will be set as failed
+            throw runtime_error(e.what());
+        }
 		catch(MaxConcurrentJobsReached e)
 		{
             string errorMessage = string("MaxConcurrentJobsReached")
@@ -11519,7 +11529,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
-			if (_encodingItem->_transcoder == "")
+			if (_encodingItem->_encoderKey == -1)
 			{
 				/*
 				string encoderToSkip;
@@ -12017,16 +12027,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", transcoder: " + _encodingItem->_transcoder
+					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 				// manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
 
-				// we have to reset _encodingItem->_transcoder because in case we will come back
+				// we have to reset _encodingItem->_encoderKey because in case we will come back
 				// in the above 'while' loop, we have to select another encoder
-				_encodingItem->_transcoder	= "";
+				_encodingItem->_encoderKey	= -1;
 
 				// ffmpegEncoderURL = 
                 //     _ffmpegEncoderProtocol
@@ -12054,9 +12064,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 				+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 			);
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(
-				_encodingItem->_encodingJobKey,
-				_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-				"");
+				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderKey, "");
 
 			/*
 			string manifestDirectoryPathName;
@@ -13156,7 +13164,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 		bool responseInitialized = false;
 		try
 		{
-			if (_encodingItem->_transcoder == "")
+			if (_encodingItem->_encoderKey == -1)
 			{
 				/*
 				string encoderToSkip;
@@ -13650,16 +13658,16 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", transcoder: " + _encodingItem->_transcoder
+					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
 				);
 
-				_currentUsedFFMpegEncoderHost = _encodingItem->_transcoder;
+				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 				// manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
 
-				// we have to reset _encodingItem->_transcoder because in case we will come back
+				// we have to reset _encodingItem->_encoderKey because in case we will come back
 				// in the above 'while' loop, we have to select another encoder
-				_encodingItem->_transcoder	= "";
+				_encodingItem->_encoderKey	= -1;
 
 				// ffmpegEncoderURL = 
                 //     _ffmpegEncoderProtocol
@@ -13687,9 +13695,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 				+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 			);
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(
-				_encodingItem->_encodingJobKey,
-				_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey,
-				"");
+				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderKey, "");
 
 			// encodingProgress: fixed to -1 (LIVE)
 			{

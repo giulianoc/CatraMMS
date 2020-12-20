@@ -286,32 +286,32 @@ void API::killOrCancelEncodingJob(
         }
 
         {
-			tuple<int64_t, string, string, MMSEngineDBFacade::EncodingStatus, bool, bool,
-				string, MMSEngineDBFacade::EncodingStatus, int64_t> encodingJobDetails =
+			tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, bool, bool,
+				int64_t, MMSEngineDBFacade::EncodingStatus, int64_t> encodingJobDetails =
 				_mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
 
 			int64_t ingestionJobKey;
 			string type;
-			string transcoder;
+			int64_t encoderKey;
 			MMSEngineDBFacade::EncodingStatus status;
 			bool highAvailability;
 			bool main;
 			int64_t theOtherEncodingJobKey;
-			string theOtherTranscoder;
+			int64_t theOtherEncoderKey;
 			MMSEngineDBFacade::EncodingStatus theOtherStatus;
 
-			tie(ingestionJobKey, type, transcoder, status, highAvailability, main, theOtherTranscoder,
-					theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
+			tie(ingestionJobKey, type, encoderKey, status, highAvailability, main,
+					theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey) = encodingJobDetails;
 
 			_logger->info(__FILEREF__ + "getEncodingJobDetails"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", type: " + type
-				+ ", transcoder: " + transcoder
+				+ ", encoderKey: " + to_string(encoderKey)
 				+ ", status: " + MMSEngineDBFacade::toString(status)
 				+ ", highAvailability: " + to_string(highAvailability)
 				+ ", main: " + to_string(main)
-				+ ", theOtherTranscoder: " + theOtherTranscoder
+				+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
 				+ ", theOtherStatus: " + MMSEngineDBFacade::toString(theOtherStatus)
 				+ ", theOtherEncodingJobKey: " + to_string(theOtherEncodingJobKey)
 			);
@@ -327,19 +327,19 @@ void API::killOrCancelEncodingJob(
 						if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
-								+ ", transcoder: " + transcoder
+								// + ", transcoder: " + transcoder
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
 
 							try
 							{
-								killEncodingJob(transcoder, encodingJobKey);
+								killEncodingJob(encoderKey, encodingJobKey);
 							}
 							catch (...)
 							{
 								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-									+ ", transcoder: " + transcoder
+									+ ", encoderKey: " + to_string(encoderKey)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(encodingJobKey)
 								);
@@ -367,19 +367,19 @@ void API::killOrCancelEncodingJob(
 						if (theOtherStatus == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
-								+ ", transcoder: " + theOtherTranscoder
+								+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 							);
 
 							try
 							{
-								killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+								killEncodingJob(theOtherEncoderKey, theOtherEncodingJobKey);
 							}
 							catch (...)
 							{
 								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-									+ ", transcoder: " + transcoder
+									+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 								);
@@ -409,19 +409,19 @@ void API::killOrCancelEncodingJob(
 						if (theOtherStatus == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
-								+ ", transcoder: " + theOtherTranscoder
+								+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 							);
 
 							try
 							{
-								killEncodingJob(theOtherTranscoder, theOtherEncodingJobKey);
+								killEncodingJob(theOtherEncoderKey, theOtherEncodingJobKey);
 							}
 							catch (...)
 							{
 								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-									+ ", transcoder: " + theOtherTranscoder
+									+ ", theOtherEncoderKey: " + to_string(theOtherEncoderKey)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(theOtherEncodingJobKey)
 								);
@@ -449,19 +449,19 @@ void API::killOrCancelEncodingJob(
 						if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
-								+ ", transcoder: " + transcoder
+								+ ", encoderKey: " + to_string(encoderKey)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
 
 							try
 							{
-								killEncodingJob(transcoder, encodingJobKey);
+								killEncodingJob(encoderKey, encodingJobKey);
 							}
 							catch (...)
 							{
 								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-									+ ", transcoder: " + transcoder
+									+ ", encoderKey: " + to_string(encoderKey)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(encodingJobKey)
 								);
@@ -492,18 +492,18 @@ void API::killOrCancelEncodingJob(
 					if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 					{
 						_logger->info(__FILEREF__ + "killEncodingJob"
-							+ ", transcoder: " + transcoder
+							+ ", encoderKey: " + to_string(encoderKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
 
 						try
 						{
-							killEncodingJob(transcoder, encodingJobKey);
+							killEncodingJob(encoderKey, encodingJobKey);
 						}
 						catch (...)
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-								+ ", transcoder: " + transcoder
+								+ ", encoderKey: " + to_string(encoderKey)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							);
@@ -543,10 +543,10 @@ void API::killOrCancelEncodingJob(
 					try
 					{
 						_logger->info(__FILEREF__ + "killEncodingJob"
-							+ ", transcoder: " + transcoder
+							+ ", encoderKey: " + to_string(encoderKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 						);
-						killEncodingJob(transcoder, encodingJobKey);
+						killEncodingJob(encoderKey, encodingJobKey);
 					}
 					catch(runtime_error e)
 					{
@@ -577,10 +577,10 @@ void API::killOrCancelEncodingJob(
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 				{
 					_logger->info(__FILEREF__ + "killEncodingJob"
-						+ ", transcoder: " + transcoder
+						+ ", encoderKey: " + to_string(encoderKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					);
-					killEncodingJob(transcoder, encodingJobKey);
+					killEncodingJob(encoderKey, encodingJobKey);
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
@@ -1329,12 +1329,14 @@ void API::removeEncodingProfilesSet(
     }
 }
 
-void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
+void API::killEncodingJob(int64_t encoderKey, int64_t encodingJobKey)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;
 	try
 	{
+		string transcoderHost = _mmsEngineDBFacade->getEncoderURL(encoderKey);
+
 		// ffmpegEncoderURL = _ffmpegEncoderProtocol
 		// 	+ "://"
 		// 	+ transcoderHost + ":"

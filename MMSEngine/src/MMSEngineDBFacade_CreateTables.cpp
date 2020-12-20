@@ -2305,7 +2305,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingProgress           INT NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
-                    "transcoder					VARCHAR (128) NULL,"
                     "encoderKey					BIGINT UNSIGNED NULL,"
                     "stagingEncodedAssetPathName VARCHAR (256) NULL,"
                     "failuresNumber           	INT NOT NULL,"

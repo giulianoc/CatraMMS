@@ -1906,7 +1906,6 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 	int64_t encoderKeyToBeSkipped)
 {
     string      lastSQLCommand;
-    Json::Value encodersPoolListRoot;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -2101,7 +2100,7 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 			;
 			_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);
+			throw EncoderNotFound(errorMessage);
 		}
 
         {
@@ -2150,6 +2149,333 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 
 
 		return make_tuple(encoderKey, protocol, serverName, port);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+}
+
+int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
+	int64_t workspaceKey, string encodersPoolLabel)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getEncodersNumberByEncodersPool"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", encodersPoolLabel: " + encodersPoolLabel
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		int encodersNumber;
+		if (encodersPoolLabel != "")
+        {
+			int64_t encodersPoolKey;
+			{
+				lastSQLCommand = 
+					string("select encodersPoolKey from MMS_EncodersPool ") 
+					+ "where workspaceKey = ? "
+					+ "and label = ? ";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, encodersPoolLabel);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", encodersPoolLabel: " + encodersPoolLabel
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", encodersPoolLabel: " + encodersPoolLabel
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (!resultSet->next())
+				{
+					string errorMessage = string("lastEncoderIndexUsed was not found")
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encodersPoolLabel: " + encodersPoolLabel
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				encodersPoolKey = resultSet->getInt64("encodersPoolKey");
+			}
+
+			{
+				lastSQLCommand = string("select count(*) from MMS_EncoderEncodersPoolMapping ")
+					+ "where encodersPoolKey = ? ";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, encodersPoolKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", encodersPoolLabel: " + encodersPoolLabel
+					+ ", encodersPoolKey: " + to_string(encodersPoolKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (!resultSet->next())
+				{
+					string errorMessage ("select count(*) failed");
+
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				encodersNumber = resultSet->getInt64(1);
+			}
+		}
+		else
+		{
+			lastSQLCommand = string("select count(*) from MMS_EncoderWorkspaceMapping ")
+				+ "where workspaceKey = ? ";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encodersPoolLabel: " + encodersPoolLabel
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (!resultSet->next())
+			{
+				string errorMessage ("select count(*) failed");
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			encodersNumber = resultSet->getInt64(1);
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+
+		return encodersNumber;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+}
+
+string MMSEngineDBFacade::getEncoderURL(int64_t encoderKey)
+{
+    string      lastSQLCommand;
+    Json::Value encodersPoolListRoot;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+
+        _logger->info(__FILEREF__ + "getEncoderURL"
+			+ ", encoderKey: " + to_string(encoderKey)
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string protocol;
+		string serverName;
+		int port;
+		{
+			lastSQLCommand = 
+				string("select protocol, serverName, port ")
+					+ "from MMS_Encoder " 
+					+ "where encoderKey = ? "
+					+ "and enabled = 1 ";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (resultSet->next())
+			{
+				protocol = resultSet->getString("protocol");
+				serverName = resultSet->getString("serverName");
+				port = resultSet->getInt("port");
+			}
+			else
+			{
+				string errorMessage = string("Encoder details not found or not enabled")
+					+ ", encoderKey: " + to_string(encoderKey)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+
+
+		string encoderURL = protocol + "://" + serverName + ":" + to_string(port);
+
+        _logger->info(__FILEREF__ + "getEncoderURL"
+			+ ", encoderKey: " + to_string(encoderKey)
+			+ ", encoderURL: " + encoderURL
+        );
+
+		return encoderURL;
     }
     catch(sql::SQLException se)
     {

@@ -9351,6 +9351,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		string configurationLabel;
+		string encodersPool;
 		string userAgent;
         string recordingPeriodStart;
         string recordingPeriodEnd;
@@ -9370,6 +9371,10 @@ void MMSEngineProcessor::manageLiveRecorder(
                 throw runtime_error(errorMessage);
             }
             configurationLabel = parametersRoot.get(field, "XXX").asString();
+
+            field = "EncodersPool";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				encodersPool = parametersRoot.get(field, "").asString();
 
             field = "UserAgent";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9537,6 +9542,34 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t confKey;
 		string liveURL;
 		tie(confKey, liveURL) = confKeyAndLiveURL;
+
+		{
+			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(                             
+				workspace->_workspaceKey, encodersPool);
+			if (encodersNumber == 0)                                                                              
+			{                                                                                                     
+				string errorMessage = __FILEREF__ + "No encoders available"                                       
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+				;
+				_logger->error(errorMessage);                                                                     
+
+				throw runtime_error(errorMessage);                                                                
+			}
+			else if (encodersNumber == 1 && highAvailability)                                                     
+			{
+				// in case of high availability and in case we have just ONE encoder, to avoid the below algorithm
+				// trying to assign the backup encoder without any possibility of success, we will force          
+				// highAvailability to be false                                                                   
+
+				string errorMessage = __FILEREF__ + "highAvailability but only ONE encoder is available"          
+					+ ", force highAvailability to be false"                                                      
+					", ingestionJobKey: " + to_string(ingestionJobKey)                         
+				;
+				_logger->error(errorMessage);                                                                     
+
+				highAvailability = false;                                                                         
+			}
+		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			highAvailability, configurationLabel, confKey, liveURL, userAgent,

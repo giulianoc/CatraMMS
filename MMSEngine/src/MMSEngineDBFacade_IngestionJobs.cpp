@@ -4724,7 +4724,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
                 "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                "transcoder, encoderKey, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+                "encoderKey, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4822,9 +4822,6 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                     encodingJobRoot[field] = Json::nullValue;
                 else
                     encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
-
-                field = "transcoder";
-                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("transcoder"));
 
                 field = "encoderKey";
                 encodingJobRoot[field] = resultSetEncodingJob->getInt64("encoderKey");
