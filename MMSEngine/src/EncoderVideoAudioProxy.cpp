@@ -2729,16 +2729,18 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 		bool urlForbidden = false;
 		bool urlNotFound = false;
 		int encodingProgress = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -2780,7 +2782,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -2805,6 +2807,38 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -4111,16 +4145,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -4162,7 +4198,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -4187,6 +4223,38 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -5111,16 +5179,18 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-					urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+					urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -5162,7 +5232,7 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -5187,6 +5257,38 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -6088,16 +6190,18 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -6139,7 +6243,7 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -6164,6 +6268,38 @@ pair<string, bool> EncoderVideoAudioProxy::videoSpeed_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -6873,16 +7009,18 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -6924,7 +7062,7 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -6949,6 +7087,38 @@ pair<string, bool> EncoderVideoAudioProxy::pictureInPicture_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -7592,16 +7762,18 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -7643,7 +7815,7 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -7668,6 +7840,38 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -8213,16 +8417,18 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 		int encodingProgress = 0;
 		int maxEncodingStatusFailures = 1;	// consecutive errors
 		int encodingStatusFailures = 0;
+		int encodingPid;
+		int lastEncodingPid = 0;
 		while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
 		{
 			this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
 			try
 			{
-				tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+				tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 					getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 				tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, encodingProgress) = encodingStatus;
+						urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
 
 				if (encodingErrorMessage != "")
 				{
@@ -8264,7 +8470,7 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					throw runtime_error(errorMessage);
 				}
 
-				// encodingProgress
+				// encodingProgress/encodingPid
 				{
 					try
 					{
@@ -8289,6 +8495,38 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						);
+					}
+
+					if (lastEncodingPid != encodingPid)
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "updateEncodingPid"
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingPid: " + to_string(encodingPid)
+							);
+							_mmsEngineDBFacade->updateEncodingPid (
+								_encodingItem->_encodingJobKey, encodingPid);
+
+							lastEncodingPid = encodingPid;
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingPid failed"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", _encodingPid: " + to_string(encodingPid)
+							);
+						}
 					}
 				}
 
@@ -10803,6 +11041,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			string encodingErrorMessage;
             int maxEncodingStatusFailures = 5;	// consecutive errors
             int encodingStatusFailures = 0;
+			int encodingPid;
+			int lastEncodingPid = 0;
 			// string lastRecordedAssetFileName;
 
 			// see the comment few lines below (2019-05-03)
@@ -10813,10 +11053,10 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                 try
                 {
-					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, ignore) = encodingStatus;
+						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
 
 					if (encodingErrorMessage != "")
 					{
@@ -10858,7 +11098,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						throw runtime_error(errorMessage);
 					}
 
-					// encodingProgress
+					// encodingProgress/encodingPid
 					{
 						try
 						{
@@ -10899,6 +11139,38 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 							);
+						}
+
+						if (lastEncodingPid != encodingPid)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingPid"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingPid: " + to_string(encodingPid)
+								);
+								_mmsEngineDBFacade->updateEncodingPid (
+									_encodingItem->_encodingJobKey, encodingPid);
+
+								lastEncodingPid = encodingPid;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+								);
+							}
 						}
 					}
 
@@ -12123,6 +12395,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
 			int encoderNotReachableFailures = 0;
+			int encodingPid;
+			int lastEncodingPid = 0;
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
@@ -12134,10 +12408,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				try
 				{
-					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, ignore) = encodingStatus;
+						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
 					_logger->info(__FILEREF__ + "getEncodingStatus"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -12306,6 +12580,41 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+						}
+					}
+
+					// encodingProgress/encodingPid
+					{
+						if (lastEncodingPid != encodingPid)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingPid"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingPid: " + to_string(encodingPid)
+								);
+								_mmsEngineDBFacade->updateEncodingPid (
+									_encodingItem->_encodingJobKey, encodingPid);
+
+								lastEncodingPid = encodingPid;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
 								);
 							}
 						}
@@ -13735,6 +14044,8 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
 
 			int encoderNotReachableFailures = 0;
+			int encodingPid;
+			int lastEncodingPid = 0;
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
@@ -13746,10 +14057,10 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
 				try
 				{
-					tuple<bool, bool, bool, string, bool, bool, int> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
-						urlForbidden, urlNotFound, ignore) = encodingStatus;
+						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
 
 					encoderNotReachableFailures = 0;
 
@@ -13908,6 +14219,41 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+						}
+					}
+
+					// encodingProgress/encodingPid
+					{
+						if (lastEncodingPid != encodingPid)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingPid"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingPid: " + to_string(encodingPid)
+								);
+								_mmsEngineDBFacade->updateEncodingPid (
+									_encodingItem->_encodingJobKey, encodingPid);
+
+								lastEncodingPid = encodingPid;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
 								);
 							}
 						}
@@ -14575,7 +14921,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 }
 */
 
-tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEncodingStatus()
+tuple<bool, bool, bool, string, bool, bool, int, int> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
     bool killedByUser;
@@ -14584,6 +14930,7 @@ tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEnco
 	bool urlNotFound;
 	bool urlForbidden;
 	int encodingProgress;
+	int pid;
     
     string ffmpegEncoderURL;
     ostringstream response;
@@ -14782,6 +15129,12 @@ tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEnco
 				encodingProgress = JSONUtils::asInt(encodeStatusResponse, field, -1);
 			else
 				encodingProgress = 0;
+
+			field = "pid";
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, field))
+				pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
+			else
+				pid = -1;
         }
         catch(...)
         {
@@ -14861,7 +15214,7 @@ tuple<bool, bool, bool, string, bool, bool, int> EncoderVideoAudioProxy::getEnco
     }
 
     return make_tuple(encodingFinished, killedByUser, completedWithError,
-		encoderErrorMessage, urlForbidden, urlNotFound, encodingProgress);
+		encoderErrorMessage, urlForbidden, urlNotFound, encodingProgress, pid);
 }
 
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(

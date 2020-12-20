@@ -1716,6 +1716,10 @@ public:
         int64_t encodingJobKey,
         int encodingPercentage);
 
+    void updateEncodingPid (
+        int64_t encodingJobKey,
+        int encodingPid);
+
 	long updateEncodingJobFailuresNumber (
         int64_t encodingJobKey,
         long failuresNumber);

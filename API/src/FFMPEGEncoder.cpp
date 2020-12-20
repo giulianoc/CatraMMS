@@ -552,7 +552,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
-				thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this, selectedEncoding, encodingJobKey, requestBody);
+				thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this,
+					selectedEncoding, encodingJobKey, requestBody);
 				encodeContentThread.detach();
 
 				#ifdef __VECTOR__
@@ -2749,7 +2750,8 @@ void FFMPEGEncoder::encodeContentThread(
                 relativePath,
                 encodingJobKey,
                 ingestionJobKey,
-				&(encoding->_childPid));
+				&(encoding->_childPid)
+		);
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
 //        string responseBody = string("{ ")
