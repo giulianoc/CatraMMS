@@ -4724,7 +4724,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
                 "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                "encoderKey, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+                "processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4823,8 +4823,23 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 else
                     encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
 
+                field = "processorMMS";
+                if (resultSetEncodingJob->isNull("processorMMS"))
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                    encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("processorMMS"));
+
                 field = "encoderKey";
-                encodingJobRoot[field] = resultSetEncodingJob->getInt64("encoderKey");
+				if (resultSetEncodingJob->isNull("encoderKey"))
+					encodingJobRoot[field] = -1;
+				else
+					encodingJobRoot[field] = resultSetEncodingJob->getInt64("encoderKey");
+
+                field = "encodingPid";
+				if (resultSetEncodingJob->isNull("encodingPid"))
+					encodingJobRoot[field] = -1;
+				else
+					encodingJobRoot[field] = resultSetEncodingJob->getInt64("encodingPid");
 
                 field = "failuresNumber";
                 encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  

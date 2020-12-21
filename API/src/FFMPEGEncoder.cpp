@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
 			int maxLiveRecordingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
 			logger->info(__FILEREF__ + "Configuration item"
-				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxEncodingsCapability)
+				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
 			);
 
 			for (int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability; liveRecordingIndex++)
