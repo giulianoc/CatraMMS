@@ -1,0 +1,12 @@
+{
+	"Label": "MMS_PNG_120",
+	"FileFormat": "PNG",
+	"Image": {
+		"Width": 120,
+		"Height": 0,
+		// if ulAspect is false, it means the aspect is preserved,
+		// the width is fixed and the height will be calculated
+		"AspectRatio": false,
+		"InterlaceType": "NoInterlace"
+	}
+}

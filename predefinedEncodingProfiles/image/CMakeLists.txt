@@ -22,9 +22,13 @@
 
 SET (PROFILEs
 	MMS_JPG_40.json
+	MMS_PNG_40.json
 	MMS_JPG_60.json
+	MMS_PNG_60.json
 	MMS_JPG_120.json
+	MMS_PNG_120.json
 	MMS_JPG_240.json
+	MMS_PNG_240.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/image)
