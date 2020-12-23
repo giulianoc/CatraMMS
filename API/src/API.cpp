@@ -2529,6 +2529,8 @@ int64_t API::manageDeliveryAuthorization(
 			//		case 1. master .m3u8: <token>---
 			//		case 2. secondary .m3u8: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
 			// scenario in case of any other delivery: <token>---
+			//		Any other delivery includes for example also the delivery/download of a .ts file, not part
+			//		of an hls delivery. In this case we will have just a token as any normal download
 
 			string separator = "---";
 			size_t endOfTokenIndex = tokenParameter.rfind(separator);
@@ -2551,6 +2553,9 @@ int64_t API::manageDeliveryAuthorization(
 		string m4sExtension(".m4s");	// dash
 		string m3u8Extension(".m3u8");	// m3u8
 		if (
+			(secondPartOfToken != "")	// secondPartOfToken is the cookie
+			&&
+			(
 			(contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
 			contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
 			||
@@ -2560,6 +2565,7 @@ int64_t API::manageDeliveryAuthorization(
 			(contentURI.size() >= m3u8Extension.size() && 0 == contentURI.compare(
 			contentURI.size()-m3u8Extension.size(), m3u8Extension.size(), m3u8Extension)
 			&& secondPartOfToken != "")
+			)
 		)
 		{
 			// .ts/m4s content to be authorized
@@ -2572,7 +2578,9 @@ int64_t API::manageDeliveryAuthorization(
 				string errorMessage = string("cookie is wrong")
 					+ ", contentURI: " + contentURI
 					+ ", cookie: " + cookie
-					;
+					+ ", firstPartOfToken: " + firstPartOfToken
+					+ ", secondPartOfToken: " + secondPartOfToken
+				;
 				_logger->info(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);

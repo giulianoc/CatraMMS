@@ -68,14 +68,32 @@
           "Label": "Frame: ${Title}",
           "Type": "Frame",
           "OnSuccess": {"Task": {
-            "Label": "Encode image (Frame): ${title}",
-            "Parameters": {
-              "ContentType": "image",
-              "EncodingPriority": "High",
-              "EncodingProfileLabel": "MMS_JPG_240"
-            },
-            "Type": "Encode"
-          }},
+			"Label": "Encoding profiles (Frame): ${Title}",
+			"Parameters": {
+				"ExecutionType": "parallel",
+				"Tasks": [
+					{
+						"Label": "Encode image MMS_JPG_240 (Frame): ${Title}",
+						"Parameters": {
+							"ContentType": "image",
+							"EncodingPriority": "High",
+							"EncodingProfileLabel": "MMS_JPG_240"
+						},
+						"Type": "Encode"
+					},
+					{
+						"Label": "Encode image MMS_PNG_240 (Frame): ${Title}",
+						"Parameters": {
+							"ContentType": "image",
+							"EncodingPriority": "High",
+							"EncodingProfileLabel": "MMS_PNG_240"
+						},
+						"Type": "Encode"
+					}
+				]
+			  },
+			"Type": "GroupOfTasks"
+			}},
           "Parameters": {
             "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
             "UniqueName": "${UniqueName}",
@@ -89,14 +107,32 @@
           }
         }},
         "OnSuccess": {"Task": {
-          "Label": "Encode image (FrameContainingFace): ${Title}",
+          "Label": "Encoding profiles (FrameContainingFace): ${Title}",
           "Parameters": {
-            "ContentType": "image",
-            "EncodingPriority": "High",
-            "EncodingProfileLabel": "MMS_JPG_240"
+			"ExecutionType": "parallel",
+			"Tasks": [
+				{
+					"Label": "Encode image MMS_JPG_240 (FrameContainingFace): ${Title}",
+					"Parameters": {
+						"ContentType": "image",
+						"EncodingPriority": "High",
+						"EncodingProfileLabel": "MMS_JPG_240"
+					},
+					"Type": "Encode"
+				},
+				{
+					"Label": "Encode image MMS_PNG_240 (FrameContainingFace): ${Title}",
+					"Parameters": {
+						"ContentType": "image",
+						"EncodingPriority": "High",
+						"EncodingProfileLabel": "MMS_PNG_240"
+					},
+					"Type": "Encode"
+				}
+			]
           },
-          "Type": "Encode"
-        }},
+          "Type": "GroupOfTasks"
+		}},
         "Parameters": {
           "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
           "UniqueName": "${UniqueName}",
