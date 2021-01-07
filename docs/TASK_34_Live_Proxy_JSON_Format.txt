@@ -7,6 +7,9 @@
 
 	"Parameters": {
 
+		// optional, possible values: IP or Satellite. Default is IP
+		"ChannelType": "IP",
+
 		// mandatory...
 		"ConfigurationLabel": "",
 

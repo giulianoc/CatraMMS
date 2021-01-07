@@ -3044,33 +3044,130 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 
 void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
-	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
+		Validator::DependencyType>>& dependencies)
 {
+
+	string channelType = "IP";
+
+    string field = "ChannelType";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		channelType = parametersRoot.get(field, "").asString();
+		if (!isChannelTypeValid(channelType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "IP or Satellite"
+                + ")"
+                + ", Field: " + field
+                + ", channelType: " + channelType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
         
-	vector<string> mandatoryFields = {
-		"ConfigurationLabel",
-		"RecordingPeriod",
-		"SegmentDuration"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	bool actAsServer;
+
+	field = "ActAsServer";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		actAsServer = JSONUtils::asBool(parametersRoot, field, false);
+	else
+		actAsServer = false;
+
+	// ActAsServer parameters are used only in case channelType is IP
+	if (channelType == "IP")
+	{
+		if (actAsServer)
+		{
+			vector<string> mandatoryFields = {
+				"ActAsServer_Protocol",
+				"ActAsServer_BindIP",
+				"ActAsServer_Port"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+           
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else
+		{
+			field = "ConfigurationLabel";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
             
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+    }
+	else // if (channelType == "Satellite")
+	{
+		field = "ConfigurationLabel";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+           
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	{
+		vector<string> mandatoryFields = {
+			"RecordingPeriod",
+			"SegmentDuration"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
                     + ", label: " + label
                     ;
-            _logger->error(errorMessage);
+				_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
 
-    string field = "SegmentDuration";
+    field = "SegmentDuration";
 	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
@@ -3276,6 +3373,140 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			_logger->error(__FILEREF__ + errorMessage);
         
 			throw runtime_error(errorMessage);
+		}
+	}
+}
+
+void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+	string channelType = "IP";
+
+    string field = "ChannelType";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		channelType = parametersRoot.get(field, "").asString();
+		if (!isChannelTypeValid(channelType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "IP or Satellite"
+                + ")"
+                + ", Field: " + field
+                + ", channelType: " + channelType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	if (channelType == "IP")
+	{
+		field = "ConfigurationLabel";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		field = "ActAsServer";
+		bool actAsServer = JSONUtils::asBool(parametersRoot, field, false);
+		if (actAsServer)
+		{
+			vector<string> mandatoryFields = {
+				"ActAsServer_Protocol",
+				"ActAsServer_BindIP",
+				"ActAsServer_Port"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+    }
+	else // if (channelType == "Satellite")
+	{
+		field = "ActAsServer_Port";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+	}
+
+    field = "OutputType";
+	string liveProxyOutputType;
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		liveProxyOutputType = parametersRoot.get(field, "").asString();
+		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+                + ", Field: " + field
+                + ", liveProxyOutputType: " + liveProxyOutputType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	if (liveProxyOutputType == "RTMP_Stream")
+	{
+		vector<string> mandatoryFields = {
+			"RtmpUrl"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 	}
 }
@@ -3628,75 +3859,6 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
             }
         }
     }
-}
-
-void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
-	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
-{
-        
-	vector<string> mandatoryFields = {
-		"ConfigurationLabel"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    string field = "OutputType";
-	string liveProxyOutputType;
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
-	{
-		liveProxyOutputType = parametersRoot.get(field, "").asString();
-		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
-                + ", Field: " + field
-                + ", liveProxyOutputType: " + liveProxyOutputType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
-	}
-
-	if (liveProxyOutputType == "RTMP_Stream")
-	{
-		vector<string> mandatoryFields = {
-			"RtmpUrl"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
 }
 
 void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
@@ -4743,6 +4905,22 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
     for (string validOutput: validOutputs)
     {
         if (faceRecognitionOutput == validOutput) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isChannelTypeValid(string channelType)
+{
+    vector<string> validChannelTypes = {
+        "IP",
+        "Satellite"
+    };
+
+    for (string validChannelType: validChannelTypes)
+    {
+        if (channelType == validChannelType) 
             return true;
     }
     

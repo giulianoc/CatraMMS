@@ -31,6 +31,8 @@ SET (CONFs
 	catrammsEncoderServer.nginx
 	mms.cfg
 	crontab.txt
+	satellite_channels_hotbird_zap_2020_12_28.conf
+	dvb_channels.conf
 )
 
 install (FILES ${CONFs} DESTINATION conf)

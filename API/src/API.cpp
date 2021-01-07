@@ -1960,7 +1960,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         facebookConfList(request, workspace);
     }
-    else if (method == "addChannelConf")
+    else if (method == "addIPChannelConf")
     {
         if (!editConfiguration)
         {
@@ -1974,9 +1974,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        addChannelConf(request, workspace, queryParameters, requestBody);
+        addIPChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "modifyChannelConf")
+    else if (method == "modifyIPChannelConf")
     {
         if (!editConfiguration)
         {
@@ -1990,9 +1990,9 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        modifyChannelConf(request, workspace, queryParameters, requestBody);
+        modifyIPChannelConf(request, workspace, queryParameters, requestBody);
     }
-    else if (method == "removeChannelConf")
+    else if (method == "removeIPChannelConf")
     {
         if (!editConfiguration)
         {
@@ -2006,11 +2006,115 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        removeChannelConf(request, workspace, queryParameters);
+        removeIPChannelConf(request, workspace, queryParameters);
     }
-    else if (method == "channelConfList")
+    else if (method == "ipChannelConfList")
     {
-        channelConfList(request, workspace, queryParameters);
+        ipChannelConfList(request, workspace, queryParameters);
+    }
+    else if (method == "addSATChannelConf")
+    {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addSATChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifySATChannelConf")
+    {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifySATChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeSATChannelConf")
+    {
+        if (!editConfiguration)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editConfiguration: " + to_string(editConfiguration)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeSATChannelConf(request, workspace, queryParameters);
+    }
+    else if (method == "satChannelConfList")
+    {
+        satChannelConfList(request, workspace, queryParameters);
+    }
+    else if (method == "addSourceSATChannelConf")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addSourceSATChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifySourceSATChannelConf")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        modifySourceSATChannelConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeSourceSATChannelConf")
+    {
+        if (!admin)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        removeSourceSATChannelConf(request, workspace, queryParameters);
+    }
+    else if (method == "sourceSatChannelConfList")
+    {
+        sourceSatChannelConfList(request, workspace, queryParameters);
     }
     else if (method == "addFTPConf")
     {
@@ -2174,11 +2278,14 @@ void API::createDeliveryAuthorization(
         {
 			uniqueName = uniqueNameIt->second;
 
-			string uniqueNameDecoded = curlpp::unescape(uniqueName);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			uniqueName = regex_replace(uniqueNameDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
+
+			uniqueName = curlpp::unescape(firstDecoding);
         }
 
 		// this is for live authorization
@@ -2358,7 +2465,7 @@ void API::createDeliveryAuthorization(
 
 					int64_t liveURLConfKey;
 					bool warningIfMissing = false;
-					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
+					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
 						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(liveURLConfKey, ignore) = liveURLConfDetails;
 
@@ -2403,7 +2510,7 @@ void API::createDeliveryAuthorization(
 
 					int64_t liveURLConfKey;
 					bool warningIfMissing = false;
-					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
+					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
 						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(liveURLConfKey, ignore) = liveURLConfDetails;
 
@@ -2801,7 +2908,7 @@ void API::createDeliveryCDN77Authorization(
 
 		string liveURLData;
 		tuple<string, string, string> liveURLConfDetails
-			= _mmsEngineDBFacade->getLiveURLConfDetails(
+			= _mmsEngineDBFacade->getIPChannelConfDetails(
 			requestWorkspace->_workspaceKey, liveURLConfKey);
 		tie(ignore, ignore, liveURLData) = liveURLConfDetails;
 
@@ -3098,31 +3205,14 @@ void API::mediaItemsList(
         {
             title = titleIt->second;
 
-			string titleDecoded = curlpp::unescape(title);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			title = regex_replace(titleDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			/*
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						title.c_str(), title.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
-
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					title = regex_replace(sDecoded, regex(plus), plusDecoded);
-				}
-			}
-			*/
+			title = curlpp::unescape(firstDecoding);
         }
 
 		vector<string> tagsIn;
@@ -3204,30 +3294,14 @@ void API::mediaItemsList(
         {
             jsonCondition = jsonConditionIt->second;
 
-			string jsonConditionDecoded = curlpp::unescape(jsonCondition);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			jsonCondition = regex_replace(jsonConditionDecoded, regex(plus), plusDecoded);
-			/*
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						jsonCondition.c_str(), jsonCondition.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
+			string firstDecoding = regex_replace(jsonCondition, regex(plus), plusDecoded);
 
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					jsonCondition = regex_replace(sDecoded, regex(plus), plusDecoded);
-				}
-			}
-			*/
+			jsonCondition = curlpp::unescape(firstDecoding);
         }
 
 		/*
@@ -3248,11 +3322,14 @@ void API::mediaItemsList(
         {
             orderBy = orderByIt->second;
 
-			string orderByDecoded = curlpp::unescape(orderBy);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			orderBy = regex_replace(orderByDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(orderBy, regex(plus), plusDecoded);
+
+			orderBy = curlpp::unescape(firstDecoding);
         }
 
         string jsonOrderBy;
@@ -3261,30 +3338,14 @@ void API::mediaItemsList(
         {
             jsonOrderBy = jsonOrderByIt->second;
 
-			string jsonOrderByDecoded = curlpp::unescape(jsonOrderBy);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			jsonOrderBy = regex_replace(jsonOrderByDecoded, regex(plus), plusDecoded);
-			/*
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						jsonOrderBy.c_str(), jsonOrderBy.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
+			string firstDecoding = regex_replace(jsonOrderBy, regex(plus), plusDecoded);
 
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					jsonOrderBy = regex_replace(sDecoded, regex(plus), plusDecoded);
-				}
-			}
-			*/
+			jsonOrderBy = curlpp::unescape(firstDecoding);
         }
 
         {

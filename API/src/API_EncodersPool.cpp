@@ -614,31 +614,14 @@ void API::encoderList(
 		{
 			label = labelIt->second;
 
-			string labelDecoded = curlpp::unescape(label);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			/*
-			curl = curl_easy_init();                                                                    
-			if(curl)                                                                                          
-			{                                                                                                 
-				int outLength;                                                                                
-				char *decoded = curl_easy_unescape(curl,                                                      
-				title.c_str(), title.length(), &outLength);                                           
-				if(decoded)                                                                                   
-				{                                                                                             
-					string sDecoded = decoded;                                                                
-					curl_free(decoded);                                                                       
-                                                                                                              
-					// still there is the '+' char                                                            
-					string plus = "\\+";                                                                      
-					string plusDecoded = " ";                                                                 
-					title = regex_replace(sDecoded, regex(plus), plusDecoded);                                
-				}                                                                                             
-			}                                                                                                 
-			*/                     
+			label = curlpp::unescape(firstDecoding);
 		}
 
 		string serverName;
@@ -647,11 +630,14 @@ void API::encoderList(
 		{
 			serverName = serverNameIt->second;
 
-			string serverNameDecoded = curlpp::unescape(serverName);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			serverName = regex_replace(serverNameDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(serverName, regex(plus), plusDecoded);
+
+			serverName = curlpp::unescape(firstDecoding);
 		}
 
 		int port = -1;
@@ -772,31 +758,14 @@ void API::encodersPoolList(
 		{
 			label = labelIt->second;
 
-			string labelDecoded = curlpp::unescape(label);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			/*
-			curl = curl_easy_init();                                                                    
-			if(curl)                                                                                          
-			{                                                                                                 
-				int outLength;                                                                                
-				char *decoded = curl_easy_unescape(curl,                                                      
-				title.c_str(), title.length(), &outLength);                                           
-				if(decoded)                                                                                   
-				{                                                                                             
-					string sDecoded = decoded;                                                                
-					curl_free(decoded);                                                                       
-                                                                                                              
-					// still there is the '+' char                                                            
-					string plus = "\\+";                                                                      
-					string plusDecoded = " ";                                                                 
-					title = regex_replace(sDecoded, regex(plus), plusDecoded);                                
-				}                                                                                             
-			}                                                                                                 
-			*/                     
+			label = curlpp::unescape(firstDecoding);
 		}
 
 		string labelOrder;

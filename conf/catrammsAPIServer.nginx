@@ -168,17 +168,45 @@
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/?$ /api?version=$1&method=addChannelConf last;
+			rewrite ^/catramms/(v[0-9]+)/conf/ipChannel/?$ /api?version=$1&method=addIPChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=modifyChannelConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/ipChannel/([0-9]+)/?$ /api?version=$1&method=modifyIPChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/([0-9]+)/?$ /api?version=$1&method=removeChannelConf&confKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/ipChannel/([0-9]+)/?$ /api?version=$1&method=removeIPChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/channel/?([0-9]*)/?$ /api?version=$1&method=channelConfList&liveURLKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/conf/ipChannel/?([0-9]*)/?$ /api?version=$1&method=ipChannelConfList&liveURLKey=$2 last;
 		}
+#workspace/user SAT channels
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/satChannel/?$ /api?version=$1&method=addSATChannelConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/satChannel/([0-9]+)/?$ /api?version=$1&method=modifySATChannelConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/satChannel/([0-9]+)/?$ /api?version=$1&method=removeSATChannelConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/satChannel/?([0-9]*)/?$ /api?version=$1&method=satChannelConfList&confKey=$2 last;
+		}
+
+#Source SAT Channels
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/sourceSatChannel/?$ /api?version=$1&method=addSourceSATChannelConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/sourceSatChannel/([0-9]+)/?$ /api?version=$1&method=modifySourceSATChannelConf&serviceId=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/sourceSatChannel/([0-9]+)/?$ /api?version=$1&method=removeSourceSATChannelConf&serviceId=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/sourceSatChannel/?([0-9]*)/?$ /api?version=$1&method=sourceSatChannelConfList&serviceId=$2 last;
+		}
+
 
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;

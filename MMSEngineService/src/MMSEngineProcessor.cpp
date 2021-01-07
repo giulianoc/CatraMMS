@@ -9350,6 +9350,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 		}
 
+		string channelType;
+		bool actAsServer;
+		string actAsServerProtocol;
+		string actAsServerBindIP;
+		int actAsServerPort;
 		string configurationLabel;
 		string encodersPool;
 		string userAgent;
@@ -9360,17 +9365,89 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string outputFileFormat;
 		bool highAvailability = false;
         {
-            string field = "ConfigurationLabel";
+            string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+				channelType = "IP";
+			else
+				channelType = parametersRoot.get(field, "").asString();
 
-                throw runtime_error(errorMessage);
-            }
-            configurationLabel = parametersRoot.get(field, "XXX").asString();
+			field = "ActAsServer";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				actAsServer = false;
+			else
+				actAsServer = parametersRoot.get(field, false).asBool();
+
+			if (channelType == "IP")
+			{
+				if (actAsServer)
+				{
+					field = "ActAsServer_Protocol";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerProtocol = parametersRoot.get(field, "").asString();
+
+					field = "ActAsServer_BindIP";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerBindIP = parametersRoot.get(field, "").asString();
+
+					field = "ActAsServer_Port";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerPort = parametersRoot.get(field, 0).asInt();
+				}
+				else
+				{
+					field = "ConfigurationLabel";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					configurationLabel = parametersRoot.get(field, "XXX").asString();
+				}
+			}
+			else // if (channelType == "Satellite")
+			{
+				actAsServer = true;
+
+				field = "ConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				configurationLabel = parametersRoot.get(field, "XXX").asString();
+			}
 
             field = "EncodersPool";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9381,9 +9458,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 				userAgent = parametersRoot.get(field, "").asString();
 
             field = "HighAvailability";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-				highAvailability = JSONUtils::asBool(parametersRoot, field, false);
+			if (actAsServer)
+				highAvailability = false;
+			else
+			{
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					highAvailability = JSONUtils::asBool(parametersRoot, field, false);
             }
 
             field = "RecordingPeriod";
@@ -9536,43 +9616,61 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
-		bool warningIfMissing = false;
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-                workspace->_workspaceKey, configurationLabel, warningIfMissing);            
-		int64_t confKey;
+		int64_t confKey = -1;
 		string liveURL;
-		tie(confKey, liveURL) = confKeyAndLiveURL;
+
+		if (channelType == "IP")
+		{
+			if (actAsServer)
+			{
+				liveURL = actAsServerProtocol + "://" + actAsServerBindIP
+					+ ":" + to_string(actAsServerPort);
+			}
+			else
+			{
+				bool warningIfMissing = false;
+				pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+					workspace->_workspaceKey, configurationLabel, warningIfMissing);
+				tie(confKey, liveURL) = channelConfDetails;
+			}
+		}
+		else // if (channelType == "Satellite")
+		{
+			bool warningIfMissing = false;
+			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+		}
 
 		{
-			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(                             
+			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(
 				workspace->_workspaceKey, encodersPool);
-			if (encodersNumber == 0)                                                                              
-			{                                                                                                     
-				string errorMessage = __FILEREF__ + "No encoders available"                                       
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+			if (encodersNumber == 0)
+			{
+				string errorMessage = __FILEREF__ + "No encoders available"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				;
-				_logger->error(errorMessage);                                                                     
+				_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);                                                                
+				throw runtime_error(errorMessage);
 			}
-			else if (encodersNumber == 1 && highAvailability)                                                     
+			else if (encodersNumber == 1 && highAvailability)
 			{
 				// in case of high availability and in case we have just ONE encoder, to avoid the below algorithm
 				// trying to assign the backup encoder without any possibility of success, we will force          
 				// highAvailability to be false                                                                   
 
-				string errorMessage = __FILEREF__ + "highAvailability but only ONE encoder is available"          
-					+ ", force highAvailability to be false"                                                      
-					", ingestionJobKey: " + to_string(ingestionJobKey)                         
+				string errorMessage = __FILEREF__ + "highAvailability but only ONE encoder is available"
+					+ ", force highAvailability to be false"
+					", ingestionJobKey: " + to_string(ingestionJobKey)
 				;
-				_logger->error(errorMessage);                                                                     
+				_logger->error(errorMessage);
 
-				highAvailability = false;                                                                         
+				highAvailability = false;
 			}
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			highAvailability, configurationLabel, confKey, liveURL, userAgent,
+			channelType, actAsServer, highAvailability, configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 
@@ -9737,7 +9835,7 @@ void MMSEngineProcessor::manageLiveProxy(
         }
 
 		bool warningIfMissing = false;
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
+        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 			workspace->_workspaceKey, configurationLabel, warningIfMissing);            
 
 		int64_t liveURLConfKey;
@@ -9829,8 +9927,8 @@ void MMSEngineProcessor::manageLiveGrid(
 				string inputConfigurationLabel = inputChannelsRoot[inputChannelIndex].asString();
 
 				bool warningIfMissing = false;
-				pair<int64_t, string> confKeyAndChannelURL = _mmsEngineDBFacade->getLiveURLConfDetails(
-					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);            
+				pair<int64_t, string> confKeyAndChannelURL = _mmsEngineDBFacade->getIPChannelConfDetails(
+					workspace->_workspaceKey, inputConfigurationLabel, warningIfMissing);
 
 				int64_t inputChannelConfKey;
 				string inputChannelURL;
@@ -9886,7 +9984,7 @@ void MMSEngineProcessor::manageLiveGrid(
 					{
 						bool warningIfMissing = true;
 
-						pair<int64_t, string> confDetails = _mmsEngineDBFacade->getLiveURLConfDetails(
+						pair<int64_t, string> confDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
 							workspace->_workspaceKey, outputChannelLabel,
 							warningIfMissing);
 
@@ -9909,7 +10007,7 @@ void MMSEngineProcessor::manageLiveGrid(
 						int position = -1;
 						Json::Value channelData = Json::nullValue;
 
-						outputChannelConfKey = _mmsEngineDBFacade->addChannelConf(
+						outputChannelConfKey = _mmsEngineDBFacade->addIPChannelConf(
 							workspace->_workspaceKey,
 							outputChannelLabel,
 							liveGridURL,
@@ -9933,7 +10031,7 @@ void MMSEngineProcessor::manageLiveGrid(
 
 						liveGridURL += (to_string(outputChannelConfKey) + "/" + manifestFileName);
 
-						_mmsEngineDBFacade->modifyChannelConf(
+						_mmsEngineDBFacade->modifyIPChannelConf(
 							outputChannelConfKey,
 							workspace->_workspaceKey,
 							false, "",
@@ -10208,7 +10306,7 @@ void MMSEngineProcessor::liveCutThread(
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
 
 		bool warningIfMissing = false;
-		pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getLiveURLConfDetails(
+		pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
 			workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		int64_t confKey;
 		string liveURL;

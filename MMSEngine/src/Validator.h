@@ -50,6 +50,8 @@ public:
 
     bool isFaceRecognitionOutputValid(string faceRecognitionOutput);
 
+    bool isChannelTypeValid(string channelType);
+
     bool isLiveRecorderOutputValid(string liveRecorderOutput);
 
     bool isLiveProxyOutputTypeValid(string liveProxyOutputType);

@@ -206,6 +206,9 @@ int main(int argc, char** argv)
 		#else	// __MAP__
 		#endif
 
+		mutex satelliteChannelsUdpPortsMutex;
+		long satelliteChannelPort_CurrentOffset = 0;
+
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
 		vector<thread> ffmpegEncoderThreads;
 
@@ -226,6 +229,9 @@ int main(int argc, char** argv)
 				&encodingCompletedMutex,
 				&encodingCompletedMap,
 				&lastEncodingCompletedCheck,
+
+				&satelliteChannelsUdpPortsMutex,
+				&satelliteChannelPort_CurrentOffset,
 
 				logger
 			);
@@ -302,6 +308,9 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
+		mutex* satelliteChannelsUdpPortsMutex,
+		long* satelliteChannelPort_CurrentOffset,
+
         shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
         fcgiAcceptMutex,
@@ -374,12 +383,18 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 		+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
 	);
 
+	_satelliteChannelPort_Start = 10000;
+	_satelliteChannelPort_MaxNumberOfOffsets = 100;
+
 	_monitorThreadShutdown = false;
 	_liveRecorderChunksIngestionThreadShutdown = false;
 
 	_encodingCompletedMutex = encodingCompletedMutex;
 	_encodingCompletedMap = encodingCompletedMap;
 	_lastEncodingCompletedCheck = lastEncodingCompletedCheck;
+
+	_satelliteChannelsUdpPortsMutex = satelliteChannelsUdpPortsMutex;
+	_satelliteChannelPort_CurrentOffset = satelliteChannelPort_CurrentOffset;
 
 	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
@@ -4787,11 +4802,37 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
-		bool actAsServer =  liveRecording->_liveRecorderParametersRoot.get("ActAsServer", false).asBool();
-		int listenTimeoutInSeconds = liveRecording->_liveRecorderParametersRoot.get("ListenTimeout", -1).asInt();
+        liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP").asString();
+		bool actAsServer = JSONUtils::asBool(liveRecorderMedatada, "actAsServer", false);
+		int listenTimeoutInSeconds = liveRecording->
+			_liveRecorderParametersRoot.get("ActAsServer_ListenTimeout", 300).asInt();
 
-        // string liveURL = liveRecording->_encodingParametersRoot.get("liveURL", "XXX").asString();
-        string liveURL = liveRecorderMedatada.get("liveURL", "").asString();
+        string liveURL;
+		if (liveRecording->_channelType == "Satellite")
+		{
+			lock_guard<mutex> locker(*_satelliteChannelsUdpPortsMutex);
+
+			liveURL = "udp://127.0.0.1:" + to_string(*_satelliteChannelPort_CurrentOffset + _satelliteChannelPort_Start);
+
+			*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
+				% _satelliteChannelPort_MaxNumberOfOffsets;
+
+			// see https://trac.ffmpeg.org/wiki/StreamingGuide, #Point to point streaming
+			// liveURL += ("?fifo_size=" + to_string(28*4096));	// default is 7*4096
+			{
+				// satelliteFrequency = JSONUtils::asInt64(liveRecorderMedatada, "satelliteFrequency", -1);
+				// satelliteVideoPid = JSONUtils::asInt64(liveRecorderMedatada, "satelliteVideoPID", -1);
+				// satelliteAudioPid = JSONUtils::asInt64(liveRecorderMedatada, "satelliteAudioPID", -1);
+			}
+		}
+		else
+		{
+			// in case of actAsServer
+			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
+			//	false: it comes from the LiveRecorder json ingested
+			liveURL = liveRecorderMedatada.get("liveURL", "").asString();
+		}
+
         time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodStart", -1);
         time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodEnd", -1);
         int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "segmentDurationInSeconds", -1);

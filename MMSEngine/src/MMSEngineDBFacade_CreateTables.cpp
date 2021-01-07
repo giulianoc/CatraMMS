@@ -2043,7 +2043,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
                 
             lastSQLCommand = 
-                "create table if not exists MMS_Conf_Channel ("
+                "create table if not exists MMS_Conf_IPChannel ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
@@ -2057,8 +2057,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "imageUniqueName			VARCHAR (128) NULL,"
                     "position					INT UNSIGNED NULL,"
                     "channelData				" + channelDataDefinition + ","
-                    "constraint MMS_Conf_Channel_PK PRIMARY KEY (confKey), "
-                    "constraint MMS_Conf_Channel_FK foreign key (workspaceKey) "
+                    "constraint MMS_Conf_IPChannel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_IPChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";
@@ -2076,7 +2076,87 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-        
+
+        try
+        {
+            lastSQLCommand = 
+				"create table if not exists MMS_Conf_SourceSATChannel ("
+                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"serviceId					BIGINT UNSIGNED NULL,"
+					"networkId					BIGINT UNSIGNED NULL,"
+					"transportStreamId			BIGINT UNSIGNED NULL,"
+					"name						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
+					"satellite					VARCHAR (64) NOT NULL,"
+					"frequency					BIGINT UNSIGNED NOT NULL,"
+					"lnb						VARCHAR (64) NULL,"
+					"videoPid					INT UNSIGNED NULL,"
+                    "audioPids					VARCHAR (128) NULL,"
+					"audioItalianPid			INT UNSIGNED NULL,"
+					"audioEnglishPid			INT UNSIGNED NULL,"
+					"teletextPid				INT UNSIGNED NULL,"
+					"modulation					VARCHAR (64) NULL,"
+                    "polarization				VARCHAR (64) NULL,"
+					"symbolRate					BIGINT UNSIGNED NULL,"
+                    "country					VARCHAR (64) NULL,"
+                    "deliverySystem				VARCHAR (64) NULL,"
+                    "constraint MMS_Conf_SourceSATChannel_PK PRIMARY KEY (confKey), "
+                    "UNIQUE (serviceId, name, frequency, videoPid, audioPids)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            string channelDataDefinition;
+            if (jsonTypeSupported)
+                channelDataDefinition = "JSON";
+            else
+                channelDataDefinition = "VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL";
+
+            lastSQLCommand = 
+				"create table if not exists MMS_Conf_SATChannel ("
+                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
+					"sourceSATConfKey			BIGINT UNSIGNED NOT NULL,"
+                    "region						VARCHAR (128) NULL,"
+                    "country					VARCHAR (128) NULL,"
+                    "imageMediaItemKey			BIGINT UNSIGNED NULL,"
+                    "imageUniqueName			VARCHAR (128) NULL,"
+                    "position					INT UNSIGNED NULL,"
+                    "channelData				" + channelDataDefinition + ","
+                    "constraint MMS_Conf_SATChannel_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_SATChannel_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "constraint MMS_Conf_SATChannel_FK2 foreign key (sourceSATConfKey) "
+						"references MMS_Conf_SourceSATChannel (confKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
         try
         {
             lastSQLCommand = 

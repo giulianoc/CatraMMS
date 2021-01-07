@@ -64,6 +64,7 @@ struct LiveRecording
 		int64_t					_ingestionJobKey;
 		Json::Value				_encodingParametersRoot;
 		Json::Value				_liveRecorderParametersRoot;
+        string					_channelType;
         string					_transcoderStagingContentsPath;
         string					_stagingContentsPath;
         string					_segmentListFileName;
@@ -114,6 +115,9 @@ public:
 		mutex* encodingCompletedMutex,
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
+
+		mutex* satelliteChannelsUdpPortsMutex,
+		long* satelliteChannelPort_CurrentOffset,
 
 		shared_ptr<spdlog::logger> logger);
     
@@ -179,6 +183,11 @@ private:
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<EncodingCompleted>>*	_encodingCompletedMap;
 	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
+
+	mutex*						_satelliteChannelsUdpPortsMutex;
+	long*						_satelliteChannelPort_CurrentOffset;
+	long						_satelliteChannelPort_Start;
+	long						_satelliteChannelPort_MaxNumberOfOffsets;
 
 	int							_monitorCheckInSeconds;
 	bool						_monitorThreadShutdown;

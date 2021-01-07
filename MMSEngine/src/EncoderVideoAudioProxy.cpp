@@ -10278,6 +10278,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
+	string channelType;
 	string encodersPool;
 	int64_t channelConfKey;
 	bool highAvailability;
@@ -10290,7 +10291,11 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	int segmentDurationInSeconds;
 	string outputFileFormat;
 	{
-        string field = "EncodersPool";
+        string field = "ChannelType";
+        channelType = _encodingItem->_liveRecorderData->
+			_ingestedParametersRoot.get(field, "IP").asString();
+
+        field = "EncodersPool";
         encodersPool = _encodingItem->_liveRecorderData->
 			_ingestedParametersRoot.get(field, "").asString();
 
@@ -12994,7 +12999,7 @@ pair<long,string> EncoderVideoAudioProxy::getLastYouTubeURLDetails(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getLiveURLConfDetails(
+			_mmsEngineDBFacade->getIPChannelConfDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -13184,7 +13189,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 	try
 	{
 		tuple<string, string, string> channelDetails =
-			_mmsEngineDBFacade->getLiveURLConfDetails(
+			_mmsEngineDBFacade->getIPChannelConfDetails(
 			_encodingItem->_workspace->_workspaceKey,
 			liveURLConfKey);
 
@@ -13311,7 +13316,7 @@ void EncoderVideoAudioProxy::updateChannelDataWithNewYouTubeURL(
 		int position = -1;
 		bool channelDataToBeModified = true;
 
-		_mmsEngineDBFacade->modifyChannelConf(
+		_mmsEngineDBFacade->modifyIPChannelConf(
 			liveURLConfKey,
 			_encodingItem->_workspace->_workspaceKey,
 			labelToBeModified, label,

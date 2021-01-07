@@ -9405,7 +9405,19 @@ bool FFMpeg::isFrameIncreasing(int secondsToWaitBetweenSamples)
 		long minutesSinceBeginningPassed =
 			chrono::duration_cast<chrono::minutes>(now - _startFFMpegMethod).count();
 		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
+        {
+            _logger->info(__FILEREF__ + "ffmpeg: too early to check frame increasing"
+                + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+                + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+                + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+				+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+				+ ", _startCheckingFrameInfoInMinutes: " + to_string(_startCheckingFrameInfoInMinutes)
+            );
+
 			return frameIncreasing;
+		}
 
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {

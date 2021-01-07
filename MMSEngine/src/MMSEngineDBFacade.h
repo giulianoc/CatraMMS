@@ -1644,6 +1644,8 @@ public:
 	int addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		string channelType,
+		bool actAsServer,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
 		string userAgent,
@@ -1891,7 +1893,7 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
-    int64_t addChannelConf(
+    int64_t addIPChannelConf(
         int64_t workspaceKey,
         string label,
         string url,
@@ -1905,7 +1907,7 @@ public:
 		int position,
 		Json::Value channelData);
 
-	void modifyChannelConf(
+	void modifyIPChannelConf(
 		int64_t confKey,
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
@@ -1919,22 +1921,110 @@ public:
 		bool positionToBeModified, int position,
 		bool channelDataToBeModified, Json::Value channelData);
 
-    void removeChannelConf(
+    void removeIPChannelConf(
         int64_t workspaceKey,
         int64_t confKey);
 
-    Json::Value getChannelConfList (
+    Json::Value getIPChannelConfList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
 		string label, string type, string name, string region, string country, string url,
 		string labelOrder);
 
-    pair<int64_t, string> getLiveURLConfDetails(
+    pair<int64_t, string> getIPChannelConfDetails(
         int64_t workspaceKey, string label,
 		bool warningIfMissing);
 
-	tuple<string, string, string> getLiveURLConfDetails(
+	tuple<string, string, string> getIPChannelConfDetails(
 		int64_t workspaceKey, int64_t confKey);
+
+    int64_t addSATChannelConf(
+        int64_t workspaceKey,
+		int64_t sourceSATConfKey,
+		string region,
+		string country,
+		int64_t imageMediaItemKey,
+		string imageUniqueName,
+		int position,
+		Json::Value channelData);
+
+	void modifySATChannelConf(
+		int64_t confKey,
+		int64_t workspaceKey,
+
+		bool sourceSATConfKeyToBeModified, int64_t sourceSATConfKey,
+		bool regionToBeModified, string region,
+		bool countryToBeModified, string country,
+		bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
+		bool positionToBeModified, int position,
+		bool channelDataToBeModified, Json::Value channelData);
+
+    void removeSATChannelConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getSATChannelConfList (
+        int64_t workspaceKey, int64_t serviceId,
+		string region, string country,
+		int start, int rows,
+		string name,
+		string nameOrder);
+
+	int64_t addSourceSATChannelConf(
+		int64_t serviceId,
+		int64_t networkId,
+		int64_t transportStreamId,
+		string name,
+		string satellite,
+		int64_t frequency,
+		string lnb,
+		int videoPid,
+		string audioPids,
+		int audioItalianPid,
+		int audioEnglishPid,
+		int teletextPid,
+		string modulation,
+		string polarization,
+		int64_t symbolRate,
+		string country,
+		string deliverySystem
+	);
+
+	void modifySourceSATChannelConf(
+		int64_t confKey,
+
+		bool serviceIdToBeModified, int64_t serviceId,
+		bool networkIdToBeModified, int64_t networkId,
+		bool transportStreamIdToBeModified, int64_t transportStreamId,
+		bool nameToBeModified, string name,
+		bool satelliteToBeModified, string satellite,
+		bool frequencyToBeModified, int64_t frequency,
+		bool lnbToBeModified, string lnb,
+		bool videoPidToBeModified, int videoPid,
+		bool audioPidsToBeModified, string audioPids,
+		bool audioItalianPidToBeModified, int audioItalianPid,
+		bool audioEnglishPidToBeModified, int audioEnglishPid,
+		bool teletextPidToBeModified, int teletextPid,
+		bool modulationToBeModified, string modulation,
+		bool polarizationToBeModified, string polarization,
+		bool symbolRateToBeModified, int64_t symbolRate,
+		bool countryToBeModified, string country,
+		bool deliverySystemToBeModified, string deliverySystem
+	);
+
+    void removeSourceSATChannelConf(
+        int64_t confKey);
+
+    Json::Value getSourceSATChannelConfList (
+        int64_t workspaceKey, int64_t confKey,
+		int start, int rows,
+		int64_t serviceId, string name, int64_t frequency,
+		int videoPid, string audioPids,
+		string nameOrder);
+
+    int64_t getSATChannelConfDetails(
+        int64_t workspaceKey, string name,
+		bool warningIfMissing);
 
     int64_t addFTPConf(
         int64_t workspaceKey,

@@ -411,24 +411,68 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
-    void addChannelConf(
+    void addIPChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void modifyChannelConf(
+    void modifyIPChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeChannelConf(
+    void removeIPChannelConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void channelConfList(
+    void ipChannelConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
+    void addSATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifySATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeSATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void satChannelConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters);
+
+    void addSourceSATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifySourceSATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeSourceSATChannelConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void sourceSatChannelConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters);

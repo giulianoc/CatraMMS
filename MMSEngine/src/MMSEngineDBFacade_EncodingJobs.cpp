@@ -8649,6 +8649,8 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
+	string channelType,
+	bool actAsServer,
 	bool highAvailability,
 	string configurationLabel, int64_t confKey, string url,
 	string userAgent,
@@ -8670,6 +8672,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", channelType: " + channelType
+            + ", actAsServer: " + to_string(actAsServer)
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
@@ -8704,30 +8708,17 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 			EncodingType encodingType = EncodingType::LiveRecorder;
         
-			/*
-			string parameters = string()
-                + "{ "
-                + "\"highAvailability\": " + to_string(highAvailability) + ""
-                + ", \"main\": " + to_string(main) + ""
-				// configurationLabel is used by the GUI (encodingJobs.java to get info to be displayed)
-                + ", \"configurationLabel\": \"" + configurationLabel + "\""
-                + ", \"confKey\": " + to_string(confKey)
-                + ", \"liveURL\": \"" + liveURL + "\""
-                + ", \"userAgent\": \"" + userAgent + "\""
-				// utcRecordingPeriodStart/utcRecordingPeriodEnd is used by the GUI (encodingJobs.java to calculate and display the duration)
-                + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
-                + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
-                + ", \"autoRenew\": " + to_string(autoRenew) + ""
-                + ", \"segmentDurationInSeconds\": " + to_string(segmentDurationInSeconds) + ""
-                + ", \"outputFileFormat\": \"" + outputFileFormat + "\""
-                + "} "
-                ;
-			*/
 			string parameters;
 			{
 				Json::Value parametersRoot;
 
-				string field = "highAvailability";
+				string field = "channelType";
+				parametersRoot[field] = channelType;
+
+				field = "actAsServer";
+				parametersRoot[field] = actAsServer;
+
+				field = "highAvailability";
 				parametersRoot[field] = highAvailability;
 
 				field = "main";

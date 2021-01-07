@@ -7,18 +7,31 @@
 
 	"Parameters": {
 
-		// mandatory: it refers the Live URL configuration
-		"ConfigurationLabel": "",
+		// optional, possible values: IP or Satellite. Default is IP
+		"ChannelType": "IP",
 
-		// default is false. If true the Task act as server listening for an incoming connection (i.e.: rtmp)
-		//	In this case the ConfigurationLabel should refer a URL like:
-		//		rtmp://<local transcoder IP to bind>:<port>
+		// default is false. If true the Task act as server listening for an incoming connection
+		// In case ChannelType is "Satellite", the ActAsServer... parameters are not used
 		"ActAsServer": false,
 
-		// It is used only in case of ActAsServer true, it is the max time in seconds
-		//	waiting an incoming connection.
-		//	Default: 300
-		"ListenTimeout": 300,
+		// mandatory only if ActAsServer is true.
+		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
+		"ActAsServerProtocol": "rtmp",
+		// mandatory only if ActAsServer is true.
+			// local transcoder IP address where to listen for data
+		"ActAsServerIP": 127.0.0.1,
+		// mandatory only if ActAsServer is true.
+			// local transcoder port where to listen for data
+		"ActAsServerPort": 12345,
+		// mandatory only if ActAsServer is true.
+			// max time in seconds waiting an incoming connection. Default is 300
+		"ActAsServerListenTimeout": 300,
+
+		// mandatory in case
+		//	- channelType is IP and ActAsServer is false, in this case it refers an IP Channel Configuration
+		//	- channelType is Satellite, in this case it refers a Satellite Channel Configuration
+		"ConfigurationLabel": "",
+
 
 		// optional: user agent to be used when the URL is called
 		"UserAgent": "",

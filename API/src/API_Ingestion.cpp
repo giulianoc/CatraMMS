@@ -3305,31 +3305,14 @@ void API::ingestionRootsStatus(
         {
             label = labelIt->second;
 
-			string labelDecoded = curlpp::unescape(label);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			/*
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						label.c_str(), label.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
-
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					label = regex_replace(sDecoded, regex(plus), plusDecoded);
-				}
-			}
-			*/
+			label = curlpp::unescape(firstDecoding);
         }
 
         string status = "all";
@@ -3514,30 +3497,14 @@ void API::ingestionJobsStatus(
         {
             label = labelIt->second;
 
-			string labelDecoded = curlpp::unescape(label);
-			// still there is the '+' char
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
-			label = regex_replace(labelDecoded, regex(plus), plusDecoded);
-			/*
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				int outLength;
-				char *decoded = curl_easy_unescape(curl,
-						label.c_str(), label.length(), &outLength);
-				if(decoded)
-				{
-					string sDecoded = decoded;
-					curl_free(decoded);
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-					// still there is the '+' char
-					string plus = "\\+";
-					string plusDecoded = " ";
-					label = regex_replace(sDecoded, regex(plus), plusDecoded);
-				}
-			}
-			*/
+			label = curlpp::unescape(firstDecoding);
         }
 
         bool startAndEndIngestionDatePresent = false;
