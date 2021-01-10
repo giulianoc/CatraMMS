@@ -3403,26 +3403,17 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
+	bool actAsServer;
+
+	field = "ActAsServer";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		actAsServer = JSONUtils::asBool(parametersRoot, field, false);
+	else
+		actAsServer = false;
+
+	// ActAsServer parameters are used only in case channelType is IP
 	if (channelType == "IP")
 	{
-		field = "ConfigurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		field = "ActAsServer";
-		bool actAsServer = JSONUtils::asBool(parametersRoot, field, false);
 		if (actAsServer)
 		{
 			vector<string> mandatoryFields = {
@@ -3436,7 +3427,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 				{
 					Json::StreamWriterBuilder wbuilder;
 					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
+           
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField
 						+ ", sParametersRoot: " + sParametersRoot
@@ -3448,24 +3439,42 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 				}
 			}
 		}
-    }
-	else // if (channelType == "Satellite")
-	{
-		field = "ActAsServer_Port";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            Json::StreamWriterBuilder wbuilder;
-            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+		else
+		{
+			field = "ConfigurationLabel";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
             
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
                     + ", sParametersRoot: " + sParametersRoot
                     + ", label: " + label
                     ;
-            _logger->error(errorMessage);
+				_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+				throw runtime_error(errorMessage);
+			}
+		}
+    }
+	else // if (channelType == "Satellite")
+	{
+		field = "ConfigurationLabel";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+           
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 	}
 
     field = "OutputType";

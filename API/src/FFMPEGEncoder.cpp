@@ -6558,7 +6558,6 @@ void FFMPEGEncoder::liveProxyThread(
 
 		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveProxyMetadata, "ingestionJobKey", -1);
 
-		string liveURL = liveProxyMetadata.get("liveURL", "").asString();
 		string userAgent = liveProxyMetadata.get("userAgent", "").asString();
 		int maxWidth = JSONUtils::asInt(liveProxyMetadata, "maxWidth", -1);
 		string otherInputOptions = liveProxyMetadata.get("otherInputOptions", "").asString();
@@ -6572,8 +6571,38 @@ void FFMPEGEncoder::liveProxyThread(
 
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
 		string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
-		bool actAsServer = liveProxy->_ingestedParametersRoot.get("ActAsServer", false).asBool();
-		int listenTimeoutInSeconds = liveProxy->_ingestedParametersRoot.get("ListenTimeout", -1).asInt();
+
+		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP").asString();
+		bool actAsServer = JSONUtils::asBool(liveProxyMetadata, "actAsServer", false);
+		int listenTimeoutInSeconds = liveProxy->
+			_ingestedParametersRoot.get("ActAsServer_ListenTimeout", -1).asInt();
+
+		string liveURL;
+		if (liveProxy->_channelType == "Satellite")
+		{
+			lock_guard<mutex> locker(*_satelliteChannelsUdpPortsMutex);
+
+			liveURL = "udp://127.0.0.1:" +
+				to_string(*_satelliteChannelPort_CurrentOffset + _satelliteChannelPort_Start);
+
+			*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
+				% _satelliteChannelPort_MaxNumberOfOffsets;
+
+			// see https://trac.ffmpeg.org/wiki/StreamingGuide, #Point to point streaming
+			// liveURL += ("?fifo_size=" + to_string(28*4096));	// default is 7*4096
+			{
+				// satelliteFrequency = JSONUtils::asInt64(liveRecorderMedatada, "satelliteFrequency", -1);
+				// satelliteVideoPid = JSONUtils::asInt64(liveRecorderMedatada, "satelliteVideoPID", -1);
+				// satelliteAudioPid = JSONUtils::asInt64(liveRecorderMedatada, "satelliteAudioPID", -1);
+			}
+		}
+		else
+		{
+			// in case of actAsServer
+			//	true: it is built into the MMSEngineProcessor::manageLiveProxy method
+			//	false: it comes from the LiveProxy json ingested
+			liveURL = liveProxyMetadata.get("liveURL", "").asString();
+		}
 
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
         MMSEngineDBFacade::ContentType contentType;

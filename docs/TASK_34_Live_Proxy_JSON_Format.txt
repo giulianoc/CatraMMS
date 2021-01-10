@@ -10,7 +10,26 @@
 		// optional, possible values: IP or Satellite. Default is IP
 		"ChannelType": "IP",
 
-		// mandatory...
+		// default is false. If true the Task act as server listening for an incoming connection
+		// In case ChannelType is "Satellite", the ActAsServer... parameters are not used
+		"ActAsServer": false,
+
+		// mandatory only if ActAsServer is true.
+		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
+		"ActAsServerProtocol": "rtmp",
+		// mandatory only if ActAsServer is true.
+			// local transcoder IP address where to listen for data
+		"ActAsServerIP": 127.0.0.1,
+		// mandatory only if ActAsServer is true.
+			// local transcoder port where to listen for data
+		"ActAsServerPort": 12345,
+		// mandatory only if ActAsServer is true.
+			// max time in seconds waiting an incoming connection. Default is 300
+		"ActAsServerListenTimeout": 300,
+
+		// mandatory in case
+		//	- channelType is IP and ActAsServer is false, in this case it refers an IP Channel Configuration
+		//	- channelType is Satellite, in this case it refers a Satellite Channel Configuration
 		"ConfigurationLabel": "",
 
 		// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
@@ -29,7 +48,7 @@
 		// mandatory only in case of RTMP_Stream
 		"RtmpUrl": "...",
 
-		// optional: user agent to be used when the URL is called
+		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",
 
 		// optional: If it is present, in case the live streaming provides several tracks,

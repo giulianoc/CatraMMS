@@ -8835,7 +8835,13 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "highAvailability";
+				string field = "channelType";
+				parametersRoot[field] = channelType;
+
+				field = "actAsServer";
+				parametersRoot[field] = actAsServer;
+
+				field = "highAvailability";
 				parametersRoot[field] = highAvailability;
 
 				field = "main";
@@ -9198,6 +9204,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
+	string channelType,
+	bool actAsServer,
 	int64_t liveURLConfKey, string configurationLabel, string url,
 	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, // string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
@@ -9214,6 +9222,8 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", channelType: " + channelType
+            + ", actAsServer: " + to_string(actAsServer)
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
@@ -9248,7 +9258,13 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "liveURLConfKey";
+				string field = "channelType";
+				parametersRoot[field] = channelType;
+
+				field = "actAsServer";
+				parametersRoot[field] = actAsServer;
+
+				field = "liveURLConfKey";
 				parametersRoot[field] = liveURLConfKey;
 
 				field = "configurationLabel";
@@ -9271,9 +9287,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
-
-				// field = "cdnURL";
-				// parametersRoot[field] = cdnURL;
 
 				if (encodingProfileKey != -1)
 				{

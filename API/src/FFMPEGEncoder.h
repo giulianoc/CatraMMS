@@ -44,6 +44,7 @@ struct LiveProxyAndGrid
 
 		int64_t					_ingestionJobKey;
 		Json::Value				_ingestedParametersRoot;
+        string					_channelType;
 		string					_outputType;
 		string					_channelLabel;
 		vector<string>			_manifestFilePathNames;

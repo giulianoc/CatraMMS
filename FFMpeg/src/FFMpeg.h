@@ -296,6 +296,41 @@ public:
 		string rtmpUrl,
 		pid_t* pChildPid);
 
+	void liveProxy(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		int maxWidth,
+
+		// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
+		//		listening for an incoming connection
+		// if actAsServer (false) means the liveURL is "any thing" referring a stream
+		bool actAsServer,
+		string liveURL,
+		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
+		int listenTimeoutInSeconds,
+
+		string userAgent,
+		string otherInputOptions,
+		string otherOutputOptions,
+
+		bool isVideo,	// if false it means is audio
+
+		// array, each element is an output containing the following fields
+		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
+		//  #in case of HLS or DASH
+		//      Json::Value encodingProfileDetailsRoot,
+		//      int segmentDurationInSeconds,
+		//      int playlistEntriesNumber,
+		//      string manifestDirectoryPath,
+		//      string manifestFileName,
+		//  #in case of RTMP_Stream
+		//      Json::Value encodingProfileDetailsRoot,
+		//      string rtmpUrl,
+		//
+		Json::Value outputsRoot,
+
+		pid_t* pChildPid);
+
 	void liveGrid(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,

@@ -9735,6 +9735,11 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		*/
 
+		string channelType;
+		bool actAsServer;
+		string actAsServerProtocol;
+		string actAsServerBindIP;
+		int actAsServerPort;
 		string configurationLabel;
 		string outputType;
 		// string userAgent;
@@ -9744,17 +9749,89 @@ void MMSEngineProcessor::manageLiveProxy(
 		long maxAttemptsNumberInCaseOfErrors;
 		int64_t encodingProfileKey = -1;
         {
-            string field = "ConfigurationLabel";
+            string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+				channelType = "IP";
+			else
+				channelType = parametersRoot.get(field, "").asString();
 
-                throw runtime_error(errorMessage);
-            }
-            configurationLabel = parametersRoot.get(field, "XXX").asString();
+			field = "ActAsServer";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				actAsServer = false;
+			else
+				actAsServer = parametersRoot.get(field, false).asBool();
+
+			if (channelType == "IP")
+			{
+				if (actAsServer)
+				{
+					field = "ActAsServer_Protocol";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerProtocol = parametersRoot.get(field, "").asString();
+
+					field = "ActAsServer_BindIP";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerBindIP = parametersRoot.get(field, "").asString();
+
+					field = "ActAsServer_Port";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerPort = parametersRoot.get(field, 0).asInt();
+				}
+				else
+				{
+					field = "ConfigurationLabel";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					configurationLabel = parametersRoot.get(field, "XXX").asString();
+				}
+			}
+			else // if (channelType == "Satellite")
+			{
+				actAsServer = true;
+
+				field = "ConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				configurationLabel = parametersRoot.get(field, "XXX").asString();
+			}
 
             field = "OutputType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9776,23 +9853,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				else
 					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
 			}
-			/*
-			else if (outputType == "CDN77")
-			{
-				field = "CDN_URL";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				cdnURL = parametersRoot.get(field, "XXX").asString();
-			}
-			*/
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9834,18 +9894,35 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
         }
 
-		bool warningIfMissing = false;
-        pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
-			workspace->_workspaceKey, configurationLabel, warningIfMissing);            
+		int64_t confKey = -1;
+		string liveURL;
 
-		int64_t liveURLConfKey;
-        string liveURL;
-		tie(liveURLConfKey, liveURL) = confKeyAndLiveURL;
+		if (channelType == "IP")
+		{
+			if (actAsServer)
+			{
+				liveURL = actAsServerProtocol + "://" + actAsServerBindIP
+					+ ":" + to_string(actAsServerPort);
+			}
+			else
+			{
+				bool warningIfMissing = false;
+				pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+					workspace->_workspaceKey, configurationLabel, warningIfMissing);
+				tie(confKey, liveURL) = channelConfDetails;
+			}
+		}
+		else // if (channelType == "Satellite")
+		{
+			bool warningIfMissing = false;
+			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+		}
+
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			liveURLConfKey, configurationLabel, liveURL, outputType,
+			channelType, actAsServer, confKey, configurationLabel, liveURL, outputType,
 			segmentDurationInSeconds, playlistEntriesNumber,
-			// cdnURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			encodingProfileKey);
 	}

@@ -1659,6 +1659,8 @@ public:
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		string channelType,
+		bool actAsServer,
 		int64_t liveURLConfKey, string configurationLabel, string url,
 		string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, // string cdnURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,

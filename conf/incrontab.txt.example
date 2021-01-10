@@ -1,0 +1,2 @@
+/var/catramms/storage/MMSRepository/MMSLive/1/2665 IN_MODIFY,IN_CLOSE_WRITE,IN_CREATE,IN_DELETE,IN_MOVED_FROM,IN_MOVED_TO,IN_MOVE_SELF /opt/catramms/CatraMMS/scripts/incrontab.sh $% $@ $#
+

@@ -3198,7 +3198,7 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 				orderByCondition = "order by sc.name " + nameOrder + " ";
 
 			lastSQLCommand = 
-				string("select csc.confKey, sc.sourceSATConfKey, sc.name, "
+				string("select csc.confKey, csc.sourceSATConfKey, sc.name, "
 					"csc.region, csc.country, "
 					"csc.imageMediaItemKey, csc.imageUniqueName, csc.position, csc.channelData "
 					"from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc ") 

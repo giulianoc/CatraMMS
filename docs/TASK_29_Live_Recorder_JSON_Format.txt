@@ -33,7 +33,7 @@
 		"ConfigurationLabel": "",
 
 
-		// optional: user agent to be used when the URL is called
+		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",
 
 		// optional. If this parameter is true, MMS starts two recordings,
