@@ -311,9 +311,6 @@ public:
 
 		string userAgent,
 		string otherInputOptions,
-		string otherOutputOptions,
-
-		bool isVideo,	// if false it means is audio
 
 		// array, each element is an output containing the following fields
 		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
@@ -327,7 +324,7 @@ public:
 		//      Json::Value encodingProfileDetailsRoot,
 		//      string rtmpUrl,
 		//
-		Json::Value outputsRoot,
+		vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
 
 		pid_t* pChildPid);
 

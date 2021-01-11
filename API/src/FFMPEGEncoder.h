@@ -42,10 +42,13 @@ struct LiveProxyAndGrid
 
 		string					_errorMessage;
 
+		string					_liveGridOutputType;	// only for LiveGrid
+		// Json::Value				_liveProxyOutputsRoot;	// only for LiveProxy
+		vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>> _liveProxyOutputRoots;
+
 		int64_t					_ingestionJobKey;
 		Json::Value				_ingestedParametersRoot;
         string					_channelType;
-		string					_outputType;
 		string					_channelLabel;
 		vector<string>			_manifestFilePathNames;
 		chrono::system_clock::time_point	_proxyStart;

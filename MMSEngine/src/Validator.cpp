@@ -3477,44 +3477,81 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    field = "OutputType";
-	string liveProxyOutputType;
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	field = "Outputs";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		liveProxyOutputType = parametersRoot.get(field, "").asString();
-		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
-                + ", Field: " + field
-                + ", liveProxyOutputType: " + liveProxyOutputType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	Json::Value outputsRoot = parametersRoot[field];
+
+	if (outputsRoot.size() == 0)
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
-	if (liveProxyOutputType == "RTMP_Stream")
+	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		vector<string> mandatoryFields = {
-			"RtmpUrl"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				Json::StreamWriterBuilder wbuilder;
-				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-            
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-				_logger->error(errorMessage);
+		Json::Value outputRoot = outputsRoot[outputIndex];
 
+		field = "OutputType";
+		string liveProxyOutputType;
+		if (JSONUtils::isMetadataPresent(outputRoot, field))
+		{
+			liveProxyOutputType = outputRoot.get(field, "").asString();
+			if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+			{
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+					+ ", Field: " + field
+					+ ", liveProxyOutputType: " + liveProxyOutputType
+					+ ", label: " + label
+					;
+				_logger->error(__FILEREF__ + errorMessage);
+        
 				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (liveProxyOutputType == "RTMP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
 		}
 	}

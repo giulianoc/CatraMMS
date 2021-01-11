@@ -11704,15 +11704,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	int64_t liveURLConfKey;
 	string configurationLabel;
 	string liveURL;
-	string outputType;
-	int segmentDurationInSeconds;
-	int playlistEntriesNumber;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
 	int maxWidth = -1;
 	string otherInputOptions;
-	string otherOutputOptions;
 	{
 		/*
         string field = "ChannelType";
@@ -11745,19 +11741,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         field = "OtherInputOptions";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
 			otherInputOptions = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "OtherOutputOptions";
-		if (JSONUtils::isMetadataPresent(_encodingItem->_liveProxyData->_ingestedParametersRoot, field))
-			otherOutputOptions = _encodingItem->_liveProxyData->_ingestedParametersRoot.get(field, "").asString();
-
-        field = "outputType";
-        outputType = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
-
-        field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 10);
-
-        field = "playlistEntriesNumber";
-        playlistEntriesNumber = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 10);
 
         field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
         waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 600);
@@ -11854,28 +11837,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 				string body;
 				{
-					string manifestDirectoryPath;
-					string manifestFileName;
-					if (outputType == "HLS" || outputType == "DASH")
-					{
-						string manifestExtension;
-						if (outputType == "HLS")
-							manifestExtension = "m3u8";
-						else if (outputType == "DASH")
-							manifestExtension = "mpd";
-
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							_mmsEngineDBFacade, to_string(liveURLConfKey),
-							_encodingItem->_workspace);
-
-						manifestFileName = to_string(liveURLConfKey) + ".m3u8";
-						/*
-						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
-								_mmsEngineDBFacade, to_string(liveURLConfKey),
-								manifestExtension, _encodingItem->_workspace);
-						*/
-					}
-
 					// in case of youtube url, the real URL to be used has to be calcolated
 					{
 						string youTubePrefix1 ("https://www.youtube.com/");
@@ -12045,48 +12006,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 					}
 
-					Json::Value encodingProfileDetails = Json::nullValue;
-					if (_encodingItem->_liveProxyData->_jsonEncodingProfile != "")
-					{
-						try
-						{
-							Json::CharReaderBuilder builder;
-							Json::CharReader* reader = builder.newCharReader();
-							string errors;
-
-							bool parsingSuccessful = reader->parse(_encodingItem->_liveProxyData->_jsonEncodingProfile.c_str(),
-								_encodingItem->_liveProxyData->_jsonEncodingProfile.c_str() + _encodingItem->_liveProxyData->_jsonEncodingProfile.size(), 
-								&encodingProfileDetails, &errors);
-							delete reader;
-
-							if (!parsingSuccessful)
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
-                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                    + ", errors: " + errors
-                                    + ", _liveProxyData->_jsonEncodingProfile: " + _encodingItem->_liveProxyData->_jsonEncodingProfile
-                                    ;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-						}
-						catch(...)
-						{
-							string errorMessage = string("_encodingItem->_jsonEncodingProfile json is not well format")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                                + ", _liveProxyData->_jsonEncodingProfile: " + _encodingItem->_liveProxyData->_jsonEncodingProfile
-                                ;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-
 					Json::Value liveProxyMetadata;
 
 					liveProxyMetadata["ingestionJobKey"] =
@@ -12095,21 +12014,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["maxWidth"] = maxWidth;
 					liveProxyMetadata["otherInputOptions"] = otherInputOptions;
-					liveProxyMetadata["otherOutputOptions"] = otherOutputOptions;
-					liveProxyMetadata["outputType"] = outputType;
-					liveProxyMetadata["segmentDurationInSeconds"] = segmentDurationInSeconds;
-					liveProxyMetadata["playlistEntriesNumber"] = playlistEntriesNumber;
-					liveProxyMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
-					liveProxyMetadata["manifestFileName"] = manifestFileName;
+					liveProxyMetadata["outputsRoot"] = _encodingItem->_liveProxyData->_outputsRoot;
 					liveProxyMetadata["configurationLabel"] = configurationLabel;
 					liveProxyMetadata["liveProxyIngestedParametersRoot"] = _encodingItem->_liveProxyData->_ingestedParametersRoot;
-					if (encodingProfileDetails != Json::nullValue)
-					{
-						liveProxyMetadata["encodingProfileDetails"] = encodingProfileDetails;
-						liveProxyMetadata["encodingProfileKey"] = _encodingItem->_liveProxyData->_encodingProfileKey;
-						liveProxyMetadata["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_liveProxyData->_contentType);
-					}
-
 					{
 						Json::StreamWriterBuilder wbuilder;
 

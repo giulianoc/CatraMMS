@@ -32,21 +32,9 @@
 		//	- channelType is Satellite, in this case it refers a Satellite Channel Configuration
 		"ConfigurationLabel": "",
 
-		// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
-		"OutputType": "HLS"
-
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
 		"EncodersPool": "",
-
-		// optional, used only in case of HLS, Default: 10
-		"SegmentDurationInSeconds": 10,
-
-		// optional, used only in case of HLS, Default: 6
-		"PlaylistEntriesNumber": 6,
-
-		// mandatory only in case of RTMP_Stream
-		"RtmpUrl": "...",
 
 		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",
@@ -62,21 +50,6 @@
 		//	-itsoffset -2.0
 		"OtherInputOptions": "",
 
-		// optional: It is possible to use this field to specify any other output options.
-		// Examples:
-		//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
-		//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
-		//	-map 0:v: specify to take all video from the first input (0) to be used in the output
-		"OtherOutputOptions": "-map 0:1",
-
-		// optional: this parameter is needed only in case the streaming has to be encoded before proxying
-		//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
-		//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
-		//		Possible values for the ContentType are: video, audio
-		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "Profile sport",
-		"ContentType": "video",
-
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
 		//		Default: 2
@@ -85,7 +58,40 @@
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many seconds LiveProxy has to wait before to try again.
 		//		Default: 600
-		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600
+		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600,
+
+		// This json array lists all the Outputs the Live-Proxy task has to generate.
+		//	At least one Output has to be present
+		"Outputs" = [
+			{
+				// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
+				"OutputType": "HLS",
+
+				// optional, used only in case of HLS, Default: 10
+				"SegmentDurationInSeconds": 10,
+
+				// optional, used only in case of HLS, Default: 6
+				"PlaylistEntriesNumber": 6,
+
+				// mandatory only in case of RTMP_Stream
+				"RtmpUrl": "...",
+
+				// optional: It is possible to use this field to specify any other output options.
+				// Examples:
+				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
+				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
+				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
+				"OtherOutputOptions": "-map 0:1",
+
+				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
+				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
+				//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+				//		Possible values for the ContentType are: video, audio
+				"EncodingProfileKey": 1,
+				"EncodingProfileLabel": "Profile sport",
+				"ContentType": "video"
+			}
+		]
 	}
 }
 

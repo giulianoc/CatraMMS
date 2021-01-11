@@ -9741,13 +9741,9 @@ void MMSEngineProcessor::manageLiveProxy(
 		string actAsServerBindIP;
 		int actAsServerPort;
 		string configurationLabel;
-		string outputType;
-		// string userAgent;
-		int segmentDurationInSeconds = 0;
-		int playlistEntriesNumber = 0;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
-		int64_t encodingProfileKey = -1;
+		Json::Value outputsRoot;
         {
             string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9833,27 +9829,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				configurationLabel = parametersRoot.get(field, "XXX").asString();
 			}
 
-            field = "OutputType";
-            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputType = "HLS";
-			else
-            	outputType = parametersRoot.get(field, "XXX").asString();
-
-			if (outputType == "HLS" || outputType == "DASH")
-			{
-				field = "SegmentDurationInSeconds";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					segmentDurationInSeconds = 10;
-				else
-					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
-
-				field = "PlaylistEntriesNumber";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-					playlistEntriesNumber = 6;
-				else
-					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-			}
-
 			field = "MaxAttemptsNumberInCaseOfErrors";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				maxAttemptsNumberInCaseOfErrors = 3;
@@ -9866,32 +9841,17 @@ void MMSEngineProcessor::manageLiveProxy(
 			else
 				waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 0);
 
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
-			string contentTypeField = "ContentType";
-			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
-			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			field = "Outputs";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
 
-				MMSEngineDBFacade::ContentType contentType;
-				if (JSONUtils::isMetadataPresent(parametersRoot, contentTypeField))
-				{
-					contentType = MMSEngineDBFacade::toContentType(
-						parametersRoot.get(contentTypeField, "").asString());
-
-					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace, contentType, encodingProfileLabel);
-				}
-				else
-				{
-					bool contentTypeToBeUsed = false;
-					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
-				}
-
+				throw runtime_error(errorMessage);
 			}
+			outputsRoot = parametersRoot[field];
         }
 
 		int64_t confKey = -1;
@@ -9919,12 +9879,125 @@ void MMSEngineProcessor::manageLiveProxy(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		}
 
+		Json::Value localOutputsRoot(Json::arrayValue);
+		{
+			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			{
+				Json::Value outputRoot = outputsRoot[outputIndex];
+
+
+				string outputType;
+				int segmentDurationInSeconds = 0;
+				int playlistEntriesNumber = 0;
+				int64_t encodingProfileKey = -1;
+				string manifestDirectoryPath;
+				string manifestFileName;
+				string rtmpUrl;
+
+
+				string field = "OutputType";
+				if (!JSONUtils::isMetadataPresent(outputRoot, field))
+					outputType = "HLS";
+				else
+					outputType = outputRoot.get(field, "HLS").asString();
+
+				if (outputType == "HLS" || outputType == "DASH")
+				{
+					field = "SegmentDurationInSeconds";
+					if (!JSONUtils::isMetadataPresent(outputRoot, field))
+						segmentDurationInSeconds = 10;
+					else
+						segmentDurationInSeconds = JSONUtils::asInt(outputRoot, field, 0);
+
+					field = "PlaylistEntriesNumber";
+					if (!JSONUtils::isMetadataPresent(outputRoot, field))
+						playlistEntriesNumber = 6;
+					else
+						playlistEntriesNumber = JSONUtils::asInt(outputRoot, field, 0);
+
+					string manifestExtension;
+					if (outputType == "HLS")
+						manifestExtension = "m3u8";
+					else if (outputType == "DASH")
+						manifestExtension = "mpd";
+
+					manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(confKey),
+						workspace);
+
+					manifestFileName = to_string(confKey) + ".m3u8";
+					/*
+						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
+							_mmsEngineDBFacade, to_string(liveURLConfKey),
+							manifestExtension, _encodingItem->_workspace);
+					*/
+				}
+				else
+				{
+					field = "RtmpUrl";
+					rtmpUrl = outputRoot.get(field, "").asString();
+				}
+
+				string keyField = "EncodingProfileKey";
+				string labelField = "EncodingProfileLabel";
+				string contentTypeField = "ContentType";
+				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
+					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
+				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
+				{
+					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
+
+					MMSEngineDBFacade::ContentType contentType;
+					if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+					{
+						contentType = MMSEngineDBFacade::toContentType(
+							outputRoot.get(contentTypeField, "").asString());
+
+						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel);
+					}
+					else
+					{
+						bool contentTypeToBeUsed = false;
+						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+					}
+				}
+
+				Json::Value localOutputRoot;
+
+				field = "outputType";
+				localOutputRoot[field] = outputType;
+
+				field = "segmentDurationInSeconds";
+				localOutputRoot[field] = segmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				localOutputRoot[field] = playlistEntriesNumber;
+
+				if (encodingProfileKey != -1)
+				{
+					field = "encodingProfileKey";
+					localOutputRoot[field] = encodingProfileKey;
+				}
+
+				field = "manifestDirectoryPath";
+				localOutputRoot[field] = manifestDirectoryPath;
+
+				field = "manifestFileName";
+				localOutputRoot[field] = manifestFileName;
+
+				field = "rtmpUrl";
+				localOutputRoot[field] = rtmpUrl;
+
+				localOutputsRoot.append(localOutputRoot);
+			}
+		}
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
-			channelType, actAsServer, confKey, configurationLabel, liveURL, outputType,
-			segmentDurationInSeconds, playlistEntriesNumber,
+			channelType, actAsServer, confKey, configurationLabel, liveURL,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
-			encodingProfileKey);
+			localOutputsRoot);
 	}
     catch(runtime_error e)
     {

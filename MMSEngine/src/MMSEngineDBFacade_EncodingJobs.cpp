@@ -264,81 +264,231 @@ void MMSEngineDBFacade::getEncodingJobs(
                 // if (encodingItem->_encodingType == EncodingType::LiveProxy)
                 {
                     encodingItem->_liveProxyData = make_shared<EncodingItem::LiveProxyData>();
-                    
-					string field = "encodingProfileKey";
-					// if not present it will be -1
-					int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, -1);
-					encodingItem->_liveProxyData->_encodingProfileKey = encodingProfileKey;
-					// encodingItem->_liveProxyData->_contentType =
-					encodingItem->_liveProxyData->_jsonEncodingProfile = "";
 
-					if (encodingProfileKey != -1)
-					{
-                        lastSQLCommand = 
-                            "select contentType, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
+					string field = "outputsRoot";
+					if (!JSONUtils::isMetadataPresent(encodingItem->_encodingParametersRoot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "No outputsRoot"
+                                + ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
 
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                        shared_ptr<sql::ResultSet> encodingProfilesResultSet (
-								preparedStatementEncodingProfile->executeQuery());
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", lastSQLCommand: " + lastSQLCommand
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-                        if (encodingProfilesResultSet->next())
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
                         {
-                            encodingItem->_liveProxyData->_contentType =
-								toContentType(encodingProfilesResultSet->getString("contentType"));
-                            encodingItem->_liveProxyData->_jsonEncodingProfile =
-								encodingProfilesResultSet->getString("jsonProfile");
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
                         }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "select failed"
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
+					Json::Value outputsRoot = encodingItem->_encodingParametersRoot[field];
+
+					for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+					{
+						Json::Value outputRoot = outputsRoot[outputIndex];
+
+						field = "encodingProfileKey";
+						// if not present it will be -1
+						int64_t encodingProfileKey = JSONUtils::asInt64(outputRoot, field, -1);
+						outputRoot[field] = encodingProfileKey;
+
+						Json::Value encodingProfileDetailsRoot = Json::nullValue;
+						MMSEngineDBFacade::ContentType encodingProfileContentType = MMSEngineDBFacade::ContentType::Video;
+
+						if (encodingProfileKey != -1)
+						{
+							lastSQLCommand = 
+								"select contentType, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
+							shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							shared_ptr<sql::ResultSet> encodingProfilesResultSet (
+								preparedStatementEncodingProfile->executeQuery());
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
+							if (encodingProfilesResultSet->next())
+							{
+								encodingProfileContentType =
+									toContentType(encodingProfilesResultSet->getString("contentType"));
+								string jsonEncodingProfile = encodingProfilesResultSet->getString("jsonProfile");
+								{
+									Json::CharReaderBuilder builder;
+									Json::CharReader* reader = builder.newCharReader();
+									string errors;
+
+									bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+											jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+											&encodingProfileDetailsRoot, &errors);
+									delete reader;
+
+									if (!parsingSuccessful)
+									{
+										string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+											+ ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", errors: " + errors
+											+ ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+										;
+										_logger->error(errorMessage);
+
+										// in case an encoding job row generate an error, we have to make it to Failed
+										// otherwise we will indefinitely get this error
+										{
+											_logger->info(__FILEREF__ + "EncodingJob update"
+												+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+												+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											);
+											lastSQLCommand = 
+												"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+											shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+													conn->_sqlConnection->prepareStatement(lastSQLCommand));
+											int queryParameterIndex = 1;
+											preparedStatementUpdate->setString(queryParameterIndex++,
+													MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+											preparedStatementUpdate->setInt64(queryParameterIndex++,
+													encodingItem->_encodingJobKey);
+
+											chrono::system_clock::time_point startSql = chrono::system_clock::now();
+											int rowsUpdated = preparedStatementUpdate->executeUpdate();
+											_logger->info(__FILEREF__ + "@SQL statistics@"
+												+ ", lastSQLCommand: " + lastSQLCommand
+												+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+												+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+												+ ", rowsUpdated: " + to_string(rowsUpdated)
+												+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+													chrono::system_clock::now() - startSql).count()) + "@"
+											);
+										}
+
+										continue;
+										// throw runtime_error(errorMessage);
+									}
+								}
+							}
+							else
+							{
+								string errorMessage = __FILEREF__ + "select failed"
                                     + ", encodingProfileKey: " + to_string(encodingProfileKey)
                                     + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
+								;
+								_logger->error(errorMessage);
 
-                            // in case an encoding job row generate an error, we have to make it to Failed
-                            // otherwise we will indefinitely get this error
-                            {
-								_logger->info(__FILEREF__ + "EncodingJob update"
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								// in case an encoding job row generate an error, we have to make it to Failed
+								// otherwise we will indefinitely get this error
+								{
+									_logger->info(__FILEREF__ + "EncodingJob update"
+										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 									);
-                                lastSQLCommand = 
-                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
-                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									lastSQLCommand = 
+										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
 										conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                                int queryParameterIndex = 1;
-                                preparedStatementUpdate->setString(queryParameterIndex++,
+									int queryParameterIndex = 1;
+									preparedStatementUpdate->setString(queryParameterIndex++,
 										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-                                preparedStatementUpdate->setInt64(queryParameterIndex++,
+									preparedStatementUpdate->setInt64(queryParameterIndex++,
 										encodingItem->_encodingJobKey);
 
-								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
-								_logger->info(__FILEREF__ + "@SQL statistics@"
-									+ ", lastSQLCommand: " + lastSQLCommand
-									+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
-									+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-									+ ", rowsUpdated: " + to_string(rowsUpdated)
-									+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-										chrono::system_clock::now() - startSql).count()) + "@"
-								);
-                            }
+									chrono::system_clock::time_point startSql = chrono::system_clock::now();
+									int rowsUpdated = preparedStatementUpdate->executeUpdate();
+									_logger->info(__FILEREF__ + "@SQL statistics@"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+										+ ", rowsUpdated: " + to_string(rowsUpdated)
+										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+											chrono::system_clock::now() - startSql).count()) + "@"
+									);
+								}
 
-                            continue;
-                            // throw runtime_error(errorMessage);
-                        }
+								continue;
+								// throw runtime_error(errorMessage);
+							}
+						}
+
+						field = "encodingProfileDetails";
+						outputRoot[field] = encodingProfileDetailsRoot;
+
+						field = "encodingProfileContentType";
+						outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+
+						outputsRoot[outputIndex] = outputRoot;
 					}
+					encodingItem->_liveProxyData->_outputsRoot = outputsRoot;
+
+					if (encodingItem->_liveProxyData->_outputsRoot.size() == 0)
+                    {
+                        string errorMessage = __FILEREF__ + "No outputsRoot"
+                                + ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        // in case an encoding job row generate an error, we have to make it to Failed
+                        // otherwise we will indefinitely get this error
+                        {
+							_logger->info(__FILEREF__ + "EncodingJob update"
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							);
+                            lastSQLCommand = 
+                                "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+									conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementUpdate->setString(queryParameterIndex++,
+									MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                            preparedStatementUpdate->setInt64(queryParameterIndex++,
+									encodingItem->_encodingJobKey);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                            int rowsUpdated = preparedStatementUpdate->executeUpdate();
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
+                        }
+
+                        continue;
+                        // throw runtime_error(errorMessage);
+                    }
 
                     {
                         lastSQLCommand = 
@@ -9207,9 +9357,8 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	string channelType,
 	bool actAsServer,
 	int64_t liveURLConfKey, string configurationLabel, string url,
-	string outputType, int segmentDurationInSeconds, int playlistEntriesNumber, // string cdnURL,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
-	int64_t encodingProfileKey
+	Json::Value outputsRoot
 )
 {
 
@@ -9227,13 +9376,9 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
-            + ", outputType: " + outputType
-            + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
-            + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
             + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors)
-            // + ", cdnURL: " + cdnURL
-            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+            + ", outputsRoot.size: " + to_string(outputsRoot.size())
         );
 
         conn = _connectionPool->borrow();	
@@ -9273,26 +9418,14 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				field = "url";
 				parametersRoot[field] = url;
 
-				field = "outputType";
-				parametersRoot[field] = outputType;
-
-				field = "segmentDurationInSeconds";
-				parametersRoot[field] = segmentDurationInSeconds;
-
-				field = "playlistEntriesNumber";
-				parametersRoot[field] = playlistEntriesNumber;
-
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
 
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				if (encodingProfileKey != -1)
-				{
-					field = "encodingProfileKey";
-					parametersRoot[field] = encodingProfileKey;
-				}
+				field = "outputsRoot";
+				parametersRoot[field] = outputsRoot;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

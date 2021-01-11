@@ -8112,23 +8112,24 @@ void FFMpeg::liveProxy(
 
 	string userAgent,
 	string otherInputOptions,
-	string otherOutputOptions,
-
-	bool isVideo,	// if false it means is audio
 
 	// array, each element is an output containing the following fields
 	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
 	//  #in case of HLS or DASH
+	//		string otherOutputOptions
 	//      Json::Value encodingProfileDetailsRoot,
+	//      string encodingProfileContentType
 	//      int segmentDurationInSeconds,
 	//      int playlistEntriesNumber,
 	//      string manifestDirectoryPath,
 	//      string manifestFileName,
 	//  #in case of RTMP_Stream
+	//		string otherOutputOptions
 	//      Json::Value encodingProfileDetailsRoot,
+	//      string encodingProfileContentType
 	//      string rtmpUrl,
 	//
-	Json::Value outputsRoot,
+	vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
 
 	pid_t* pChildPid)
 {
@@ -8144,7 +8145,8 @@ void FFMpeg::liveProxy(
 		*/
 	);
 
-	if (!actAsServer && maxWidth != -1 && otherOutputOptions.find("-map") == string::npos)
+	string otherOutputOptionsBecauseOfMaxWidth;
+	if (!actAsServer && maxWidth != -1)
 	{
 		try
 		{
@@ -8152,11 +8154,11 @@ void FFMpeg::liveProxy(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", maxWidth: " + to_string(maxWidth)
-				+ ", otherOutputOptions: " + otherOutputOptions
 			);
 
 			vector<tuple<int, string, string, string, string, int, int>>	videoTracks;
 			vector<tuple<int, string, string, string, int, bool>>			audioTracks;
+
 			getLiveStreamingInfo(
 				liveURL,
 				userAgent,
@@ -8228,17 +8230,17 @@ void FFMpeg::liveProxy(
 				}
 			}
 
-			string previousOtherOutputOptions = otherOutputOptions;
-
 			if (selectedVideoStreamId != "" && selectedAudioStreamId != "")
-				otherOutputOptions += (" -map " + selectedVideoStreamId + " -map " + selectedAudioStreamId);
+			{
+				otherOutputOptionsBecauseOfMaxWidth =
+					string(" -map ") + selectedVideoStreamId + " -map " + selectedAudioStreamId;
+			}
 
 			_logger->info(__FILEREF__ + "liveProxy: new other output options"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", maxWidth: " + to_string(maxWidth)
-				+ ", previous otherOutputOptions: " + previousOtherOutputOptions
-				+ ", current otherOutputOptions: " + otherOutputOptions
+				+ ", otherOutputOptionsBecauseOfMaxWidth: " + otherOutputOptionsBecauseOfMaxWidth
 			);
 		}
 		catch(runtime_error e)
@@ -8254,6 +8256,7 @@ void FFMpeg::liveProxy(
 		}
 	}
 
+	// Creating multi outputs: https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs
 	vector<string> ffmpegArgumentList;
 	{
 		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
@@ -8292,40 +8295,39 @@ void FFMpeg::liveProxy(
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
-		addToArguments(otherOutputOptions, ffmpegArgumentList);
 	}
 
-	if (outputsRoot.size() == 0)
+	if (outputRoots.size() == 0)
 	{
 		string errorMessage = __FILEREF__ + "liveProxy. No output parameters"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", outputsRoot.size: " + to_string(outputsRoot.size())
+			+ ", outputRoots.size: " + to_string(outputRoots.size())
 		;
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 
-	for(int outputIndex = 0; outputsRoot.size(); outputIndex++)
+	for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+		outputRoots)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		string outputType;
+		string otherOutputOptions;
+		Json::Value encodingProfileDetailsRoot;
+		string manifestDirectoryPath;
+		string manifestFileName;
+		int segmentDurationInSeconds;
+		int playlistEntriesNumber;
+		bool isVideo;
+		string rtmpUrl;
 
-		string outputType = outputRoot.get("outputType", "").asString();
+		tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
+			manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+			= tOutputRoot;
 
-		string outputTypeLowerCase;
-		outputTypeLowerCase.resize(outputType.size());
-		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
-			[](unsigned char c){return tolower(c); } );
-
-		if (outputTypeLowerCase == "hls" && outputTypeLowerCase == "dash")
+		if (outputType == "HLS" || outputType == "DASH")
 		{
-			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetailsRoot"];
-			string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
-			string manifestFileName = outputRoot.get("manifestFileName", "").asString();
-			int segmentDurationInSeconds = asInt(outputRoot, "segmentDurationInSeconds", 10);
-			int playlistEntriesNumber = asInt(outputRoot, "playlistEntriesNumber", 5);
-
 			vector<string> ffmpegEncodingProfileArgumentList;
 			if (encodingProfileDetailsRoot != Json::nullValue)
 			{
@@ -8437,6 +8439,12 @@ void FFMpeg::liveProxy(
 			{
 				string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
+				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
+				);
+
 				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
 				// I saw just once that the directory was not created and the liveencoder remains in the loop
 				// where:
@@ -8462,6 +8470,11 @@ void FFMpeg::liveProxy(
 						S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 				}
 
+				if (otherOutputOptions.find("-map") == string::npos && otherOutputOptionsBecauseOfMaxWidth != "")
+					addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth, ffmpegArgumentList);
+				else
+					addToArguments(otherOutputOptions, ffmpegArgumentList);
+
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
@@ -8482,7 +8495,7 @@ void FFMpeg::liveProxy(
 						ffmpegArgumentList.push_back("copy");
 					}
 				}
-				if (outputTypeLowerCase == "hls")
+				if (outputType == "HLS")
 				{
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("append_list");
@@ -8514,7 +8527,7 @@ void FFMpeg::liveProxy(
 					// ffmpegArgumentList.push_back("-start_number");
 					// ffmpegArgumentList.push_back(to_string(10));
 				}
-				else if (outputTypeLowerCase == "dash")
+				else if (outputType == "DASH")
 				{
 					ffmpegArgumentList.push_back("-seg_duration");
 					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
@@ -8536,10 +8549,19 @@ void FFMpeg::liveProxy(
 				ffmpegArgumentList.push_back(manifestFilePathName);
 			}
 		}
-		else if (outputTypeLowerCase == "rtmp_stream")
+		else if (outputType == "RTMP_Stream")
 		{
-			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetailsRoot"];
-			string rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
+			if (rtmpUrl == "")
+			{
+				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", rtmpUrl: " + rtmpUrl
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 
 			vector<string> ffmpegEncodingProfileArgumentList;
 			if (encodingProfileDetailsRoot != Json::nullValue)
@@ -8648,6 +8670,8 @@ void FFMpeg::liveProxy(
 					throw e;
 				}
 			}
+
+			addToArguments(otherOutputOptions, ffmpegArgumentList);
 
 			if (ffmpegEncodingProfileArgumentList.size() > 0)
 			{
@@ -8825,21 +8849,25 @@ void FFMpeg::liveProxy(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		for(int outputIndex = 0; outputsRoot.size(); outputIndex++)
+		for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+			outputRoots)
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			string outputType;
+			string otherOutputOptions;
+			Json::Value encodingProfileDetailsRoot;
+			string manifestDirectoryPath;
+			string manifestFileName;
+			int segmentDurationInSeconds;
+			int playlistEntriesNumber;
+			bool isVideo;
+			string rtmpUrl;
 
-			string outputType = outputRoot.get("outputType", "").asString();
+			tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
+				manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+				= tOutputRoot;
 
-			string outputTypeLowerCase;
-			outputTypeLowerCase.resize(outputType.size());
-			transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
-				[](unsigned char c){return tolower(c); } );
-
-			if (outputTypeLowerCase != "hls" && outputTypeLowerCase != "dash")
+			if (outputType == "HLS" || outputType == "DASH")
 			{
-				string manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
-
 				if (manifestDirectoryPath != "")
 				{
 					if (FileIO::directoryExisting(manifestDirectoryPath))
