@@ -3083,9 +3083,9 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		if (actAsServer)
 		{
 			vector<string> mandatoryFields = {
-				"ActAsServer_Protocol",
-				"ActAsServer_BindIP",
-				"ActAsServer_Port"
+				"ActAsServerProtocol",
+				"ActAsServerBindIP",
+				"ActAsServerPort"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -3417,9 +3417,9 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		if (actAsServer)
 		{
 			vector<string> mandatoryFields = {
-				"ActAsServer_Protocol",
-				"ActAsServer_BindIP",
-				"ActAsServer_Port"
+				"ActAsServerProtocol",
+				"ActAsServerBindIP",
+				"ActAsServerPort"
 			};
 			for (string mandatoryField: mandatoryFields)
 			{

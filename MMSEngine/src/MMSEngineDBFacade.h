@@ -623,6 +623,9 @@ public:
         };
 
 		struct LiveRecorderData {
+            Json::Value								_monitorEncodingProfileDetailsRoot;
+			MMSEngineDBFacade::ContentType			_monitorEncodingProfileContentType;
+
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
 		};
@@ -1655,7 +1658,12 @@ public:
 		bool autoRenew,
 		int segmentDurationInSeconds,
 		string outputFileFormat,
-		EncodingPriority encodingPriority);
+		EncodingPriority encodingPriority,
+		bool monitorHLS,
+		int64_t monitorEncodingProfileKey,
+		string monitorManifestDirectoryPath,
+		string monitorManifestFileName,
+		int monitorPlaylistEntriesNumber);
 
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,

@@ -250,6 +250,15 @@ public:
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
         string outputFileFormat,
+
+		// monitorHLS
+		bool monitorHLS,
+		Json::Value monitorEncodingProfileDetailsRoot,
+		bool monitorIsVideo,
+		string monitorManifestDirectoryPath,
+		string monitorManifestFileName,
+		int monitorPlaylistEntriesNumber,
+
 		pid_t* pChildPid);
 
 	void liveProxyByHTTPStreaming(

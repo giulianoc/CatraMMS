@@ -4803,9 +4803,9 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
         liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP").asString();
-		bool actAsServer = JSONUtils::asBool(liveRecorderMedatada, "actAsServer", false);
+		bool actAsServer = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "actAsServer", false);
 		int listenTimeoutInSeconds = liveRecording->
-			_liveRecorderParametersRoot.get("ActAsServer_ListenTimeout", 300).asInt();
+			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 
         string liveURL;
 		if (liveRecording->_channelType == "Satellite")
@@ -4838,6 +4838,75 @@ void FFMPEGEncoder::liveRecorderThread(
         int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "segmentDurationInSeconds", -1);
         string outputFileFormat = liveRecording->_encodingParametersRoot.get("outputFileFormat", "XXX").asString();
 
+
+		bool monitorHLS;
+		Json::Value monitorEncodingProfileDetailsRoot = Json::nullValue;
+		bool monitorIsVideo = true;
+		string monitorManifestDirectoryPath;
+		string monitorManifestFileName;
+		int monitorPlaylistEntriesNumber = -1;
+		{
+			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "monitorHLS", false);
+
+			if (monitorHLS)
+			{
+				// Json::Value monitorHLSRoot = liveRecording->_liveRecorderParametersRoot["MonitorHLS"];
+
+				monitorHLS = true;
+
+				monitorManifestDirectoryPath = liveRecording->_encodingParametersRoot.get("monitorManifestDirectoryPath", "").asString();
+				monitorManifestFileName = liveRecording->_encodingParametersRoot.get("monitorManifestFileName", "").asString();
+				monitorPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "monitorPlaylistEntriesNumber", 6);
+
+				monitorEncodingProfileDetailsRoot = liveRecorderMedatada["monitorEncodingProfileDetailsRoot"];
+				string monitorEncodingProfileContentType =
+					liveRecorderMedatada.get("monitorEncodingProfileContentType", "Video").asString();
+
+				monitorIsVideo = monitorEncodingProfileContentType == "Video" ? true : false;
+
+				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+				}
+
+				// internal monitoring thread will not check anything on the monitorHLS delivery
+				//	 (I'm not sure this is right think to do)
+				// liveRecording->_manifestFilePathNames.push_back(
+				// 	monitorManifestDirectoryPath + "/" + monitorManifestFileName);
+			}
+		}
+
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
@@ -4862,14 +4931,24 @@ void FFMPEGEncoder::liveRecorderThread(
 			encodingJobKey,
 			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
+
 			actAsServer,
 			liveURL,
 			listenTimeoutInSeconds,
+
 			userAgent,
 			utcRecordingPeriodStart,
 			utcRecordingPeriodEnd,
 			segmentDurationInSeconds,
 			outputFileFormat,
+
+			monitorHLS,
+			monitorEncodingProfileDetailsRoot,
+			monitorIsVideo,
+			monitorManifestDirectoryPath,
+			monitorManifestFileName,
+			monitorPlaylistEntriesNumber,
+
 			&(liveRecording->_childPid)
 		);
 
@@ -6661,7 +6740,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP").asString();
 		bool actAsServer = JSONUtils::asBool(liveProxyMetadata, "actAsServer", false);
 		int listenTimeoutInSeconds = liveProxy->
-			_ingestedParametersRoot.get("ActAsServer_ListenTimeout", -1).asInt();
+			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 
 		string liveURL;
 		if (liveProxy->_channelType == "Satellite")

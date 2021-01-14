@@ -19,7 +19,7 @@
 		"ActAsServerProtocol": "rtmp",
 		// mandatory only if ActAsServer is true.
 			// local transcoder IP address where to listen for data
-		"ActAsServerIP": 127.0.0.1,
+		"ActAsServerBindIP": 127.0.0.1,
 		// mandatory only if ActAsServer is true.
 			// local transcoder port where to listen for data
 		"ActAsServerPort": 12345,
@@ -80,6 +80,24 @@
 		// optional. it specifies the encoding profile label to be used for the Live Recorder VOD
 		//	By default it is the generated/source ts profile
 		"LiveRecorderVirtualVODProfileLabel": "MMS_TS_H264_veryfast_360p25_high422_AAC_92",
+
+		// monitorHLS allows to monitor the input stream providing an HLS delivery
+		//	that can be used inside a player.
+		// This field is optional, if not present no monitor HLS is generated. By default monitorHLS is not present
+		"MonitorHLS": {
+
+			// optional: this parameter is needed in case we need a specific encoding profile for the monitor HLS.
+			// Generally this is a low encoding profile
+			//		The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel. 
+			//      In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+			//      Possible values for the ContentType are: video, audio
+			"EncodingProfileKey": 1,
+			"EncodingProfileLabel": "Profile sport",
+			"ContentType": "video",
+
+			// optional. Default: 6                                             
+			"PlaylistEntriesNumber": 6
+		},
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [

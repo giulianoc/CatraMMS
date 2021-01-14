@@ -9364,6 +9364,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int segmentDurationInSeconds;
 		string outputFileFormat;
 		bool highAvailability = false;
+		bool monitorHLS = false;
+		int monitorPlaylistEntriesNumber = 0;
+		int64_t monitorEncodingProfileKey = -1;
         {
             string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9381,7 +9384,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			{
 				if (actAsServer)
 				{
-					field = "ActAsServer_Protocol";
+					field = "ActAsServerProtocol";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9393,7 +9396,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					}
 					actAsServerProtocol = parametersRoot.get(field, "").asString();
 
-					field = "ActAsServer_BindIP";
+					field = "ActAsServerBindIP";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9405,7 +9408,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					}
 					actAsServerBindIP = parametersRoot.get(field, "").asString();
 
-					field = "ActAsServer_Port";
+					field = "ActAsServerPort";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9516,6 +9519,51 @@ void MMSEngineProcessor::manageLiveRecorder(
 				outputFileFormat = "ts";
 			else
             	outputFileFormat = parametersRoot.get(field, "XXX").asString();
+
+			field = "MonitorHLS";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::Value monitorHLSRoot = parametersRoot[field];
+
+				monitorHLS = true;
+
+				field = "PlaylistEntriesNumber";
+				if (!JSONUtils::isMetadataPresent(monitorHLSRoot, field))
+					monitorPlaylistEntriesNumber = 6;
+				else
+					monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
+
+
+				string keyField = "EncodingProfileKey";
+				string labelField = "EncodingProfileLabel";
+				string contentTypeField = "ContentType";
+				if (JSONUtils::isMetadataPresent(monitorHLSRoot, keyField))
+					monitorEncodingProfileKey = JSONUtils::asInt64(monitorHLSRoot, keyField, 0);
+				else if (JSONUtils::isMetadataPresent(monitorHLSRoot, labelField))
+				{
+					string encodingProfileLabel = monitorHLSRoot.get(labelField, "").asString();
+
+					MMSEngineDBFacade::ContentType contentType;
+					if (JSONUtils::isMetadataPresent(monitorHLSRoot, contentTypeField))
+					{
+						contentType = MMSEngineDBFacade::toContentType(
+							monitorHLSRoot.get(contentTypeField, "").asString());
+
+						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel);
+					}
+					else
+					{
+						bool contentTypeToBeUsed = false;
+						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+					}
+				}
+			}
+			else
+			{
+				monitorHLS = false;
+			}
         }
 
 		// next code is the same in the Validator class
@@ -9641,6 +9689,25 @@ void MMSEngineProcessor::manageLiveRecorder(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		}
 
+		string monitorManifestDirectoryPath;
+		string monitorManifestFileName;
+		if(monitorHLS)
+		{
+			string manifestExtension;
+			manifestExtension = "m3u8";
+
+			monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+				_mmsEngineDBFacade, to_string(confKey),
+				workspace);
+
+			monitorManifestFileName = to_string(confKey) + ".m3u8";
+			/*
+				manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
+					_mmsEngineDBFacade, to_string(liveURLConfKey),
+					manifestExtension, _encodingItem->_workspace);
+			*/
+		}
+
 		{
 			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(
 				workspace->_workspaceKey, encodersPool);
@@ -9672,7 +9739,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			channelType, actAsServer, highAvailability, configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
-			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
+			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
+			monitorHLS, monitorEncodingProfileKey,
+			monitorManifestDirectoryPath, monitorManifestFileName,
+			monitorPlaylistEntriesNumber);
 
 		/*
 		if (highAvailability)
@@ -9761,7 +9831,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			{
 				if (actAsServer)
 				{
-					field = "ActAsServer_Protocol";
+					field = "ActAsServerProtocol";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9773,7 +9843,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					}
 					actAsServerProtocol = parametersRoot.get(field, "").asString();
 
-					field = "ActAsServer_BindIP";
+					field = "ActAsServerBindIP";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9785,7 +9855,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					}
 					actAsServerBindIP = parametersRoot.get(field, "").asString();
 
-					field = "ActAsServer_Port";
+					field = "ActAsServerPort";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage = __FILEREF__ + "Field is not present or it is null"

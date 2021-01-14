@@ -19,7 +19,7 @@
 		"ActAsServerProtocol": "rtmp",
 		// mandatory only if ActAsServer is true.
 			// local transcoder IP address where to listen for data
-		"ActAsServerIP": 127.0.0.1,
+		"ActAsServerBindIP": 127.0.0.1,
 		// mandatory only if ActAsServer is true.
 			// local transcoder port where to listen for data
 		"ActAsServerPort": 12345,

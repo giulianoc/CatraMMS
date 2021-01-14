@@ -6563,9 +6563,41 @@ void FFMpeg::liveRecorder(
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
         string outputFileFormat,
+
+		// monitorHLS
+		bool monitorHLS,
+		Json::Value monitorEncodingProfileDetailsRoot,
+		bool monitorIsVideo,
+		string monitorManifestDirectoryPath,
+		string monitorManifestFileName,
+		int monitorPlaylistEntriesNumber,
+
 		pid_t* pChildPid)
 {
 	_currentApiName = "liveRecorder";
+
+	_logger->info(__FILEREF__ + "Received " + _currentApiName
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", segmentListPathName: " + segmentListPathName
+		+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
+
+		+ ", actAsServer: " + to_string(actAsServer)
+		+ ", liveURL: " + liveURL
+		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+
+		+ ", userAgent: " + userAgent
+		+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+		+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+		+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+		+ ", outputFileFormat: " + outputFileFormat
+
+		+ ", monitorHLS: " + to_string(monitorHLS)
+		+ ", monitorIsVideo: " + to_string(monitorIsVideo)
+		+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+		+ ", monitorManifestFileName: " + monitorManifestFileName
+		+ ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
+	);
 
 	setStatus(
 		ingestionJobKey,
@@ -6757,6 +6789,7 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-t");
 		ffmpegArgumentList.push_back(to_string(utcRecordingPeriodEnd - utcNow));
+
 		ffmpegArgumentList.push_back("-c:v");
 		ffmpegArgumentList.push_back("copy");
 		ffmpegArgumentList.push_back("-c:a");
@@ -6772,6 +6805,213 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back("-strftime");
 		ffmpegArgumentList.push_back("1");
 		ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
+
+		if (monitorHLS)
+		{
+			vector<string> ffmpegEncodingProfileArgumentList;
+			if (monitorEncodingProfileDetailsRoot != Json::nullValue)
+			{
+				try
+				{
+					string httpStreamingFileFormat;    
+					string ffmpegHttpStreamingParameter = "";
+
+					string ffmpegFileFormatParameter = "";
+
+					string ffmpegVideoCodecParameter = "";
+					string ffmpegVideoProfileParameter = "";
+					string ffmpegVideoResolutionParameter = "";
+					int videoBitRateInKbps = -1;
+					string ffmpegVideoBitRateParameter = "";
+					string ffmpegVideoOtherParameters = "";
+					string ffmpegVideoMaxRateParameter = "";
+					string ffmpegVideoBufSizeParameter = "";
+					string ffmpegVideoFrameRateParameter = "";
+					string ffmpegVideoKeyFramesRateParameter = "";
+					bool twoPasses;
+
+					string ffmpegAudioCodecParameter = "";
+					string ffmpegAudioBitRateParameter = "";
+					string ffmpegAudioOtherParameters = "";
+					string ffmpegAudioChannelsParameter = "";
+					string ffmpegAudioSampleRateParameter = "";
+
+
+					settingFfmpegParameters(
+						monitorEncodingProfileDetailsRoot,
+						monitorIsVideo,
+
+						httpStreamingFileFormat,
+						ffmpegHttpStreamingParameter,
+
+						ffmpegFileFormatParameter,
+
+						ffmpegVideoCodecParameter,
+						ffmpegVideoProfileParameter,
+						ffmpegVideoResolutionParameter,
+						videoBitRateInKbps,
+						ffmpegVideoBitRateParameter,
+						ffmpegVideoOtherParameters,
+						twoPasses,
+						ffmpegVideoMaxRateParameter,
+						ffmpegVideoBufSizeParameter,
+						ffmpegVideoFrameRateParameter,
+						ffmpegVideoKeyFramesRateParameter,
+
+						ffmpegAudioCodecParameter,
+						ffmpegAudioBitRateParameter,
+						ffmpegAudioOtherParameters,
+						ffmpegAudioChannelsParameter,
+						ffmpegAudioSampleRateParameter
+					);
+
+					/*
+					if (httpStreamingFileFormat != "")
+					{
+						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					else */ if (twoPasses)
+					{
+						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have a two passes encoding"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+					ffmpegEncodingProfileArgumentList.push_back("-threads");
+					ffmpegEncodingProfileArgumentList.push_back("0");
+					addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+					addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					throw e;
+				}
+			}
+
+			{
+				string manifestFilePathName = monitorManifestDirectoryPath + "/" + monitorManifestFileName;
+
+				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+				);
+
+				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+				// I saw just once that the directory was not created and the liveencoder remains in the loop
+				// where:
+				//	1. the encoder returns an error because of the missing directory
+				//	2. EncoderVideoAudioProxy calls again the encoder
+				// So, for this reason, the below check is done
+				if (!FileIO::directoryExisting(monitorManifestDirectoryPath))
+				{
+					_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+					);
+
+					_logger->info(__FILEREF__ + "Create directory"
+						+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+					);
+					bool noErrorIfExists = true;
+					bool recursive = true;
+					FileIO::createDirectory(monitorManifestDirectoryPath,
+						S_IRUSR | S_IWUSR | S_IXUSR |
+						S_IRGRP | S_IXGRP |
+						S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+				}
+
+				/*
+				if (monitorOtherOutputOptions.find("-map") == string::npos && monitorOtherOutputOptionsBecauseOfMaxWidth != "")
+					addToArguments(monitorOtherOutputOptions + monitorOtherOutputOptionsBecauseOfMaxWidth, ffmpegArgumentList);
+				else
+					addToArguments(monitorOtherOutputOptions, ffmpegArgumentList);
+				*/
+
+				if (ffmpegEncodingProfileArgumentList.size() > 0)
+				{
+					for (string parameter: ffmpegEncodingProfileArgumentList)
+						addToArguments(parameter, ffmpegArgumentList);
+				}
+				else
+				{
+					// if (monitorOtherOutputOptions.find("-filter:v") == string::npos)
+					{
+						// it is not possible to have -c:v copy and -filter:v toghether
+						ffmpegArgumentList.push_back("-c:v");
+						ffmpegArgumentList.push_back("copy");
+					}
+					// if (monitorOtherOutputOptions.find("-filter:a") == string::npos)
+					{
+						// it is not possible to have -c:a copy and -filter:a toghether
+						ffmpegArgumentList.push_back("-c:a");
+						ffmpegArgumentList.push_back("copy");
+					}
+				}
+				{
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("append_list");
+					ffmpegArgumentList.push_back("-hls_time");
+					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegArgumentList.push_back("-hls_list_size");
+					ffmpegArgumentList.push_back(to_string(monitorPlaylistEntriesNumber));
+
+					// Set the number of unreferenced segments to keep on disk
+					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+					// to download segments which were recently referenced in the playlist.
+					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+					ffmpegArgumentList.push_back("-hls_delete_threshold");
+					ffmpegArgumentList.push_back(to_string(1));
+
+					// Segment files removed from the playlist are deleted after a period of time equal
+					// to the duration of the segment plus the duration of the playlist.
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("delete_segments");
+
+					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-hls_start_number_source");
+					// ffmpegArgumentList.push_back("datetime");
+
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-start_number");
+					// ffmpegArgumentList.push_back(to_string(10));
+				}
+				ffmpegArgumentList.push_back(manifestFilePathName);
+			}
+		}
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -7221,6 +7461,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 				ffmpegAudioSampleRateParameter
 			);
 
+			/*
 			if (httpStreamingFileFormat != "")
 			{
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
@@ -7231,7 +7472,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 
 				throw runtime_error(errorMessage);
 			}
-			else if (twoPasses)
+			else */ if (twoPasses)
 			{
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7817,6 +8058,7 @@ void FFMpeg::liveProxyByStream(
 				ffmpegAudioSampleRateParameter
 			);
 
+			/*
 			if (httpStreamingFileFormat != "")
 			{
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
@@ -7827,7 +8069,7 @@ void FFMpeg::liveProxyByStream(
 
 				throw runtime_error(errorMessage);
 			}
-			else if (twoPasses)
+			else */ if (twoPasses)
 			{
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8135,6 +8377,17 @@ void FFMpeg::liveProxy(
 {
 	_currentApiName = "liveProxy";
 
+	_logger->info(__FILEREF__ + "Received " + _currentApiName
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", maxWidth: " + to_string(maxWidth)
+		+ ", actAsServer: " + to_string(actAsServer)
+		+ ", liveURL: " + liveURL
+		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", userAgent: " + userAgent
+		+ ", otherInputOptions: " + otherInputOptions
+	);
+
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey
@@ -8385,6 +8638,7 @@ void FFMpeg::liveProxy(
 						ffmpegAudioSampleRateParameter
 					);
 
+					/*
 					if (httpStreamingFileFormat != "")
 					{
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
@@ -8395,7 +8649,7 @@ void FFMpeg::liveProxy(
 
 						throw runtime_error(errorMessage);
 					}
-					else if (twoPasses)
+					else */ if (twoPasses)
 					{
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8620,6 +8874,7 @@ void FFMpeg::liveProxy(
 						ffmpegAudioSampleRateParameter
 					);
 
+					/*
 					if (httpStreamingFileFormat != "")
 					{
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have an httpStreaming encoding"
@@ -8630,7 +8885,7 @@ void FFMpeg::liveProxy(
 
 						throw runtime_error(errorMessage);
 					}
-					else if (twoPasses)
+					else */ if (twoPasses)
 					{
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)

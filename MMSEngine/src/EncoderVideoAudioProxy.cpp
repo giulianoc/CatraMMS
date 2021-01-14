@@ -10799,6 +10799,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
 					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_ingestedParametersRoot;
+					liveRecorderMedatada["monitorEncodingProfileContentType"] = MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData->_monitorEncodingProfileContentType);
+					liveRecorderMedatada["monitorEncodingProfileDetailsRoot"] = _encodingItem->_liveRecorderData->_monitorEncodingProfileDetailsRoot;
 					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{
@@ -11700,6 +11702,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 {
 
 	// string channelType;
+	bool actAsServer;
 	string encodersPool;
 	int64_t liveURLConfKey;
 	string configurationLabel;
@@ -11716,7 +11719,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			_ingestedParametersRoot.get(field, "").asString();
 		*/
 
-        string field = "EncodersPool";
+        string field = "actAsServer";
+        actAsServer = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, false);
+
+        field = "EncodersPool";
         encodersPool = _encodingItem->_liveProxyData->
 			_ingestedParametersRoot.get(field, "").asString();
 
@@ -12010,6 +12016,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveProxyMetadata["actAsServer"] = actAsServer;
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["maxWidth"] = maxWidth;

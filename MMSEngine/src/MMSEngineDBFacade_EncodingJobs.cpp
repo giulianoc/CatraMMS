@@ -868,7 +868,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 // if (encodingItem->_encodingType == EncodingType::LiveRecorder)
                 {
                     encodingItem->_liveRecorderData = make_shared<EncodingItem::LiveRecorderData>();
-                    
+
                     {
                         lastSQLCommand = 
                             "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
@@ -977,6 +977,131 @@ void MMSEngineDBFacade::getEncodingJobs(
                             // throw runtime_error(errorMessage);
                         }
                     }
+
+					{
+						string field = "monitorEncodingProfileKey";
+						// if not present it will be -1
+						int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, -1);
+
+						if (encodingProfileKey != -1)
+						{
+							lastSQLCommand = 
+								"select contentType, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
+							shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingProfileKey);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							shared_ptr<sql::ResultSet> encodingProfilesResultSet (
+								preparedStatementEncodingProfile->executeQuery());
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								+ ", encodingProfilesResultSet->rowsCount: " + to_string(encodingProfilesResultSet->rowsCount())
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
+							if (encodingProfilesResultSet->next())
+							{
+								encodingItem->_liveRecorderData->_monitorEncodingProfileContentType =
+									toContentType(encodingProfilesResultSet->getString("contentType"));
+								string jsonEncodingProfile = encodingProfilesResultSet->getString("jsonProfile");
+								{
+									Json::CharReaderBuilder builder;
+									Json::CharReader* reader = builder.newCharReader();
+									string errors;
+
+									bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+										jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+										&(encodingItem->_liveRecorderData->_monitorEncodingProfileDetailsRoot), &errors);
+									delete reader;
+
+									if (!parsingSuccessful)
+									{
+										string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+											+ ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", errors: " + errors
+											+ ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+										;
+										_logger->error(errorMessage);
+
+										// in case an encoding job row generate an error, we have to make it to Failed
+										// otherwise we will indefinitely get this error
+										{
+											_logger->info(__FILEREF__ + "EncodingJob update"
+												+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+												+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											);
+											lastSQLCommand = 
+												"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+											shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+													conn->_sqlConnection->prepareStatement(lastSQLCommand));
+											int queryParameterIndex = 1;
+											preparedStatementUpdate->setString(queryParameterIndex++,
+													MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+											preparedStatementUpdate->setInt64(queryParameterIndex++,
+													encodingItem->_encodingJobKey);
+
+											chrono::system_clock::time_point startSql = chrono::system_clock::now();
+											int rowsUpdated = preparedStatementUpdate->executeUpdate();
+											_logger->info(__FILEREF__ + "@SQL statistics@"
+												+ ", lastSQLCommand: " + lastSQLCommand
+												+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+												+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+												+ ", rowsUpdated: " + to_string(rowsUpdated)
+												+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+													chrono::system_clock::now() - startSql).count()) + "@"
+											);
+										}
+
+										continue;
+										// throw runtime_error(errorMessage);
+									}
+								}
+							}
+							else
+							{
+								string errorMessage = __FILEREF__ + "select failed"
+                                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+								;
+								_logger->error(errorMessage);
+
+								// in case an encoding job row generate an error, we have to make it to Failed
+								// otherwise we will indefinitely get this error
+								{
+									_logger->info(__FILEREF__ + "EncodingJob update"
+										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+										+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+									);
+									lastSQLCommand = 
+										"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+									shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+										conn->_sqlConnection->prepareStatement(lastSQLCommand));
+									int queryParameterIndex = 1;
+									preparedStatementUpdate->setString(queryParameterIndex++,
+										MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+									preparedStatementUpdate->setInt64(queryParameterIndex++,
+										encodingItem->_encodingJobKey);
+
+									chrono::system_clock::time_point startSql = chrono::system_clock::now();
+									int rowsUpdated = preparedStatementUpdate->executeUpdate();
+									_logger->info(__FILEREF__ + "@SQL statistics@"
+										+ ", lastSQLCommand: " + lastSQLCommand
+										+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+										+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+										+ ", rowsUpdated: " + to_string(rowsUpdated)
+										+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+											chrono::system_clock::now() - startSql).count()) + "@"
+									);
+								}
+
+								continue;
+								// throw runtime_error(errorMessage);
+							}
+						}
+					}
                 }
 
                 encodingItems.push_back(encodingItem);
@@ -8809,7 +8934,12 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	bool autoRenew,
 	int segmentDurationInSeconds,
 	string outputFileFormat,
-	EncodingPriority encodingPriority
+	EncodingPriority encodingPriority,
+	bool monitorHLS,
+	int64_t monitorEncodingProfileKey,
+	string monitorManifestDirectoryPath,
+	string monitorManifestFileName,
+	int monitorPlaylistEntriesNumber
 )
 {
 
@@ -8835,6 +8965,12 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", outputFileFormat: " + outputFileFormat
             + ", encodingPriority: " + toString(encodingPriority)
+            + ", monitorHLS: " + to_string(monitorHLS)
+            + ", monitorEncodingProfileKey: " + to_string(monitorEncodingProfileKey)
+            + ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+            + ", monitorManifestFileName: " + monitorManifestFileName
+            + ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
+
         );
 
         conn = _connectionPool->borrow();	
@@ -8900,6 +9036,21 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "outputFileFormat";
 				parametersRoot[field] = outputFileFormat;
+
+				field = "monitorHLS";
+				parametersRoot[field] = monitorHLS;
+
+				field = "monitorEncodingProfileKey";
+				parametersRoot[field] = monitorEncodingProfileKey;
+
+				field = "monitorManifestDirectoryPath";
+				parametersRoot[field] = monitorManifestDirectoryPath;
+
+				field = "monitorManifestFileName";
+				parametersRoot[field] = monitorManifestFileName;
+
+				field = "monitorPlaylistEntriesNumber";
+				parametersRoot[field] = monitorPlaylistEntriesNumber;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);
@@ -9023,6 +9174,23 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "outputFileFormat";
 				parametersRoot[field] = outputFileFormat;
+
+				// false 
+				// 1. because HLS cannot generate ts files in the same directory
+				field = "monitorHLS";
+				parametersRoot[field] = false;
+
+				field = "monitorEncodingProfileKey";
+				parametersRoot[field] = monitorEncodingProfileKey;
+
+				field = "monitorManifestDirectoryPath";
+				parametersRoot[field] = monitorManifestDirectoryPath;
+
+				field = "monitorManifestFileName";
+				parametersRoot[field] = monitorManifestFileName;
+
+				field = "monitorPlaylistEntriesNumber";
+				parametersRoot[field] = monitorPlaylistEntriesNumber;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);
