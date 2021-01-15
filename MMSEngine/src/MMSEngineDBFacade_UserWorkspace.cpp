@@ -2633,7 +2633,8 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             lastSQLCommand = 
                 "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
 				"flags, creationDate, expirationDate) values ("
-                "?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+                "                        ?,      ?,       ?,            ?,       ?, "
+				"?,     NOW(),        STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);

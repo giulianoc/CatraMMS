@@ -9,6 +9,7 @@ currentDir=$(pwd)
 cd /opt/catrasoftware/deploy
 tarFileName=CatraMMS-$version-ubuntu.tar.gz
 
+rm -rf CatraMMS-$version
 cp -r CatraMMS CatraMMS-$version
 tar cvfz $tarFileName CatraMMS-$version
 rm -rf CatraMMS-$version
@@ -34,6 +35,26 @@ fi
 echo -n "deploy su cibor? " 
 read deploy
 if [ "$deploy" == "y" ]; then
+	echo "cibortv-mms-api-gui-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-api-gui-1:/opt/catramms
+	date
+
+	echo "cibortv-mms-api-gui-2"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-api-gui-2:/opt/catramms
+	date
+
+	echo "cibortv-mms-engine-db-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-1:/opt/catramms
+	date
+
+	echo "cibortv-mms-engine-db-2"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-2:/opt/catramms
+	date
+
+	echo "cibortv-mms-engine-db-3"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-3:/opt/catramms
+	date
+
 	echo "cibortv-mms-transcoder-es-1"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-es-1:/opt/catramms
 	date
@@ -64,26 +85,6 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-transcoder-itaita-2"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-itaita-2:/opt/catramms
-	date
-
-	echo "cibortv-mms-api-gui-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-api-gui-1:/opt/catramms
-	date
-
-	echo "cibortv-mms-api-gui-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-api-gui-2:/opt/catramms
-	date
-
-	echo "cibortv-mms-engine-db-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-1:/opt/catramms
-	date
-
-	echo "cibortv-mms-engine-db-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-2:/opt/catramms
-	date
-
-	echo "cibortv-mms-engine-db-3"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-engine-db-3:/opt/catramms
 	date
 
 fi
