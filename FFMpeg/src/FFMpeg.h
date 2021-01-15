@@ -258,6 +258,7 @@ public:
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
 		int monitorPlaylistEntriesNumber,
+		int monitorSegmentDurationInSeconds,
 
 		pid_t* pChildPid);
 

@@ -8939,7 +8939,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int64_t monitorEncodingProfileKey,
 	string monitorManifestDirectoryPath,
 	string monitorManifestFileName,
-	int monitorPlaylistEntriesNumber
+	int monitorPlaylistEntriesNumber,
+	int monitorSegmentDurationInSeconds
 )
 {
 
@@ -8970,6 +8971,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
             + ", monitorManifestFileName: " + monitorManifestFileName
             + ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
+            + ", monitorSegmentDurationInSeconds: " + to_string(monitorSegmentDurationInSeconds)
 
         );
 
@@ -9051,6 +9053,9 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "monitorPlaylistEntriesNumber";
 				parametersRoot[field] = monitorPlaylistEntriesNumber;
+
+				field = "monitorSegmentDurationInSeconds";
+				parametersRoot[field] = monitorSegmentDurationInSeconds;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);
@@ -9191,6 +9196,9 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "monitorPlaylistEntriesNumber";
 				parametersRoot[field] = monitorPlaylistEntriesNumber;
+
+				field = "monitorSegmentDurationInSeconds";
+				parametersRoot[field] = monitorSegmentDurationInSeconds;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

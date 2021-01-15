@@ -9366,6 +9366,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		bool highAvailability = false;
 		bool monitorHLS = false;
 		int monitorPlaylistEntriesNumber = 0;
+		int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
         {
             string field = "ChannelType";
@@ -9532,6 +9533,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 					monitorPlaylistEntriesNumber = 6;
 				else
 					monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
+
+				field = "SegmentDurationInSeconds";
+				if (!JSONUtils::isMetadataPresent(monitorHLSRoot, field))
+					monitorSegmentDurationInSeconds = 10;
+				else
+					monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
 
 
 				string keyField = "EncodingProfileKey";
@@ -9742,7 +9749,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 			monitorHLS, monitorEncodingProfileKey,
 			monitorManifestDirectoryPath, monitorManifestFileName,
-			monitorPlaylistEntriesNumber);
+			monitorPlaylistEntriesNumber, monitorSegmentDurationInSeconds);
 
 		/*
 		if (highAvailability)

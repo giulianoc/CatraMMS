@@ -6571,6 +6571,7 @@ void FFMpeg::liveRecorder(
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
 		int monitorPlaylistEntriesNumber,
+		int monitorSegmentDurationInSeconds,
 
 		pid_t* pChildPid)
 {
@@ -6597,6 +6598,7 @@ void FFMpeg::liveRecorder(
 		+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
 		+ ", monitorManifestFileName: " + monitorManifestFileName
 		+ ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
+		+ ", monitorSegmentDurationInSeconds: " + to_string(monitorSegmentDurationInSeconds)
 	);
 
 	setStatus(
@@ -6982,7 +6984,7 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("append_list");
 					ffmpegArgumentList.push_back("-hls_time");
-					ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegArgumentList.push_back(to_string(monitorSegmentDurationInSeconds));
 					ffmpegArgumentList.push_back("-hls_list_size");
 					ffmpegArgumentList.push_back(to_string(monitorPlaylistEntriesNumber));
 

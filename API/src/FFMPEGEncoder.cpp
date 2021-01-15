@@ -4845,6 +4845,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		string monitorManifestDirectoryPath;
 		string monitorManifestFileName;
 		int monitorPlaylistEntriesNumber = -1;
+		int monitorSegmentDurationInSeconds = -1;
 		{
 			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "monitorHLS", false);
 
@@ -4857,6 +4858,7 @@ void FFMPEGEncoder::liveRecorderThread(
 				monitorManifestDirectoryPath = liveRecording->_encodingParametersRoot.get("monitorManifestDirectoryPath", "").asString();
 				monitorManifestFileName = liveRecording->_encodingParametersRoot.get("monitorManifestFileName", "").asString();
 				monitorPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "monitorPlaylistEntriesNumber", 6);
+				monitorSegmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "monitorSegmentDurationInSeconds", 10);
 
 				monitorEncodingProfileDetailsRoot = liveRecorderMedatada["monitorEncodingProfileDetailsRoot"];
 				string monitorEncodingProfileContentType =
@@ -4948,6 +4950,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			monitorManifestDirectoryPath,
 			monitorManifestFileName,
 			monitorPlaylistEntriesNumber,
+			monitorSegmentDurationInSeconds,
 
 			&(liveRecording->_childPid)
 		);

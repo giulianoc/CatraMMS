@@ -95,8 +95,11 @@
 			"EncodingProfileLabel": "Profile sport",
 			"ContentType": "video",
 
-			// optional. Default: 6                                             
-			"PlaylistEntriesNumber": 6
+			// optional. Default: 6
+			"PlaylistEntriesNumber": 6,
+
+			// optional. Default: 10
+			"SegmentDurationInSeconds": 10
 		},
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow

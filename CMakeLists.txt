@@ -74,3 +74,5 @@ add_subdirectory(utilities/lockTest/src)
 add_subdirectory(utilities/sendEmail/src)
 add_subdirectory(utilities/addWorkspaceToActiveDirectoryUser/src)
 
+install (FILES version.txt DESTINATION ./)
+

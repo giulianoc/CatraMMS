@@ -2410,7 +2410,9 @@ void API::createDeliveryAuthorization(
 				tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
-					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
+					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
+					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder	// scenario with monitorHLS true
+				)
 				{
 					string errorMessage = string("ingestionJob is not a LiveProxy")
 						+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
@@ -2475,6 +2477,53 @@ void API::createDeliveryAuthorization(
 						liveFileExtension = "m3u8";
 					else
 						liveFileExtension = "mpd";
+					tuple<string, string, string> liveDeliveryDetails
+						= _mmsStorage->getLiveDeliveryDetails(
+						_mmsEngineDBFacade, to_string(liveURLConfKey),
+						liveFileExtension, requestWorkspace);
+					tie(deliveryURI, ignore, deliveryFileName) =
+						liveDeliveryDetails;
+
+					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						physicalPathKey,
+						liveURLConfKey,
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+				}
+				else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+				{
+					string field = "ConfigurationLabel";
+					string configurationLabel = ingestionJobRoot.get(field, "").asString();
+					field = "MonitorHLS";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Live-LiveRecorder without MonitorHLS cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					int64_t liveURLConfKey;
+					bool warningIfMissing = false;
+					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
+					tie(liveURLConfKey, ignore) = liveURLConfDetails;
+
+					string deliveryURI;
+					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
 						_mmsEngineDBFacade, to_string(liveURLConfKey),

@@ -1663,7 +1663,8 @@ public:
 		int64_t monitorEncodingProfileKey,
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
-		int monitorPlaylistEntriesNumber);
+		int monitorPlaylistEntriesNumber,
+		int monitorSegmentDurationInSeconds);
 
 	int addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
