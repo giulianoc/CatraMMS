@@ -1110,6 +1110,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionRoot ("
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
+                    "userKey    				BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "metaDataContent			MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
@@ -1118,7 +1119,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "status           			VARCHAR (64) NOT NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
                     "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade) "	   	        				
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "	   	        				
+                    "constraint MMS_IngestionRoot_FK2 foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

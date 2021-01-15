@@ -1099,7 +1099,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
 int64_t MMSEngineDBFacade::addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t workspaceKey, string rootType, string rootLabel,
+    	int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
 		string metaDataContent
 )
 {
@@ -1112,12 +1112,15 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         {
             {                
                 lastSQLCommand = 
-                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, metaDataContent, ingestionDate, lastUpdate, status) "
-					"values (NULL, ?, ?, ?, ?, NOW(), NOW(), ?)";
+                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, userKey, type, label, "
+					"metaDataContent, ingestionDate, lastUpdate, status) "
+					"values (                       NULL,             ?,            ?,       ?,    ?, "
+					"?,               NOW(),         NOW(),      ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+                preparedStatement->setInt64(queryParameterIndex++, userKey);
                 preparedStatement->setString(queryParameterIndex++, rootType);
                 preparedStatement->setString(queryParameterIndex++, rootLabel);
                 preparedStatement->setString(queryParameterIndex++, metaDataContent);
@@ -1128,6 +1131,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
 				_logger->info(__FILEREF__ + "@SQL statistics@"
 					+ ", lastSQLCommand: " + lastSQLCommand
 					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", userKey: " + to_string(userKey)
 					+ ", rootType: " + rootType
 					+ ", rootLabel: " + rootLabel
 					+ ", metaDataContent: " + metaDataContent
@@ -4099,7 +4103,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         Json::Value workflowsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string("select ingestionRootKey, label, status, "
+                string("select ingestionRootKey, userKey, label, status, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(lastUpdate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as lastUpdate "
                     "from MMS_IngestionRoot ")
@@ -4151,6 +4155,21 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 int64_t currentIngestionRootKey = resultSet->getInt64("ingestionRootKey");
                 field = "ingestionRootKey";
                 workflowRoot[field] = currentIngestionRootKey;
+
+				int64_t userKey = resultSet->getInt64("userKey");
+                field = "userKey";
+                workflowRoot[field] = userKey;
+
+				{
+					pair<string, string> userDetails = getUserDetails(userKey);
+
+					string userName;
+
+					tie(ignore, userName) = userDetails;
+
+					field = "userName";
+					workflowRoot[field] = userName;
+				}
 
                 field = "label";
                 workflowRoot[field] = static_cast<string>(resultSet->getString("label"));

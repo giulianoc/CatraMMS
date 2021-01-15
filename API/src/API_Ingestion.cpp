@@ -97,7 +97,7 @@ void API::ingestion(
             }    
             
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
-                workspace->_workspaceKey, rootType, rootLabel, requestBody.c_str());
+                workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
     
             field = "Task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

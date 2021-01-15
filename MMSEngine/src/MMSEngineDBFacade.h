@@ -1304,7 +1304,7 @@ public:
     
     int64_t addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t workspaceKey, string rootType, string rootLabel,
+    	int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
 		string metaDataContent);
 
 	void addIngestionJobDependency (                                                           
