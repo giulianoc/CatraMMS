@@ -2155,7 +2155,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             lastSQLCommand = 
                     "insert into MMS_Workspace ("
                     "workspaceKey, creationDate, name, directoryName, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode) values ("
-                    "NULL,         NULL,         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              ?)";
+                    "NULL,         NOW(),         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
