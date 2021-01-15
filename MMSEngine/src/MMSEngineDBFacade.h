@@ -1410,7 +1410,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-		string ingestionType,
+		string ingestionType, string jsonParametersCondition,
         bool asc, string status,
 		bool ingestionJobOutputs);
 

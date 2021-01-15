@@ -4301,7 +4301,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows, string label,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-		string ingestionType,
+		string ingestionType, string jsonParametersCondition,
         bool asc, string status,
 		bool ingestionJobOutputs	// added because output could be thousands of entries
 )
@@ -4356,6 +4356,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 requestParametersRoot[field] = ingestionType;
             }
 
+            if (jsonParametersCondition != "")
+            {
+                field = "jsonParametersCondition";
+                requestParametersRoot[field] = jsonParametersCondition;
+            }
+
             field = "ingestionJobOutputs";
             requestParametersRoot[field] = ingestionJobOutputs;
 
@@ -4373,6 +4379,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (ingestionType != "")
             sqlWhere += ("and ij.ingestionType = ? ");
+        if (jsonParametersCondition != "")
+            sqlWhere += ("and " + jsonParametersCondition + " ");
         if (status == "completed")
             sqlWhere += ("and ij.status like 'End_%' ");
         else if (status == "notCompleted")

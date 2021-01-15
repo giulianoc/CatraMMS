@@ -1756,7 +1756,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 				sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
         if (jsonCondition != "")
-            sqlWhere += ("and " + jsonCondition);
+            sqlWhere += ("and " + jsonCondition + " ");
         
 		int64_t numFound;
         {
@@ -2015,7 +2015,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 					sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 			}
 			if (jsonCondition != "")
-				sqlWhere += ("and " + jsonCondition);
+				sqlWhere += ("and " + jsonCondition + " ");
         
 			lastSQLCommand = 
 				string("create temporary table ") + temporaryTableName + " select "

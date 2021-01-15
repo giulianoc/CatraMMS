@@ -3547,6 +3547,22 @@ void API::ingestionJobsStatus(
                 ingestionJobOutputs = false;
         }
 
+        string jsonParametersCondition;
+        auto jsonParametersConditionIt = queryParameters.find("jsonParametersCondition");
+        if (jsonParametersConditionIt != queryParameters.end() && jsonParametersConditionIt->second != "")
+        {
+            jsonParametersCondition = jsonParametersConditionIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(jsonParametersCondition, regex(plus), plusDecoded);
+
+			jsonParametersCondition = curlpp::unescape(firstDecoding);
+        }
+
         string status = "all";
         auto statusIt = queryParameters.find("status");
         if (statusIt != queryParameters.end() && statusIt->second != "")
@@ -3559,7 +3575,7 @@ void API::ingestionJobsStatus(
                     workspace, ingestionJobKey,
                     start, rows, label,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    ingestionType, asc, status, ingestionJobOutputs
+                    ingestionType, jsonParametersCondition, asc, status, ingestionJobOutputs
                     );
 
             Json::StreamWriterBuilder wbuilder;
