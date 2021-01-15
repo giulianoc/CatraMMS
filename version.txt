@@ -1,1 +1,1 @@
-v1.0.1
+v1.0.2, LiveRecorder: added monitorSegmentDuration. LiveDelivery: extended for Live-Recorder with monitorHLS
