@@ -547,6 +547,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool killEncoding = true;
             bool cancelIngestionJob = true;
             bool editEncodersPool = false;
+            bool applicationRecorder = false;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -563,6 +564,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 					killEncoding,
 					cancelIngestionJob,
 					editEncodersPool,
+					applicationRecorder,
                     trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
@@ -828,6 +830,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
             bool killEncoding = true;
             bool cancelIngestionJob = true;
             bool editEncodersPool = false;
+			bool applicationRecorder = false;
             
             pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
@@ -844,6 +847,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 					killEncoding,
 					cancelIngestionJob,
 					editEncodersPool,
+					applicationRecorder,
                     trimWorkspaceName,
                     workspaceType,
                     deliveryURL,
@@ -1057,6 +1061,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+	bool applicationRecorder,
     int64_t workspaceKeyToBeShared,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1264,6 +1269,14 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                        flags.append(",");
                     flags.append("EDIT_ENCODERSPOOL");
                 }
+
+                if (applicationRecorder)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("APPLICATION_RECORDER");
+                }
+
             }
 
             lastSQLCommand = 
@@ -1485,6 +1498,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+	bool applicationRecorder,
 	string defaultWorkspaceKeys,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -1585,6 +1599,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia,
 						editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+						applicationRecorder,
 						llDefaultWorkspaceKey);
 					if (apiKey.empty())
 						apiKey = localApiKey;
@@ -1817,6 +1832,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+	bool applicationRecorder,
 	int64_t workspaceKey
 )
 {
@@ -1838,6 +1854,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+			applicationRecorder,
 			workspaceKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -1936,6 +1953,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+	bool applicationRecorder,
 	int64_t workspaceKey
 )
 {
@@ -2025,6 +2043,13 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
                     if (flags != "")
                        flags.append(",");
                     flags.append("EDIT_ENCODERSPOOL");
+                }
+
+                if (applicationRecorder)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("APPLICATION_RECORDER");
                 }
             }
 
@@ -2129,6 +2154,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
         bool shareWorkspace, bool editMedia,
         bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,
@@ -2306,6 +2332,13 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("EDIT_ENCODERSPOOL");
+                }
+
+                if (applicationRecorder)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("APPLICATION_RECORDER");
                 }
             }
             
@@ -3137,7 +3170,7 @@ void MMSEngineDBFacade::deleteWorkspace(
     // return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 	MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
@@ -3290,7 +3323,8 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
         flags.find("EDIT_CONFIGURATION") == string::npos ? false : true,
         flags.find("KILL_ENCODING") == string::npos ? false : true,
         flags.find("CANCEL_INGESTIONJOB") == string::npos ? false : true,
-        flags.find("EDIT_ENCODERSPOOL") == string::npos ? false : true
+        flags.find("EDIT_ENCODERSPOOL") == string::npos ? false : true,
+        flags.find("APPLICATION_RECORDER") == string::npos ? false : true
     );
 }
 
@@ -3712,6 +3746,10 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			userAPIKeyRoot[field] = flags.find("EDIT_ENCODERSPOOL") == string::npos
 				? false : true;
 
+			field = "applicationRecorder";
+			userAPIKeyRoot[field] = flags.find("APPLICATION_RECORDER") == string::npos
+				? false : true;
+
 			field = "userAPIKey";
 			workspaceDetailRoot[field] = userAPIKeyRoot;
 		}
@@ -3794,7 +3832,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
-		bool newEditEncodersPool)
+		bool newEditEncodersPool, bool newApplicationRecorder)
 {
     Json::Value workspaceDetailRoot;
     string          lastSQLCommand;
@@ -4016,6 +4054,13 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("EDIT_ENCODERSPOOL");
             }
 
+            if (newApplicationRecorder)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("APPLICATION_RECORDER");
+            }
+
             lastSQLCommand = 
                 "update MMS_APIKey set flags = ? "
                 "where workspaceKey = ? and userKey = ?";
@@ -4119,6 +4164,9 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         
         field = "editEncodersPool";
         workspaceDetailRoot[field] = newEditEncodersPool ? true : false;
+
+        field = "applicationRecorder";
+        workspaceDetailRoot[field] = newApplicationRecorder ? true : false;
 
         {
             lastSQLCommand = 

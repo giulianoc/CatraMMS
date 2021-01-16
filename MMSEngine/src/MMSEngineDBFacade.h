@@ -1164,6 +1164,7 @@ public:
         bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
@@ -1176,6 +1177,7 @@ public:
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
 		string defaultWorkspaceKeys,
 		chrono::system_clock::time_point userExpirationDate
 	);
@@ -1186,11 +1188,12 @@ public:
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
 		int64_t workspaceKey);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
-    tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+    tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 		checkAPIKey (string apiKey);
 
     Json::Value login (string eMailAddress, string password);
@@ -1209,7 +1212,7 @@ public:
         bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles,
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding,
-		bool newCancelIngestionJob, bool newEditEncodersPool);
+		bool newCancelIngestionJob, bool newEditEncodersPool, bool newApplicationRecorder);
 
 	Json::Value setWorkspaceAsDefault (
 		int64_t userKey,
@@ -2206,6 +2209,7 @@ private:
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
 		int64_t workspaceKey);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
@@ -2271,6 +2275,7 @@ private:
 		bool killEncoding,
 		bool cancelIngestionJob,
 		bool editEncodersPool,
+		bool applicationRecorder,
         string workspaceName,
         WorkspaceType workspaceType,
         string deliveryURL,

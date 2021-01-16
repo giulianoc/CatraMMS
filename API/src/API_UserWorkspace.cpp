@@ -731,6 +731,19 @@ void API::shareWorkspace_(
         }
         editEncodersPool = (editEncodersPoolIt->second == "true" ? true : false);
 
+        bool applicationRecorder;
+        auto applicationRecorderIt = queryParameters.find("applicationRecorder");
+        if (applicationRecorderIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'applicationRecorder' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        applicationRecorder = (applicationRecorderIt->second == "true" ? true : false);
+
 
         string name;
         string email;
@@ -839,6 +852,7 @@ void API::shareWorkspace_(
                     country, 
                     createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 					editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+					applicationRecorder,
                     workspace->_workspaceKey,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
@@ -1444,6 +1458,7 @@ void API::login(
 						bool killEncoding = false;
 						bool cancelIngestionJob = false;
 						bool editEncodersPool = false;
+						bool applicationRecorder = false;
 						pair<int64_t,string> userKeyAndEmail =
 							_mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName,
@@ -1451,6 +1466,7 @@ void API::login(
 							string(""),	// userCountry,
 							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+							applicationRecorder,
 							_ldapDefaultWorkspaceKeys,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 								// chrono::system_clock::time_point userExpirationDate
@@ -1824,6 +1840,7 @@ void API::updateWorkspace(
         bool newKillEncoding;
         bool newCancelIngestionJob;
         bool newEditEncodersPool;
+        bool newApplicationRecorder;
 
         Json::Value metadataRoot;
         try
@@ -1880,7 +1897,8 @@ void API::updateWorkspace(
                 "EditConfiguration",
                 "KillEncoding",
                 "CancelIngestionJob",
-                "EditEncodersPool"
+                "EditEncodersPool",
+                "ApplicationRecorder"
             };
             for (string field: mandatoryFields)
             {
@@ -1913,6 +1931,7 @@ void API::updateWorkspace(
             newKillEncoding = JSONUtils::asBool(metadataRoot, "KillEncoding", false);
             newCancelIngestionJob = JSONUtils::asBool(metadataRoot, "CancelIngestionJob", false);
             newEditEncodersPool = JSONUtils::asBool(metadataRoot, "EditEncodersPool", false);
+            newApplicationRecorder = JSONUtils::asBool(metadataRoot, "ApplicationRecorder", false);
         }
 
         try
@@ -1931,7 +1950,7 @@ void API::updateWorkspace(
                     newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles,
                     newDeliveryAuthorization, newShareWorkspace,
                     newEditMedia, newEditConfiguration, newKillEncoding, newCancelIngestionJob,
-					newEditEncodersPool);
+					newEditEncodersPool, newApplicationRecorder);
 
             _logger->info(__FILEREF__ + "WorkspaceDetails updated"
                 + ", userKey: " + to_string(userKey)

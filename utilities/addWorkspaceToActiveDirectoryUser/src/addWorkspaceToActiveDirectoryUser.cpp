@@ -48,6 +48,7 @@ int main (int iArgc, char *pArgv [])
 		bool killEncoding = false;
 		bool cancelIngestionJob = false;
 		bool editEncodersPool = false;
+		bool applicationRecorder = false;
 
 		mmsEngineDBFacade->createAPIKeyForActiveDirectoryUser(
                 userKey,
@@ -55,6 +56,7 @@ int main (int iArgc, char *pArgv [])
                 createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
                 shareWorkspace, editMedia,
                 editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+				applicationRecorder,
                 workspaceKey);
 	}
 

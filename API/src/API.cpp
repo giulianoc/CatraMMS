@@ -405,7 +405,7 @@ void API::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
+        tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
 			userKeyWorkspaceAndFlags,
 		string apiKey,
         unsigned long contentLength,
@@ -427,12 +427,13 @@ void API::manageRequestAndResponse(
     bool killEncoding;
     bool cancelIngestionJob_;
     bool editEncodersPool;
+    bool applicationRecorder;
 
     if (basicAuthenticationPresent)
     {
         tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles,
 				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding,
-				cancelIngestionJob_, editEncodersPool) 
+				cancelIngestionJob_, editEncodersPool, applicationRecorder) 
                 = userKeyWorkspaceAndFlags;
 
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
@@ -453,6 +454,7 @@ void API::manageRequestAndResponse(
             + ", killEncoding: " + to_string(killEncoding)
             + ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
             + ", editEncodersPool: " + to_string(editEncodersPool)
+            + ", applicationRecorder: " + to_string(applicationRecorder)
         );        
     }
 
