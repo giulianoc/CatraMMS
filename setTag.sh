@@ -1,8 +1,10 @@
 #!/bin/bash
 
+
 if [ $# -ne 2 ]
 then
     echo "usage $0 <version tag, i.e.: 1.0.0> <tag message>"
+	echo "Reminder to list tags: git tag -n --sort=taggerdate"
 
     exit
 fi
