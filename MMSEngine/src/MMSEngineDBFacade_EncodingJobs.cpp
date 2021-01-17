@@ -8926,6 +8926,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int64_t ingestionJobKey,
 	string channelType,
 	bool actAsServer,
+	int64_t actAsServerChannelCode,
 	bool highAvailability,
 	string configurationLabel, int64_t confKey, string url,
 	string userAgent,
@@ -8955,6 +8956,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", channelType: " + channelType
             + ", actAsServer: " + to_string(actAsServer)
+            + ", actAsServerChannelCode: " + to_string(actAsServerChannelCode)
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
@@ -9005,6 +9007,9 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "actAsServer";
 				parametersRoot[field] = actAsServer;
+
+				field = "actAsServerChannelCode";
+				parametersRoot[field] = actAsServerChannelCode;
 
 				field = "highAvailability";
 				parametersRoot[field] = highAvailability;
@@ -9146,6 +9151,9 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "actAsServer";
 				parametersRoot[field] = actAsServer;
+
+				field = "actAsServerChannelCode";
+				parametersRoot[field] = actAsServerChannelCode;
 
 				field = "highAvailability";
 				parametersRoot[field] = highAvailability;

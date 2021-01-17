@@ -4803,7 +4803,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
         liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP").asString();
-		bool actAsServer = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "actAsServer", false);
+		liveRecording->_actAsServer = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "actAsServer", false);
+		liveRecording->_actAsServerChannelCode = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "actAsServerChannelCode", 0);
 		int listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 
@@ -4934,7 +4935,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
 
-			actAsServer,
+			liveRecording->_actAsServer,
 			liveURL,
 			listenTimeoutInSeconds,
 
@@ -5412,6 +5413,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 							pair<string, int> lastRecordedAssetInfo = liveRecorder_processLastGeneratedLiveRecorderFiles(
 								liveRecording->_ingestionJobKey,
 								liveRecording->_encodingJobKey,
+								liveRecording->_channelType, liveRecording->_actAsServer, liveRecording->_actAsServerChannelCode,
 								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
 								liveRecording->_encodingParametersRoot,
 								liveRecording->_liveRecorderParametersRoot,
@@ -5488,6 +5490,7 @@ void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
+	string channelType, bool actAsServer, int64_t actAsServerChannelCode,
 	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
@@ -5659,7 +5662,10 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 			string uniqueName;
 			{
-				uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
+				if (actAsServer)
+					uniqueName = to_string(actAsServerChannelCode);
+				else
+					uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
 				uniqueName += " - ";
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
@@ -5672,7 +5678,12 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
-				mmsDataRoot["liveURLConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
+				if (channelType == "IP")
+					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
+				else if (channelType == "Satellite")
+					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
+				else
+					mmsDataRoot["actAsServerChannelCode"] = actAsServerChannelCode;
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
 				{
@@ -5693,8 +5704,10 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// Title
 			string addContentTitle;
 			{
-				// ConfigurationLabel is the label associated to the live URL
-				addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
+				if (actAsServer)
+					addContentTitle = to_string(actAsServerChannelCode);
+				else
+					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
 				addContentTitle += " - ";
 

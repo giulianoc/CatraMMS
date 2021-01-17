@@ -3083,6 +3083,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		if (actAsServer)
 		{
 			vector<string> mandatoryFields = {
+				"ActAsServerChannelCode",
 				"ActAsServerProtocol",
 				"ActAsServerBindIP",
 				"ActAsServerPort"
@@ -4079,8 +4080,28 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
 
+	string channelType = "IP";
+
+    string field = "ChannelType";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		channelType = parametersRoot.get(field, "").asString();
+		if (!isChannelTypeValid(channelType))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "IP or Satellite"
+                + ")"
+                + ", Field: " + field
+                + ", channelType: " + channelType
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+
 	vector<string> mandatoryFields = {
-		"ConfigurationLabel",
 		"CutPeriod"
     };
     for (string mandatoryField: mandatoryFields)
@@ -4101,7 +4122,62 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    string field = "CutPeriod";
+	if (channelType == "IP")
+	{
+		field = "IPConfigurationLabel";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+	}
+	else if (channelType == "Satellite")
+	{
+		field = "SATConfigurationLabel";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+	}
+	else if (channelType == "IP_MMSAsServer")
+	{
+		field = "ActAsServerChannelCode";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+	}
+
+    field = "CutPeriod";
 	Json::Value cutPeriodRoot = parametersRoot[field];
     field = "Start";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
@@ -4961,7 +5037,8 @@ bool Validator::isChannelTypeValid(string channelType)
 {
     vector<string> validChannelTypes = {
         "IP",
-        "Satellite"
+        "Satellite",
+		"IP_MMSAsServer"
     };
 
     for (string validChannelType: validChannelTypes)

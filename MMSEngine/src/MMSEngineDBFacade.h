@@ -1653,6 +1653,7 @@ public:
 		int64_t ingestionJobKey,
 		string channelType,
 		bool actAsServer,
+		int64_t actAsServerChannelCode,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
 		string userAgent,

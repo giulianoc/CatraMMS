@@ -7,8 +7,18 @@
 
 	"Parameters": {
 
-		// mandatory: reference to the Configuration Label of the Live URL
-		"ConfigurationLabel": "",
+		// optional, possible values: IP, Satellite or IP_MMSAsServer. Default is IP
+		"ChannelType": "IP",
+
+		// If ChannelType is IP, IPConfigurationLabel is mandatory and
+		//		it identifies the IP Channel
+		// If ChannelType is Satellite, SATConfigurationLabel is mandatory and
+		//		it identifies the SAT Channel
+		// If ChannelType is IP_MMSAsServer, ActAsServerChannelCode is mandatory and
+		//		it identifies the Channel received as input
+		"IPConfigurationLabel": "",
+		"SATConfigurationLabel": "",
+		"ActAsServerChannelCode": 1234,
 
 		// mandatory: It specifies the period to be cut, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SS:MMMZ

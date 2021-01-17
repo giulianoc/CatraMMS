@@ -9352,6 +9352,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		string channelType;
 		bool actAsServer;
+		int64_t actAsServerChannelCode;
 		string actAsServerProtocol;
 		string actAsServerBindIP;
 		int actAsServerPort;
@@ -9385,6 +9386,18 @@ void MMSEngineProcessor::manageLiveRecorder(
 			{
 				if (actAsServer)
 				{
+					field = "ActAsServerChannelCode";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					actAsServerChannelCode = JSONUtils::asInt64(parametersRoot, field, 0);
+
 					field = "ActAsServerProtocol";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
@@ -9419,7 +9432,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 						throw runtime_error(errorMessage);
 					}
-					actAsServerPort = parametersRoot.get(field, 0).asInt();
+					actAsServerPort = JSONUtils::asInt(parametersRoot, field, 0);
 				}
 				else
 				{
@@ -9700,6 +9713,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string monitorManifestFileName;
 		if(monitorHLS)
 		{
+			/*
 			int64_t deliveryKey;
 			{
 				field = "InternalMMS";
@@ -9727,15 +9741,16 @@ void MMSEngineProcessor::manageLiveRecorder(
 				}
 				deliveryKey = JSONUtils::asInt64(internalMMSRoot, field, 0);
 			}
+			*/
 
 			string manifestExtension;
 			manifestExtension = "m3u8";
 
 			monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-				_mmsEngineDBFacade, to_string(deliveryKey),
+				_mmsEngineDBFacade, to_string(actAsServerChannelCode),
 				workspace);
 
-			monitorManifestFileName = to_string(deliveryKey) + ".m3u8";
+			monitorManifestFileName = to_string(actAsServerChannelCode) + ".m3u8";
 			/*
 				manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
 					_mmsEngineDBFacade, to_string(liveURLConfKey),
@@ -9772,7 +9787,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			channelType, actAsServer, highAvailability, configurationLabel, confKey, liveURL, userAgent,
+			channelType, actAsServer, actAsServerChannelCode, highAvailability,
+			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 			monitorHLS, monitorEncodingProfileKey,
@@ -10384,13 +10400,16 @@ void MMSEngineProcessor::liveCutThread(
 {
     try
     {
-		string configurationLabel;
+		string channelType;
+		string ipConfigurationLabel;
+		string satConfigurationLabel;
+		int64_t actAsServerChannelCode = -1;
         string cutPeriodStartTimeInMilliSeconds;
         string cutPeriodEndTimeInMilliSeconds;
 		int maxWaitingForLastChunkInSeconds = 90;
 		bool errorIfAChunkIsMissing = false;
         {
-            string field = "ConfigurationLabel";
+            string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10401,7 +10420,53 @@ void MMSEngineProcessor::liveCutThread(
 
                 throw runtime_error(errorMessage);
             }
-            configurationLabel = liveCutParametersRoot.get(field, "XXX").asString();
+			channelType = liveCutParametersRoot.get(field, "").asString();
+
+			if (channelType == "IP")
+			{
+				field = "IPConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
+			}
+			else if (channelType == "Satellite")
+			{
+				field = "SATConfigurationLabel";
+				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				satConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
+			}
+			else if (channelType == "IP_MMSAsServer")
+			{
+				field = "ActAsServerChannelCode";
+				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				actAsServerChannelCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
+			}
 
 			field = "MaxWaitingForLastChunkInSeconds";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -10560,12 +10625,20 @@ void MMSEngineProcessor::liveCutThread(
 		 */
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
 
-		bool warningIfMissing = false;
-		pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
-			workspace->_workspaceKey, configurationLabel, warningIfMissing);
-		int64_t confKey;
-		string liveURL;
-		tie(confKey, liveURL) = confKeyAndLiveURL;
+		int64_t confKey = -1;
+		if (channelType == "IP")
+		{
+			bool warningIfMissing = false;
+			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
+				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
+			tie(confKey, ignore) = confKeyAndLiveURL;
+		}
+		else if (channelType == "Satellite")
+		{
+			bool warningIfMissing = false;
+			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+				workspace->_workspaceKey, satConfigurationLabel, warningIfMissing);
+		}
 
 		Json::Value mediaItemKeyReferencesRoot(Json::arrayValue);
 		int64_t utcFirstChunkStartTime;
@@ -10611,13 +10684,22 @@ void MMSEngineProcessor::liveCutThread(
 				//                       PS-------------------------------PE
 
 				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
-				jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.liveURLConfKey') = " + to_string(confKey) + " and (";
+				if (channelType == "IP")
+					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
+						+ to_string(confKey) + " and (";
+				else if (channelType == "Satellite")
+					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.satConfKey') = "
+						+ to_string(confKey) + " and (";
+				else // if (channelType == "IP_MMSAsServer")
+					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.actAsServerChannelCode') = "
+						+ to_string(actAsServerChannelCode) + " and (";
 
 				// first chunk of the cut
 				jsonCondition += (
 					"(JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') * 1000 <= "
 						+ to_string(utcCutPeriodStartTimeInMilliSeconds) + " "
-					+ "and " + to_string(utcCutPeriodStartTimeInMilliSeconds) + " < JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 ) "
+					+ "and " + to_string(utcCutPeriodStartTimeInMilliSeconds)
+						+ " < JSON_EXTRACT(userData, '$.mmsData.utcChunkEndTime') * 1000 ) "
 				);
 
 				jsonCondition += " or ";
@@ -10930,7 +11012,10 @@ void MMSEngineProcessor::liveCutThread(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				+ ", configurationLabel: " + configurationLabel
+				+ ", channelType: " + channelType
+				+ ", ipConfigurationLabel: " + ipConfigurationLabel
+				+ ", satConfigurationLabel: " + satConfigurationLabel
+				+ ", actAsServerChannelCode: " + to_string(actAsServerChannelCode)
 				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
 				+ ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds)
@@ -10997,11 +11082,25 @@ void MMSEngineProcessor::liveCutThread(
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
+				if (channelType == "IP")
 				{
 					Json::Value removed;
-					field = "ConfigurationLabel";
+					field = "IPConfigurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
+				else if (channelType == "Satellite")
+				{
+					Json::Value removed;
+					field = "SATConfigurationLabel";
+					concatDemuxerParametersRoot.removeMember(field, &removed);
+				}
+				else // if (channelType == "IP_MMSAsServer")
+				{
+					Json::Value removed;
+					field = "ActAsServerChannelCode";
+					concatDemuxerParametersRoot.removeMember(field, &removed);
+				}
+
 				{
 					Json::Value removed;
 					field = "CutPeriod";
@@ -11153,14 +11252,27 @@ void MMSEngineProcessor::liveCutThread(
 
 					Json::Value mmsDataRoot;
 
-					field = "LiveCutUtcStartTimeInMilliSecs";
+					field = "liveCutUtcStartTimeInMilliSecs";
 					mmsDataRoot[field] = utcCutPeriodStartTimeInMilliSeconds;
 
-					field = "LiveCutUtcEndTimeInMilliSecs";
+					field = "liveCutUtcEndTimeInMilliSecs";
 					mmsDataRoot[field] = utcCutPeriodEndTimeInMilliSeconds;
 
-					field = "ConfigurationLabel";
-					mmsDataRoot[field] = configurationLabel;
+					if (channelType == "IP")
+					{
+						field = "ipConfigurationLabel";
+						mmsDataRoot[field] = ipConfigurationLabel;
+					}
+					else if (channelType == "Satellite")
+					{
+						field = "satConfigurationLabel";
+						mmsDataRoot[field] = satConfigurationLabel;
+					}
+					else // if (channelType == "IP_MMSAsServer")
+					{
+						field = "actAsServerChannelCode";
+						mmsDataRoot[field] = actAsServerChannelCode;
+					}
 
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;
@@ -13609,7 +13721,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
 			tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
 
-			tie(ignore, ignore, ignore, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
+			tie(ignore, ignore, durationInMilliSeconds, videoWidth, videoHeight, ignore, ignore, ignore, ignore) = videoTrack;
         }
         catch(runtime_error e)
         {

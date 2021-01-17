@@ -15,6 +15,13 @@
 		"ActAsServer": false,
 
 		// mandatory only if ActAsServer is true.
+		//		It is a numerical code identifying the input channel
+		//		The same code will be used:
+		//		- to label the generated chunks
+		//		- as input in the Live-Cut task
+		//		- into the delivery URL
+		"ActAsServerChannelCode": 12345,
+		// mandatory only if ActAsServer is true.
 		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
 		"ActAsServerProtocol": "rtmp",
 		// mandatory only if ActAsServer is true.

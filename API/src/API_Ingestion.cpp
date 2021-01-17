@@ -898,6 +898,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "apiKey";
 			internalMMSRoot[field] = apiKey;
 
+			/*
 			// 2021-01-17: in case of MonitorHLS, MMS has to build a path to save the live segments.
 			//	We will generated now a 'key' that will be used to build the path where the live segments
 			//	are generated.
@@ -909,6 +910,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				field = "deliveryKey";
 				internalMMSRoot[field] = now.time_since_epoch().count();
 			}
+			*/
 		}
 
 		string onSuccessField = "OnSuccess";
