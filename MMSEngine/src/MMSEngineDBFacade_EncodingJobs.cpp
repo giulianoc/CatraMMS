@@ -8925,7 +8925,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string channelType,
-	bool actAsServer,
 	int64_t actAsServerChannelCode,
 	bool highAvailability,
 	string configurationLabel, int64_t confKey, string url,
@@ -8955,7 +8954,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", channelType: " + channelType
-            + ", actAsServer: " + to_string(actAsServer)
             + ", actAsServerChannelCode: " + to_string(actAsServerChannelCode)
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
@@ -9004,9 +9002,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				string field = "channelType";
 				parametersRoot[field] = channelType;
-
-				field = "actAsServer";
-				parametersRoot[field] = actAsServer;
 
 				field = "actAsServerChannelCode";
 				parametersRoot[field] = actAsServerChannelCode;
@@ -9148,9 +9143,6 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				string field = "channelType";
 				parametersRoot[field] = channelType;
-
-				field = "actAsServer";
-				parametersRoot[field] = actAsServer;
 
 				field = "actAsServerChannelCode";
 				parametersRoot[field] = actAsServerChannelCode;
@@ -9539,7 +9531,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string channelType,
-	bool actAsServer,
 	int64_t liveURLConfKey, string configurationLabel, string url,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
@@ -9556,7 +9547,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
         _logger->info(__FILEREF__ + "addEncoding_LiveProxyJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", channelType: " + channelType
-            + ", actAsServer: " + to_string(actAsServer)
 			+ ", liveURLConfKey: " + to_string(liveURLConfKey)
 			+ ", configurationLabel: " + configurationLabel
             + ", url: " + url
@@ -9589,9 +9579,6 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				string field = "channelType";
 				parametersRoot[field] = channelType;
-
-				field = "actAsServer";
-				parametersRoot[field] = actAsServer;
 
 				field = "liveURLConfKey";
 				parametersRoot[field] = liveURLConfKey;

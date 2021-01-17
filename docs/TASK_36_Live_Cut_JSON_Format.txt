@@ -10,14 +10,13 @@
 		// optional, possible values: IP, Satellite or IP_MMSAsServer. Default is IP
 		"ChannelType": "IP",
 
-		// If ChannelType is IP, IPConfigurationLabel is mandatory and
+		// If ChannelType is IP, ConfigurationLabel is mandatory and
 		//		it identifies the IP Channel
-		// If ChannelType is Satellite, SATConfigurationLabel is mandatory and
+		// If ChannelType is Satellite, ConfigurationLabel is mandatory and
 		//		it identifies the SAT Channel
 		// If ChannelType is IP_MMSAsServer, ActAsServerChannelCode is mandatory and
 		//		it identifies the Channel received as input
-		"IPConfigurationLabel": "",
-		"SATConfigurationLabel": "",
+		"ConfigurationLabel": "",
 		"ActAsServerChannelCode": 1234,
 
 		// mandatory: It specifies the period to be cut, his format is:

@@ -66,7 +66,6 @@ struct LiveRecording
 		string					_errorMessage;
 
 		int64_t					_ingestionJobKey;
-		bool					_actAsServer;
 		int64_t					_actAsServerChannelCode;
 		Json::Value				_encodingParametersRoot;
 		Json::Value				_liveRecorderParametersRoot;
@@ -243,7 +242,7 @@ private:
         string requestBody);
 	pair<string, int> liveRecorder_processLastGeneratedLiveRecorderFiles(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		string channelType, bool actAsServer, int64_t actAsServerChannelCode,
+		string channelType, int64_t actAsServerChannelCode,
 		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value liveRecorderParametersRoot,

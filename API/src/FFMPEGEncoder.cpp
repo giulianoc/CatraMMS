@@ -4803,7 +4803,6 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
         liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP").asString();
-		liveRecording->_actAsServer = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "actAsServer", false);
 		liveRecording->_actAsServerChannelCode = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "actAsServerChannelCode", 0);
 		int listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
@@ -4935,7 +4934,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
 			liveRecording->_recordedFileNamePrefix,
 
-			liveRecording->_actAsServer,
+			liveRecording->_channelType,
 			liveURL,
 			listenTimeoutInSeconds,
 
@@ -5413,7 +5412,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 							pair<string, int> lastRecordedAssetInfo = liveRecorder_processLastGeneratedLiveRecorderFiles(
 								liveRecording->_ingestionJobKey,
 								liveRecording->_encodingJobKey,
-								liveRecording->_channelType, liveRecording->_actAsServer, liveRecording->_actAsServerChannelCode,
+								liveRecording->_channelType, liveRecording->_actAsServerChannelCode,
 								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
 								liveRecording->_encodingParametersRoot,
 								liveRecording->_liveRecorderParametersRoot,
@@ -5490,7 +5489,7 @@ void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelType, bool actAsServer, int64_t actAsServerChannelCode,
+	string channelType, int64_t actAsServerChannelCode,
 	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
@@ -5662,7 +5661,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 			string uniqueName;
 			{
-				if (actAsServer)
+				if (channelType == "IP_MMSAsServer")
 					uniqueName = to_string(actAsServerChannelCode);
 				else
 					uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
@@ -5678,11 +5677,12 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
+				mmsDataRoot["channelType"] = channelType;
 				if (channelType == "IP")
 					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				else if (channelType == "Satellite")
 					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else
+				else // if (channelType == "IP_MMSAsServer")
 					mmsDataRoot["actAsServerChannelCode"] = actAsServerChannelCode;
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
@@ -5704,7 +5704,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// Title
 			string addContentTitle;
 			{
-				if (actAsServer)
+				if (channelType == "IP_MMSAsServer")
 					addContentTitle = to_string(actAsServerChannelCode);
 				else
 					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
@@ -6754,7 +6754,6 @@ void FFMPEGEncoder::liveProxyThread(
 		// string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 
 		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP").asString();
-		bool actAsServer = JSONUtils::asBool(liveProxyMetadata, "actAsServer", false);
 		int listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 
@@ -6878,7 +6877,7 @@ void FFMPEGEncoder::liveProxyThread(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 				maxWidth,
-				actAsServer,
+				liveProxy->_channelType,
 				liveURL,
 				listenTimeoutInSeconds,
 				userAgent,

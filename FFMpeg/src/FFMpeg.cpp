@@ -6553,7 +6553,7 @@ void FFMpeg::liveRecorder(
 		// if actAsServer (true) means the liveURL should be like rtmp://<local transcoder IP to bind>:<port>
 		//		listening for an incoming connection
 		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		bool actAsServer,
+		string channelType,	// IP, Satellite, IP_MMSAsServer
         string liveURL,
 		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
@@ -6583,7 +6583,7 @@ void FFMpeg::liveRecorder(
 		+ ", segmentListPathName: " + segmentListPathName
 		+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 
-		+ ", actAsServer: " + to_string(actAsServer)
+		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 
@@ -6771,12 +6771,12 @@ void FFMpeg::liveRecorder(
 	#else
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
-		if (!actAsServer && userAgent != "")
+		if (channelType == "IP" && userAgent != "")
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
 		}
-		if (actAsServer)
+		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");
@@ -8349,7 +8349,7 @@ void FFMpeg::liveProxy(
 	// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
 	//		listening for an incoming connection
 	// if actAsServer (false) means the liveURL is "any thing" referring a stream
-	bool actAsServer,
+	string channelType,
 	string liveURL,
 	// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
@@ -8383,7 +8383,7 @@ void FFMpeg::liveProxy(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", maxWidth: " + to_string(maxWidth)
-		+ ", actAsServer: " + to_string(actAsServer)
+		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", userAgent: " + userAgent
@@ -8401,7 +8401,7 @@ void FFMpeg::liveProxy(
 	);
 
 	string otherOutputOptionsBecauseOfMaxWidth;
-	if (!actAsServer && maxWidth != -1)
+	if (channelType == "IP" && maxWidth != -1)
 	{
 		try
 		{
@@ -8530,14 +8530,14 @@ void FFMpeg::liveProxy(
 		//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
 		//		in the background process group
 		ffmpegArgumentList.push_back("-nostdin");
-		if (!actAsServer && userAgent != "")
+		if (channelType == "IP" && userAgent != "")
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
 		}
 		ffmpegArgumentList.push_back("-re");
 		addToArguments(otherInputOptions, ffmpegArgumentList);
-		if (actAsServer)
+		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");

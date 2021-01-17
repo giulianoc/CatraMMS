@@ -11701,8 +11701,7 @@ bool EncoderVideoAudioProxy::liveProxy()
 bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 {
 
-	// string channelType;
-	bool actAsServer;
+	string channelType;
 	string encodersPool;
 	int64_t liveURLConfKey;
 	string configurationLabel;
@@ -11713,14 +11712,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	int maxWidth = -1;
 	string otherInputOptions;
 	{
-		/*
         string field = "ChannelType";
         channelType = _encodingItem->_liveProxyData->
 			_ingestedParametersRoot.get(field, "").asString();
-		*/
-
-        string field = "actAsServer";
-        actAsServer = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "EncodersPool";
         encodersPool = _encodingItem->_liveProxyData->
@@ -12016,7 +12010,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-					liveProxyMetadata["actAsServer"] = actAsServer;
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["maxWidth"] = maxWidth;

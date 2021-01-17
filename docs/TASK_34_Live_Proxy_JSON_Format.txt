@@ -7,29 +7,31 @@
 
 	"Parameters": {
 
-		// optional, possible values: IP or Satellite. Default is IP
+		// optional, possible values: IP, Satellite or IP_MMSAsServer.
+		//	Default is IP
 		"ChannelType": "IP",
 
-		// default is false. If true the Task act as server listening for an incoming connection
-		// In case ChannelType is "Satellite", the ActAsServer... parameters are not used
-		"ActAsServer": false,
-
-		// mandatory only if ActAsServer is true.
+		// mandatory only if ChannelType is IP_MMSAsServer.
+		//		It is a numerical code identifying the input channel
+		//		The same code will be used:
+		//		- into the delivery URL
+		"ActAsServerChannelCode": 12345,
+		// mandatory only if channelType is IP_MMSAsServer
 		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
 		"ActAsServerProtocol": "rtmp",
-		// mandatory only if ActAsServer is true.
+		// mandatory only if channelType is IP_MMSAsServer
 			// local transcoder IP address where to listen for data
 		"ActAsServerBindIP": 127.0.0.1,
-		// mandatory only if ActAsServer is true.
+		// mandatory only if channelType is IP_MMSAsServer
 			// local transcoder port where to listen for data
 		"ActAsServerPort": 12345,
-		// mandatory only if ActAsServer is true.
+		// mandatory only if channelType is IP_MMSAsServer
 			// max time in seconds waiting an incoming connection. Default is 300
 		"ActAsServerListenTimeout": 300,
 
-		// mandatory in case
-		//	- channelType is IP and ActAsServer is false, in this case it refers an IP Channel Configuration
-		//	- channelType is Satellite, in this case it refers a Satellite Channel Configuration
+		// mandatory in case channelType is IP or Satellite
+		//	- if channelType is IP, it refers an IP Channel Configuration
+		//	- if channelType is Satellite, it refers a Satellite Channel Configuration
 		"ConfigurationLabel": "",
 
 		// optional. To be set with the EncodersPool label only in case 

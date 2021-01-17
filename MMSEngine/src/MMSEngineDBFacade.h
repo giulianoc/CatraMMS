@@ -1652,7 +1652,6 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string channelType,
-		bool actAsServer,
 		int64_t actAsServerChannelCode,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
@@ -1674,7 +1673,6 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string channelType,
-		bool actAsServer,
 		int64_t liveURLConfKey, string configurationLabel, string url,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);

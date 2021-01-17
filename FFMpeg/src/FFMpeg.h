@@ -241,7 +241,7 @@ public:
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
-		bool actAsServer,
+		string channelType,
         string liveURL,
 		int listenTimeoutInSeconds,
 
@@ -314,7 +314,7 @@ public:
 		// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
 		//		listening for an incoming connection
 		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		bool actAsServer,
+		string channelType,
 		string liveURL,
 		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
