@@ -2516,29 +2516,42 @@ void API::createDeliveryAuthorization(
 						throw runtime_error(errorMessage);
 					}
 
-					field = "InternalMMS";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					string channelType = "IP";
+
+					field = "ChannelType";
+					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+						channelType = ingestionJobRoot.get(field, "").asString();
+
+					int64_t deliveryKey = -1;
+					if (channelType == "IP")
 					{
-						string errorMessage = string("A Live-LiveRecorder without InternalMMS cannot be delivered")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(__FILEREF__ + errorMessage);
+						field = "ConfigurationLabel";
+						string configurationLabel = ingestionJobRoot.get(field, "").asString();
 
-						throw runtime_error(errorMessage);
+						int64_t ipConfKey;
+						bool warningIfMissing = false;
+						pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+							requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
+						tie(ipConfKey, ignore) = liveURLConfDetails;
+
+						deliveryKey = ipConfKey;
 					}
-					Json::Value internalMMSRoot = ingestionJobRoot[field];
-
-					field = "deliveryKey";
-					if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					else if (channelType == "Satellite")
 					{
-						string errorMessage = string("A Live-LiveRecorder without deliveryKey cannot be delivered")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(__FILEREF__ + errorMessage);
+						field = "SATConfigurationLabel";
+						string configurationLabel = ingestionJobRoot.get(field, "").asString();
 
-						throw runtime_error(errorMessage);
+						bool warningIfMissing = false;
+						int64_t satConfKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+							requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
+
+						deliveryKey = satConfKey;
 					}
-					int64_t deliveryKey = JSONUtils::asInt64(internalMMSRoot, field, 0);
+					else // if (channelType == "IP_MMSAsServer")
+					{
+						field = "ActAsServerChannelCode";
+						deliveryKey = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+					}
 
 					string deliveryURI;
 					string liveFileExtension = "m3u8";
