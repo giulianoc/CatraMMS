@@ -4747,11 +4747,23 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::LiveGrid
                 )
         {
-            lastSQLCommand = 
-                "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
-                "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
-                "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                "processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+			// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,
+			//	we will take the main one. In case HighAvailability is false, we still have the main field set to true
+			if (ingestionType == IngestionType::LiveRecorder)
+				lastSQLCommand = 
+					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
+					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
+					"and JSON_EXTRACT(parameters, '$.main') = true "
+					;
+			else
+				lastSQLCommand = 
+					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
+					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
+					;
 
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));

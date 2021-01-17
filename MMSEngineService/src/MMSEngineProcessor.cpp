@@ -9700,14 +9700,42 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string monitorManifestFileName;
 		if(monitorHLS)
 		{
+			int64_t deliveryKey;
+			{
+				field = "InternalMMS";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				Json::Value internalMMSRoot = parametersRoot[field];
+
+				field = "deliveryKey";
+				if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				deliveryKey = JSONUtils::asInt64(internalMMSRoot, field, 0);
+			}
+
 			string manifestExtension;
 			manifestExtension = "m3u8";
 
 			monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-				_mmsEngineDBFacade, to_string(confKey),
+				_mmsEngineDBFacade, to_string(deliveryKey),
 				workspace);
 
-			monitorManifestFileName = to_string(confKey) + ".m3u8";
+			monitorManifestFileName = to_string(deliveryKey) + ".m3u8";
 			/*
 				manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
 					_mmsEngineDBFacade, to_string(liveURLConfKey),

@@ -2515,12 +2515,12 @@ void MMSEngineDBFacade::getAllStorageDetails(
     }        
 }
 
-// at least one between physicalPathKey and liveURLConfKey has to be -1
+// at least one between physicalPathKey and liveDeliveryKey has to be -1
 int64_t MMSEngineDBFacade::createDeliveryAuthorization(
     int64_t userKey,
     string clientIPAddress,
     int64_t physicalPathKey,	// vod key
-	int64_t liveURLConfKey,		// live key
+	int64_t liveDeliveryKey,	// live key
     string deliveryURI,
     int ttlInSeconds,
     int maxRetries)
@@ -2543,7 +2543,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 			if (physicalPathKey == -1)
 			{
 				contentType = "live";
-				contentKey = liveURLConfKey;
+				contentKey = liveDeliveryKey;
 			}
 			else
 			{
@@ -2551,8 +2551,10 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 				contentKey = physicalPathKey;
 			}
             lastSQLCommand = 
-                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, 0, ?)";
+                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, "
+				"contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
+                "                                      NULL,                     ?,       ?, "
+				"?,           ?,          ?,           ?,            0,                    ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;

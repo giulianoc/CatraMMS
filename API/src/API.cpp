@@ -2505,6 +2505,70 @@ void API::createDeliveryAuthorization(
 				}
 				else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 				{
+					string field = "MonitorHLS";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Live-LiveRecorder without MonitorHLS cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					field = "InternalMMS";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Live-LiveRecorder without InternalMMS cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value internalMMSRoot = ingestionJobRoot[field];
+
+					field = "deliveryKey";
+					if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
+					{
+						string errorMessage = string("A Live-LiveRecorder without deliveryKey cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					int64_t deliveryKey = JSONUtils::asInt64(internalMMSRoot, field, 0);
+
+					string deliveryURI;
+					string liveFileExtension = "m3u8";
+					tuple<string, string, string> liveDeliveryDetails
+						= _mmsStorage->getLiveDeliveryDetails(
+						_mmsEngineDBFacade, to_string(deliveryKey),
+						liveFileExtension, requestWorkspace);
+					tie(deliveryURI, ignore, deliveryFileName) =
+						liveDeliveryDetails;
+
+					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						-1,	// physicalPathKey,
+						deliveryKey,
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+
+					/*
+					 * old method using the liveURLConfKey ....
 					string field = "ConfigurationLabel";
 					string configurationLabel = ingestionJobRoot.get(field, "").asString();
 					field = "MonitorHLS";
@@ -2549,6 +2613,7 @@ void API::createDeliveryAuthorization(
 						+ deliveryURI
 						+ "?token=" + to_string(authorizationKey)
 					;
+					*/
 				}
 				else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
 				{

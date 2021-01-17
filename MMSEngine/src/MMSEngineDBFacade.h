@@ -1550,7 +1550,7 @@ public:
         int64_t userKey,
         string clientIPAddress,
         int64_t physicalPathKey,
-		int64_t liveURLConfKey,
+		int64_t liveDeliveryKey,
         string deliveryURI,
         int ttlInSeconds,
         int maxRetries);

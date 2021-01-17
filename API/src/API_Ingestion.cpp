@@ -897,6 +897,18 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			field = "apiKey";
 			internalMMSRoot[field] = apiKey;
+
+			// 2021-01-17: in case of MonitorHLS, MMS has to build a path to save the live segments.
+			//	We will generated now a 'key' that will be used to build the path where the live segments
+			//	are generated.
+			//	That will guarantee that 2 recordings of the same channels will have two different paths
+			field = "MonitorHLS";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				field = "deliveryKey";
+				internalMMSRoot[field] = now.time_since_epoch().count();
+			}
 		}
 
 		string onSuccessField = "OnSuccess";
