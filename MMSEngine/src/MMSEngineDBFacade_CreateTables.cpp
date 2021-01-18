@@ -1196,6 +1196,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "processorMMS               VARCHAR (128) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "errorMessage               MEDIUMTEXT NULL,"
+					// added because the channels view was slow
+					"configurationLabel_virtual	VARCHAR(128) GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.ConfigurationLabel'))) NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				
@@ -1257,6 +1259,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionJob_idx3 on MMS_IngestionJob (ingestionType)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx4 on MMS_IngestionJob (configurationLabel_virtual)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

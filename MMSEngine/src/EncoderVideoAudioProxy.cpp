@@ -10294,7 +10294,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		/*
         string field = "ChannelType";
         channelType = _encodingItem->_liveRecorderData->
-			_ingestedParametersRoot.get(field, "IP").asString();
+			_ingestedParametersRoot.get(field, "IP_MMSAsClient").asString();
 		*/
 
         string field = "EncodersPool";

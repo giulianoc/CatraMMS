@@ -6771,7 +6771,7 @@ void FFMpeg::liveRecorder(
 	#else
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
-		if (channelType == "IP" && userAgent != "")
+		if (channelType == "IP_MMSAsClient" && userAgent != "")
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
@@ -7119,7 +7119,49 @@ void FFMpeg::liveRecorder(
 
 			throw runtime_error("liveRecording exit before unexpectly");
 		}
-    }
+
+		if (monitorHLS)
+		{
+			if (monitorManifestDirectoryPath != "")
+			{
+				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+				}
+			}
+		}
+   }
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
@@ -7168,6 +7210,7 @@ void FFMpeg::liveRecorder(
             + ", segmentListPathName: " + segmentListPathName);
         FileIO::remove(segmentListPathName, exceptionInCaseOfError);
 
+		/*
 		if (segmentListPath != "")
     	{
         	// get files from file system
@@ -7187,14 +7230,15 @@ void FFMpeg::liveRecorder(
                 	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     	continue;
 
-                	if (directoryEntry.size() >= recordedFileNamePrefix.size() && 0 == directoryEntry.compare(0, recordedFileNamePrefix.size(), recordedFileNamePrefix))
+                	if (directoryEntry.size() >= recordedFileNamePrefix.size()
+						&& 0 == directoryEntry.compare(0, recordedFileNamePrefix.size(), recordedFileNamePrefix))
 					{
 						string recordedPathNameToBeRemoved = segmentListPath + "/" + directoryEntry;
         				_logger->info(__FILEREF__ + "Remove"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
             				+ ", recordedPathNameToBeRemoved: " + recordedPathNameToBeRemoved);
-        				// FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
+        				FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
 					}
             	}
             	catch(DirectoryListFinished e)
@@ -7227,6 +7271,49 @@ void FFMpeg::liveRecorder(
 
         	FileIO::closeDirectory (directory);
     	}
+		*/
+
+		if (monitorHLS)
+		{
+			if (monitorManifestDirectoryPath != "")
+			{
+				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(monitorManifestDirectoryPath, bRemoveRecursively);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+				}
+			}
+		}
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
@@ -8401,7 +8488,7 @@ void FFMpeg::liveProxy(
 	);
 
 	string otherOutputOptionsBecauseOfMaxWidth;
-	if (channelType == "IP" && maxWidth != -1)
+	if (channelType == "IP_MMSAsClient" && maxWidth != -1)
 	{
 		try
 		{
@@ -8530,7 +8617,7 @@ void FFMpeg::liveProxy(
 		//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
 		//		in the background process group
 		ffmpegArgumentList.push_back("-nostdin");
-		if (channelType == "IP" && userAgent != "")
+		if (channelType == "IP_MMSAsClient" && userAgent != "")
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
@@ -9036,6 +9123,66 @@ void FFMpeg::liveProxy(
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
+
+		for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+			outputRoots)
+		{
+			string outputType;
+			// string otherOutputOptions;
+			// Json::Value encodingProfileDetailsRoot;
+			string manifestDirectoryPath;
+			// string manifestFileName;
+			// int segmentDurationInSeconds;
+			// int playlistEntriesNumber;
+			// bool isVideo;
+			// string rtmpUrl;
+
+			tie(outputType, ignore, ignore, manifestDirectoryPath,       
+				ignore, ignore, ignore, ignore, ignore)
+				= tOutputRoot;
+
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				if (manifestDirectoryPath != "")
+				{
+					if (FileIO::directoryExisting(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							Boolean_t bRemoveRecursively = true;
+							FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+    	}
     }
     catch(runtime_error e)
     {
@@ -9110,17 +9257,17 @@ void FFMpeg::liveProxy(
 			outputRoots)
 		{
 			string outputType;
-			string otherOutputOptions;
-			Json::Value encodingProfileDetailsRoot;
+			// string otherOutputOptions;
+			// Json::Value encodingProfileDetailsRoot;
 			string manifestDirectoryPath;
-			string manifestFileName;
-			int segmentDurationInSeconds;
-			int playlistEntriesNumber;
-			bool isVideo;
-			string rtmpUrl;
+			// string manifestFileName;
+			// int segmentDurationInSeconds;
+			// int playlistEntriesNumber;
+			// bool isVideo;
+			// string rtmpUrl;
 
-			tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
-				manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+			tie(outputType, ignore, ignore, manifestDirectoryPath,       
+				ignore, ignore, ignore, ignore, ignore)
 				= tOutputRoot;
 
 			if (outputType == "HLS" || outputType == "DASH")

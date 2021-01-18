@@ -2516,14 +2516,14 @@ void API::createDeliveryAuthorization(
 						throw runtime_error(errorMessage);
 					}
 
-					string channelType = "IP";
+					string channelType = "IP_MMSAsClient";
 
 					field = "ChannelType";
 					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 						channelType = ingestionJobRoot.get(field, "").asString();
 
 					int64_t deliveryKey = -1;
-					if (channelType == "IP")
+					if (channelType == "IP_MMSAsClient")
 					{
 						field = "ConfigurationLabel";
 						string configurationLabel = ingestionJobRoot.get(field, "").asString();
@@ -2579,6 +2579,13 @@ void API::createDeliveryAuthorization(
 						+ deliveryURI
 						+ "?token=" + to_string(authorizationKey)
 					;
+
+					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", channelType: " + channelType
+						+ ", deliveryKey: " + to_string(deliveryKey)
+						+ ", deliveryURL: " + deliveryURL
+					);
 
 					/*
 					 * old method using the liveURLConfKey ....

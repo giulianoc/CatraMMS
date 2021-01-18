@@ -4802,8 +4802,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
-        liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP").asString();
-		liveRecording->_actAsServerChannelCode = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "actAsServerChannelCode", 0);
+        liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP_MMSAsClient").asString();
 		int listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 
@@ -5412,7 +5411,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 							pair<string, int> lastRecordedAssetInfo = liveRecorder_processLastGeneratedLiveRecorderFiles(
 								liveRecording->_ingestionJobKey,
 								liveRecording->_encodingJobKey,
-								liveRecording->_channelType, liveRecording->_actAsServerChannelCode,
+								liveRecording->_channelType,
 								highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
 								liveRecording->_encodingParametersRoot,
 								liveRecording->_liveRecorderParametersRoot,
@@ -5489,7 +5488,7 @@ void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	string channelType, int64_t actAsServerChannelCode,
+	string channelType,
 	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
@@ -5662,7 +5661,11 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			string uniqueName;
 			{
 				if (channelType == "IP_MMSAsServer")
+				{
+					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"ActAsServerChannelCode", 0);
 					uniqueName = to_string(actAsServerChannelCode);
+				}
 				else
 					uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
 				uniqueName += " - ";
@@ -5678,12 +5681,16 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
 				mmsDataRoot["channelType"] = channelType;
-				if (channelType == "IP")
+				if (channelType == "IP_MMSAsClient")
 					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				else if (channelType == "Satellite")
 					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				else // if (channelType == "IP_MMSAsServer")
+				{
+					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"ActAsServerChannelCode", 0);
 					mmsDataRoot["actAsServerChannelCode"] = actAsServerChannelCode;
+				}
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
 				{
@@ -5705,7 +5712,11 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			string addContentTitle;
 			{
 				if (channelType == "IP_MMSAsServer")
+				{
+					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"ActAsServerChannelCode", 0);
 					addContentTitle = to_string(actAsServerChannelCode);
+				}
 				else
 					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
@@ -6753,7 +6764,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
 		// string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 
-		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP").asString();
+		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP_MMSAsClient").asString();
 		int listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 

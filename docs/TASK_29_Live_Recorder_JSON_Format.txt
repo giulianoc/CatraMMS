@@ -7,9 +7,9 @@
 
 	"Parameters": {
 
-		// optional, possible values: IP, Satellite or IP_MMSAsServer.
-		//	Default is IP
-		"ChannelType": "IP",
+		// optional, possible values: IP_MMSAsClient, Satellite or IP_MMSAsServer.
+		//	Default is IP_MMSAsClient
+		"ChannelType": "IP_MMSAsClient",
 
 		// mandatory only if ChannelType is IP_MMSAsServer.
 		//		It is a numerical code identifying the input channel

@@ -9371,11 +9371,11 @@ void MMSEngineProcessor::manageLiveRecorder(
         {
             string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				channelType = "IP";
+				channelType = "IP_MMSAsClient";
 			else
 				channelType = parametersRoot.get(field, "").asString();
 
-			if (channelType == "IP")
+			if (channelType == "IP_MMSAsClient")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9675,7 +9675,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t confKey = -1;
 		string liveURL;
 
-		if (channelType == "IP")
+		if (channelType == "IP_MMSAsClient")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
@@ -9731,7 +9731,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			string manifestExtension;
 			manifestExtension = "m3u8";
 
-			if (channelType == "IP")
+			if (channelType == "IP_MMSAsClient")
 			{
 				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 					_mmsEngineDBFacade, to_string(confKey),
@@ -9791,7 +9791,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			channelType, actAsServerChannelCode, highAvailability,
+			channelType, highAvailability,
 			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
@@ -9872,11 +9872,11 @@ void MMSEngineProcessor::manageLiveProxy(
         {
             string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				channelType = "IP";
+				channelType = "IP_MMSAsClient";
 			else
 				channelType = parametersRoot.get(field, "").asString();
 
-			if (channelType == "IP")
+			if (channelType == "IP_MMSAsClient")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9983,7 +9983,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		int64_t confKey = -1;
 		string liveURL;
 
-		if (channelType == "IP")
+		if (channelType == "IP_MMSAsClient")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> channelConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
@@ -10044,7 +10044,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					else if (outputType == "DASH")
 						manifestExtension = "mpd";
 
-					if (channelType == "IP")
+					if (channelType == "IP_MMSAsClient")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							_mmsEngineDBFacade, to_string(confKey),
@@ -10445,7 +10445,7 @@ void MMSEngineProcessor::liveCutThread(
             }
 			channelType = liveCutParametersRoot.get(field, "").asString();
 
-			if (channelType == "IP")
+			if (channelType == "IP_MMSAsClient")
 			{
 				field = "ConfigurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -10649,7 +10649,7 @@ void MMSEngineProcessor::liveCutThread(
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
 
 		int64_t confKey = -1;
-		if (channelType == "IP")
+		if (channelType == "IP_MMSAsClient")
 		{
 			bool warningIfMissing = false;
 			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
@@ -10707,7 +10707,7 @@ void MMSEngineProcessor::liveCutThread(
 				//                       PS-------------------------------PE
 
 				jsonCondition = "( JSON_EXTRACT(userData, '$.mmsData.validated') = true and ";
-				if (channelType == "IP")
+				if (channelType == "IP_MMSAsClient")
 					jsonCondition += "JSON_EXTRACT(userData, '$.mmsData.ipConfKey') = "
 						+ to_string(confKey) + " and (";
 				else if (channelType == "Satellite")
@@ -11105,7 +11105,7 @@ void MMSEngineProcessor::liveCutThread(
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
-				if (channelType == "IP")
+				if (channelType == "IP_MMSAsClient")
 				{
 					Json::Value removed;
 					field = "ConfigurationLabel";
@@ -11284,7 +11284,7 @@ void MMSEngineProcessor::liveCutThread(
 					field = "channelType";
 					mmsDataRoot[field] = channelType;
 
-					if (channelType == "IP")
+					if (channelType == "IP_MMSAsClient")
 					{
 						field = "configurationLabel";
 						mmsDataRoot[field] = ipConfigurationLabel;

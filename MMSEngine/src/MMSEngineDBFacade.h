@@ -1652,7 +1652,6 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string channelType,
-		int64_t actAsServerChannelCode,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
 		string userAgent,

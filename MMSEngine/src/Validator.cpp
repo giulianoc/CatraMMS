@@ -3048,7 +3048,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		Validator::DependencyType>>& dependencies)
 {
 
-	string channelType = "IP";
+	string channelType = "IP_MMSAsClient";
 
     string field = "ChannelType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -3069,7 +3069,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	if (channelType == "IP")
+	if (channelType == "IP_MMSAsClient")
 	{
 		field = "ConfigurationLabel";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -3371,7 +3371,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
         
-	string channelType = "IP";
+	string channelType = "IP_MMSAsClient";
 
     string field = "ChannelType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -3392,7 +3392,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	if (channelType == "IP")
+	if (channelType == "IP_MMSAsClient")
 	{
 		field = "ConfigurationLabel";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -4057,7 +4057,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
 
-	string channelType = "IP";
+	string channelType = "IP_MMSAsClient";
 
     string field = "ChannelType";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -4066,7 +4066,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		if (!isChannelTypeValid(channelType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP or Satellite"
+                + "IP_MMSAsClient, Satellite or IP_MMSAsServer"
                 + ")"
                 + ", Field: " + field
                 + ", channelType: " + channelType
@@ -4099,7 +4099,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
         }
     }
 
-	if (channelType == "IP")
+	if (channelType == "IP_MMSAsClient")
 	{
 		field = "ConfigurationLabel";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5013,7 +5013,7 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
 bool Validator::isChannelTypeValid(string channelType)
 {
     vector<string> validChannelTypes = {
-        "IP",
+        "IP_MMSAsClient",
         "Satellite",
 		"IP_MMSAsServer"
     };
