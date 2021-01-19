@@ -58,6 +58,9 @@ public:
 
     bool isLiveGridOutputTypeValid(string liveGridOutputType);
 
+	time_t sDateSecondsToUtc(string sDate);
+	int64_t sDateMilliSecondsToUtc(string sDate);
+
     void validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root);
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot, bool validateDependenciesToo);

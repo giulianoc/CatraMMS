@@ -93,6 +93,9 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
     );
 
+	_timeBeforeToPrepareResourcesInMinutes      = JSONUtils::asInt(configuration["mms"],
+		"liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
+
     _downloadChunkSizeInMegaBytes       = JSONUtils::asInt(configuration["download"], "downloadChunkSizeInMegaBytes", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
@@ -9574,103 +9577,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
         }
 
-		// next code is the same in the Validator class
-		time_t utcRecordingPeriodStart;
-		{
-			unsigned long		ulUTCYear;
-			unsigned long		ulUTCMonth;
-			unsigned long		ulUTCDay;
-			unsigned long		ulUTCHour;
-			unsigned long		ulUTCMinutes;
-			unsigned long		ulUTCSeconds;
-			tm					tmRecordingPeriodStart;
-			int					sscanfReturn;
+		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-
-			// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
-			// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
-			// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
-			if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
-				&ulUTCYear,
-				&ulUTCMonth,
-				&ulUTCDay,
-				&ulUTCHour,
-				&ulUTCMinutes,
-				&ulUTCSeconds)) != 6)
-			{
-				string field = "Start";
-
-				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sscanfReturn: " + to_string(sscanfReturn)
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			time (&utcRecordingPeriodStart);
-			gmtime_r(&utcRecordingPeriodStart, &tmRecordingPeriodStart);
-
-			tmRecordingPeriodStart.tm_year		= ulUTCYear - 1900;
-			tmRecordingPeriodStart.tm_mon		= ulUTCMonth - 1;
-			tmRecordingPeriodStart.tm_mday		= ulUTCDay;
-			tmRecordingPeriodStart.tm_hour		= ulUTCHour;
-			tmRecordingPeriodStart.tm_min		= ulUTCMinutes;
-			tmRecordingPeriodStart.tm_sec		= ulUTCSeconds;
-
-			utcRecordingPeriodStart = timegm(&tmRecordingPeriodStart);
-		}
+		time_t utcRecordingPeriodStart = validator.sDateSecondsToUtc(recordingPeriodStart);
 		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
-		time_t utcRecordingPeriodEnd;
-		{
-			unsigned long		ulUTCYear;
-			unsigned long		ulUTCMonth;
-			unsigned long		ulUTCDay;
-			unsigned long		ulUTCHour;
-			unsigned long		ulUTCMinutes;
-			unsigned long		ulUTCSeconds;
-			tm					tmRecordingPeriodEnd;
-			int					sscanfReturn;
-
-
-			if ((sscanfReturn = sscanf (recordingPeriodEnd.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
-				&ulUTCYear,
-				&ulUTCMonth,
-				&ulUTCDay,
-				&ulUTCHour,
-				&ulUTCMinutes,
-				&ulUTCSeconds)) != 6)
-			{
-				string field = "Start";
-
-				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field
-					+ ", sscanfReturn: " + to_string(sscanfReturn)
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			time (&utcRecordingPeriodEnd);
-			gmtime_r(&utcRecordingPeriodEnd, &tmRecordingPeriodEnd);
-
-			tmRecordingPeriodEnd.tm_year		= ulUTCYear - 1900;
-			tmRecordingPeriodEnd.tm_mon			= ulUTCMonth - 1;
-			tmRecordingPeriodEnd.tm_mday		= ulUTCDay;
-			tmRecordingPeriodEnd.tm_hour		= ulUTCHour;
-			tmRecordingPeriodEnd.tm_min			= ulUTCMinutes;
-			tmRecordingPeriodEnd.tm_sec			= ulUTCSeconds;
-
-			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
-		}
+		time_t utcRecordingPeriodEnd = validator.sDateSecondsToUtc(recordingPeriodEnd);
 
 		int64_t confKey = -1;
 		string liveURL;
@@ -9869,6 +9782,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
 		Json::Value outputsRoot;
+		int64_t utcProxyPeriodStart = -1;
+		int64_t utcProxyPeriodEnd = -1;
         {
             string field = "ChannelType";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9953,6 +9868,37 @@ void MMSEngineProcessor::manageLiveProxy(
 					throw runtime_error(errorMessage);
 				}
 				actAsServerPort = parametersRoot.get(field, 0).asInt();
+			}
+
+            field = "ProxyPeriod";
+            if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				utcProxyPeriodStart = -1;
+				utcProxyPeriodEnd = -1;
+			}
+			else
+			{
+				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+
+				Json::Value proxyPeriodRoot = parametersRoot[field];
+
+				field = "Start";
+				if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					utcProxyPeriodStart = -1;
+				else
+				{
+					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
+					utcProxyPeriodStart = validator.sDateSecondsToUtc(proxyPeriodStart);
+				}
+
+				field = "End";
+				if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					utcProxyPeriodEnd = -1;
+				else
+				{
+					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
+					utcProxyPeriodEnd = validator.sDateSecondsToUtc(proxyPeriodEnd);
+				}
 			}
 
 			field = "MaxAttemptsNumberInCaseOfErrors";
@@ -10140,6 +10086,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			channelType, confKey, configurationLabel, liveURL,
+			utcProxyPeriodStart, utcProxyPeriodEnd,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			localOutputsRoot);
 	}
@@ -10529,114 +10476,12 @@ void MMSEngineProcessor::liveCutThread(
             cutPeriodEndTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
         }
 
-		// next code is the same in the Validator class
-		int64_t utcCutPeriodStartTimeInMilliSeconds;
-		{
-			unsigned long		ulUTCYear;
-			unsigned long		ulUTCMonth;
-			unsigned long		ulUTCDay;
-			unsigned long		ulUTCHour;
-			unsigned long		ulUTCMinutes;
-			unsigned long		ulUTCSeconds;
-			unsigned long		ulUTCMilliSeconds;
-			tm					tmCutPeriodStart;
-			int					sscanfReturn;
+		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-
-			// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
-			// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
-			// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
-			if ((sscanfReturn = sscanf (cutPeriodStartTimeInMilliSeconds.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ",
-				&ulUTCYear,
-				&ulUTCMonth,
-				&ulUTCDay,
-				&ulUTCHour,
-				&ulUTCMinutes,
-				&ulUTCSeconds,
-				&ulUTCMilliSeconds)) != 7)
-			{
-				string field = "Start";
-
-				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", Field: " + field
-					+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
-					+ ", sscanfReturn: " + to_string(sscanfReturn)
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			time_t utcCutPeriodStartTime;
-			time (&utcCutPeriodStartTime);
-			gmtime_r(&utcCutPeriodStartTime, &tmCutPeriodStart);
-
-			tmCutPeriodStart.tm_year		= ulUTCYear - 1900;
-			tmCutPeriodStart.tm_mon		= ulUTCMonth - 1;
-			tmCutPeriodStart.tm_mday		= ulUTCDay;
-			tmCutPeriodStart.tm_hour		= ulUTCHour;
-			tmCutPeriodStart.tm_min		= ulUTCMinutes;
-			tmCutPeriodStart.tm_sec		= ulUTCSeconds;
-
-			utcCutPeriodStartTimeInMilliSeconds = timegm(&tmCutPeriodStart) * 1000;
-			utcCutPeriodStartTimeInMilliSeconds += ulUTCMilliSeconds;
-		}
+		int64_t utcCutPeriodStartTimeInMilliSeconds = validator.sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
-		int64_t utcCutPeriodEndTimeInMilliSeconds;
-		{
-			unsigned long		ulUTCYear;
-			unsigned long		ulUTCMonth;
-			unsigned long		ulUTCDay;
-			unsigned long		ulUTCHour;
-			unsigned long		ulUTCMinutes;
-			unsigned long		ulUTCSeconds;
-			unsigned long		ulUTCMilliSeconds;
-			tm					tmCutPeriodEnd;
-			int					sscanfReturn;
-
-
-			if ((sscanfReturn = sscanf (cutPeriodEndTimeInMilliSeconds.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ",
-				&ulUTCYear,
-				&ulUTCMonth,
-				&ulUTCDay,
-				&ulUTCHour,
-				&ulUTCMinutes,
-				&ulUTCSeconds,
-				&ulUTCMilliSeconds)) != 7)
-			{
-				string field = "End";
-
-				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", Field: " + field
-					+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
-					+ ", sscanfReturn: " + to_string(sscanfReturn)
-					;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			time_t utcCutPeriodEndTime;
-			time (&utcCutPeriodEndTime);
-			gmtime_r(&utcCutPeriodEndTime, &tmCutPeriodEnd);
-
-			tmCutPeriodEnd.tm_year		= ulUTCYear - 1900;
-			tmCutPeriodEnd.tm_mon			= ulUTCMonth - 1;
-			tmCutPeriodEnd.tm_mday		= ulUTCDay;
-			tmCutPeriodEnd.tm_hour		= ulUTCHour;
-			tmCutPeriodEnd.tm_min			= ulUTCMinutes;
-			tmCutPeriodEnd.tm_sec			= ulUTCSeconds;
-
-			utcCutPeriodEndTimeInMilliSeconds = timegm(&tmCutPeriodEnd) * 1000;
-			utcCutPeriodEndTimeInMilliSeconds += ulUTCMilliSeconds;
-		}
+		int64_t utcCutPeriodEndTimeInMilliSeconds = validator.sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In case the chunk is 1 minute,
@@ -16576,7 +16421,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
 		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems,
-				_maxEncodingJobsPerEvent);
+			_timeBeforeToPrepareResourcesInMinutes, _maxEncodingJobsPerEvent);
 
 		_logger->info(__FILEREF__ + "_pActiveEncodingsManager->addEncodingItems"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)

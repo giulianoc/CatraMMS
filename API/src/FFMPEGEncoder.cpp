@@ -6768,6 +6768,9 @@ void FFMPEGEncoder::liveProxyThread(
 		int listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 
+		time_t utcProxyPeriodStart = JSONUtils::asInt64(liveProxyMetadata, "utcProxyPeriodStart", -1);
+		time_t utcProxyPeriodEnd = JSONUtils::asInt64(liveProxyMetadata, "utcProxyPeriodEnd", -1);
+
 		string liveURL;
 		if (liveProxy->_channelType == "Satellite")
 		{
@@ -6893,6 +6896,8 @@ void FFMPEGEncoder::liveProxyThread(
 				listenTimeoutInSeconds,
 				userAgent,
 				otherInputOptions,
+				utcProxyPeriodStart,
+				utcProxyPeriodEnd,
 				liveProxy->_liveProxyOutputRoots,
 				&(liveProxy->_childPid));
 		}

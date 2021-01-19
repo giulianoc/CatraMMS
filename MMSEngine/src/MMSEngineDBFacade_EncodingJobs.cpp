@@ -6,6 +6,7 @@
 void MMSEngineDBFacade::getEncodingJobs(
         string processorMMS,
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems,
+		int timeBeforeToPrepareResourcesInMinutes,
 		int maxEncodingsNumber
 )
 {
@@ -53,14 +54,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             lastSQLCommand =
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
-				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName "
+				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
+				"JSON_EXTRACT(ej.parameters, '$.utcProxyPeriodStart') as utcProxyPeriodStart "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and ij.ingestionType = 'Live-Proxy' "
-				;
+				"order by JSON_EXTRACT(ej.parameters, '$.utcProxyPeriodStart') asc"
+			;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -77,8 +80,21 @@ void MMSEngineDBFacade::getEncodingJobs(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
+			time_t utcNow;
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
             while (encodingResultSet->next())
             {
+				if (!encodingResultSet->isNull("utcProxyPeriodStart"))
+				{
+					int64_t utcProxyPeriodStart = encodingResultSet->getInt64("utcProxyPeriodStart");
+					if (utcProxyPeriodStart - utcNow >= timeBeforeToPrepareResourcesInMinutes * 60)
+						continue;
+				}
+
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
 
@@ -656,14 +672,15 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             lastSQLCommand =
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
-				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName "
+				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
+				"JSON_EXTRACT(ej.parameters, '$.utcRecordingPeriodStart') as utcRecordingPeriodStart "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ij.ingestionJobKey = ej.ingestionJobKey and ej.processorMMS is null "
 				"and ij.status not like 'End_%' "
 				"and ej.status = ? and ej.encodingJobStart <= NOW() "
 				"and ij.ingestionType = 'Live-Recorder' "
-				"order by JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start') asc"
+				"order by JSON_EXTRACT(ej.parameters, '$.utcRecordingPeriodStart') asc"
 				;
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -681,8 +698,21 @@ void MMSEngineDBFacade::getEncodingJobs(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 
+			time_t utcNow;
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
             while (encodingResultSet->next())
             {
+				if (!encodingResultSet->isNull("utcRecordingPeriodStart"))
+				{
+					time_t utcRecordingPeriodStart = encodingResultSet->getInt64("utcRecordingPeriodStart");
+					if (utcRecordingPeriodStart - utcNow >= timeBeforeToPrepareResourcesInMinutes * 60)
+						continue;
+				}
+
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
 
@@ -9524,6 +9554,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t ingestionJobKey,
 	string channelType,
 	int64_t liveURLConfKey, string configurationLabel, string url,
+	int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
 )
@@ -9580,6 +9611,12 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "utcProxyPeriodStart";
+				parametersRoot[field] = utcProxyPeriodStart;
+
+				field = "utcProxyPeriodEnd";
+				parametersRoot[field] = utcProxyPeriodEnd;
 
 				field = "maxAttemptsNumberInCaseOfErrors";
 				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;

@@ -322,6 +322,10 @@ public:
 		string userAgent,
 		string otherInputOptions,
 
+		// ProxyPeriod are -1 if they do not have to be used
+		time_t utcProxyPeriodStart,
+		time_t utcProxyPeriodEnd,
+
 		// array, each element is an output containing the following fields
 		//  string outputType (it could be: HLS, DASH, RTMP_Stream)
 		//  #in case of HLS or DASH

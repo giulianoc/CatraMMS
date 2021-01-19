@@ -96,6 +96,7 @@ private:
     int						_maxEventManagementTimeInSeconds;
     int                     _dependencyExpirationInHours;
     size_t                  _downloadChunkSizeInMegaBytes;
+	int						_timeBeforeToPrepareResourcesInMinutes;
     
     string                  _emailProtocol;
     string                  _emailServer;

@@ -10336,9 +10336,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool urlForbidden = false;
 	bool urlNotFound = false;
 
-	time_t utcNow = 0;
+	time_t utcNowToCheckExit = 0;
 	while (!killedByUser && !urlForbidden && !urlNotFound
-			&& utcNow < utcRecordingPeriodEnd)
+			&& utcNowToCheckExit < utcRecordingPeriodEnd)
 	{
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveRecorderURI;
@@ -11294,9 +11294,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             
-			utcNow = chrono::system_clock::to_time_t(endEncoding);
+			utcNowToCheckExit = chrono::system_clock::to_time_t(endEncoding);
 
-			if (utcNow < utcRecordingPeriodEnd)
+			if (utcNowToCheckExit < utcRecordingPeriodEnd)
 			{
 				_logger->error(__FILEREF__ + "LiveRecorder media file completed unexpected"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -11304,7 +11304,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", liveURL: " + liveURL
                     + ", main: " + to_string(main)
-					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNow)
+					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNowToCheckExit)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
@@ -11406,7 +11406,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
+				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
 			}
 
             // throw e;
@@ -11428,7 +11428,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
+				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
 			}
 
             // throw e;
@@ -11450,7 +11450,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
+				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
 			}
 
             // throw e;
@@ -11472,7 +11472,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				utcNow = chrono::system_clock::to_time_t(now);
+				utcNowToCheckExit = chrono::system_clock::to_time_t(now);
 			}
 
             // throw e;
@@ -11682,6 +11682,58 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 bool EncoderVideoAudioProxy::liveProxy()
 {
 
+	time_t utcProxyPeriodStart = -1;
+	time_t utcProxyPeriodEnd = -1;
+	{
+		string field = "utcProxyPeriodStart";
+		utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+
+		field = "utcProxyPeriodEnd";
+		utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+	}
+
+	if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+	{
+		time_t utcNow;                                                                                            
+
+		{                                                                                                         
+			chrono::system_clock::time_point now = chrono::system_clock::now();                                   
+			utcNow = chrono::system_clock::to_time_t(now);                                                        
+		}
+
+		// MMS allocates a thread just 5 minutes before the beginning of the recording                            
+		if (utcNow < utcProxyPeriodStart)                                                                     
+		{                                                                                                         
+			if (utcProxyPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)                  
+			{                                                                                                     
+				_logger->info(__FILEREF__ + "Too early to allocate a thread for proxing"                        
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)                                        
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)                         
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)                           
+					+ ", utcProyPeriodStart - utcNow: " + to_string(utcProxyPeriodStart - utcNow)        
+					+ ", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
+				);
+
+				// it is simulated a MaxConcurrentJobsReached to avoid to increase the error counter              
+				throw MaxConcurrentJobsReached();                                                                 
+			}
+		}
+
+		if (utcProxyPeriodEnd <= utcNow)
+		{
+			string errorMessage = __FILEREF__ + "Too late to activate the proxy"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", utcNow: " + to_string(utcNow)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
 	bool killedByUser = liveProxy_through_ffmpeg();
 	if (killedByUser)
 	{
@@ -11711,6 +11763,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string userAgent;
 	int maxWidth = -1;
 	string otherInputOptions;
+	time_t utcProxyPeriodStart;
+	time_t utcProxyPeriodEnd;
 	{
         string field = "ChannelType";
         channelType = _encodingItem->_liveProxyData->
@@ -11747,6 +11801,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
         field = "maxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
+
+		field = "utcProxyPeriodStart";
+		utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+		field = "utcProxyPeriodEnd";
+		utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
 	}
 
 	bool killedByUser = false;
@@ -11789,9 +11849,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	//	In this scenarios, we have to retry again without waiting the crontab check
 	// 2020-03-12: Removing the urlNotFound management generated duplication of ffmpeg process
 	//	For this reason we rollbacked as it was before
+	time_t utcNowCheckToExit = 0;
 	while (!killedByUser && !urlForbidden && !urlNotFound
 		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 	{
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+		{
+			if (utcNowCheckToExit >= utcProxyPeriodEnd)
+				break;
+		}
+
 		string ffmpegEncoderURL;
 		string ffmpegURI = _ffmpegLiveProxyURI;
 		ostringstream response;
@@ -12278,8 +12345,12 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			}
 			*/
 
-			// encodingProgress: fixed to -1 (LIVE)
+			if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+				;
+			else
 			{
+				// encodingProgress: fixed to -1 (LIVE)
+
 				try
 				{
 					int encodingProgress = -1;
@@ -12508,6 +12579,53 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					// encodingProgress/encodingPid
 					{
+						if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+						{
+							time_t utcNow;                                                                    
+
+							{                                                                                 
+								chrono::system_clock::time_point now = chrono::system_clock::now();           
+								utcNow = chrono::system_clock::to_time_t(now);                                
+							}                                                                                 
+                                                                                                              
+							int encodingProgress;                                                             
+                                                                                                              
+							if (utcNow < utcProxyPeriodStart)                                             
+								encodingProgress = 0;                                                         
+							else if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)      
+								encodingProgress = ((utcNow - utcProxyPeriodStart) * 100) /               
+									(utcProxyPeriodEnd - utcProxyPeriodStart);                        
+							else                                                                              
+								encodingProgress = 100;
+
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+								);
+								_mmsEngineDBFacade->updateEncodingJobProgress (
+									_encodingItem->_encodingJobKey, encodingProgress);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+								);
+							}
+						}
+
 						if (lastEncodingPid != encodingPid)
 						{
 							try
@@ -12607,6 +12725,43 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
+			utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
+
+			if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+			{
+				if (utcNowCheckToExit < utcProxyPeriodEnd)
+				{
+					_logger->error(__FILEREF__ + "LiveProxy media file completed unexpected"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", still remaining seconds (utcProxyPeriodEnd - utcNow): " + to_string(utcProxyPeriodEnd - utcNowCheckToExit)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					);
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "LiveProxy media file completed"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", configurationLabel: " + configurationLabel
+						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					);
+				}
+			}
+			else
 			{
 				_logger->error(__FILEREF__ + "LiveProxy media file completed unexpected"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -12691,6 +12846,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
 
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
             // throw e;
         }
         catch (curlpp::RuntimeError& e) 
@@ -12733,6 +12893,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// sleep a bit and try again
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
 
             // throw e;
         }
@@ -12777,6 +12942,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
 
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
             // throw e;
         }
         catch (exception e)
@@ -12819,6 +12989,11 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// sleep a bit and try again
 			int sleepTime = 30;
 			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
 
             // throw e;
         }

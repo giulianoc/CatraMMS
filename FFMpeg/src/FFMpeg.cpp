@@ -8444,6 +8444,10 @@ void FFMpeg::liveProxy(
 	string userAgent,
 	string otherInputOptions,
 
+	// ProxyPeriod are -1 if they do not have to be used
+	time_t utcProxyPeriodStart,
+	time_t utcProxyPeriodEnd,
+
 	// array, each element is an output containing the following fields
 	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
 	//  #in case of HLS or DASH
@@ -8475,6 +8479,8 @@ void FFMpeg::liveProxy(
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", userAgent: " + userAgent
 		+ ", otherInputOptions: " + otherInputOptions
+		+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+		+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
 	);
 
 	setStatus(
@@ -8598,6 +8604,73 @@ void FFMpeg::liveProxy(
 		}
 	}
 
+	time_t utcNow;
+
+	if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+	{
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		if (utcNow < utcProxyPeriodStart)
+		{
+			while (utcNow < utcProxyPeriodStart)
+			{
+				time_t sleepTime = utcProxyPeriodStart - utcNow;
+
+				_logger->info(__FILEREF__ + "LiveProxy timing. "
+						+ "Too early to start the LiveProxy, just sleep "
+					+ to_string(sleepTime) + " seconds"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+					);
+
+				this_thread::sleep_for(chrono::seconds(sleepTime));
+
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+			}
+		}
+		else if (utcProxyPeriodEnd <= utcNow)
+        {
+            string errorMessage = __FILEREF__ + "LiveProxy timing. "
+				+ "Too late to start the LiveProxy"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+                    + ", utcNow: " + to_string(utcNow)
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+		else
+		{
+            string errorMessage = __FILEREF__ + "LiveProxy timing. "
+				+ "We are a bit late to start the LiveProxy, let's start it"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", delay (secs): " + to_string(utcNow - utcProxyPeriodStart)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+                    + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+            ;
+
+            _logger->warn(errorMessage);
+		}
+	}
+
+	{
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		utcNow = chrono::system_clock::to_time_t(now);
+	}
+
 	// Creating multi outputs: https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs
 	vector<string> ffmpegArgumentList;
 	{
@@ -8637,6 +8710,11 @@ void FFMpeg::liveProxy(
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+		{
+			ffmpegArgumentList.push_back("-t");
+			ffmpegArgumentList.push_back(to_string(utcProxyPeriodEnd - utcNow));
+		}
 	}
 
 	if (outputRoots.size() == 0)
@@ -9064,7 +9142,6 @@ void FFMpeg::liveProxy(
 	int iReturnedStatus = 0;
 	chrono::system_clock::time_point startFfmpegCommand;
 	chrono::system_clock::time_point endFfmpegCommand;
-	time_t utcNow;
 
     try
     {
@@ -9183,6 +9260,13 @@ void FFMpeg::liveProxy(
 				}
 			}
     	}
+
+		if (utcProxyPeriodStart != -1 && utcProxyPeriodStart != -1
+			&& endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcProxyPeriodEnd - utcNow - 60))
+		{
+
+			throw runtime_error("liveProxy exit before unexpectly");
+		}
     }
     catch(runtime_error e)
     {
