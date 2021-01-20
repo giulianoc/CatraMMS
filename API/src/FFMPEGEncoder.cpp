@@ -4802,7 +4802,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_liveRecorderParametersRoot = liveRecorderMedatada["liveRecorderParametersRoot"];
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
-        liveRecording->_channelType = liveRecorderMedatada.get("channelType", "IP_MMSAsClient").asString();
+        liveRecording->_channelType = liveRecording->_liveRecorderParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
 		int listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 
