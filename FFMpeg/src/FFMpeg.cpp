@@ -8444,7 +8444,7 @@ void FFMpeg::liveProxy(
 	string userAgent,
 	string otherInputOptions,
 
-	// ProxyPeriod are -1 if they do not have to be used
+	bool timePeriod,
 	time_t utcProxyPeriodStart,
 	time_t utcProxyPeriodEnd,
 
@@ -8479,6 +8479,7 @@ void FFMpeg::liveProxy(
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", userAgent: " + userAgent
 		+ ", otherInputOptions: " + otherInputOptions
+		+ ", timePeriod: " + to_string(timePeriod)
 		+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
 		+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
 	);
@@ -8606,7 +8607,7 @@ void FFMpeg::liveProxy(
 
 	time_t utcNow;
 
-	if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+	if (timePeriod)
 	{
 		{
 			chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -8710,7 +8711,7 @@ void FFMpeg::liveProxy(
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
-		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+		if (timePeriod)
 		{
 			ffmpegArgumentList.push_back("-t");
 			ffmpegArgumentList.push_back(to_string(utcProxyPeriodEnd - utcNow));
@@ -9261,8 +9262,7 @@ void FFMpeg::liveProxy(
 			}
     	}
 
-		if (utcProxyPeriodStart != -1 && utcProxyPeriodStart != -1
-			&& endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcProxyPeriodEnd - utcNow - 60))
+		if (timePeriod && endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcProxyPeriodEnd - utcNow - 60))
 		{
 
 			throw runtime_error("liveProxy exit before unexpectly");

@@ -11260,7 +11260,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						+ ", main: " + to_string(main)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
-				);
+					);
 
 					/*
 					 2019-05-03: commented because we saw the following scenario:
@@ -11682,17 +11682,24 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 bool EncoderVideoAudioProxy::liveProxy()
 {
 
+	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	{
-		string field = "utcProxyPeriodStart";
-		utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+		string field = "timePeriod";
+		timePeriod = JSONUtils::asBool(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, false);
 
-		field = "utcProxyPeriodEnd";
-		utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+		if (timePeriod)
+		{
+			string field = "utcProxyPeriodStart";
+			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+
+			field = "utcProxyPeriodEnd";
+			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_liveProxyData->_ingestedParametersRoot, field, -1);
+		}
 	}
 
-	if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+	if (timePeriod)
 	{
 		time_t utcNow;                                                                                            
 
@@ -11763,8 +11770,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	string userAgent;
 	int maxWidth = -1;
 	string otherInputOptions;
-	time_t utcProxyPeriodStart;
-	time_t utcProxyPeriodEnd;
+	bool timePeriod = false;
+	time_t utcProxyPeriodStart = -1;
+	time_t utcProxyPeriodEnd = -1;
 	{
         string field = "ChannelType";
         channelType = _encodingItem->_liveProxyData->
@@ -11802,11 +11810,17 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
         field = "maxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
 
-		field = "utcProxyPeriodStart";
-		utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		field = "timePeriod";
+		timePeriod = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
-		field = "utcProxyPeriodEnd";
-		utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		if (timePeriod)
+		{
+			field = "utcProxyPeriodStart";
+			utcProxyPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+			field = "utcProxyPeriodEnd";
+			utcProxyPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		}
 	}
 
 	bool killedByUser = false;
@@ -11853,7 +11867,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	while (!killedByUser && !urlForbidden && !urlNotFound
 		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 	{
-		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+		if (timePeriod)
 		{
 			if (utcNowCheckToExit >= utcProxyPeriodEnd)
 				break;
@@ -12078,6 +12092,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveProxyMetadata["liveURL"] = liveURL;
+					liveProxyMetadata["timePeriod"] = timePeriod;
+					liveProxyMetadata["utcProxyPeriodStart"] = utcProxyPeriodStart;
+					liveProxyMetadata["utcProxyPeriodEnd"] = utcProxyPeriodEnd;
 					liveProxyMetadata["userAgent"] = userAgent;
 					liveProxyMetadata["maxWidth"] = maxWidth;
 					liveProxyMetadata["otherInputOptions"] = otherInputOptions;
@@ -12345,7 +12362,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			}
 			*/
 
-			if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+			if (timePeriod)
 				;
 			else
 			{
@@ -12579,7 +12596,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 					// encodingProgress/encodingPid
 					{
-						if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+						if (timePeriod)
 						{
 							time_t utcNow;                                                                    
 
@@ -12727,7 +12744,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 
 			utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
 
-			if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1)
+			if (timePeriod)
 			{
 				if (utcNowCheckToExit < utcProxyPeriodEnd)
 				{

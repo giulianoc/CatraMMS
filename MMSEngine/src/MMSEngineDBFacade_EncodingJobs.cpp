@@ -88,17 +88,25 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             while (encodingResultSet->next())
             {
+                int64_t encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+
 				if (!encodingResultSet->isNull("utcProxyPeriodStart"))
 				{
 					int64_t utcProxyPeriodStart = encodingResultSet->getInt64("utcProxyPeriodStart");
 					if (utcProxyPeriodStart - utcNow >= timeBeforeToPrepareResourcesInMinutes * 60)
+					{
+						_logger->info(__FILEREF__ + "LiveProxy, EncodingJob discarded because too early to be processed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+						);
+
 						continue;
+					}
 				}
 
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
 
-                encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+                encodingItem->_encodingJobKey = encodingJobKey;
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
                 encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
                 encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
@@ -706,17 +714,25 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             while (encodingResultSet->next())
             {
+                int64_t encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+
 				if (!encodingResultSet->isNull("utcRecordingPeriodStart"))
 				{
 					time_t utcRecordingPeriodStart = encodingResultSet->getInt64("utcRecordingPeriodStart");
 					if (utcRecordingPeriodStart - utcNow >= timeBeforeToPrepareResourcesInMinutes * 60)
+					{
+						_logger->info(__FILEREF__ + "LiveRecorder, EncodingJob discarded because too early to be processed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+						);
+
 						continue;
+					}
 				}
 
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
 
-                encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+                encodingItem->_encodingJobKey = encodingJobKey;
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
                 encodingItem->_encodingType = toEncodingType(encodingResultSet->getString("type"));
                 encodingItem->_encodingParameters = encodingResultSet->getString("parameters");
@@ -9554,7 +9570,7 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t ingestionJobKey,
 	string channelType,
 	int64_t liveURLConfKey, string configurationLabel, string url,
-	int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
+	bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	Json::Value outputsRoot
 )
@@ -9611,6 +9627,9 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "url";
 				parametersRoot[field] = url;
+
+				field = "timePeriod";
+				parametersRoot[field] = timePeriod;
 
 				field = "utcProxyPeriodStart";
 				parametersRoot[field] = utcProxyPeriodStart;

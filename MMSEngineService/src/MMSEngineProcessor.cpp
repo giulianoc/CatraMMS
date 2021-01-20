@@ -9782,6 +9782,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
 		Json::Value outputsRoot;
+		bool timePeriod;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
         {
@@ -9870,7 +9871,8 @@ void MMSEngineProcessor::manageLiveProxy(
 				actAsServerPort = parametersRoot.get(field, 0).asInt();
 			}
 
-            field = "ProxyPeriod";
+			timePeriod = false;
+            field = "TimePeriod";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				utcProxyPeriodStart = -1;
@@ -9878,24 +9880,49 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 			else
 			{
-				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-
-				Json::Value proxyPeriodRoot = parametersRoot[field];
-
-				field = "Start";
-				if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
-					utcProxyPeriodStart = -1;
-				else
+				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+				if (timePeriod)
 				{
+					field = "ProxyPeriod";
+					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+
+					Json::Value proxyPeriodRoot = parametersRoot[field];
+
+					field = "Start";
+					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
 					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
 					utcProxyPeriodStart = validator.sDateSecondsToUtc(proxyPeriodStart);
-				}
 
-				field = "End";
-				if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
-					utcProxyPeriodEnd = -1;
-				else
-				{
+					field = "End";
+					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					{
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", Field: " + field;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
 					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
 					utcProxyPeriodEnd = validator.sDateSecondsToUtc(proxyPeriodEnd);
 				}
@@ -10086,7 +10113,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			channelType, confKey, configurationLabel, liveURL,
-			utcProxyPeriodStart, utcProxyPeriodEnd,
+			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			localOutputsRoot);
 	}

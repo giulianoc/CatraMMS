@@ -3457,8 +3457,30 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    field = "ProxyPeriod";
+	bool timePeriod = false;
+	field = "TimePeriod";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+
+    field = "ProxyPeriod";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		if (timePeriod)
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+         
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+				;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	else
 	{
 		Json::Value proxyPeriodRoot = parametersRoot[field];
 

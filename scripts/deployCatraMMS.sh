@@ -10,6 +10,10 @@ fi
 version=$1
 
 
+mmsStopALL.sh
+sleep 2
+
+
 echo "cd /opt/catramms"
 cd /opt/catramms
 
@@ -27,8 +31,6 @@ ln -s CatraMMS-$version CatraMMS
 sleep 1
 
 cd
-
-mmsStopALL.sh
 
 mmsStatusALL.sh
 

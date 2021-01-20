@@ -1674,7 +1674,7 @@ public:
 		int64_t ingestionJobKey,
 		string channelType,
 		int64_t liveURLConfKey, string configurationLabel, string url,
-		int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
+		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);
 

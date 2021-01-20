@@ -322,7 +322,7 @@ public:
 		string userAgent,
 		string otherInputOptions,
 
-		// ProxyPeriod are -1 if they do not have to be used
+		bool timePeriod,
 		time_t utcProxyPeriodStart,
 		time_t utcProxyPeriodEnd,
 
