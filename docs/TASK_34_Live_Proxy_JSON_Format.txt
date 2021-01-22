@@ -11,11 +11,6 @@
 		//	Default is IP_MMSAsClient
 		"ChannelType": "IP_MMSAsClient",
 
-		// mandatory only if ChannelType is IP_MMSAsServer.
-		//		It is a numerical code identifying the input channel
-		//		The same code will be used:
-		//		- into the delivery URL
-		"ActAsServerChannelCode": 12345,
 		// mandatory only if channelType is IP_MMSAsServer
 		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
 		"ActAsServerProtocol": "rtmp",
@@ -79,6 +74,22 @@
 			{
 				// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
 				"OutputType": "HLS",
+
+				// DeliveryCode is used only in case of HLS and DASH
+				//	It identifies this specific delivery. In case for example
+				//	- we have two HLS Outputs or
+				//	- we have the same channel delivered
+				//		as Recording monitor HLS and Live Proxy Output
+				//	In these scenarios, delivery code identifies each delivery.
+				//	Internally the delivery code is used to
+				//		- build the delivery URL (so it is used to build
+				//			the path where the HLS segments are saved)
+				// mandatory only if OutputType is HLS or DASH.
+				//	Really, in case of IP_MMSAsClient, if this field is not present,
+				//	it is initialized with the confKey of the channel.
+				//	This is just for backward compatibility (cibor project)
+				//	because it should always be provided
+				"DeliveryCode": 12345,
 
 				// optional, used only in case of HLS, Default: 10
 				"SegmentDurationInSeconds": 10,

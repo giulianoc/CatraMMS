@@ -1,10 +1,6 @@
 {
-	"Label" : "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
-	"FileFormat" : "hls",
-	"HLS" : 
-	{
-		"SegmentDuration" : 10
-	},
+	"Label" : "MMS_MP4_H264_800Kb_veryslow_360p25_AAC_92",
+	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
@@ -12,9 +8,9 @@
 		"Width" : 640,
 		"Height" : 360,
 		"FrameRate": 25,
-		"TwoPasses" : false,
+		"TwoPasses" : true,
 		"KBitRate" : 800,
-		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
+		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{

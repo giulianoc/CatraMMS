@@ -1566,11 +1566,118 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 }
 
 void MMSEngineDBFacade::updateIngestionJobMetadataContent (
-        shared_ptr<MySQLConnection> conn,
-        int64_t ingestionJobKey,
-        string metadataContent
+	int64_t ingestionJobKey,
+	string metadataContent
 )
-{    
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        updateIngestionJobMetadataContent (conn, ingestionJobKey, metadataContent);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
+void MMSEngineDBFacade::updateIngestionJobMetadataContent (
+	shared_ptr<MySQLConnection> conn,
+	int64_t ingestionJobKey,
+	string metadataContent
+)
+{
     string      lastSQLCommand;
     
     try

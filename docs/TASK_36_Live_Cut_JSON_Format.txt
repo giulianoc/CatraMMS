@@ -7,17 +7,7 @@
 
 	"Parameters": {
 
-		// optional, possible values: IP, Satellite or IP_MMSAsServer. Default is IP
-		"ChannelType": "IP",
-
-		// If ChannelType is IP, ConfigurationLabel is mandatory and
-		//		it identifies the IP Channel
-		// If ChannelType is Satellite, ConfigurationLabel is mandatory and
-		//		it identifies the SAT Channel
-		// If ChannelType is IP_MMSAsServer, ActAsServerChannelCode is mandatory and
-		//		it identifies the Channel received as input
-		"ConfigurationLabel": "",
-		"ActAsServerChannelCode": 1234,
+		"DeliveryCode": 1234,
 
 		// mandatory: It specifies the period to be cut, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SS:MMMZ

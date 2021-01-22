@@ -1,6 +1,6 @@
 {
-	"Label" : "MMS_MP4_H264_veryfast_360p25_AAC_92",
-	"FileFormat" : "mp4",
+	"Label" : "MMS_TS_H264_800Kb_veryfast_360p25_high422_AAC_92",
+	"FileFormat" : "ts",
 	"Video" : 
 	{
 		"Codec" : "libx264",

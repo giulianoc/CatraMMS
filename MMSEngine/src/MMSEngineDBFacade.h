@@ -1331,6 +1331,10 @@ public:
 		vector<int64_t>& ingestionJobsKey);
 
     void updateIngestionJobMetadataContent (
+        int64_t ingestionJobKey,
+        string metadataContent);
+
+    void updateIngestionJobMetadataContent (
         shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         string metadataContent);

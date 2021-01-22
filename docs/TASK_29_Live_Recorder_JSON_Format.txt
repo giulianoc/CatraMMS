@@ -12,13 +12,6 @@
 		"ChannelType": "IP_MMSAsClient",
 
 		// mandatory only if ChannelType is IP_MMSAsServer.
-		//		It is a numerical code identifying the input channel
-		//		The same code will be used:
-		//		- to label the generated chunks
-		//		- as input in the Live-Cut task
-		//		- into the delivery URL
-		"ActAsServerChannelCode": 12345,
-		// mandatory only if ChannelType is IP_MMSAsServer.
 		//		Protocol listening for the data (i.e.: rtmp, udp, rtp, ...)
 		"ActAsServerProtocol": "rtmp",
 		// mandatory only if ChannelType is IP_MMSAsServer.
@@ -31,11 +24,24 @@
 			// max time in seconds waiting an incoming connection. Default is 300
 		"ActAsServerListenTimeout": 300,
 
-		// mandatory in case channelType is IP or Satellite
+		// mandatory in case channelType is IP_MMSAsClient or Satellite
 		//	- if channelType is IP, it refers an IP Channel Configuration
 		//	- if channelType is Satellite, it refers a Satellite Channel Configuration
 		"ConfigurationLabel": "",
 
+		// mandatory
+		//	It identifies this specific recording. In case for example
+		//	- we have two recordings of the same channel
+		//	- we have the same channel delivered
+		//		as Recording monitor HLS and Live Proxy Output
+		//	- we need to use Live-Cut on the recorded channel
+		//	In these scenarios, delivery code identifies each delivery.
+		//	Internally the delivery code is used to
+		//		- build the delivery URL (so it is used to build
+		//			the path where the HLS segments are saved)
+		//		- to label the generated chunks
+		//		- as input in the Live-Cut task
+		"DeliveryCode": 12345,
 
 		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",

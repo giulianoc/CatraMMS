@@ -5660,14 +5660,9 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 			string uniqueName;
 			{
-				if (channelType == "IP_MMSAsServer")
-				{
-					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
-						"ActAsServerChannelCode", 0);
-					uniqueName = to_string(actAsServerChannelCode);
-				}
-				else
-					uniqueName = to_string(JSONUtils::asInt64(encodingParametersRoot, "confKey", 0));
+				int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot, "DeliveryCode", 0);
+
+				uniqueName = to_string(deliveryCode);
 				uniqueName += " - ";
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
@@ -5680,16 +5675,18 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
+				/*
 				mmsDataRoot["channelType"] = channelType;
 				if (channelType == "IP_MMSAsClient")
 					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				else if (channelType == "Satellite")
 					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
 				else // if (channelType == "IP_MMSAsServer")
+				*/
 				{
-					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
-						"ActAsServerChannelCode", 0);
-					mmsDataRoot["actAsServerChannelCode"] = actAsServerChannelCode;
+					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"DeliveryCode", 0);
+					mmsDataRoot["deliveryCode"] = deliveryCode;
 				}
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
@@ -5711,14 +5708,16 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// Title
 			string addContentTitle;
 			{
-				if (channelType == "IP_MMSAsServer")
+				// if (channelType == "IP_MMSAsServer")
 				{
-					int64_t actAsServerChannelCode = JSONUtils::asInt64(liveRecorderParametersRoot,
-						"ActAsServerChannelCode", 0);
-					addContentTitle = to_string(actAsServerChannelCode);
+					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"DeliveryCode", 0);
+					addContentTitle = to_string(deliveryCode);
 				}
+				/*
 				else
 					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
+				*/
 
 				addContentTitle += " - ";
 

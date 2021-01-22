@@ -1,15 +1,19 @@
 {
-	"Label" : "MMS_MP4_H264_6Mbps_veryslow_720p50_AAC_160",
-	"FileFormat" : "mp4",
-	"Video" :
+	"Label" : "MMS_DASH_H264_1500Kb_veryslow_720p25_AAC_160",
+	"FileFormat" : "dash",
+	"DASH" : 
+	{
+		"SegmentDuration" : 10
+	},
+	"Video" : 
 	{
 		"Codec" : "libx264",
 		"Profile" : "high422",
 		"Width" : 1280,
 		"Height" : 720,
-		"FrameRate": 50,
+		"FrameRate": 25,
 		"TwoPasses" : true,
-		"KBitRate" : 6000,
+		"KBitRate" : 1500,
 		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 23"
 	},
 	"Audio" : 

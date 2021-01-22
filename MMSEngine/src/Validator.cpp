@@ -3108,7 +3108,6 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	else // if (channelType == "IP_MMSAsServer")
 	{
 		vector<string> mandatoryFields = {
-			"ActAsServerChannelCode",
 			"ActAsServerProtocol",
 			"ActAsServerBindIP",
 			"ActAsServerPort"
@@ -3130,6 +3129,22 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 				throw runtime_error(errorMessage);
 			}
 		}
+	}
+
+	field = "DeliveryCode";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+       
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
 	{
@@ -3382,7 +3397,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		if (!isChannelTypeValid(channelType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP, Satellite or IP_MMSAsServer"
+                + "IP_MMSAsClient, Satellite or IP_MMSAsServer"
                 + ")"
                 + ", Field: " + field
                 + ", channelType: " + channelType
@@ -3433,7 +3448,6 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	else if (channelType == "IP_MMSAsServer")
 	{
 		vector<string> mandatoryFields = {
-			"ActAsServerChannelCode",
 			"ActAsServerProtocol",
 			"ActAsServerBindIP",
 			"ActAsServerPort"
@@ -3574,7 +3588,30 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 			}
 		}
 
-		if (liveProxyOutputType == "RTMP_Stream")
+		if (liveProxyOutputType == "HLS")
+		{
+			vector<string> mandatoryFields = {
+				"DeliveryCode"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (liveProxyOutputType == "RTMP_Stream")
 		{
 			vector<string> mandatoryFields = {
 				"RtmpUrl"
@@ -4122,6 +4159,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
 
+	/*
 	string channelType = "IP_MMSAsClient";
 
     string field = "ChannelType";
@@ -4142,6 +4180,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 			throw runtime_error(errorMessage);
 		}
 	}
+	*/
 
 	vector<string> mandatoryFields = {
 		"CutPeriod"
@@ -4164,6 +4203,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
         }
     }
 
+	/*
 	if (channelType == "IP_MMSAsClient")
 	{
 		field = "ConfigurationLabel";
@@ -4217,6 +4257,23 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+	}
+	*/
+
+	string field = "DeliveryCode";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
     field = "CutPeriod";

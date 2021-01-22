@@ -2298,6 +2298,14 @@ void API::createDeliveryAuthorization(
 			ingestionJobKey = stoll(ingestionJobKeyIt->second);
         }
 
+		// this is for live authorization
+        int64_t deliveryCode = -1;
+        auto deliveryCodeIt = queryParameters.find("deliveryCode");
+        if (deliveryCodeIt != queryParameters.end())
+        {
+			deliveryCode = stoll(deliveryCodeIt->second);
+        }
+
 		if (physicalPathKey == -1
 				&& ((mediaItemKey == -1 && uniqueName == "") || encodingProfileKey == -1)
 				&& ingestionJobKey == -1)
@@ -2460,18 +2468,125 @@ void API::createDeliveryAuthorization(
 
 				if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
-					string field = "ConfigurationLabel";
-					string configurationLabel = ingestionJobRoot.get(field, "").asString();
-					field = "OutputType";
-					string outputType = ingestionJobRoot.get(field, "").asString();
-					if (outputType == "")
-						outputType = "HLS";
+					string field = "ChannelType";
+					string channelType = ingestionJobRoot.get(field, "IP_MMSAsClient").asString();
 
-					int64_t liveURLConfKey;
-					bool warningIfMissing = false;
-					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(liveURLConfKey, ignore) = liveURLConfDetails;
+					field = "Outputs";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Live-Proxy without Outputs cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					Json::Value outputsRoot = ingestionJobRoot[field];
+
+					vector<pair<int64_t, string>> outputsDeliveryCodesAndOutputTypes;
+					{
+						for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+						{
+							Json::Value outputRoot = outputsRoot[outputIndex];
+
+							string outputType;
+
+							field = "OutputType";
+							if (!JSONUtils::isMetadataPresent(outputRoot, field))
+								outputType = "HLS";
+							else
+								outputType = outputRoot.get(field, "HLS").asString();
+
+							if (outputType == "HLS" || outputType == "DASH")
+							{
+								field = "DeliveryCode";
+								if (JSONUtils::isMetadataPresent(outputRoot, field))
+								{
+									int64_t localDeliveryCode = outputRoot.get(field, 0).asInt64();
+
+									outputsDeliveryCodesAndOutputTypes.push_back(
+										make_pair(localDeliveryCode, outputType));
+								}
+							}
+						}
+					}
+
+					string outputType = "HLS";	// default HLS
+
+					if (deliveryCode == -1)
+					{
+						if (outputsDeliveryCodesAndOutputTypes.size() == 0)
+						{
+							if (channelType == "IP_MMSAsClient")
+							{
+								// deliveryCode shall be mandatory. Just for backward compatibility
+								// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it
+								// with confKey
+
+								field = "ConfigurationLabel";
+								string configurationLabel = ingestionJobRoot.get(field, "").asString();
+
+								int64_t liveURLConfKey;
+								bool warningIfMissing = false;
+								pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+									requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
+								tie(liveURLConfKey, ignore) = liveURLConfDetails;
+
+								deliveryCode = liveURLConfKey;
+							}
+							else
+							{
+								string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								;
+								_logger->error(__FILEREF__ + errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+						}
+						else if (outputsDeliveryCodesAndOutputTypes.size() > 1)
+						{
+							string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						else
+						{
+							// we have just one delivery code, it will be this one
+							deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
+							outputType = outputsDeliveryCodesAndOutputTypes[0].second;
+
+						}
+					}
+					else
+					{
+						bool deliveryCodeFound = false;
+
+						for (pair<int64_t, string> deliveryCodeAndOutputType: outputsDeliveryCodesAndOutputTypes)
+						{
+							if (deliveryCodeAndOutputType.first == deliveryCode)
+							{
+								deliveryCodeFound = true;
+
+								outputType = deliveryCodeAndOutputType.second;
+
+								break;
+							}
+						}
+
+						if (!deliveryCodeFound)
+						{
+							string errorMessage = string("DeliveryCode received does not exist for the ingestionJob")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
 
 					string deliveryURI;
 					string liveFileExtension;
@@ -2479,9 +2594,10 @@ void API::createDeliveryAuthorization(
 						liveFileExtension = "m3u8";
 					else
 						liveFileExtension = "mpd";
+
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(liveURLConfKey),
+						_mmsEngineDBFacade, to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -2489,8 +2605,8 @@ void API::createDeliveryAuthorization(
 					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 						userKey,
 						clientIPAddress,
-						physicalPathKey,
-						liveURLConfKey,
+						-1,	// physicalPathKey,	vod key
+						deliveryCode,		// live key
 						deliveryURI,
 						ttlInSeconds,
 						maxRetries);
@@ -2516,48 +2632,23 @@ void API::createDeliveryAuthorization(
 						throw runtime_error(errorMessage);
 					}
 
-					string channelType = "IP_MMSAsClient";
-
-					field = "ChannelType";
-					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-						channelType = ingestionJobRoot.get(field, "").asString();
-
-					int64_t deliveryKey = -1;
-					if (channelType == "IP_MMSAsClient")
+					field = "DeliveryCode";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
-						field = "ConfigurationLabel";
-						string configurationLabel = ingestionJobRoot.get(field, "").asString();
+						string errorMessage = string("A Live-LiveRecorder Monitor HLS without DeliveryCode cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
 
-						int64_t ipConfKey;
-						bool warningIfMissing = false;
-						pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-							requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-						tie(ipConfKey, ignore) = liveURLConfDetails;
-
-						deliveryKey = ipConfKey;
+						throw runtime_error(errorMessage);
 					}
-					else if (channelType == "Satellite")
-					{
-						field = "SATConfigurationLabel";
-						string configurationLabel = ingestionJobRoot.get(field, "").asString();
-
-						bool warningIfMissing = false;
-						int64_t satConfKey = _mmsEngineDBFacade->getSATChannelConfDetails(
-							requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-
-						deliveryKey = satConfKey;
-					}
-					else // if (channelType == "IP_MMSAsServer")
-					{
-						field = "ActAsServerChannelCode";
-						deliveryKey = JSONUtils::asInt64(ingestionJobRoot, field, 0);
-					}
+					deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
 
 					string deliveryURI;
 					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(deliveryKey),
+						_mmsEngineDBFacade, to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -2566,11 +2657,10 @@ void API::createDeliveryAuthorization(
 						userKey,
 						clientIPAddress,
 						-1,	// physicalPathKey,
-						deliveryKey,
+						deliveryCode,
 						deliveryURI,
 						ttlInSeconds,
 						maxRetries);
-
 
 					deliveryURL = 
 						_deliveryProtocol
@@ -2582,8 +2672,7 @@ void API::createDeliveryAuthorization(
 
 					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", channelType: " + channelType
-						+ ", deliveryKey: " + to_string(deliveryKey)
+						+ ", deliveryCode: " + to_string(deliveryCode)
 						+ ", deliveryURL: " + deliveryURL
 					);
 
