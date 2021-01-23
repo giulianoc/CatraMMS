@@ -4925,7 +4925,14 @@ void FFMPEGEncoder::liveRecorderThread(
 		//		(see the secondsToStartEarly variable inside _ffmpeg->liveRecorder)
 		//		For this reason the above decrement was commented
 
-		liveRecording->_recordingStart = chrono::system_clock::now();
+		// based on liveProxy->_proxyStart, the monitor thread starts the checkings
+		// In case of IP_MMSAsServer, the checks should be done after the ffmpeg server
+		// receives the stream and we do not know what it happens.
+		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
+		if (liveRecording->_channelType == "IP_MMSAsServer")
+			liveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(listenTimeoutInSeconds);
+		else
+			liveRecording->_recordingStart = chrono::system_clock::now();
 
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
@@ -6890,7 +6897,14 @@ void FFMPEGEncoder::liveProxyThread(
 		}
 
 		{
-			liveProxy->_proxyStart = chrono::system_clock::now();
+			// based on liveProxy->_proxyStart, the monitor thread starts the checkings
+			// In case of IP_MMSAsServer, the checks should be done after the ffmpeg server
+			// receives the stream and we do not know what it happens.
+			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
+			if (liveProxy->_channelType == "IP_MMSAsServer")
+				liveProxy->_proxyStart = chrono::system_clock::now() + chrono::seconds(listenTimeoutInSeconds);
+			else
+				liveProxy->_proxyStart = chrono::system_clock::now();
 
 			liveProxy->_ffmpeg->liveProxy(
 				liveProxy->_ingestionJobKey,
@@ -7823,6 +7837,23 @@ void FFMPEGEncoder::monitorThread()
 					bool liveProxyWorking = true;
 					string localErrorMessage;
 
+					{
+						int64_t liveProxyLiveTimeInMinutes =
+							chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
+
+						// checks are done after 3 minutes LiveProxy started, in order to be sure
+						// the manifest file was already created
+						if (liveProxyLiveTimeInMinutes <= 3)
+						{
+							_logger->info(__FILEREF__ + "Checks are not done because too early"
+								+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+							);
+
+							continue;
+						}
+					}
+
 					// First health check
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 					//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
@@ -7854,13 +7885,15 @@ void FFMPEGEncoder::monitorThread()
 								{
 									// First health check (HLS/DASH) looking the manifests path name timestamp
 
+									/*
 									chrono::system_clock::time_point now = chrono::system_clock::now();
 									int64_t liveProxyLiveTimeInMinutes =
 										chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
 
-									// check id done after 3 minutes LiveProxy started, in order to be sure
+									// check is done after 3 minutes LiveProxy started, in order to be sure
 									// the manifest file was already created
 									if (liveProxyLiveTimeInMinutes > 3)
+									*/
 									{
 										for (string manifestFilePathName: liveProxy->_manifestFilePathNames)
 										{
@@ -8015,6 +8048,7 @@ void FFMPEGEncoder::monitorThread()
 							{
 								try
 								{
+									/*
 									chrono::system_clock::time_point now = chrono::system_clock::now();
 									int64_t liveProxyLiveTimeInMinutes =
 										chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
@@ -8026,6 +8060,7 @@ void FFMPEGEncoder::monitorThread()
 									//		(10 minutes after the "capacity" of the playlist)
 									// 3. kill ffmpeg in case no segments were generated
 									if (liveProxyLiveTimeInMinutes > 3)
+									*/
 									{
 										for (string manifestFilePathName: liveProxy->_manifestFilePathNames)
 										{
@@ -8523,12 +8558,32 @@ void FFMPEGEncoder::monitorThread()
 
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 
+					int64_t liveRecordingLiveTimeInMinutes =
+						chrono::duration_cast<chrono::minutes>(now - liveRecording->_recordingStart).count();
+
+					int segmentDurationInSeconds;
+					string field = "segmentDurationInSeconds";
+					segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, field, 0);
+
+					// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
+					// in order to be sure the file was already created
+					if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
+					{
+						_logger->info(__FILEREF__ + "Checks are not done because too early"
+							+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						);
+
+						continue;
+					}
+
 					// First health check
 					//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs) seconds
 					try
 					{
 						// looking the manifests path name timestamp
 
+						/*
 						chrono::system_clock::time_point now = chrono::system_clock::now();
 						int64_t liveRecordingLiveTimeInMinutes =
 							chrono::duration_cast<chrono::minutes>(now - liveRecording->_recordingStart).count();
@@ -8541,6 +8596,7 @@ void FFMPEGEncoder::monitorThread()
 						// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 						// in order to be sure the file was already created
 						if (liveRecordingLiveTimeInMinutes > (segmentDurationInSeconds / 60) + 5)
+						*/
 						{
 							string segmentListPathName = liveRecording->_transcoderStagingContentsPath
 								+ liveRecording->_segmentListFileName;
