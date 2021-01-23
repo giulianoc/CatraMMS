@@ -336,13 +336,30 @@ void MMSEngineDBFacade::getEncodingJobs(
 					{
 						Json::Value outputRoot = outputsRoot[outputIndex];
 
-						field = "encodingProfileKey";
+						/*
+						{
+							Json::StreamWriterBuilder wbuilder;
+							string sOutputRoot = Json::writeString(wbuilder, outputRoot);
+							_logger->info(__FILEREF__ + "outputsRoot encodingProfileKey check"
+								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+								+ ", sOutputRoot: " + sOutputRoot
+							);
+						}
+						*/
+
+						field = "encodingProfileKey";	// added by MMSEngineProcessor
 						// if not present it will be -1
 						int64_t encodingProfileKey = JSONUtils::asInt64(outputRoot, field, -1);
-						outputRoot[field] = encodingProfileKey;
+						// outputRoot[field] = encodingProfileKey;
+
+                        _logger->info(__FILEREF__ + "outputsRoot encodingProfileKey check"
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+						);
 
 						Json::Value encodingProfileDetailsRoot = Json::nullValue;
-						MMSEngineDBFacade::ContentType encodingProfileContentType = MMSEngineDBFacade::ContentType::Video;
+						MMSEngineDBFacade::ContentType encodingProfileContentType =
+							MMSEngineDBFacade::ContentType::Video;
 
 						if (encodingProfileKey != -1)
 						{
@@ -469,9 +486,43 @@ void MMSEngineDBFacade::getEncodingJobs(
 						field = "encodingProfileContentType";
 						outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
 
+						/*
+						{
+							Json::StreamWriterBuilder wbuilder;
+							string sOutputRoot = Json::writeString(wbuilder, outputRoot);
+							_logger->info(__FILEREF__ + "2. outputsRoot encodingProfileKey check"
+								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								+ ", sOutputRoot: " + sOutputRoot
+							);
+						}
+						*/
+
 						outputsRoot[outputIndex] = outputRoot;
+
+						/*
+						{
+							Json::StreamWriterBuilder wbuilder;
+							string sOutputRoot = Json::writeString(wbuilder, outputsRoot);
+							_logger->info(__FILEREF__ + "3. outputsRoot encodingProfileKey check"
+								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+								+ ", sOutputRoot: " + sOutputRoot
+							);
+						}
+						*/
 					}
 					encodingItem->_liveProxyData->_outputsRoot = outputsRoot;
+					/*
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sOutputRoot = Json::writeString(wbuilder, encodingItem->_liveProxyData->_outputsRoot);
+						_logger->info(__FILEREF__ + "3. outputsRoot encodingProfileKey check"
+							+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+							+ ", sOutputRoot: " + sOutputRoot
+						);
+					}
+					*/
 
 					if (encodingItem->_liveProxyData->_outputsRoot.size() == 0)
                     {

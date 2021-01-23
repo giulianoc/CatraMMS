@@ -10073,7 +10073,15 @@ void MMSEngineProcessor::manageLiveProxy(
 				string labelField = "EncodingProfileLabel";
 				string contentTypeField = "ContentType";
 				if (JSONUtils::isMetadataPresent(outputRoot, keyField))
+				{
 					encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
+
+					_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					);
+				}
 				else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
 				{
 					string encodingProfileLabel = outputRoot.get(labelField, "").asString();
@@ -10093,6 +10101,13 @@ void MMSEngineProcessor::manageLiveProxy(
 						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
 					}
+
+					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingProfileLabel: " + encodingProfileLabel
+						+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+					);
 				}
 
 				Json::Value localOutputRoot;

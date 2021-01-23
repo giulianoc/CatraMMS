@@ -6712,7 +6712,7 @@ void FFMPEGEncoder::liveProxyThread(
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetailsRoot"];
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 					manifestFileName = outputRoot.get("manifestFileName", "").asString();
 					segmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
@@ -6725,7 +6725,7 @@ void FFMPEGEncoder::liveProxyThread(
 				else if (outputType == "RTMP_Stream")
 				{
 					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
-					encodingProfileDetailsRoot = outputRoot["encodingProfileDetailsRoot"];
+					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 
 					string encodingProfileContentType = outputRoot.get("encodingProfileContentType", "Video").asString();
@@ -6763,7 +6763,7 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_ingestedParametersRoot = liveProxyMetadata["liveProxyIngestedParametersRoot"];
 		// string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 
-		liveProxy->_channelType = liveProxyMetadata.get("channelType", "IP_MMSAsClient").asString();
+		liveProxy->_channelType = liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
 		int listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 
