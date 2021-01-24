@@ -9358,6 +9358,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string actAsServerProtocol;
 		string actAsServerBindIP;
 		int actAsServerPort;
+		string actAsServerURI;
 		string configurationLabel;
 		string encodersPool;
 		string userAgent;
@@ -9443,6 +9444,18 @@ void MMSEngineProcessor::manageLiveRecorder(
 					throw runtime_error(errorMessage);
 				}
 				actAsServerPort = JSONUtils::asInt(parametersRoot, field, 0);
+
+				field = "ActAsServerURI";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				actAsServerURI = parametersRoot.get(field, "").asString();
 			}
 
             field = "EncodersPool";
@@ -9604,7 +9617,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		else // if (channelType == "IP_MMSAsServer")
 		{
 			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
-				+ ":" + to_string(actAsServerPort);
+				+ ":" + to_string(actAsServerPort) + actAsServerURI;
 		}
 
 		string monitorManifestDirectoryPath;
@@ -9779,6 +9792,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string actAsServerProtocol;
 		string actAsServerBindIP;
 		int actAsServerPort;
+		string actAsServerURI;
 		string configurationLabel;
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
@@ -9858,6 +9872,18 @@ void MMSEngineProcessor::manageLiveProxy(
 					throw runtime_error(errorMessage);
 				}
 				actAsServerPort = parametersRoot.get(field, 0).asInt();
+
+				field = "ActAsServerURI";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				actAsServerURI = parametersRoot.get(field, "").asString();
 			}
 
 			timePeriod = false;
@@ -9961,7 +9987,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		else // if (channelType == "IP_MMSAsServer)
 		{
 			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
-				+ ":" + to_string(actAsServerPort);
+				+ ":" + to_string(actAsServerPort) + actAsServerURI;
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);
@@ -9994,6 +10020,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					{
 						if (channelType == "IP_MMSAsClient")
 						{
+							_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
 							// deliveryCode shall be mandatory. Just for backward compatibility
 							// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it 
 							// with confKey
@@ -10146,6 +10173,18 @@ void MMSEngineProcessor::manageLiveProxy(
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			localOutputsRoot);
 	}
+    catch(ConfKeyNotFound e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveProxy failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw runtime_error(e.what());
+    }
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"

@@ -85,10 +85,6 @@
 				//		- build the delivery URL (so it is used to build
 				//			the path where the HLS segments are saved)
 				// mandatory only if OutputType is HLS or DASH.
-				//	Really, in case of IP_MMSAsClient, if this field is not present,
-				//	it is initialized with the confKey of the channel.
-				//	This is just for backward compatibility (cibor project)
-				//	because it should always be provided
 				"DeliveryCode": 12345,
 
 				// optional, used only in case of HLS, Default: 10

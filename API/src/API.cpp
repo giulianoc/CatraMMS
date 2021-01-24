@@ -2519,6 +2519,7 @@ void API::createDeliveryAuthorization(
 						{
 							if (channelType == "IP_MMSAsClient")
 							{
+								_logger->info(__FILEREF__ + "This is just a message to understand if the code pass from here or we can remove this condition I added because of cibor");
 								// deliveryCode shall be mandatory. Just for backward compatibility
 								// (cibor project), in case it is missing and it is IP_MMSAsClient, we set it
 								// with confKey

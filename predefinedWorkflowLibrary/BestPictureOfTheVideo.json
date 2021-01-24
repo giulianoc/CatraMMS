@@ -48,6 +48,11 @@
       "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
       "Type": "integer",
       "Value": 1500
+    },
+    "ImageUserData": {
+      "Position": 9,
+      "Type": "string",
+      "Value": ""
     }
   },
   "Label": "Best Picture of the Video",
@@ -103,6 +108,7 @@
             "Retention": "${ImageRetention}",
             "Tags": "${ImageTags}",
             "Title": "${Title}",
+			"UserData": "${ImageUserData}",
             "Width": 640
           }
         }},
@@ -144,7 +150,8 @@
           "Output": "FrameContainingFace",
           "Retention": "${ImageRetention}",
           "Tags": "${ImageTags}",
-          "Title": "${Title}"
+          "Title": "${Title}",
+		  "UserData": "${ImageUserData}"
         }
       }]
     }
