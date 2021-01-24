@@ -11104,6 +11104,53 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							;
 						_logger->error(errorMessage);
 
+						encodingStatusFailures++;
+
+						// in this scenario encodingFinished is true
+
+						// update EncodingJob failures number to notify the GUI EncodingJob is failing
+						try
+						{
+							_logger->info(__FILEREF__ + "check and update encodingJob FailuresNumber"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+							);
+
+							long previousEncodingStatusFailures =
+								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+									_encodingItem->_encodingJobKey, 
+									encodingStatusFailures);
+							if (previousEncodingStatusFailures < 0)
+							{
+								_logger->info(__FILEREF__ + "LiveRecorder Killed by user during waiting loop"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+
+								// when previousEncodingStatusFailures is < 0 means:
+								// 1. the live recording is not starting (ffmpeg is generating
+								//		continuously an error)
+								// 2. User killed the encoding through MMS GUI or API
+								// 3. the kill procedure (in API module) was not able to kill the ffmpeg process,
+								//		because it does not exist the process and set the failuresNumber DB field
+								//		to a negative value in order to communicate with this thread 
+								// 4. This thread, when it finds a negative failuresNumber, knows the encoding
+								//		was killed and exit from the loop
+								encodingFinished = true;
+								killedByUser = true;
+							}
+						}
+						catch(...)
+						{
+							_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+							);
+						}
+
 						throw runtime_error(errorMessage);
 					}
 
@@ -11211,7 +11258,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					//	the liveRecoridng is started and because just one ts file was not found (this is in case of m3u8 URL).
 					//	In this case we do not have to exit from the loop and we have just to try again
 					long urlNotFoundFakeAfterMinutes = 10;
-					long encodingDurationInMinutes = chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - startEncoding).count();
+					long encodingDurationInMinutes = chrono::duration_cast<chrono::minutes>(
+						chrono::system_clock::now() - startEncoding).count();
 					if (urlNotFound && encodingDurationInMinutes > urlNotFoundFakeAfterMinutes)
 					{
 						// 2020-06-06. Scenario:
@@ -11251,7 +11299,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						);
 					}
 
-                    encodingStatusFailures++;
+					// already incremented in above in if (completedWithError)
+                    // encodingStatusFailures++;
 
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -13062,11 +13111,30 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 {
     try
     {
-		// This method is never called because in both the scenarios below an exception
-		// by EncoderVideoAudioProxy::liveProxy is raised:
+		// In case of Liveproxy where TimePeriod is false, this method is never called because,
+		//	in both the scenarios below, an exception by EncoderVideoAudioProxy::liveProxy will be raised:
 		// - transcoding killed by the user 
 		// - The max number of calls to the URL were all done and all failed
-    }
+		//
+		// In case of LiveProxy where TimePeriod is true, this method is called
+
+		// Status will be success if at least one Chunk was generated, otherwise it will be failed
+		{
+			string errorMessage;
+			string processorMMS;
+			MMSEngineDBFacade::IngestionStatus	newIngestionStatus
+				= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);
+			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+				errorMessage);
+		}
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "processLiveProxy failed"
