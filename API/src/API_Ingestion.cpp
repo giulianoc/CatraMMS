@@ -332,7 +332,14 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 						{
 							field = "Value";
 							if (variableType == "string")
+							{
 								sValue = variableDetails.get(field, "").asString();
+
+								// scenario, the json will be: "field": "${var_name}"
+								//	so in case the value of the variable contains " we have
+								//	to replace it with \"
+								sValue = regex_replace(sValue, regex("\""), "\\\"");
+							}
 							else if (variableType == "integer")
 								sValue = to_string(JSONUtils::asInt64(variableDetails, field, 0));
 							else if (variableType == "decimal")
@@ -360,7 +367,14 @@ Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variabl
 						else
 						{
 							if (variableType == "string")
+							{
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+
+								// scenario, the json will be: "field": "${var_name}"
+								//	so in case the value of the variable contains " we have
+								//	to replace it with \"
+								sValue = regex_replace(sValue, regex("\""), "\\\"");
+							}
 							else if (variableType == "integer")
 								sValue = to_string(JSONUtils::asInt64(variablesValuesToBeUsedRoot, sKey, 0));
 							else if (variableType == "decimal")

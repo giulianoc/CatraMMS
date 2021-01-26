@@ -3197,6 +3197,7 @@ void API::createDeliveryCDN77Authorization(
 				throw runtime_error(errorMessage);
 			}
 			cdnResourceUrlStart += 3;	// "://"
+			// protocolPart: https://
 			protocolPart = cdn77DeliveryURL.substr(0, cdnResourceUrlStart);
 
 			size_t cdnResourceUrlEnd = cdn77DeliveryURL.find_first_of("/", cdnResourceUrlStart);
@@ -3210,7 +3211,9 @@ void API::createDeliveryCDN77Authorization(
 				throw runtime_error(errorMessage);
 			}
 
+			// cdnResourceUrl: 1234456789.rsc.cdn77.org
 			cdnResourceUrl = cdn77DeliveryURL.substr(cdnResourceUrlStart, cdnResourceUrlEnd - cdnResourceUrlStart);
+			// filePath: /file/playlist/d.m3u8
 			filePath = cdn77DeliveryURL.substr(cdnResourceUrlEnd);
 		}
 
