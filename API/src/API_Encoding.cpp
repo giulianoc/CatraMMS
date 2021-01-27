@@ -729,11 +729,18 @@ void API::encodingProfilesList(
             
             contentTypePresent = true;
         }
-        
+
+        string label;
+        auto labelIt = queryParameters.find("label");
+        if (labelIt != queryParameters.end() && labelIt->second != "")
+        {
+            label = labelIt->second;
+        }
+
         {
             Json::Value encodingProfileListRoot = _mmsEngineDBFacade->getEncodingProfileList(
                     workspace->_workspaceKey, encodingProfileKey,
-                    contentTypePresent, contentType);
+                    contentTypePresent, contentType, label);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingProfileListRoot);

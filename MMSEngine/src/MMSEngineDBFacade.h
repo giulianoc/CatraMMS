@@ -1478,7 +1478,8 @@ public:
 
     Json::Value getEncodingProfileList (
         int64_t workspaceKey, int64_t encodingProfileKey,
-        bool contentTypePresent, ContentType contentType);
+        bool contentTypePresent, ContentType contentType,
+		string label);
 
     int64_t getPhysicalPathDetails(
         int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing);

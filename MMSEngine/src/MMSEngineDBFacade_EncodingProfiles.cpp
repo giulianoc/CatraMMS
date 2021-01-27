@@ -1068,7 +1068,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 
 Json::Value MMSEngineDBFacade::getEncodingProfileList (
         int64_t workspaceKey, int64_t encodingProfileKey,
-        bool contentTypePresent, ContentType contentType
+        bool contentTypePresent, ContentType contentType,
+		string label
 )
 {    
     string      lastSQLCommand;
@@ -1085,6 +1086,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
             + ", contentTypePresent: " + to_string(contentTypePresent)
             + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
+            + ", label: " + label
         );
         
         conn = _connectionPool->borrow();	
@@ -1107,6 +1109,12 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 requestParametersRoot[field] = toString(contentType);
             }
             
+            if (label != "")
+            {
+                field = "label";
+                requestParametersRoot[field] = label;
+            }
+            
             field = "requestParameters";
             contentListRoot[field] = requestParametersRoot;
         }
@@ -1116,6 +1124,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
             sqlWhere += ("and encodingProfileKey = ? ");
         if (contentTypePresent)
             sqlWhere += ("and contentType = ? ");
+        if (label != "")
+            sqlWhere += ("and label like ? ");
         
         Json::Value responseRoot;
         {
@@ -1130,6 +1140,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -1137,6 +1149,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -1169,6 +1182,8 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (label != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -1176,6 +1191,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 				+ (contentTypePresent ? (string(", contentType: ") + toString(contentType)) : "")
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
