@@ -106,7 +106,8 @@ private:
     int                 _defaultMaxRetries;
     bool                _defaultRedirect;
     string              _deliveryProtocol;
-    string              _deliveryHost;
+    string              _deliveryHost_authorizationThroughParameter;
+    string              _deliveryHost_authorizationThroughPath;
     
 	bool				_ldapEnabled;
     string				_ldapURL;
@@ -366,8 +367,13 @@ private:
 		string clientIPAddress,
 		unordered_map<string, string> queryParameters);
 
-	int64_t manageDeliveryAuthorization(
+	int64_t checkDeliveryAuthorizationThroughParameter(
 		string contentURI, string tokenParameter);
+
+	int64_t checkDeliveryAuthorizationThroughPath(
+		string contentURI);
+
+	string getSignedPath(string contentURI, time_t expirationTime);
 
     void addYouTubeConf(
         FCGX_Request& request,

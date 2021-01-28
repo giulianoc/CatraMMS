@@ -535,7 +535,9 @@ bool APICommon::basicAuthenticationRequired(
     if (method == "registerUser"
             || method == "confirmRegistration"
             || method == "login"
-            || method == "manageHTTPStreamingManifest"
+            || method == "manageHTTPStreamingManifest_authorizationThroughParameter"
+            || method == "deliveryAuthorizationThroughParameter"
+            || method == "deliveryAuthorizationThroughPath"
             || method == "status"	// often used as healthy check
             )
     {

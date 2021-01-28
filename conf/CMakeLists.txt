@@ -26,6 +26,7 @@ SET (CONFs
 	catrammsAPIServer.nginx
 	catrammsGUIServer.nginx
 	catrammsDeliveryServer.nginx
+	catrammsDelivery-pathServer.nginx
 	catrammsDelivery-fServer.nginx
 	catrammsBinaryServer.nginx
 	catrammsEncoderServer.nginx

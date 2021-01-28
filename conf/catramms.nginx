@@ -98,6 +98,44 @@ server {
 }
 
 
+#delivery-path
+#in case of nginx load balancer
+server {
+	server_name mms-delivery-path-1.restream.ovh;
+	listen 192.168.1.105:80;
+
+	set $deliveryHostName 192.168.1.105;
+	set $guiHostName mms-gui.catrasoft.cloud;
+	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+}
+
+#in case of direct call from client
+server {
+	server_name mms-delivery-path-1.catrasoft.cloud;
+	#listen 80;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+
+	set $deliveryHostName 127.0.0.1;
+	set $guiHostName mms-gui.catrasoft.cloud;
+	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+}
+
+#in case of direct call from client
+server {
+    server_name mms-delivery-path.catrasoft.cloud;
+    listen 127.0.0.1:80;
+
+    set $deliveryHostName 127.0.0.1;
+    set $guiHostName mms-gui.catrasoft.cloud;
+    include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+}
+
+
 #delivery-f
 #in case of nginx load balancer
 server {

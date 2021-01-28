@@ -304,10 +304,14 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
     );
-    _deliveryHost  = api["delivery"].get("deliveryHost", "XXX").asString();
+    _deliveryHost_authorizationThroughParameter  = api["delivery"].get("deliveryHost_authorizationThroughParameter", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryHost: " + _deliveryHost
+        + ", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
     );
+    _deliveryHost_authorizationThroughPath  = api["delivery"].get("deliveryHost_authorizationThroughPath", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+		+ ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath
+	);
 
     _ldapEnabled  = JSONUtils::asBool(api["activeDirectory"], "enabled", false);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -596,7 +600,7 @@ void API::manageRequestAndResponse(
         string responseBody;
         sendSuccess(request, 200, responseBody);
     }
-    else if (method == "deliveryAuthorization")
+    else if (method == "deliveryAuthorizationThroughParameter")
     {
         // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
         try
@@ -630,195 +634,15 @@ void API::manageRequestAndResponse(
 
 			string tokenParameter = tokenIt->second;
 
-			_logger->info(__FILEREF__ + "Calling manageDeliveryAuthorization..."
+			_logger->info(__FILEREF__ + "Calling checkDeliveryAuthorizationThroughParameter"
 				+ ", contentURI: " + contentURI
 				+ ", tokenParameter: " + tokenParameter
 			);
 
-			manageDeliveryAuthorization(contentURI, tokenParameter);
+			checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
 			string responseBody;
 			sendSuccess(request, 200, responseBody);
-
-			/*
-            auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-            auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-            if (tokenIt != requestDetails.end()
-				&& originalURIIt != requestDetails.end())
-            {
-				_logger->info(__FILEREF__ + "deliveryAuthorization, received"
-					+ ", originalURIIt: " + originalURIIt->second
-					+ ", tokenIt->second: " + tokenIt->second
-				);
-
-                string contentURI = originalURIIt->second;
-                size_t endOfURIIndex = contentURI.find_last_of("?");
-                if (endOfURIIndex == string::npos)
-                {
-                    string errorMessage = string("Wrong URI format")
-                        + ", contentURI: " + contentURI
-                            ;
-                    _logger->warn(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-                }
-                contentURI = contentURI.substr(0, endOfURIIndex);
-
-				string firstPartOfToken;
-				string secondPartOfToken;
-				{
-					// token formats:
-					// scenario in case of .ts (hls) delivery: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
-					// scenario in case of .m4s (dash) delivery: ---<cookie: encription of 'token'>
-					//		both encryption were built in 'manageHTTPStreamingManifest'
-					// scenario in case of .m3u8 delivery:
-					//		case 1. master .m3u8: <token>---
-					//		case 2. secondary .m3u8: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
-					// scenario in case of any other delivery: <token>---
-
-					string separator = "---";
-					string tokenParameter = tokenIt->second;
-					size_t endOfTokenIndex = tokenParameter.rfind(separator);
-					if (endOfTokenIndex == string::npos)
-					{
-						string errorMessage = string("Wrong token format")
-							+ ", contentURI: " + contentURI
-							+ ", tokenParameter: " + tokenParameter
-						;
-						_logger->warn(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					firstPartOfToken = tokenParameter.substr(0, endOfTokenIndex);
-					secondPartOfToken = tokenParameter.substr(endOfTokenIndex + separator.length());
-				}
-
-				// end with
-				string tsExtension(".ts");		// hls
-				string m4sExtension(".m4s");	// dash
-				string m3u8Extension(".m3u8");	// m3u8
-				if (
-					(contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
-					contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
-					||
-					(contentURI.size() >= m4sExtension.size() && 0 == contentURI.compare(
-					contentURI.size()-m4sExtension.size(), m4sExtension.size(), m4sExtension))
-					||
-					(contentURI.size() >= m3u8Extension.size() && 0 == contentURI.compare(
-					contentURI.size()-m3u8Extension.size(), m3u8Extension.size(), m3u8Extension)
-					&& secondPartOfToken != "")
-				)
-				{
-					// .ts/m4s content to be authorized
-
-					string encryptedToken = firstPartOfToken;
-					string cookie = secondPartOfToken;
-
-					if (cookie == "")
-					{
-						string errorMessage = string("cookie is wrong")
-							+ ", contentURI: " + contentURI
-							+ ", cookie: " + cookie
-							;
-						_logger->info(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					// manifestLineAndToken comes from ts URL
-					string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
-					string manifestLine;
-					int64_t tokenComingFromURL;
-					{
-						string separator = "+++";
-						size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
-						if (beginOfTokenIndex == string::npos)
-						{
-							string errorMessage = string("Wrong parameter format")
-								+ ", contentURI: " + contentURI
-								+ ", manifestLineAndToken: " + manifestLineAndToken
-								;
-							_logger->info(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						manifestLine = manifestLineAndToken.substr(0, beginOfTokenIndex);
-						string sTokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
-						tokenComingFromURL = stoll(sTokenComingFromURL);
-					}
-
-					string sTokenComingFromCookie = Encrypt::decrypt(cookie);
-					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
-
-					if (tokenComingFromCookie != tokenComingFromURL
-
-							// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
-							// 2020-02-04: commented because it does not work in case of dash
-							// contentURI: /MMSLive/1/109/init-stream0.m4s
-							// manifestLine: chunk-stream$RepresentationID$-$Number%05d$.m4s
-							// || contentURI.find(manifestLine) == string::npos
-					)
-					{
-						string errorMessage = string("Wrong parameter format")
-							+ ", contentURI: " + contentURI
-							+ ", manifestLine: " + manifestLine
-							+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-							;
-						_logger->info(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					_logger->info(__FILEREF__ + "token authorized"
-						+ ", contentURI: " + contentURI
-						+ ", manifestLine: " + manifestLine
-						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-						+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-					);
-
-					string responseBody;
-					sendSuccess(request, 200, responseBody);
-				}
-				else
-				{
-					int64_t token = stoll(firstPartOfToken);
-					if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
-					{
-						_logger->info(__FILEREF__ + "token authorized"
-							+ ", token: " + to_string(token)
-						);
-
-						string responseBody;
-						sendSuccess(request, 200, responseBody);
-					}
-					else
-					{
-						string errorMessage = string("Not authorized: token invalid")
-							+ ", token: " + to_string(token)
-                            ;
-						_logger->warn(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
-			else
-			{
-				{
-					string errorMessage = string("deliveryAuthorization")
-						+ ", token: " + (tokenIt != requestDetails.end() ? tokenIt->second : "null")
-						+ ", URI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-                           ;
-					_logger->warn(__FILEREF__ + errorMessage);
-				}
-
-				string errorMessage = string("deliveryAuthorization, not authorized: parameter not present")
-                       ;
-				_logger->warn(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			*/
         }
         catch(runtime_error e)
         {
@@ -836,7 +660,49 @@ void API::manageRequestAndResponse(
             sendError(request, 500, errorMessage);
         }
     }
-    else if (method == "manageHTTPStreamingManifest")
+    else if (method == "deliveryAuthorizationThroughPath")
+    {
+        // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+        try
+        {
+			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+			if (originalURIIt == requestDetails.end())
+			{
+				string errorMessage = string("deliveryAuthorization, not authorized")
+					+ ", URI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+                          ;
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string contentURI = originalURIIt->second;
+
+			_logger->info(__FILEREF__ + "deliveryAuthorizationThroughPath. Calling checkAuthorizationThroughPath"
+				+ ", contentURI: " + contentURI
+			);
+
+			checkDeliveryAuthorizationThroughPath(contentURI);
+
+			string responseBody;
+			sendSuccess(request, 200, responseBody);
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("Not authorized");
+            _logger->warn(__FILEREF__ + errorMessage);
+
+			string responseBody;
+			sendError(request, 403, errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Not authorized: exception managing token");
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+        }
+    }
+    else if (method == "manageHTTPStreamingManifest_authorizationThroughParameter")
     {
         try
         {
@@ -909,11 +775,11 @@ void API::manageRequestAndResponse(
 				string cookie = cookieIt->second;
 
 				string tokenParameter = tokenIt->second + "---" + cookie;
-				_logger->info(__FILEREF__ + "Calling manageDeliveryAuthorization..."
+				_logger->info(__FILEREF__ + "Calling checkDeliveryAuthorizationThroughParameter"
 					+ ", contentURI: " + contentURI
 					+ ", tokenParameter: " + tokenParameter
 				);
-				tokenComingFromURL = manageDeliveryAuthorization(contentURI, tokenParameter);
+				tokenComingFromURL = checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 			}
 			else
 			{
@@ -2352,11 +2218,20 @@ void API::createDeliveryAuthorization(
                 save = false;
         }
 
+        bool authorizationThroughPath = false;
+        auto authorizationThroughPathIt = queryParameters.find("authorizationThroughPath");
+        if (authorizationThroughPathIt != queryParameters.end())
+        {
+            if (authorizationThroughPathIt->second == "true")
+                authorizationThroughPath = true;
+            else
+                authorizationThroughPath = false;
+        }
+
         try
         {
 			string deliveryURL;
 			string deliveryFileName;
-			int64_t authorizationKey;
 
 			if (ingestionJobKey == -1)
 			{
@@ -2388,26 +2263,43 @@ void API::createDeliveryAuthorization(
 						physicalPathKeyDeliveryFileNameAndDeliveryURI;
 				}
 
-				int64_t liveURLConfKey = -1;
-				authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey,
-					clientIPAddress,
-					physicalPathKey,
-					liveURLConfKey,
-					deliveryURI,
-					ttlInSeconds,
-					maxRetries);
+				if (authorizationThroughPath)
+				{
+					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+					expirationTime += ttlInSeconds;
 
-				deliveryURL = 
-					_deliveryProtocol
-					+ "://" 
-					+ _deliveryHost
-					+ deliveryURI
-					+ "?token=" + to_string(authorizationKey)
-				;
+					string md5Base64 = getSignedPath(deliveryURI, expirationTime);
 
-				if (save && deliveryFileName != "")
-					deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughPath
+						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+						+ deliveryURI
+					;
+				}
+				else
+				{
+					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						physicalPathKey,
+						-1,
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost_authorizationThroughParameter
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+
+					if (save && deliveryFileName != "")
+						deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
+				}
 			}
 			else
 			{
@@ -2603,22 +2495,40 @@ void API::createDeliveryAuthorization(
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
 
-					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						-1,	// physicalPathKey,	vod key
-						deliveryCode,		// live key
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
+					if (authorizationThroughPath)
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
+						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughPath
+							+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+							+ deliveryURI
+						;
+					}
+					else
+					{
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey,
+							clientIPAddress,
+							-1,	// physicalPathKey,	vod key
+							deliveryCode,		// live key
+							deliveryURI,
+							ttlInSeconds,
+							maxRetries);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughParameter
+							+ deliveryURI
+							+ "?token=" + to_string(authorizationKey)
+						;
+					}
 				}
 				else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 				{
@@ -2654,22 +2564,40 @@ void API::createDeliveryAuthorization(
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
 
-					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						-1,	// physicalPathKey,
-						deliveryCode,
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
+					if (authorizationThroughPath)
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
+						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughPath
+							+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+							+ deliveryURI
+						;
+					}
+					else
+					{
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey,
+							clientIPAddress,
+							-1,	// physicalPathKey,
+							deliveryCode,
+							deliveryURI,
+							ttlInSeconds,
+							maxRetries);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughParameter
+							+ deliveryURI
+							+ "?token=" + to_string(authorizationKey)
+						;
+					}
 
 					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2753,22 +2681,40 @@ void API::createDeliveryAuthorization(
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
 
-					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						physicalPathKey,
-						liveURLConfKey,
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
+					if (authorizationThroughPath)
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
+						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughPath
+							+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+							+ deliveryURI
+						;
+					}
+					else
+					{
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey,
+							clientIPAddress,
+							physicalPathKey,
+							liveURLConfKey,
+							deliveryURI,
+							ttlInSeconds,
+							maxRetries);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughParameter
+							+ deliveryURI
+							+ "?token=" + to_string(authorizationKey)
+						;
+					}
 				}
 			}
 
@@ -2781,7 +2727,6 @@ void API::createDeliveryAuthorization(
                 string responseBody = string("{ ")
                     + "\"deliveryURL\": \"" + deliveryURL + "\""
                     + ", \"deliveryFileName\": \"" + deliveryFileName + "\""
-                    + ", \"authorizationKey\": " + to_string(authorizationKey)
                     + ", \"ttlInSeconds\": " + to_string(ttlInSeconds)
                     + ", \"maxRetries\": " + to_string(maxRetries)
                     + " }";
@@ -2840,13 +2785,13 @@ void API::createDeliveryAuthorization(
     }
 }
 
-int64_t API::manageDeliveryAuthorization(
+int64_t API::checkDeliveryAuthorizationThroughParameter(
 		string contentURI, string tokenParameter)
 {
 	int64_t tokenComingFromURL;
 	try
 	{
-		_logger->info(__FILEREF__ + "deliveryAuthorization, received"
+		_logger->info(__FILEREF__ + "checkDeliveryAuthorizationThroughParameter, received"
 			+ ", contentURI: " + contentURI
 			+ ", tokenParameter: " + tokenParameter
 		);
@@ -3089,6 +3034,141 @@ int64_t API::manageDeliveryAuthorization(
 	}
 
 	return tokenComingFromURL;
+}
+
+int64_t API::checkDeliveryAuthorizationThroughPath(
+	string contentURI)
+{
+	int64_t tokenComingFromURL = -1;
+	try
+	{
+		_logger->info(__FILEREF__ + "checkDeliveryAuthorizationThroughPath, received"
+			+ ", contentURI: " + contentURI
+		);
+
+		string tokenLabel = "/token_";
+
+		size_t startTokenIndex = contentURI.find("/token_");
+		if (startTokenIndex == string::npos)
+		{
+			string errorMessage = string("Wrong token format")
+				+ ", contentURI: " + contentURI
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		startTokenIndex += tokenLabel.size();
+
+		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
+		if (endTokenIndex == string::npos)
+		{
+			string errorMessage = string("Wrong token format")
+				+ ", contentURI: " + contentURI
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
+		if (endExpirationIndex == string::npos)
+		{
+			string errorMessage = string("Wrong token format")
+				+ ", contentURI: " + contentURI
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string tokenSigned = contentURI.substr(startTokenIndex, endTokenIndex - startTokenIndex);
+		string sExpirationTime = contentURI.substr(endTokenIndex + 1, endExpirationIndex - (endTokenIndex + 1));
+		string initialContentURI = contentURI.substr(endExpirationIndex);
+		time_t expirationTime = stoll(sExpirationTime);
+
+		string md5Base64 = getSignedPath(initialContentURI, expirationTime);
+
+		_logger->info(__FILEREF__ + "Authorization through path"
+			+ ", contentURI: " + contentURI
+			+ ", initialContentURI: " + initialContentURI
+			+ ", expirationTime: " + to_string(expirationTime)
+			+ ", tokenSigned: " + tokenSigned
+			+ ", md5Base64: " + md5Base64
+		);
+
+		if (md5Base64 != tokenSigned)
+		{
+			string errorMessage = string("Wrong token")
+				+ ", md5Base64: " + md5Base64
+				+ ", tokenSigned: " + tokenSigned
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+		if (expirationTime < utcNow)
+		{
+			string errorMessage = string("Token expired")
+				+ ", expirationTime: " + to_string(expirationTime)
+				+ ", utcNow: " + to_string(utcNow)
+			;
+			_logger->warn(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("Not authorized");
+		_logger->warn(__FILEREF__ + errorMessage);
+
+		throw e;
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("Not authorized: exception managing token");
+		_logger->warn(__FILEREF__ + errorMessage);
+
+		throw e;
+	}
+
+	return tokenComingFromURL;
+}
+
+string API::getSignedPath(string contentURI, time_t expirationTime)
+{
+	string token = to_string(expirationTime) + contentURI;
+	string md5Base64;
+	{
+		unsigned char digest[MD5_DIGEST_LENGTH];
+		MD5((unsigned char*) token.c_str(), token.size(), digest);
+		md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
+
+		transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+			[](unsigned char c){
+				if (c == '+')
+					return '-';
+				else if (c == '/')
+					return '_';
+				else
+					return (char) c;
+			}
+		);
+	}
+
+	_logger->info(__FILEREF__ + "Authorization through path"
+		+ ", contentURI: " + contentURI
+		+ ", expirationTime: " + to_string(expirationTime)
+		+ ", token: " + token
+		+ ", md5Base64: " + md5Base64
+	);
+
+
+	return md5Base64;
 }
 
 void API::createDeliveryCDN77Authorization(

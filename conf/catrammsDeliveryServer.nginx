@@ -4,15 +4,18 @@
 
 	root /var/catramms/storage/MMSRepository/;
 
+	#authorization through parameter
+	#next location manages .m3u8 request (authorize request and add token parameter to each line of the manifest)
 	location ~ .(m3u8|mpd)$ {
 		if ($request_method = GET) {
 			#live
-			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;                 
+			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;                 
 			#vod
-			rewrite ^/MMS_ /api?method=manageHTTPStreamingManifest&cookie=$cookie_mmsInfo last;                 
+			rewrite ^/MMS_ /api?method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;                 
 		}
 	}
 
+	#next location manages the other requests: .mp4, .ts (authorize request)
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
 		if ($arg_token) {
 			set $token "$arg_token---$cookie_mmsInfo";
@@ -21,7 +24,7 @@
 			add_header Content-Disposition 'attachment; filename="$arg_deliveryFileName"';
 		}
 
-		auth_request /catramms/delivery/checkAuthorization;
+		auth_request /catramms/delivery/checkAuthorizationThroughParameter;
 
 		if ($request_method = 'GET') {
 			add_header 'Access-Control-Allow-Origin' 'https://$guiHostName';
@@ -32,10 +35,10 @@
 		}
 	}
 
-	location = /catramms/delivery/checkAuthorization {
+	location = /catramms/delivery/checkAuthorizationThroughParameter {
 		internal;
 
-		proxy_pass http://$deliveryHostName/catramms/delivery/authorization;
+		proxy_pass http://$deliveryHostName/catramms/delivery/authorizationThroughParameter;
 		#$host will be mms-delivery.restream.ovh
 		proxy_set_header Host $host;
 		proxy_pass_request_body off;
@@ -45,14 +48,15 @@
 		proxy_set_header X-Original-URI $request_uri;
 	}
 
-	location /catramms/delivery/authorization {
+	location /catramms/delivery/authorizationThroughParameter {
 		allow 127.0.0.1;
 		deny all;
 		if ($request_method = GET) {
-			rewrite ^/catramms/delivery/authorization/?$ /api?method=deliveryAuthorization last;
+			rewrite ^/catramms/delivery/authorizationThroughParameter/?$ /api?method=deliveryAuthorizationThroughParameter last;
 		}
 	}
 
+	#common part
 	location /api {
 		internal;
 
