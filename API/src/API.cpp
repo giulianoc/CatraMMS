@@ -3085,7 +3085,14 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 		string tokenSigned = contentURI.substr(startTokenIndex, endTokenIndex - startTokenIndex);
 		string sExpirationTime = contentURI.substr(endTokenIndex + 1, endExpirationIndex - (endTokenIndex + 1));
-		string initialContentURI = contentURI.substr(endExpirationIndex);
+		string initialContentURI;
+
+		size_t endContentURIIndex = contentURI.find("?", endExpirationIndex);
+		if (endContentURIIndex == string::npos)
+			initialContentURI = contentURI.substr(endExpirationIndex);
+		else
+			initialContentURI = contentURI.substr(endExpirationIndex, endContentURIIndex - endExpirationIndex);
+
 		time_t expirationTime = stoll(sExpirationTime);
 
 		string md5Base64 = getSignedPath(initialContentURI, expirationTime);
