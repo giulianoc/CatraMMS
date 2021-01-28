@@ -2268,7 +2268,22 @@ void API::createDeliveryAuthorization(
 					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 					expirationTime += ttlInSeconds;
 
-					string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+					string uriToBeSigned;
+					{
+						string m3u8Suffix(".m3u8");
+						if (deliveryURI.size() >= m3u8Suffix.size()
+							&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						{
+							size_t endPathIndex = deliveryURI.find_last_of("/");
+							if (endPathIndex == string::npos)
+								uriToBeSigned = deliveryURI;
+							else
+								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+						}
+						else
+							uriToBeSigned = deliveryURI;
+					}
+					string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
 
 					deliveryURL = 
 						_deliveryProtocol
@@ -2500,7 +2515,22 @@ void API::createDeliveryAuthorization(
 						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 						expirationTime += ttlInSeconds;
 
-						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							if (deliveryURI.size() >= m3u8Suffix.size()
+								&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
 
 						deliveryURL = 
 							_deliveryProtocol
@@ -2569,7 +2599,22 @@ void API::createDeliveryAuthorization(
 						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 						expirationTime += ttlInSeconds;
 
-						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							if (deliveryURI.size() >= m3u8Suffix.size()
+								&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
 
 						deliveryURL = 
 							_deliveryProtocol
@@ -2686,7 +2731,22 @@ void API::createDeliveryAuthorization(
 						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 						expirationTime += ttlInSeconds;
 
-						string md5Base64 = getSignedPath(deliveryURI, expirationTime);
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							if (deliveryURI.size() >= m3u8Suffix.size()
+								&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
 
 						deliveryURL = 
 							_deliveryProtocol
@@ -3085,36 +3145,123 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 		string tokenSigned = contentURI.substr(startTokenIndex, endTokenIndex - startTokenIndex);
 		string sExpirationTime = contentURI.substr(endTokenIndex + 1, endExpirationIndex - (endTokenIndex + 1));
-		string initialContentURI;
+		time_t expirationTime = stoll(sExpirationTime);
+
+
+		string contentURIToBeVerified;
 
 		size_t endContentURIIndex = contentURI.find("?", endExpirationIndex);
 		if (endContentURIIndex == string::npos)
-			initialContentURI = contentURI.substr(endExpirationIndex);
+			contentURIToBeVerified = contentURI.substr(endExpirationIndex);
 		else
-			initialContentURI = contentURI.substr(endExpirationIndex, endContentURIIndex - endExpirationIndex);
+			contentURIToBeVerified = contentURI.substr(endExpirationIndex, endContentURIIndex - endExpirationIndex);
 
-		time_t expirationTime = stoll(sExpirationTime);
-
-		string md5Base64 = getSignedPath(initialContentURI, expirationTime);
-
-		_logger->info(__FILEREF__ + "Authorization through path"
-			+ ", contentURI: " + contentURI
-			+ ", initialContentURI: " + initialContentURI
-			+ ", expirationTime: " + to_string(expirationTime)
-			+ ", tokenSigned: " + tokenSigned
-			+ ", md5Base64: " + md5Base64
-		);
-
-		if (md5Base64 != tokenSigned)
+		string m3u8Suffix(".m3u8");
+		string tsSuffix(".ts");
+		if (contentURIToBeVerified.size() >= m3u8Suffix.size()
+			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 		{
-			string errorMessage = string("Wrong token")
-				+ ", md5Base64: " + md5Base64
-				+ ", tokenSigned: " + tokenSigned
-			;
-			_logger->warn(__FILEREF__ + errorMessage);
+			{
+				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+				if (endPathIndex != string::npos)
+					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+			}
 
-			throw runtime_error(errorMessage);
+			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+
+			_logger->info(__FILEREF__ + "Authorization through path (m3u8)"
+				+ ", contentURI: " + contentURI
+				+ ", contentURIToBeVerified: " + contentURIToBeVerified
+				+ ", expirationTime: " + to_string(expirationTime)
+				+ ", tokenSigned: " + tokenSigned
+				+ ", md5Base64: " + md5Base64
+			);
+
+			if (md5Base64 != tokenSigned)
+			{
+				string errorMessage = string("Wrong token (m3u8)")
+					+ ", md5Base64: " + md5Base64
+					+ ", tokenSigned: " + tokenSigned
+				;
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
+		else if (contentURIToBeVerified.size() >= tsSuffix.size()
+			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
+		{
+			{
+				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+				if (endPathIndex != string::npos)
+					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+			}
+
+			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+
+			_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
+				+ ", contentURI: " + contentURI
+				+ ", contentURIToBeVerified: " + contentURIToBeVerified
+				+ ", expirationTime: " + to_string(expirationTime)
+				+ ", tokenSigned: " + tokenSigned
+				+ ", md5Base64: " + md5Base64
+			);
+
+			if (md5Base64 != tokenSigned)
+			{
+				// we still try removing again the last directory to manage the scenario of milti bitrate encoding
+				{
+					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+					if (endPathIndex != string::npos)
+						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+				}
+
+				string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+
+				_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
+					+ ", contentURI: " + contentURI
+					+ ", contentURIToBeVerified: " + contentURIToBeVerified
+					+ ", expirationTime: " + to_string(expirationTime)
+					+ ", tokenSigned: " + tokenSigned
+					+ ", md5Base64: " + md5Base64
+				);
+
+				if (md5Base64 != tokenSigned)
+				{
+					string errorMessage = string("Wrong token (ts)")
+						+ ", md5Base64: " + md5Base64
+						+ ", tokenSigned: " + tokenSigned
+					;
+					_logger->warn(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else
+		{
+			string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+
+			_logger->info(__FILEREF__ + "Authorization through path"
+				+ ", contentURI: " + contentURI
+				+ ", contentURIToBeVerified: " + contentURIToBeVerified
+				+ ", expirationTime: " + to_string(expirationTime)
+				+ ", tokenSigned: " + tokenSigned
+				+ ", md5Base64: " + md5Base64
+			);
+
+			if (md5Base64 != tokenSigned)
+			{
+				string errorMessage = string("Wrong token")
+					+ ", md5Base64: " + md5Base64
+					+ ", tokenSigned: " + tokenSigned
+				;
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
 
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		if (expirationTime < utcNow)
