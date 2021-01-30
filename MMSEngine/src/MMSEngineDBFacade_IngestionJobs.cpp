@@ -4892,6 +4892,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
                 int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
                 
+				field = "ownedByCurrentWorkspace";
+				encodingJobRoot[field] = true;
+
                 field = "encodingJobKey";
                 encodingJobRoot[field] = encodingJobKey;
 

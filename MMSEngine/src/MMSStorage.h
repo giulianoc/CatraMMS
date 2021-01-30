@@ -251,6 +251,17 @@ private:
 
 	void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
 
+	void removePhysicalPathFile(
+		int64_t mediaItemKey,
+		int64_t physicalPathKey,
+		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology,
+		string fileName,
+		bool externalReadOnlyStorage,
+		int mmsPartitionNumber,
+		string workspaceDirectoryName,
+		string relativePath,
+		int64_t sizeInBytes);
+
 } ;
 
 #endif

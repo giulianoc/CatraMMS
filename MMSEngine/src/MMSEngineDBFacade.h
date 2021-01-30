@@ -1275,7 +1275,7 @@ public:
 
     void getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
-        vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
+        vector<tuple<shared_ptr<Workspace>,int64_t, int64_t>>& mediaItemKeyOrPhysicalPathKeyToBeRemoved,
         int maxMediaItemKeysNumber);
 
 	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
@@ -1426,7 +1426,7 @@ public:
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
-		int64_t encoderKey,
+		int64_t encoderKey, bool alsoEncodingJobsFromOtherWorkspaces,
         bool asc, string status, string types);
 
     Json::Value getMediaItemsList (
@@ -1812,6 +1812,7 @@ public:
         int mmsPartitionIndexUsed,
         unsigned long long sizeInBytes,
         int64_t encodingProfileKey,
+		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
@@ -2176,6 +2177,8 @@ public:
 	void removeEncodersPool(
 		int64_t encodersPoolKey);
 
+	static int64_t parseRetention(string retention);
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
@@ -2313,6 +2316,7 @@ private:
         int mmsPartitionIndexUsed,
         unsigned long long sizeInBytes,
         int64_t encodingProfileKey,
+		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,

@@ -1720,6 +1720,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "deliveryInfo				" + deliveryInfoDefinition + ","
                     "isAlias					INT NOT NULL DEFAULT 0,"
                     "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+					"retentionInMinutes			bigint unsigned NULL,"
                     "constraint MMS_PhysicalPath_PK PRIMARY KEY (physicalPathKey), "
                     "constraint MMS_PhysicalPath_FK foreign key (mediaItemKey) "
                         "references MMS_MediaItem (mediaItemKey) on delete cascade, "

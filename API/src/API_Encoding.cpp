@@ -94,6 +94,17 @@ void API::encodingJobsStatus(
             encoderKey = stoll(encoderKeyIt->second);
         }
 
+        bool alsoEncodingJobsFromOtherWorkspaces = false;
+        auto alsoEncodingJobsFromOtherWorkspacesIt = queryParameters.find("alsoEncodingJobsFromOtherWorkspaces");
+        if (alsoEncodingJobsFromOtherWorkspacesIt != queryParameters.end()
+			&& alsoEncodingJobsFromOtherWorkspacesIt->second != "")
+        {
+            if (alsoEncodingJobsFromOtherWorkspacesIt->second == "true")
+                alsoEncodingJobsFromOtherWorkspaces = true;
+            else
+                alsoEncodingJobsFromOtherWorkspaces = false;
+        }
+
         bool asc = true;
         auto ascIt = queryParameters.find("asc");
         if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -124,7 +135,7 @@ void API::encodingJobsStatus(
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     startAndEndEncodingDatePresent, startEncodingDate, endEncodingDate,
-					encoderKey,
+					encoderKey, alsoEncodingJobsFromOtherWorkspaces,
                     asc, status, types
                     );
 

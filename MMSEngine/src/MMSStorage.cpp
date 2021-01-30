@@ -1292,7 +1292,8 @@ void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFac
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,string,string,int64_t, bool> storageDetails =
+        tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,
+			string,string,int64_t, bool> storageDetails =
             mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -1308,74 +1309,25 @@ void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFac
         tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, 
                 deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
-		if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming)
+		if (!externalReadOnlyStorage)
 		{
-			// in this case we have to removed the directory and not just the m3u8/mpd file
-			fileName = "";
+			removePhysicalPathFile(
+				-1,
+				physicalPathKey,
+				deliveryTechnology,
+				fileName,
+				externalReadOnlyStorage,
+				mmsPartitionNumber,
+				workspace->_directoryName,
+				relativePath,
+				sizeInBytes);
 		}
 
-        _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-            + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-            + ", workspaceDirectoryName: " + workspace->_directoryName
-            + ", relativePath: " + relativePath
-            + ", fileName: " + fileName
-        );
-        string mmsAssetPathName = getMMSAssetPathName(
-			externalReadOnlyStorage,
-            mmsPartitionNumber,
-            workspace->_directoryName,
-            relativePath,
-            fileName);
-        
         _logger->info(__FILEREF__ + "removePhysicalPathKey ..."
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
 
         mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
-
-        {
-            FileIO::DirectoryEntryType_t detSourceFileType;
-
-            detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-            {
-                _logger->info(__FILEREF__ + "Remove directory"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                bool removeRecursively = true;
-                FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
-            } 
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "Remove file"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                FileIO::remove(mmsAssetPathName);
-            } 
-            else 
-            {
-                string errorMessage = string("Unexpected directory entry")
-                        + ", detSourceFileType: " + to_string(detSourceFileType);
-                
-                _logger->error(__FILEREF__ + errorMessage);
-                
-                throw runtime_error(errorMessage);
-            }
-        }
-
-		{
-			lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-			PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
-
-			partitionInfo._currentFreeSizeInBytes			+= sizeInBytes;
-
-			_logger->info(__FILEREF__ + "Partition free size info"
-				+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-				+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
-			);
-		}
     }
     catch(MediaItemKeyNotFound e)
     {
@@ -1437,192 +1389,19 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
             tie(deliveryTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath,
 					fileName, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
-			if (externalReadOnlyStorage)
-				continue;
-
-            {
-				string m3u8Suffix(".m3u8");
-
-				if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming
-					|| 
-					fileName.size() >= m3u8Suffix.size()	// end with .m3u8
-						&& 0 == fileName.compare(fileName.size()-m3u8Suffix.size(), m3u8Suffix.size(),
-							m3u8Suffix)
-					)
-				{
-					// in this case we have to removed the directory and not just the m3u8/mpd file
-					fileName = "";
-				}
-
-				_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-					+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
-					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-					+ ", workspaceDirectoryName: " + workspaceDirectoryName
-					+ ", relativePath: " + relativePath
-					+ ", fileName: " + fileName
-				);
-				string mmsAssetPathName = getMMSAssetPathName(
+			if (!externalReadOnlyStorage)
+			{
+				removePhysicalPathFile(
+					mediaItemKey,
+					-1,
+					deliveryTechnology,
+					fileName,
 					externalReadOnlyStorage,
 					mmsPartitionNumber,
 					workspaceDirectoryName,
 					relativePath,
-					fileName);
-
-                FileIO::DirectoryEntryType_t detSourceFileType;
-				bool fileExist = true;
-
-				try
-				{
-					detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-				}
-				catch(FileNotExisting fne)
-				{
-					string errorMessage = string("file/directory not present")
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", mmsAssetPathName: " + mmsAssetPathName
-					;
-       
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					fileExist = false;
-				}
-				catch(runtime_error e)
-				{
-					_logger->error(__FILEREF__ + e.what());
-
-					throw e;
-				}
-				catch(exception e)
-				{
-					_logger->error(__FILEREF__ + "...exception");
-
-					throw e;
-				}
-
-				if (fileExist)
-				{
-					if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "Remove directory"
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							);
-							bool removeRecursively = true;
-							FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
-						}
-						catch(DirectoryNotExisting dne)
-						{
-							string errorMessage = string("removeDirectory failed. directory not present")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-        
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("removeDirectory failed")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-								+ ", exception: " + e.what()
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw e;
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("removeDirectory failed")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw e;
-						}
-
-						{
-							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
-
-							partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
-
-							_logger->info(__FILEREF__ + "Partition free size info"
-								+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-								+ ", _currentFreeSizeInBytes: "
-									+ to_string(partitionInfo._currentFreeSizeInBytes)
-							);
-						}
-					} 
-					else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "Remove file"
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							);
-							FileIO::remove(mmsAssetPathName);
-						}
-						catch(FileNotExisting fne)
-						{
-							string errorMessage = string("removefailed, file not present")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-        
-							_logger->warn(__FILEREF__ + errorMessage);
-						}
-						catch(runtime_error e)
-						{
-							string errorMessage = string("remove failed")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-								+ ", exception: " + e.what()
-							;
-        
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw e;
-						}
-						catch(exception e)
-						{
-							string errorMessage = string("remove failed")
-								+ ", mediaItemKey: " + to_string(mediaItemKey)
-								+ ", mmsAssetPathName: " + mmsAssetPathName
-							;
-        
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw e;
-						}
-
-						{
-							lock_guard<recursive_mutex> locker(_mtMMSPartitions);
-
-							PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
-
-							partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
-
-							_logger->info(__FILEREF__ + "Partition free size info"
-								+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-								+ ", _currentFreeSizeInBytes: "
-									+ to_string(partitionInfo._currentFreeSizeInBytes)
-							);
-						}
-					} 
-					else 
-					{
-						string errorMessage = string("Unexpected directory entry")
-                            + ", detSourceFileType: " + to_string(detSourceFileType);
-
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-            }
+					sizeInBytes);
+			}
         }
 
         _logger->info(__FILEREF__ + "removeMediaItem ..."
@@ -1651,6 +1430,240 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
         
         throw runtime_error(errorMessage);
     }
+}
+
+void MMSStorage::removePhysicalPathFile(
+	int64_t mediaItemKey,
+	int64_t physicalPathKey,
+	MMSEngineDBFacade::DeliveryTechnology deliveryTechnology,
+	string fileName,
+	bool externalReadOnlyStorage,
+	int mmsPartitionNumber,
+	string workspaceDirectoryName,
+	string relativePath,
+	int64_t sizeInBytes
+		)
+{
+    try
+    {
+        _logger->info(__FILEREF__ + "removePhysicalPathFile"
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        );
+
+		{
+			string m3u8Suffix(".m3u8");
+
+			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming
+				|| 
+				fileName.size() >= m3u8Suffix.size()	// end with .m3u8
+					&& 0 == fileName.compare(fileName.size()-m3u8Suffix.size(), m3u8Suffix.size(),
+					m3u8Suffix)
+				)
+			{
+				// in this case we have to removed the directory and not just the m3u8/mpd file
+				fileName = "";
+			}
+
+			_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+				+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+				+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+				+ ", workspaceDirectoryName: " + workspaceDirectoryName
+				+ ", relativePath: " + relativePath
+				+ ", fileName: " + fileName
+			);
+			string mmsAssetPathName = getMMSAssetPathName(
+				externalReadOnlyStorage,
+				mmsPartitionNumber,
+				workspaceDirectoryName,
+				relativePath,
+				fileName);
+
+			FileIO::DirectoryEntryType_t detSourceFileType;
+			bool fileExist = true;
+
+			try
+			{
+				detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+			}
+			catch(FileNotExisting fne)
+			{
+				string errorMessage = string("file/directory not present")
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				;
+      
+				_logger->warn(__FILEREF__ + errorMessage);
+
+				fileExist = false;
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + e.what());
+
+				throw e;
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "...exception");
+
+				throw e;
+			}
+
+			if (fileExist)
+			{
+				if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "Remove directory"
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						);
+						bool removeRecursively = true;
+						FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+					}
+					catch(DirectoryNotExisting dne)
+					{
+						string errorMessage = string("removeDirectory failed. directory not present")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+       
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("removeDirectory failed")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", exception: " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = string("removeDirectory failed")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw e;
+					}
+
+					{
+						lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+						PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+
+						partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
+
+						_logger->info(__FILEREF__ + "Partition free size info"
+							+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+							+ ", _currentFreeSizeInBytes: "
+								+ to_string(partitionInfo._currentFreeSizeInBytes)
+						);
+					}
+				} 
+				else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "Remove file"
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						);
+						FileIO::remove(mmsAssetPathName);
+					}
+					catch(FileNotExisting fne)
+					{
+						string errorMessage = string("removefailed, file not present")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+       
+						_logger->warn(__FILEREF__ + errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("remove failed")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+							+ ", exception: " + e.what()
+						;
+       
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = string("remove failed")
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", physicalPathKey: " + to_string(physicalPathKey)
+							+ ", mmsAssetPathName: " + mmsAssetPathName
+						;
+       
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw e;
+					}
+
+					{
+						lock_guard<recursive_mutex> locker(_mtMMSPartitions);
+
+						PartitionInfo& partitionInfo = _mmsPartitionsInfo.at(mmsPartitionNumber);
+
+						partitionInfo._currentFreeSizeInBytes		+= sizeInBytes;
+
+						_logger->info(__FILEREF__ + "Partition free size info"
+							+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+							+ ", _currentFreeSizeInBytes: "
+								+ to_string(partitionInfo._currentFreeSizeInBytes)
+						);
+					}
+				} 
+				else 
+				{
+					string errorMessage = string("Unexpected directory entry")
+                           + ", detSourceFileType: " + to_string(detSourceFileType);
+
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("removePhysicalPathFile failed")
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", physicalPathKey: " + to_string(physicalPathKey)
+			+ ", exception: " + e.what()
+		;
+
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("removePhysicalPathFile failed")
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", physicalPathKey: " + to_string(physicalPathKey)
+		;
+
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 /*

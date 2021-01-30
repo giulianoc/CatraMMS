@@ -1572,7 +1572,17 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
         encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
 				field, 0);
     }
-    
+
+	int64_t physicalItemRetentionInMinutes = -1;
+	{
+		string field = "PhysicalItemRetention";
+		if (JSONUtils::isMetadataPresent(_encodingItem->_encodeData->_ingestedParametersRoot, field))
+		{
+			string retention = _encodingItem->_encodeData->_ingestedParametersRoot.get(field, "1d").asString();
+			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+		}
+	}
+
 	pair<int64_t, long> mediaInfoDetails;
 	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
@@ -1994,6 +2004,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
             mmsPartitionIndexUsed,
             mmsAssetSizeInBytes,
             encodingProfileKey,
+			physicalItemRetentionInMinutes,
                 
 			mediaInfoDetails,
 			videoTracks,
@@ -3117,6 +3128,16 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 				field, 0);
     }
     
+	int64_t physicalItemRetentionInMinutes = -1;
+	{
+		string field = "PhysicalItemRetention";
+		if (JSONUtils::isMetadataPresent(_encodingItem->_encodeData->_ingestedParametersRoot, field))
+		{
+			string retention = _encodingItem->_encodeData->_ingestedParametersRoot.get(field, "1d").asString();
+			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+		}
+	}
+
 	Json::Value encodingProfileDetails;
 	{
 		try
@@ -3569,6 +3590,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             mmsPartitionIndexUsed,
             mmsAssetSizeInBytes,
             encodingProfileKey,
+			physicalItemRetentionInMinutes,
                 
 			mediaInfoDetails,
 			videoTracks,

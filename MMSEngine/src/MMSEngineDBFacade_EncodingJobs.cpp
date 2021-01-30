@@ -6259,6 +6259,17 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 	bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
 	bool startAndEndEncodingDatePresent, string startEncodingDate, string endEncodingDate,
 	int64_t encoderKey,
+
+	// 2021-01-29: next parameter is used ONLY if encoderKey != -1
+	// The goal is the, if the user from a GUI asks for the encoding jobs of a specific encoder,
+	// wants to know how the encoder is loaded and, to know that, he need to know also the encoding jobs
+	// running on that encoder from other workflows.
+	// So, if alsoEncodingJobsFromOtherWorkspaces is true and encoderKey != -1, we will send all the encodingJobs
+	// running on that encoder.
+	// In this case, for the one not belonging to the current workspace, we will not fill
+	// the ingestionJobKey, so it is not possible to retrieve information by GUI like 'title media, ...'
+	bool alsoEncodingJobsFromOtherWorkspaces,
+
 	bool asc, string status, string types
 )
 {
@@ -6314,6 +6325,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 field = "encoderKey";
                 requestParametersRoot[field] = encoderKey;
             }
+
+			field = "alsoEncodingJobsFromOtherWorkspaces";
+			requestParametersRoot[field] = alsoEncodingJobsFromOtherWorkspaces;
             
             field = "status";
             requestParametersRoot[field] = status;
@@ -6350,7 +6364,10 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 		}
 
         string sqlWhere = string ("where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey ");
-        sqlWhere += ("and ir.workspaceKey = ? ");
+		if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+			;
+		else
+			sqlWhere += ("and ir.workspaceKey = ? ");
         if (encodingJobKey != -1)
             sqlWhere += ("and ej.encodingJobKey = ? ");
         if (startAndEndIngestionDatePresent)
@@ -6383,7 +6400,10 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+			if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+				;
+			else
+				preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (encodingJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
             if (startAndEndIngestionDatePresent)
@@ -6407,7 +6427,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ((alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+					? "" : (", workspaceKey: " + to_string(workspace->_workspaceKey)))
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
@@ -6437,8 +6458,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         Json::Value encodingJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, "
-				"ej.processorMMS, ej.encoderKey, ej.encodingPid, ej.failuresNumber, ej.encodingPriority, "
+                "select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
+				"ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
+				"ej.failuresNumber, ej.encodingPriority, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -6449,7 +6471,10 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 + "limit ? offset ?";
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatementEncodingJob->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+			if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+				;
+			else
+				preparedStatementEncodingJob->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (encodingJobKey != -1)
                 preparedStatementEncodingJob->setInt64(queryParameterIndex++, encodingJobKey);
             if (startAndEndIngestionDatePresent)
@@ -6475,7 +6500,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ((alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+					? "" : (", workspaceKey: " + to_string(workspace->_workspaceKey)))
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", startIngestionDate: " + startIngestionDate
 				+ ", endIngestionDate: " + endIngestionDate
@@ -6493,17 +6519,47 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             {
                 Json::Value encodingJobRoot;
 
+				int64_t workspaceKey = resultSetEncodingJob->getInt64("workspaceKey");
+
+				bool ownedByCurrentWorkspace;
+				if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+				{
+					if (workspaceKey == workspace->_workspaceKey)
+						ownedByCurrentWorkspace = true;
+					else
+						ownedByCurrentWorkspace = false;
+				}
+				else
+					ownedByCurrentWorkspace = true;
+
+				field = "ownedByCurrentWorkspace";
+				encodingJobRoot[field] = ownedByCurrentWorkspace;
+
+
                 int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
                 
                 field = "encodingJobKey";
                 encodingJobRoot[field] = encodingJobKey;
 
-                field = "ingestionJobKey";
-                encodingJobRoot[field] = resultSetEncodingJob->getInt64("ingestionJobKey");
+				// if (ownedByCurrentWorkspace)
+				{
+					field = "ingestionJobKey";
+					encodingJobRoot[field] = resultSetEncodingJob->getInt64("ingestionJobKey");
+				}
+				/*
+				else
+				{
+					// see comment above (2021-01-29)
+
+					field = "ingestionJobKey";
+					encodingJobRoot[field] = Json::nullValue;
+				}
+				*/
 
                 field = "type";
                 encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
 
+				// if (ownedByCurrentWorkspace)
                 {
                     string parameters = resultSetEncodingJob->getString("parameters");
 
@@ -6535,6 +6591,13 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                     field = "parameters";
                     encodingJobRoot[field] = parametersRoot;
                 }
+				/*
+				else
+				{
+                    field = "parameters";
+					encodingJobRoot[field] = Json::nullValue;
+				}
+				*/
 
                 field = "status";
                 encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));

@@ -6882,6 +6882,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					externalDeliveryURL = parametersRoot.get(field, "").asString();
 			}
 
+			int64_t physicalItemRetentionInMinutes = -1;
+			{
+				string field = "PhysicalItemRetention";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string retention = parametersRoot.get(field, "1d").asString();
+					physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+				}
+			}
+
 			_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata..."
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey)
@@ -6897,6 +6907,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", mmsPartitionUsed: " + to_string(mmsPartitionUsed)
 				+ ", sizeInBytes: " + to_string(sizeInBytes)
 				+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				+ ", physicalItemRetentionInMinutes: " + to_string(physicalItemRetentionInMinutes)
 
 				+ ", videoTracks.size: " + to_string(videoTracks.size())
 				+ ", audioTracks.size: " + to_string(audioTracks.size())
@@ -6935,6 +6946,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                     mmsPartitionUsed,
                     sizeInBytes,
 					encodingProfileKey,
+					physicalItemRetentionInMinutes,
                 
                     // video-audio
 					mediaInfoDetails,
@@ -12065,6 +12077,16 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 				try
 				{
+					int64_t physicalItemRetentionInMinutes = -1;
+					{
+						string field = "PhysicalItemRetention";
+						if (JSONUtils::isMetadataPresent(parametersRoot, field))
+						{
+							string retention = parametersRoot.get(field, "1d").asString();
+							physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+						}
+					}
+
 					unsigned long long mmsAssetSizeInBytes;
 					{
 						bool inCaseOfLinkHasItToBeRead = false;
@@ -12089,6 +12111,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						mmsPartitionIndexUsed,
 						mmsAssetSizeInBytes,
 						-1,	// encodingProfileKey,
+						physicalItemRetentionInMinutes,
 
 						mediaInfoDetails,
 						videoTracks,
@@ -16880,7 +16903,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
         );
 
-        vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
+        vector<tuple<shared_ptr<Workspace>,int64_t, int64_t>> mediaItemKeyOrPhysicalPathKeyToBeRemoved;
         bool moreRemoveToBeDone = true;
 
         while (moreRemoveToBeDone)
@@ -16889,11 +16912,11 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             {
                 int maxMediaItemKeysNumber = 100;
 
-                mediaItemKeyToBeRemoved.clear();
+                mediaItemKeyOrPhysicalPathKeyToBeRemoved.clear();
                 _mmsEngineDBFacade->getExpiredMediaItemKeysCheckingDependencies(
-                    _processorMMS, mediaItemKeyToBeRemoved, maxMediaItemKeysNumber);
+                    _processorMMS, mediaItemKeyOrPhysicalPathKeyToBeRemoved, maxMediaItemKeysNumber);
 
-                if (mediaItemKeyToBeRemoved.size() == 0)
+                if (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() == 0)
                     moreRemoveToBeDone = false;
             }
             catch(runtime_error e)
@@ -16919,42 +16942,52 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 break;
             }
 
-            for (pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey: mediaItemKeyToBeRemoved)
+            for (tuple<shared_ptr<Workspace>,int64_t, int64_t> workspaceMediaItemKeyOrPhysicalPathKey:
+					mediaItemKeyOrPhysicalPathKeyToBeRemoved)
             {
+				shared_ptr<Workspace> workspace;
+				int64_t mediaItemKey;
+				int64_t physicalPathKey;
+
+				tie(workspace, mediaItemKey, physicalPathKey) = workspaceMediaItemKeyOrPhysicalPathKey;
+
                 _logger->info(__FILEREF__ + "Removing because of ContentRetention"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", workspace->_workspaceKey: "
-						+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
-                    + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
-                    + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                    + ", workspace->_name: " + workspace->_name
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", physicalPathKey: " + to_string(physicalPathKey)
                 );
 
                 try
                 {
-                    _mmsStorage->removeMediaItem(_mmsEngineDBFacade, workspaceAndMediaItemKey.second);
+					if (physicalPathKey == -1)
+						_mmsStorage->removeMediaItem(_mmsEngineDBFacade, mediaItemKey);
+					else
+						_mmsStorage->removePhysicalPath(_mmsEngineDBFacade, physicalPathKey);
                 }
                 catch(runtime_error e)
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", workspace->_workspaceKey: "
-							+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
-                        + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
-                        + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                        + ", workspace->_name: " + workspace->_name
+                        + ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+                        + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
                         + ", exception: " + e.what()
                     );
 
 					try
 					{
 						string processorMMSForRetention = "";
-						_mmsEngineDBFacade->updateMediaItem(workspaceAndMediaItemKey.second,
-							processorMMSForRetention);
+						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
 					}
 					catch(runtime_error e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+							+ ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
 							+ ", exception: " + e.what()
 						);
 					}
@@ -16962,7 +16995,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+							+ ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
 							+ ", exception: " + e.what()
 						);
 					}
@@ -16979,23 +17013,23 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", workspace->_workspaceKey: "
-							+ to_string(workspaceAndMediaItemKey.first->_workspaceKey)
-                        + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
-                        + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                        + ", workspace->_name: " + workspace->_name
+						+ ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+						+ ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
                     );
 
 					try
 					{
 						string processorMMSForRetention = "";
-						_mmsEngineDBFacade->updateMediaItem(workspaceAndMediaItemKey.second,
-							processorMMSForRetention);
+						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
 					}
 					catch(runtime_error e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+							+ ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
 							+ ", exception: " + e.what()
 						);
 					}
@@ -17003,7 +17037,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", mediaItemKey: " + to_string(workspaceAndMediaItemKey.second)
+							+ ", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey)
+							+ ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
 							+ ", exception: " + e.what()
 						);
 					}

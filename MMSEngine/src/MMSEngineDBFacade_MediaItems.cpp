@@ -6,8 +6,8 @@
 
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
         string processorMMS,
-        vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
-        int maxMediaItemKeysNumber)
+        vector<tuple<shared_ptr<Workspace>,int64_t, int64_t>>& mediaItemKeyOrPhysicalPathKeyToBeRemoved,
+        int maxEntriesNumber)
 {
     string      lastSQLCommand;
     
@@ -31,36 +31,37 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
             statement->execute(lastSQLCommand);
         }
         
+		// 1. MediaItemKeys expired
         int start = 0;
         bool noMoreRowsReturned = false;
-        while (mediaItemKeyToBeRemoved.size() < maxMediaItemKeysNumber &&
+        while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber &&
                 !noMoreRowsReturned)
         {
             lastSQLCommand = 
-                "select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
+				"select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
 				"DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem where "
-                "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
-                "and processorMMSForRetention is null "
-                "limit ? offset ? for update";
+				"DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
+				"and processorMMSForRetention is null "
+				"limit ? offset ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, maxMediaItemKeysNumber);
+            preparedStatement->setInt(queryParameterIndex++, maxEntriesNumber);
             preparedStatement->setInt(queryParameterIndex++, start);
             
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", maxMediaItemKeysNumber: " + to_string(maxMediaItemKeysNumber)
+				+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
             noMoreRowsReturned = true;
-            start += maxMediaItemKeysNumber;
+            start += maxEntriesNumber;
             while (resultSet->next())
             {
                 noMoreRowsReturned = false;
@@ -80,13 +81,6 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 
                 if (!ingestionDependingOnMediaItemKey)
                 {
-                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-
-                    pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey =
-                            make_pair(workspace, mediaItemKey);
-
-                    mediaItemKeyToBeRemoved.push_back(workspaceAndMediaItemKey);
-
                     {
                         lastSQLCommand = 
                             "update MMS_MediaItem set processorMMSForRetention = ? "
@@ -109,6 +103,11 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 						);
                         if (rowsUpdated != 1)
                         {
+							// may be another processor doing the same activity updates it
+							// Really it should never happen because of the 'for update'
+
+							continue;
+							/*
                             string errorMessage = __FILEREF__ + "no update was done"
                                     + ", processorMMS: " + processorMMS
                                     + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -118,8 +117,16 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                             _logger->error(errorMessage);
 
                             throw runtime_error(errorMessage);
+							*/
                         }
                     }
+
+                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+                    tuple<shared_ptr<Workspace>,int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
+                            make_tuple(workspace, mediaItemKey, -1);
+
+                    mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
                 }
                 else
                 {
@@ -130,6 +137,124 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                         + ", title: " + title
                         + ", ingestionDate: " + ingestionDate
                         + ", retentionInMinutes: " + to_string(retentionInMinutes)
+                    );
+                }
+            }
+        }
+
+		// 1. PhysicalPathKeys expired
+        start = 0;
+        noMoreRowsReturned = false;
+        while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber &&
+                !noMoreRowsReturned)
+        {
+            lastSQLCommand = 
+				"select mi.workspaceKey, mi.mediaItemKey, p.physicalPathKey, mi.ingestionJobKey, "
+				"p.retentionInMinutes, mi.title, "
+				"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+				"from MMS_MediaItem mi, MMS_PhysicalPath p where "
+				"mi.mediaItemKey = p.mediaItemKey "
+				"and p.retentionInMinutes != null "
+				// PhysicalPathKey expired
+				"and DATE_ADD(mi.ingestionDate, INTERVAL p.retentionInMinutes MINUTE) < NOW() "
+				// MediaItemKey not expired
+				"and DATE_ADD(mi.ingestionDate, INTERVAL mi.retentionInMinutes MINUTE) > NOW() "
+				"and processorMMSForRetention is null "
+				"limit ? offset ? for update";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, maxEntriesNumber);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+				+ ", start: " + to_string(start)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            noMoreRowsReturned = true;
+            start += maxEntriesNumber;
+            while (resultSet->next())
+            {
+                noMoreRowsReturned = false;
+                
+                int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+                int64_t workspaceKey = resultSet->getInt64("workspaceKey");
+                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                int64_t physicalPathKey = resultSet->getInt64("physicalPathKey");
+                int64_t physicalPathKeyRetentionInMinutes = resultSet->getInt64("retentionInMinutes");
+                string ingestionDate = resultSet->getString("ingestionDate");
+                string title = resultSet->getString("title");
+                
+                // check if there is still an ingestion depending on the ingestionJobKey
+                bool ingestionDependingOnMediaItemKey = false;
+				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, ingestionJobKey)
+						> 0)
+					ingestionDependingOnMediaItemKey = true;
+
+                if (!ingestionDependingOnMediaItemKey)
+                {
+                    {
+                        lastSQLCommand = 
+                            "update MMS_MediaItem set processorMMSForRetention = ? "
+							"where mediaItemKey = ? and processorMMSForRetention is null";
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
+                        preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, mediaItemKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+                        int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", processorMMS: " + processorMMS
+							+ ", mediaItemKey: " + to_string(mediaItemKey)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+                        if (rowsUpdated != 1)
+                        {
+							// may be another processor doing the same activity updates it
+							// Really it should never happen because of the 'for update'
+
+							continue;
+							/*
+                            string errorMessage = __FILEREF__ + "no update was done"
+                                    + ", processorMMS: " + processorMMS
+                                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+							*/
+                        }
+                    }
+
+                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+                    tuple<shared_ptr<Workspace>,int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
+                            make_tuple(workspace, mediaItemKey, physicalPathKey);
+
+                    mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
+                }
+                else
+                {
+                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
+                        + "ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", title: " + title
+                        + ", ingestionDate: " + ingestionDate
+                        + ", physicalPathKeyRetentionInMinutes: " + to_string(physicalPathKeyRetentionInMinutes)
                     );
                 }
             }
@@ -1114,7 +1239,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         "select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
 						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryTechnology')) as externalDeliveryTechnology, "
 						"JSON_UNQUOTE(JSON_EXTRACT(deliveryInfo, '$.externalDeliveryURL')) as externalDeliveryURL, "
-						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, "
+						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes, "
                         "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = ?";
 
@@ -1250,6 +1375,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         field = "creationDate";
                         profileRoot[field] = static_cast<string>(resultSetProfiles->getString("creationDate"));
+
+                        field = "retentionInMinutes";
+						if (resultSetProfiles->isNull("retentionInMinutes"))
+							profileRoot[field] = Json::nullValue;
+						else
+							profileRoot[field] = resultSetProfiles->getInt64("retentionInMinutes");
 
                         if (contentType == ContentType::Video)
                         {
@@ -4340,7 +4471,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string userData = "";
             string deliveryFileName = "";
             string sContentType;
-            int retentionInMinutes = _contentRetentionInMinutesDefaultValue;
+            int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
             // string encodingProfilesSet;
 
             string field = "Title";
@@ -4382,38 +4513,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string retention = parametersRoot.get(field, "1d").asString();
-                if (retention == "0")
-                    retentionInMinutes = 0;
-                else if (retention.length() > 1)
-                {
-                    switch (retention.back())
-                    {
-                        case 's':   // seconds
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) / 60;
-                            
-                            break;
-                        case 'm':   // minutes
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1));
-                            
-                            break;
-                        case 'h':   // hours
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * 60;
-                            
-                            break;
-                        case 'd':   // days
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * 1440;
-                            
-                            break;
-                        case 'M':   // month
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * (1440 * 30);
-                            
-                            break;
-                        case 'y':   // year
-                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * (1440 * 365);
-                            
-                            break;
-                    }
-                }
+				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
             }
 
             string startPublishing = "NOW";
@@ -4508,7 +4608,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, startPublishing);
             preparedStatement->setString(queryParameterIndex++, endPublishing);
-            preparedStatement->setInt(queryParameterIndex++, retentionInMinutes);
+            preparedStatement->setInt64(queryParameterIndex++, retentionInMinutes);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -4748,6 +4848,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				externalDeliveryURL = parametersRoot.get(field, "").asString();
 		}
 
+		int64_t physicalItemRetentionInMinutes = -1;
+		{
+            string field = "PhysicalItemRetention";
+            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            {
+                string retention = parametersRoot.get(field, "1d").asString();
+				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
+            }
+		}
+
 		int64_t physicalPathKey = -1;
 		{
 			int64_t liveRecordingIngestionJobKey = -1;
@@ -4798,6 +4908,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				mmsPartitionIndexUsed,
 				sizeInBytes,
 				encodingProfileKey,
+				physicalItemRetentionInMinutes,
 
 				// video-audio
 				mediaInfoDetails,
@@ -5157,6 +5268,47 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
     return mediaItemKeyAndPhysicalPathKey;
 }
 
+int64_t MMSEngineDBFacade::parseRetention(string retention)
+
+{
+	int64_t retentionInMinutes = -1;
+
+	if (retention == "0")
+		retentionInMinutes = 0;
+	else if (retention.length() > 1)
+	{
+		switch (retention.back())
+		{
+			case 's':   // seconds
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) / 60;
+
+				break;
+			case 'm':   // minutes
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1));
+
+				break;
+			case 'h':   // hours
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * 60;
+
+				break;
+			case 'd':   // days
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * 1440;
+
+				break;
+			case 'M':   // month
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * (1440 * 30);
+
+				break;
+			case 'y':   // year
+				retentionInMinutes = stoll(retention.substr(0, retention.length() - 1)) * (1440 * 365);
+
+				break;
+		}
+	}
+
+	return retentionInMinutes;
+}
+
 void MMSEngineDBFacade::addExternalUniqueName(
 	shared_ptr<MySQLConnection> conn,
 	int64_t workspaceKey,
@@ -5283,6 +5435,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int mmsPartitionIndexUsed,
         unsigned long long sizeInBytes,
         int64_t encodingProfileKey,
+		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
@@ -5348,6 +5501,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             mmsPartitionIndexUsed,
             sizeInBytes,
             encodingProfileKey,
+			physicalItemRetentionPeriodInMinutes,
 
             // video-audio
 			mediaInfoDetails,
@@ -5576,6 +5730,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int mmsPartitionIndexUsed,
         unsigned long long sizeInBytes,
         int64_t encodingProfileKey,
+		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
 		pair<int64_t, long>& mediaInfoDetails,
@@ -5671,12 +5826,13 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					+ ", encodedFileName: " + encodedFileName
 					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
 					+ ", deliveryInfo: " + deliveryInfo
+					+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
 					);
             lastSQLCommand = 
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
-				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate, retentionInMinutes) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5704,6 +5860,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, deliveryInfo);
+			if (physicalItemRetentionPeriodInMinutes == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, physicalItemRetentionPeriodInMinutes);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -5720,6 +5880,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", deliveryInfo: " + deliveryInfo
+				+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);

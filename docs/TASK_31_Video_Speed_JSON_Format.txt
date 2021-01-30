@@ -49,11 +49,19 @@
 		// The UserData are involved in searches as well
 		"UserData": { },
 
-		// optional: it specifies the retention of the content.
+		// optional: it specifies the retention of the content (MediaItem retention). Once the retention expires,
+		//		content including all his profiles (PhysicalItems) will be removed.
 		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
 		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
 		// By default it is 60m
 		"Retention": "60m",
+
+		// optional: It is possible to specify a specific retention just for the profile (PhysicalItem).
+		//		In this case, if the retention of the profile (PhysicalItem) expires before the retention of the
+		//		content (MediaItem), only the profiles will be removed.
+		//		It has not have sense specifies a PhysicalItem retention greater than the MediaItem retention.
+		//		If it is not specified, only the MediaItem retention is used.
+		"PhysicalItemRetention": "30m".
 
 		// optional
 		"Title": "My title",
