@@ -49,8 +49,13 @@ echo ""
 printf "${RED}"
 read -n 1 -s -r -p "Press any key to continue making the project"
 printf "${NC}"
+
 make
+printf "${RED}"
+echo "rm -rf $deployDirectory/$moduleName"
+printf "${NC}"
 rm -rf $deployDirectory/$moduleName
+read -n 1 -s -r -p "Press any key to continue"
 make install
 
 echo ""
