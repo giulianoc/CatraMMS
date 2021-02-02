@@ -957,7 +957,6 @@ void FFMpeg::encodeContent(
 			// hls or dash
 
 			vector<string> ffmpegArgumentList;
-			ostringstream ffmpegArgumentListStream;
 
 			{
 				bool noErrorIfExists = true;
@@ -1035,19 +1034,20 @@ void FFMpeg::encodeContent(
 
 				ffmpegArgumentList.push_back("/dev/null");
 
+				ostringstream ffmpegArgumentListStreamFirstStep;
 				try
 				{
 					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
-							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+							ostream_iterator<string>(ffmpegArgumentListStreamFirstStep, " "));
 
 					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -1065,7 +1065,7 @@ void FFMpeg::encodeContent(
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
 						;            
 						_logger->error(errorMessage);
 
@@ -1078,7 +1078,7 @@ void FFMpeg::encodeContent(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
@@ -1092,7 +1092,7 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
@@ -1101,7 +1101,7 @@ void FFMpeg::encodeContent(
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamFirstStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
@@ -1136,7 +1136,6 @@ void FFMpeg::encodeContent(
 					+ "/" + manifestFileName;
 
 				ffmpegArgumentList.clear();
-				ffmpegArgumentListStream.clear();
 
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
@@ -1177,6 +1176,7 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 
+				ostringstream ffmpegArgumentListStreamSecondStep;
                 _currentlyAtSecondPass = true;
 				try
 				{
@@ -1184,13 +1184,13 @@ void FFMpeg::encodeContent(
 
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
-							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+							ostream_iterator<string>(ffmpegArgumentListStreamSecondStep, " "));
 
 					_logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -1208,7 +1208,7 @@ void FFMpeg::encodeContent(
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 						;            
 						_logger->error(errorMessage);
 
@@ -1221,7 +1221,7 @@ void FFMpeg::encodeContent(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
@@ -1235,7 +1235,7 @@ void FFMpeg::encodeContent(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
@@ -1244,7 +1244,7 @@ void FFMpeg::encodeContent(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
-							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStreamSecondStep.str()
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
@@ -1322,6 +1322,7 @@ void FFMpeg::encodeContent(
 				addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 
+				ostringstream ffmpegArgumentListStream;
 				try
 				{
 					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -1431,7 +1432,6 @@ void FFMpeg::encodeContent(
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded dir size is 0"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
 
                 _logger->error(errorMessage);
@@ -6699,12 +6699,16 @@ void FFMpeg::liveRecorder(
 		}
 		else if (utcRecordingPeriodEnd <= utcNow)
         {
+			time_t tooLateTime = utcNow - utcRecordingPeriodEnd;
+
             string errorMessage = __FILEREF__ + "LiveRecorder timing. "
 				+ "Too late to start the LiveRecorder"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
                     + ", utcNow: " + to_string(utcNow)
+                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+                    + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+                    + ", tooLateTime: " + to_string(tooLateTime)
             ;
 
             _logger->error(errorMessage);
@@ -6713,14 +6717,16 @@ void FFMpeg::liveRecorder(
         }
 		else
 		{
+			time_t delayTime = utcNow - utcRecordingPeriodStart;
+
             string errorMessage = __FILEREF__ + "LiveRecorder timing. "
 				+ "We are a bit late to start the LiveRecorder, let's start it"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", delay (secs): " + to_string(utcNow - utcRecordingPeriodStart)
-                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
                     + ", utcNow: " + to_string(utcNow)
+                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
                     + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+                    + ", delayTime: " + to_string(delayTime)
             ;
 
             _logger->warn(errorMessage);
@@ -6735,11 +6741,6 @@ void FFMpeg::liveRecorder(
     
 		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S_%s." + outputFileFormat;
-
-	{
-		chrono::system_clock::time_point now = chrono::system_clock::now();
-		utcNow = chrono::system_clock::to_time_t(now);
-	}
 
 	#ifdef __EXECUTE__
 		ffmpegExecuteCommand = 
@@ -6789,8 +6790,22 @@ void FFMpeg::liveRecorder(
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
-		ffmpegArgumentList.push_back("-t");
-		ffmpegArgumentList.push_back(to_string(utcRecordingPeriodEnd - utcNow));
+		{
+			time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
+
+            _logger->info(__FILEREF__ + "LiveRecording timing. "
+				+ "Streaming duration"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", utcNow: " + to_string(utcNow)
+				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+				+ ", streamingDuration: " + to_string(streamingDuration)
+			);
+
+			ffmpegArgumentList.push_back("-t");
+			ffmpegArgumentList.push_back(to_string(streamingDuration));
+		}
 
 		ffmpegArgumentList.push_back("-c:v");
 		ffmpegArgumentList.push_back("copy");
@@ -7544,12 +7559,16 @@ void FFMpeg::liveProxy(
 		}
 		else if (utcProxyPeriodEnd <= utcNow)
         {
+			time_t tooLateTime = utcNow - utcProxyPeriodEnd;
+
             string errorMessage = __FILEREF__ + "LiveProxy timing. "
 				+ "Too late to start the LiveProxy"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
                     + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+                    + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+                    + ", tooLateTime: " + to_string(tooLateTime)
             ;
 
             _logger->error(errorMessage);
@@ -7558,20 +7577,22 @@ void FFMpeg::liveProxy(
         }
 		else
 		{
+			time_t delayTime = utcNow - utcProxyPeriodStart;
+
             string errorMessage = __FILEREF__ + "LiveProxy timing. "
 				+ "We are a bit late to start the LiveProxy, let's start it"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", delay (secs): " + to_string(utcNow - utcProxyPeriodStart)
-                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
                     + ", utcNow: " + to_string(utcNow)
+                    + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
                     + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+                    + ", delayTime: " + to_string(delayTime)
             ;
 
             _logger->warn(errorMessage);
 		}
 	}
-
+	else
 	{
 		chrono::system_clock::time_point now = chrono::system_clock::now();
 		utcNow = chrono::system_clock::to_time_t(now);
@@ -7614,13 +7635,25 @@ void FFMpeg::liveProxy(
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
 		}
-		ffmpegArgumentList.push_back("-i");
-		ffmpegArgumentList.push_back(liveURL);
 		if (timePeriod)
 		{
+			time_t streamingDuration = utcProxyPeriodEnd - utcNow;
+
+            _logger->info(__FILEREF__ + "LiveProxy timing. "
+				+ "Streaming duration"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", utcNow: " + to_string(utcNow)
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", streamingDuration: " + to_string(streamingDuration)
+			);
+
 			ffmpegArgumentList.push_back("-t");
-			ffmpegArgumentList.push_back(to_string(utcProxyPeriodEnd - utcNow));
+			ffmpegArgumentList.push_back(to_string(streamingDuration));
 		}
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(liveURL);
 	}
 
 	if (outputRoots.size() == 0)

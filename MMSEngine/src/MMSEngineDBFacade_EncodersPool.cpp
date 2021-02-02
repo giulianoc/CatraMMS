@@ -1957,7 +1957,7 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 			);
             if (!resultSet->next())
 			{
-				string errorMessage = string("lastEncoderIndexUsed was not found")
+				string errorMessage = string("encodersPool was not found")
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", encodersPoolLabel: " + encodersPoolLabel
 				;

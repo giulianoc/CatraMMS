@@ -22,6 +22,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(
     _logger             = logger;
 	_mmsEngineDBFacade	= mmsEngineDBFacade;
 
+	/*
     Json::Value encodersPools = configuration["ffmpeg"]["hosts"];
     
     for (auto const& encodersPoolName : encodersPools.getMemberNames())
@@ -50,11 +51,13 @@ EncodersLoadBalancer::EncodersLoadBalancer(
         
         _encodersPools[encodersPoolName] = encodersPoolDetails;
     }
+	*/
 }
 
 EncodersLoadBalancer::~EncodersLoadBalancer() {
 }
 
+/*
 string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace,
 	string transcoderToSkip) 
 {
@@ -85,6 +88,7 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
 
     return it->second._encoders[it->second._lastEncoderUsed];
 }
+*/
 
 pair<int64_t, string> EncodersLoadBalancer::getEncoderURL(
 	string encodersPoolLabel, shared_ptr<Workspace> workspace,

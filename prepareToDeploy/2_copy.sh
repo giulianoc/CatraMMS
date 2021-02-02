@@ -5,16 +5,12 @@ date
 version=$(cat ./version.txt)
 
 currentDir=$(pwd)
+moduleName=$(basename $currentDir)
 
-cd /opt/catrasoftware/deploy
-tarFileName=CatraMMS-$version-ubuntu.tar.gz
+linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
 
-rm -rf CatraMMS-$version
-cp -r CatraMMS CatraMMS-$version
-tar cvfz $tarFileName CatraMMS-$version
-rm -rf CatraMMS-$version
+tarFileName=$moduleName-$version-$linuxName.tar.gz
 
-cd $currentDir
 
 echo -n "deploy su mms cloud? " 
 read deploy
@@ -77,6 +73,18 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-transcoder-fr-5"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-5:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-6"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-6:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-7"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-7:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-8"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-8:/opt/catramms
 	date
 
 	echo "cibortv-mms-transcoder-ita-1"

@@ -3673,7 +3673,7 @@ void API::cancelIngestionJob(
 		ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
 		/*
-		 * This parameter was added because of this Scenario:
+		 * This forceCancel parameter was added because of this Scenario:
 		 *	1. Live proxy ingestion job.
 		 *	2. the ffmpeg command will never start, may be because of a wrong url
 		 *	In this scenario there is no way to cancel the job because:
@@ -3691,6 +3691,18 @@ void API::cancelIngestionJob(
 		 *  For this reason, it would be better to avoid to use the forceCancel parameter because
 		 *  it is set the ingestionJob status to End_CancelledByUser but it could leave
 		 *  the EncoderVideoAudioProxy thread allocated and/or the ffmpeg process running.
+		 *
+		 * This forceCancel parameter is useful in scenarios where we have to force the status
+		 * of the IngestionJob to End_CancelledByUser status.
+		 * In this case it is important to check if there are active associated EncodingJob
+		 * (i.e. ToBeProcessed or Processing) and set them to End_CanceledByUser.
+		 *
+		 * Otherwise the EncodingJob, orphan of the IngestionJob, will remain definitevely
+		 * in this 'active' state creating problems to the Engine.
+		 * Also, these EncodingJobs may have also the processor field set to NULL
+		 * (specially in case of ToBeProcessed) and therefore they will not managed 
+		 * by the reset procedure called when the Engine start.
+		 *
 		 *
 		 */
         bool forceCancel = false;
@@ -3730,6 +3742,9 @@ void API::cancelIngestionJob(
 		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
 			MMSEngineDBFacade::IngestionStatus::End_CancelledByUser, 
 			"");
+
+		if (forceCancel)
+			_mmsEngineDBFacade->forceCancelEncodingJob (ingestionJobKey);
 
         string responseBody;
         sendSuccess(request, 200, responseBody);

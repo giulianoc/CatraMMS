@@ -1,0 +1,25 @@
+{
+	"Label" : "MMS_HLS_H264_1500Kb_medium_720p25_AAC_160",
+	"FileFormat" : "hls",
+	"HLS" : 
+	{
+		"SegmentDuration" : 10
+	},
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "high422",
+		"Width" : 1280,
+		"Height" : 720,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 1500,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 23"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
+	}
+}

@@ -1724,6 +1724,8 @@ public:
 		string ingestionErrorMessage = "",
 		bool forceEncodingToBeFailed = false);
 
+	void forceCancelEncodingJob(int64_t ingestionJobKey);
+
     void updateEncodingJobPriority (
         shared_ptr<Workspace> workspace,
         int64_t encodingJobKey,

@@ -21,6 +21,7 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/DateTime.h"
+#include "catralibraries/StringUtils.h"
 #include "FFMPEGEncoder.h"
 #include "MMSStorage.h"
 
@@ -490,27 +491,39 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
+
 		{
 			lock_guard<mutex> locker(*_encodingMutex);
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -646,21 +659,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -796,21 +821,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -946,21 +983,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -1096,21 +1145,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -1246,21 +1307,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -1396,21 +1469,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<Encoding>    selectedEncoding;
-			bool                    encodingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
 			{
 				if (!encoding->_running)
 				{
-					encodingFound = true;
-					selectedEncoding = encoding;
-              
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedEncoding = encoding;
+					}
+				}
+				else
+				{
+					if (encoding->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!encodingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -1546,21 +1631,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<LiveRecording>    selectedLiveRecording;
-			bool						liveRecordingFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
 			{
 				if (!liveRecording->_running)
 				{
-					liveRecordingFound = true;
-					selectedLiveRecording = liveRecording;
-
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedLiveRecording = liveRecording;
+					}
+				}
+				else
+				{
+					if (liveRecording->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-			if (!liveRecordingFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -1697,22 +1794,33 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			#ifdef __VECTOR__
 			shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
-			bool                    liveProxyFound = false;
+			bool					freeEncodingFound = false;
+			bool					encodingAlreadyRunning = false;
 			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
 			{
 				if (!liveProxy->_running)
 				{
-					liveProxyFound = true;
-					selectedLiveProxy = liveProxy;
-
-					break;
+					if (!freeEncodingFound)
+					{
+						freeEncodingFound = true;
+						selectedLiveProxy = liveProxy;
+					}
+				}
+				else
+				{
+					if (liveProxy->_encodingJobKey == encodingJobKey)
+						encodingAlreadyRunning = true;
 				}
 			}
-
-			if (!liveProxyFound)
+			if (encodingAlreadyRunning || !freeEncodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-					+ ", " + EncodingIsAlreadyRunning().what();
+				string errorMessage;
+				if (encodingAlreadyRunning)
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + EncodingIsAlreadyRunning().what();
+				else
+					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+						+ ", " + NoEncodingAvailable().what();
 
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -4941,7 +5049,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_recordedFileNamePrefix,
 
 			liveRecording->_channelType,
-			liveURL,
+			StringUtils::trimTabToo(liveURL),
 			listenTimeoutInSeconds,
 
 			userAgent,
@@ -6911,7 +7019,7 @@ void FFMPEGEncoder::liveProxyThread(
 				encodingJobKey,
 				maxWidth,
 				liveProxy->_channelType,
-				liveURL,
+				StringUtils::trimTabToo(liveURL),
 				listenTimeoutInSeconds,
 				userAgent,
 				otherInputOptions,

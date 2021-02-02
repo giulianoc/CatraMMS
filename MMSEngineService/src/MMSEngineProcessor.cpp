@@ -4841,6 +4841,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     LocalAssetIngestionEvent localAssetIngestionEvent)
 {
 
+	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEventThread"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
+
     Json::Value parametersRoot;
     try
     {
@@ -10477,6 +10483,12 @@ void MMSEngineProcessor::liveCutThread(
 {
     try
     {
+		_logger->info(__FILEREF__ + "liveCutThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
 		// string channelType;
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
@@ -11585,12 +11597,12 @@ void MMSEngineProcessor::changeFileFormatThread(
 {
     try 
     {
-        _logger->info(__FILEREF__ + "ChangeFileFormat"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-                
+		_logger->info(__FILEREF__ + "changeFileFormatThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured media to be used to changeFileFormat"
@@ -12262,6 +12274,12 @@ void MMSEngineProcessor::copyContentThread(
 
     try 
     {
+		_logger->info(__FILEREF__ + "copyContentThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         string localPathName = localPath;
         if (localFileName != "")
         {
@@ -12316,7 +12334,6 @@ void MMSEngineProcessor::copyContentThread(
 
         _logger->info(__FILEREF__ + "Coping"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", localPath: " + localPath
@@ -12431,12 +12448,12 @@ void MMSEngineProcessor::extractTracksContentThread(
 {
     try 
     {
-        _logger->info(__FILEREF__ + "Extracting Tracks"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-                
+		_logger->info(__FILEREF__ + "extractTracksContentThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured media to be used to extract a track"
@@ -12757,6 +12774,12 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
     
     try
     {
+		_logger->info(__FILEREF__ + "handleMultiLocalAssetIngestionEventThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         // get files from file system       
         {
             string generatedFrames_BaseFileName = to_string(multiLocalAssetIngestionEvent.getIngestionJobKey());
@@ -13121,13 +13144,18 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
 {
     try
     {
+		_logger->info(__FILEREF__ + "generateAndIngestFramesThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         string field;
         
         if (dependencies.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No video found"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", dependencies.size: " + to_string(dependencies.size());
             _logger->error(errorMessage);
@@ -14005,11 +14033,11 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 {
     try
     {
-        _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
+		_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
 
         if (dependencies.size() < 1)
         {
@@ -14628,11 +14656,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 {
     try
     {
-        _logger->info(__FILEREF__ + "generateAndIngestCutMediaThread"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
 
         if (dependencies.size() != 1)
         {
@@ -16895,14 +16923,14 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
         shared_ptr<long> processorsThreadsNumber)
 {
 
+	_logger->info(__FILEREF__ + "handleContentRetentionEventThread"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
+
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
     {
-        _logger->info(__FILEREF__ + "Content Retention started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-        );
-
         vector<tuple<shared_ptr<Workspace>,int64_t, int64_t>> mediaItemKeyOrPhysicalPathKeyToBeRemoved;
         bool moreRemoveToBeDone = true;
 
@@ -17325,14 +17353,13 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
         shared_ptr<long> processorsThreadsNumber)
 {
     
+	_logger->info(__FILEREF__ + "handleMainAndBackupOfRunnungLiveRecordingHA"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
     {
-        _logger->info(__FILEREF__ + "Received MainAndBackupOfRunnungLiveRecordingHA event"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-        );
-
 		try
 		{
 			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA(_processorMMS);
@@ -17697,6 +17724,11 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 {
     bool downloadingCompleted = false;
 
+	_logger->info(__FILEREF__ + "downloadMediaSourceFileThread"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
 /*
     - aggiungere un timeout nel caso nessun pacchetto è ricevuto entro XXXX seconds
     - per il resume:
@@ -17829,7 +17861,6 @@ RESUMING FILE TRANSFERS
         {
             _logger->info(__FILEREF__ + "Downloading"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", localSourceReferenceURL: " + localSourceReferenceURL
                 + ", attempt: " + to_string(attemptIndex + 1)
@@ -18374,6 +18405,12 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
     try 
     {
+		_logger->info(__FILEREF__ + "ftpUploadMediaSourceThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
                 + ftpServer 
                 + ":" + to_string(ftpPort) 
@@ -18389,7 +18426,6 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
         _logger->info(__FILEREF__ + "FTP Uploading"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
@@ -18751,7 +18787,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
     {
         _logger->info(__FILEREF__ + "postVideoOnFacebookThread"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
@@ -19652,7 +19688,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     {
         _logger->info(__FILEREF__ + "postVideoOnYouTubeThread"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
@@ -20650,6 +20686,12 @@ void MMSEngineProcessor::userHttpCallbackThread(
 	string errorMessage;
 	string sResponse;
 
+	_logger->info(__FILEREF__ + "userHttpCallbackThread"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
+
 	while (!callbackSuccessful && currentRetries < maxRetries)
 	{
 		callbackSuccessful = true;
@@ -20665,7 +20707,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
 
 			_logger->info(__FILEREF__ + "userHttpCallbackThread"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", httpProtocol: " + httpProtocol
 				+ ", httpHostName: " + httpHostName
@@ -21077,6 +21118,12 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 
     try 
     {
+		_logger->info(__FILEREF__ + "moveMediaSourceFileThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         string destBinaryPathName =
 			workspaceIngestionRepository
@@ -21103,7 +21150,6 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
                 
         _logger->info(__FILEREF__ + "Moving"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", destBinaryPathName: " + destBinaryPathName
@@ -21244,6 +21290,12 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 
     try 
     {
+		_logger->info(__FILEREF__ + "copyMediaSourceFileThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         string destBinaryPathName =
 			workspaceIngestionRepository
@@ -21270,7 +21322,6 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 
         _logger->info(__FILEREF__ + "Coping"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", destBinaryPathName: " + destBinaryPathName
@@ -21409,14 +21460,14 @@ void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
         shared_ptr<long> processorsThreadsNumber)
 {
 
+	_logger->info(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread"
+		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	);
+
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
     {
-        _logger->info(__FILEREF__ + "Update Live Recorder Virtual VOD started"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
-        );
-
 		int64_t liveRecorderIngestionJobKey;
 		string liveRecorderConfigurationLabel;
 

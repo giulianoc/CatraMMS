@@ -1137,6 +1137,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 			+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
 			+ ", encodingPriority: " + MMSEngineDBFacade::toString(encodingItem->_encodingPriority)
+			+ ", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged)
 		);
         
         throw MaxEncodingsManagerCapacityReached();

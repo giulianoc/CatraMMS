@@ -19,6 +19,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "API.h"
+#include "catralibraries/StringUtils.h"
 
 
 void API::addYouTubeConf(

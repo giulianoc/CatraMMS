@@ -49,13 +49,15 @@ public:
 		int64_t encoderKeyToBeSkipped);
 
 private:
+	/*
     struct EncodersPoolDetails {
         vector<string>          _encoders;
         int                     _lastEncoderUsed;
     };
-    shared_ptr<spdlog::logger>          _logger;
     
     map<string, EncodersPoolDetails>    _encodersPools;
+	*/
+    shared_ptr<spdlog::logger>          _logger;
 	shared_ptr<MMSEngineDBFacade>		_mmsEngineDBFacade;
 
 	void init();
