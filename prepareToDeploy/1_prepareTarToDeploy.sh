@@ -12,6 +12,11 @@ fi
 tagName=$1
 tagMessage=$2
 
+deployDirectory=/opt/catrasoftware/deploy
+
+currentDir=$(pwd)
+moduleName=$(basename $currentDir)
+
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
@@ -45,6 +50,7 @@ printf "${RED}"
 read -n 1 -s -r -p "Press any key to continue making the project"
 printf "${NC}"
 make
+rm -rf $deployDirectory/$moduleName
 make install
 
 echo ""
