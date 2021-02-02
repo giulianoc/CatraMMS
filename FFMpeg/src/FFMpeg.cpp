@@ -6770,6 +6770,41 @@ void FFMpeg::liveRecorder(
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
 	#else
+		time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
+
+		_logger->info(__FILEREF__ + "LiveRecording timing. "
+			+ "Streaming duration"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", utcNow: " + to_string(utcNow)
+			+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+			+ ", streamingDuration: " + to_string(streamingDuration)
+		);
+		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+		{
+			if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
+			{
+				// 2021-02-02: sceanrio:
+				//	streaming duration is 25 seconds
+				//	timeout: 3600 seconds
+				//	The result is that the process will finish after 3600 seconds, not after 25 seconds
+				//	To avoid that, in this scenario, we will set the timeout equals to streamingDuration
+				_logger->info(__FILEREF__ + "LiveRecorder timing. "
+					+ "Listen timeout in seconds is reduced because max after 'streamingDuration' the process has to finish"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", utcNow: " + to_string(utcNow)
+					+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+					+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+					+ ", streamingDuration: " + to_string(streamingDuration)
+					+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+				);
+
+				listenTimeoutInSeconds = streamingDuration;
+			}
+		}
+
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
 		if (channelType == "IP_MMSAsClient" && userAgent != "")
@@ -6791,18 +6826,6 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		{
-			time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
-
-            _logger->info(__FILEREF__ + "LiveRecording timing. "
-				+ "Streaming duration"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", utcNow: " + to_string(utcNow)
-				+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
-				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
-				+ ", streamingDuration: " + to_string(streamingDuration)
-			);
-
 			ffmpegArgumentList.push_back("-t");
 			ffmpegArgumentList.push_back(to_string(streamingDuration));
 		}
@@ -7601,6 +7624,47 @@ void FFMpeg::liveProxy(
 	// Creating multi outputs: https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs
 	vector<string> ffmpegArgumentList;
 	{
+		time_t streamingDuration = 0;
+
+		if (timePeriod)
+		{
+			streamingDuration = utcProxyPeriodEnd - utcNow;
+
+			_logger->info(__FILEREF__ + "LiveProxy timing. "
+				+ "Streaming duration"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", utcNow: " + to_string(utcNow)
+				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+				+ ", streamingDuration: " + to_string(streamingDuration)
+			);
+
+			if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+			{
+				if (listenTimeoutInSeconds > 0 && listenTimeoutInSeconds > streamingDuration)
+				{
+					// 2021-02-02: sceanrio:
+					//	streaming duration is 25 seconds
+					//	timeout: 3600 seconds
+					//	The result is that the process will finish after 3600 seconds, not after 25 seconds
+					//	To avoid that, in this scenario, we will set the timeout equals to streamingDuration
+					_logger->info(__FILEREF__ + "LiveProxy timing. "
+						+ "Listen timeout in seconds is reduced because max after 'streamingDuration' the process has to finish"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", utcNow: " + to_string(utcNow)
+						+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
+						+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+						+ ", streamingDuration: " + to_string(streamingDuration)
+						+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+					);
+
+					listenTimeoutInSeconds = streamingDuration;
+				}
+			}
+		}
+
 		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 
 		ffmpegArgumentList.push_back("ffmpeg");
@@ -7635,25 +7699,13 @@ void FFMpeg::liveProxy(
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
 		}
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(liveURL);
 		if (timePeriod)
 		{
-			time_t streamingDuration = utcProxyPeriodEnd - utcNow;
-
-            _logger->info(__FILEREF__ + "LiveProxy timing. "
-				+ "Streaming duration"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", utcNow: " + to_string(utcNow)
-				+ ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart)
-				+ ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
-				+ ", streamingDuration: " + to_string(streamingDuration)
-			);
-
 			ffmpegArgumentList.push_back("-t");
 			ffmpegArgumentList.push_back(to_string(streamingDuration));
 		}
-		ffmpegArgumentList.push_back("-i");
-		ffmpegArgumentList.push_back(liveURL);
 	}
 
 	if (outputRoots.size() == 0)
