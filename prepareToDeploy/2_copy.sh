@@ -8,6 +8,8 @@ currentDir=$(pwd)
 moduleName=$(basename $currentDir)
 
 linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
+#linuxName using centos will be "centos", next remove "
+linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 1, length($0) - 1)); else printf("%s", $0) }')
 
 tarFileName=$moduleName-$version-$linuxName.tar.gz
 

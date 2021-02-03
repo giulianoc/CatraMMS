@@ -11936,7 +11936,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	//	For this reason we rollbacked as it was before
 	time_t utcNowCheckToExit = 0;
 	while (!killedByUser && !urlForbidden && !urlNotFound
-		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+		// check on currentAttemptsNumberInCaseOfErrors is done only if there is no timePeriod
+		&& (timePeriod || currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+	)
 	{
 		if (timePeriod)
 		{
@@ -12621,7 +12623,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						}
 						while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
 								< chrono::seconds(waitingSecondsBetweenAttemptsInCaseOfErrors)
-								&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
+						 		&& (timePeriod || currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
 								&& !killedByUser);
 
 						// if (chunksWereNotGenerated)

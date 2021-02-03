@@ -60,8 +60,10 @@
 
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
-		//		Default: 2
-		"MaxAttemptsNumberInCaseOfErrors": 2,
+		//		Remark: this parameter is used ONLY in case TimePeriod is false. If TimePeriod is true
+		//			the tasks tries untile the TimePeriod->End is reached.
+		//		Default: 3
+		"MaxAttemptsNumberInCaseOfErrors": 3,
 
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many seconds LiveProxy has to wait before to try again.
