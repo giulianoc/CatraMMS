@@ -9210,7 +9210,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 
 int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
-	int64_t ingestionJobKey,
+	int64_t ingestionJobKey, string ingestionJobLabel,
 	string channelType,
 	bool highAvailability,
 	string configurationLabel, int64_t confKey, string url,
@@ -9239,6 +9239,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveRecorderJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ingestionJobLabel: " + ingestionJobLabel
             + ", channelType: " + channelType
             + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
@@ -9285,7 +9286,10 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "channelType";
+				string field = "ingestionJobLabel";
+				parametersRoot[field] = ingestionJobLabel;
+
+				field = "channelType";
 				parametersRoot[field] = channelType;
 
 				field = "highAvailability";
@@ -9423,7 +9427,10 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "channelType";
+				string field = "ingestionJobLabel";
+				parametersRoot[field] = ingestionJobLabel;
+
+				field = "channelType";
 				parametersRoot[field] = channelType;
 
 				field = "highAvailability";

@@ -1285,9 +1285,8 @@ public:
 			shared_ptr<MySQLConnection> conn, int64_t ingestionJobKey);
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Workspace>,string, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
-        string processorMMS,
-        int maxIngestionJobs
+        vector<tuple<int64_t, string, shared_ptr<Workspace>,string, string, IngestionType,
+		IngestionStatus>>& ingestionsToBeManaged, string processorMMS, int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck
     );
 
@@ -1657,6 +1656,7 @@ public:
 	int addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		string ingestionJobLabel,
 		string channelType,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,

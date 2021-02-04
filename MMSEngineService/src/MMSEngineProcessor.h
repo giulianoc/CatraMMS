@@ -230,7 +230,7 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
 	void manageLiveRecorder(
-        int64_t ingestionJobKey,
+        int64_t ingestionJobKey, string ingestionJobLabel,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);

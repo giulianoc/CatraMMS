@@ -5823,16 +5823,30 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 			// Title
 			string addContentTitle;
 			{
-				// if (channelType == "IP_MMSAsServer")
+				/*
+				if (channelType == "IP_MMSAsServer")
 				{
 					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
 						"DeliveryCode", 0);
 					addContentTitle = to_string(deliveryCode);
 				}
-				/*
 				else
+				{
+					// 2021-02-03: in this case, we will use the 'ConfigurationLabel' that
+					// it is much better that a code. Who will see the title of the chunks will recognize
+					// easily the recording
 					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
+				}
 				*/
+				string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+				if (ingestionJobLabel == "")
+				{
+					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
+						"DeliveryCode", 0);
+					addContentTitle = to_string(deliveryCode);
+				}
+				else
+					addContentTitle = ingestionJobLabel;
 
 				addContentTitle += " - ";
 
@@ -5843,11 +5857,19 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 					// from utc to local time
 					localtime_r (&utcCurrentRecordedFileCreationTime, &tmDateTime);
 
+					/*
 					sprintf (strCurrentRecordedFileTime,
 						"%04d-%02d-%02d %02d:%02d:%02d",
 						tmDateTime. tm_year + 1900,
 						tmDateTime. tm_mon + 1,
 						tmDateTime. tm_mday,
+						tmDateTime. tm_hour,
+						tmDateTime. tm_min,
+						tmDateTime. tm_sec);
+					*/
+
+					sprintf (strCurrentRecordedFileTime,
+						"%02d:%02d:%02d",
 						tmDateTime. tm_hour,
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);

@@ -3,7 +3,7 @@
 #include "MMSEngineDBFacade.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType,
+        vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
 		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
@@ -68,7 +68,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			// first Live-Proxy (because if we have many many Live-Recorder, Live-Proxy will never start
 			{
 				lastSQLCommand = 
-					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType, "
+					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
+						"ij.ingestionType, "
 						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
@@ -112,6 +113,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				while (resultSet->next())
 				{
 					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+					string ingestionJobLabel	= resultSet->getString("label");
 					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
 					string metaDataContent      = resultSet->getString("metaDataContent");
 					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
@@ -129,8 +131,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					int dependOnSuccess;
 					IngestionStatus ingestionStatusDependency;
 
-					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
-						= ingestionJobToBeManagedInfo;
+					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess,
+						ingestionStatusDependency) = ingestionJobToBeManagedInfo;
 
 					if (ingestionJobToBeManaged)
 					{
@@ -141,9 +143,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                        
 						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-						tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                               = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
-									   ingestionType, ingestionStatus);
+						tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
+							IngestionStatus> ingestionToBeManaged
+                               = make_tuple(ingestionJobKey, ingestionJobLabel, workspace, ingestionDate,
+									   metaDataContent, ingestionType, ingestionStatus);
 
 						ingestionsToBeManaged.push_back(ingestionToBeManaged);
 						liveProxyToBeIngested++;
@@ -170,7 +173,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				int minutesAheadToConsiderLiveRecorder = 15;
 
 				lastSQLCommand = 
-					"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType, "
+					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
+						"ij.ingestionType, "
 						"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
@@ -217,6 +221,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				while (resultSet->next())
 				{
 					int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+					string ingestionJobLabel	= resultSet->getString("label");
 					int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
 					string metaDataContent      = resultSet->getString("metaDataContent");
 					IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
@@ -234,8 +239,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					int dependOnSuccess;
 					IngestionStatus ingestionStatusDependency;
 
-					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
-						= ingestionJobToBeManagedInfo;
+					tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess,
+						ingestionStatusDependency) = ingestionJobToBeManagedInfo;
 
 					if (ingestionJobToBeManaged)
 					{
@@ -246,9 +251,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                        
 						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-						tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                               = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
-									   ingestionType, ingestionStatus);
+						tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
+							IngestionStatus> ingestionToBeManaged = make_tuple(ingestionJobKey,
+								ingestionJobLabel, workspace, ingestionDate, metaDataContent,
+								ingestionType, ingestionStatus);
 
 						ingestionsToBeManaged.push_back(ingestionToBeManaged);
 						liveRecorderToBeIngested++;
@@ -280,7 +286,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					);
 
 					lastSQLCommand = 
-						"select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, "
+						"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, "
 							"ij.status, ij.ingestionType, "
 							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
@@ -336,6 +342,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					while (resultSet->next())
 					{
 						int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+						string ingestionJobLabel	= resultSet->getString("label");
 						int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
 						string metaDataContent      = resultSet->getString("metaDataContent");
 						IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(
@@ -353,8 +360,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						int dependOnSuccess;
 						IngestionStatus ingestionStatusDependency;
 
-						tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency)
-							= ingestionJobToBeManagedInfo;
+						tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess,
+							ingestionStatusDependency) = ingestionJobToBeManagedInfo;
 
 						if (ingestionJobToBeManaged)
 						{
@@ -365,9 +372,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
 							shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-							tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, workspace, ingestionDate, metaDataContent,
-										ingestionType, ingestionStatus);
+							tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
+								IngestionStatus> ingestionToBeManaged = make_tuple(ingestionJobKey,
+									ingestionJobLabel, workspace, ingestionDate, metaDataContent,
+									ingestionType, ingestionStatus);
 
 							ingestionsToBeManaged.push_back(ingestionToBeManaged);
 							othersToBeIngested++;
@@ -392,18 +400,21 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			pointAfterNotLive = chrono::system_clock::now();
         }
 
-        for (tuple<int64_t, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
-            ingestionsToBeManaged)
+        for (tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
+			IngestionStatus>& ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
+			/*
+            string ingestionJobLabel;
             shared_ptr<Workspace> workspace;
             string ingestionDate;
             string metaDataContent;
             string sourceReference;
-            MMSEngineDBFacade::IngestionStatus ingestionStatus;
             MMSEngineDBFacade::IngestionType ingestionType;
+			*/
+            MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-            tie(ingestionJobKey, workspace, ingestionDate, metaDataContent, ingestionType,
+            tie(ingestionJobKey, ignore, ignore, ignore, ignore, ignore,
 					ingestionStatus) = ingestionToBeManaged;
 
             if (ingestionStatus == IngestionStatus::SourceMovingInProgress

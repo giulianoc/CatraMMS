@@ -808,7 +808,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			return;
 		}
 
-        vector<tuple<int64_t,shared_ptr<Workspace>,string, string,
+        vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string,
 			MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
 
@@ -852,13 +852,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
             throw e;
         }
         
-        for (tuple<int64_t, shared_ptr<Workspace>, string, string,
+        for (tuple<int64_t, string, shared_ptr<Workspace>, string, string,
 				MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             try
             {
+                string ingestionJobLabel;
                 shared_ptr<Workspace> workspace;
                 string ingestionDate;
                 string metaDataContent;
@@ -866,12 +867,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 MMSEngineDBFacade::IngestionType ingestionType;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-                tie(ingestionJobKey, workspace, ingestionDate, metaDataContent,
-                        ingestionType, ingestionStatus) = ingestionToBeManaged;
+                tie(ingestionJobKey, ingestionJobLabel, workspace, ingestionDate, metaDataContent,
+					ingestionType, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", ingestionJobLabel: " + ingestionJobLabel
                     + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                     + ", ingestionDate: " + ingestionDate
                     + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
@@ -4187,6 +4189,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
 								manageLiveRecorder(
 									ingestionJobKey, 
+									ingestionJobLabel,
 									ingestionStatus,
 									workspace, 
 									parametersRoot);
@@ -9351,6 +9354,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
 void MMSEngineProcessor::manageLiveRecorder(
         int64_t ingestionJobKey,
+		string ingestionJobLabel,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot
@@ -9737,7 +9741,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			channelType, highAvailability,
+			ingestionJobLabel, channelType, highAvailability,
 			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
