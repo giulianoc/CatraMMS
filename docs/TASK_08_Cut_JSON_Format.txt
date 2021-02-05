@@ -38,8 +38,8 @@
 		//			the EndTime is changed to the duration of the media.
 		//		if FixEndTimeIfOvercomeDuration is set to false
 		//			this task will fail because the cut is not possible to be done
-		//	Default is false
-		"FixEndTimeIfOvercomeDuration": false,
+		//	Default is true
+		"FixEndTimeIfOvercomeDuration": true,
 
 		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
 		"FramesNumber": 10,

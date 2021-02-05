@@ -14853,11 +14853,14 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
         }
 
-        bool fixEndTimeIfOvercomeDuration = false;
+		// 2021-02-05: default is set to true because often we have the error
+		//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
+		//	For this reason this field is set to true by default
+        bool fixEndTimeIfOvercomeDuration = true;
         field = "FixEndTimeIfOvercomeDuration";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, false);
+			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
         }
 
 		/*
