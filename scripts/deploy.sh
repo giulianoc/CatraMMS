@@ -22,8 +22,12 @@ rm -f CatraMMS
 
 sleep 1
 
-echo "tar xvfz CatraMMS-$version-ubuntu.tar.gz"
-tar xvfz CatraMMS-$version-ubuntu.tar.gz
+linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
+#linuxName using centos will be "centos", next remove "
+linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
+
+echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
+tar xvfz CatraMMS-$version-$linuxName.tar.gz
 
 echo "ln -s CatraMMS-$version CatraMMS"
 ln -s CatraMMS-$version CatraMMS
