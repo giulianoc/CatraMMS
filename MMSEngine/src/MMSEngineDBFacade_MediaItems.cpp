@@ -605,6 +605,338 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
     return dependenciesNumber;
 }
 
+Json::Value MMSEngineDBFacade::updateMediaItem (
+	int64_t workspaceKey,
+	int64_t mediaItemKey,
+	string newTitle,
+	string newUserData,
+	int64_t newRetentionInMinutes,
+	bool admin
+	)
+{
+    Json::Value mediaItemRoot;
+    string		lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_MediaItem set title = ?, "
+				"userData = ?, retentionInMinutes = ? "
+                "where mediaItemKey = ?";
+				// 2021-02: in case the user is not the owner and it is a shared workspace
+				//		the workspceke will not match
+                // "where workspaceKey = ? and mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, newTitle);
+			if (newUserData == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, newUserData);
+            preparedStatement->setInt64(queryParameterIndex++, newRetentionInMinutes);
+            // preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newTitle: " + newTitle
+				+ ", newUserData: " + newUserData
+				+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			/*
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", newTitle: " + newTitle
+						+ ", newUserData: " + newUserData
+						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+			*/
+        }
+
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    
+	string uniqueName;
+	int64_t physicalPathKey = -1;
+	vector<int64_t> otherMediaItemsKey;
+	int start = 0;
+	int rows = 1;
+	bool contentTypePresent = false;
+	ContentType contentType;
+	bool startAndEndIngestionDatePresent = false;
+	string startIngestionDate;
+	string endIngestionDate;
+	string title;
+	int liveRecordingChunk = -1;
+	string jsonCondition;
+	vector<string> tagsIn;
+	vector<string> tagsNotIn;
+	string orderBy;
+	string jsonOrderBy;
+
+	Json::Value mediaItemsListRoot = getMediaItemsList (
+		workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
+		otherMediaItemsKey,
+        start, rows,
+        contentTypePresent, contentType,
+        startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+        title, liveRecordingChunk, jsonCondition,
+		tagsIn, tagsNotIn,
+        orderBy,
+		jsonOrderBy,
+		admin);
+
+    return mediaItemsListRoot;
+}
+
+Json::Value MMSEngineDBFacade::updatePhysicalPath (
+	int64_t workspaceKey,
+	int64_t mediaItemKey,
+	int64_t physicalPathKey,
+	int64_t newRetentionInMinutes,
+	bool admin
+	)
+{
+    Json::Value mediaItemRoot;
+    string		lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_PhysicalPath set retentionInMinutes = ? "
+                "where physicalPathKey = ? and mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+			if (newRetentionInMinutes == -1)
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+			else
+				preparedStatement->setInt64(queryParameterIndex++, newRetentionInMinutes);
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+				+ ", physicalPathKey: " + to_string(physicalPathKey)
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			/*
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", physicalPathKey: " + to_string(physicalPathKey)
+						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+			*/
+        }
+
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    
+	string uniqueName;
+	int64_t localPhysicalPathKey = -1;
+	vector<int64_t> otherMediaItemsKey;
+	int start = 0;
+	int rows = 1;
+	bool contentTypePresent = false;
+	ContentType contentType;
+	bool startAndEndIngestionDatePresent = false;
+	string startIngestionDate;
+	string endIngestionDate;
+	string title;
+	int liveRecordingChunk = -1;
+	string jsonCondition;
+	vector<string> tagsIn;
+	vector<string> tagsNotIn;
+	string orderBy;
+	string jsonOrderBy;
+
+	Json::Value mediaItemsListRoot = getMediaItemsList (
+		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey,
+		otherMediaItemsKey,
+        start, rows,
+        contentTypePresent, contentType,
+        startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+        title, liveRecordingChunk, jsonCondition,
+		tagsIn, tagsNotIn,
+        orderBy,
+		jsonOrderBy,
+		admin);
+
+    return mediaItemsListRoot;
+}
+
 Json::Value MMSEngineDBFacade::getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
 		vector<int64_t>& otherMediaItemsKey,

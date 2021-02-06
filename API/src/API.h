@@ -234,6 +234,20 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody, bool admin);
 
+    void updateMediaItem(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody, bool admin);
+
+    void updatePhysicalPath(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody, bool admin);
+
     void tagsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

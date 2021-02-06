@@ -96,6 +96,10 @@
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/mediaItems/?([0-9]*)/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2&physicalPathKey=$3 last;
 		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/mediaItem/([0-9]+)/?$ /api?version=$1&method=updateMediaItem&mediaItemKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/mediaItem/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=updatePhysicalPath&mediaItemKey=$2&physicalPathKey=$3 last;
+		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/tags/?$ /api?version=$1&method=tagsList last;
 		}

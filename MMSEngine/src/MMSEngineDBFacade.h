@@ -1428,6 +1428,23 @@ public:
 		int64_t encoderKey, bool alsoEncodingJobsFromOtherWorkspaces,
         bool asc, string status, string types);
 
+	Json::Value updateMediaItem (
+		int64_t workspaceKey,
+		int64_t mediaItemKey,
+		string newTitle,
+		string newUserData,
+		int64_t newRetentionInMinutes,
+		bool admin
+	);
+
+	Json::Value updatePhysicalPath (
+		int64_t workspaceKey,
+		int64_t mediaItemKey,
+		int64_t physicalPathKey,
+		int64_t newRetentionInMinutes,
+		bool admin
+	);
+
     Json::Value getMediaItemsList (
         int64_t workspaceKey, 
 		int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,

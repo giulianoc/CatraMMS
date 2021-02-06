@@ -28,6 +28,7 @@ SET (COMMON_SOURCES
 
 SET (SOURCES_API
 	API.cpp
+	API_MediaItem.cpp
 	API_Encoding.cpp
 	API_Ingestion.cpp
 	API_WorkflowLibrary.cpp
