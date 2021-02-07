@@ -7213,7 +7213,7 @@ int MMSEngineDBFacade::addEncodingJob (
     }        
 }
 
-int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
+void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     int64_t mediaItemKey_1, int64_t physicalPathKey_1,
@@ -7657,7 +7657,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     }        
 }
 
-int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
+void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
@@ -8024,7 +8024,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
+void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
@@ -8333,7 +8333,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_SlideShowJob (
+void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     vector<string>& sourcePhysicalPaths,
@@ -8630,7 +8630,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
     }        
 }
 
-int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
+void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	int64_t sourceMediaItemKey,
@@ -8923,7 +8923,7 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
     }        
 }
 
-int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
+void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
@@ -9208,7 +9208,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
     }        
 }
 
-int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
+void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey, string ingestionJobLabel,
 	string channelType,
@@ -9813,7 +9813,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_LiveProxyJob (
+void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string channelType,
@@ -10137,7 +10137,324 @@ int MMSEngineDBFacade::addEncoding_LiveProxyJob (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_LiveGridJob (
+void MMSEngineDBFacade::addEncoding_AwaitingTheBeginningJob (
+	shared_ptr<Workspace> workspace,
+	int64_t ingestionJobKey,
+	string mmsSourcePictureAssetPathName,
+	int64_t utcCountDownEnd,
+	int64_t deliveryCode,
+	int segmentDurationInSeconds, int playlistEntriesNumber,
+	int64_t encodingProfileKey,
+	string manifestDirectoryPath, string manifestFileName, string rtmpUrl,
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
+		{
+			EncodingType encodingType = EncodingType::AwaitingTheBeginning;
+        
+			string parameters;
+			{
+				Json::Value parametersRoot;
+
+				string field = "mmsSourcePictureAssetPathName";
+				parametersRoot[field] = mmsSourcePictureAssetPathName;
+
+				field = "utcCountDownEnd";
+				parametersRoot[field] = utcCountDownEnd;
+
+				field = "deliveryCode";
+				parametersRoot[field] = deliveryCode;
+
+				field = "segmentDurationInSeconds";
+				parametersRoot[field] = segmentDurationInSeconds;
+
+				field = "playlistEntriesNumber";
+				parametersRoot[field] = playlistEntriesNumber;
+
+				field = "encodingProfileKey";
+				parametersRoot[field] = encodingProfileKey;
+
+				field = "manifestDirectoryPath";
+				parametersRoot[field] = manifestDirectoryPath;
+
+				field = "manifestFileName";
+				parametersRoot[field] = manifestFileName;
+
+				field = "rtmpUrl";
+				parametersRoot[field] = rtmpUrl;
+
+				field = "maxAttemptsNumberInCaseOfErrors";
+				parametersRoot[field] = maxAttemptsNumberInCaseOfErrors;
+
+				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
+				Json::StreamWriterBuilder wbuilder;
+				parameters = Json::writeString(wbuilder, parametersRoot);
+			}
+
+			_logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+				+ ", parameters.length: " + to_string(parameters.length()));
+        
+			{
+				// 2019-11-06: we will force the encoding priority to high to be sure this EncodingJob
+				//	will be managed as soon as possible
+				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
+
+				lastSQLCommand = 
+					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
+					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
+					"encoderKey, encodingPid, failuresNumber) values ("
+												"NULL,           ?,               ?,    ?,          ?, "
+					"NOW(),            NULL,           NULL,             ?,      NULL, "
+					"NULL,       NULL,        0)";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+				preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+				preparedStatement->setString(queryParameterIndex++, parameters);
+				preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
+				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingType: " + toString(encodingType)
+					+ ", parameters: " + parameters
+					+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
+					+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+
+			// int64_t encodingJobKey = getLastInsertId(conn);
+        
+			{
+				IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
+				string errorMessage;
+				string processorMMS;
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", IngestionStatus: " + toString(newIngestionStatus)
+					+ ", errorMessage: " + errorMessage
+					+ ", processorMMS: " + processorMMS
+				);                            
+				updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
+			}
+		}
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }        
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "exception doing unborrow"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+				/*
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+				conn = nullptr;
+				*/
+            }
+        }
+        
+        throw e;
+    }
+}
+
+void MMSEngineDBFacade::addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		vector<tuple<int64_t, string, string>>& inputChannels,
@@ -10497,7 +10814,7 @@ int MMSEngineDBFacade::addEncoding_LiveGridJob (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_VideoSpeed (
+void MMSEngineDBFacade::addEncoding_VideoSpeed (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey, int64_t physicalPathKey,
@@ -10846,7 +11163,7 @@ int MMSEngineDBFacade::addEncoding_VideoSpeed (
     }
 }
 
-int MMSEngineDBFacade::addEncoding_PictureInPictureJob (
+void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,

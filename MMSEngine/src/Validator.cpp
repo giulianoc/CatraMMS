@@ -964,6 +964,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Awaiting-The-Beginning")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::AwaitingTheBeginning;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else if (type == "Live-Grid")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveGrid;
@@ -1181,6 +1202,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+    {
+        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
@@ -3624,6 +3650,173 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 				{
 					Json::StreamWriterBuilder wbuilder;
 					string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+	}
+}
+
+void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+        if (validateDependenciesToo)
+        {
+            if (dependencies.size() == 1)
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = dependencies[0];
+
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
+						+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                        + ", referenceMediaItemKey: " + to_string(key)
+                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+    }
+
+    string encodingProfileKeyField = "EncodingProfileKey";
+    string encodingProfileLabelField = "EncodingProfileLabel";
+    if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
+		&& !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
+    {
+        string errorMessage = __FILEREF__ + "Neither of the following fields are present"
+                + ", Field: " + encodingProfileLabelField
+                + ", Field: " + encodingProfileKeyField
+                + ", label: " + label
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+	string channelType = "IP_MMSAsClient";
+
+	{
+		vector<string> mandatoryFields = {
+			"CountDownEnd"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+          
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+
+	{
+		field = "CountDownEnd";
+		string countDownEnd = parametersRoot.get(field, "").asString();
+		time_t utcCountDownEnd = sDateSecondsToUtc(countDownEnd);
+	}
+
+	{
+		field = "OutputType";
+		string outputType;
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			outputType = parametersRoot.get(field, "").asString();
+			if (!isLiveProxyOutputTypeValid(outputType))
+			{
+				string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+					+ ", Field: " + field
+					+ ", outputType: " + outputType
+					+ ", label: " + label
+					;
+				_logger->error(__FILEREF__ + errorMessage);
+        
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (outputType == "HLS")
+		{
+			vector<string> mandatoryFields = {
+				"DeliveryCode"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", Field: " + mandatoryField
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (outputType == "RTMP_Stream")
+		{
+			vector<string> mandatoryFields = {
+				"RtmpUrl"
+			};
+			for (string mandatoryField: mandatoryFields)
+			{
+				if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
             
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
 						+ ", Field: " + mandatoryField

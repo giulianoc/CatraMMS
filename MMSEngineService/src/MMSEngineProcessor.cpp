@@ -4386,6 +4386,108 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+                        {
+                            try
+                            {
+								manageAwaitingTheBeginning(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot,
+									dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
                         {
                             try
@@ -10222,6 +10324,264 @@ void MMSEngineProcessor::manageLiveProxy(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageAwaitingTheBeginning(
+	int64_t ingestionJobKey,
+	MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+		dependencies
+)
+{
+    try
+    {
+		/*
+		 * commented because it will be High by default
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+		*/
+
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong media number for awaitingTheBeginnin"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		string mmsSourcePictureAssetPathName;
+        MMSEngineDBFacade::ContentType referenceContentType;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+        {
+            int64_t key;
+            Validator::DependencyType dependencyType;
+            
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType	= dependencies[0];
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+                int64_t encodingProfileKey = -1;
+                
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+				tie(ignore, mmsSourcePictureAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPath;
+
+				sourceMediaItemKey = key;
+
+				sourcePhysicalPathKey = -1;
+			}
+			else
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPath =
+					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+				tie(mmsSourcePictureAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPath;
+
+				sourcePhysicalPathKey = key;
+            
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+
+				MMSEngineDBFacade::ContentType localContentType;
+				string localTitle;
+				string userData;
+                string ingestionDate;
+				int64_t localIngestionJobKey;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
+						localIngestionJobKey, ignore)
+                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+			}
+		}
+
+		int64_t utcCountDownEnd = -1;
+        {
+			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+
+			string field = "CountDownEnd";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string sCountDownEnd = parametersRoot.get(field, "").asString();
+			utcCountDownEnd = validator.sDateSecondsToUtc(sCountDownEnd);
+		}
+
+		string outputType;
+		int64_t deliveryCode;
+		int segmentDurationInSeconds = 0;
+		int playlistEntriesNumber = 0;
+		int64_t encodingProfileKey = -1;
+		string manifestDirectoryPath;
+		string manifestFileName;
+		string rtmpUrl;
+		{
+			string field = "OutputType";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				outputType = "HLS";
+			else
+				outputType = parametersRoot.get(field, "HLS").asString();
+
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				field = "DeliveryCode";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage =
+						__FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				deliveryCode = parametersRoot.get(field, 0).asInt64();
+
+				field = "SegmentDurationInSeconds";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					segmentDurationInSeconds = 10;
+				else
+					segmentDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+
+				field = "PlaylistEntriesNumber";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					playlistEntriesNumber = 6;
+				else
+					playlistEntriesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+
+				string manifestExtension;
+				if (outputType == "HLS")
+					manifestExtension = "m3u8";
+				else if (outputType == "DASH")
+					manifestExtension = "mpd";
+
+				{
+					manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						workspace);
+
+					manifestFileName = to_string(deliveryCode) + ".m3u8";
+				}
+			}
+			else
+			{
+				field = "RtmpUrl";
+				rtmpUrl = parametersRoot.get(field, "").asString();
+			}
+
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			string contentTypeField = "ContentType";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+
+				_logger->info(__FILEREF__ + "outputRoot encodingProfileKey"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				MMSEngineDBFacade::ContentType contentType;
+				if (JSONUtils::isMetadataPresent(parametersRoot, contentTypeField))
+				{
+					contentType = MMSEngineDBFacade::toContentType(
+						parametersRoot.get(contentTypeField, "").asString());
+
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace, contentType, encodingProfileLabel);
+				}
+				else
+				{
+					bool contentTypeToBeUsed = false;
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+				}
+
+				_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingProfileLabel: " + encodingProfileLabel
+					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
+				);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", Field: " + keyField
+                    + ", Field: " + labelField
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		// the only reason we may have a failure should be in case the image is missing/removed
+		long waitingSecondsBetweenAttemptsInCaseOfErrors = 30;
+		long maxAttemptsNumberInCaseOfErrors = 3;
+
+		_mmsEngineDBFacade->addEncoding_AwaitingTheBeginningJob(workspace, ingestionJobKey,
+			mmsSourcePictureAssetPathName, utcCountDownEnd, deliveryCode,
+			segmentDurationInSeconds, playlistEntriesNumber, encodingProfileKey,
+			manifestDirectoryPath, manifestFileName, rtmpUrl,
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors;
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageAwaitingTheBeginning failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

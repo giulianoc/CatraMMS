@@ -1775,7 +1775,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-    else if (method == "liveProxy" || method == "liveGrid")
+    else if (method == "liveProxy"
+		|| method == "liveGrid"
+		|| method == "awaitingTheBegining"
+	)
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
@@ -1884,7 +1887,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					liveProxyThread.detach();
 				}
-				else // if (method == "liveGrid")
+				else if (method == "liveGrid")
 				{
 					_logger->info(__FILEREF__ + "Creating liveGrid thread"
 						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
@@ -1893,6 +1896,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					thread liveGridThread(&FFMPEGEncoder::liveGridThread,
 						this, selectedLiveProxy, encodingJobKey, requestBody);
 					liveGridThread.detach();
+				}
+				else // if (method == "awaitingTheBeginning")
+				{
+					_logger->info(__FILEREF__ + "Creating awaitingTheBeginning thread"
+						+ ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
+						+ ", requestBody: " + requestBody
+					);
+					thread awaitingTheBeginningThread(&FFMPEGEncoder::awaitingTheBeginningThread,
+						this, selectedLiveProxy, encodingJobKey, requestBody);
+					awaitingTheBeginningThread.detach();
 				}
 
 				#ifdef __VECTOR__
@@ -1938,7 +1951,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "liveProxyThread failed"
+            _logger->error(__FILEREF__ + "liveProxy/liveGrid/awaitingTheBeginning Thread failed"
                 + ", method: " + method
                 + ", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
@@ -7282,6 +7295,434 @@ void FFMPEGEncoder::liveProxyThread(
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
+    }
+    catch(runtime_error e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+		liveProxy->_killedBecauseOfNotWorking = false;
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+		liveProxy->_errorMessage	= errorMessage;
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+
+void FFMPEGEncoder::awaitingTheBeginningThread(
+	// FCGX_Request& request,
+	shared_ptr<LiveProxyAndGrid> liveProxy,
+	int64_t encodingJobKey,
+	string requestBody)
+{
+    string api = "awaitingTheBeginning";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+		liveProxy->_killedBecauseOfNotWorking = false;
+		liveProxy->_errorMessage = "";
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
+        Json::Value awaitingTheBeginningMetadata;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &awaitingTheBeginningMetadata, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		liveProxy->_ingestionJobKey = JSONUtils::asInt64(
+			awaitingTheBeginningMetadata, "ingestionJobKey", -1);
+
+		string outputType;
+		// otherOutputOptions is not used for awaitingTheBeginning
+		string otherOutputOptions;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		string manifestDirectoryPath;
+		string manifestFileName;
+		int segmentDurationInSeconds = -1;
+		int playlistEntriesNumber = -1;
+		bool isVideo = true;
+		string rtmpUrl;
+		{
+			outputType = awaitingTheBeginningMetadata.get("outputType", "").asString();
+
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				// otherOutputOptions is not used by awaitingTheBeginning
+				// otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+				encodingProfileDetailsRoot = awaitingTheBeginningMetadata["encodingProfileDetails"];
+				manifestDirectoryPath = awaitingTheBeginningMetadata.get("manifestDirectoryPath", "").asString();
+				manifestFileName = awaitingTheBeginningMetadata.get("manifestFileName", "").asString();
+				segmentDurationInSeconds = JSONUtils::asInt(awaitingTheBeginningMetadata, "segmentDurationInSeconds", 10);
+				playlistEntriesNumber = JSONUtils::asInt(awaitingTheBeginningMetadata, "playlistEntriesNumber", 5);
+
+				string encodingProfileContentType = awaitingTheBeginningMetadata.get("encodingProfileContentType", "Video").asString();
+
+				isVideo = encodingProfileContentType == "Video" ? true : false;
+			}
+			else if (outputType == "RTMP_Stream")
+			{
+				// otherOutputOptions is not used by awaitingTheBeginning
+				// otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+				encodingProfileDetailsRoot = awaitingTheBeginningMetadata["encodingProfileDetails"];
+				rtmpUrl = awaitingTheBeginningMetadata.get("rtmpUrl", "").asString();
+
+				string encodingProfileContentType = awaitingTheBeginningMetadata.get("encodingProfileContentType", "Video").asString();
+				isVideo = encodingProfileContentType == "Video" ? true : false;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "awaitingTheBegining. Wrong output type"
+					+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", outputType: " + outputType;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		// we will fill liveProxy->_liveProxyOutputRoots just because it is needed to the monitor thread
+		{
+			liveProxy->_liveProxyOutputRoots.clear();
+
+			tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
+				= make_tuple(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,
+					manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl);
+
+			liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
+		}
+
+        string mmsSourcePictureAssetPathName = awaitingTheBeginningMetadata.get("mmsSourcePictureAssetPathName", "").asString();
+		liveProxy->_channelLabel = "";	// awaitingTheBeginningMetadata.get("configurationLabel", "").asString();
+
+		liveProxy->_ingestedParametersRoot = awaitingTheBeginningMetadata["awaitingTheBeginningIngestedParametersRoot"];
+
+		liveProxy->_channelType = ""; // liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
+
+		time_t utcAwaitingTheBeginningEnd = JSONUtils::asInt64(awaitingTheBeginningMetadata, "utcAwaitingTheBeginningEnd", -1);
+
+		liveProxy->_manifestFilePathNames.clear();
+
+		{
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				if (FileIO::directoryExisting(manifestDirectoryPath))
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						);
+						Boolean_t bRemoveRecursively = true;
+						FileIO::removeDirectory(manifestDirectoryPath, bRemoveRecursively);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+					catch(exception e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						// throw e;
+					}
+				}
+
+				liveProxy->_manifestFilePathNames.push_back(manifestDirectoryPath + "/" + manifestFileName);
+			}
+		}
+
+		{
+			liveProxy->_proxyStart = chrono::system_clock::now();
+
+			liveProxy->_ffmpeg->awaitingTheBegining(
+				liveProxy->_ingestionJobKey,
+				encodingJobKey,
+
+				mmsSourcePictureAssetPathName,
+
+				utcAwaitingTheBeginningEnd,
+
+				outputType,
+				encodingProfileDetailsRoot,
+				manifestDirectoryPath,
+				manifestFileName,
+				segmentDurationInSeconds,
+				playlistEntriesNumber,
+				isVideo,
+				rtmpUrl,
+
+				&(liveProxy->_childPid));
+		}
+
+        liveProxy->_running = false;
+        liveProxy->_childPid = 0;
+		liveProxy->_killedBecauseOfNotWorking = false;
+        
+        _logger->info(__FILEREF__ + "_ffmpeg->awaitingTheBegining finished"
+			+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+        );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		liveProxy->_ingestionJobKey = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        liveProxy->_running = false;
+		liveProxy->_ingestionJobKey = 0;
+        liveProxy->_childPid = 0;
+		liveProxy->_manifestFilePathNames.clear();
+		liveProxy->_channelLabel = "";
+		liveProxy->_liveProxyOutputRoots.clear();
+
+		char strDateTime [64];
+		{
+			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			tm tmDateTime;
+			localtime_r (&utcTime, &tmDateTime);
+			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+		}
+		string eWhat = e.what();
+        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser;
+		if (liveProxy->_killedBecauseOfNotWorking)
+		{
+			// it was killed just because it was not working and not because of user
+			// In this case the process has to be restarted soon
+			killedByUser				= false;
+			completedWithError			= true;
+			liveProxy->_killedBecauseOfNotWorking = false;
+		}
+		else
+		{
+			killedByUser				= true;
+		}
+		bool urlForbidden				= false;
+		bool urlNotFound				= false;
+		addEncodingCompleted(liveProxy->_encodingJobKey,
+				completedWithError, liveProxy->_errorMessage, killedByUser,
+				urlForbidden, urlNotFound);
+
+		#ifdef __VECTOR__
+		#else	// __MAP__
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			int erase = _liveProxiesCapability->erase(liveProxy->_encodingJobKey);
+			if (erase)
+				_logger->info(__FILEREF__ + "_liveProxiesCapability->erase"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+			else
+				_logger->error(__FILEREF__ + "_liveProxiesCapability->erase. Key not found"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", erase: " + to_string(erase)
+				);
+		}
+		#endif
     }
     catch(runtime_error e)
     {
