@@ -33,6 +33,7 @@ SET (CONFs
 	mms.cfg
 	crontab.txt
 	satellite_channels_hotbird_zap_2020_12_28.conf
+	partitionInfo.json
 )
 
 install (FILES ${CONFs} DESTINATION conf)

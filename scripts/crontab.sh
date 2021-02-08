@@ -144,6 +144,7 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
+		# retention IngestionRepository for directories is nr. 8
 		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 4 ]
@@ -189,7 +190,8 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/StreamingRepository/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		# retention IngestionRepository for files is nr. 3
+		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/users/*/* -empty -mmin +$timeoutInMinutes -type d -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 9 ]
 	then

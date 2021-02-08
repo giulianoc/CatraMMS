@@ -1,0 +1,5 @@
+{
+	"partitionUsageType": "getDirectoryUsage",
+	"maxStorageUsageInKB": 1500000000
+}
+

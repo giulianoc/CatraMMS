@@ -195,6 +195,7 @@ public:
 
 private:
     shared_ptr<spdlog::logger>  _logger;
+	Json::Value					_configuration;
 
     string                      _hostName;
 
@@ -210,7 +211,7 @@ private:
     // string                      _ingestionRootRepository;
     // string                      _profilesRootRepository;
 
-	unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
+	int								_freeSpaceToLeaveInEachPartitionInMB;
 
 	struct PartitionInfo {
 		// it is without / at the end

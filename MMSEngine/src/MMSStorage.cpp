@@ -14,6 +14,7 @@ MMSStorage::MMSStorage(
 	try
 	{
 		_logger             = logger;
+		_configuration		= configuration;
 
 		_hostName = System::getHostName();
 
@@ -24,7 +25,7 @@ MMSStorage::MMSStorage(
 		if (_storage.size() > 0 && _storage.back() != '/')
 			_storage.push_back('/');
 
-		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 5);
+		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
 		);
@@ -1903,13 +1904,34 @@ string MMSStorage::moveAssetInMMSRepository(
             int64_t mmsPartitionsFreeSizeInKB = (int64_t)
                 ((_mmsPartitionsInfo[_ulCurrentMMSPartitionIndex])._currentFreeSizeInBytes / 1000);
 
+			int localFreeSpaceToLeaveInEachPartitionInMB;
+			{
+				char pMMSPartitionName [64];
+				sprintf(pMMSPartitionName, "%04lu", _ulCurrentMMSPartitionIndex);
+				string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_")
+					+ pMMSPartitionName;
+
+				if (JSONUtils::isMetadataPresent(_configuration["storage"], freeSpaceConfField))
+					localFreeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(
+							_configuration["storage"], freeSpaceConfField, 100);
+				else
+					localFreeSpaceToLeaveInEachPartitionInMB = _freeSpaceToLeaveInEachPartitionInMB;
+				_logger->info(__FILEREF__ + "FreeSpaceToLeaveInEachPartitionInMB"
+					+ ", freeSpaceConfField: " + freeSpaceConfField
+					+ ", _freeSpaceToLeaveInEachPartitionInMB: "
+						+ to_string(_freeSpaceToLeaveInEachPartitionInMB)
+					+ ", localFreeSpaceToLeaveInEachPartitionInMB: "
+						+ to_string(localFreeSpaceToLeaveInEachPartitionInMB)
+				);
+			}
+
             if (mmsPartitionsFreeSizeInKB <=
-                    (_freeSpaceToLeaveInEachPartitionInMB * 1000)) 
+                    (localFreeSpaceToLeaveInEachPartitionInMB * 1000)) 
             {
                 _logger->info(__FILEREF__ + "Partition space too low"
                     + ", _ulCurrentMMSPartitionIndex: " + to_string(_ulCurrentMMSPartitionIndex)
                     + ", mmsPartitionsFreeSizeInKB: " + to_string(mmsPartitionsFreeSizeInKB)
-                    + ", _freeSpaceToLeaveInEachPartitionInMB * 1000: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1000)
+                    + ", localFreeSpaceToLeaveInEachPartitionInMB * 1000: " + to_string(localFreeSpaceToLeaveInEachPartitionInMB * 1000)
                 );
 
                 if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsInfo.size())
@@ -1921,7 +1943,7 @@ string MMSStorage::moveAssetInMMSRepository(
             }
 
             if ((unsigned long long) (mmsPartitionsFreeSizeInKB -
-                    (_freeSpaceToLeaveInEachPartitionInMB * 1000)) >
+                    (localFreeSpaceToLeaveInEachPartitionInMB * 1000)) >
                     (ullFSEntrySizeInBytes / 1000)) 
             {
                 break;
@@ -2241,7 +2263,7 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 	{
 		// ullUsedInKB
 		{
-			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+			chrono::system_clock::time_point startPoint_getDirectoryUsage = chrono::system_clock::now();
 
 			try
 			{
@@ -2263,11 +2285,11 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 				);
 			}
 
-			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			chrono::system_clock::time_point endPoint_getDirectoryUsage = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
 				+ ", usedInBytes: " + to_string(usedInBytes)
 				+ ", @MMS statistics@ - elapsed (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint_getDirectoryUsage - startPoint_getDirectoryUsage).count()) + "@"
 			);
 		}
 
@@ -2289,7 +2311,7 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 		// ullUsedInBytes
 		if (partitionInfo._partitionUsageType == "getDirectoryUsage")
 		{
-			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+			chrono::system_clock::time_point startPoint_getDirectoryUsage = chrono::system_clock::now();
 
 			try
 			{
@@ -2311,11 +2333,11 @@ void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo)
 				);
 			}
 
-			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			chrono::system_clock::time_point endPoint_getDirectoryUsage = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "getDirectoryUsage statistics"
 				+ ", usedInBytes: " + to_string(usedInBytes)
 				+ ", @MMS statistics@ - elapsed (secs): @"
-					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endPoint_getDirectoryUsage - startPoint_getDirectoryUsage).count()) + "@"
 			);
 		}
 
