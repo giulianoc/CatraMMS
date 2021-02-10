@@ -38,10 +38,6 @@ void API::updateMediaItem(
 
     try
     {
-        string newTitle;
-		string newUserData;
-		int64_t newRetentionInMinutes;
-
         int64_t mediaItemKey = -1;
         auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
         if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second == "")
@@ -92,29 +88,44 @@ void API::updateMediaItem(
             throw runtime_error(errorMessage);
         }
 
+		bool titleModified = false;
+        string newTitle;
+		bool userDataModified = false;
+		string newUserData;
+		bool retentionInMinutesModified = false;
+		int64_t newRetentionInMinutes;
+		bool tagsModified = false;
+		Json::Value newTagsRoot;
+
         {
-            vector<string> mandatoryFields = {
-                "Title",
-				"UserData",
-				"RetentionInMinutes"
-            };
-            for (string field: mandatoryFields)
-            {
-                if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-                {
-                    string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
-                    _logger->error(__FILEREF__ + errorMessage);
+			string field = "Title";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				titleModified = true;
+				newTitle = metadataRoot.get("Title", "").asString();
+			}
 
-                    sendError(request, 400, errorMessage);
+			field = "UserData";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				userDataModified = true;
+				newUserData = metadataRoot.get("UserData", "").asString();
+			}
 
-                    throw runtime_error(errorMessage);
-                }
-            }
+			field = "RetentionInMinutes";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				retentionInMinutesModified = true;
+				newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
+			}
 
-            newTitle = metadataRoot.get("Title", "").asString();
-            newUserData = metadataRoot.get("UserData", "").asString();
-            newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
+			field = "Tags";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				tagsModified = true;
+				newTagsRoot = metadataRoot[field];
+			}
+
         }
 
         try
@@ -127,9 +138,10 @@ void API::updateMediaItem(
 			Json::Value mediaItemRoot = _mmsEngineDBFacade->updateMediaItem (
 				workspace->_workspaceKey,
 				mediaItemKey,
-				newTitle,
-				newUserData,
-				newRetentionInMinutes,
+				titleModified, newTitle,
+				userDataModified, newUserData,
+				retentionInMinutesModified, newRetentionInMinutes,
+				tagsModified, newTagsRoot,
 				admin
 			);
 

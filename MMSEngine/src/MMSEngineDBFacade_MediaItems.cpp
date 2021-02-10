@@ -608,9 +608,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 Json::Value MMSEngineDBFacade::updateMediaItem (
 	int64_t workspaceKey,
 	int64_t mediaItemKey,
-	string newTitle,
-	string newUserData,
-	int64_t newRetentionInMinutes,
+	bool titleModified, string newTitle,
+	bool userDataModified, string newUserData,
+	bool retentionInMinutesModified, int64_t newRetentionInMinutes,
+	bool tagsModified, Json::Value tagsRoot,
 	bool admin
 	)
 {
@@ -626,23 +627,52 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		if (titleModified || userDataModified || retentionInMinutesModified)
         {
-            lastSQLCommand = 
-                "update MMS_MediaItem set title = ?, "
-				"userData = ?, retentionInMinutes = ? "
-                "where mediaItemKey = ?";
+			string setSQL;
+
+			if (titleModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "title = ?";
+			}
+
+			if (userDataModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "userData = ?";
+			}
+
+			if (retentionInMinutesModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "retentionInMinutes = ?";
+			}
+			setSQL = "set " + setSQL + " ";
+
+			lastSQLCommand = 
+				string("update MMS_MediaItem ") + setSQL
+				+ "where mediaItemKey = ?";
 				// 2021-02: in case the user is not the owner and it is a shared workspace
 				//		the workspceke will not match
-                // "where workspaceKey = ? and mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
+				// "where workspaceKey = ? and mediaItemKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, newTitle);
-			if (newUserData == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-			else
-				preparedStatement->setString(queryParameterIndex++, newUserData);
-            preparedStatement->setInt64(queryParameterIndex++, newRetentionInMinutes);
+			int queryParameterIndex = 1;
+			if (titleModified)
+				preparedStatement->setString(queryParameterIndex++, newTitle);
+			if (userDataModified)
+			{
+				if (newUserData == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, newUserData);
+			}
+			if (retentionInMinutesModified)
+				preparedStatement->setInt64(queryParameterIndex++, newRetentionInMinutes);
             // preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
@@ -676,7 +706,14 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
                 // throw runtime_error(errorMessage);
             }
 			*/
-        }
+		}
+
+		if (tagsModified)
+		{
+			// we should have a transaction here
+			removeTags(conn, mediaItemKey);
+			addTags(conn, mediaItemKey, tagsRoot);
+		}
 
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4969,43 +5006,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string field = "Tags";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value tags = parametersRoot[field];
-				for (int tagIndex = 0; tagIndex < tags.length(); tagIndex++)
-				{
-					string tag = tags[tagIndex].asString();
-				/*
-				stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
-				while (ssTagsCommaSeparated.good())
-				{
-					string tag;
-					getline(ssTagsCommaSeparated, tag, ',');
-				*/
-
-					tag = StringUtils::trim(tag);
-
-					if (tag == "")
-						continue;
-
-           			lastSQLCommand = 
-               			"insert into MMS_Tag (mediaItemKey, name) values ("
-               			"?, ?)";
-
-           			shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-           			int queryParameterIndex = 1;
-           			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-           			preparedStatement->setString(queryParameterIndex++, tag);
-
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-           			preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", tag: " + tag
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-				}
+				Json::Value tagsRoot = parametersRoot[field];
+				addTags(conn, mediaItemKey, tagsRoot);
 			}
         }
 
@@ -5755,6 +5757,150 @@ void MMSEngineDBFacade::addExternalUniqueName(
 			+ ", mediaItemKey: " + to_string(mediaItemKey)
 			+ ", allowUniqueNameOverride: " + to_string(allowUniqueNameOverride)
 			+ ", uniqueName: " + uniqueName
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineDBFacade::addTags(
+	shared_ptr<MySQLConnection> conn,
+	int64_t mediaItemKey,
+	Json::Value tagsRoot
+)
+{
+	string      lastSQLCommand;
+
+	try
+	{
+		for (int tagIndex = 0; tagIndex < tagsRoot.size(); tagIndex++)
+		{
+			string tag = tagsRoot[tagIndex].asString();
+		/*
+		stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
+		while (ssTagsCommaSeparated.good())
+		{
+			string tag;
+			getline(ssTagsCommaSeparated, tag, ',');
+		*/
+
+			tag = StringUtils::trim(tag);
+
+			if (tag == "")
+				continue;
+
+			lastSQLCommand = 
+				"insert into MMS_Tag (mediaItemKey, name) values ("
+				"?, ?)";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+			conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+			preparedStatement->setString(queryParameterIndex++, tag);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+       			preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", tag: " + tag
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+		}
+	}
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineDBFacade::removeTags(
+	shared_ptr<MySQLConnection> conn,
+	int64_t mediaItemKey
+)
+{
+	string      lastSQLCommand;
+
+	try
+	{
+		lastSQLCommand = 
+			"delete from MMS_Tag where mediaItemKey = ?";
+
+		shared_ptr<sql::PreparedStatement> preparedStatement (
+		conn->_sqlConnection->prepareStatement(lastSQLCommand));
+		int queryParameterIndex = 1;
+		preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+		chrono::system_clock::time_point startSql = chrono::system_clock::now();
+		int rowsUpdated = preparedStatement->executeUpdate();
+		_logger->info(__FILEREF__ + "@SQL statistics@"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - startSql).count()) + "@"
+		);
+		/*
+		if (rowsUpdated != 1)
+		{
+		}
+		*/
+	}
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+			+ ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+			+ ", mediaItemKey: " + to_string(mediaItemKey)
         );
         
         throw e;

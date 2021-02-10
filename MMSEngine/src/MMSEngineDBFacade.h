@@ -1451,9 +1451,10 @@ public:
 	Json::Value updateMediaItem (
 		int64_t workspaceKey,
 		int64_t mediaItemKey,
-		string newTitle,
-		string newUserData,
-		int64_t newRetentionInMinutes,
+		bool titleModified, string newTitle,
+		bool userDataModified, string newUserData,
+		bool retentionInMinutesModified, int64_t newRetentionInMinutes,
+		bool tagsModified, Json::Value tagsRoot,
 		bool admin
 	);
 
@@ -2496,6 +2497,14 @@ private:
         return ((int) 0x8);
     }
 
+	void addTags(
+		shared_ptr<MySQLConnection> conn,
+		int64_t mediaItemKey,
+		Json::Value tagsRoot);
+
+	void removeTags(
+		shared_ptr<MySQLConnection> conn,
+		int64_t mediaItemKey);
 };
 
 #endif /* MMSEngineDBFacade_h */
