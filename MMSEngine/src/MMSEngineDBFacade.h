@@ -301,7 +301,8 @@ public:
 		VideoSpeed			= 9,
 		PictureInPicture	= 10,
 		LiveProxy			= 11,
-		LiveGrid			= 12
+		LiveGrid			= 12,
+		AwaitingTheBeginning	= 13
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -333,6 +334,8 @@ public:
                 return "LiveProxy";
             case EncodingType::LiveGrid:
                 return "LiveGrid";
+            case EncodingType::AwaitingTheBeginning:
+                return "AwaitingTheBeginning";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -369,6 +372,8 @@ public:
             return EncodingType::LiveProxy;
         else if (lowerCase == "livegrid")
             return EncodingType::LiveGrid;
+        else if (lowerCase == "awaitingthebeginning")
+            return EncodingType::AwaitingTheBeginning;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -665,6 +670,15 @@ public:
 			Json::Value								_ingestedParametersRoot;
 		};
 
+		struct AwaitingTheBeginningData {
+			int64_t									_encodingProfileKey;
+			ContentType								_encodingProfileContentType;
+			Json::Value								_encodingProfileDetailsRoot;
+
+			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_ingestedParametersRoot;
+		};
+
 		struct LiveGridData {
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
@@ -684,6 +698,7 @@ public:
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveProxyData>					_liveProxyData;
+		shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
@@ -723,6 +738,7 @@ public:
         LiveProxy				= 26,
         LiveCut					= 27,
         LiveGrid				= 28,
+        AwaitingTheBeginning	= 29,
 
         EmailNotification       = 30,
         MediaCrossReference		= 31,
@@ -793,6 +809,8 @@ public:
 				return "Live-Cut";
 			case IngestionType::LiveGrid:
 				return "Live-Grid";
+			case IngestionType::AwaitingTheBeginning:
+				return "Awaiting-The-Beginning";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -874,6 +892,8 @@ public:
             return IngestionType::LiveCut;
         else if (lowerCase == "live-grid")
             return IngestionType::LiveGrid;
+        else if (lowerCase == "awaiting-the-beginning")
+            return IngestionType::AwaitingTheBeginning;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1598,7 +1618,7 @@ public:
 		string encodingProfileLabel,
 		bool contentTypeToBeUsed = true);
 
-    int addEncodingJob (
+    void addEncodingJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t destEncodingProfileKey,
@@ -1606,7 +1626,7 @@ public:
         int64_t sourcePhysicalPathKey,
         EncodingPriority encodingPriority);
 
-    int addEncoding_OverlayImageOnVideoJob (
+    void addEncoding_OverlayImageOnVideoJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t mediaItemKey_1, int64_t physicalPathKey_1,
@@ -1614,7 +1634,7 @@ public:
         string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
         EncodingPriority encodingPriority);
 
-    int addEncoding_OverlayTextOnVideoJob (
+    void addEncoding_OverlayTextOnVideoJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
@@ -1631,7 +1651,7 @@ public:
         string boxColor,
         int boxPercentageOpacity);
 
-    int addEncoding_GenerateFramesJob (
+    void addEncoding_GenerateFramesJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
@@ -1642,7 +1662,7 @@ public:
         int64_t sourceVideoPhysicalPathKey,
         int64_t videoDurationInMilliSeconds);
 
-    int addEncoding_SlideShowJob (
+    void addEncoding_SlideShowJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
@@ -1650,7 +1670,7 @@ public:
         int outputFrameRate,
         EncodingPriority encodingPriority);
 
-    int addEncoding_FaceRecognitionJob (
+    void addEncoding_FaceRecognitionJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
 		int64_t sourceMediaItemKey,
@@ -1662,7 +1682,7 @@ public:
 		long initialFramesNumberToBeSkipped,
 		bool oneFramePerSecond);
 
-    int addEncoding_FaceIdentificationJob (
+    void addEncoding_FaceIdentificationJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
@@ -1670,7 +1690,7 @@ public:
 		string deepLearnedModelTagsCommaSeparated,
         EncodingPriority encodingPriority);
 
-	int addEncoding_LiveRecorderJob (
+	void addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string ingestionJobLabel,
@@ -1691,7 +1711,7 @@ public:
 		int monitorPlaylistEntriesNumber,
 		int monitorSegmentDurationInSeconds);
 
-	int addEncoding_LiveProxyJob (
+	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string channelType,
@@ -1700,7 +1720,20 @@ public:
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);
 
-	int addEncoding_LiveGridJob (
+	void addEncoding_AwaitingTheBeginningJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		string mmsSourcePictureAssetPathName,
+		int64_t utcIngestionJobStartProcessing,
+		int64_t utcCountDownEnd,
+		int64_t deliveryCode,
+		string outputType,
+		int segmentDurationInSeconds, int playlistEntriesNumber,
+		int64_t encodingProfileKey,
+		string manifestDirectoryPath, string manifestFileName, string rtmpUrl,
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+
+	void addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		vector<tuple<int64_t, string, string>>& inputChannels,
@@ -1710,14 +1743,14 @@ public:
 		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
 
-    int addEncoding_VideoSpeed (
+    void addEncoding_VideoSpeed (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t mediaItemKey, int64_t physicalPathKey,
         VideoSpeedType videoSpeedType, int videoSpeedSize,
         EncodingPriority encodingPriority);
 
-	int addEncoding_PictureInPictureJob (
+	void addEncoding_PictureInPictureJob (
 		shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
 		int64_t mainMediaItemKey, int64_t mainPhysicalPathKey,

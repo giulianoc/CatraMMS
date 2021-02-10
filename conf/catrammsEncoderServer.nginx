@@ -28,6 +28,9 @@
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/awaitingTheBeginning/([0-9]+)/?$ /encoder?version=$1&method=awaitingTheBeginning&encodingJobKey=$2 last;
+		}
+		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {

@@ -161,6 +161,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveProxyURI: " + _ffmpegLiveProxyURI
     );
+    _ffmpegAwaitingTheBeginningURI = _configuration["ffmpeg"].get("awaitingTheBeginningURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->awaitingTheBeginningURI: " + _ffmpegAwaitingTheBeginningURI
+    );
     _ffmpegLiveGridURI = _configuration["ffmpeg"].get("liveGridURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->liveGridURI: " + _ffmpegLiveGridURI
@@ -323,6 +327,10 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
         {
 			killedByUser = liveProxy();
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AwaitingTheBeginning)
+        {
+			killedByUser = awaitingTheBeginning();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveGrid)
         {
@@ -996,6 +1004,13 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
         {
             processLiveProxy(killedByUser);
+            
+            mediaItemKey = -1;
+            encodedPhysicalPathKey = -1;            
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AwaitingTheBeginning)
+        {
+            processAwaitingTheBeginning(killedByUser);
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;            
@@ -13175,6 +13190,1110 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "processLiveProxy failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
+}
+
+bool EncoderVideoAudioProxy::awaitingTheBeginning()
+{
+
+	time_t utcCountDownEnd = -1;
+	{
+		string field = "utcCountDownEnd";
+		utcCountDownEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+	}
+
+	{
+		time_t utcNow;                                                                                            
+
+		{                                                                                                         
+			chrono::system_clock::time_point now = chrono::system_clock::now();                                   
+			utcNow = chrono::system_clock::to_time_t(now);                                                        
+		}
+
+		if (utcCountDownEnd <= utcNow)
+		{
+			string errorMessage = __FILEREF__ + "Too late to activate awaitingTheBeginning"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", utcCountDownEnd: " + to_string(utcCountDownEnd)
+				+ ", utcNow: " + to_string(utcNow)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	bool killedByUser = awaitingTheBeginning_through_ffmpeg();
+	if (killedByUser)
+	{
+		string errorMessage = __FILEREF__ + "Encoding killed by the User"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            ;
+		_logger->warn(errorMessage);
+        
+		throw EncodingKilledByUser();
+	}
+    
+	return killedByUser;
+}
+
+bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
+{
+
+	string encodersPool;
+	long waitingSecondsBetweenAttemptsInCaseOfErrors;
+	long maxAttemptsNumberInCaseOfErrors;
+	time_t utcIngestionJobStartProcessing = -1;
+	time_t utcCountDownEnd = -1;
+	{
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_awaitingTheBeginningData->_ingestedParametersRoot.get(field, "").asString();
+
+        field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 600);
+
+        field = "maxAttemptsNumberInCaseOfErrors";
+        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 2);
+
+		field = "utcIngestionJobStartProcessing";
+		utcIngestionJobStartProcessing = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+		field = "utcCountDownEnd";
+		utcCountDownEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+	}
+
+	bool killedByUser = false;
+	bool urlForbidden = false;
+	bool urlNotFound = false;
+
+	long currentAttemptsNumberInCaseOfErrors = 0;
+
+	long encodingStatusFailures = 0;
+	// 2020-04-19: Reset encodingStatusFailures into DB. That because if we comes from an error/exception
+	//	encodingStatusFailures is > than 0 but we consider here like it is 0 because our variable is set to 0
+	try
+	{
+		_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+		);
+
+		_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+				_encodingItem->_encodingJobKey, 
+				encodingStatusFailures
+		);
+	}
+	catch(...)
+	{
+		_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+		);
+	}
+
+	// 2020-03-11: we saw the following scenarios:
+	//	1. ffmpeg was running
+	//	2. after several hours it failed (1:34 am)
+	//	3. our below loop tried again and this new attempt returned 404 URL NOT FOUND
+	//	4. we exit from this loop
+	//	5. crontab started again it after 15 minutes
+	//	In this scenarios, we have to retry again without waiting the crontab check
+	// 2020-03-12: Removing the urlNotFound management generated duplication of ffmpeg process
+	//	For this reason we rollbacked as it was before
+	time_t utcNowCheckToExit = 0;
+	while (!killedByUser && !urlForbidden && !urlNotFound
+		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
+	)
+	{
+		if (utcNowCheckToExit >= utcCountDownEnd)
+			break;
+
+		string ffmpegEncoderURL;
+		string ffmpegURI = _ffmpegAwaitingTheBeginningURI;
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			if (_encodingItem->_encoderKey == -1)
+			{
+				/*
+				string encoderToSkip;
+				_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+					encodersPool, _encodingItem->_workspace, encoderToSkip);
+				*/
+				int64_t encoderKeyToBeSkipped = -1;
+				pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+					encodersPool, _encodingItem->_workspace,
+					encoderKeyToBeSkipped);
+				tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+
+				_logger->info(__FILEREF__ + "Configuration item"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+					+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+				);
+				// ffmpegEncoderURL = 
+				// 	_ffmpegEncoderProtocol
+				// 	+ "://"
+				// 	+ _currentUsedFFMpegEncoderHost + ":"
+				// 	+ to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
+					+ ffmpegURI
+					+ "/" + to_string(_encodingItem->_encodingJobKey)
+				;
+
+				_logger->info(__FILEREF__ + "AwaitingTheBeginning. Selection of the transcoder. The transcoder is selected by load balancer"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+					+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+				);
+
+				string body;
+				{
+					Json::Value awaitingTheBeginningMetadata;
+
+					awaitingTheBeginningMetadata["ingestionJobKey"] =
+						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+
+					awaitingTheBeginningMetadata["mmsSourcePictureAssetPathName"] =
+						_encodingItem->_encodingParametersRoot.get("mmsSourcePictureAssetPathName", "").asString();
+
+					awaitingTheBeginningMetadata["outputType"] =
+						_encodingItem->_encodingParametersRoot.get("outputType", "").asString();
+					awaitingTheBeginningMetadata["encodingProfileDetails"] =
+						_encodingItem->_awaitingTheBeginningData->_encodingProfileDetailsRoot;
+					awaitingTheBeginningMetadata["manifestDirectoryPath"] =
+						_encodingItem->_encodingParametersRoot.get("manifestDirectoryPath", "").asString();
+					awaitingTheBeginningMetadata["manifestFileName"] =
+						_encodingItem->_encodingParametersRoot.get("manifestFileName", "").asString();
+					awaitingTheBeginningMetadata["segmentDurationInSeconds"] =
+						JSONUtils::asInt(_encodingItem->_encodingParametersRoot, "segmentDurationInSeconds", -1);
+					awaitingTheBeginningMetadata["playlistEntriesNumber"] =
+						JSONUtils::asInt(_encodingItem->_encodingParametersRoot, "playlistEntriesNumber", -1);
+					awaitingTheBeginningMetadata["encodingProfileContentType"] =
+						MMSEngineDBFacade::toString(_encodingItem->_awaitingTheBeginningData->_encodingProfileContentType);
+					awaitingTheBeginningMetadata["rtmpUrl"] =
+						_encodingItem->_encodingParametersRoot.get("rtmpUrl", "").asString();
+
+					awaitingTheBeginningMetadata["utcCountDownEnd"] = utcCountDownEnd;
+					awaitingTheBeginningMetadata["awaitingTheBeginningIngestedParametersRoot"] =
+						_encodingItem->_awaitingTheBeginningData->_ingestedParametersRoot;
+
+					{
+						Json::StreamWriterBuilder wbuilder;
+
+						body = Json::writeString(wbuilder, awaitingTheBeginningMetadata);
+					}
+				}
+
+				list<string> header;
+
+				header.push_back("Content-Type: application/json");
+				{
+					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+					header.push_back(basicAuthorization);
+				}
+            
+				curlpp::Cleanup cleaner;
+				curlpp::Easy request;
+
+				// Setting the URL to retrive.
+				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+				// timeout consistent with nginx configuration (fastcgi_read_timeout)
+				request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
+
+				// if (_ffmpegEncoderProtocol == "https")
+				string httpsPrefix("https");
+				if (ffmpegEncoderURL.size() >= httpsPrefix.size()
+					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
+				{
+					/*
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+					*/
+                                                                                                  
+                
+					/*
+					// cert is stored PEM coded in file... 
+					// since PEM is default, we needn't set it for PEM 
+					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+					curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+					equest.setOpt(sslCertType);
+
+					// set the cert for client authentication
+					// "testcert.pem"
+					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+					curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+					request.setOpt(sslCert);
+					*/
+
+					/*
+					// sorry, for engine we must set the passphrase
+					//   (if the key has one...)
+					// const char *pPassphrase = NULL;
+					if(pPassphrase)
+						curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+					// if we use a key stored in a crypto engine,
+					//   we must set the key type to "ENG"
+					// pKeyType  = "PEM";
+					curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+					// set the private key (file or ID in engine)
+					// pKeyName  = "testkey.pem";
+					curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+					// set the file with the certs vaildating the server
+					// *pCACertFile = "cacert.pem";
+					curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+					*/
+                
+					// disconnect if we can't validate server's cert
+					bool bSslVerifyPeer = false;
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+					request.setOpt(sslVerifyPeer);
+                
+					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+					request.setOpt(sslVerifyHost);
+                
+					// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+				}
+				request.setOpt(new curlpp::options::HttpHeader(header));
+				request.setOpt(new curlpp::options::PostFields(body));
+				request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+				request.setOpt(new curlpp::options::WriteStream(&response));
+
+				_logger->info(__FILEREF__ + "Calling transcoder for AwaitingTheBeginning media file"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+				);
+				responseInitialized = true;
+				request.perform();
+
+				string sResponse = response.str();
+				// LF and CR create problems to the json parser...
+				while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+					sResponse.pop_back();
+
+				Json::Value awaitingTheBeginningContentResponse;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                        sResponse.c_str() + sResponse.size(), 
+                        &awaitingTheBeginningContentResponse, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                            + ", errors: " + errors
+                            + ", sResponse: " + sResponse
+                            ;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}               
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                        + ", sResponse: " + sResponse
+                        + ", e.what(): " + e.what()
+                        ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw e;
+				}
+				catch(...)
+				{
+					string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                        + ", sResponse: " + sResponse
+                        ;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					string field = "error";
+					if (JSONUtils::isMetadataPresent(awaitingTheBeginningContentResponse, field))
+					{
+						string error = awaitingTheBeginningContentResponse.get(field, "XXX").asString();
+                    
+						if (error.find(NoEncodingAvailable().what()) != string::npos)
+						{
+							string errorMessage = string("No Encodings available")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+							_logger->warn(__FILEREF__ + errorMessage);
+
+							throw MaxConcurrentJobsReached();
+						}
+						else
+						{
+							string errorMessage = string("FFMPEGEncoder error")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                                + ", sResponse: " + sResponse
+                                ;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}                        
+					}
+				}
+			}
+			else
+			{
+				_logger->info(__FILEREF__ + "awaitingTheBeginning. Selection of the transcoder. The transcoder is already saved (DB), the encoding should be already running"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encoderKey: " + to_string(_encodingItem->_encoderKey)
+				);
+
+				_currentUsedFFMpegEncoderHost = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
+				// manifestFilePathName = _encodingItem->_stagingEncodedAssetPathName;
+
+				// we have to reset _encodingItem->_encoderKey because in case we will come back
+				// in the above 'while' loop, we have to select another encoder
+				_encodingItem->_encoderKey	= -1;
+
+				// ffmpegEncoderURL = 
+                //     _ffmpegEncoderProtocol
+                //     + "://"
+                //     + _currentUsedFFMpegEncoderHost + ":"
+                //     + to_string(_ffmpegEncoderPort)
+				ffmpegEncoderURL =
+					_currentUsedFFMpegEncoderHost
+                    + ffmpegURI
+                    + "/" + to_string(_encodingItem->_encodingJobKey)
+				;
+			}
+
+			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+			{
+				lock_guard<mutex> locker(*_mtEncodingJobs);
+
+				*_status = EncodingJobStatus::Running;
+			}
+
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+				+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(
+				_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderKey, "");
+
+			/*
+			string manifestDirectoryPathName;
+			if (outputType == "HLS" || outputType == "DASH")
+			{
+				size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+				if (manifestFilePathIndex == string::npos)
+				{
+					string errorMessage = __FILEREF__ + "No manifestDirectoryPath find in the m3u8/mpd file path name"
+							+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", manifestFilePathName: " + manifestFilePathName;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
+			}
+			*/
+
+            // loop waiting the end of the encoding
+            bool encodingFinished = false;
+			bool completedWithError = false;
+			string encodingErrorMessage;
+			// string lastRecordedAssetFileName;
+			chrono::system_clock::time_point startCheckingEncodingStatus = chrono::system_clock::now();
+
+			int encoderNotReachableFailures = 0;
+			int encodingPid;
+			int lastEncodingPid = 0;
+
+			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
+			//  in case the transcoder is down (once I had to upgrade his operative system),
+			//  the engine has to select another encoder and not remain in the next loop indefinitely
+            while(!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
+            // while(!encodingFinished)
+            {
+				this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+
+				try
+				{
+					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
+						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
+						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
+					_logger->info(__FILEREF__ + "getEncodingStatus"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", completedWithError: " + to_string(completedWithError)
+						+ ", urlForbidden: " + to_string(urlForbidden)
+						+ ", urlNotFound: " + to_string(urlNotFound)
+					);
+
+					encoderNotReachableFailures = 0;
+
+					// health check and retention is done by ffmpegEncoder.cpp
+					
+					if (encodingErrorMessage != "")
+					{
+						try
+						{
+							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+								_encodingItem->_ingestionJobKey, encodingErrorMessage);
+						}
+						catch(runtime_error e)
+						{
+							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							);
+						}
+						catch(exception e)
+						{
+							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+								+ ", _ingestionJobKey: " +
+									to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: "
+									+ to_string(_encodingItem->_encodingJobKey)
+							);
+						}
+					}
+
+					if (completedWithError) // || chunksWereNotGenerated)
+					{
+						if (urlForbidden || urlNotFound)	// see my comment at the beginning of the while loop
+						{
+							string errorMessage =
+								__FILEREF__ + "Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"             
+								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+								+ ", encodingErrorMessage: " + encodingErrorMessage
+								;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						currentAttemptsNumberInCaseOfErrors++;
+
+						string errorMessage = __FILEREF__ + "Encoding failed"             
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", encodingErrorMessage: " + encodingErrorMessage
+							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
+						;
+						_logger->error(errorMessage);
+
+						encodingStatusFailures++;
+
+						// in this scenario encodingFinished is true
+
+						_logger->info(__FILEREF__ + "Start waiting loop for the next call"
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+
+						chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
+						chrono::system_clock::time_point now;
+						do
+						{
+							// update EncodingJob failures number to notify the GUI EncodingJob is failing
+							try
+							{
+								_logger->info(__FILEREF__ + "check and update encodingJob FailuresNumber"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+
+								long previousEncodingStatusFailures =
+									_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+										_encodingItem->_encodingJobKey, 
+										encodingStatusFailures);
+								if (previousEncodingStatusFailures < 0)
+								{
+									_logger->info(__FILEREF__ + "AwaitingTheBeginning Killed by user during waiting loop"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+									);
+
+									// when previousEncodingStatusFailures is < 0 means:
+									// 1. the live proxy is not starting (ffmpeg is generating continuously an error)
+									// 2. User killed the encoding through MMS GUI or API
+									// 3. the kill procedure (in API module) was not able to kill the ffmpeg process,
+									//		because it does not exist the process and set the failuresNumber DB field
+									//		to a negative value in order to communicate with this thread 
+									// 4. This thread, when it finds a negative failuresNumber, knows the encoding
+									//		was killed and exit from the loop
+									encodingFinished = true;
+									killedByUser = true;
+								}
+							}
+							catch(...)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+
+							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+
+							now = chrono::system_clock::now();
+						}
+						while (chrono::duration_cast<chrono::seconds>(now - startWaiting)
+								< chrono::seconds(waitingSecondsBetweenAttemptsInCaseOfErrors)
+						 		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
+								&& !killedByUser);
+
+						// if (chunksWereNotGenerated)
+						// 	encodingFinished = true;
+
+						throw runtime_error(errorMessage);
+					}
+					else
+					{
+						// ffmpeg is running successful, we will make sure currentAttemptsNumberInCaseOfErrors is reset
+						currentAttemptsNumberInCaseOfErrors = 0;
+
+						if (encodingStatusFailures > 0)
+						{
+							try
+							{
+								// update EncodingJob failures number to notify the GUI encodingJob is successful
+								encodingStatusFailures = 0;
+
+								_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+
+								int64_t mediaItemKey = -1;
+								int64_t encodedPhysicalPathKey = -1;
+								_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+										_encodingItem->_encodingJobKey, 
+										encodingStatusFailures
+								);
+							}
+							catch(...)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+								);
+							}
+						}
+					}
+
+					// encodingProgress/encodingPid
+					{
+						{
+							time_t utcNow;                                                                    
+
+							{                                                                                 
+								chrono::system_clock::time_point now = chrono::system_clock::now();           
+								utcNow = chrono::system_clock::to_time_t(now);                                
+							}                                                                                 
+                                                                                                              
+							int encodingProgress;                                                             
+                                                                                                              
+							if (utcNow < utcCountDownEnd)      
+								encodingProgress = ((utcNow - utcIngestionJobStartProcessing) * 100) /               
+									(utcCountDownEnd - utcIngestionJobStartProcessing);                        
+							else                                                                              
+								encodingProgress = 100;
+
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+								);
+								_mmsEngineDBFacade->updateEncodingJobProgress (
+									_encodingItem->_encodingJobKey, encodingProgress);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingProgress: " + to_string(encodingProgress)
+								);
+							}
+						}
+
+						if (lastEncodingPid != encodingPid)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "updateEncodingPid"
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", encodingPid: " + to_string(encodingPid)
+								);
+								_mmsEngineDBFacade->updateEncodingPid (
+									_encodingItem->_encodingJobKey, encodingPid);
+
+								lastEncodingPid = encodingPid;
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+									+ ", e.what(): " + e.what()
+								);
+							}
+							catch(exception e)
+							{
+								_logger->error(__FILEREF__ + "updateEncodingPid failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", _encodingPid: " + to_string(encodingPid)
+								);
+							}
+						}
+					}
+
+					/*
+					if (outputType == "HLS" || outputType == "DASH")
+					{
+						bool exceptionInCaseOfError = false;
+
+						for (string segmentPathNameToBeRemoved: chunksTooOldToBeRemoved)
+						{
+							try
+							{
+								_logger->info(__FILEREF__ + "Remove chunk because too old"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
+								FileIO::remove(segmentPathNameToBeRemoved, exceptionInCaseOfError);
+							}
+							catch(runtime_error e)
+							{
+								_logger->error(__FILEREF__ + "remove failed"
+									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+									+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+									+ ", e.what(): " + e.what()
+								);
+							}
+						}
+					}
+					*/
+                }
+				catch(EncoderNotReachable e)
+				{
+					encoderNotReachableFailures++;
+
+					// 2020-11-23. Scenario:
+					//	1. I shutdown the encoder because I had to upgrade OS version
+					//	2. this thread remained in this loop (while(!encodingFinished))
+					//		and the channel did not work until the Encoder was working again
+					//	In this scenario, so when the encoder is not reachable at all, the engine
+					//	has to select a new encoder.
+					//	For this reason we added this EncoderNotReachable catch
+					//	and the encoderNotReachableFailures variable
+
+					_logger->error(__FILEREF__ + "Transcoder is not reachable at all, let's select another encoder"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
+						+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
+						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+					);
+				}
+                catch(...)
+                {
+					_logger->error(__FILEREF__ + "getEncodingStatus failed"
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+					);
+                }
+            }
+            
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+			utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
+
+			{
+				if (utcNowCheckToExit < utcCountDownEnd)
+				{
+					_logger->error(__FILEREF__ + "AwaitingTheBeginning media file completed unexpected"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", still remaining seconds (utcAwaitingTheBeginningEnd - utcNow): "
+							+ to_string(utcCountDownEnd - utcNowCheckToExit)
+						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					);
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "AwaitingTheBeginning media file completed"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+						+ ", encodingFinished: " + to_string(encodingFinished)
+						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+						+ ", killedByUser: " + to_string(killedByUser)
+						+ ", @MMS statistics@ - encodingDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
+						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					);
+				}
+			}
+		}
+		catch(MaxConcurrentJobsReached e)
+		{
+            string errorMessage = string("MaxConcurrentJobsReached")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+                + ", e.what(): " + e.what()
+                ;
+            _logger->warn(__FILEREF__ + errorMessage);
+
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// is finished or not. This task will come back by the MMS system
+            throw e;
+        }
+        catch (curlpp::LogicError& e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+            
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
+        }
+        catch (curlpp::RuntimeError& e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed/runtime_error"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
+        }
+        catch (exception e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+				+ ", response.str(): " + (responseInitialized ? response.str() : "")
+            );
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
+			{
+				encodingStatusFailures++;
+
+				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
+					_encodingItem->_encodingJobKey, 
+					encodingStatusFailures);
+			}
+			catch(...)
+			{
+				_logger->error(__FILEREF__ + "updateEncodingJobFailuresNumber FAILED"
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNowCheckToExit = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
+        }
+	}
+
+	if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
+	{
+		string errorMessage = __FILEREF__ + "Reached the max number of attempts to the URL"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            + ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) 
+            + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) 
+            ;
+		_logger->error(errorMessage);
+        
+		throw EncoderError();
+	}
+
+    return killedByUser;
+}
+
+void EncoderVideoAudioProxy::processAwaitingTheBeginning(bool killedByUser)
+{
+    try
+    {
+		{
+			string errorMessage;
+			string processorMMS;
+			MMSEngineDBFacade::IngestionStatus	newIngestionStatus
+				= MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);
+			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+				errorMessage);
+		}
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processAwaitingTheBeginning failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingParameters: " + _encodingItem->_encodingParameters
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processAwaitingTheBeginning failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)

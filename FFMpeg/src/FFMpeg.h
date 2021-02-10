@@ -342,6 +342,36 @@ public:
 
 		pid_t* pChildPid);
 
+	void awaitingTheBegining(
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+
+        string mmsSourcePictureAssetPathName,
+
+		time_t utcCountDownEnd,
+
+		string text,
+		string textPosition_X_InPixel,
+		string textPosition_Y_InPixel,
+		string fontType,
+		int fontSize,
+		string fontColor,
+		int textPercentageOpacity,
+		bool boxEnable,
+		string boxColor,
+		int boxPercentageOpacity,
+
+		string outputType,
+		Json::Value encodingProfileDetailsRoot,
+		string manifestDirectoryPath,
+		string manifestFileName,
+		int segmentDurationInSeconds,
+		int playlistEntriesNumber,
+		bool isVideo,
+		string rtmpUrl,
+
+		pid_t* pChildPid);
+
 	void liveGrid(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,

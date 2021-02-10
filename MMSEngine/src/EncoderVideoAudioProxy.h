@@ -164,6 +164,7 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     string                              _ffmpegLiveProxyURI;
+    string								_ffmpegAwaitingTheBeginningURI;
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
@@ -262,6 +263,10 @@ private:
 	bool liveProxy();
 	bool liveProxy_through_ffmpeg();
     void processLiveProxy(bool killedByUser);
+
+	bool awaitingTheBeginning();
+	bool awaitingTheBeginning_through_ffmpeg();
+    void processAwaitingTheBeginning(bool killedByUser);
 
 	pair<long,string> getLastYouTubeURLDetails(
 		int64_t ingestionKey,

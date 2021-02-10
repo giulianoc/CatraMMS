@@ -275,6 +275,12 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+	void awaitingTheBeginningThread(
+        // FCGX_Request& request,
+        shared_ptr<LiveProxyAndGrid> liveProxy,
+        int64_t encodingJobKey,
+        string requestBody);
+
 	void liveGridThread(
         // FCGX_Request& request,
         shared_ptr<LiveProxyAndGrid> liveProxy,

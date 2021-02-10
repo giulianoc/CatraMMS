@@ -93,7 +93,7 @@
 		"Ingester": "my ingester",
 
 		// optional
-		"Tags": "my tags",
+		"Tags": [ "tag 1", "tag 2" ],
 
 		// optional
 		"ContentProviderName": "default",

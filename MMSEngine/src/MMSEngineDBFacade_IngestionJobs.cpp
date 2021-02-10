@@ -4863,6 +4863,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::PictureInPicture
                 || ingestionType == IngestionType::LiveProxy
                 || ingestionType == IngestionType::LiveGrid
+                || ingestionType == IngestionType::AwaitingTheBeginning
                 )
         {
 			// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,

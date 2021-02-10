@@ -4969,11 +4969,17 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string field = "Tags";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
+				Json::Value tags = parametersRoot[field];
+				for (int tagIndex = 0; tagIndex < tags.length(); tagIndex++)
+				{
+					string tag = tags[tagIndex].asString();
+				/*
 				stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
 				while (ssTagsCommaSeparated.good())
 				{
 					string tag;
 					getline(ssTagsCommaSeparated, tag, ',');
+				*/
 
 					tag = StringUtils::trim(tag);
 
@@ -4984,7 +4990,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                			"insert into MMS_Tag (mediaItemKey, name) values ("
                			"?, ?)";
 
-           			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+           			shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
            			int queryParameterIndex = 1;
            			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
            			preparedStatement->setString(queryParameterIndex++, tag);
