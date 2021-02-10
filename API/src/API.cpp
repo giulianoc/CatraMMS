@@ -2361,6 +2361,7 @@ void API::createDeliveryAuthorization(
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
 					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
 					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder	// scenario with monitorHLS true
+					&& ingestionType != MMSEngineDBFacade::IngestionType::AwaitingTheBeginning
 				)
 				{
 					string errorMessage = string("ingestionJob is not a LiveProxy")
@@ -2609,6 +2610,133 @@ void API::createDeliveryAuthorization(
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
 						string errorMessage = string("A Live-LiveRecorder Monitor HLS without DeliveryCode cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+
+					string deliveryURI;
+					string liveFileExtension = "m3u8";
+					tuple<string, string, string> liveDeliveryDetails
+						= _mmsStorage->getLiveDeliveryDetails(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						liveFileExtension, requestWorkspace);
+					tie(deliveryURI, ignore, deliveryFileName) =
+						liveDeliveryDetails;
+
+					if (authorizationThroughPath)
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
+
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							if (deliveryURI.size() >= m3u8Suffix.size()
+								&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedPath(uriToBeSigned, expirationTime);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughPath
+							+ "/token_" + md5Base64 + "," + to_string(expirationTime)
+							+ deliveryURI
+						;
+					}
+					else
+					{
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey,
+							clientIPAddress,
+							-1,	// physicalPathKey,
+							deliveryCode,
+							deliveryURI,
+							ttlInSeconds,
+							maxRetries);
+
+						deliveryURL = 
+							_deliveryProtocol
+							+ "://" 
+							+ _deliveryHost_authorizationThroughParameter
+							+ deliveryURI
+							+ "?token=" + to_string(authorizationKey)
+						;
+					}
+
+					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", deliveryCode: " + to_string(deliveryCode)
+						+ ", deliveryURL: " + deliveryURL
+					);
+
+					/*
+					 * old method using the liveURLConfKey ....
+					string field = "ConfigurationLabel";
+					string configurationLabel = ingestionJobRoot.get(field, "").asString();
+					field = "MonitorHLS";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Live-LiveRecorder without MonitorHLS cannot be delivered")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					int64_t liveURLConfKey;
+					bool warningIfMissing = false;
+					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
+						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
+					tie(liveURLConfKey, ignore) = liveURLConfDetails;
+
+					string deliveryURI;
+					string liveFileExtension = "m3u8";
+					tuple<string, string, string> liveDeliveryDetails
+						= _mmsStorage->getLiveDeliveryDetails(
+						_mmsEngineDBFacade, to_string(liveURLConfKey),
+						liveFileExtension, requestWorkspace);
+					tie(deliveryURI, ignore, deliveryFileName) =
+						liveDeliveryDetails;
+
+					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey,
+						clientIPAddress,
+						physicalPathKey,
+						liveURLConfKey,
+						deliveryURI,
+						ttlInSeconds,
+						maxRetries);
+
+					deliveryURL = 
+						_deliveryProtocol
+						+ "://" 
+						+ _deliveryHost
+						+ deliveryURI
+						+ "?token=" + to_string(authorizationKey)
+					;
+					*/
+				}
+				else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
+				{
+					string field = "DeliveryCode";
+					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						string errorMessage = string("A Awaiting-The-Beginning without DeliveryCode cannot be delivered")
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						;
 						_logger->error(__FILEREF__ + errorMessage);

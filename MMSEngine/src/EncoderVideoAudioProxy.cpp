@@ -13256,7 +13256,7 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	time_t utcIngestionJobStartProcessing = -1;
-	time_t utcAwaitingTheBeginningEnd = -1;
+	time_t utcCountDownEnd = -1;
 	{
         string field = "EncodersPool";
         encodersPool = _encodingItem->_awaitingTheBeginningData->_ingestedParametersRoot.get(field, "").asString();
@@ -13270,8 +13270,8 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 		field = "utcIngestionJobStartProcessing";
 		utcIngestionJobStartProcessing = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
 
-		field = "utcAwaitingTheBeginningEnd";
-		utcAwaitingTheBeginningEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		field = "utcCountDownEnd";
+		utcCountDownEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
 	}
 
 	bool killedByUser = false;
@@ -13319,7 +13319,7 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 		&& currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors
 	)
 	{
-		if (utcNowCheckToExit >= utcAwaitingTheBeginningEnd)
+		if (utcNowCheckToExit >= utcCountDownEnd)
 			break;
 
 		string ffmpegEncoderURL;
@@ -13388,11 +13388,11 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 					awaitingTheBeginningMetadata["playlistEntriesNumber"] =
 						JSONUtils::asInt(_encodingItem->_encodingParametersRoot, "playlistEntriesNumber", -1);
 					awaitingTheBeginningMetadata["encodingProfileContentType"] =
-						_encodingItem->_encodingParametersRoot.get("encodingProfileContentType", "").asString();
+						MMSEngineDBFacade::toString(_encodingItem->_awaitingTheBeginningData->_encodingProfileContentType);
 					awaitingTheBeginningMetadata["rtmpUrl"] =
 						_encodingItem->_encodingParametersRoot.get("rtmpUrl", "").asString();
 
-					awaitingTheBeginningMetadata["utcAwaitingTheBeginningEnd"] = utcAwaitingTheBeginningEnd;
+					awaitingTheBeginningMetadata["utcCountDownEnd"] = utcCountDownEnd;
 					awaitingTheBeginningMetadata["awaitingTheBeginningIngestedParametersRoot"] =
 						_encodingItem->_awaitingTheBeginningData->_ingestedParametersRoot;
 
@@ -13563,7 +13563,7 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 
 				{
 					string field = "error";
-					if (JSONUtils::isMetadataPresent(liveProxyContentResponse, field))
+					if (JSONUtils::isMetadataPresent(awaitingTheBeginningContentResponse, field))
 					{
 						string error = awaitingTheBeginningContentResponse.get(field, "XXX").asString();
                     
@@ -13744,7 +13744,6 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 						string errorMessage = __FILEREF__ + "Encoding failed"             
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", configurationLabel: " + configurationLabel
 							+ ", encodingErrorMessage: " + encodingErrorMessage
 							// + ", chunksWereNotGenerated: " + to_string(chunksWereNotGenerated)
 						;
@@ -13867,9 +13866,9 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
                                                                                                               
 							int encodingProgress;                                                             
                                                                                                               
-							if (utcNow < utcAwaitingTheBeginningEnd)      
+							if (utcNow < utcCountDownEnd)      
 								encodingProgress = ((utcNow - utcIngestionJobStartProcessing) * 100) /               
-									(utcAwaitingTheBeginningEnd - utcIngestionJobStartProcessing);                        
+									(utcCountDownEnd - utcIngestionJobStartProcessing);                        
 							else                                                                              
 								encodingProgress = 100;
 
@@ -13978,7 +13977,6 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 					_logger->error(__FILEREF__ + "Transcoder is not reachable at all, let's select another encoder"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
 						+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
 						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
@@ -13990,7 +13988,6 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 					_logger->error(__FILEREF__ + "getEncodingStatus failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", configurationLabel: " + configurationLabel
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 						+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
@@ -14003,14 +14000,14 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 			utcNowCheckToExit = chrono::system_clock::to_time_t(endEncoding);
 
 			{
-				if (utcNowCheckToExit < utcAwaitingTheBeginningEnd)
+				if (utcNowCheckToExit < utcCountDownEnd)
 				{
 					_logger->error(__FILEREF__ + "AwaitingTheBeginning media file completed unexpected"
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", still remaining seconds (utcAwaitingTheBeginningEnd - utcNow): "
-							+ to_string(utcAwaitingTheBeginningEnd - utcNowCheckToExit)
+							+ to_string(utcCountDownEnd - utcNowCheckToExit)
 						+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
 						+ ", encodingFinished: " + to_string(encodingFinished)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
@@ -14034,21 +14031,6 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 					);
 				}
-			}
-			else
-			{
-				_logger->error(__FILEREF__ + "AwaitingTheBeginning media file completed unexpected"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", encodingFinished: " + to_string(encodingFinished)
-                    + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                    + ", killedByUser: " + to_string(killedByUser)
-                    + ", @MMS statistics@ - encodingDuration (secs): @"
-						+ to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
-                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
-				);
 			}
 		}
 		catch(MaxConcurrentJobsReached e)
@@ -14267,7 +14249,6 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) 
             + ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) 
-			+ ", configurationLabel: " + configurationLabel
             ;
 		_logger->error(errorMessage);
         

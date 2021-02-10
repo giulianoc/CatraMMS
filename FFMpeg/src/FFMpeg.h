@@ -348,20 +348,18 @@ public:
 
         string mmsSourcePictureAssetPathName,
 
-		time_t utcEnd,
+		time_t utcCountDownEnd,
 
-		/*
-        string text,
-        string textPosition_X_InPixel,
-        string textPosition_Y_InPixel,
-        string fontType,
-        int fontSize,
-        string fontColor,
-        int textPercentageOpacity,
-        bool boxEnable,
-        string boxColor,
-        int boxPercentageOpacity,
-		*/
+		string text,
+		string textPosition_X_InPixel,
+		string textPosition_Y_InPixel,
+		string fontType,
+		int fontSize,
+		string fontColor,
+		int textPercentageOpacity,
+		bool boxEnable,
+		string boxColor,
+		int boxPercentageOpacity,
 
 		string outputType,
 		Json::Value encodingProfileDetailsRoot,

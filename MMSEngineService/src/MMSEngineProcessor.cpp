@@ -4393,6 +4393,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								manageAwaitingTheBeginning(
 									ingestionJobKey, 
 									ingestionStatus,
+									ingestionDate,
 									workspace, 
 									parametersRoot,
 									dependencies);
@@ -10337,6 +10338,7 @@ void MMSEngineProcessor::manageLiveProxy(
 void MMSEngineProcessor::manageAwaitingTheBeginning(
 	int64_t ingestionJobKey,
 	MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	string ingestionDate,
 	shared_ptr<Workspace> workspace,
 	Json::Value parametersRoot,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
@@ -10440,6 +10442,13 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 			}
 			string sCountDownEnd = parametersRoot.get(field, "").asString();
 			utcCountDownEnd = validator.sDateSecondsToUtc(sCountDownEnd);
+		}
+
+		int64_t utcIngestionJobStartProcessing = -1;
+        {
+			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+
+			utcIngestionJobStartProcessing = validator.sDateSecondsToUtc(ingestionDate);
 		}
 
 		string outputType;
@@ -10562,10 +10571,11 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 		long maxAttemptsNumberInCaseOfErrors = 3;
 
 		_mmsEngineDBFacade->addEncoding_AwaitingTheBeginningJob(workspace, ingestionJobKey,
-			mmsSourcePictureAssetPathName, utcCountDownEnd, deliveryCode,
-			segmentDurationInSeconds, playlistEntriesNumber, encodingProfileKey,
+			mmsSourcePictureAssetPathName, utcIngestionJobStartProcessing, utcCountDownEnd,
+			deliveryCode,
+			outputType, segmentDurationInSeconds, playlistEntriesNumber, encodingProfileKey,
 			manifestDirectoryPath, manifestFileName, rtmpUrl,
-			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors;
+			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
     catch(runtime_error e)
     {

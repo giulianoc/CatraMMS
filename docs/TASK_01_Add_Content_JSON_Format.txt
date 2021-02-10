@@ -112,7 +112,7 @@
 		"Ingester": "aaaa",
 
 		// optional
-		"Tags": "aaa",
+		"Tags": [ "tag 1", "tag 2" ],
 
 		// optional
 		"MD5FileCheckSum": null,

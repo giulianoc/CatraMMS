@@ -1777,7 +1777,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "liveProxy"
 		|| method == "liveGrid"
-		|| method == "awaitingTheBegining"
+		|| method == "awaitingTheBeginning"
 	)
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -7546,7 +7546,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 
 		liveProxy->_channelType = ""; // liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
 
-		time_t utcAwaitingTheBeginningEnd = JSONUtils::asInt64(awaitingTheBeginningMetadata, "utcAwaitingTheBeginningEnd", -1);
+		time_t utcCountDownEnd = JSONUtils::asInt64(awaitingTheBeginningMetadata, "utcCountDownEnd", -1);
 
 		liveProxy->_manifestFilePathNames.clear();
 
@@ -7593,6 +7593,57 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 			}
 		}
 
+		string text;
+		string textPosition_X_InPixel;
+		string textPosition_Y_InPixel;
+		string fontType;
+		int fontSize = -1;
+		string fontColor;
+		int textPercentageOpacity = -1;
+		bool boxEnable = false;
+		string boxColor;
+		int boxPercentageOpacity = -1;
+		{
+			string field = "Text";
+			text = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "TextPosition_X_InPixel";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				textPosition_X_InPixel = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "TextPosition_Y_InPixel";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				textPosition_Y_InPixel = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "FontType";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				fontType = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "FontSize";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				fontSize = JSONUtils::asInt(liveProxy->_ingestedParametersRoot, field, -1);
+
+			field = "FontColor";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				fontColor = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "TextPercentageOpacity";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				textPercentageOpacity = JSONUtils::asInt64(liveProxy->_ingestedParametersRoot, field, -1);
+
+			field = "BoxEnable";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				boxEnable = JSONUtils::asBool(liveProxy->_ingestedParametersRoot, field, false);
+
+			field = "BoxColor";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				boxColor = liveProxy->_ingestedParametersRoot.get(field, "").asString();
+
+			field = "BoxPercentageOpacity";
+			if (JSONUtils::isMetadataPresent(liveProxy->_ingestedParametersRoot, field))
+				boxPercentageOpacity = JSONUtils::asInt64(liveProxy->_ingestedParametersRoot, field, -1);
+		}
+
 		{
 			liveProxy->_proxyStart = chrono::system_clock::now();
 
@@ -7602,7 +7653,18 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 
 				mmsSourcePictureAssetPathName,
 
-				utcAwaitingTheBeginningEnd,
+				utcCountDownEnd,
+
+				text,
+				textPosition_X_InPixel,
+				textPosition_Y_InPixel,
+				fontType,
+				fontSize,
+				fontColor,
+				textPercentageOpacity,
+				boxEnable,
+				boxColor,
+				boxPercentageOpacity,
 
 				outputType,
 				encodingProfileDetailsRoot,

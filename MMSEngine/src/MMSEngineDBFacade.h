@@ -670,6 +670,15 @@ public:
 			Json::Value								_ingestedParametersRoot;
 		};
 
+		struct AwaitingTheBeginningData {
+			int64_t									_encodingProfileKey;
+			ContentType								_encodingProfileContentType;
+			Json::Value								_encodingProfileDetailsRoot;
+
+			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_ingestedParametersRoot;
+		};
+
 		struct LiveGridData {
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
@@ -689,6 +698,7 @@ public:
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
 		shared_ptr<LiveProxyData>					_liveProxyData;
+		shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
     } ;
 
@@ -1608,7 +1618,7 @@ public:
 		string encodingProfileLabel,
 		bool contentTypeToBeUsed = true);
 
-    int addEncodingJob (
+    void addEncodingJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t destEncodingProfileKey,
@@ -1714,8 +1724,10 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		string mmsSourcePictureAssetPathName,
+		int64_t utcIngestionJobStartProcessing,
 		int64_t utcCountDownEnd,
 		int64_t deliveryCode,
+		string outputType,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
 		int64_t encodingProfileKey,
 		string manifestDirectoryPath, string manifestFileName, string rtmpUrl,

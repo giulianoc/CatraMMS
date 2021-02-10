@@ -22,14 +22,62 @@
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
-		// optional. To be set with the EncodersPool label only in case 
-		// a specific encoders pool has to be used
-		"EncodersPool": "",
-
 		// mandatory: it specifies the end of the Awaiting The Beginning task. The countdown
 		//		specified into the video depends on this parameter. His format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"CountDownEnd": "2019-01-21T13:30:00Z",
+
+		// mandatory. The text string to be drawn
+		"Text": "...",
+
+		// optional: the below parameters specify the X and Y in pixel where the text
+		//    has to be overlayed on the video. Default values for both are "0"
+		//    It is possible to specify also a formula using the following variables:
+		//        video_width: width in pixel of the video
+		//        video_height: height in pixel of the video
+		//        text_width: width in pixel of the text (a text may have more than one line)
+		//        text_height: height in pixel of the text (a text may have more than one line)
+		//        line_width: width in pixel of the line
+		//        line_height: height in pixel of the line
+		//        timestampInSeconds: it can be used to change the position of the text based on
+		//              timestamp of the frame
+		// Examples:
+		//    To show the text at the pixel: 100:50:
+		//          "TextPosition_X_InPixel"="100"
+		//          "TextPosition_Y_InPixel"="50"
+		//    To show the text at the center of the video frame:
+		//          "TextPosition_X_InPixel"="(video_width-text_width)/2"
+		//          "TextPosition_Y_InPixel"="(video_height-text_height)/2"
+		//    To show a text line sliding from right to left in the last row of the video frame. The "Text" is assumed to contain a single line with no newlines:
+		//          "TextPosition_X_InPixel"="-50*timestampInSeconds"
+		//          "TextPosition_Y_InPixel"="video_height-line_height"
+		"TextPosition_X_InPixel": "(video_width-text_width)/2",                                  
+		"TextPosition_Y_InPixel": "(video_height-text_height)/2",                                
+
+		// optional. Possible values: ...to be added
+		"FontType": "",
+
+		// optional. The font size to be used for drawing text
+		"FontSize": 24,
+
+		// optional. The color to be used for drawing fonts
+		"FontColor": "yellow",
+
+		// optional
+		"TextPercentageOpacity": 20,
+
+		// optional. Used to draw a box around text
+		"BoxEnable": true,
+
+		// optional. The color to be used for drawing box around text
+		"BoxColor": "red",
+
+		// optional
+		"BoxPercentageOpacity": 20,
+
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
+		"EncodersPool": "",
 
 		// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
 		"OutputType": "HLS",

@@ -244,6 +244,7 @@ private:
 	void manageAwaitingTheBeginning(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
+		string ingestionDate,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
