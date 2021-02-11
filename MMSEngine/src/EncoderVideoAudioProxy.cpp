@@ -8167,6 +8167,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 
                 slideShowMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 slideShowMedatada["durationOfEachSlideInSeconds"] = durationOfEachSlideInSeconds;
+                slideShowMedatada["videoSyncMethod"] = _encodingItem->
+					_encodingParametersRoot.get("videoSyncMethod", "").asString();
                 slideShowMedatada["outputFrameRate"] = outputFrameRate;
                 slideShowMedatada["slideShowMediaPathName"] = slideShowMediaPathName;
                 slideShowMedatada["sourcePhysicalPaths"] = sourcePhysicalPathsRoot;

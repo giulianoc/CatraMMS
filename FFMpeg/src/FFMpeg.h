@@ -447,6 +447,21 @@ private:
     int				_waitingNFSSync_attemptNumber;
     int				_waitingNFSSync_sleepTimeInSeconds;
 
+
+	string getDrawTextVideoFilterDescription(
+		string text,
+		string textPosition_X_InPixel,
+		string textPosition_Y_InPixel,
+		string fontType,
+		int fontSize,
+		string fontColor,
+		int textPercentageOpacity,
+		bool boxEnable,
+		string boxColor,
+		int boxPercentageOpacity,
+		int64_t streamingDurationInSeconds
+	);
+
 	void setStatus(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey = -1,

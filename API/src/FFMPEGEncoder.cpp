@@ -1875,6 +1875,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				selectedLiveProxy->_running = true;
 				selectedLiveProxy->_encodingJobKey = encodingJobKey;
+				selectedLiveProxy->_method = method;
 				selectedLiveProxy->_childPid = 0;
 
 				if (method == "liveProxy")
@@ -7065,6 +7066,7 @@ void FFMPEGEncoder::liveProxyThread(
 		}
 
         liveProxy->_running = false;
+		liveProxy->_method = "";
         liveProxy->_childPid = 0;
 		liveProxy->_killedBecauseOfNotWorking = false;
         
@@ -7109,6 +7111,7 @@ void FFMPEGEncoder::liveProxyThread(
 	catch(FFMpegEncodingKilledByUser e)
 	{
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7176,6 +7179,7 @@ void FFMPEGEncoder::liveProxyThread(
     catch(FFMpegURLForbidden e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7238,6 +7242,7 @@ void FFMPEGEncoder::liveProxyThread(
     catch(FFMpegURLNotFound e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7300,6 +7305,7 @@ void FFMPEGEncoder::liveProxyThread(
     catch(runtime_error e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7362,6 +7368,7 @@ void FFMPEGEncoder::liveProxyThread(
     catch(exception e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7682,6 +7689,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 		}
 
         liveProxy->_running = false;
+		liveProxy->_method = "";
         liveProxy->_childPid = 0;
 		liveProxy->_killedBecauseOfNotWorking = false;
         
@@ -7725,6 +7733,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 	catch(FFMpegEncodingKilledByUser e)
 	{
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7792,6 +7801,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
     catch(runtime_error e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -7854,6 +7864,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
     catch(exception e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8078,6 +8089,7 @@ void FFMPEGEncoder::liveGridThread(
 		*/
 
         liveProxy->_running = false;
+		liveProxy->_method = "";
         liveProxy->_childPid = 0;
 		liveProxy->_killedBecauseOfNotWorking = false;
         
@@ -8122,6 +8134,7 @@ void FFMPEGEncoder::liveGridThread(
 	catch(FFMpegEncodingKilledByUser e)
 	{
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8189,6 +8202,7 @@ void FFMPEGEncoder::liveGridThread(
     catch(FFMpegURLForbidden e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8251,6 +8265,7 @@ void FFMPEGEncoder::liveGridThread(
     catch(FFMpegURLNotFound e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8313,6 +8328,7 @@ void FFMPEGEncoder::liveGridThread(
     catch(runtime_error e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8375,6 +8391,7 @@ void FFMPEGEncoder::liveGridThread(
     catch(exception e)
     {
         liveProxy->_running = false;
+		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
         liveProxy->_childPid = 0;
 		liveProxy->_manifestFilePathNames.clear();
@@ -8912,8 +8929,11 @@ void FFMPEGEncoder::monitorThread()
 								try
 								{
 									// Second health check (HLS/DASH), looks if the frame is increasing
+									// awaitingTheBeginning skips this check because
+									// often takes much time to update the frames
 									int secondsToWaitBetweenSamples = 3;
-									if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+									if (liveProxy->_method != "awaitingTheBeginning"
+											&& !liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
 									{
 										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (HLS/DASH). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)

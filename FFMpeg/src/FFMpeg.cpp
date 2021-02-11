@@ -2410,63 +2410,11 @@ void FFMpeg::overlayTextOnVideo(
                 + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
 
+
         {
-            string ffmpegTextPosition_X_InPixel = 
-                    regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
-            
-            string ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
-
-            string ffmpegDrawTextFilter = string("drawtext=text=") + text;
-            if (textPosition_X_InPixel != "")
-                ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
-            if (textPosition_Y_InPixel != "")
-                ffmpegDrawTextFilter += (":y=" + ffmpegTextPosition_Y_InPixel);               
-            if (fontType != "")
-                ffmpegDrawTextFilter += (":fontfile=" + _ffmpegTtfFontDir + "/" + fontType);
-            if (fontSize != -1)
-                ffmpegDrawTextFilter += (":fontsize=" + to_string(fontSize));
-            if (fontColor != "")
-            {
-                ffmpegDrawTextFilter += (":fontcolor=" + fontColor);                
-                if (textPercentageOpacity != -1)
-                {
-                    char opacity[64];
-                    
-                    sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
-                    
-                    ffmpegDrawTextFilter += ("@" + string(opacity));                
-                }
-            }
-            if (boxEnable)
-            {
-                ffmpegDrawTextFilter += (":box=1");
-                
-                if (boxColor != "")
-                {
-                    ffmpegDrawTextFilter += (":boxcolor=" + boxColor);                
-                    if (boxPercentageOpacity != -1)
-                    {
-                        char opacity[64];
-
-                        sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
-
-                        ffmpegDrawTextFilter += ("@" + string(opacity));                
-                    }
-                }
-            }
+			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity, -1);
 
 		#ifdef __EXECUTE__
             string ffmpegExecuteCommand;
@@ -2788,6 +2736,121 @@ void FFMpeg::overlayTextOnVideo(
     }
 }
 
+string FFMpeg::getDrawTextVideoFilterDescription(
+	string text,
+	string textPosition_X_InPixel,
+	string textPosition_Y_InPixel,
+	string fontType,
+	int fontSize,
+	string fontColor,
+	int textPercentageOpacity,
+	bool boxEnable,
+	string boxColor,
+	int boxPercentageOpacity,
+	int64_t streamingDurationInSeconds
+)
+{
+
+	string ffmpegDrawTextFilter;
+
+	{
+		// see https://ffmpeg.org/ffmpeg-filters.html
+		// see https://ffmpeg.org/ffmpeg-utils.html
+		//
+		// expr_int_format, eif
+		//	Evaluate the expression’s value and output as formatted integer.
+		//	The first argument is the expression to be evaluated, just as for the expr function.
+		//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
+		//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
+		//
+		string ffmpegText = regex_replace(text, regex(":"), "\\:");
+		ffmpegText = regex_replace(ffmpegText,
+			regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
+		ffmpegText = regex_replace(ffmpegText,
+			regex("hours_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/3600),24))\\:d\\:2}");
+		ffmpegText = regex_replace(ffmpegText,
+			regex("mins_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/60),60))\\:d\\:2}");
+		ffmpegText = regex_replace(ffmpegText,
+			regex("secs_counter"), "%{eif\\:trunc(mod(countDownDurationInSecs-t\\,60))\\:d\\:2}");
+		ffmpegText = regex_replace(ffmpegText,
+			regex("cents_counter"), "%{eif\\:(mod(countDownDurationInSecs-t\\,1)*pow(10,2))\\:d\\:2}");
+		if (streamingDurationInSeconds != -1)
+		{
+			ffmpegText = regex_replace(ffmpegText,
+				regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+		}
+
+		/*
+		* -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
+		fontcolor=yellow:fontsize=45:x=100:y=65:
+		text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
+		%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
+		%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
+		%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
+
+		* 5447324 is the countdown duration expressed in seconds
+		*/
+		string ffmpegTextPosition_X_InPixel = 
+			regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
+		ffmpegTextPosition_X_InPixel = 
+			regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w");
+		ffmpegTextPosition_X_InPixel = 
+			regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
+		ffmpegTextPosition_X_InPixel = 
+			regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
+
+		string ffmpegTextPosition_Y_InPixel = 
+			regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
+		ffmpegTextPosition_Y_InPixel = 
+			regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
+		ffmpegTextPosition_Y_InPixel = 
+			regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
+		ffmpegTextPosition_Y_InPixel = 
+			regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
+
+		ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
+		if (textPosition_X_InPixel != "")
+			ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
+		if (textPosition_Y_InPixel != "")
+			ffmpegDrawTextFilter += (":y=" + ffmpegTextPosition_Y_InPixel);               
+		if (fontType != "")
+			ffmpegDrawTextFilter += (":fontfile='" + _ffmpegTtfFontDir + "/" + fontType + "'");
+		if (fontSize != -1)
+			ffmpegDrawTextFilter += (":fontsize=" + to_string(fontSize));
+		if (fontColor != "")
+		{
+			ffmpegDrawTextFilter += (":fontcolor=" + fontColor);                
+			if (textPercentageOpacity != -1)
+			{
+				char opacity[64];
+
+				sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
+
+				ffmpegDrawTextFilter += ("@" + string(opacity));                
+			}
+		}
+		if (boxEnable)
+		{
+			ffmpegDrawTextFilter += (":box=1");
+
+			if (boxColor != "")
+			{
+				ffmpegDrawTextFilter += (":boxcolor=" + boxColor);                
+				if (boxPercentageOpacity != -1)
+				{
+					char opacity[64];
+
+					sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
+
+					ffmpegDrawTextFilter += ("@" + string(opacity));                
+				}
+			}
+		}
+	}
+
+	return ffmpegDrawTextFilter;
+}
+
 void FFMpeg::awaitingTheBegining(
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -3006,95 +3069,10 @@ void FFMpeg::awaitingTheBegining(
 			}
 		}
 
-		string ffmpegDrawTextFilter;
-		{
-			// see https://ffmpeg.org/ffmpeg-filters.html
-			// see https://ffmpeg.org/ffmpeg-utils.html
-			//
-			// expr_int_format, eif
-			//	Evaluate the expression’s value and output as formatted integer.
-			//	The first argument is the expression to be evaluated, just as for the expr function.
-			//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
-			//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
-			//
-            string ffmpegText = regex_replace(text,
-				regex("days_counter"), "%{eif\\:trunc((countDownDurationInSecs-t)/86400)\\:d\\:2}");
-            ffmpegText = regex_replace(ffmpegText,
-				regex("hours_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/3600),24))\\:d\\:2}");
-            ffmpegText = regex_replace(ffmpegText,
-				regex("mins_counter"), "%{eif\\:trunc(mod(((countDownDurationInSecs-t)/60),60))\\:d\\:2}");
-            ffmpegText = regex_replace(ffmpegText,
-				regex("secs_counter"), "%{eif\\:trunc(mod(countDownDurationInSecs-t\\,60))\\:d\\:2}");
-            ffmpegText = regex_replace(ffmpegText,
-				regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
-
-			/*
-			 * -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
-				fontcolor=yellow:fontsize=45:x=100:y=65:
-				text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
-				%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
-				%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
-				%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
-
-			 * 5447324 is the countdown duration expressed in seconds
-			 */
-            string ffmpegTextPosition_X_InPixel = 
-                    regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
-            ffmpegTextPosition_X_InPixel = 
-                    regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
-            
-            string ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
-            ffmpegTextPosition_Y_InPixel = 
-                    regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
-
-            ffmpegDrawTextFilter = string("drawtext=text='") + ffmpegText + "'";
-            if (textPosition_X_InPixel != "")
-                ffmpegDrawTextFilter += (":x=" + ffmpegTextPosition_X_InPixel);
-            if (textPosition_Y_InPixel != "")
-                ffmpegDrawTextFilter += (":y=" + ffmpegTextPosition_Y_InPixel);               
-            if (fontType != "")
-                ffmpegDrawTextFilter += (":fontfile='" + _ffmpegTtfFontDir + "/" + fontType + "'");
-            if (fontSize != -1)
-                ffmpegDrawTextFilter += (":fontsize=" + to_string(fontSize));
-            if (fontColor != "")
-            {
-                ffmpegDrawTextFilter += (":fontcolor=" + fontColor);                
-                if (textPercentageOpacity != -1)
-                {
-                    char opacity[64];
-                    
-                    sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
-                    
-                    ffmpegDrawTextFilter += ("@" + string(opacity));                
-                }
-            }
-            if (boxEnable)
-            {
-                ffmpegDrawTextFilter += (":box=1");
-                
-                if (boxColor != "")
-                {
-                    ffmpegDrawTextFilter += (":boxcolor=" + boxColor);                
-                    if (boxPercentageOpacity != -1)
-                    {
-                        char opacity[64];
-
-                        sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
-
-                        ffmpegDrawTextFilter += ("@" + string(opacity));                
-                    }
-                }
-            }
-		}
+		string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(
+			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
+			fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
+			streamingDurationInSeconds);
 
 		vector<string> ffmpegArgumentList;
 		ostringstream ffmpegArgumentListStream;
@@ -6936,6 +6914,15 @@ void FFMpeg::generateSlideshowMediaToIngest(
 		stagingEncodedAssetPathName
 		*/
 	);
+
+	_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
+		+ ", videoSyncMethod: " + videoSyncMethod
+		+ ", outputFrameRate: " + to_string(outputFrameRate)
+		+ ", slideshowMediaPathName: " + slideshowMediaPathName
+		);
 
 	int iReturnedStatus = 0;
 

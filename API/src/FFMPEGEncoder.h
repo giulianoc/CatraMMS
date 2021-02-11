@@ -36,6 +36,7 @@ struct LiveProxyAndGrid
 {
         bool                    _running;
         int64_t                 _encodingJobKey;
+		string					_method;	// liveProxy, liveGrid or awaitingTheBeginning
         shared_ptr<FFMpeg>		_ffmpeg;
 		pid_t					_childPid;
         bool					_killedBecauseOfNotWorking;	// by monitorThread
