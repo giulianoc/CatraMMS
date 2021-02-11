@@ -8877,6 +8877,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
     int64_t ingestionJobKey,
     vector<string>& sourcePhysicalPaths,
     double durationOfEachSlideInSeconds,
+	string videoSyncMethod,
     int outputFrameRate,
     EncodingPriority encodingPriority
 )
@@ -8905,12 +8906,14 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
         }
 
         EncodingType encodingType = EncodingType::SlideShow;
-        
+
+		/*
         string parameters = string()
                 + "{ "
                 + "\"durationOfEachSlideInSeconds\": " + to_string(durationOfEachSlideInSeconds)
                 + ", \"outputFrameRate\": " + to_string(outputFrameRate)
                 + ", \"sourcePhysicalPaths\": [ ";
+
         bool firstSourcePhysicalPath = true;
         for (string sourcePhysicalPath: sourcePhysicalPaths)
         {
@@ -8925,6 +8928,30 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 string(" ] ")
                 + "} "
                 );
+
+		*/
+		string parameters;
+		{
+			Json::Value parametersRoot;
+
+			string field = "durationOfEachSlideInSeconds";
+			parametersRoot[field] = durationOfEachSlideInSeconds;
+
+			field = "videoSyncMethod";
+			parametersRoot[field] = videoSyncMethod;
+
+			field = "outputFrameRate";
+			parametersRoot[field] = outputFrameRate;
+
+			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
+			for (string sourcePhysicalPath: sourcePhysicalPaths)
+				sourcePhysicalPathsRoot.append(sourcePhysicalPath);
+			field = "sourcePhysicalPaths";
+			parametersRoot[field] = sourcePhysicalPathsRoot;
+
+			Json::StreamWriterBuilder wbuilder;
+			parameters = Json::writeString(wbuilder, parametersRoot);
+		}
 
         _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
             + ", parameters.length: " + to_string(parameters.length()));
@@ -10679,7 +10706,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 void MMSEngineDBFacade::addEncoding_AwaitingTheBeginningJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	string mmsSourcePictureAssetPathName,
+	string mmsSourceVideoAssetPathName,
+	int64_t videoDurationInMilliSeconds,
 	int64_t utcIngestionJobStartProcessing,
 	int64_t utcCountDownEnd,
 	int64_t deliveryCode,
@@ -10719,8 +10747,11 @@ void MMSEngineDBFacade::addEncoding_AwaitingTheBeginningJob (
 			{
 				Json::Value parametersRoot;
 
-				string field = "mmsSourcePictureAssetPathName";
-				parametersRoot[field] = mmsSourcePictureAssetPathName;
+				string field = "mmsSourceVideoAssetPathName";
+				parametersRoot[field] = mmsSourceVideoAssetPathName;
+
+				field = "videoDurationInMilliSeconds";
+				parametersRoot[field] = videoDurationInMilliSeconds;
 
 				field = "utcIngestionJobStartProcessing";
 				parametersRoot[field] = utcIngestionJobStartProcessing;

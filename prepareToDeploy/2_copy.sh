@@ -89,6 +89,14 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-8:/opt/catramms
 	date
 
+	echo "cibortv-mms-transcoder-fr-9"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-9:/opt/catramms
+	date
+
+	echo "cibortv-mms-transcoder-fr-10"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-10:/opt/catramms
+	date
+
 	echo "cibortv-mms-transcoder-ita-1"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-ita-1:/opt/catramms
 	date

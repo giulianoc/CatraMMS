@@ -13372,8 +13372,10 @@ bool EncoderVideoAudioProxy::awaitingTheBeginning_through_ffmpeg()
 					awaitingTheBeginningMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
-					awaitingTheBeginningMetadata["mmsSourcePictureAssetPathName"] =
-						_encodingItem->_encodingParametersRoot.get("mmsSourcePictureAssetPathName", "").asString();
+					awaitingTheBeginningMetadata["mmsSourceVideoAssetPathName"] =
+						_encodingItem->_encodingParametersRoot.get("mmsSourceVideoAssetPathName", "").asString();
+					awaitingTheBeginningMetadata["videoDurationInMilliSeconds"] =
+						JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
 					awaitingTheBeginningMetadata["outputType"] =
 						_encodingItem->_encodingParametersRoot.get("outputType", "").asString();

@@ -10374,14 +10374,14 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
             throw runtime_error(errorMessage);
         }
 
-		string mmsSourcePictureAssetPathName;
-        MMSEngineDBFacade::ContentType referenceContentType;
+		string mmsSourceVideoAssetPathName;
+		MMSEngineDBFacade::ContentType referenceContentType;
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
-        {
+		{
             int64_t key;
             Validator::DependencyType dependencyType;
-            
+
 			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 				keyAndDependencyType	= dependencies[0];
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
@@ -10393,7 +10393,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsSourcePictureAssetPathName, ignore, ignore, ignore, ignore, ignore)
+				tie(ignore, mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPath;
 
 				sourceMediaItemKey = key;
@@ -10404,7 +10404,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 			{
 				tuple<string, int, string, string, int64_t, string> physicalPath =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(mmsSourcePictureAssetPathName, ignore, ignore, ignore, ignore, ignore)
+				tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPath;
 
 				sourcePhysicalPathKey = key;
@@ -10425,6 +10425,9 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
                     = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 			}
 		}
+
+		int64_t videoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+			sourceMediaItemKey, sourcePhysicalPathKey);
 
 		int64_t utcCountDownEnd = -1;
         {
@@ -10571,7 +10574,8 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 		long maxAttemptsNumberInCaseOfErrors = 3;
 
 		_mmsEngineDBFacade->addEncoding_AwaitingTheBeginningJob(workspace, ingestionJobKey,
-			mmsSourcePictureAssetPathName, utcIngestionJobStartProcessing, utcCountDownEnd,
+			mmsSourceVideoAssetPathName, videoDurationInMilliSeconds,
+			utcIngestionJobStartProcessing, utcCountDownEnd,
 			deliveryCode,
 			outputType, segmentDurationInSeconds, playlistEntriesNumber, encodingProfileKey,
 			manifestDirectoryPath, manifestFileName, rtmpUrl,
@@ -14363,14 +14367,17 @@ void MMSEngineProcessor::manageSlideShowTask(
         double durationOfEachSlideInSeconds = 2;
         field = "DurationOfEachSlideInSeconds";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
             durationOfEachSlideInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
-        }
+
+        string videoSyncMethod = "vfr";
+        field = "VideoSyncMethod";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            videoSyncMethod = parametersRoot.get(field, "vfr").asString();
 
         int outputFrameRate = 25;
         
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-                sourcePhysicalPaths, durationOfEachSlideInSeconds, 
+                sourcePhysicalPaths, durationOfEachSlideInSeconds, videoSyncMethod,
                 outputFrameRate, encodingPriority);
     }
     catch(runtime_error e)

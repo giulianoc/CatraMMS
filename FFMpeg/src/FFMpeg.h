@@ -216,6 +216,7 @@ public:
         int64_t encodingJobKey,
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
+		string videoSyncMethod,
         int outputFrameRate,
         string slideshowMediaPathName,
 		pid_t* pChildPid);
@@ -346,7 +347,8 @@ public:
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
 
-        string mmsSourcePictureAssetPathName,
+        string mmsSourceVideoAssetPathName,
+		int64_t videoDurationInMilliSeconds,
 
 		time_t utcCountDownEnd,
 

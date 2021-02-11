@@ -1668,6 +1668,7 @@ public:
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds,
+		string videoSyncMethod,
         int outputFrameRate,
         EncodingPriority encodingPriority);
 
@@ -1724,7 +1725,8 @@ public:
 	void addEncoding_AwaitingTheBeginningJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
-		string mmsSourcePictureAssetPathName,
+		string mmsSourceVideoAssetPathName,
+		int64_t videoDurationInMilliSeconds,
 		int64_t utcIngestionJobStartProcessing,
 		int64_t utcCountDownEnd,
 		int64_t deliveryCode,

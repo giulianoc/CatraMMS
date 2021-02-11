@@ -9,7 +9,8 @@
 
 		// mandatory
 		"References": [
-			// mandatory. Just one Reference needed to identify the picture to be used to build the live content
+			// mandatory. Just one Reference needed to identify the video to be used to build the live content
+			// Generally, for this task, the video is generated with the Slideshow Task using cfr as video sync method.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the picture
@@ -28,6 +29,11 @@
 		"CountDownEnd": "2019-01-21T13:30:00Z",
 
 		// mandatory. The text string to be drawn
+		//	The following words are reserved:
+		//		days_counter: it will be replaced by MMS with a counter of days
+		//		hours_counter: it will be replaced by MMS with a counter of hours
+		//		mins_counter: it will be replaced by MMS with a counter of minutes
+		//		secs_counter: it will be replaced by MMS with a counter of seconds
 		"Text": "...",
 
 		// optional: the below parameters specify the X and Y in pixel where the text
@@ -103,7 +109,7 @@
 		// mandatory only in case of RTMP_Stream
 		"RtmpUrl": "...",
 
-		// mandatory: this is the encoding profile to be used for the creation of the video.
+		// mandatory: this is the encoding profile to be used for the creation of the countDown video.
 		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.
 		//	In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
 		//	Possible values for the ContentType are: video, audio

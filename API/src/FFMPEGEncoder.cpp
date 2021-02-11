@@ -4054,9 +4054,10 @@ void FFMPEGEncoder::slideShowThread(
         
         int64_t ingestionJobKey = JSONUtils::asInt64(slideShowMedatada, "ingestionJobKey", -1);
         double durationOfEachSlideInSeconds = JSONUtils::asDouble(slideShowMedatada, "durationOfEachSlideInSeconds", 0);
+        string videoSyncMethod = slideShowMedatada.get("videoSyncMethod", "vfr").asString();
         int outputFrameRate = JSONUtils::asInt(slideShowMedatada, "outputFrameRate", -1);
         string slideShowMediaPathName = slideShowMedatada.get("slideShowMediaPathName", "XXX").asString();
-        
+
         vector<string> sourcePhysicalPaths;
         Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
         sourcePhysicalPathsRoot = slideShowMedatada["sourcePhysicalPaths"];
@@ -4068,7 +4069,7 @@ void FFMPEGEncoder::slideShowThread(
         }
 
         encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
-                sourcePhysicalPaths, durationOfEachSlideInSeconds,
+                sourcePhysicalPaths, durationOfEachSlideInSeconds, videoSyncMethod,
                 outputFrameRate, slideShowMediaPathName,
 				&(encoding->_childPid));
         
@@ -7539,7 +7540,8 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 			liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
 		}
 
-        string mmsSourcePictureAssetPathName = awaitingTheBeginningMetadata.get("mmsSourcePictureAssetPathName", "").asString();
+        string mmsSourceVideoAssetPathName = awaitingTheBeginningMetadata.get("mmsSourceVideoAssetPathName", "").asString();
+        int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(awaitingTheBeginningMetadata, "videoDurationInMilliSeconds", -1);
 		liveProxy->_channelLabel = "";	// awaitingTheBeginningMetadata.get("configurationLabel", "").asString();
 
 		liveProxy->_ingestedParametersRoot = awaitingTheBeginningMetadata["awaitingTheBeginningIngestedParametersRoot"];
@@ -7651,7 +7653,8 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 				liveProxy->_ingestionJobKey,
 				encodingJobKey,
 
-				mmsSourcePictureAssetPathName,
+				mmsSourceVideoAssetPathName,
+				videoDurationInMilliSeconds,
 
 				utcCountDownEnd,
 

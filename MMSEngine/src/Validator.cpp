@@ -3702,9 +3702,9 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 
                 tie(key, referenceContentType, dependencyType) = dependencies[0];
 
-                if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
-                    string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
+                    string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
 						+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                         + ", referenceMediaItemKey: " + to_string(key)
                         + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
@@ -3732,8 +3732,6 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 
         throw runtime_error(errorMessage);
     }
-
-	string channelType = "IP_MMSAsClient";
 
 	{
 		vector<string> mandatoryFields = {
