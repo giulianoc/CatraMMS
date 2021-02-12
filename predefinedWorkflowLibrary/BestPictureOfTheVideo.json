@@ -1,64 +1,60 @@
 {
   "Variables": {
-    "Label": {
-      "Position": 0,
-      "Type": "string",
-      "Value": "Image label"
-    },
     "Title": {
-      "Position": 1,
+      "Position": 0,
       "Description": "Title of the Picture",
       "Type": "string",
       "Value": "My Title"
     },
     "ImageTags": {
-      "Position": 2,
-      "Description": "Comma separated tags",
+      "Position": 1,
+      "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
       "Type": "string",
       "Value": "FACE"
     },
     "InstantInSeconds": {
-      "Position": 3,
+      "Position": 2,
       "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
       "Type": "decimal",
       "Value": 60
     },
     "UniqueName": {
-      "Position": 4,
+      "Position": 3,
       "Type": "string",
       "Value": ""
     },
     "AllowUniqueNameOverride": {
-      "Position": 5,
+      "Position": 4,
       "Type": "boolean",
       "Value": false
     },
     "ImageRetention": {
-      "Position": 6,
+      "Position": 5,
       "Type": "string",
       "Value": "1d"
     },
     "Ingester": {
-      "Position": 7,
+      "Position": 6,
       "Type": "string",
       "Value": "Admin"
     },
     "InitialFramesNumberToBeSkipped": {
-      "Position": 8,
+      "Position": 7,
       "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
       "Type": "integer",
       "Value": 1500
     },
     "ImageUserData": {
-      "Position": 9,
+      "Position": 8,
       "Type": "string",
-      "Value": ""
+	  "Value": "",
+      "Description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
     }
   },
   "Label": "Best Picture of the Video",
   "Type": "Workflow",
   "Task": {
-    "Label": "${Label}",
+    "Label": "${Title}",
     "Type": "GroupOfTasks",
     "Parameters": {
       "ExecutionType": "parallel",
@@ -103,7 +99,7 @@
             "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
             "UniqueName": "${UniqueName}",
             "Height": 480,
-            "Ingester": "Giuliano",
+            "Ingester": "${Ingester}",
             "InstantInSeconds": "${InstantInSeconds}",
             "Retention": "${ImageRetention}",
             "Tags": "${ImageTags}",
@@ -144,7 +140,7 @@
           "UniqueName": "${UniqueName}",
           "CascadeName": "haarcascade_frontalface_alt_tree",
           "EncodingPriority": "High",
-          "Ingester": "Giuliano",
+          "Ingester": "${Ingester}",
           "InitialFramesNumberToBeSkipped": "${InitialFramesNumberToBeSkipped}",
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",

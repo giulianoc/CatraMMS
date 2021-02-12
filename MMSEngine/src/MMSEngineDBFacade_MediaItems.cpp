@@ -4866,7 +4866,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				{
 					Json::StreamWriterBuilder wbuilder;
 
-					userData = Json::writeString(wbuilder, parametersRoot[field]);                        
+					userData = Json::writeString(wbuilder, parametersRoot[field]);
 
 					// _logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
 					// 	+ ", userData: " + userData
@@ -5773,9 +5773,55 @@ void MMSEngineDBFacade::addTags(
 
 	try
 	{
-		for (int tagIndex = 0; tagIndex < tagsRoot.size(); tagIndex++)
+		// generally tagsRoot is an array of strings.
+		// In case it comes from a WorkflowAsLibrary, it will be a string
+		//	containing a json array of strings
+		Json::Value localTagsRoot;
+
+		if (tagsRoot.type() == Json::stringValue)
 		{
-			string tag = tagsRoot[tagIndex].asString();
+			string sTags = tagsRoot.asString();
+			if (sTags == "")
+				return;
+
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(sTags.c_str(),
+					sTags.c_str() + sTags.size(),                          
+					&localTagsRoot, &errors);                                       
+				delete reader;                                                             
+
+				if (!parsingSuccessful)                                                    
+				{                                                                          
+					string errorMessage = __FILEREF__ + "failed to parse the tags"  
+						+ ", errors: " + errors                                        
+						+ ", sTags: " + sTags                              
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(...)
+			{
+				string errorMessage = string("requestBody json is not well format")
+					+ ", sTags: " + sTags                              
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+			localTagsRoot = tagsRoot;
+
+		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
+		{
+			string tag = localTagsRoot[tagIndex].asString();
 		/*
 		stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
 		while (ssTagsCommaSeparated.good())

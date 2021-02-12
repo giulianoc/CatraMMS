@@ -16,4 +16,8 @@ echo "tomcat"
 echo "nginx"
 ~/nginx.sh stop
 
+
+echo "mmsStatus to check all is down"
+~/mmsStatusALL.sh
+
 date
