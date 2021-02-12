@@ -12592,6 +12592,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						chrono::system_clock::time_point now;
 						do
 						{
+							// 2021-02-12: moved sleep here because, in this case, if the task was killed
+							// during the sleep, it will check that.
+							// Before the sleep was after the check, so when the sleep is finished,
+							// the flow will go out of the loop and no check is done and Task remains up
+							// even if user kiiled it.
+							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+
 							// update EncodingJob failures number to notify the GUI EncodingJob is failing
 							try
 							{
@@ -12633,8 +12640,6 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 									+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 								);
 							}
-
-							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
 
 							now = chrono::system_clock::now();
 						}
