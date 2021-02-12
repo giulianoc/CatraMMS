@@ -7557,7 +7557,7 @@ void FFMpeg::liveRecorder(
 			{
 				try
 				{
-					bool isVideo;
+					bool isVideo = monitorIsVideo;
 					string httpStreamingFileFormat;    
 					string ffmpegHttpStreamingParameter = "";
 
@@ -7626,6 +7626,7 @@ void FFMpeg::liveRecorder(
 						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", twoPasses: " + to_string(twoPasses)
 						;
 						_logger->error(errorMessage);
 
@@ -11739,37 +11740,15 @@ void FFMpeg::settingFfmpegParameters(
 )
 {
     string field;
-	/*
-    Json::Value encodingProfileRoot;
-    try
-    {
-        Json::CharReaderBuilder builder;
-        Json::CharReader* reader = builder.newCharReader();
-        string errors;
 
-        bool parsingSuccessful = reader->parse(encodingProfileDetails.c_str(),
-                encodingProfileDetails.c_str() + encodingProfileDetails.size(), 
-                &encodingProfileRoot, &errors);
-        delete reader;
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sEncodingProfileDetailsRoot = Json::writeString(wbuilder, encodingProfileDetailsRoot);
 
-        if (!parsingSuccessful)
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the encoder details"
-                    + ", errors: " + errors
-                    + ", encodingProfileDetails: " + encodingProfileDetails
-                    ;
-            _logger->error(errorMessage);
-            
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(...)
-    {
-        throw runtime_error(string("ffmpeg: wrong encoding profile json format")
-                + ", encodingProfileDetails: " + encodingProfileDetails
-                );
-    }
-	*/
+		_logger->info(__FILEREF__ + "settingFfmpegParameters"
+			", sEncodingProfileDetailsRoot: " + sEncodingProfileDetailsRoot
+		);
+	}
 
     // fileFormat
     string fileFormat;

@@ -13027,6 +13027,13 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 			// update EncodingJob failures number to notify the GUI EncodingJob is failing
 			try
 			{
+				// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated
+				// contiuosly. The task will never exist from this loop because
+				// currentAttemptsNumberInCaseOfErrors always remain to 0 and the main loop
+				// look currentAttemptsNumberInCaseOfErrors.
+				// So added currentAttemptsNumberInCaseOfErrors++
+				currentAttemptsNumberInCaseOfErrors++;
+
 				encodingStatusFailures++;
 
 				_logger->info(__FILEREF__ + "updateEncodingJobFailuresNumber"
