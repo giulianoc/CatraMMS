@@ -268,7 +268,8 @@ private:
 		bool highAvailability,
 		Json::Value userDataRoot,
 		string fileFormat,
-		Json::Value liveRecorderParametersRoot);
+		Json::Value liveRecorderParametersRoot,
+		Json::Value encodingParametersRoot);
 
 	void liveProxyThread(
         // FCGX_Request& request,

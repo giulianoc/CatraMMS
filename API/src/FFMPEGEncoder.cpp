@@ -5956,7 +5956,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 						transcoderStagingContentsPath, currentRecordedAssetFileName,
 						stagingContentsPath,
 						addContentTitle, uniqueName, highAvailability, userDataRoot, outputFileFormat,
-						liveRecorderParametersRoot);
+						liveRecorderParametersRoot, encodingParametersRoot);
 				}
 				catch(runtime_error e)
 				{
@@ -6039,7 +6039,8 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	bool highAvailability,
 	Json::Value userDataRoot,
 	string fileFormat,
-	Json::Value liveRecorderParametersRoot)
+	Json::Value liveRecorderParametersRoot,
+	Json::Value encodingParametersRoot)
 {
 	try
 	{
@@ -6271,6 +6272,36 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 
 				// name of the variable
 				field = "PreviousUtcChunkStartTime";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
+
+			int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot, "DeliveryCode", 0);
+			{
+				Json::Value variableWorkflowRoot;
+
+				field = "Type";
+				variableWorkflowRoot[field] = "integer";
+
+				field = "Value";
+				variableWorkflowRoot[field] = deliveryCode;
+
+				// name of the variable
+				field = "DeliveryCode";
+				variablesWorkflowRoot[field] = variableWorkflowRoot;
+			}
+
+			string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+			{
+				Json::Value variableWorkflowRoot;
+
+				field = "Type";
+				variableWorkflowRoot[field] = "string";
+
+				field = "Value";
+				variableWorkflowRoot[field] = ingestionJobLabel;
+
+				// name of the variable
+				field = "IngestionJobLabel";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 

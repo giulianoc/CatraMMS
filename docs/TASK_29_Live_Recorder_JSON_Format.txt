@@ -5,6 +5,13 @@
 	// mandatory
 	"Type": "Live-Recorder",
 
+	// The Workflow ingested by the MMS Task Manager to add the generated Chunks
+	// will have the following variables:
+	// - CurrentUtcChunkStartTime, integer, UTC Start Time of the current chunk
+	// - PreviousUtcChunkStartTime, integer, UTC Start Time of the previous chunk
+	// - CurrentUtcChunkStartTime_HHMISS, string, Local Time having the HH:MI:SS format
+	// - DeliveryCode, integer, delivery code of the Live Recorder
+	// - IngestionJobLabel, string, ingestion job label of the Live Recorder
 	"Parameters": {
 
 		// optional, possible values: IP_MMSAsClient, Satellite or IP_MMSAsServer.
