@@ -160,6 +160,19 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath
     );
 
+	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
+	for(int adminEmailAddressesIndex = 0;
+			adminEmailAddressesIndex < configuration["mms"]["adminEmailAddresses"].size();
+			adminEmailAddressesIndex++)
+	{
+		string adminEmailAddress = configuration["mms"]["adminEmailAddresses"]
+			[adminEmailAddressesIndex].asString();
+		_adminEmailAddresses.push_back(adminEmailAddress);
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", mms->adminEmailAddresses[adminEmailAddressesIndex]: " + adminEmailAddress
+		);
+	}
+
     _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
 	bool reconnect = true;
 	// string defaultCharacterSet = "utf8";

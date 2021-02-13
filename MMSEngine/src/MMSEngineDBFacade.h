@@ -2265,6 +2265,8 @@ private:
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
 
+	vector<string>	_adminEmailAddresses;
+
 	string createAPIKeyForActiveDirectoryUser(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
@@ -2274,6 +2276,11 @@ private:
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder,
 		int64_t workspaceKey);
+
+		void addWorkspaceForAdminUsers(
+			shared_ptr<MySQLConnection> conn,
+			int64_t workspaceKey
+		);
 
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,

@@ -2110,6 +2110,8 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+
+			addWorkspaceForAdminUsers(conn, workspaceKey);
         }
     }
     catch(sql::SQLException se)
@@ -2711,6 +2713,8 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+
+			addWorkspaceForAdminUsers(conn, workspaceKey);
         }
 
         {
@@ -2896,6 +2900,203 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
         
         throw e;
     }    
+}
+
+void MMSEngineDBFacade::addWorkspaceForAdminUsers(
+	shared_ptr<MySQLConnection> conn,
+	int64_t workspaceKey
+)
+{
+	string apiKey;
+    string  lastSQLCommand;
+
+    try
+    {
+		string flags;
+		{
+			bool admin = true;
+
+			if (admin)
+			{
+				if (flags != "")
+					flags.append(",");
+				flags.append("ADMIN");
+			}
+		}
+
+		bool isOwner = false;
+		bool isDefault = false;
+
+		for(string adminEmailAddress: _adminEmailAddresses)
+        {
+			int64_t userKey;
+			{
+				lastSQLCommand = 
+					"select userKey from MMS_User "
+					"where eMailAddress = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, adminEmailAddress);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", adminEmailAddress: " + adminEmailAddress
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
+				{
+					userKey = resultSet->getInt64("userKey");
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "Admin email address was not found"
+						+ ", adminEmailAddress: " + adminEmailAddress
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+
+			bool apiKeyAlreadyPresentForAdminUser = false;
+			{
+				lastSQLCommand = 
+					"select count(*) from MMS_APIKey "
+					"where userKey = ? and workspaceKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
+				{
+					if (resultSet->getInt64(1) != 0)
+						apiKeyAlreadyPresentForAdminUser = true;
+					else
+						apiKeyAlreadyPresentForAdminUser = false;
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "count(*) has to return a row"
+						+ ", userKey: " + to_string(userKey)
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
+			}
+
+			if (apiKeyAlreadyPresentForAdminUser)
+				continue;
+
+			unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+			default_random_engine e(seed);
+
+			string sourceApiKey = adminEmailAddress + "__SEP__" + to_string(e());
+			apiKey = Encrypt::encrypt(sourceApiKey);
+
+			lastSQLCommand = 
+				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
+				"flags, creationDate, expirationDate) values ("
+				"?, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatementAPIKey->setString(queryParameterIndex++, apiKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, userKey);
+			preparedStatementAPIKey->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
+			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
+			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			char        strExpirationDate [64];
+			{
+				chrono::system_clock::time_point apiKeyExpirationDate =
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+
+				tm          tmDateTime;
+				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
+
+				localtime_r (&utcTime, &tmDateTime);
+
+				sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
+
+				preparedStatementAPIKey->setString(queryParameterIndex++, strExpirationDate);
+			}
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			preparedStatementAPIKey->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", apiKey: " + apiKey
+				+ ", userKey: " + to_string(userKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", isOwner: " + to_string(isOwner)
+				+ ", isDefault: " + to_string(isDefault)
+				+ ", flags: " + flags
+				+ ", strExpirationDate: " + strExpirationDate
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::deleteWorkspace(
@@ -3704,51 +3905,85 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			string flags = resultSet->getString("flags");
                 
 			field = "admin";
-			userAPIKeyRoot[field] = flags.find("ADMIN") == string::npos ? false : true;
+			bool admin = flags.find("ADMIN") == string::npos ? false : true;
+			userAPIKeyRoot[field] = admin;
 
 			field = "createRemoveWorkspace";
-			userAPIKeyRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos 
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos 
+					? false : true;
 
 			field = "ingestWorkflow";
-			userAPIKeyRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos
+					? false : true;
 
 			field = "createProfiles";
-			userAPIKeyRoot[field] = flags.find("CREATE_PROFILES") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("CREATE_PROFILES") == string::npos
+					? false : true;
 
 			field = "deliveryAuthorization";
-			userAPIKeyRoot[field] = flags.find("DELIVERY_AUTHORIZATION") == string::npos 
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("DELIVERY_AUTHORIZATION") == string::npos 
+					? false : true;
 
 			field = "shareWorkspace";
-			userAPIKeyRoot[field] = flags.find("SHARE_WORKSPACE") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("SHARE_WORKSPACE") == string::npos
+					? false : true;
 
 			field = "editMedia";
-			userAPIKeyRoot[field] = flags.find("EDIT_MEDIA") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("EDIT_MEDIA") == string::npos
+					? false : true;
                 
 			field = "editConfiguration";
-			userAPIKeyRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos
+					? false : true;
 
 			field = "killEncoding";
-			userAPIKeyRoot[field] = flags.find("KILL_ENCODING") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("KILL_ENCODING") == string::npos
+					? false : true;
 
 			field = "cancelIngestionJob";
-			userAPIKeyRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos
+					? false : true;
 
 			field = "editEncodersPool";
-			userAPIKeyRoot[field] = flags.find("EDIT_ENCODERSPOOL") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("EDIT_ENCODERSPOOL") == string::npos
+					? false : true;
 
 			field = "applicationRecorder";
-			userAPIKeyRoot[field] = flags.find("APPLICATION_RECORDER") == string::npos
-				? false : true;
+			if(admin)
+				userAPIKeyRoot[field] = true;
+			else
+				userAPIKeyRoot[field] = flags.find("APPLICATION_RECORDER") == string::npos
+					? false : true;
 
 			field = "userAPIKey";
 			workspaceDetailRoot[field] = userAPIKeyRoot;

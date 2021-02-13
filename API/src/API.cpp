@@ -1296,7 +1296,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "createWorkspace")
     {
-        if (!createRemoveWorkspace)
+        if (!admin && !createRemoveWorkspace)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
@@ -1312,7 +1312,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "deleteWorkspace")
     {
-        if (!createRemoveWorkspace)
+        if (!admin && !createRemoveWorkspace)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
@@ -1332,7 +1332,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "shareWorkspace")
     {
-        if (!shareWorkspace)
+        if (!admin && !shareWorkspace)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", shareWorkspace: " + to_string(shareWorkspace)
@@ -1424,7 +1424,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addEncodersPool")
     {
-        if (!editEncodersPool)
+        if (!admin && !editEncodersPool)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editEncodersPool: " + to_string(editEncodersPool)
@@ -1440,7 +1440,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyEncodersPool")
     {
-        if (!editEncodersPool)
+        if (!admin && !editEncodersPool)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editEncodersPool: " + to_string(editEncodersPool)
@@ -1456,7 +1456,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeEncodersPool")
     {
-        if (!editEncodersPool)
+        if (!admin && !editEncodersPool)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editEncodersPool: " + to_string(editEncodersPool)
@@ -1504,7 +1504,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "createDeliveryAuthorization")
     {
-        if (!deliveryAuthorization)
+        if (!admin && !deliveryAuthorization)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", deliveryAuthorization: " + to_string(deliveryAuthorization)
@@ -1526,7 +1526,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "createDeliveryCDN77Authorization")
     {
-        if (!deliveryAuthorization)
+        if (!admin && !deliveryAuthorization)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", deliveryAuthorization: " + to_string(deliveryAuthorization)
@@ -1548,7 +1548,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "ingestion")
     {
-        if (!ingestWorkflow)
+        if (!admin && !ingestWorkflow)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", ingestWorkflow: " + to_string(ingestWorkflow)
@@ -1576,7 +1576,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "cancelIngestionJob")
     {
-        if (!cancelIngestionJob_)
+        if (!admin && !cancelIngestionJob_)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
@@ -1600,7 +1600,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "killOrCancelEncodingJob")
     {
-        if (!killEncoding)
+        if (!admin && !killEncoding)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", killEncoding: " + to_string(killEncoding)
@@ -1620,7 +1620,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "updateMediaItem")
     {
-        if (!editMedia)
+        if (!admin && !editMedia)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editMedia: " + to_string(editMedia)
@@ -1636,7 +1636,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "updatePhysicalPath")
     {
-        if (!editMedia)
+        if (!admin && !editMedia)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editMedia: " + to_string(editMedia)
@@ -1662,7 +1662,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addEncodingProfilesSet")
     {
-        if (!createProfiles)
+        if (!admin && !createProfiles)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createProfiles: " + to_string(createProfiles)
@@ -1683,7 +1683,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addEncodingProfile")
     {
-        if (!createProfiles)
+        if (!admin && !createProfiles)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createProfiles: " + to_string(createProfiles)
@@ -1700,7 +1700,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeEncodingProfile")
     {
-        if (!createProfiles)
+        if (!admin && !createProfiles)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createProfiles: " + to_string(createProfiles)
@@ -1717,7 +1717,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeEncodingProfilesSet")
     {
-        if (!createProfiles)
+        if (!admin && !createProfiles)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", createProfiles: " + to_string(createProfiles)
@@ -1758,7 +1758,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addYouTubeConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1774,7 +1774,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyYouTubeConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1790,7 +1790,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeYouTubeConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1810,7 +1810,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addFacebookConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1826,7 +1826,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyFacebookConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1842,7 +1842,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeFacebookConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1862,7 +1862,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addIPChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1878,7 +1878,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyIPChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1894,7 +1894,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeIPChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1914,7 +1914,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addSATChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1930,7 +1930,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifySATChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -1946,7 +1946,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeSATChannelConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2018,7 +2018,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addFTPConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2034,7 +2034,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyFTPConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2050,7 +2050,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeFTPConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2070,7 +2070,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "addEMailConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2086,7 +2086,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "modifyEMailConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)
@@ -2102,7 +2102,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "removeEMailConf")
     {
-        if (!editConfiguration)
+        if (!admin && !editConfiguration)
         {
             string errorMessage = string("APIKey does not have the permission"
                     ", editConfiguration: " + to_string(editConfiguration)

@@ -8487,12 +8487,10 @@ void MMSEngineProcessor::httpCallbackTask(
         {
             string field = "Protocol";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
                 httpProtocol = "http";
-            }
             else
             {
-                httpProtocol = parametersRoot.get(field, "XXX").asString();
+                httpProtocol = parametersRoot.get(field, "").asString();
                 if (httpProtocol == "")
                     httpProtocol = "http";
             }
@@ -8510,7 +8508,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
                 throw runtime_error(errorMessage);
             }
-            httpHostName = parametersRoot.get(field, "XXX").asString();
+            httpHostName = parametersRoot.get(field, "").asString();
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", httpHostName: " + httpHostName
             );
@@ -8548,28 +8546,24 @@ void MMSEngineProcessor::httpCallbackTask(
 
                 throw runtime_error(errorMessage);
             }
-            httpURI = parametersRoot.get(field, "XXX").asString();
+            httpURI = parametersRoot.get(field, "").asString();
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", httpURI: " + httpURI
             );
 
             field = "Parameters";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
                 httpURLParameters = parametersRoot.get(field, "XXX").asString();
-            }
             _logger->info(__FILEREF__ + "Retrieved configuration parameter"
                     + ", httpURLParameters: " + httpURLParameters
             );
 
             field = "Method";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
                 httpMethod = "POST";
-            }
             else
             {
-                httpMethod = parametersRoot.get(field, "XXX").asString();
+                httpMethod = parametersRoot.get(field, "").asString();
                 if (httpMethod == "")
                     httpMethod = "POST";
             }
@@ -8581,7 +8575,7 @@ void MMSEngineProcessor::httpCallbackTask(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// semicolon as separator
-				stringstream ss(parametersRoot.get(field, "XXX").asString());
+				stringstream ss(parametersRoot.get(field, "").asString());
 				string token;
 				char delim = ';';
 				while (getline(ss, token, delim))
@@ -8594,9 +8588,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
             field = "MaxRetries";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
 				maxRetries = 2;
-            }
             else
 			{
                 maxRetries = JSONUtils::asInt(parametersRoot, field, 3);
@@ -8608,8 +8600,9 @@ void MMSEngineProcessor::httpCallbackTask(
             );
         }
 
-		// 2020-06-18: below we have a loop for the dependencies. If this is confirmed, callbackMedatada should be an array
+		// 2021-02: we do not have a requirement to send data in case of GET
         Json::Value callbackMedatada;
+		if (httpMethod == "POST")
         {
             for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
 					dependencies)
@@ -8795,39 +8788,10 @@ void MMSEngineProcessor::httpCallbackTask(
 						);
 					}
 				}
-				/*
-				if (contentType == MMSEngineDBFacade::ContentType::Video)
-				{
-					int64_t durationInMilliSeconds;
-
-					tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-						videoDetails = _mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey);
-
-					tie(durationInMilliSeconds, ignore,
-						ignore, ignore, ignore, ignore, ignore, ignore,
-						ignore, ignore, ignore, ignore) = videoDetails;
-
-					float durationInSeconds = durationInMilliSeconds / 1000;
-
-					callbackMedatada["durationInSeconds"] = durationInSeconds;
-				}
-				else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-				{
-					int64_t durationInMilliSeconds;
-
-					tuple<int64_t,string,long,long,int> audioDetails
-						= _mmsEngineDBFacade->getAudioDetails(mediaItemKey, physicalPathKey);
-
-					tie(durationInMilliSeconds, ignore, ignore, ignore, ignore)
-						= audioDetails;
-
-					float durationInSeconds = durationInMilliSeconds / 1000;
-
-					callbackMedatada["durationInSeconds"] = durationInSeconds;
-				}
-				*/
 			}
         }
+		else
+			callbackMedatada = Json::nullValue;
 
         // check on thread availability was done at the beginning in this method
         thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
@@ -21109,7 +21073,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + httpURLParameters;
 
 			string data;
-			if (callbackMedatada.type() != Json::nullValue)
+			if (callbackMedatada != Json::nullValue)
 			{
 				Json::StreamWriterBuilder wbuilder;
 
@@ -21133,6 +21097,8 @@ void MMSEngineProcessor::userHttpCallbackThread(
 
 			if (data != "")
 			{
+				// 2021-02: we do not have a requirement to send data in case of GET
+				/*
 				if (httpMethod == "GET")
 				{
 					if (httpURLParameters == "")
@@ -21141,7 +21107,9 @@ void MMSEngineProcessor::userHttpCallbackThread(
 						userURL += "&";
 					userURL += ("data=" + curlpp::escape(data));
 				}
-				else    // POST
+				else
+				*/
+				if (httpMethod == "POST")
 				{
 					request.setOpt(new curlpp::options::PostFields(data));
 					request.setOpt(new curlpp::options::PostFieldSize(data.length()));
