@@ -67,6 +67,7 @@ add_subdirectory(predefinedWorkflowLibrary)
 add_subdirectory(predefinedImages)
 
 add_subdirectory(utilities/registerAndConfirmUser/src)
+add_subdirectory(utilities/registerActiveDirectoryUser/src)
 add_subdirectory(utilities/ffmpeg_getLiveStreamingInfo/src)
 add_subdirectory(utilities/confirmUser)
 add_subdirectory(utilities/cvCaptureTest/src)

@@ -454,9 +454,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 		string trimWorkspaceName = StringUtils::trim(workspaceName);
 		if (trimWorkspaceName == "")
 		{
-			string errorMessage = string("WorkspaceName is not well formed.")                             
-				+ ", workspaceName: " + workspaceName                                                     
-			;                                                                                             
+			string errorMessage = string("WorkspaceName is not well formed.")
+				+ ", workspaceName: " + workspaceName
+			;
 			_logger->error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -795,9 +795,9 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 		string trimWorkspaceName = StringUtils::trim(workspaceName);
 		if (trimWorkspaceName == "")
 		{
-			string errorMessage = string("WorkspaceName is not well formed.")                             
-				+ ", workspaceName: " + workspaceName                                                     
-			;                                                                                             
+			string errorMessage = string("WorkspaceName is not well formed.")
+				+ ", workspaceName: " + workspaceName
+			;
 			_logger->error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1132,9 +1132,9 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 			string trimUserName = StringUtils::trim(userName);
 			if (trimUserName == "")
 			{
-				string errorMessage = string("userName is not well formed.")                             
-					+ ", userName: " + userName                                                     
-				;                                                                                             
+				string errorMessage = string("userName is not well formed.")
+					+ ", userName: " + userName
+				;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1605,38 +1605,6 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						apiKey = localApiKey;
 				}
 			}
-			/*
-			apiKey = createAPIKeyForActiveDirectoryUser(
-				conn,
-				userKey,
-				userEmailAddress,
-				createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
-				shareWorkspace, editMedia,
-				editConfiguration, killEncoding,
-				defaultWorkspaceKey_1);
-			if (defaultWorkspaceKey_2 != -1)
-			{
-				createAPIKeyForActiveDirectoryUser(
-					conn,
-					userKey,
-					userEmailAddress,
-					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
-					shareWorkspace, editMedia,
-					editConfiguration, killEncoding,
-					defaultWorkspaceKey_2);
-			}
-			if (defaultWorkspaceKey_3 != -1)
-			{
-				createAPIKeyForActiveDirectoryUser(
-					conn,
-					userKey,
-					userEmailAddress,
-					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
-					shareWorkspace, editMedia,
-					editConfiguration, killEncoding,
-					defaultWorkspaceKey_3);
-			}
-			*/
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
