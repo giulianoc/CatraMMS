@@ -185,18 +185,25 @@ void FFMpeg::encodeContent(
                 + ".ffmpegoutput";
 
 		// special case:
-		//	- input is mp4
+		//	- input is mp4 or ts
 		//	- output is hls
 		//	- more than 1 audio track
 		//	- one video track
 		// In this case we will create:
 		//  - one m3u8 for each track (video and audio)
 		//  - one main m3u8 having a group for AUDIO
-		string suffix = ".mp4";
+		string mp4Suffix = ".mp4";
+		string tsSuffix = ".ts";
 		if (
 			// input is mp4
-			mmsSourceAssetPathName.size() >= suffix.size()
-			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-suffix.size(), suffix.size(), suffix)
+			(
+			(mmsSourceAssetPathName.size() >= mp4Suffix.size()
+			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-mp4Suffix.size(), mp4Suffix.size(), mp4Suffix))
+			||
+			// input is ts
+			(mmsSourceAssetPathName.size() >= tsSuffix.size()
+			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
+			)
 
 			// output is hls
 			&& httpStreamingFileFormat == "hls"
