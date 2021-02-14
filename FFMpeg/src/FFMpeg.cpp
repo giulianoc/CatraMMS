@@ -11051,8 +11051,8 @@ void FFMpeg::changeFileFormat(
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-i " + sourcePhysicalPath + " "
-			+ "-c:v copy "
-			+ "-c:a copy "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+            + "-map 0:v -c:v copy -map 0:a -c:a copy "
 			+ destinationPathName + " "
 			+ "> " + _outputFfmpegPathFileName + " "
 			+ "2>&1"
