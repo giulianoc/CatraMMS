@@ -6674,7 +6674,8 @@ void FFMpeg::generateConcatMediaToIngest(
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 -i " + concatenationListPathName + " "
-            + "-c copy " + concatenatedMediaPathName + " "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+            + "-map 0:v -c:v copy -map 0:a -c:a copy " + concatenatedMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
@@ -6815,7 +6816,8 @@ void FFMpeg::generateCutMediaToIngest(
 			+ "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
             // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-            + "-c copy " + cutMediaPathName + " "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+            + "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
@@ -6829,7 +6831,8 @@ void FFMpeg::generateCutMediaToIngest(
 			+ "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
             // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-            + "-c copy " + cutMediaPathName + " "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+            + "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
             + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
