@@ -7534,10 +7534,20 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back(to_string(streamingDuration));
 		}
 
+		// this is to get all video tracks
+		ffmpegArgumentList.push_back("-map");
+		ffmpegArgumentList.push_back("0:v");
+
 		ffmpegArgumentList.push_back("-c:v");
 		ffmpegArgumentList.push_back("copy");
+
+		// this is to get all audio tracks
+		ffmpegArgumentList.push_back("-map");
+		ffmpegArgumentList.push_back("0:a");
+
 		ffmpegArgumentList.push_back("-c:a");
 		ffmpegArgumentList.push_back("copy");
+
 		ffmpegArgumentList.push_back("-f");
 		ffmpegArgumentList.push_back("segment");
 		ffmpegArgumentList.push_back("-segment_list");

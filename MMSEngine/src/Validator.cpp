@@ -2546,20 +2546,20 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     }
 
     string field = "Tracks";
-    Json::Value tracksToot = parametersRoot[field];
-    if (tracksToot.size() == 0)
+    Json::Value tracksRoot = parametersRoot[field];
+    if (tracksRoot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No correct number of Tracks"
-                + ", tracksToot.size: " + to_string(tracksToot.size())
+                + ", tracksRoot.size: " + to_string(tracksRoot.size())
                     + ", label: " + label
                 ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
-    for (int trackIndex = 0; trackIndex < tracksToot.size(); trackIndex++)
+    for (int trackIndex = 0; trackIndex < tracksRoot.size(); trackIndex++)
     {
-        Json::Value trackRoot = tracksToot[trackIndex];
+        Json::Value trackRoot = tracksRoot[trackIndex];
         
         field = "TrackType";
         if (!JSONUtils::isMetadataPresent(trackRoot, field))
