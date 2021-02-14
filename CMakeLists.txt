@@ -73,7 +73,7 @@ add_subdirectory(utilities/confirmUser)
 add_subdirectory(utilities/cvCaptureTest/src)
 add_subdirectory(utilities/lockTest/src)
 add_subdirectory(utilities/sendEmail/src)
-add_subdirectory(utilities/addWorkspaceToActiveDirectoryUser/src)
+add_subdirectory(utilities/addWorkspaceToExistingActiveDirectoryUser/src)
 
 install (FILES version.txt DESTINATION ./)
 

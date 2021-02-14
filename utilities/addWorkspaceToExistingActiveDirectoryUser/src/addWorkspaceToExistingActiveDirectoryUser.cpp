@@ -21,12 +21,12 @@ int main (int iArgc, char *pArgv [])
 	string userEmailAddress = pArgv[3];
 	int64_t workspaceKey = stoll(pArgv[4]);
 
-    auto logger = spdlog::stdout_color_mt("addWorkspaceToActiveDirectoryUser");
+    auto logger = spdlog::stdout_color_mt("addWorkspaceToExistingActiveDirectoryUser");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
-    logger->info(__FILEREF__ + "addWorkspaceToActiveDirectoryUser"
+    logger->info(__FILEREF__ + "addWorkspaceToExistingActiveDirectoryUser"
 			+ ", userKey: " + to_string(userKey)
 			+ ", userEmailAddress: " + userEmailAddress
 			+ ", workspaceKey: " + to_string(workspaceKey)

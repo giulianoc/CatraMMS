@@ -10,9 +10,9 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 6)
+    if (iArgc != 5)
     {
-        cerr << "Usage: " << pArgv[0] << " config-path-name name email password workspace-name" << endl;
+        cerr << "Usage: " << pArgv[0] << " config-path-name userName userEmailAddress defaultWorkspaceKeys" << endl;
         
         return 1;
     }
