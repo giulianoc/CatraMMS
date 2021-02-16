@@ -21450,7 +21450,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", IngestionStatus: " + "End_TaskSuccess"
-			+ ", errorMessage: " + ""
+			+ ", errorMessage: " + "HTTP successful response: " + sResponse
 			+ ", currentRetries: " + to_string(currentRetries)
 			+ ", maxRetries: " + to_string(maxRetries)
 		);                            

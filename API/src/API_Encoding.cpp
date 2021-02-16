@@ -14,6 +14,7 @@
 #include "JSONUtils.h"
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -745,7 +746,16 @@ void API::encodingProfilesList(
         auto labelIt = queryParameters.find("label");
         if (labelIt != queryParameters.end() && labelIt->second != "")
         {
-            label = labelIt->second;
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = curlpp::unescape(firstDecoding);
         }
 
         {
