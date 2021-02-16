@@ -35,6 +35,7 @@
 		"DependenciesToBeAddedToReferences": "atTheEnd",
 
 		// mandatory. At least one entry inside the array has to be present
+		//	A media item having all the tracks specified by this array will be generated
 		"Tracks": [
 			{
 				// mandatory: track type to be extracted (video or audio)
