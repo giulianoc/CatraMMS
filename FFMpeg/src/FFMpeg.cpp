@@ -5657,10 +5657,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", firstVideoCodecName: " + firstVideoCodecName;
                     + ", Field: " + field;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);
+                // throw runtime_error(errorMessage);
             }            
         }
         else
