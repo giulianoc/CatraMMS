@@ -67,6 +67,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
 			// first Live-Proxy (because if we have many many Live-Recorder, Live-Proxy will never start
 			{
+				int minutesAheadToConsiderLiveProxy = 5;
+
 				lastSQLCommand = 
 					"select ij.ingestionJobKey, ij.label, ir.workspaceKey, ij.metaDataContent, ij.status, "
 						"ij.ingestionType, "
@@ -75,6 +77,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Proxy' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						"and ("
+							"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
+							"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
+							"or (JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = true and "
+								"UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.ProxyPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0) "
+						") "
 						// "for update "
 						;
 						// "limit ? offset ?"
@@ -92,6 +100,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 				preparedStatement->setString(queryParameterIndexIngestionJob++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+				preparedStatement->setInt(queryParameterIndexIngestionJob++, minutesAheadToConsiderLiveProxy);
 
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
 				// preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
@@ -105,6 +114,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					+ ", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress)
 					+ ", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress)
 					+ ", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress)
+					+ ", minutesAheadToConsiderLiveProxy: " + to_string(minutesAheadToConsiderLiveProxy)
 					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
@@ -294,7 +304,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"and ir.ingestionDate >= DATE_SUB(NOW(), INTERVAL ? DAY) "
-							"order by ir.ingestionDate asc "
+							"order by ij.priority asc, ir.ingestionDate asc "
 							"limit ? offset ?"
 							// "limit ? offset ? for update"
 							;
@@ -1262,16 +1272,23 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, metaDataContent, ingestionType, startProcessing, endProcessing, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
-                                                  "NULL,            ?,                ?,     ?,               ?,             NULL,            NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, "
+					"metaDataContent, ingestionType, priority, startProcessing, endProcessing, downloadingProgress, "
+					"uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                                                  "NULL,            ?,                ?, "
+					"?,               ?,             ?,        NULL,            NULL,         NULL, "
+					"NULL,              0,                       NULL,         ?,      NULL)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
                 preparedStatement->setString(queryParameterIndex++, label);
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
+                preparedStatement->setInt(queryParameterIndex++, getIngestionTypePriority(ingestionType));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(
+					MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
                 preparedStatement->executeUpdate();
@@ -1352,6 +1369,28 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     }
     
     return ingestionJobKey;
+}
+
+int MMSEngineDBFacade::getIngestionTypePriority(MMSEngineDBFacade::IngestionType ingestionType)
+{
+	// The priority is used when engine retrieves the ingestion jobs to be executed
+	//
+	// Really LiveProxy and LiveRecording, since they are drived by their Start time, have the precedence
+	// on every other task (see getIngestionJobs method)
+	//
+	// Regarding the other Tasks, AddContent has the precedence
+	//		Scenario: we have a LiveRecording and, at the end, all the chunks will be concatenated
+	//			If we have a lot of Tasks, the AddContent of the Chunk could be done lated and,
+	//			the concatenation of the LiveRecorder chunks, will not have all the chunks
+	//
+	if (ingestionType == IngestionType::LiveProxy)
+		return 1;
+	else if (ingestionType == IngestionType::LiveRecorder)
+		return 5;
+	else if (ingestionType == IngestionType::AddContent)
+		return 10;
+	else
+		return 15;
 }
 
 void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (

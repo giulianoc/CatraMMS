@@ -2305,6 +2305,8 @@ private:
 		int64_t liveRecordingIngestionJobKey
 	);
 
+	int getIngestionTypePriority(MMSEngineDBFacade::IngestionType);
+
 	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, int64_t mediaItemKey,
