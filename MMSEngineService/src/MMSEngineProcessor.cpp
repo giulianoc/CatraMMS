@@ -17653,6 +17653,45 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
     }
+
+    {
+		chrono::system_clock::time_point start = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Fix of EncodingJobs having wrong status"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        );
+
+		try
+		{
+			_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "fixEncodingJobsHavingWrongStatus failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "fixEncodingJobsHavingWrongStatus failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+        _logger->info(__FILEREF__ + "Fix of EncodingJobs having wrong status"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+		);
+    }
 }
 
 void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()

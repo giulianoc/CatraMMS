@@ -240,7 +240,8 @@ public:
         End_Success				= 2,
         End_Failed              = 3,
         End_KilledByUser		= 4,
-        End_CanceledByUser		= 5
+        End_CanceledByUser		= 5,
+        End_CanceledByMMS		= 6
     };
     static const char* toString(const EncodingStatus& encodingStatus)
     {
@@ -258,6 +259,8 @@ public:
                 return "End_KilledByUser";
             case EncodingStatus::End_CanceledByUser:
                 return "End_CanceledByUser";
+            case EncodingStatus::End_CanceledByMMS:
+                return "End_CanceledByMMS";
             default:
             throw runtime_error(
 					string("Wrong EncodingStatus: ") + to_string(static_cast<int>(encodingStatus)));
@@ -282,6 +285,8 @@ public:
             return EncodingStatus::End_KilledByUser;
         else if (lowerCase == "end_canceledbyuser")
             return EncodingStatus::End_CanceledByUser;
+        else if (lowerCase == "end_canceledbymms")
+            return EncodingStatus::End_CanceledByMMS;
         else
             throw runtime_error(string("Wrong EncodingStatus")
                     + ", encodingStatus: " + encodingStatus
@@ -1606,6 +1611,8 @@ public:
 	void retentionOfIngestionData();
 
 	void retentionOfDeliveryAuthorization();
+
+	void fixEncodingJobsHavingWrongStatus();
 
     void getEncodingJobs(
         string processorMMS,

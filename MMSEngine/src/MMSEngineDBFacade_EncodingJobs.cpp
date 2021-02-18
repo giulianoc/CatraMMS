@@ -7400,6 +7400,154 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
     return statusListRoot;
 }
 
+void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	_logger->info(__FILEREF__ + "fixEncodingJobsHavingWrongStatus"
+			);
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		// Scenarios: IngestionJob in final status but EncodingJob not in final status
+		//	This is independently by the specific instance of mms-engine (because in this scenario
+		//	often the processor field is empty) but someone has to do it
+		{
+			lastSQLCommand = 
+				"select ij.ingestionJobKey, ej.encodingJobKey, "
+				"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
+				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
+				"where ij.ingestionJobKey = ej.ingestionJobKey "
+				"and ij.status like 'End_%' and ej.status not like 'End_%'"
+			;
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			while (resultSet->next())
+			{
+				int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+				int64_t encodingJobKey = resultSet->getInt64("encodingJobKey");
+				string ingestionJobStatus = resultSet->getString("ingestionJobStatus");
+				string encodingJobStatus = resultSet->getString("encodingJobStatus");
+
+				{
+					_logger->info(__FILEREF__ + "Found EncodingJob with wrong status"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobStatus: " + ingestionJobStatus
+						+ ", encodingJobStatus: " + encodingJobStatus
+					);
+
+					lastSQLCommand =
+						"update MMS_EncodingJob "
+						"set status = ? "
+						"where encodingJobKey = ? "
+					;
+
+					shared_ptr<sql::PreparedStatement> preparedStatementFixEncoding (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatementFixEncoding->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS));
+					preparedStatementFixEncoding->setInt64(
+						queryParameterIndex++, encodingJobKey);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatementFixEncoding->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", EncodingStatus::End_CanceledByMMS: "
+							+ MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+			}
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
 void MMSEngineDBFacade::addEncodingJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
