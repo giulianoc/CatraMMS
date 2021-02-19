@@ -948,6 +948,7 @@ void API::shareWorkspace_(
 
 void API::workspaceList(
         FCGX_Request& request,
+		int64_t userKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
@@ -958,6 +959,7 @@ void API::workspaceList(
 
     try
     {
+		/*
         int start = 0;
         auto startIt = queryParameters.find("start");
         if (startIt != queryParameters.end() && startIt->second != "")
@@ -973,10 +975,10 @@ void API::workspaceList(
 			if (rows > _maxPageSize)
 				rows = _maxPageSize;
         }
+		*/
 
         {
-			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(
-					start, rows);
+			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceListRoot);
@@ -1283,66 +1285,13 @@ void API::login(
 					string email;
 					bool testCredentialsSuccessful = false;
 
-					/*
-					if (userName == "catramgi")
-						email = "Giuliano.Catrambone@rsi.ch";
-					else if (userName == "valentst")
-						email = "Stefano.Valentini@rsi.ch";
-					else if (userName == "galantan")
-						email = "Anna.Galante@rsi.ch";
-					else if (userName == "donatmau")
-						email = "Maurizio.Donati@rsi.ch";
-					else if (userName == "franchst")
-						email = "Stefano.Franchini@rsi.ch";
-					else if (userName == "maccarma")
-						email = "Matteo.Maccarinelli@rsi.ch";
-					else if (userName == "fanettpa")
-						email = "Paola.Fanetti@rsi.ch";
-					else if (userName == "civilean")
-						email = "Antonio.Civile@rsi.ch";
-					else if (userName == "gannami")
-						email = "Michel.Ganna@rsi.ch";
-					else if (userName == "fioronle")
-						email = "Leo.Fioroni@rsi.ch";
-					else if (userName == "nageswka")
-						email = "Kabil.Nageswarakurukkal@rsi.ch";
-					else if (userName == "merolajo")
-						email = "Jonathan.Merola@rsi.ch";
-					else if (userName == "paganist")
-						email = "Stefano.Pagani@rsi.ch";
-					else if (userName == "dellagda")
-						email = "Davide.Dellagana@rsi.ch";
-					else if (userName == "rennispa")
-						email = "Patrizia.Rennis@rsi.ch";
-					else if (userName == "tessargi")
-						email = "Gianluca.Tessari@rsi.ch";
-					else if (userName == "ammannro")
-						email = "Romano.Ammann@rsi.ch";
-					else if (userName == "lazzerma")
-						email = "Massimo.Lazzeri@rsi.ch";
-					else if (userName == "brandima")
-						email = "Massimo.Brandini@rsi.ch";
-					else if (userName == "cattanic")
-						email = "Nicola.Cattaneo@rsi.ch";
-					else if (userName == "canettiv")
-						email = "Ivan.Canetti@rsi.ch";
-					else if (userName == "zarroel")
-						email = "Eliseo.Zarro@rsi.ch";
-					else if (userName == "roncarer")
-						email = "Erich.Roncarolo@rsi.ch";
-					else if (userName == "svc-rsi-mp")
-						email = "svc-rsi-mp@media.int";
-					else if (userName == "bragugcl")
-						email = "Claudio.Braguglia@rsi.ch";
-					else
-					*/
 					{
-						istringstream iss(_ldapURL);                                                                                
-						vector<string> ldapURLs;                                                                                 
-						copy(                                                                                                 
-							istream_iterator<std::string>(iss),                                                               
-							istream_iterator<std::string>(),                                                                  
-							back_inserter(ldapURLs)                                                                              
+						istringstream iss(_ldapURL);
+						vector<string> ldapURLs;
+						copy(
+							istream_iterator<std::string>(iss),
+							istream_iterator<std::string>(),
+							back_inserter(ldapURLs)
 						);
 
 						for(string ldapURL: ldapURLs)
@@ -1450,15 +1399,15 @@ void API::login(
 						// flags set by default
 						bool createRemoveWorkspace = true;
 						bool ingestWorkflow = true;
-						bool createProfiles = false;
+						bool createProfiles = true;
 						bool deliveryAuthorization = true;
 						bool shareWorkspace = true;
 						bool editMedia = true;
-						bool editConfiguration = false;
-						bool killEncoding = false;
-						bool cancelIngestionJob = false;
-						bool editEncodersPool = false;
-						bool applicationRecorder = false;
+						bool editConfiguration = true;
+						bool killEncoding = true;
+						bool cancelIngestionJob = true;
+						bool editEncodersPool = true;
+						bool applicationRecorder = true;
 						pair<int64_t,string> userKeyAndEmail =
 							_mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName,
@@ -1549,12 +1498,12 @@ void API::login(
                 + ", userKey: " + to_string(userKey)
             );
             
-            Json::Value workspaceDetailsRoot =
-                    _mmsEngineDBFacade->getWorkspaceDetails(userKey);
-            
-            string field = "workspaces";
-            loginDetailsRoot[field] = workspaceDetailsRoot;
-            
+            Json::Value loginWorkspaceRoot =
+                    _mmsEngineDBFacade->getLoginWorkspace(userKey);
+
+            string field = "loginWorkspace";
+            loginDetailsRoot[field] = loginWorkspaceRoot;
+
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
             

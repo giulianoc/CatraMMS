@@ -257,172 +257,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     }
 }
 
-Json::Value MMSEngineDBFacade::getWorkspaceList(int start, int rows)
-{
-    string  lastSQLCommand;
-	Json::Value workspaceListRoot;
-
-    shared_ptr<MySQLConnection> conn = nullptr;
-
-    try
-    {
-		conn = _connectionPool->borrow();	
-		_logger->debug(__FILEREF__ + "DB connection borrow"
-			+ ", getConnectionId: " + to_string(conn->getConnectionId())
-		);
-
-		string field;
-		{
-			Json::Value requestParametersRoot;
-
-			field = "start";
-			requestParametersRoot[field] = start;
-
-			field = "rows";
-			requestParametersRoot[field] = rows;
-
-			field = "requestParameters";
-			workspaceListRoot[field] = requestParametersRoot;
-		}
-
-		Json::Value responseRoot;
-		{
-			lastSQLCommand =
-				"select count(*) from MMS_Workspace ";
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-			if (resultSet->next())
-			{
-				field = "numFound";
-				responseRoot[field] = resultSet->getInt64(1);
-			}
-			else
-			{
-				string errorMessage ("select count(*) failed");
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		Json::Value workspacesRoot(Json::arrayValue);
-		{
-			lastSQLCommand =
-				"select workspaceKey, isEnabled, name, maxEncodingPriority, "
-				"encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, "
-				"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
-				"from MMS_Workspace "
-                "limit ? offset ?";
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, rows);
-            preparedStatement->setInt(queryParameterIndex++, start);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", rows: " + to_string(rows)
-				+ ", start: " + to_string(start)
-				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
-			bool userAPIKeyInfo = false;
-			bool encoders = true;
-			while(resultSet->next())
-			{
-                Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
-					conn, resultSet, userAPIKeyInfo, encoders);
-
-				workspacesRoot.append(workspaceDetailRoot);
-			}
-		}
-
-		field = "workspaces";
-		responseRoot[field] = workspacesRoot;
-
-		field = "response";
-		workspaceListRoot[field] = responseRoot;
-
-		_logger->debug(__FILEREF__ + "DB connection unborrow"
-			+ ", getConnectionId: " + to_string(conn->getConnectionId())
-		);
-		_connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw se;
-    }
-    catch(runtime_error e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
-        );
-
-        if (conn != nullptr)
-        {
-            _logger->debug(__FILEREF__ + "DB connection unborrow"
-                + ", getConnectionId: " + to_string(conn->getConnectionId())
-            );
-            _connectionPool->unborrow(conn);
-			conn = nullptr;
-        }
-
-        throw e;
-    }
-
-	return workspaceListRoot;
-}
-
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     string userName,
     string userEmailAddress,
@@ -3688,10 +3522,10 @@ Json::Value MMSEngineDBFacade::login (
     return loginDetailsRoot;
 }
 
-Json::Value MMSEngineDBFacade::getWorkspaceDetails (
+Json::Value MMSEngineDBFacade::getWorkspaceList (
     int64_t userKey)
 {
-    Json::Value     workspaceDetailsRoot(Json::arrayValue);
+	Json::Value workspaceListRoot;
     string          lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -3703,6 +3537,56 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		string field;
+		{
+			Json::Value requestParametersRoot;
+
+			/*
+			field = "start";
+			requestParametersRoot[field] = start;
+
+			field = "rows";
+			requestParametersRoot[field] = rows;
+			*/
+
+			field = "requestParameters";
+			workspaceListRoot[field] = requestParametersRoot;
+		}
+
+		Json::Value responseRoot;
+		{
+			lastSQLCommand =
+				"select count(*) from MMS_Workspace w, MMS_APIKey a "
+				"where w.workspaceKey = a.workspaceKey and a.userKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, userKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			if (resultSet->next())
+			{
+				field = "numFound";
+				responseRoot[field] = resultSet->getInt64(1);
+			}
+			else
+			{
+				string errorMessage ("select count(*) failed");
+
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		Json::Value workspacesRoot(Json::arrayValue);
         {
             lastSQLCommand = 
                 "select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
@@ -3726,16 +3610,22 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			bool userAPIKeyInfo = true;
-			bool encoders = true;
+			// bool encoders = true;
             while (resultSet->next())
             {
                 Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
-					conn, resultSet, userAPIKeyInfo, encoders);
+					conn, resultSet, userAPIKeyInfo);	//, encoders);
 
-                workspaceDetailsRoot.append(workspaceDetailRoot);                        
+                workspacesRoot.append(workspaceDetailRoot);                        
             }
         }
         
+		field = "workspaces";
+		responseRoot[field] = workspacesRoot;
+
+		field = "response";
+		workspaceListRoot[field] = responseRoot;
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -3801,14 +3691,171 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
         throw e;
     }
     
-    return workspaceDetailsRoot;
+	return workspaceListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
+{
+	Json::Value loginWorkspaceRoot;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
+				"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+				"from MMS_APIKey a, MMS_Workspace w "
+				"where a.workspaceKey = w.workspaceKey "
+				"and userKey = ? and isDefault = 1 limit 1";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			bool userAPIKeyInfo = true;
+			// bool encoders = true;
+            if (resultSet->next())
+            {
+                loginWorkspaceRoot = getWorkspaceDetailsRoot (
+					conn, resultSet, userAPIKeyInfo);	//, encoders);
+            }
+			else
+			{
+				lastSQLCommand = 
+					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
+					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+					"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+					"from MMS_APIKey a, MMS_Workspace w "
+					"where a.workspaceKey = w.workspaceKey "
+					"and userKey = ? limit 1";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", userKey: " + to_string(userKey)
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				bool userAPIKeyInfo = true;
+				// bool encoders = true;
+				if (resultSet->next())
+				{
+					loginWorkspaceRoot = getWorkspaceDetailsRoot (
+						conn, resultSet, userAPIKeyInfo);	//, encoders);
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "No workspace found for userKey"
+						+ ", userKey: " + to_string(userKey)
+						+ ", lastSQLCommand: " + lastSQLCommand
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    
+	return loginWorkspaceRoot;
 }
 
 Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 	shared_ptr<MySQLConnection> conn,
 	shared_ptr<sql::ResultSet> resultSet,
-	bool userAPIKeyInfo,
-	bool encoders)
+	bool userAPIKeyInfo
+	// bool encoders
+	)
 {
     Json::Value     workspaceDetailRoot;
 
@@ -3957,6 +4004,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			workspaceDetailRoot[field] = userAPIKeyRoot;
 		}
 
+		/*
 		if (encoders)
 		{
 			Json::Value encodersRoot(Json::arrayValue);
@@ -3993,6 +4041,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			field = "encoders";
 			workspaceDetailRoot[field] = encodersRoot;
 		}
+		*/
     }
     catch(sql::SQLException se)
     {

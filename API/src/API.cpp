@@ -1348,19 +1348,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "workspaceList")
     {
-        if (!admin)
-        {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		workspaceList(request, workspace, queryParameters);
+		workspaceList(request, userKey, workspace, queryParameters);
     }
     else if (method == "confirmRegistration")
     {

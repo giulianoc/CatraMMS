@@ -1153,7 +1153,9 @@ public:
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
 
-	Json::Value getWorkspaceList(int start, int rows);
+	Json::Value getWorkspaceList(int64_t userKey);
+
+	Json::Value getLoginWorkspace(int64_t userKey);
 
     tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
@@ -1228,7 +1230,7 @@ public:
 
     Json::Value login (string eMailAddress, string password);
 
-    Json::Value getWorkspaceDetails (int64_t userKey);
+    // Json::Value getWorkspaceDetails (int64_t userKey);
 
     pair<int64_t,int64_t> getWorkspaceUsage(
         int64_t workspaceKey);
@@ -2454,8 +2456,9 @@ private:
 	Json::Value getWorkspaceDetailsRoot (
 		shared_ptr<MySQLConnection> conn,
 		shared_ptr<sql::ResultSet> resultSet,
-		bool userAPIKeyInfo,
-		bool encoders);
+		bool userAPIKeyInfo
+		// bool encoders
+		);
 
 	Json::Value getEncoderRoot (
 		shared_ptr<sql::ResultSet> resultSet);

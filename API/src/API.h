@@ -166,6 +166,7 @@ private:
 
     void workspaceList(
         FCGX_Request& request,
+		int64_t userKey,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
