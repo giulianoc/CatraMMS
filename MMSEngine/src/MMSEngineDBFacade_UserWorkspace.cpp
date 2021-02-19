@@ -1143,7 +1143,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
+                "NULL, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, trimUserName);
