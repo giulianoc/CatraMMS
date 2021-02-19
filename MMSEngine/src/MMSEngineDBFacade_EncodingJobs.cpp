@@ -9024,7 +9024,8 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-    vector<string>& sourcePhysicalPaths,
+    vector<string>& imagesSourcePhysicalPaths,
+    vector<string>& audiosSourcePhysicalPaths,
     double durationOfEachSlideInSeconds,
 	string videoSyncMethod,
     int outputFrameRate,
@@ -9056,29 +9057,6 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
         EncodingType encodingType = EncodingType::SlideShow;
 
-		/*
-        string parameters = string()
-                + "{ "
-                + "\"durationOfEachSlideInSeconds\": " + to_string(durationOfEachSlideInSeconds)
-                + ", \"outputFrameRate\": " + to_string(outputFrameRate)
-                + ", \"sourcePhysicalPaths\": [ ";
-
-        bool firstSourcePhysicalPath = true;
-        for (string sourcePhysicalPath: sourcePhysicalPaths)
-        {
-            if (!firstSourcePhysicalPath)
-                parameters += ", ";
-            parameters += ("\"" + sourcePhysicalPath + "\"");
-            
-            if (firstSourcePhysicalPath)
-                firstSourcePhysicalPath = false;
-        }
-        parameters += (
-                string(" ] ")
-                + "} "
-                );
-
-		*/
 		string parameters;
 		{
 			Json::Value parametersRoot;
@@ -9092,11 +9070,21 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 			field = "outputFrameRate";
 			parametersRoot[field] = outputFrameRate;
 
-			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-			for (string sourcePhysicalPath: sourcePhysicalPaths)
-				sourcePhysicalPathsRoot.append(sourcePhysicalPath);
-			field = "sourcePhysicalPaths";
-			parametersRoot[field] = sourcePhysicalPathsRoot;
+			{
+				Json::Value imagesSourcePhysicalPathsRoot(Json::arrayValue);
+				for (string imageSourcePhysicalPath: imagesSourcePhysicalPaths)
+					imagesSourcePhysicalPathsRoot.append(imageSourcePhysicalPath);
+				field = "imagesSourcePhysicalPaths";
+				parametersRoot[field] = imagesSourcePhysicalPathsRoot;
+			}
+
+			{
+				Json::Value audiosSourcePhysicalPathsRoot(Json::arrayValue);
+				for (string audioSourcePhysicalPath: audiosSourcePhysicalPaths)
+					audiosSourcePhysicalPathsRoot.append(audioSourcePhysicalPath);
+				field = "audiosSourcePhysicalPaths";
+				parametersRoot[field] = audiosSourcePhysicalPathsRoot;
+			}
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);
@@ -9118,20 +9106,24 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, "
-				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?, "
-				"NOW(),            NULL,           NULL,             ?,      NULL, "
-				"NULL,       NULL,        0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, "
+				"parameters, encodingPriority, encodingJobStart, encodingJobEnd, "
+				"encodingProgress, status, processorMMS, encoderKey, "
+				"encodingPid, failuresNumber) values ("
+				"                            NULL,           ?,               ?, "
+				"?,          ?,                NOW(),            NULL, "
+				"NULL,             ?,      NULL,         NULL, "
+				"NULL,        0)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
             preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -9141,12 +9133,13 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 				+ ", encodingType: " + toString(encodingType)
 				+ ", parameters: " + parameters
 				+ ", savedEncodingPriority: " + to_string(savedEncodingPriority)
-				+ ", EncodingStatus::ToBeProcessed: " + MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
+				+ ", EncodingStatus::ToBeProcessed: "
+					+ MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
         }
-        
+
         {            
             IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
 

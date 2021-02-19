@@ -1308,7 +1308,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
             throw runtime_error(errorMessage);
         }
 
-        createWorkspace(request, userKey, queryParameters, requestBody);
+        createWorkspace(request, userKey, queryParameters, requestBody, admin);
     }
     else if (method == "deleteWorkspace")
     {

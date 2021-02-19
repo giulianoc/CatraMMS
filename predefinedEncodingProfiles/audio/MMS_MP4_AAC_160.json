@@ -1,10 +1,10 @@
 {
-	"Label" : "MMS_AAC_92",
+	"Label" : "MMS_MP4_AAC_160",
 	"FileFormat" : "mp4",
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 92,
+		"KBitRate" : 160,
 		"ChannelsNumber": 2
 	}
 }

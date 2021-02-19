@@ -147,7 +147,7 @@ private:
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
-        string requestBody);
+        string requestBody, bool admin);
 
     void deleteWorkspace(
         FCGX_Request& request,

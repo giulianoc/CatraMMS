@@ -1654,9 +1654,10 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 
                 tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
-                if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Image
+						&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
                 {
-                    string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
+                    string errorMessage = __FILEREF__ + "Reference... does not refer an image-audio content"
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                         + ", referenceMediaItemKey: " + to_string(key)
                         + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)

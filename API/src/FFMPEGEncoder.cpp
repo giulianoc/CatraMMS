@@ -4059,18 +4059,39 @@ void FFMPEGEncoder::slideShowThread(
         int outputFrameRate = JSONUtils::asInt(slideShowMedatada, "outputFrameRate", -1);
         string slideShowMediaPathName = slideShowMedatada.get("slideShowMediaPathName", "XXX").asString();
 
-        vector<string> sourcePhysicalPaths;
-        Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
-        sourcePhysicalPathsRoot = slideShowMedatada["sourcePhysicalPaths"];
-        for (int sourcePhysicalPathIndex = 0; sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size(); ++sourcePhysicalPathIndex)
-        {
-            string sourcePhysicalPathName = sourcePhysicalPathsRoot.get(sourcePhysicalPathIndex, "XXX").asString();
+        vector<string> imagesSourcePhysicalPaths;
+		{
+			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
+			sourcePhysicalPathsRoot = slideShowMedatada["imagesSourcePhysicalPaths"];
+			for (int sourcePhysicalPathIndex = 0;
+				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
+				++sourcePhysicalPathIndex)
+			{
+				string sourcePhysicalPathName =
+					sourcePhysicalPathsRoot.get(sourcePhysicalPathIndex, "").asString();
 
-            sourcePhysicalPaths.push_back(sourcePhysicalPathName);
-        }
+				imagesSourcePhysicalPaths.push_back(sourcePhysicalPathName);
+			}
+		}
+
+        vector<string> audiosSourcePhysicalPaths;
+		{
+			Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
+			sourcePhysicalPathsRoot = slideShowMedatada["audiosSourcePhysicalPaths"];
+			for (int sourcePhysicalPathIndex = 0;
+				sourcePhysicalPathIndex < sourcePhysicalPathsRoot.size();
+				++sourcePhysicalPathIndex)
+			{
+				string sourcePhysicalPathName =
+					sourcePhysicalPathsRoot.get(sourcePhysicalPathIndex, "").asString();
+
+				audiosSourcePhysicalPaths.push_back(sourcePhysicalPathName);
+			}
+		}
 
         encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
-                sourcePhysicalPaths, durationOfEachSlideInSeconds, videoSyncMethod,
+                imagesSourcePhysicalPaths, durationOfEachSlideInSeconds,
+				audiosSourcePhysicalPaths, videoSyncMethod,
                 outputFrameRate, slideShowMediaPathName,
 				&(encoding->_childPid));
         

@@ -8084,7 +8084,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 	string encodersPool;
     double durationOfEachSlideInSeconds;
     int outputFrameRate;  
-    Json::Value sourcePhysicalPathsRoot(Json::arrayValue);
+    Json::Value imagesSourcePhysicalPathsRoot(Json::arrayValue);
+    Json::Value audiosSourcePhysicalPathsRoot(Json::arrayValue);
 
     {
         string field = "EncodersPool";
@@ -8097,8 +8098,11 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         field = "outputFrameRate";
         outputFrameRate = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
-        field = "sourcePhysicalPaths";
-        sourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
+        field = "imagesSourcePhysicalPaths";
+        imagesSourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
+
+        field = "audiosSourcePhysicalPaths";
+        audiosSourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
     }
     
 	string ffmpegEncoderURL;
@@ -8171,7 +8175,8 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 					_encodingParametersRoot.get("videoSyncMethod", "").asString();
                 slideShowMedatada["outputFrameRate"] = outputFrameRate;
                 slideShowMedatada["slideShowMediaPathName"] = slideShowMediaPathName;
-                slideShowMedatada["sourcePhysicalPaths"] = sourcePhysicalPathsRoot;
+                slideShowMedatada["imagesSourcePhysicalPaths"] = imagesSourcePhysicalPathsRoot;
+                slideShowMedatada["audiosSourcePhysicalPaths"] = audiosSourcePhysicalPathsRoot;
 
                 {
                     Json::StreamWriterBuilder wbuilder;

@@ -1182,6 +1182,7 @@ public:
         long maxIngestionsNumber,
         long maxStorageInMB,
         string languageCode,
+		bool admin,
         chrono::system_clock::time_point userExpirationDate);
 
 	void deleteWorkspace(int64_t userKey, int64_t workspaceKey);
@@ -1681,7 +1682,8 @@ public:
     void addEncoding_SlideShowJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
-        vector<string>& sourcePhysicalPaths,
+        vector<string>& imagesSourcePhysicalPaths,
+        vector<string>& audiosSourcePhysicalPaths,
         double durationOfEachSlideInSeconds,
 		string videoSyncMethod,
         int outputFrameRate,

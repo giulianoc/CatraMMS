@@ -21,8 +21,9 @@
 # with the authors.
 
 SET (PROFILEs
-	MMS_AAC_160.json
-	MMS_AAC_92.json
+	MMS_MP4_AAC_160.json
+	MMS_MP4_AAC_92.json
+	MMS_HLS_AAC_160Kb.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/audio)

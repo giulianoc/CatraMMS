@@ -1,0 +1,14 @@
+{
+	"Label" : "MMS_HLS_AAC_160Kb",
+	"FileFormat" : "hls",
+	"HLS" : 
+	{
+		"SegmentDuration" : 10
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 92,
+		"ChannelsNumber": 2
+	}
+}

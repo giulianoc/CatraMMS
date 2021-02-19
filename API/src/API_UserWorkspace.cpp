@@ -382,7 +382,8 @@ void API::createWorkspace(
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
-        string requestBody)
+        string requestBody,
+		bool admin)
 {
     string api = "createWorkspace";
 
@@ -480,6 +481,7 @@ void API::createWorkspace(
                         maxIngestionsNumber,            // long maxIngestionsNumber,
                         maxStorageInMB,                 // long maxStorageInMB,
                         "",                             // string languageCode,
+						admin,
                         chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 

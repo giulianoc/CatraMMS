@@ -214,8 +214,9 @@ public:
     void generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        vector<string>& sourcePhysicalPaths,
+        vector<string>& imagesSourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
+        vector<string>& audiosSourcePhysicalPaths,
 		string videoSyncMethod,
         int outputFrameRate,
         string slideshowMediaPathName,

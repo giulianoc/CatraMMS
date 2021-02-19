@@ -14244,10 +14244,11 @@ void MMSEngineProcessor::manageSlideShowTask(
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
         }
 
-        MMSEngineDBFacade::ContentType slideshowContentType;
-        bool slideshowContentTypeInitialized = false;
-        vector<string> sourcePhysicalPaths;
-        
+        // MMSEngineDBFacade::ContentType slideshowContentType;
+        // bool slideshowContentTypeInitialized = false;
+        vector<string> imagesSourcePhysicalPaths;
+        vector<string> audiosSourcePhysicalPaths;
+
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             // int64_t encodingProfileKey = -1;
@@ -14294,9 +14295,24 @@ void MMSEngineProcessor::manageSlideShowTask(
                 tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
                         = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
             }
+
+			if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+				imagesSourcePhysicalPaths.push_back(sourcePhysicalPath);
+			else if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
+				audiosSourcePhysicalPaths.push_back(sourcePhysicalPath);
+			else
+			{
+				string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image-Audio"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
             
-            sourcePhysicalPaths.push_back(sourcePhysicalPath);
-            
+			/*
             bool warningIfMissing = false;
             
             tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
@@ -14342,6 +14358,7 @@ void MMSEngineProcessor::manageSlideShowTask(
                     throw runtime_error(errorMessage);
                 }
             }
+			*/
         }
 
         double durationOfEachSlideInSeconds = 2;
@@ -14357,8 +14374,9 @@ void MMSEngineProcessor::manageSlideShowTask(
         int outputFrameRate = 25;
         
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-                sourcePhysicalPaths, durationOfEachSlideInSeconds, videoSyncMethod,
-                outputFrameRate, encodingPriority);
+			imagesSourcePhysicalPaths, audiosSourcePhysicalPaths,
+			durationOfEachSlideInSeconds, videoSyncMethod,
+			outputFrameRate, encodingPriority);
     }
     catch(runtime_error e)
     {

@@ -6907,8 +6907,9 @@ void FFMpeg::generateCutMediaToIngest(
 void FFMpeg::generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        vector<string>& sourcePhysicalPaths,
+        vector<string>& imagesSourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
+        vector<string>& audiosSourcePhysicalPaths,
 		string videoSyncMethod,
         int outputFrameRate,
         string slideshowMediaPathName,
@@ -6937,23 +6938,46 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
 	int iReturnedStatus = 0;
 
-    string slideshowListPathName =
+    string slideshowListImagesPathName =
         _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
-        + ".slideshowList.txt"
+        + ".slideshowListImages.txt"
         ;
+
+	if (imagesSourcePhysicalPaths.size() > 1)
+	{
+		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
+		string lastSourcePhysicalPath;
+		for (string sourcePhysicalPath: imagesSourcePhysicalPaths)
+		{
+			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
+			slideshowListFile << "duration " << durationOfEachSlideInSeconds << endl;
         
-    ofstream slideshowListFile(slideshowListPathName.c_str(), ofstream::trunc);
-    string lastSourcePhysicalPath;
-    for (string sourcePhysicalPath: sourcePhysicalPaths)
-    {
-        slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-        slideshowListFile << "duration " << durationOfEachSlideInSeconds << endl;
+			lastSourcePhysicalPath = sourcePhysicalPath;
+		}
+		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
+		slideshowListFile.close();
+	}
+
+	string slideshowListAudiosPathName =
+		_ffmpegTempDir + "/"
+		+ to_string(ingestionJobKey)
+		+ ".slideshowListAudios.txt"
+	;
+
+	if (audiosSourcePhysicalPaths.size() > 1)
+	{
+		ofstream slideshowListFile(slideshowListAudiosPathName.c_str(), ofstream::trunc);
+		string lastSourcePhysicalPath;
+		for (string sourcePhysicalPath: audiosSourcePhysicalPaths)
+		{
+			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
         
-        lastSourcePhysicalPath = sourcePhysicalPath;
-    }
-    slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
-    slideshowListFile.close();
+			lastSourcePhysicalPath = sourcePhysicalPath;
+		}
+		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
+		slideshowListFile.close();
+	}
 
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
@@ -6965,35 +6989,39 @@ void FFMpeg::generateSlideshowMediaToIngest(
     // The -safe 0 above is not required if the paths are relative
     // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
 
-#ifdef __EXECUTE__
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-f concat -safe 0 " 
-            // + "-framerate 5/1 "
-            + "-i " + slideshowListPathName + " "
-            + "-c:v libx264 "
-            + "-r " + to_string(outputFrameRate) + " "
-            + "-vsync " + videoSyncMethod + " "
-            + "-pix_fmt yuv420p " + slideshowMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
-
-    #ifdef __APPLE__
-        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-#else
+	// https://www.imakewebsites.ca/posts/2016/10/30/ffmpeg-concatenating-with-image-sequences-and-audio/
 	vector<string> ffmpegArgumentList;
 	ostringstream ffmpegArgumentListStream;
 
 	ffmpegArgumentList.push_back("ffmpeg");
-	ffmpegArgumentList.push_back("-f");
-	ffmpegArgumentList.push_back("concat");
-	ffmpegArgumentList.push_back("-safe");
-	ffmpegArgumentList.push_back("0");
-    // + "-framerate 5/1 "
-	ffmpegArgumentList.push_back("-i");
-	ffmpegArgumentList.push_back(slideshowListPathName);
+	if (imagesSourcePhysicalPaths.size() == 1)
+	{
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(imagesSourcePhysicalPaths[0]);
+	}
+	else if (imagesSourcePhysicalPaths.size() > 1)
+	{
+		ffmpegArgumentList.push_back("-f");
+		ffmpegArgumentList.push_back("concat");
+		ffmpegArgumentList.push_back("-safe");
+		ffmpegArgumentList.push_back("0");
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(slideshowListImagesPathName);
+	}
+	if (audiosSourcePhysicalPaths.size() == 1)
+	{
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(audiosSourcePhysicalPaths[0]);
+	}
+	else if (audiosSourcePhysicalPaths.size() > 1)
+	{
+		ffmpegArgumentList.push_back("-f");
+		ffmpegArgumentList.push_back("concat");
+		ffmpegArgumentList.push_back("-safe");
+		ffmpegArgumentList.push_back("0");
+		ffmpegArgumentList.push_back("-i");
+		ffmpegArgumentList.push_back(slideshowListAudiosPathName);
+	}
 	ffmpegArgumentList.push_back("-c:v");
 	ffmpegArgumentList.push_back("libx264");
 	ffmpegArgumentList.push_back("-r");
@@ -7002,32 +7030,14 @@ void FFMpeg::generateSlideshowMediaToIngest(
 	ffmpegArgumentList.push_back(videoSyncMethod);
 	ffmpegArgumentList.push_back("-pix_fmt");
 	ffmpegArgumentList.push_back("yuv420p");
+	if (audiosSourcePhysicalPaths.size() > 0)
+		ffmpegArgumentList.push_back("-shortest");
 	ffmpegArgumentList.push_back(slideshowMediaPathName);
-#endif
 
     try
     {
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-	#ifdef __EXECUTE__
-        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executing ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        );
-
-        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "generateSlideshowMediaToIngest: ffmpeg command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-	#else
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 				ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -7056,35 +7066,19 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
             throw runtime_error(errorMessage);
         }
-	#endif
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-	#ifdef __EXECUTE__
-        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executed ffmpeg command"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-        );
-	#else
         _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
-	#endif
     }
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		#ifdef __EXECUTE__
-			string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-			;
-		#else
 			string errorMessage;
 			if (iReturnedStatus == 9)	// 9 means: SIGKILL
 				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -7104,7 +7098,6 @@ void FFMpeg::generateSlideshowMediaToIngest(
 					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 					+ ", e.what(): " + e.what()
 				;
-		#endif
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
@@ -7112,9 +7105,18 @@ void FFMpeg::generateSlideshowMediaToIngest(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-        _logger->info(__FILEREF__ + "Remove"
-            + ", slideshowListPathName: " + slideshowListPathName);
-        FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
+        if (FileIO::isFileExisting(slideshowListImagesPathName.c_str()))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", slideshowListImagesPathName: " + slideshowListImagesPathName);
+			FileIO::remove(slideshowListImagesPathName, exceptionInCaseOfError);
+		}
+        if (FileIO::isFileExisting(slideshowListAudiosPathName.c_str()))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
+			FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
+		}
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL
 			throw FFMpegEncodingKilledByUser();
@@ -7127,9 +7129,18 @@ void FFMpeg::generateSlideshowMediaToIngest(
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
     
-    _logger->info(__FILEREF__ + "Remove"
-        + ", slideshowListPathName: " + slideshowListPathName);
-    FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
+	if (FileIO::isFileExisting(slideshowListImagesPathName.c_str()))
+	{
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", slideshowListImagesPathName: " + slideshowListImagesPathName);
+		FileIO::remove(slideshowListImagesPathName, exceptionInCaseOfError);
+	}
+	if (FileIO::isFileExisting(slideshowListAudiosPathName.c_str()))
+	{
+		_logger->info(__FILEREF__ + "Remove"
+			+ ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
+		FileIO::remove(slideshowListAudiosPathName, exceptionInCaseOfError);
+	}
 }
 
 void FFMpeg::extractTrackMediaToIngest(

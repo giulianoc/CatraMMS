@@ -612,6 +612,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     long maxIngestionsNumber,
     long maxStorageInMB,
     string languageCode,
+	bool admin,
     chrono::system_clock::time_point userExpirationDate
 )
 {
@@ -653,7 +654,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
         }
         
         {
-            bool admin = false;
             bool createRemoveWorkspace = true;
             bool ingestWorkflow = true;
             bool createProfiles = true;
