@@ -3689,11 +3689,11 @@ void API::cancelIngestionJob(
 		 *  internal look
 		 *
 		 *  For this reason, it would be better to avoid to use the forceCancel parameter because
-		 *  it is set the ingestionJob status to End_CancelledByUser but it could leave
+		 *  it is set the ingestionJob status to End_CanceledByUser but it could leave
 		 *  the EncoderVideoAudioProxy thread allocated and/or the ffmpeg process running.
 		 *
 		 * This forceCancel parameter is useful in scenarios where we have to force the status
-		 * of the IngestionJob to End_CancelledByUser status.
+		 * of the IngestionJob to End_CanceledByUser status.
 		 * In this case it is important to check if there are active associated EncodingJob
 		 * (i.e. ToBeProcessed or Processing) and set them to End_CanceledByUser.
 		 *
@@ -3736,11 +3736,11 @@ void API::cancelIngestionJob(
 
 		_logger->info(__FILEREF__ + "Update IngestionJob"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", IngestionStatus: " + "End_CancelledByUser"
+			+ ", IngestionStatus: " + "End_CanceledByUser"
 			+ ", errorMessage: " + ""
 		);
 		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-			MMSEngineDBFacade::IngestionStatus::End_CancelledByUser, 
+			MMSEngineDBFacade::IngestionStatus::End_CanceledByUser, 
 			"");
 
 		if (forceCancel)

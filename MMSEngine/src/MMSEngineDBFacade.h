@@ -930,7 +930,8 @@ public:
         EncodingQueued,
 
 		// DOWNLOAD / UPLOAD / ENCODING / JOB --> cancelled by User
-        End_CancelledByUser,
+        End_CanceledByUser,
+        End_CanceledByMMS,
 
         End_ValidationMetadataFailed,   
 
@@ -961,8 +962,10 @@ public:
                 return "SourceUploadingInProgress";
             case IngestionStatus::EncodingQueued:
                 return "EncodingQueued";
-            case IngestionStatus::End_CancelledByUser:
-                return "End_CancelledByUser";
+            case IngestionStatus::End_CanceledByUser:
+                return "End_CanceledByUser";
+            case IngestionStatus::End_CanceledByMMS:
+                return "End_CanceledByMMS";
             case IngestionStatus::End_ValidationMetadataFailed:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
@@ -999,8 +1002,10 @@ public:
             return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "encodingqueued")
             return IngestionStatus::EncodingQueued;
-        else if (lowerCase == "end_cancelledbyuser")
-            return IngestionStatus::End_CancelledByUser;
+        else if (lowerCase == "end_canceledbyuser")
+            return IngestionStatus::End_CanceledByUser;
+        else if (lowerCase == "end_canceledbymms")
+            return IngestionStatus::End_CanceledByMMS;
         else if (lowerCase == "end_validationmetadatafailed")
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
@@ -1613,6 +1618,7 @@ public:
 	void retentionOfDeliveryAuthorization();
 
 	void fixEncodingJobsHavingWrongStatus();
+	void fixIngestionJobsHavingWrongStatus();
 
     void getEncodingJobs(
         string processorMMS,

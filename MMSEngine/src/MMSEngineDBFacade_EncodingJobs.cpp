@@ -4723,7 +4723,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
         {
-            IngestionStatus ingestionStatus = IngestionStatus::End_CancelledByUser;
+            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
@@ -4739,7 +4739,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         else if (newEncodingStatus == EncodingStatus::End_CanceledByUser && ingestionJobKey != -1)
         {
-            IngestionStatus ingestionStatus = IngestionStatus::End_CancelledByUser;
+            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
@@ -7419,6 +7419,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 		// Scenarios: IngestionJob in final status but EncodingJob not in final status
 		//	This is independently by the specific instance of mms-engine (because in this scenario
 		//	often the processor field is empty) but someone has to do it
+		//	This scenario may happen in case the mms-engine is shutdown not in friendly way
 		{
 			lastSQLCommand = 
 				"select ij.ingestionJobKey, ej.encodingJobKey, "
