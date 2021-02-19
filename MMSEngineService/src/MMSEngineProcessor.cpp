@@ -336,6 +336,7 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
+					/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 					if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 					{
 						_logger->warn(__FILEREF__
@@ -347,19 +348,6 @@ void MMSEngineProcessor::operator ()()
 							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 						);
             
-						/*
-						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
-								+ "just more logs and file system full because of logs "
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
-							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
-						);
-						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
-						*/
-
 						{
 							shared_ptr<LocalAssetIngestionEvent>    cloneLocalAssetIngestionEvent
 								= _multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(
@@ -369,12 +357,11 @@ void MMSEngineProcessor::operator ()()
 								localAssetIngestionEvent->getSource());
 							cloneLocalAssetIngestionEvent->setDestination(
 								localAssetIngestionEvent->getDestination());
-							/* 2019-11-15: it is important this message will expire later.
-							 *	Before this change (+ 5 seconds), the event expires istantly and we have file system full "
-							*	because of the two messages
-							*	- Not enough available threads... and
-							*	- addEvent: EVENT_TYPE...
-							*/
+							// 2019-11-15: it is important this message will expire later.
+							//	Before this change (+ 5 seconds), the event expires istantly and we have file system full "
+							//	because of the two messages
+							//		- Not enough available threads... and
+							//		- addEvent: EVENT_TYPE...
 							cloneLocalAssetIngestionEvent->setExpirationTimePoint(
 								chrono::system_clock::now() + chrono::seconds(5));
 
@@ -411,6 +398,7 @@ void MMSEngineProcessor::operator ()()
 						}
 					}
 					else
+					*/
 					{
 						// handleLocalAssetIngestionEvent (localAssetIngestionEvent);
                         thread handleLocalAssetIngestionEventThread(&MMSEngineProcessor::handleLocalAssetIngestionEventThread,
@@ -517,6 +505,7 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
+					/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 					if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 					{
 						_logger->warn(__FILEREF__
@@ -528,19 +517,6 @@ void MMSEngineProcessor::operator ()()
 							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 						);
 
-						/*
-						_logger->info(__FILEREF__ + "Threads finished, added a sleep because a new event istantly causes "
-								+ "just more logs and file system full because of logs "
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-							+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-							+ ", _processorThreads + _maxAdditionalProcessorThreads: "
-							+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
-							+ ", _secondsWaitingWhenThreadsFinished: " + to_string(_secondsWaitingWhenThreadsFinished)
-						);
-						this_thread::sleep_for(chrono::seconds(_secondsWaitingWhenThreadsFinished));
-						*/
-            
 						{
 							shared_ptr<MultiLocalAssetIngestionEvent>    cloneMultiLocalAssetIngestionEvent
 								= _multiEventsSet->getEventsFactory()->getFreeEvent<MultiLocalAssetIngestionEvent>(
@@ -550,12 +526,11 @@ void MMSEngineProcessor::operator ()()
 								multiLocalAssetIngestionEvent->getSource());
 							cloneMultiLocalAssetIngestionEvent->setDestination(
 								multiLocalAssetIngestionEvent->getDestination());
-							/* 2019-11-15: it is important this message will expire later.
-							 *	Before this change (+ 5 seconds), the event expires istantly and we have file system full "
-							*	because of the two messages
-							*	- Not enough available threads... and
-							*	- addEvent: EVENT_TYPE...
-							*/
+							// 2019-11-15: it is important this message will expire later.
+							//	Before this change (+ 5 seconds), the event expires istantly and we have file system full "
+							//	because of the two messages
+							//	- Not enough available threads... and
+							//	- addEvent: EVENT_TYPE...
 							cloneMultiLocalAssetIngestionEvent->setExpirationTimePoint(
 								chrono::system_clock::now() + chrono::seconds(5));
 
@@ -579,6 +554,7 @@ void MMSEngineProcessor::operator ()()
 						}
 					}
 					else
+					*/
 					{
 						// handleMultiLocalAssetIngestionEvent (multiLocalAssetIngestionEvent);
                         thread handleMultiLocalAssetIngestionEventThread(
@@ -814,6 +790,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
         try
         {
+			if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+			{
+				_logger->warn(__FILEREF__ + "Not enough available threads to manage more Tasks"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+					+ ", _processorThreads + _maxAdditionalProcessorThreads: "
+						+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
+				);
+
+				return;
+			}
+
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
 				_processorMMS, _maxIngestionJobsPerEvent 
             );
@@ -1684,6 +1672,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									if (nextIngestionStatus ==
 										MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
 									{
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1711,6 +1700,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
+										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -1736,6 +1726,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									else if (nextIngestionStatus ==
 										MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
 									{
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1766,6 +1757,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
+										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -1791,6 +1783,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									else if (nextIngestionStatus ==
 										MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
 									{
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1821,6 +1814,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
+										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -2621,6 +2615,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else // Frame
                                 {
+									/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 									if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 									{
 										_logger->warn(__FILEREF__
@@ -2650,6 +2645,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 									}
 									else
+									*/
 									{
 										thread generateAndIngestFramesThread(&MMSEngineProcessor::generateAndIngestFramesThread,
 												this, _processorsThreadsNumber, ingestionJobKey, workspace,
@@ -2869,6 +2865,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							// _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
                                 if (_processorsThreadsNumber.use_count() >
 										_processorThreads + _maxAdditionalProcessorThreads)
                                 {
@@ -2898,6 +2895,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
+								*/
                                 {
                                     thread generateAndIngestConcatenationThread(
 										&MMSEngineProcessor::generateAndIngestConcatenationThread, this, 
@@ -3008,6 +3006,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							// by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
                                 if (_processorsThreadsNumber.use_count() >
 									_processorThreads + _maxAdditionalProcessorThreads)
                                 {
@@ -3035,6 +3034,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
+								*/
                                 {
                                     thread generateAndIngestCutMediaThread(&MMSEngineProcessor::generateAndIngestCutMediaThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -3239,6 +3239,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
                             try
                             {
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
                                 if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
@@ -3265,6 +3266,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
+								*/
                                 {
                                     thread extractTracksContentThread(&MMSEngineProcessor::extractTracksContentThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -4594,6 +4596,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
 							try
 							{
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 								{
 									_logger->warn(__FILEREF__ + "Not enough available threads to manage liveCutThread, activity is postponed"
@@ -4621,6 +4624,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									);
 								}
 								else
+								*/
 								{
 									thread liveCutThread(&MMSEngineProcessor::liveCutThread, this, 
 										_processorsThreadsNumber, ingestionJobKey,
@@ -4724,6 +4728,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
                             try
                             {
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__
@@ -4752,6 +4757,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 								}
 								else
+								*/
                                 {
                                     thread changeFileFormatThread(&MMSEngineProcessor::changeFileFormatThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -7820,6 +7826,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             throw runtime_error(errorMessage);
         }
 
+		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -7848,6 +7855,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             
             return;
         }
+		*/
 
         string configurationLabel;
         {
@@ -7989,6 +7997,7 @@ void MMSEngineProcessor::postOnFacebookTask(
             throw runtime_error(errorMessage);
         }
 
+		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8017,6 +8026,7 @@ void MMSEngineProcessor::postOnFacebookTask(
             
             return;
         }
+		*/
 
         string facebookConfigurationLabel;
         string facebookNodeId;
@@ -8213,6 +8223,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             throw runtime_error(errorMessage);
         }
 
+		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8241,6 +8252,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             
             return;
         }
+		*/
 
         string youTubeConfigurationLabel;
         string youTubeTitle;
@@ -8445,6 +8457,7 @@ void MMSEngineProcessor::httpCallbackTask(
         }
          */
 
+		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
         if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__
@@ -8474,6 +8487,7 @@ void MMSEngineProcessor::httpCallbackTask(
             
             return;
         }
+		*/
 
         string httpProtocol;
         string httpHostName;
@@ -8846,6 +8860,7 @@ void MMSEngineProcessor::localCopyContentTask(
             throw runtime_error(errorMessage);
         }
 
+		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8874,6 +8889,7 @@ void MMSEngineProcessor::localCopyContentTask(
             
             return;
         }
+		*/
 
         string localPath;
         string localFileName;
