@@ -217,6 +217,7 @@ public:
         vector<string>& imagesSourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
         vector<string>& audiosSourcePhysicalPaths,
+		double shortestAudioDurationInSeconds,
 		string videoSyncMethod,
         int outputFrameRate,
         string slideshowMediaPathName,

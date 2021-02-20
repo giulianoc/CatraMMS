@@ -6,9 +6,10 @@
 	"Type": "Slideshow",
 
 	"Parameters": {
-		// mandatory
+		// mandatory. It references images and audios (audios are optional)
+		//	The width of the Images has to be divisible by 2 (required by h.264 codec)
 		"References": [
-			// mandatory. As many References as the number of images.
+			// mandatory. As many References as the number of images and number of audio.
 			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally the "ErrorIfContentNotFound" boolean field

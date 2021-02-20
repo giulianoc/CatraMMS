@@ -6910,6 +6910,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         vector<string>& imagesSourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
         vector<string>& audiosSourcePhysicalPaths,
+        double shortestAudioDurationInSeconds,	// the shortest duration among the audios
 		string videoSyncMethod,
         int outputFrameRate,
         string slideshowMediaPathName,
@@ -6930,10 +6931,11 @@ void FFMpeg::generateSlideshowMediaToIngest(
 	_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
 		+ ", videoSyncMethod: " + videoSyncMethod
 		+ ", outputFrameRate: " + to_string(outputFrameRate)
 		+ ", slideshowMediaPathName: " + slideshowMediaPathName
+		+ ", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds)
+		+ ", shortestAudioDurationInSeconds: " + to_string(shortestAudioDurationInSeconds)
 		);
 
 	int iReturnedStatus = 0;
@@ -6944,18 +6946,77 @@ void FFMpeg::generateSlideshowMediaToIngest(
         + ".slideshowListImages.txt"
         ;
 
-	if (imagesSourcePhysicalPaths.size() > 1)
+	// IN CASE WE HAVE AUDIO
+	//	We will stop the video at the shortest between
+	//		- the duration of the slide show (sum of the duration of the images)
+	//		- shortest audio
+	//
+	//	So, if the duration of the picture is longest than the duration of the shortest audio
+	//			we have to reduce the duration of the pictures (1)
+	//	    if the duration of the shortest audio is longest than the duration of the pictures
+	//			we have to increase the duration of the last pictures (2)
+
 	{
 		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
 		string lastSourcePhysicalPath;
-		for (string sourcePhysicalPath: imagesSourcePhysicalPaths)
+		for (int imageIndex = 0; imageIndex < imagesSourcePhysicalPaths.size(); imageIndex++)
 		{
-			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-			slideshowListFile << "duration " << durationOfEachSlideInSeconds << endl;
+			string sourcePhysicalPath = imagesSourcePhysicalPaths[imageIndex];
+			double slideDurationInSeconds;
+
+			if (audiosSourcePhysicalPaths.size() > 0)
+			{
+				if (imageIndex + 1 >= imagesSourcePhysicalPaths.size() &&
+					durationOfEachSlideInSeconds * (imageIndex + 1) < shortestAudioDurationInSeconds)
+				{
+					// we are writing the last image and the duretion of all the slides
+					// is less than the shortest audio duration (2)
+					slideDurationInSeconds = shortestAudioDurationInSeconds
+						- (durationOfEachSlideInSeconds * imageIndex);
+				}
+				else
+				{
+					// check case (1)
+
+					if (durationOfEachSlideInSeconds * (imageIndex + 1) <= shortestAudioDurationInSeconds)
+						slideDurationInSeconds = durationOfEachSlideInSeconds;
+					else if (durationOfEachSlideInSeconds * (imageIndex + 1) > shortestAudioDurationInSeconds)
+					{
+						// if we are behind shortestAudioDurationInSeconds, we have to add
+						// the remaining secondsand we have to terminate (next 'if' checks if before
+						// we were behind just break)
+						if (durationOfEachSlideInSeconds * imageIndex >= shortestAudioDurationInSeconds)
+							break;
+						else
+							slideDurationInSeconds = (durationOfEachSlideInSeconds * (imageIndex + 1))
+								- shortestAudioDurationInSeconds;
+					}
+				}
+			}
+			else
+				slideDurationInSeconds = durationOfEachSlideInSeconds;
         
+			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
+			_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", line: " + ("file '" + sourcePhysicalPath + "'")
+			);
+			slideshowListFile << "duration " << slideDurationInSeconds << endl;
+			_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", line: " + ("duration " + to_string(slideDurationInSeconds))
+			);
+
 			lastSourcePhysicalPath = sourcePhysicalPath;
 		}
 		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
+		_logger->info(__FILEREF__ + "Received generateSlideshowMediaToIngest"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", line: " + ("file '" + lastSourcePhysicalPath + "'")
+			);
 		slideshowListFile.close();
 	}
 
@@ -6994,12 +7055,6 @@ void FFMpeg::generateSlideshowMediaToIngest(
 	ostringstream ffmpegArgumentListStream;
 
 	ffmpegArgumentList.push_back("ffmpeg");
-	if (imagesSourcePhysicalPaths.size() == 1)
-	{
-		ffmpegArgumentList.push_back("-i");
-		ffmpegArgumentList.push_back(imagesSourcePhysicalPaths[0]);
-	}
-	else if (imagesSourcePhysicalPaths.size() > 1)
 	{
 		ffmpegArgumentList.push_back("-f");
 		ffmpegArgumentList.push_back("concat");

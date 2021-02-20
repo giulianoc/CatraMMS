@@ -9025,8 +9025,9 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     vector<string>& imagesSourcePhysicalPaths,
-    vector<string>& audiosSourcePhysicalPaths,
     double durationOfEachSlideInSeconds,
+    vector<string>& audiosSourcePhysicalPaths,
+    double shortestAudioDurationInSeconds,
 	string videoSyncMethod,
     int outputFrameRate,
     EncodingPriority encodingPriority
@@ -9061,10 +9062,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 		{
 			Json::Value parametersRoot;
 
-			string field = "durationOfEachSlideInSeconds";
-			parametersRoot[field] = durationOfEachSlideInSeconds;
-
-			field = "videoSyncMethod";
+			string field = "videoSyncMethod";
 			parametersRoot[field] = videoSyncMethod;
 
 			field = "outputFrameRate";
@@ -9078,6 +9076,9 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 				parametersRoot[field] = imagesSourcePhysicalPathsRoot;
 			}
 
+			field = "durationOfEachSlideInSeconds";
+			parametersRoot[field] = durationOfEachSlideInSeconds;
+
 			{
 				Json::Value audiosSourcePhysicalPathsRoot(Json::arrayValue);
 				for (string audioSourcePhysicalPath: audiosSourcePhysicalPaths)
@@ -9085,6 +9086,9 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 				field = "audiosSourcePhysicalPaths";
 				parametersRoot[field] = audiosSourcePhysicalPathsRoot;
 			}
+
+			field = "shortestAudioDurationInSeconds";
+			parametersRoot[field] = shortestAudioDurationInSeconds;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

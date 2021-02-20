@@ -8082,18 +8082,16 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 {
     
 	string encodersPool;
-    double durationOfEachSlideInSeconds;
     int outputFrameRate;  
     Json::Value imagesSourcePhysicalPathsRoot(Json::arrayValue);
+    double durationOfEachSlideInSeconds;
     Json::Value audiosSourcePhysicalPathsRoot(Json::arrayValue);
+    double shortestAudioDurationInSeconds;
 
     {
         string field = "EncodersPool";
         encodersPool = _encodingItem->_slideShowData->
 			_ingestedParametersRoot.get(field, "").asString();
-
-        field = "durationOfEachSlideInSeconds";
-        durationOfEachSlideInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "outputFrameRate";
         outputFrameRate = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
@@ -8101,8 +8099,14 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         field = "imagesSourcePhysicalPaths";
         imagesSourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
 
+        field = "durationOfEachSlideInSeconds";
+        durationOfEachSlideInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
+
         field = "audiosSourcePhysicalPaths";
         audiosSourcePhysicalPathsRoot = _encodingItem->_encodingParametersRoot[field];
+
+        field = "shortestAudioDurationInSeconds";
+        shortestAudioDurationInSeconds = JSONUtils::asDouble(_encodingItem->_encodingParametersRoot, field, 0);
     }
     
 	string ffmpegEncoderURL;
@@ -8170,13 +8174,14 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 Json::Value slideShowMedatada;
                 
                 slideShowMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
-                slideShowMedatada["durationOfEachSlideInSeconds"] = durationOfEachSlideInSeconds;
                 slideShowMedatada["videoSyncMethod"] = _encodingItem->
 					_encodingParametersRoot.get("videoSyncMethod", "").asString();
                 slideShowMedatada["outputFrameRate"] = outputFrameRate;
                 slideShowMedatada["slideShowMediaPathName"] = slideShowMediaPathName;
                 slideShowMedatada["imagesSourcePhysicalPaths"] = imagesSourcePhysicalPathsRoot;
+                slideShowMedatada["durationOfEachSlideInSeconds"] = durationOfEachSlideInSeconds;
                 slideShowMedatada["audiosSourcePhysicalPaths"] = audiosSourcePhysicalPathsRoot;
+                slideShowMedatada["shortestAudioDurationInSeconds"] = shortestAudioDurationInSeconds;
 
                 {
                     Json::StreamWriterBuilder wbuilder;

@@ -14248,6 +14248,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         // bool slideshowContentTypeInitialized = false;
         vector<string> imagesSourcePhysicalPaths;
         vector<string> audiosSourcePhysicalPaths;
+		double shortestAudioDurationInSeconds = -1;
 
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
@@ -14268,38 +14269,41 @@ void MMSEngineProcessor::manageSlideShowTask(
             {
 				int64_t encodingProfileKey = -1;
 				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+					physicalPathDetails;
 
                 sourceMediaItemKey = key;
             }
             else
             {
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
                 tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
 
-                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
-                        = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+                tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore) = mediaItemDetails;
             }
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
 				imagesSourcePhysicalPaths.push_back(sourcePhysicalPath);
 			else if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
+			{
 				audiosSourcePhysicalPaths.push_back(sourcePhysicalPath);
+				double mediaDurationInMilliseconds =
+					(double) _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+					sourceMediaItemKey, sourcePhysicalPathKey);
+				if (shortestAudioDurationInSeconds == -1
+						|| shortestAudioDurationInSeconds > mediaDurationInMilliseconds / 1000)
+					shortestAudioDurationInSeconds = mediaDurationInMilliseconds / 1000;
+			}
 			else
 			{
 				string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image-Audio"
@@ -14374,8 +14378,9 @@ void MMSEngineProcessor::manageSlideShowTask(
         int outputFrameRate = 25;
         
         _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
-			imagesSourcePhysicalPaths, audiosSourcePhysicalPaths,
-			durationOfEachSlideInSeconds, videoSyncMethod,
+			imagesSourcePhysicalPaths, durationOfEachSlideInSeconds,
+			audiosSourcePhysicalPaths, shortestAudioDurationInSeconds,
+			videoSyncMethod,
 			outputFrameRate, encodingPriority);
     }
     catch(runtime_error e)

@@ -1717,7 +1717,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									profileRoot[field] =
 										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
 								else
-									profileRoot[field] = Json::nullValue;
+								{
+									// 2021-02-20: by default we set just download
+									// profileRoot[field] = Json::nullValue;
+									profileRoot[field] =
+										MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::Download);
+								}
 							}
 						}
                         else

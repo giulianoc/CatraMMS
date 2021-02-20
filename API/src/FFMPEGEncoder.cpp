@@ -4054,7 +4054,6 @@ void FFMPEGEncoder::slideShowThread(
         }
         
         int64_t ingestionJobKey = JSONUtils::asInt64(slideShowMedatada, "ingestionJobKey", -1);
-        double durationOfEachSlideInSeconds = JSONUtils::asDouble(slideShowMedatada, "durationOfEachSlideInSeconds", 0);
         string videoSyncMethod = slideShowMedatada.get("videoSyncMethod", "vfr").asString();
         int outputFrameRate = JSONUtils::asInt(slideShowMedatada, "outputFrameRate", -1);
         string slideShowMediaPathName = slideShowMedatada.get("slideShowMediaPathName", "XXX").asString();
@@ -4073,6 +4072,8 @@ void FFMPEGEncoder::slideShowThread(
 				imagesSourcePhysicalPaths.push_back(sourcePhysicalPathName);
 			}
 		}
+        double durationOfEachSlideInSeconds = JSONUtils::asDouble(slideShowMedatada,
+			"durationOfEachSlideInSeconds", 0);
 
         vector<string> audiosSourcePhysicalPaths;
 		{
@@ -4088,13 +4089,15 @@ void FFMPEGEncoder::slideShowThread(
 				audiosSourcePhysicalPaths.push_back(sourcePhysicalPathName);
 			}
 		}
+        double shortestAudioDurationInSeconds = JSONUtils::asDouble(slideShowMedatada,
+			"shortestAudioDurationInSeconds", 0);
 
         encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
                 imagesSourcePhysicalPaths, durationOfEachSlideInSeconds,
-				audiosSourcePhysicalPaths, videoSyncMethod,
-                outputFrameRate, slideShowMediaPathName,
+				audiosSourcePhysicalPaths, shortestAudioDurationInSeconds,
+				videoSyncMethod, outputFrameRate, slideShowMediaPathName,
 				&(encoding->_childPid));
-        
+
         encoding->_running = false;
         encoding->_childPid = 0;
         

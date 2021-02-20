@@ -1683,8 +1683,9 @@ public:
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         vector<string>& imagesSourcePhysicalPaths,
-        vector<string>& audiosSourcePhysicalPaths,
         double durationOfEachSlideInSeconds,
+        vector<string>& audiosSourcePhysicalPaths,
+        double shortestAudioDurationInSeconds,
 		string videoSyncMethod,
         int outputFrameRate,
         EncodingPriority encodingPriority);
