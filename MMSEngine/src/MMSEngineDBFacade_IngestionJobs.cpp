@@ -3629,7 +3629,13 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 }
 
 tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-	MMSEngineDBFacade::getIngestionJobDetails(int64_t ingestionJobKey
+	MMSEngineDBFacade::getIngestionJobDetails(
+		// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
+		//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
+		//	calls this method, to be sure an end user can do an update of any IngestionJob (also
+		//	belonging to another workspace)
+		int64_t workspaceKey,
+		int64_t ingestionJobKey
 )
 {
     string      lastSQLCommand;
@@ -3648,9 +3654,11 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		int64_t ingestionRootKey;
         {
             lastSQLCommand = 
-                string("select label, ingestionType, status, metaDataContent, errorMessage "
+                string("select ingestionRootKey, label, ingestionType, status, "
+						"metaDataContent, errorMessage "
 						"from MMS_IngestionJob where ingestionJobKey = ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -3668,6 +3676,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 			);
             if (resultSet->next())
             {
+                ingestionRootKey = resultSet->getInt64("ingestionRootKey");
                 label = static_cast<string>(resultSet->getString("label"));
 				ingestionType = toIngestionType(resultSet->getString("ingestionType"));
 				ingestionStatus = toIngestionStatus(resultSet->getString("status"));
@@ -3685,6 +3694,52 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
             }
         }
         
+		int64_t localWorkspaceKey;
+        {
+            lastSQLCommand = 
+                string("select workspaceKey "
+						"from MMS_IngestionRoot where ingestionRootKey = ?");
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+                localWorkspaceKey = resultSet->getInt64("workspaceKey");
+            }
+			else
+            {
+                string errorMessage = __FILEREF__ + "ingestion root not found"
+                        + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+		if (workspaceKey != localWorkspaceKey)
+		{
+			string errorMessage = __FILEREF__ + "ingestion job was found but it is not belonging to your workspace"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", localWorkspaceKey: " + to_string(localWorkspaceKey)
+				;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -5668,6 +5723,164 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
         throw e;
     }    
+}
+
+void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
+	int64_t workspaceKey,
+	int64_t ingestionJobKey,
+	bool labelModified, string newLabel,
+	bool recordingPeriodStartModified, string newRecordingPeriodStart,
+	bool recordingPeriodEndModified, string newRecordingPeriodEnd,
+	bool admin
+	)
+{
+    string		lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		if (labelModified || recordingPeriodStartModified || recordingPeriodEndModified)
+        {
+			string setSQL;
+
+			if (labelModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "label = ?";
+			}
+
+			if (recordingPeriodStartModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.Start', ?)";
+			}
+
+			if (recordingPeriodEndModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.End', ?)";
+			}
+
+			setSQL = "set " + setSQL + " ";
+
+			lastSQLCommand = 
+				string("update MMS_IngestionJob ") + setSQL
+				+ "where ingestionJobKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (labelModified)
+				preparedStatement->setString(queryParameterIndex++, newLabel);
+			if (recordingPeriodStartModified)
+				preparedStatement->setString(queryParameterIndex++, newRecordingPeriodStart);
+			if (recordingPeriodEndModified)
+				preparedStatement->setString(queryParameterIndex++, newRecordingPeriodEnd);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newLabel: " + newLabel
+				+ ", newRecordingPeriodStart: " + newRecordingPeriodStart
+				+ ", newRecordingPeriodEnd: " + newRecordingPeriodEnd
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			/*
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", newTitle: " + newTitle
+						+ ", newUserData: " + newUserData
+						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+			*/
+		}
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::retentionOfIngestionData()

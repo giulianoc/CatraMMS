@@ -14774,7 +14774,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         else
         {
             FFMpeg ffmpeg (_configuration, _logger);
-            ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
+            ffmpeg.concat(ingestionJobKey,
+				concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+				sourcePhysicalPaths, concatenatedMediaPathName);
         }
 
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest done"
@@ -14862,7 +14864,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				}
 				int framesNumber = -1;
 
-				_logger->info(__FILEREF__ + "Calling ffmpeg.generateCutMediaToIngest"
+				_logger->info(__FILEREF__ + "Calling ffmpeg.cut"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
@@ -14872,11 +14874,12 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ ", framesNumber: " + to_string(framesNumber)
 				);
 
-				ffmpeg.generateCutMediaToIngest(ingestionJobKey, concatenatedMediaPathName, 
+				ffmpeg.cut(ingestionJobKey, concatenatedMediaPathName, 
+					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
 					keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
 					cutMediaPathName);
 
-				_logger->info(__FILEREF__ + "generateCutMediaToIngest done"
+				_logger->info(__FILEREF__ + "cut done"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", cutMediaPathName: " + cutMediaPathName
@@ -15072,37 +15075,33 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         {
 			int64_t encodingProfileKey = -1;
 			bool warningIfMissing = false;
-			tuple<int64_t, string, int, string, string, int64_t, string>
-				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+			tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
 				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
-				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				physicalPathDetails;
 
             sourceMediaItemKey = key;
         }
         else
         {
-			tuple<string, int, string, string, int64_t, string>
-				physicalPathFileNameSizeInBytesAndDeliveryFileName =
+			tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
-				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
             sourcePhysicalPathKey = key;
 
             bool warningIfMissing = false;
             tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-				mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
             tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+				= mediaItemDetails;
         }
 
         bool warningIfMissing = false;
 
         tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
-			contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey
+			mediaItemDetails
                 = _mmsEngineDBFacade->getMediaItemKeyDetails(
 				workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
         
@@ -15112,7 +15111,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         string ingestionDate;
 		int64_t localIngestionJobKey;
         tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
-			= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+			= mediaItemDetails;
 
         if (contentType != MMSEngineDBFacade::ContentType::Video
                 && contentType != MMSEngineDBFacade::ContentType::Audio)
@@ -15221,17 +15220,31 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
         double endTimeInSeconds = 0.0;
         field = "EndTimeInSeconds";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-			endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+			if (contentType == MMSEngineDBFacade::ContentType::Audio)
+			{
+				// endTimeInSeconds in case of Audio is mandatory
+				// because we cannot use the other option (FramesNumber)
+
+				string errorMessage = __FILEREF__ + "Field is not present or it is null, endTimeInSeconds in case of Audio is mandatory because we cannot use the other option (FramesNumber)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
+		endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
         int framesNumber = -1;
-        field = "FramesNumber";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-        }
+		if (contentType == MMSEngineDBFacade::ContentType::Video)
+		{
+			field = "FramesNumber";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+		}
 
 		// 2021-02-05: default is set to true because often we have the error
 		//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
@@ -15239,9 +15252,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         bool fixEndTimeIfOvercomeDuration = true;
         field = "FixEndTimeIfOvercomeDuration";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
 			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
-        }
 
 		/*
         if (endTimeInSeconds == -1 && framesNumber == -1)
@@ -15484,11 +15495,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                 + localSourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateCutMediaToIngest(ingestionJobKey, sourcePhysicalPath, 
+        ffmpeg.cut(ingestionJobKey, sourcePhysicalPath, 
+				contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
                 cutMediaPathName);
 
-        _logger->info(__FILEREF__ + "generateCutMediaToIngest done"
+        _logger->info(__FILEREF__ + "cut done"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", cutMediaPathName: " + cutMediaPathName
@@ -16657,7 +16669,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
 						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
 							string, string> labelIngestionTypeAndErrorMessage =
-							_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
+							_mmsEngineDBFacade->getIngestionJobDetails(
+									workspace->_workspaceKey, referenceIngestionJobKey);
 						tie(referenceLabel, ingestionType, ignore, ignore, referenceErrorMessage);
 
 						break;

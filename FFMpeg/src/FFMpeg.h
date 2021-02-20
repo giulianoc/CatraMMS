@@ -206,8 +206,9 @@ public:
         int64_t videoDurationInMilliSeconds,
 		pid_t* pChildPid);
 
-    void generateConcatMediaToIngest(
+    void concat(
         int64_t ingestionJobKey,
+		bool isVideo,
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
 
@@ -223,9 +224,10 @@ public:
         string slideshowMediaPathName,
 		pid_t* pChildPid);
 
-    void generateCutMediaToIngest(
+    void cut(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		bool isVideo,
 		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,

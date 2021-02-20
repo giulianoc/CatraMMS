@@ -1578,6 +1578,22 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
         cancelIngestionJob(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "updateIngestionJob")
+    {
+        if (!admin && !editMedia)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", editMedia: " + to_string(editMedia)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        updateIngestionJob(request, workspace, userKey, queryParameters, requestBody, admin);
+    }
     else if (method == "encodingJobsStatus")
     {
         encodingJobsStatus(request, workspace, queryParameters, requestBody);
@@ -2341,7 +2357,8 @@ void API::createDeliveryAuthorization(
 				// create authorization for a live request
 
 				tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-					ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+					ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
+							requestWorkspace->_workspaceKey, ingestionJobKey);
 				MMSEngineDBFacade::IngestionType ingestionType;
 				string metaDataContent;
 				tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;

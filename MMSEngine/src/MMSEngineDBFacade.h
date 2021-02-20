@@ -1376,6 +1376,14 @@ public:
 		int64_t ingestionJobKey,
 		int64_t parentGroupOfTasksIngestionJobKey);
 
+	void updateIngestionJob_LiveRecorder (
+		int64_t workspaceKey,
+		int64_t ingestionJobKey,
+		bool labelModified, string newLabel,
+		bool recordingPeriodStartModified, string newRecordingPeriodStart,
+		bool recordingPeriodEndModified, string newRecordingPeriodEnd,
+		bool admin);
+
 	void getGroupOfTasksChildrenStatus(
 		int64_t groupOfTasksIngestionJobKey,
 		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
@@ -1434,7 +1442,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
 
 	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-		getIngestionJobDetails(int64_t ingestionJobKey);
+		getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey);
 
     Json::Value getIngestionRootsStatus (
         shared_ptr<Workspace> workspace,

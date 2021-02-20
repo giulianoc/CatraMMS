@@ -1558,6 +1558,8 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     }
     Json::Value tasksRoot = parametersRoot[field];
 
+	/* 2021-02-20: A group that does not have any Task couls be a scenario,
+	 * so we do not have to raise an error. Same check commented in Validation.cpp
     if (tasksRoot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
@@ -1565,6 +1567,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         throw runtime_error(errorMessage);
     }
+	*/
 
     // vector<int64_t> newDependOnIngestionJobKeysForStarting;
     vector<int64_t> newDependOnIngestionJobKeysOverallInputBecauseOfTasks;
@@ -2200,7 +2203,8 @@ void API::uploadedBinary(
 		try
 		{
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
-				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
+						workspace->_workspaceKey, ingestionJobKey);
 
 			string parameters;
 			tie(ignore, ignore, ignore, parameters, ignore) = ingestionJobDetails;
@@ -2240,6 +2244,7 @@ void API::uploadedBinary(
 		catch(runtime_error e)
 		{
 			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
 				+ ", destBinaryPathName: " + destBinaryPathName
@@ -2254,6 +2259,7 @@ void API::uploadedBinary(
 		catch(exception e)
 		{
 			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
 				+ ", destBinaryPathName: " + destBinaryPathName
@@ -3718,7 +3724,8 @@ void API::cancelIngestionJob(
 		MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
 		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(ingestionJobKey);
+			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
+					workspace->_workspaceKey, ingestionJobKey);
 		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
 
 		if (!forceCancel && ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
@@ -3763,6 +3770,223 @@ void API::cancelIngestionJob(
         sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::updateIngestionJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+		unordered_map<string, string> queryParameters,
+        string requestBody,
+		bool admin)
+{
+    string api = "updateIngestionJob";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+        {
+			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+        }
+		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+
+        try
+        {
+            _logger->info(__FILEREF__ + "getIngestionJobDetails"
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus,
+				string, string> ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails (
+					workspace->_workspaceKey, ingestionJobKey);
+
+			string			label;
+			MMSEngineDBFacade::IngestionType	ingestionType;
+			MMSEngineDBFacade::IngestionStatus ingestionStatus;
+			string			metaDataContent;
+
+			tie(label, ingestionType, ingestionStatus, metaDataContent, ignore) = ingestionJobDetails;
+
+			if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
+			{
+				string errorMessage = string("It is not possible to update an IngestionJob that it is not in Start_TaskQueued status")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			Json::Value metadataRoot;
+			try
+			{
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				string errors;
+
+				bool parsingSuccessful = reader->parse(requestBody.c_str(),
+					requestBody.c_str() + requestBody.size(), 
+					&metadataRoot, &errors);
+				delete reader;
+
+				if (!parsingSuccessful)
+				{
+					string errorMessage = string("Json metadata failed during the parsing")
+						+ ", errors: " + errors
+						+ ", json data: " + requestBody
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("Json metadata failed during the parsing"
+					", json data: " + requestBody
+				);
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+			{
+				bool labelModified = false;
+				string newLabel;
+				bool recordingPeriodStartModified = false;
+				string newRecordingPeriodStart;
+				bool recordingPeriodEndModified = false;
+				string newRecordingPeriodEnd;
+
+				{
+					string field = "Label";
+					if (JSONUtils::isMetadataPresent(metadataRoot, field))
+					{
+						labelModified = true;
+						newLabel = metadataRoot.get("Label", "").asString();
+					}
+
+					field = "RecordingPeriodStart";
+					if (JSONUtils::isMetadataPresent(metadataRoot, field))
+					{
+						recordingPeriodStartModified = true;
+						newRecordingPeriodStart = metadataRoot.get("RecordingPeriodStart", "").asString();
+					}
+
+					field = "RecordingPeriodEnd";
+					if (JSONUtils::isMetadataPresent(metadataRoot, field))
+					{
+						recordingPeriodEndModified = true;
+						newRecordingPeriodEnd = metadataRoot.get("RecordingPeriodEnd", "").asString();
+					}
+				}
+
+				if (recordingPeriodStartModified)
+				{
+					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+					validator.sDateSecondsToUtc(newRecordingPeriodStart);
+				}
+
+				if (recordingPeriodEndModified)
+				{
+					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+					validator.sDateSecondsToUtc(newRecordingPeriodEnd);
+				}
+
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				);
+
+				_mmsEngineDBFacade->updateIngestionJob_LiveRecorder (
+					workspace->_workspaceKey,
+					ingestionJobKey,
+					labelModified, newLabel,
+					recordingPeriodStartModified, newRecordingPeriodStart,
+					recordingPeriodEndModified, newRecordingPeriodEnd,
+					admin
+				);
+
+				_logger->info(__FILEREF__ + "IngestionJob updated"
+					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				);
+			}
+
+			Json::Value responseRoot;
+			responseRoot["status"] = string("success");
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, responseRoot);
+            
+            sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
     }
     catch(exception e)
     {

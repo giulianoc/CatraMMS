@@ -6633,12 +6633,12 @@ vector<string> FFMpeg::generateFramesToIngest(
     return generatedFramesFileNames;
 }
 
-void FFMpeg::generateConcatMediaToIngest(
-        int64_t ingestionJobKey,
+void FFMpeg::concat(int64_t ingestionJobKey,
+		bool isVideo,
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName)
 {
-	_currentApiName = "generateConcatMediaToIngest";
+	_currentApiName = "concat";
 
 	setStatus(
 		ingestionJobKey
@@ -6679,14 +6679,31 @@ void FFMpeg::generateConcatMediaToIngest(
     // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
 	// 2019-10-10: added -fflags +genpts -async 1 for lipsync issue!!!
 	// 2019-10-11: removed -fflags +genpts -async 1 because does not have inpact on lipsync issue!!!
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-f concat -safe 0 -i " + concatenationListPathName + " "
+    string ffmpegExecuteCommand;
+	if (isVideo)
+	{
+		ffmpegExecuteCommand =
+			_ffmpegPath + "/ffmpeg "
+			+ "-f concat -safe 0 -i " + concatenationListPathName + " "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
-            + "-map 0:v -c:v copy -map 0:a -c:a copy " + concatenatedMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
+			+ "-map 0:v -c:v copy -map 0:a -c:a copy "
+			+ concatenatedMediaPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
+	}
+	else
+	{
+		ffmpegExecuteCommand =
+			_ffmpegPath + "/ffmpeg "
+			+ "-f concat -safe 0 -i " + concatenationListPathName + " "
+			// -map 0:a is to get all audio tracks
+			+ "-map 0:a -c:a copy "
+			+ concatenatedMediaPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
+	}
 
     #ifdef __APPLE__
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
@@ -6694,7 +6711,7 @@ void FFMpeg::generateConcatMediaToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "concat: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -6713,7 +6730,7 @@ void FFMpeg::generateConcatMediaToIngest(
 
 				inputBuffer = input.str();
 			}
-            string errorMessage = __FILEREF__ + "generateConcatMediaToIngest: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "concat: ffmpeg command failed"
 				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
 				+ ", inputBuffer: " + inputBuffer
@@ -6726,7 +6743,7 @@ void FFMpeg::generateConcatMediaToIngest(
 
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "concat: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @"
@@ -6766,9 +6783,10 @@ void FFMpeg::generateConcatMediaToIngest(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::generateCutMediaToIngest(
+void FFMpeg::cut(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		bool isVideo,
 		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,
@@ -6776,7 +6794,7 @@ void FFMpeg::generateCutMediaToIngest(
         string cutMediaPathName)
 {
 
-	_currentApiName = "generateCutMediaToIngest";
+	_currentApiName = "cut";
 
 	setStatus(
 		ingestionJobKey
@@ -6814,7 +6832,7 @@ void FFMpeg::generateCutMediaToIngest(
 			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
     */
     string ffmpegExecuteCommand;
-	if (keyFrameSeeking)
+	if (isVideo && keyFrameSeeking)
 	{
 		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
@@ -6831,19 +6849,42 @@ void FFMpeg::generateCutMediaToIngest(
             ;
 	}
 	else
-		ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-i " + sourcePhysicalPath + " "
-            + "-ss " + to_string(startTimeInSeconds) + " "
-            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-			+ "-async 1 "
-			// commented because aresample filtering requires encoding and here we are just streamcopy
-            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-			// -map 0:v and -map 0:a is to get all video-audio tracks
-            + "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
+	{
+		if (isVideo)
+		{
+			ffmpegExecuteCommand = 
+				_ffmpegPath + "/ffmpeg "
+				+ "-i " + sourcePhysicalPath + " "
+				+ "-ss " + to_string(startTimeInSeconds) + " "
+				+ (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+				+ "-async 1 "
+				// commented because aresample filtering requires encoding and here we are just streamcopy
+				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+				// -map 0:v and -map 0:a is to get all video-audio tracks
+				+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
+				+ "> " + _outputFfmpegPathFileName + " "
+				+ "2>&1"
+			;
+		}
+		else
+		{
+			// audio
+
+			ffmpegExecuteCommand = 
+				_ffmpegPath + "/ffmpeg "
+				+ "-i " + sourcePhysicalPath + " "
+				+ "-ss " + to_string(startTimeInSeconds) + " "
+				+ "-to " + to_string(endTimeInSeconds) + " "
+				+ "-async 1 "
+				// commented because aresample filtering requires encoding and here we are just streamcopy
+				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+				// -map 0:v and -map 0:a is to get all video-audio tracks
+				+ "-map 0:a -c:a copy " + cutMediaPathName + " "
+				+ "> " + _outputFfmpegPathFileName + " "
+				+ "2>&1"
+			;
+		}
+	}
 
     #ifdef __APPLE__
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
@@ -6851,7 +6892,7 @@ void FFMpeg::generateCutMediaToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "cut: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -6861,7 +6902,7 @@ void FFMpeg::generateCutMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "generateCutMediaToIngest: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "cut: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -6873,7 +6914,7 @@ void FFMpeg::generateCutMediaToIngest(
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "cut: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"

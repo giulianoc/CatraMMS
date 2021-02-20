@@ -139,7 +139,9 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
         throw runtime_error(errorMessage);
     }
     Json::Value tasksRoot = parametersRoot[field];
-    
+
+	/* 2021-02-20: A group that does not have any Task couls be a scenario,
+	 * so we do not have to raise an error. Same check commented in API_Ingestion.cpp
     if (tasksRoot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
@@ -147,6 +149,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
         throw runtime_error(errorMessage);
     }
+	*/
 
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
@@ -4686,7 +4689,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
 							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 								labelIngestionTypeAndErrorMessage =
-								_mmsEngineDBFacade->getIngestionJobDetails(referenceIngestionJobKey);
+								_mmsEngineDBFacade->getIngestionJobDetails(
+										workspaceKey, referenceIngestionJobKey);
 							tie(ignore, ingestionType, ignore, ignore, ignore) = labelIngestionTypeAndErrorMessage;
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)

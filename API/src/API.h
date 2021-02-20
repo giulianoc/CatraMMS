@@ -209,6 +209,13 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+    void updateIngestionJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody, bool admin);
+
     void encodingJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
