@@ -3879,68 +3879,103 @@ void API::updateIngestionJob(
 				throw runtime_error(errorMessage);
 			}
 
-			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+			string field = "IngestionType";
+			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				bool labelModified = false;
-				string newLabel;
-				bool recordingPeriodStartModified = false;
-				string newRecordingPeriodStart;
-				bool recordingPeriodEndModified = false;
-				string newRecordingPeriodEnd;
-
-				{
-					string field = "Label";
-					if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					{
-						labelModified = true;
-						newLabel = metadataRoot.get("Label", "").asString();
-					}
-
-					field = "RecordingPeriodStart";
-					if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					{
-						recordingPeriodStartModified = true;
-						newRecordingPeriodStart = metadataRoot.get("RecordingPeriodStart", "").asString();
-					}
-
-					field = "RecordingPeriodEnd";
-					if (JSONUtils::isMetadataPresent(metadataRoot, field))
-					{
-						recordingPeriodEndModified = true;
-						newRecordingPeriodEnd = metadataRoot.get("RecordingPeriodEnd", "").asString();
-					}
-				}
-
-				if (recordingPeriodStartModified)
-				{
-					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-					validator.sDateSecondsToUtc(newRecordingPeriodStart);
-				}
-
-				if (recordingPeriodEndModified)
-				{
-					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-					validator.sDateSecondsToUtc(newRecordingPeriodEnd);
-				}
-
-				_logger->info(__FILEREF__ + "Update IngestionJob"
-					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				string errorMessage = string("IngestionType field is missing")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				);
+				;
+				_logger->error(__FILEREF__ + errorMessage);
 
-				_mmsEngineDBFacade->updateIngestionJob_LiveRecorder (
-					workspace->_workspaceKey,
-					ingestionJobKey,
-					labelModified, newLabel,
-					recordingPeriodStartModified, newRecordingPeriodStart,
-					recordingPeriodEndModified, newRecordingPeriodEnd,
-					admin
-				);
+				throw runtime_error(errorMessage);
+			}
+			string sIngestionType = metadataRoot.get("IngestionType", "").asString();
 
-				_logger->info(__FILEREF__ + "IngestionJob updated"
-					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				);
+			if (sIngestionType == MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionType::LiveRecorder))
+			{
+				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder)
+				{
+					string errorMessage = string("It was requested an Update of Live-Recorder but IngestionType is not a LiveRecorder")
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					bool ingestionJobLabelModified = false;
+					string newIngestionJobLabel;
+					bool channelLabelModified = false;
+					string newChannelLabel;
+					bool recordingPeriodStartModified = false;
+					string newRecordingPeriodStart;
+					bool recordingPeriodEndModified = false;
+					string newRecordingPeriodEnd;
+
+					{
+						field = "IngestionJobLabel";
+						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						{
+							ingestionJobLabelModified = true;
+							newIngestionJobLabel = metadataRoot.get("IngestionJobLabel", "").asString();
+						}
+
+						field = "ChannelLabel";
+						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						{
+							channelLabelModified = true;
+							newChannelLabel = metadataRoot.get("ChannelLabel", "").asString();
+						}
+
+						field = "RecordingPeriodStart";
+						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						{
+							recordingPeriodStartModified = true;
+							newRecordingPeriodStart = metadataRoot.get("RecordingPeriodStart", "").asString();
+						}
+
+						field = "RecordingPeriodEnd";
+						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						{
+							recordingPeriodEndModified = true;
+							newRecordingPeriodEnd = metadataRoot.get("RecordingPeriodEnd", "").asString();
+						}
+					}
+
+					if (recordingPeriodStartModified)
+					{
+						Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+						validator.sDateSecondsToUtc(newRecordingPeriodStart);
+					}
+
+					if (recordingPeriodEndModified)
+					{
+						Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+						validator.sDateSecondsToUtc(newRecordingPeriodEnd);
+					}
+
+					_logger->info(__FILEREF__ + "Update IngestionJob"
+						+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					);
+
+					_mmsEngineDBFacade->updateIngestionJob_LiveRecorder (
+						workspace->_workspaceKey,
+						ingestionJobKey,
+						ingestionJobLabelModified, newIngestionJobLabel,
+						channelLabelModified, newChannelLabel,
+						recordingPeriodStartModified, newRecordingPeriodStart,
+						recordingPeriodEndModified, newRecordingPeriodEnd,
+						admin
+					);
+
+					_logger->info(__FILEREF__ + "IngestionJob updated"
+						+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					);
+				}
 			}
 
 			Json::Value responseRoot;

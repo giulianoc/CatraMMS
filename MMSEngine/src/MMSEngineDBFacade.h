@@ -391,7 +391,8 @@ public:
         MaxCapacityReached,
         ErrorBeforeEncoding,
 		KilledByUser,
-		CanceledByUser
+		CanceledByUser,
+		CanceledByMMS
     };
     static const char* toString(const EncodingError& encodingError)
     {
@@ -409,6 +410,8 @@ public:
                 return "KilledByUser";
             case EncodingError::CanceledByUser:
                 return "CanceledByUser";
+            case EncodingError::CanceledByMMS:
+                return "CanceledByMMS";
             default:
             throw runtime_error(string("Wrong EncodingError"));
         }
@@ -431,6 +434,8 @@ public:
             return EncodingError::KilledByUser;
         else if (lowerCase == "canceledbyuser")
             return EncodingError::CanceledByUser;
+        else if (lowerCase == "canceledbymms")
+            return EncodingError::CanceledByMMS;
         else
             throw runtime_error(string("Wrong EncodingError")
                     + ", encodingError: " + encodingError
@@ -1379,7 +1384,8 @@ public:
 	void updateIngestionJob_LiveRecorder (
 		int64_t workspaceKey,
 		int64_t ingestionJobKey,
-		bool labelModified, string newLabel,
+		bool ingestionJobLabelModified, string newIngestionJobLabel,
+		bool channelLabelModified, string newChannerLabel,
 		bool recordingPeriodStartModified, string newRecordingPeriodStart,
 		bool recordingPeriodEndModified, string newRecordingPeriodEnd,
 		bool admin);

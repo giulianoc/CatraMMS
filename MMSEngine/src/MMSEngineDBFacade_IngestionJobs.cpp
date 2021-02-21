@@ -2153,9 +2153,11 @@ void MMSEngineDBFacade::updateIngestionJob (
 					+ "endProcessing = NOW() "
 					+ "where ingestionJobKey = ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+            preparedStatement->setString(queryParameterIndex++,
+				MMSEngineDBFacade::toString(newIngestionStatus));
             if (errorMessageForSQL != "")
                 preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
 			if (processorMMS != "noToBeUpdated")
@@ -2254,7 +2256,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             
 		bool updateIngestionRootStatus = true;
 		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus,
-				conn);
+			conn);
 
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
@@ -2634,7 +2636,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 if (resultSet->next())
                 {
                     ingestionRootKey = resultSet->getInt64("ingestionRootKey");
-                    currentIngestionRootStatus = MMSEngineDBFacade::toIngestionRootStatus(resultSet->getString("Status"));                
+                    currentIngestionRootStatus = MMSEngineDBFacade::toIngestionRootStatus(
+						resultSet->getString("Status"));                
                 }
                 else
                 {
@@ -2655,7 +2658,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             {
                 lastSQLCommand = 
                     "select status from MMS_IngestionJob where ingestionRootKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 
@@ -2670,7 +2674,8 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 				);
                 while (resultSet->next())
                 {                
-                    IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                    IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(
+						resultSet->getString("Status"));
 
                     if (!MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatus))
                         intermediateStatesCount++;
@@ -2708,9 +2713,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 lastSQLCommand = 
                     "update MMS_IngestionRoot set lastUpdate = NOW(), status = ? where ingestionRootKey = ?";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionRootStatus));
+                preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(newIngestionRootStatus));
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5624,37 +5631,19 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 				string encodingJobStatus = resultSet->getString("encodingJobStatus");
 
 				{
-					_logger->info(__FILEREF__ + "Found IngestionJob having wrong status"
+					string errorMessage = string("Found IngestionJob having wrong status")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobStatus: " + ingestionJobStatus
 						+ ", encodingJobStatus: " + encodingJobStatus
-					);
-
-					lastSQLCommand =
-						"update MMS_IngestionJob "
-						"set status = ? "
-						"where ingestionJobKey = ? "
 					;
+					_logger->error(__FILEREF__ + errorMessage);
 
-					shared_ptr<sql::PreparedStatement> preparedStatementFixEncoding (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatementFixEncoding->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(IngestionStatus::End_CanceledByMMS));
-					preparedStatementFixEncoding->setInt64(
-						queryParameterIndex++, ingestionJobKey);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatementFixEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", IngestionStatus::End_CanceledByMMS: "
-							+ MMSEngineDBFacade::toString(IngestionStatus::End_CanceledByMMS)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
+					updateIngestionJob (
+						conn,
+						ingestionJobKey,
+						IngestionStatus::End_CanceledByMMS,
+						errorMessage);
 				}
 			}
 		}
@@ -5728,7 +5717,8 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 	int64_t workspaceKey,
 	int64_t ingestionJobKey,
-	bool labelModified, string newLabel,
+	bool ingestionJobLabelModified, string newIngestionJobLabel,
+	bool channelLabelModified, string newChannelLabel,
 	bool recordingPeriodStartModified, string newRecordingPeriodStart,
 	bool recordingPeriodEndModified, string newRecordingPeriodEnd,
 	bool admin
@@ -5745,15 +5735,23 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		if (labelModified || recordingPeriodStartModified || recordingPeriodEndModified)
+		if (ingestionJobLabelModified || channelLabelModified
+				|| recordingPeriodStartModified || recordingPeriodEndModified)
         {
 			string setSQL;
 
-			if (labelModified)
+			if (ingestionJobLabelModified)
 			{
 				if (setSQL != "")
 					setSQL += ", ";
 				setSQL += "label = ?";
+			}
+
+			if (channelLabelModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.ConfigurationLabel', ?)";
 			}
 
 			if (recordingPeriodStartModified)
@@ -5778,8 +5776,10 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			if (labelModified)
-				preparedStatement->setString(queryParameterIndex++, newLabel);
+			if (ingestionJobLabelModified)
+				preparedStatement->setString(queryParameterIndex++, newIngestionJobLabel);
+			if (channelLabelModified)
+				preparedStatement->setString(queryParameterIndex++, newChannelLabel);
 			if (recordingPeriodStartModified)
 				preparedStatement->setString(queryParameterIndex++, newRecordingPeriodStart);
 			if (recordingPeriodEndModified)
@@ -5790,7 +5790,8 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", newLabel: " + newLabel
+				+ ", newIngestionJobLabel: " + newIngestionJobLabel
+				+ ", newChannelLabel: " + newChannelLabel
 				+ ", newRecordingPeriodStart: " + newRecordingPeriodStart
 				+ ", newRecordingPeriodEnd: " + newRecordingPeriodEnd
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)

@@ -4317,13 +4317,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 }
 
 int MMSEngineDBFacade::updateEncodingJob (
-        int64_t encodingJobKey,
-        EncodingError encodingError,
-        int64_t mediaItemKey,
-        int64_t encodedPhysicalPathKey,
-        int64_t ingestionJobKey,
-		string ingestionErrorMessage,
-		bool forceEncodingToBeFailed)
+	int64_t encodingJobKey,
+	EncodingError encodingError,
+	int64_t mediaItemKey,
+	int64_t encodedPhysicalPathKey,
+	int64_t ingestionJobKey,
+	string ingestionErrorMessage,
+	bool forceEncodingToBeFailed)
 {
     
     string      lastSQLCommand;
@@ -4632,6 +4632,54 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", encodingJobKey: " + to_string(encodingJobKey)
             );
         }
+        else if (encodingError == EncodingError::CanceledByMMS)
+        {
+            newEncodingStatus       = EncodingStatus::End_CanceledByMMS;
+            
+			_logger->info(__FILEREF__ + "EncodingJob update"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", processorMMS: " + "NULL"
+				+ ", encodingJobEnd: " + "NOW()"
+				);
+            lastSQLCommand = 
+                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
+				"where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++,
+					MMSEngineDBFacade::toString(newEncodingStatus));
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", MMSEngineDBFacade::toString(newEncodingStatus): "
+							+ MMSEngineDBFacade::toString(newEncodingStatus)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+            _logger->info(__FILEREF__ + "EncodingJob updated successful"
+                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+                + ", encodingJobKey: " + to_string(encodingJobKey)
+            );
+        }
         else    // success
         {
             newEncodingStatus       = EncodingStatus::End_Success;
@@ -4740,6 +4788,22 @@ int MMSEngineDBFacade::updateEncodingJob (
         else if (newEncodingStatus == EncodingStatus::End_CanceledByUser && ingestionJobKey != -1)
         {
             IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByUser;
+            string errorMessage;
+            string processorMMS;
+            int64_t physicalPathKey = -1;
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + toString(ingestionStatus)
+                + ", physicalPathKey: " + to_string(physicalPathKey)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
+        }
+        else if (newEncodingStatus == EncodingStatus::End_CanceledByMMS)
+        {
+            IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByMMS;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
@@ -7448,36 +7512,21 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 				string encodingJobStatus = resultSet->getString("encodingJobStatus");
 
 				{
-					_logger->info(__FILEREF__ + "Found EncodingJob with wrong status"
+					string errorMessage = string("Found EncodingJob with wrong status")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", ingestionJobStatus: " + ingestionJobStatus
 						+ ", encodingJobStatus: " + encodingJobStatus
-					);
-
-					lastSQLCommand =
-						"update MMS_EncodingJob "
-						"set status = ? "
-						"where encodingJobKey = ? "
 					;
+					_logger->error(__FILEREF__ + errorMessage);
 
-					shared_ptr<sql::PreparedStatement> preparedStatementFixEncoding (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatementFixEncoding->setString(queryParameterIndex++,
-						MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS));
-					preparedStatementFixEncoding->setInt64(
-						queryParameterIndex++, encodingJobKey);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatementFixEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", EncodingStatus::End_CanceledByMMS: "
-							+ MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
+					updateEncodingJob (
+						encodingJobKey,
+						EncodingError::CanceledByMMS,
+						-1,	// mediaItemKey,	not used
+						-1, // encodedPhysicalPathKey,	not used
+						ingestionJobKey,
+						errorMessage
 					);
 				}
 			}

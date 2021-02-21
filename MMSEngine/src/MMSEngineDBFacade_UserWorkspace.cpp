@@ -3795,9 +3795,9 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "No workspace found for userKey"
+					string errorMessage = __FILEREF__ + "No workspace found"
 						+ ", userKey: " + to_string(userKey)
-						+ ", lastSQLCommand: " + lastSQLCommand
+						// + ", lastSQLCommand: " + lastSQLCommand
 					;
 					_logger->error(errorMessage);
 
