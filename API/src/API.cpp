@@ -1348,7 +1348,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else if (method == "workspaceList")
     {
-		workspaceList(request, userKey, workspace, queryParameters);
+		workspaceList(request, userKey, workspace, queryParameters, admin);
     }
     else if (method == "confirmRegistration")
     {

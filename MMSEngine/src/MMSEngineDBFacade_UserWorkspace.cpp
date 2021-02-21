@@ -3523,7 +3523,7 @@ Json::Value MMSEngineDBFacade::login (
 }
 
 Json::Value MMSEngineDBFacade::getWorkspaceList (
-    int64_t userKey)
+    int64_t userKey, bool admin)
 {
 	Json::Value workspaceListRoot;
     string          lastSQLCommand;
@@ -3555,9 +3555,16 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
 		Json::Value responseRoot;
 		{
-			lastSQLCommand =
-				"select count(*) from MMS_Workspace w, MMS_APIKey a "
-				"where w.workspaceKey = a.workspaceKey and a.userKey = ?";
+			if (admin)
+				lastSQLCommand =
+					"select count(*) from MMS_Workspace w, MMS_APIKey a "
+					"where w.workspaceKey = a.workspaceKey "
+					"and a.userKey = ?";
+			else
+				lastSQLCommand =
+					"select count(*) from MMS_Workspace w, MMS_APIKey a "
+					"where w.workspaceKey = a.workspaceKey "
+					"and a.userKey = ? and w.isEnabled = 1";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -3588,13 +3595,24 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
 		Json::Value workspacesRoot(Json::arrayValue);
         {
-            lastSQLCommand = 
-                "select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
+			if (admin)
+				lastSQLCommand = 
+					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
 					"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
 					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
-					"where a.workspaceKey = w.workspaceKey and userKey = ?";
+					"where a.workspaceKey = w.workspaceKey "
+					"and userKey = ?";
+			else
+				lastSQLCommand = 
+					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
+					"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
+					"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+                    "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+                    "from MMS_APIKey a, MMS_Workspace w "
+					"where a.workspaceKey = w.workspaceKey "
+					"and userKey = ? and w.isEnabled = 1";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3709,14 +3727,18 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
         );
 
         {
-            lastSQLCommand = 
+			// if admin returns all the workspaces of the user (even the one not enabled)
+			// if NOT admin returns only the one having isEnabled = 1
+			lastSQLCommand = 
 				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
 				"a.apiKey, a.isOwner, a.isDefault, a.flags, "
 				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 				"from MMS_APIKey a, MMS_Workspace w "
 				"where a.workspaceKey = w.workspaceKey "
-				"and userKey = ? and isDefault = 1 limit 1";
+				"and a.userKey = ? and a.isDefault = 1 "
+				"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
+				"limit 1";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3747,7 +3769,9 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey)
 					"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 					"from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
-					"and userKey = ? limit 1";
+					"and a.userKey = ? "
+					"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
+					"limit 1";
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
@@ -3918,7 +3942,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 				? "true" : "false";
 
 			string flags = resultSet->getString("flags");
-                
+
 			field = "admin";
 			bool admin = flags.find("ADMIN") == string::npos ? false : true;
 			userAPIKeyRoot[field] = admin;

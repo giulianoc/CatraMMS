@@ -952,7 +952,8 @@ void API::workspaceList(
         FCGX_Request& request,
 		int64_t userKey,
         shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters)
+        unordered_map<string, string> queryParameters,
+		bool admin)
 {
     string api = "workspaceList";
 
@@ -980,7 +981,7 @@ void API::workspaceList(
 		*/
 
         {
-			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey);
+			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, workspaceListRoot);

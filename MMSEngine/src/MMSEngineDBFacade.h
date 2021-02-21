@@ -1153,7 +1153,7 @@ public:
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
 
-	Json::Value getWorkspaceList(int64_t userKey);
+	Json::Value getWorkspaceList(int64_t userKey, bool admin);
 
 	Json::Value getLoginWorkspace(int64_t userKey);
 
