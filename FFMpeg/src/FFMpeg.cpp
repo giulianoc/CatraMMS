@@ -8918,7 +8918,10 @@ void FFMpeg::liveProxy(
 				}
 			}
 
-			addToArguments(otherOutputOptions, ffmpegArgumentList);
+			if (otherOutputOptions.find("-map") == string::npos && otherOutputOptionsBecauseOfMaxWidth != "")
+				addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth, ffmpegArgumentList);
+			else
+				addToArguments(otherOutputOptions, ffmpegArgumentList);
 
 			if (ffmpegEncodingProfileArgumentList.size() > 0)
 			{
