@@ -22,6 +22,7 @@
 #include "Magick++.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/sinks/rotating_file_sink.h"
 
 Json::Value loadConfigurationFile(string configurationPathName);
 
@@ -90,18 +91,42 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(configPathName);
 
-    string logPathName =  configuration["log"]["mms"].get("pathName", "XXX").asString();
+    string logPathName =  configuration["log"]["mms"].get("pathName", "").asString();
+	string logType =  configuration["log"]["mms"].get("type", "").asString();
     bool stdout =  JSONUtils::asBool(configuration["log"]["mms"], "stdout", false);
     
     std::vector<spdlog::sink_ptr> sinks;
-    auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
-    sinks.push_back(dailySink);
-    if (stdout)
-    {
-	auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        // auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
-        sinks.push_back(stdoutSink);
-    }
+	{
+		if(logType == "daily")
+		{
+			int logRotationHour = JSONUtils::asInt(configuration["log"]["mms"]["daily"],
+				"rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt(configuration["log"]["mms"]["daily"],
+				"rotationMinute", 1);
+
+			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
+				logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+		}
+		else if(logType == "rotating")
+		{
+			int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["encoder"]["rotating"],
+				"maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::asInt(configuration["log"]["mms"]["rotating"],
+				"maxFiles", 1);
+
+			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
+				maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+		}
+
+		if (stdout)
+		{
+			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			sinks.push_back(stdoutSink);
+		}
+	}
+
     auto logger = std::make_shared<spdlog::logger>("mmsEngineService", begin(sinks), end(sinks));
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     spdlog::register_logger(logger);
@@ -112,7 +137,7 @@ int main (int iArgc, char *pArgv [])
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"]["mms"].get("level", "XXX").asString();
+    string logLevel =  configuration["log"]["mms"].get("level", "").asString();
     if (logLevel == "debug")
         spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "info")
@@ -120,7 +145,7 @@ int main (int iArgc, char *pArgv [])
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
 
-    string pattern =  configuration["log"]["mms"].get("pattern", "XXX").asString();
+    string pattern =  configuration["log"]["mms"].get("pattern", "").asString();
     spdlog::set_pattern(pattern);
 
     // install a signal handler

@@ -17,6 +17,7 @@
 #include <regex>
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/sinks/rotating_file_sink.h"
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -58,17 +59,41 @@ int main(int argc, char** argv)
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
 		string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
+		string logType =  configuration["log"]["api"].get("type", "").asString();
 		bool stdout =  JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
     
 		std::vector<spdlog::sink_ptr> sinks;
-		auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
-		sinks.push_back(dailySink);
-		if (stdout)
 		{
-			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
-			// auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
-			sinks.push_back(stdoutSink);
+			if(logType == "daily")
+			{
+				int logRotationHour = JSONUtils::asInt(configuration["log"]["api"]["daily"],
+					"rotationHour", 1);
+				int logRotationMinute = JSONUtils::asInt(configuration["log"]["api"]["daily"],
+					"rotationMinute", 1);
+
+				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
+					logRotationHour, logRotationMinute);
+				sinks.push_back(dailySink);
+			}
+			else if(logType == "rotating")
+			{
+				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["encoder"]["rotating"],
+					"maxSizeInKBytes", 1000);
+				int maxFiles = JSONUtils::asInt(configuration["log"]["api"]["rotating"],
+					"maxFiles", 10);
+
+				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
+					maxSizeInKBytes * 1000, maxFiles);
+				sinks.push_back(rotatingSink);
+			}
+
+			if (stdout)
+			{
+				auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+				sinks.push_back(stdoutSink);
+			}
 		}
+
 		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
 		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
 		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
