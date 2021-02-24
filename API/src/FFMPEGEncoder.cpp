@@ -5847,6 +5847,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
 
+			string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+
 			// UserData
 			Json::Value userDataRoot;
 			{
@@ -5868,6 +5870,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 						"DeliveryCode", 0);
 					mmsDataRoot["deliveryCode"] = deliveryCode;
 				}
+				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
 				mmsDataRoot["main"] = main;
 				if (!highAvailability)
 				{
@@ -5903,7 +5906,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFi
 					addContentTitle = liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 				}
 				*/
-				string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
+				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();
 				if (ingestionJobLabel == "")
 				{
 					int64_t deliveryCode = JSONUtils::asInt64(liveRecorderParametersRoot,
