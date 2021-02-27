@@ -17,6 +17,7 @@
 #include "EMailSender.h"
 */
 #include "JSONUtils.h"
+#include "catralibraries/DateTime.h"
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -3946,14 +3947,14 @@ void API::updateIngestionJob(
 
 					if (recordingPeriodStartModified)
 					{
-						Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-						validator.sDateSecondsToUtc(newRecordingPeriodStart);
+						// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+						DateTime::sDateSecondsToUtc(newRecordingPeriodStart);
 					}
 
 					if (recordingPeriodEndModified)
 					{
-						Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-						validator.sDateSecondsToUtc(newRecordingPeriodEnd);
+						// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+						DateTime::sDateSecondsToUtc(newRecordingPeriodEnd);
 					}
 
 					_logger->info(__FILEREF__ + "Update IngestionJob"

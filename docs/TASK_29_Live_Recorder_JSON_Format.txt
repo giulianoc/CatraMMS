@@ -86,17 +86,26 @@
 		"EncodersPool": "",
 
 		// optional. the LiveRecorderVOD is the Media Item updated continuously containing
-		//	all the generated chunks. This parameter specifies if the LiveRecorderVOD
-		//	has to be generated or not. Default is false.
-		"LiveRecorderVirtualVOD": false,
+		//	Live Recording. 
+		// This field is optional, if not present no LiveRecorderVOD is generated.
+		// By default LiveRecorderVirtualVOD is not present
+		"LiveRecorderVirtualVOD": {
 
-		// optional. it specifies the max duration of the LiveRecorderVOD in minutes
-		//	Default is 120 minutes
-		"LiveRecorderVirtualVODMaxDuration": 120,
+			// optional. it specifies the max duration of the LiveRecorderVOD in minutes
+			//	Default is 120 minutes
+			"LiveRecorderVirtualVODMaxDuration": 120,
 
-		// optional. it specifies the encoding profile label to be used for the Live Recorder VOD
-		//	By default it is the generated/source ts profile
-		"LiveRecorderVirtualVODProfileLabel": "MMS_TS_H264_veryfast_360p25_high422_AAC_92",
+			// This is an HLS profile and, generally, this is a low encoding profile
+			//		The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel. 
+			//      In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+			//      Possible values for the ContentType are: video, audio
+			"EncodingProfileKey": 1,
+			"EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92",
+			"ContentType": "video",
+
+			// optional. Default: 10
+			"SegmentDurationInSeconds": 10
+		}
 
 		// monitorHLS allows to monitor the input stream providing an HLS delivery
 		//	that can be used inside a player.
@@ -104,17 +113,22 @@
 		"MonitorHLS": {
 
 			// optional: this parameter is needed in case we need a specific encoding profile for the monitor HLS.
-			// Generally this is a low encoding profile
+			// This is an HLS profile and, generally, this is a low encoding profile
 			//		The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel. 
 			//      In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
 			//      Possible values for the ContentType are: video, audio
+			//	In case also LiveRecorderVirtualVOD is true, it is used the encoding profiles
+			//	specified into the LiveRecorderVirtualVOD json section
 			"EncodingProfileKey": 1,
-			"EncodingProfileLabel": "Profile sport",
+			"EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92",
 			"ContentType": "video",
 
+			// In case LiveRecorderVirtualVOD is true, this parameter is not used
 			// optional. Default: 6
 			"PlaylistEntriesNumber": 6,
 
+			// In case LiveRecorderVirtualVOD is true, is is used the duration
+			//	specified into the LiveRecorderVirtualVOD json section
 			// optional. Default: 10
 			"SegmentDurationInSeconds": 10
 		},

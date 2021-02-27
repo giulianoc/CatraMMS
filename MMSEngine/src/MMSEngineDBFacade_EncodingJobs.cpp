@@ -1614,7 +1614,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     }
 
 					{
-						string field = "monitorEncodingProfileKey";
+						string field = "monitorVirtualVODEncodingProfileKey";
 						// if not present it will be -1
 						int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, -1);
 
@@ -1639,7 +1639,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							);
 							if (encodingProfilesResultSet->next())
 							{
-								encodingItem->_liveRecorderData->_monitorEncodingProfileContentType =
+								encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileContentType =
 									toContentType(encodingProfilesResultSet->getString("contentType"));
 								string jsonEncodingProfile = encodingProfilesResultSet->getString("jsonProfile");
 								{
@@ -1649,7 +1649,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 									bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
 										jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
-										&(encodingItem->_liveRecorderData->_monitorEncodingProfileDetailsRoot), &errors);
+										&(encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileDetailsRoot), &errors);
 									delete reader;
 
 									if (!parsingSuccessful)
@@ -9982,12 +9982,17 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	int segmentDurationInSeconds,
 	string outputFileFormat,
 	EncodingPriority encodingPriority,
+
 	bool monitorHLS,
-	int64_t monitorEncodingProfileKey,
 	string monitorManifestDirectoryPath,
 	string monitorManifestFileName,
-	int monitorPlaylistEntriesNumber,
-	int monitorSegmentDurationInSeconds
+
+	bool liveRecorderVirtualVOD,
+
+	// common between monitor and virtual vod
+	int64_t monitorVirtualVODEncodingProfileKey,
+	int monitorVirtualVODSegmentDurationInSeconds,
+	int monitorVirtualVODPlaylistEntriesNumber
 )
 {
 
@@ -10014,11 +10019,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", outputFileFormat: " + outputFileFormat
             + ", encodingPriority: " + toString(encodingPriority)
             + ", monitorHLS: " + to_string(monitorHLS)
-            + ", monitorEncodingProfileKey: " + to_string(monitorEncodingProfileKey)
             + ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
             + ", monitorManifestFileName: " + monitorManifestFileName
-            + ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
-            + ", monitorSegmentDurationInSeconds: " + to_string(monitorSegmentDurationInSeconds)
+            + ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD)
+            + ", monitorVirtualVODEncodingProfileKey: " + to_string(monitorVirtualVODEncodingProfileKey)
+            + ", monitorVirtualVODSegmentDurationInSeconds: " + to_string(monitorVirtualVODSegmentDurationInSeconds)
+            + ", monitorVirtualVODPlaylistEntriesNumber: " + to_string(monitorVirtualVODPlaylistEntriesNumber)
 
         );
 
@@ -10089,20 +10095,23 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "monitorHLS";
 				parametersRoot[field] = monitorHLS;
 
-				field = "monitorEncodingProfileKey";
-				parametersRoot[field] = monitorEncodingProfileKey;
-
 				field = "monitorManifestDirectoryPath";
 				parametersRoot[field] = monitorManifestDirectoryPath;
 
 				field = "monitorManifestFileName";
 				parametersRoot[field] = monitorManifestFileName;
 
-				field = "monitorPlaylistEntriesNumber";
-				parametersRoot[field] = monitorPlaylistEntriesNumber;
+				field = "liveRecorderVirtualVOD";
+				parametersRoot[field] = liveRecorderVirtualVOD;
 
-				field = "monitorSegmentDurationInSeconds";
-				parametersRoot[field] = monitorSegmentDurationInSeconds;
+				field = "monitorVirtualVODEncodingProfileKey";
+				parametersRoot[field] = monitorVirtualVODEncodingProfileKey;
+
+				field = "monitorVirtualVODSegmentDurationInSeconds";
+				parametersRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
+
+				field = "monitorVirtualVODPlaylistEntriesNumber";
+				parametersRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);
@@ -10232,20 +10241,25 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "monitorHLS";
 				parametersRoot[field] = false;
 
-				field = "monitorEncodingProfileKey";
-				parametersRoot[field] = monitorEncodingProfileKey;
-
 				field = "monitorManifestDirectoryPath";
 				parametersRoot[field] = monitorManifestDirectoryPath;
 
 				field = "monitorManifestFileName";
 				parametersRoot[field] = monitorManifestFileName;
 
-				field = "monitorPlaylistEntriesNumber";
-				parametersRoot[field] = monitorPlaylistEntriesNumber;
+				// false 
+				// 1. because HLS cannot generate ts files in the same directory
+				field = "liveRecorderVirtualVOD";
+				parametersRoot[field] = false;
 
-				field = "monitorSegmentDurationInSeconds";
-				parametersRoot[field] = monitorSegmentDurationInSeconds;
+				field = "monitorVirtualVODEncodingProfileKey";
+				parametersRoot[field] = monitorVirtualVODEncodingProfileKey;
+
+				field = "monitorVirtualVODSegmentDurationInSeconds";
+				parametersRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
+
+				field = "monitorVirtualVODPlaylistEntriesNumber";
+				parametersRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

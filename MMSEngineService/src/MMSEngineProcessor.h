@@ -70,7 +70,6 @@ private:
     int                                 _processorIdentifier;
     int                                 _processorThreads;
     int                                 _maxAdditionalProcessorThreads;
-    int									_maxSecondsToWaitUpdateLiveRecorderVirtualVOD;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -134,8 +133,6 @@ private:
 	int						_waitingNFSSync_attemptNumber;
 	int						_waitingNFSSync_sleepTimeInSeconds;
 
-	string					_liveRecorderVirtualVODImageLabel;
-
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
 	bool isMaintenanceMode();
@@ -159,7 +156,6 @@ private:
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
 	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
-	void handleUpdateLiveRecorderVirtualVODEventThread (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(
         int64_t ingestionJobKey,
@@ -409,30 +405,6 @@ private:
 		string tarBinaryPathName, string workspaceIngestionRepository,
 		string sourcePathName
 		);
-
-	void liveRecorder_ingestVirtualVOD(
-		shared_ptr<Workspace> workspace,
-		int64_t liveRecorderIngestionJobKey,
-		int64_t liveRecorderVirtualVODProfileKey,
-		int liveRecorderSegmentDuration,
-		string liveRecorderConfigurationLabel,
-		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
-		string liveChunkRetention,
-		string liveRecorderVirtualVODUniqueName,
-		int64_t liveRecorderUserKey,
-		string liveRecorderApiKey);
-
-	void liveRecorder_updateVirtualVOD(
-		shared_ptr<Workspace> workspace,
-		int64_t liveRecorderIngestionJobKey,
-		string liveRecorderVirtualVODUniqueName,
-		int64_t liveRecorderVirtualVODProfileKey,
-		int liveRecorderSegmentDuration,
-		string liveRecorderConfigurationLabel,
-		vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& liveChunksDetails,
-		int64_t liveRecorderVirtualVODMediaItemKey,
-		int64_t liveRecorderVirtualVODPhysicalPathKey,
-		string liveRecorderVirtualVODManifestPathName);
 
     int progressDownloadCallback(
         int64_t ingestionJobKey,

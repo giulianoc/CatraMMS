@@ -274,11 +274,14 @@ int main(int argc, char** argv)
 		{
 			thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread,
 					ffmpegEncoders[0]);
+			thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
+					ffmpegEncoders[0]);
 
 			thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
 
 			ffmpegEncoderThreads[0].join();
         
+			ffmpegEncoders[0]->stopLiveRecorderVirtualVODIngestionThread();
 			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
 			ffmpegEncoders[0]->stopMonitorThread();
 		}
@@ -353,6 +356,11 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
     );
 
+    _liveRecorderVirtualVODIngestionCheckInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderVirtualVODIngestionCheckInSeconds", 5);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->liveRecorderVirtualVODIngestionCheckInSeconds: " + to_string(_liveRecorderVirtualVODIngestionCheckInSeconds)
+    );
+
     _encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
@@ -415,6 +423,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 
 	_monitorThreadShutdown = false;
 	_liveRecorderChunksIngestionThreadShutdown = false;
+	_liveRecorderVirtualVODIngestionThreadShutdown = false;
 
 	_encodingCompletedMutex = encodingCompletedMutex;
 	_encodingCompletedMap = encodingCompletedMap;
@@ -4965,9 +4974,12 @@ void FFMPEGEncoder::liveRecorderThread(
         string userAgent = liveRecorderMedatada.get("userAgent", "XXX").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
-        liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "XXX").asString();
-        liveRecording->_segmentListFileName = liveRecorderMedatada.get("segmentListFileName", "XXX").asString();
-        liveRecording->_recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "XXX").asString();
+        liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "").asString();
+        liveRecording->_segmentListFileName = liveRecorderMedatada.get("segmentListFileName", "").asString();
+        liveRecording->_recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "").asString();
+        liveRecording->_virtualVODStagingContentsPath = liveRecorderMedatada.get("virtualVODStagingContentsPath", "").asString();
+        liveRecording->_liveRecorderVirtualVODImageMediaItemKey = JSONUtils::asInt64(liveRecorderMedatada,
+			"liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
@@ -5005,38 +5017,49 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveURL = liveRecorderMedatada.get("liveURL", "").asString();
 		}
 
-        time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodStart", -1);
-        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot, "utcRecordingPeriodEnd", -1);
-        int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "segmentDurationInSeconds", -1);
-        string outputFileFormat = liveRecording->_encodingParametersRoot.get("outputFileFormat", "XXX").asString();
+        time_t utcRecordingPeriodStart = JSONUtils::asInt64(liveRecording->_encodingParametersRoot,
+			"utcRecordingPeriodStart", -1);
+        time_t utcRecordingPeriodEnd = JSONUtils::asInt64(liveRecording->_encodingParametersRoot,
+			"utcRecordingPeriodEnd", -1);
+        int segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
+			"segmentDurationInSeconds", -1);
+        string outputFileFormat = liveRecording->_encodingParametersRoot
+			.get("outputFileFormat", "").asString();
 
 
 		bool monitorHLS;
-		Json::Value monitorEncodingProfileDetailsRoot = Json::nullValue;
+		bool virtualVOD;
+		Json::Value monitorVirtualVODEncodingProfileDetailsRoot = Json::nullValue;
 		bool monitorIsVideo = true;
 		string monitorManifestDirectoryPath;
 		string monitorManifestFileName;
-		int monitorPlaylistEntriesNumber = -1;
-		int monitorSegmentDurationInSeconds = -1;
+		int monitorVirtualVODPlaylistEntriesNumber = -1;
+		int monitorVirtualVODSegmentDurationInSeconds = -1;
 		{
-			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot, "monitorHLS", false);
+			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
+				"monitorHLS", false);
+			liveRecording->_virtualVOD = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
+				"liveRecorderVirtualVOD", false);
 
-			if (monitorHLS)
+			if (monitorHLS || liveRecording->_virtualVOD)
 			{
 				// Json::Value monitorHLSRoot = liveRecording->_liveRecorderParametersRoot["MonitorHLS"];
 
-				monitorHLS = true;
+				liveRecording->_monitorVirtualVODManifestDirectoryPath = liveRecording->_encodingParametersRoot
+					.get("monitorManifestDirectoryPath", "").asString();
+				liveRecording->_monitorVirtualVODManifestFileName = liveRecording->_encodingParametersRoot
+					.get("monitorManifestFileName", "").asString();
+				monitorVirtualVODPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
+					"monitorVirtualVODPlaylistEntriesNumber", 6);
+				monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
+					"monitorVirtualVODSegmentDurationInSeconds", 10);
 
-				monitorManifestDirectoryPath = liveRecording->_encodingParametersRoot.get("monitorManifestDirectoryPath", "").asString();
-				monitorManifestFileName = liveRecording->_encodingParametersRoot.get("monitorManifestFileName", "").asString();
-				monitorPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "monitorPlaylistEntriesNumber", 6);
-				monitorSegmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, "monitorSegmentDurationInSeconds", 10);
+				monitorVirtualVODEncodingProfileDetailsRoot =
+					liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"];
+				string monitorVirtualVODEncodingProfileContentType =
+					liveRecorderMedatada.get("monitorVirtualVODEncodingProfileContentType", "Video").asString();
 
-				monitorEncodingProfileDetailsRoot = liveRecorderMedatada["monitorEncodingProfileDetailsRoot"];
-				string monitorEncodingProfileContentType =
-					liveRecorderMedatada.get("monitorEncodingProfileContentType", "Video").asString();
-
-				monitorIsVideo = monitorEncodingProfileContentType == "Video" ? true : false;
+				monitorIsVideo = monitorVirtualVODEncodingProfileContentType == "Video" ? true : false;
 
 				if (FileIO::directoryExisting(monitorManifestDirectoryPath))
 				{
@@ -5081,10 +5104,12 @@ void FFMPEGEncoder::liveRecorderThread(
 			}
 		}
 
-		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName))
+		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
+			+ liveRecording->_segmentListFileName))
 		{
 			_logger->info(__FILEREF__ + "remove"
-				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName
+				+ ", segmentListPathName: " + liveRecording->_transcoderStagingContentsPath
+					+ liveRecording->_segmentListFileName
 			);
 			bool exceptionInCaseOfError = false;
 			FileIO::remove(liveRecording->_transcoderStagingContentsPath + liveRecording->_segmentListFileName,
@@ -5124,12 +5149,13 @@ void FFMPEGEncoder::liveRecorderThread(
 			outputFileFormat,
 
 			monitorHLS,
-			monitorEncodingProfileDetailsRoot,
+			liveRecording->_virtualVOD,
+			monitorVirtualVODEncodingProfileDetailsRoot,
 			monitorIsVideo,
-			monitorManifestDirectoryPath,
-			monitorManifestFileName,
-			monitorPlaylistEntriesNumber,
-			monitorSegmentDurationInSeconds,
+			liveRecording->_monitorVirtualVODManifestDirectoryPath,
+			liveRecording->_monitorVirtualVODManifestFileName,
+			monitorVirtualVODPlaylistEntriesNumber,
+			monitorVirtualVODSegmentDurationInSeconds,
 
 			&(liveRecording->_childPid)
 		);
@@ -5664,6 +5690,143 @@ void FFMPEGEncoder::stopLiveRecorderChunksIngestionThread()
 	_liveRecorderChunksIngestionThreadShutdown = true;
 
 	this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
+}
+
+void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
+{
+
+	while(!_liveRecorderVirtualVODIngestionThreadShutdown)
+	{
+		try
+		{
+			lock_guard<mutex> locker(*_liveRecordingMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			#else	// __MAP__
+			for(map<int64_t, shared_ptr<LiveRecording>>::iterator it = _liveRecordingsCapability->begin();
+				it != _liveRecordingsCapability->end(); it++)
+			#endif
+			{
+				#ifdef __VECTOR__
+				#else	// __MAP__
+				shared_ptr<LiveRecording> liveRecording = it->second;
+				#endif
+
+				if (liveRecording->_running && liveRecording->_virtualVOD)
+				{
+					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD ..."
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", running: " + to_string(liveRecording->_running)
+						+ ", virtualVOD: " + to_string(liveRecording->_virtualVOD)
+					);
+
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+
+					try
+					{
+						int64_t deliveryCode = JSONUtils::asInt64(
+							liveRecording->_liveRecorderParametersRoot, "DeliveryCode", 0);
+						string ingestionJobLabel = liveRecording->_encodingParametersRoot
+							.get("ingestionJobLabel", "").asString();
+						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
+							+ to_string(deliveryCode) + "_" + to_string(liveRecording->_ingestionJobKey)
+							+ ")";
+						string liveRecorderVirtualVODRetention = "3h";
+
+						int64_t userKey;
+						string apiKey;
+						{
+							string field = "InternalMMS";
+							if (JSONUtils::isMetadataPresent(liveRecording->_liveRecorderParametersRoot, field))
+							{
+								// internalMMSRootPresent = true;
+
+								Json::Value internalMMSRoot = liveRecording->_liveRecorderParametersRoot[field];
+
+								field = "userKey";
+								userKey = JSONUtils::asInt64(internalMMSRoot, field, -1);
+
+								field = "apiKey";
+								apiKey = internalMMSRoot.get(field, "").asString();
+
+							}
+						}
+
+						liveRecorder_buildAndIngestVirtualVOD(
+							liveRecording->_ingestionJobKey,
+							liveRecording->_encodingJobKey,
+
+							liveRecording->_monitorVirtualVODManifestDirectoryPath,
+							liveRecording->_monitorVirtualVODManifestFileName,
+							liveRecording->_virtualVODStagingContentsPath,
+
+							deliveryCode,
+							ingestionJobLabel,
+							liveRecorderVirtualVODUniqueName,
+							liveRecorderVirtualVODRetention,
+							liveRecording->_liveRecorderVirtualVODImageMediaItemKey,
+							userKey,
+							apiKey);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+					catch(exception e)
+					{
+						string errorMessage = string ("liveRecorder_buildAndIngestVirtualVOD failed")
+							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+							+ ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+
+						_logger->error(__FILEREF__ + errorMessage);
+					}
+
+					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD"
+						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", @MMS statistics@ - elapsed time: @" + to_string(
+							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
+						) + "@"
+					);
+				}
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+
+		this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionCheckInSeconds));
+	}
+}
+
+void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
+{
+	_liveRecorderVirtualVODIngestionThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionCheckInSeconds));
 }
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
@@ -6841,6 +7004,711 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
 
 	return utcCurrentRecordedFileLastModificationTime;
+}
+
+void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
+	int64_t liveRecorderIngestionJobKey,
+	int64_t liveRecorderEncodingJobKey,
+
+	string sourceSegmentsDirectoryPathName,
+	string sourceManifestFileName,
+	string stagingLiveRecorderVirtualVODPathName,
+
+	int64_t deliveryCode,
+	string liveRecorderIngestionJobLabel,
+	string liveRecorderVirtualVODUniqueName,
+	string liveRecorderVirtualVODRetention,
+	int64_t liveRecorderVirtualVODImageMediaItemKey,
+	int64_t liveRecorderUserKey,
+	string liveRecorderApiKey
+)
+{
+
+	// let's build the live recorder virtual VOD
+	// - copy current manifest and TS files
+	// - calculate start end time of the virtual VOD
+	// - add end line to manifest
+	// - create tar gz
+	// - remove directory
+	int64_t utcStartTimeInMilliSecs = -1;
+	int64_t utcEndTimeInMilliSecs = -1;
+
+	string liveRecorderVirtualVODName;
+	string tarGzStagingLiveRecorderVirtualVODPathName;
+	try
+	{
+		{
+			liveRecorderVirtualVODName = to_string(liveRecorderIngestionJobKey)
+				+ "_liveRecorderVirtualVOD"
+			;
+
+			if (stagingLiveRecorderVirtualVODPathName != ""
+				&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+			{
+				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+				);
+				bool removeRecursively = true;
+				FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+			}
+		}
+
+		// copy manifest and TS files into the stagingLiveRecorderVirtualVODPathName
+		{
+			_logger->info(__FILEREF__ + "Coping directory"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName
+				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+			);
+
+			chrono::system_clock::time_point startCoping = chrono::system_clock::now();
+			FileIO::copyDirectory(sourceSegmentsDirectoryPathName, stagingLiveRecorderVirtualVODPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |                                                                 
+                  S_IRGRP | S_IXGRP |                                                                           
+                  S_IROTH | S_IXOTH);
+			chrono::system_clock::time_point endCoping = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Copied directory"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", @MMS COPY statistics@ - copingDuration (secs): @"
+					+ to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
+			);
+		}
+
+		string copiedManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
+			sourceManifestFileName;
+		if (!FileIO::isFileExisting (copiedManifestPathFileName.c_str()))
+		{
+			string errorMessage = string("manifest file not existing")
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// read start time of the first segment
+		// read start time and duration of the last segment
+		double firstSegmentDuration = -1.0;
+		int64_t firstSegmentUtcStartTimeInMillisecs = -1;
+		double lastSegmentDuration = -1.0;
+		int64_t lastSegmentUtcStartTimeInMillisecs = -1;
+		{
+			_logger->info(__FILEREF__ + "Reading copied manifest file"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+			);
+
+			ifstream ifManifestFile(copiedManifestPathFileName);
+			if (!ifManifestFile.is_open())
+			{
+				string errorMessage = string("Not authorized: manifest file not opened")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+				;
+				_logger->info(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string manifestLine;
+			while(getline(ifManifestFile, manifestLine))
+			{
+				// #EXTINF:14.640000,
+				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
+
+				string prefix ("#EXTINF:");
+				if (manifestLine.size() >= prefix.size()
+					&& 0 == manifestLine.compare(0, prefix.size(), prefix))
+				{
+					size_t endOfSegmentDuration = manifestLine.find(",");
+					if (endOfSegmentDuration == string::npos)
+					{
+						string errorMessage = string("wrong manifest line format")
+							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", manifestLine: " + manifestLine
+						;
+						_logger->info(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					lastSegmentDuration = stod(manifestLine.substr(prefix.size(), endOfSegmentDuration - prefix.size()));
+				}
+
+				prefix = "#EXT-X-PROGRAM-DATE-TIME:";
+				if (manifestLine.size() >= prefix.size() && 0 == manifestLine.compare(0, prefix.size(), prefix))
+					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(prefix.size()));
+
+				if (firstSegmentDuration == -1.0 && firstSegmentUtcStartTimeInMillisecs == -1
+						&& lastSegmentDuration != -1.0 && lastSegmentUtcStartTimeInMillisecs != -1)
+				{
+					firstSegmentDuration = lastSegmentDuration;
+					firstSegmentUtcStartTimeInMillisecs = lastSegmentUtcStartTimeInMillisecs;
+				}
+			}
+		}
+		utcStartTimeInMilliSecs = firstSegmentUtcStartTimeInMillisecs;
+		utcEndTimeInMilliSecs = lastSegmentUtcStartTimeInMillisecs + (lastSegmentDuration * 1000);
+
+		// add end list to manifest file
+		{
+			_logger->info(__FILEREF__ + "Add end manifest line to copied manifest file"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+			);
+
+			string endLine = "\n";
+			ofstream ofManifestFile(copiedManifestPathFileName, ofstream::app);
+			ofManifestFile << endLine << "#EXT-X-ENDLIST" + endLine;
+		}
+
+		{
+			string executeCommand;
+			try
+			{
+				tarGzStagingLiveRecorderVirtualVODPathName = stagingLiveRecorderVirtualVODPathName + ".tar.gz";
+
+				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
+				if (endOfPathIndex == string::npos)
+				{
+					string errorMessage = string("No stagingLiveRecorderVirtualVODDirectory found")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+				string stagingLiveRecorderVirtualVODDirectory =
+					stagingLiveRecorderVirtualVODPathName.substr(0, endOfPathIndex);
+
+				executeCommand =
+					"tar cfz " + tarGzStagingLiveRecorderVirtualVODPathName
+					+ " -C " + stagingLiveRecorderVirtualVODDirectory
+					+ " " + liveRecorderVirtualVODName;
+				_logger->info(__FILEREF__ + "Start tar command "
+					+ ", executeCommand: " + executeCommand
+				);
+				chrono::system_clock::time_point startTar = chrono::system_clock::now();
+				int executeCommandStatus = ProcessUtility::execute(executeCommand);
+				chrono::system_clock::time_point endTar = chrono::system_clock::now();
+				_logger->info(__FILEREF__ + "End tar command "
+					+ ", executeCommand: " + executeCommand
+					+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+				);
+				if (executeCommandStatus != 0)
+				{
+					string errorMessage = string("ProcessUtility::execute failed")
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+						+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
+						+ ", executeCommand: " + executeCommand 
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+          
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					_logger->info(__FILEREF__ + "Remove directory"
+						+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+					);
+					bool removeRecursively = true;
+					FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+				}
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = string("tar command failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", executeCommand: " + executeCommand 
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+         
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch(runtime_error e)
+	{
+		string errorMessage = string("build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		if (stagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("build the live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		if (stagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(stagingLiveRecorderVirtualVODPathName, removeRecursively);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	// build workflow
+	string workflowMetadata;
+	try
+	{
+		// {
+        // 	"Label": "<workflow label>",
+        // 	"Type": "Workflow",
+        //	"Task": {
+        //        "Label": "<task label 1>",
+        //        "Type": "Add-Content"
+        //        "Parameters": {
+        //                "FileFormat": "m3u8",
+        //                "Ingester": "Giuliano",
+        //                "SourceURL": "move:///abc...."
+        //        },
+        //	}
+		// }
+		Json::Value mmsDataRoot;
+
+		// 2020-04-28: set it to liveRecordingChunk to avoid to be visible into the GUI (view MediaItems).
+		//	This is because this MediaItem is not completed yet
+		string field = "dataType";
+		mmsDataRoot[field] = "liveRecordingVOD";
+
+		field = "utcStartTimeInMilliSecs";
+		mmsDataRoot[field] = utcStartTimeInMilliSecs;
+
+		field = "utcEndTimeInMilliSecs";
+		mmsDataRoot[field] = utcEndTimeInMilliSecs;
+
+		string sUtcEndTime;
+		{
+			char    utcEndTime_str [64];
+			tm      tmDateTime;
+
+
+			time_t utcEndTimeInSeconds = utcEndTimeInMilliSecs / 1000;
+
+			// from utc to local time
+			localtime_r (&utcEndTimeInSeconds, &tmDateTime);
+
+			sprintf (utcEndTime_str,
+				"%04d-%02d-%02d %02d:%02d:%02d",                                                              
+				tmDateTime. tm_year + 1900,                                                                   
+				tmDateTime. tm_mon + 1,                                                                       
+				tmDateTime. tm_mday,                                                                          
+				tmDateTime. tm_hour,                                                                          
+				tmDateTime. tm_min,                                                                           
+				tmDateTime. tm_sec);                                                                          
+
+			sUtcEndTime = utcEndTime_str;                                                       
+
+			field = "utcEndTime_str";
+			mmsDataRoot[field] = sUtcEndTime;                                                            
+		}
+
+		field = "deliveryCode";
+		mmsDataRoot[field] = deliveryCode;
+
+		Json::Value userDataRoot;
+
+		field = "mmsData";
+		userDataRoot[field] = mmsDataRoot;
+
+		Json::Value addContentRoot;
+
+		string addContentLabel = liveRecorderIngestionJobLabel + " (" + sUtcEndTime + ") building V-VOD...";
+
+		field = "Label";
+		addContentRoot[field] = addContentLabel;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		Json::Value addContentParametersRoot;
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = "m3u8";
+
+		string sourceURL = string("copy") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
+        field = "SourceURL";
+        addContentParametersRoot[field] = sourceURL;
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Live Recorder Task";
+
+		field = "Title";
+		addContentParametersRoot[field] = addContentLabel;
+
+		field = "UniqueName";
+		addContentParametersRoot[field] = liveRecorderVirtualVODUniqueName;
+
+		field = "AllowUniqueNameOverride";
+		addContentParametersRoot[field] = true;
+
+		field = "Retention";
+		addContentParametersRoot[field] = liveRecorderVirtualVODRetention;
+
+		field = "UserData";
+		addContentParametersRoot[field] = userDataRoot;
+
+		if (liveRecorderVirtualVODImageMediaItemKey != -1)
+		{
+			try
+			{
+				/*
+				bool warningIfMissing = true;
+				pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+					workspace->_workspaceKey, liveRecorderVirtualVODImageLabel, warningIfMissing);
+
+				int64_t liveRecorderVirtualVODImageMediaItemKey;
+				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
+				*/
+
+				Json::Value crossReferenceRoot;
+
+				field = "Type";
+				crossReferenceRoot[field] = "VideoOfImage";
+
+				field = "MediaItemKey";
+				crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
+
+				field = "CrossReference";
+				addContentParametersRoot[field] = crossReferenceRoot;
+			}
+			catch (MediaItemKeyNotFound e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
+			catch (runtime_error e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
+					+ ", e.what: " + e.what()
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed")
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey)
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+			}
+		}
+
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
+
+
+		Json::Value workflowRoot;
+
+		field = "Label";
+		workflowRoot[field] = addContentLabel;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Live Recorder VOD Workflow metadata generated"
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", " + addContentLabel + ", "
+		);
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("build workflowMetadata live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", e.what: " + e.what()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+
+	// ingest the Live Recorder VOD
+	ostringstream response;
+	string mmsAPIURL;
+	try
+	{
+		mmsAPIURL =
+			_mmsAPIProtocol
+			+ "://"
+			+ _mmsAPIHostname + ":"
+			+ to_string(_mmsAPIPort)
+			+ _mmsAPIIngestionURI
+           ;
+
+		list<string> header;
+
+		header.push_back("Content-Type: application/json");
+		{
+			// string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			string userPasswordEncoded = Convert::base64_encode(to_string(liveRecorderUserKey) + ":" + liveRecorderApiKey);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+		// timeout consistent with nginx configuration (fastcgi_read_timeout)
+		request.setOpt(new curlpp::options::Timeout(_mmsAPITimeoutInSeconds));
+
+		if (_mmsAPIProtocol == "https")
+		{
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+              
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+              
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		_logger->info(__FILEREF__ + "Ingesting Live Recorder VOD workflow"
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+		chrono::system_clock::time_point startIngesting = chrono::system_clock::now();
+		request.perform();
+		chrono::system_clock::time_point endIngesting = chrono::system_clock::now();
+
+		string sResponse = response.str();
+		// LF and CR create problems to the json parser...
+		while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+			sResponse.pop_back();
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);
+		if (responseCode == 201)
+		{
+			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				;
+			_logger->info(message);
+		}
+		else
+		{
+			string message = __FILEREF__ + "Ingested Live Recorder VOD workflow response"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) 
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", @MMS statistics@ - ingestingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endIngesting - startIngesting).count()) + "@"
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				+ ", responseCode: " + to_string(responseCode)
+				;
+			_logger->error(message);
+
+			throw runtime_error(message);
+		}
+	}
+	catch (curlpp::LogicError& e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed (LogicError)")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (curlpp::RuntimeError& e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed (RuntimeError)")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (runtime_error e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", e.what: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception e)
+	{
+		string errorMessage = string("ingest live recorder VOD failed")
+			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+			+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", response.str(): " + response.str()
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		if (tarGzStagingLiveRecorderVirtualVODPathName != ""
+			&& FileIO::fileExisting(tarGzStagingLiveRecorderVirtualVODPathName))
+		{
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName
+			);
+			FileIO::remove(tarGzStagingLiveRecorderVirtualVODPathName);
+		}
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void FFMPEGEncoder::liveProxyThread(

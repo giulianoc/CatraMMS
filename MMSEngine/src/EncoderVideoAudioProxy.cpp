@@ -99,6 +99,12 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
 
+	_liveRecorderVirtualVODImageLabel = _configuration["ffmpeg"].get("liveRecorderVirtualVODImageLabel",
+		"").asString();
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
+	);
+
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -117,7 +123,8 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPassword: " + "..."
     );
-    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"],
+		"encoderTimeoutInSeconds", 120);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
     );
@@ -10248,7 +10255,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
-	int segmentDurationInSeconds;
+	int monitorVirtualVODSegmentDurationInSeconds;
 	bool autoRenew;
 	{
         string field = "autoRenew";
@@ -10257,11 +10264,11 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
         field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
-        field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
+        field = "monitorVirtualVODSegmentDurationInSeconds";
+        monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
 		// since the first chunk is discarded, we will start recording before the period of the chunk
-		utcRecordingPeriodStart -= segmentDurationInSeconds;
+		utcRecordingPeriodStart -= monitorVirtualVODSegmentDurationInSeconds;
 
         field = "utcRecordingPeriodEnd";
         utcRecordingPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
@@ -10337,7 +10344,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
 	bool autoRenew;
-	int segmentDurationInSeconds;
+	int monitorVirtualVODSegmentDurationInSeconds;
 	string outputFileFormat;
 	{
 		/*
@@ -10374,8 +10381,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         field = "autoRenew";
         autoRenew = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
-        field = "segmentDurationInSeconds";
-        segmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
+        field = "monitorVirtualVODSegmentDurationInSeconds";
+        monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "outputFileFormat";
         outputFileFormat = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -10599,10 +10606,23 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				string body;
 				{
+					// the recorder generates the chunks in a local(transcoder) directory
 					string transcoderStagingContentsPath;
+
+					// the chunks are moved to a shared directory to be ingested using a copy/move source URL
 					string stagingContentsPath;
+
+					// playlist where the recorder writes the chunks generated
 					string segmentListFileName;
+
 					string recordedFileNamePrefix;
+
+					// the virtual VOD is generated into a shared directory to be ingested
+					// using a copy/move source URL
+					string virtualVODStagingContentsPath;
+
+					int64_t liveRecorderVirtualVODImageMediaItemKey;
+
 					{
 						{
 							bool removeLinuxPathIfExist = false;
@@ -10667,6 +10687,31 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							+ to_string(_encodingItem->_ingestionJobKey)
 							+ "_" + to_string(_encodingItem->_encodingJobKey)
 							;
+
+						{
+							bool removeLinuxPathIfExist = false;
+							bool neededForTranscoder = false;
+							virtualVODStagingContentsPath = _mmsStorage->getStagingAssetPathName(
+								neededForTranscoder,
+								_encodingItem->_workspace->_directoryName,
+								to_string(_encodingItem->_ingestionJobKey) + "_virtualVOD",	// directoryNamePrefix,
+								"/",    // _encodingItem->_relativePath,
+								to_string(_encodingItem->_ingestionJobKey) + "_liveRecorderVirtualVOD",
+								-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+								-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+								removeLinuxPathIfExist);
+						}
+
+						{
+							bool warningIfMissing = true;
+							pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
+								_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+								_encodingItem->_workspace->_workspaceKey,
+								_liveRecorderVirtualVODImageLabel,
+								warningIfMissing);
+
+							tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
+						}
 					}
 
 					string localLiveURL = liveURL;
@@ -10839,17 +10884,25 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					}
 
 					Json::Value liveRecorderMedatada;
-                
+
 					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveRecorderMedatada["userAgent"] = userAgent;
 					liveRecorderMedatada["transcoderStagingContentsPath"] = transcoderStagingContentsPath;
 					liveRecorderMedatada["stagingContentsPath"] = stagingContentsPath;
+					liveRecorderMedatada["virtualVODStagingContentsPath"] = virtualVODStagingContentsPath;
+					liveRecorderMedatada["liveRecorderVirtualVODImageMediaItemKey"] =
+						liveRecorderVirtualVODImageMediaItemKey;
 					liveRecorderMedatada["segmentListFileName"] = segmentListFileName;
 					liveRecorderMedatada["recordedFileNamePrefix"] = recordedFileNamePrefix;
-					liveRecorderMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
-					liveRecorderMedatada["liveRecorderParametersRoot"] = _encodingItem->_liveRecorderData->_ingestedParametersRoot;
-					liveRecorderMedatada["monitorEncodingProfileContentType"] = MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData->_monitorEncodingProfileContentType);
-					liveRecorderMedatada["monitorEncodingProfileDetailsRoot"] = _encodingItem->_liveRecorderData->_monitorEncodingProfileDetailsRoot;
+					liveRecorderMedatada["encodingParametersRoot"] =
+						_encodingItem->_encodingParametersRoot;
+					liveRecorderMedatada["liveRecorderParametersRoot"] =
+						_encodingItem->_liveRecorderData->_ingestedParametersRoot;
+					liveRecorderMedatada["monitorVirtualVODEncodingProfileContentType"] =
+						MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData
+							->_monitorVirtualVODEncodingProfileContentType);
+					liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"] =
+						_encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileDetailsRoot;
 					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{
@@ -10863,7 +10916,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				header.push_back("Content-Type: application/json");
 				{
-					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+					string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
+						+ _ffmpegEncoderPassword);
 					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 					header.push_back(basicAuthorization);
@@ -10884,19 +10938,19 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
 				{
 					/*
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
 					*/
                                                                                                   
                 

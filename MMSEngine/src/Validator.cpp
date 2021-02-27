@@ -12,6 +12,7 @@
  */
 
 #include "JSONUtils.h"
+#include "catralibraries/DateTime.h"
 #include "Validator.h"
 
 Validator::Validator(
@@ -3255,7 +3256,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string recordingPeriodStart = recordingPeriodRoot.get(field, "").asString();
-	time_t utcRecordingPeriodStart = sDateSecondsToUtc(recordingPeriodStart);
+	time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
 
     field = "End";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -3274,7 +3275,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string recordingPeriodEnd = recordingPeriodRoot.get(field, "").asString();
-	time_t utcRecordingPeriodEnd = sDateSecondsToUtc(recordingPeriodEnd);
+	time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
 	if (utcRecordingPeriodStart >= utcRecordingPeriodEnd)
 	{
@@ -3313,6 +3314,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 }
 
+/*
 time_t Validator::sDateSecondsToUtc(string sDate)
 {
 
@@ -3362,6 +3364,8 @@ time_t Validator::sDateSecondsToUtc(string sDate)
 	return utcTime;
 }
 
+// 2021-02-26T15:41:15.477+0100 (ISO8610)
+// 2021-02-26T15:41:15.477Z
 int64_t Validator::sDateMilliSecondsToUtc(string sDate)
 {
 
@@ -3372,27 +3376,85 @@ int64_t Validator::sDateMilliSecondsToUtc(string sDate)
 	unsigned long       ulUTCMinutes;
 	unsigned long       ulUTCSeconds;
 	unsigned long		ulUTCMilliSeconds;
+	unsigned long		ulHourTimeZone;
+	unsigned long		ulMinuteTimeZone;
 	tm                  tmDate;
 	int                 sscanfReturn;
 
 
-	if ((sscanfReturn = sscanf (sDate.c_str(),
-		"%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ",
-		&ulUTCYear,
-		&ulUTCMonth,
-		&ulUTCDay,
-		&ulUTCHour,
-		&ulUTCMinutes,
-		&ulUTCSeconds,
-		&ulUTCMilliSeconds)) != 7)
+	char signTimeZone = '+';
+	string dateFormat;
+	if (sDate.size() == 28)
 	{
-		string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+		// 2021-02-26T15:41:15.477+0100 (ISO8610)
+
+		signTimeZone = sDate[23];
+
+		dateFormat = string("%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3lu") + signTimeZone + "%2lu%2lu";
+	}
+	else if (sDate.size() == 24)
+	{
+		// 2021-02-26T15:41:15.477Z
+		dateFormat = string("%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ");
+
+		ulHourTimeZone		= 0;
+		ulMinuteTimeZone	= 0;
+	}
+	else
+	{
+		string errorMessage = __FILEREF__ + "Wrong date format"
 			+ ", sDate: " + sDate
-			+ ", sscanfReturn: " + to_string(sscanfReturn)
 		;
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
+	}
+
+
+	if (sDate.size() == 28)
+	{
+		if ((sscanfReturn = sscanf (sDate.c_str(),
+			dateFormat.c_str(),
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds,
+			&ulUTCMilliSeconds,
+			&ulHourTimeZone,
+			&ulMinuteTimeZone
+			)) != 9)
+		{
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", sDate: " + sDate
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	else
+	{
+		if ((sscanfReturn = sscanf (sDate.c_str(),
+			dateFormat.c_str(),
+			&ulUTCYear,
+			&ulUTCMonth,
+			&ulUTCDay,
+			&ulUTCHour,
+			&ulUTCMinutes,
+			&ulUTCSeconds,
+			&ulUTCMilliSeconds)) != 7)
+		{
+			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+				+ ", sDate: " + sDate
+				+ ", sscanfReturn: " + to_string(sscanfReturn)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 	}
 
 	int64_t utcTime;
@@ -3410,9 +3472,15 @@ int64_t Validator::sDateMilliSecondsToUtc(string sDate)
 	utcTime = timegm(&tmDate) * 1000;
 	utcTime += ulUTCMilliSeconds;
 
+	if (signTimeZone == '+')
+		utcTime -= (((ulHourTimeZone * 3600) + (ulMinuteTimeZone * 60)) * 1000);
+	else // if (signTimeZone == '-')
+		utcTime += (((ulHourTimeZone * 3600) + (ulMinuteTimeZone * 60)) * 1000);
+
 
 	return utcTime;
 }
+*/
 
 void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
@@ -3537,14 +3605,14 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
-			utcProxyPeriodStart = sDateSecondsToUtc(proxyPeriodStart);
+			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 		}
 
 		field = "End";
 		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
-			utcProxyPeriodEnd = sDateSecondsToUtc(proxyPeriodEnd);
+			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1
@@ -3763,7 +3831,7 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 	{
 		field = "CountDownEnd";
 		string countDownEnd = parametersRoot.get(field, "").asString();
-		time_t utcCountDownEnd = sDateSecondsToUtc(countDownEnd);
+		time_t utcCountDownEnd = DateTime::sDateSecondsToUtc(countDownEnd);
 	}
 
 	{
@@ -4506,7 +4574,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string cutPeriodStart = cutPeriodRoot.get(field, "").asString();
-	int64_t utcCutPeriodStart = sDateMilliSecondsToUtc(cutPeriodStart);
+	int64_t utcCutPeriodStart = DateTime::sDateMilliSecondsToUtc(cutPeriodStart);
 
     field = "End";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
@@ -4525,7 +4593,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string cutPeriodEnd = cutPeriodRoot.get(field, "").asString();
-	int64_t utcCutPeriodEnd = sDateMilliSecondsToUtc(cutPeriodEnd);
+	int64_t utcCutPeriodEnd = DateTime::sDateMilliSecondsToUtc(cutPeriodEnd);
 
 	if (utcCutPeriodStart >= utcCutPeriodEnd)
 	{

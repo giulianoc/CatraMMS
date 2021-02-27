@@ -12,6 +12,7 @@
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
 #include "catralibraries/Encrypt.h"
+#include "catralibraries/DateTime.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/Convert.h"
 #include "PersistenceLock.h"
@@ -23,7 +24,6 @@
 #include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "MainAndBackupRunningHALiveRecordingEvent.h"
-#include "UpdateLiveRecorderVirtualVODTimes.h"
 #include "EMailSender.h"
 #include "Magick++.h"
 #include <openssl/md5.h>
@@ -75,12 +75,6 @@ MMSEngineProcessor::MMSEngineProcessor(
     _maxEncodingJobsPerEvent       = JSONUtils::asInt(configuration["mms"], "maxEncodingJobsPerEvent", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
-    );
-
-    _maxSecondsToWaitUpdateLiveRecorderVirtualVOD	= JSONUtils::asInt(configuration["mms"]["locks"],
-		"maxSecondsToWaitUpdateLiveRecorderVirtualVOD", 10);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->maxSecondsToWaitUpdateLiveRecorderVirtualVOD: " + to_string(_maxSecondsToWaitUpdateLiveRecorderVirtualVOD)
     );
 
     _maxEventManagementTimeInSeconds       = JSONUtils::asInt(configuration["mms"], "maxEventManagementTimeInSeconds", 5);
@@ -226,11 +220,6 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", storage->waitingNFSSync_sleepTimeInSeconds: "
 		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
-	);
-
-	_liveRecorderVirtualVODImageLabel	= _configuration["mms"].get("liveRecorderVirtualVODImageLabel", "").asString();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 	);
 
     if (_processorIdentifier == 0)
@@ -704,46 +693,6 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                );
-            }
-            break;
-            case MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD:	// 9
-            {
-                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                );
-
-                try
-                {
-                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
-                    {
-                        // it is a periodical event, we will wait the next one
-                        
-                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleUpdateLiveRecorderVirtualVODEventThread, activity is postponed"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-                        );
-                    }
-                    else
-                    {
-                        thread updateLiveRecorderVirtualVOD(&MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread, this,
-                            _processorsThreadsNumber);
-                        updateLiveRecorderVirtualVOD.detach();
-                    }
-                }
-                catch(exception e)
-                {
-                    _logger->error(__FILEREF__ + "handleUpdateLiveRecorderVirtualVODEventThread failed"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", exception: " + e.what()
-                    );
-                }
-
-                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
-
-                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_UPDATELIVERECORDERVIRTUALVOD"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -9473,6 +9422,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int segmentDurationInSeconds;
 		string outputFileFormat;
 		bool highAvailability = false;
+		bool liveRecorderVirtualVOD = false;
+		int liveRecorderVirtualVODMaxDurationInMinutes = 120;
+		int64_t virtualVODEncodingProfileKey = -1;
+		int virtualVODSegmentDurationInSeconds = 0;
 		bool monitorHLS = false;
 		int monitorPlaylistEntriesNumber = 0;
 		int monitorSegmentDurationInSeconds = 0;
@@ -9682,6 +9635,56 @@ void MMSEngineProcessor::manageLiveRecorder(
 				monitorHLS = false;
 			}
 
+			field = "LiveRecorderVirtualVOD";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				Json::Value virtualVODRoot = parametersRoot[field];
+
+				liveRecorderVirtualVOD = true;
+
+				field = "LiveRecorderVirtualVODMaxDuration";
+				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
+					liveRecorderVirtualVODMaxDurationInMinutes = 120;
+				else
+					liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(virtualVODRoot, field, 120);
+
+				field = "SegmentDurationInSeconds";
+				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
+					virtualVODSegmentDurationInSeconds = 10;
+				else
+					virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
+
+				string keyField = "EncodingProfileKey";
+				string labelField = "EncodingProfileLabel";
+				string contentTypeField = "ContentType";
+				if (JSONUtils::isMetadataPresent(virtualVODRoot, keyField))
+					virtualVODEncodingProfileKey = JSONUtils::asInt64(virtualVODRoot, keyField, 0);
+				else if (JSONUtils::isMetadataPresent(virtualVODRoot, labelField))
+				{
+					string encodingProfileLabel = virtualVODRoot.get(labelField, "").asString();
+
+					MMSEngineDBFacade::ContentType contentType;
+					if (JSONUtils::isMetadataPresent(virtualVODRoot, contentTypeField))
+					{
+						contentType = MMSEngineDBFacade::toContentType(
+							virtualVODRoot.get(contentTypeField, "").asString());
+
+						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel);
+					}
+					else
+					{
+						bool contentTypeToBeUsed = false;
+						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+					}
+				}
+			}
+			else
+			{
+				liveRecorderVirtualVOD = false;
+			}
+
 			field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
@@ -9695,13 +9698,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 			deliveryCode = JSONUtils::asInt64(parametersRoot, field, 0);
         }
 
-		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		time_t utcRecordingPeriodStart = validator.sDateSecondsToUtc(recordingPeriodStart);
+		time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
 		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
-		time_t utcRecordingPeriodEnd = validator.sDateSecondsToUtc(recordingPeriodEnd);
+		time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
 
 		int64_t confKey = -1;
 		string liveURL;
@@ -9727,38 +9730,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		string monitorManifestDirectoryPath;
 		string monitorManifestFileName;
-		if(monitorHLS)
+		if(monitorHLS || liveRecorderVirtualVOD)
 		{
-			/*
-			int64_t deliveryKey;
-			{
-				field = "InternalMMS";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				Json::Value internalMMSRoot = parametersRoot[field];
-
-				field = "deliveryKey";
-				if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				deliveryKey = JSONUtils::asInt64(internalMMSRoot, field, 0);
-			}
-			*/
-
 			string manifestExtension;
 			manifestExtension = "m3u8";
 
@@ -9788,11 +9761,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 			}
-			/*
-				manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(
-					_mmsEngineDBFacade, to_string(liveURLConfKey),
-					manifestExtension, _encodingItem->_workspace);
-			*/
 		}
 
 		{
@@ -9823,14 +9791,43 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
+		int64_t monitorVirtualVODEncodingProfileKey = -1;
+		if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey != -1)
+			monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+		else if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey == -1)
+			monitorVirtualVODEncodingProfileKey = monitorEncodingProfileKey;
+		else if (monitorEncodingProfileKey == -1 && virtualVODEncodingProfileKey != -1)
+			monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+
+		int monitorVirtualVODSegmentDurationInSeconds;
+		if (liveRecorderVirtualVOD)
+			monitorVirtualVODSegmentDurationInSeconds = virtualVODSegmentDurationInSeconds;
+		else
+			monitorVirtualVODSegmentDurationInSeconds = monitorSegmentDurationInSeconds;
+
+		int monitorVirtualVODPlaylistEntriesNumber;
+		if (liveRecorderVirtualVOD)
+		{
+			monitorVirtualVODPlaylistEntriesNumber = (liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
+				monitorVirtualVODSegmentDurationInSeconds;
+		}
+		else
+			monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
+
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			ingestionJobLabel, channelType, highAvailability,
 			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
-			monitorHLS, monitorEncodingProfileKey,
-			monitorManifestDirectoryPath, monitorManifestFileName,
-			monitorPlaylistEntriesNumber, monitorSegmentDurationInSeconds);
+
+			monitorHLS, monitorManifestDirectoryPath, monitorManifestFileName,
+			liveRecorderVirtualVOD,
+
+			// common between monitor and virtual vod
+			monitorVirtualVODEncodingProfileKey,
+			monitorVirtualVODSegmentDurationInSeconds,
+			monitorVirtualVODPlaylistEntriesNumber
+		);
 
 		/*
 		if (highAvailability)
@@ -10014,7 +10011,7 @@ void MMSEngineProcessor::manageLiveProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+					// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 					Json::Value proxyPeriodRoot = parametersRoot[field];
 
@@ -10030,7 +10027,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					}
 
 					string proxyPeriodStart = proxyPeriodRoot.get(field, "").asString();
-					utcProxyPeriodStart = validator.sDateSecondsToUtc(proxyPeriodStart);
+					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 					field = "End";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
@@ -10044,7 +10041,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					}
 
 					string proxyPeriodEnd = proxyPeriodRoot.get(field, "").asString();
-					utcProxyPeriodEnd = validator.sDateSecondsToUtc(proxyPeriodEnd);
+					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
@@ -10411,7 +10408,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 
 		int64_t utcCountDownEnd = -1;
         {
-			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+			// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 			string field = "CountDownEnd";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10424,14 +10421,14 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 				throw runtime_error(errorMessage);
 			}
 			string sCountDownEnd = parametersRoot.get(field, "").asString();
-			utcCountDownEnd = validator.sDateSecondsToUtc(sCountDownEnd);
+			utcCountDownEnd = DateTime::sDateSecondsToUtc(sCountDownEnd);
 		}
 
 		int64_t utcIngestionJobStartProcessing = -1;
         {
-			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+			// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-			utcIngestionJobStartProcessing = validator.sDateSecondsToUtc(ingestionDate);
+			utcIngestionJobStartProcessing = DateTime::sDateSecondsToUtc(ingestionDate);
 		}
 
 		string outputType;
@@ -10954,12 +10951,12 @@ void MMSEngineProcessor::liveCutThread(
             cutPeriodEndTimeInMilliSeconds = cutPeriodRoot.get(field, "").asString();
         }
 
-		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		int64_t utcCutPeriodStartTimeInMilliSeconds = validator.sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
+		int64_t utcCutPeriodStartTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
-		int64_t utcCutPeriodEndTimeInMilliSeconds = validator.sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
+		int64_t utcCutPeriodEndTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In case the chunk is 1 minute,
@@ -21941,6 +21938,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
     }
 }
 
+/*
 void MMSEngineProcessor::handleUpdateLiveRecorderVirtualVODEventThread (
         shared_ptr<long> processorsThreadsNumber)
 {
@@ -22269,9 +22267,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 					continue;
 				}
 
-				/*
-				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
-				*/
+//				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
 
 				string mmsDataField = "mmsData";
 				string dataTypeField = "dataType";
@@ -22643,21 +22639,6 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 	string workflowMetadata;
 	try
 	{
-		/*
-		{
-        	"Label": "<workflow label>",
-        	"Type": "Workflow",
-        	"Task": {
-                "Label": "<task label 1>",
-                "Type": "Add-Content"
-                "Parameters": {
-                        "FileFormat": "m3u8",
-                        "Ingester": "Giuliano",
-                        "SourceURL": "move:///abc...."
-                },
-        	}
-		}
-		*/
 		Json::Value mmsDataRoot;
 
 		// 2020-04-28: set it to liveRecordingChunk to avoid to be visible into the GUI (view MediaItems).
@@ -22887,56 +22868,7 @@ void MMSEngineProcessor::liveRecorder_ingestVirtualVOD(
 
 		if (_mmsAPIProtocol == "https")
 		{
-			/*
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-			*/
 
-			/*
-			// cert is stored PEM coded in file... 
-			// since PEM is default, we needn't set it for PEM 
-			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-			equest.setOpt(sslCertType);
-
-			// set the cert for client authentication
-			// "testcert.pem"
-			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-			request.setOpt(sslCert);
-			*/
-
-			/*
-			// sorry, for engine we must set the passphrase
-			//   (if the key has one...)
-			// const char *pPassphrase = NULL;
-			if(pPassphrase)
-			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-			// if we use a key stored in a crypto engine,
-			//   we must set the key type to "ENG"
-			// pKeyType  = "PEM";
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-			// set the private key (file or ID in engine)
-			// pKeyName  = "testkey.pem";
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-			// set the file with the certs vaildating the server
-			// *pCACertFile = "cacert.pem";
-			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-			*/
 
 			// disconnect if we can't validate server's cert
 			bool bSslVerifyPeer = false;
@@ -23173,9 +23105,7 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 					continue;
 				}
 
-				/*
-				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
-				*/
+//				* {"mmsData": {"main": true, "dataType": "liveRecordingChunk", "validated": true, "liveURLConfKey": 2, "ingestionJobKey": 9257842, "utcChunkEndTime": 1587806100, "utcChunkStartTime": 1587806040, "utcPreviousChunkStartTime": 1587805980}}
 
 				string mmsDataField = "mmsData";
 				string dataTypeField = "dataType";
@@ -23426,14 +23356,6 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 		}
 	}
 
-	/*
-	int liveRecorderVirtualVODMaxTSToBeUsed = liveRecorderVirtualVODMaxDurationInMinutes * 60
-		/ liveRecorderSegmentDuration;
-	if (tsToBeUsed.size() > liveRecorderVirtualVODMaxTSToBeUsed)
-		tsToBeUsed.erase(tsToBeUsed.begin(),
-			tsToBeUsed.begin() + (tsToBeUsed.size() - liveRecorderVirtualVODMaxTSToBeUsed));
-	*/
-
 	if (tsToBeUsed.size() == 0)
 	{
 		string errorMessage = string("No chunks found")
@@ -23678,22 +23600,6 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 			}
 
 			{
-				/*
-				size_t endOfPathIndex = liveRecorderVirtualVODManifestPathName.find_last_of("/");
-				if (endOfPathIndex == string::npos)
-				{
-					string errorMessage = string("No liveRecorderVirtualVODDirectory found")
-						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
-						+ ", liveRecorderVirtualVODManifestPathName: " + liveRecorderVirtualVODManifestPathName 
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-          
-					throw runtime_error(errorMessage);
-				}
-				string liveRecorderVirtualVODDirectory =
-					liveRecorderVirtualVODManifestPathName.substr(0, endOfPathIndex);
-				*/
-
 				sizeInBytes = FileIO::getDirectorySizeInBytes(liveRecorderVirtualVODDirectory);
 			}
 		}
@@ -23757,6 +23663,7 @@ void MMSEngineProcessor::liveRecorder_updateVirtualVOD(
 		throw runtime_error(errorMessage);
 	}
 }
+*/
 
 void MMSEngineProcessor::manageTarFileInCaseOfIngestionOfSegments(
 		int64_t ingestionJobKey,

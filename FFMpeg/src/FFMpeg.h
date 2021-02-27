@@ -258,12 +258,13 @@ public:
 
 		// monitorHLS
 		bool monitorHLS,
-		Json::Value monitorEncodingProfileDetailsRoot,
+		bool virtualVOD,
+		Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
 		bool monitorIsVideo,
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
-		int monitorPlaylistEntriesNumber,
-		int monitorSegmentDurationInSeconds,
+		int monitorVirtualVODPlaylistEntriesNumber,
+		int monitorVirtualVODSegmentDurationInSeconds,
 
 		pid_t* pChildPid);
 

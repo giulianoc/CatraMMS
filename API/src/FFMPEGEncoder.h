@@ -78,6 +78,12 @@ struct LiveRecording
 		int						_lastRecordedAssetDurationInSeconds;
 		string					_channelLabel;
 		chrono::system_clock::time_point	_recordingStart;
+
+		bool					_virtualVOD;
+		string					_monitorVirtualVODManifestDirectoryPath;
+		string					_monitorVirtualVODManifestFileName;
+		string					_virtualVODStagingContentsPath;
+		int64_t					_liveRecorderVirtualVODImageMediaItemKey;
 };
 
 struct EncodingCompleted
@@ -154,6 +160,9 @@ public:
 	void liveRecorderChunksIngestionThread();
 	void stopLiveRecorderChunksIngestionThread();
 
+	void liveRecorderVirtualVODIngestionThread();
+	void stopLiveRecorderVirtualVODIngestionThread();
+
 	void monitorThread();
 	void stopMonitorThread();
     
@@ -181,8 +190,13 @@ private:
 		map<int64_t, shared_ptr<LiveRecording>>* _liveRecordingsCapability;
 	#endif
 	int							_maxLiveRecordingsCapability;
+
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
+
+	int							_liveRecorderVirtualVODIngestionCheckInSeconds;
+	bool						_liveRecorderVirtualVODIngestionThreadShutdown;
+	string						_liveRecorderVirtualVODImageLabel;
 
     mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
@@ -270,6 +284,21 @@ private:
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot,
 		Json::Value encodingParametersRoot);
+	void liveRecorder_buildAndIngestVirtualVOD(
+		int64_t liveRecorderIngestionJobKey,
+		int64_t liveRecorderEncodingJobKey,
+
+		string sourceSegmentsDirectoryPathName,
+		string sourceManifestFileName,
+		string stagingLiveRecorderVirtualVODPathName,
+
+		int64_t deliveryCode,
+		string liveRecorderIngestionJobLabel,
+		string liveRecorderVirtualVODUniqueName,
+		string liveRecorderVirtualVODRetention,
+		int64_t liveRecorderVirtualVODImageMediaItemKey,
+		int64_t liveRecorderUserKey,
+		string liveRecorderApiKey);
 
 	void liveProxyThread(
         // FCGX_Request& request,

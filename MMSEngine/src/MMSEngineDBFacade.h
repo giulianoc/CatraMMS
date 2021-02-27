@@ -638,8 +638,8 @@ public:
         };
 
 		struct LiveRecorderData {
-            Json::Value								_monitorEncodingProfileDetailsRoot;
-			MMSEngineDBFacade::ContentType			_monitorEncodingProfileContentType;
+            Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
+			MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
 
 			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
 			Json::Value								_ingestedParametersRoot;
@@ -1726,8 +1726,7 @@ public:
 
 	void addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
-		int64_t ingestionJobKey,
-		string ingestionJobLabel,
+		int64_t ingestionJobKey, string ingestionJobLabel,
 		string channelType,
 		bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
@@ -1738,12 +1737,17 @@ public:
 		int segmentDurationInSeconds,
 		string outputFileFormat,
 		EncodingPriority encodingPriority,
+
 		bool monitorHLS,
-		int64_t monitorEncodingProfileKey,
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
-		int monitorPlaylistEntriesNumber,
-		int monitorSegmentDurationInSeconds);
+
+		bool liveRecorderVirtualVOD,
+
+		// common between monitor and virtual vod
+		int64_t monitorVirtualVODEncodingProfileKey,
+		int monitorVirtualVODSegmentDurationInSeconds,
+		int monitorVirtualVODPlaylistEntriesNumber);
 
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,

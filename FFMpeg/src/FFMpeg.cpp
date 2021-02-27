@@ -5799,6 +5799,11 @@ void FFMpeg::getLiveStreamingInfo(
 
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
+        _logger->info(__FILEREF__ + "getLiveStreamingInfo: Executing ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
 		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
 		if (executeCommandStatus != 0)
 		{
@@ -7386,14 +7391,15 @@ void FFMpeg::liveRecorder(
         int segmentDurationInSeconds,
         string outputFileFormat,
 
-		// monitorHLS
+		// monitorHLS-VirtualVOD
 		bool monitorHLS,
-		Json::Value monitorEncodingProfileDetailsRoot,
+		bool virtualVOD,
+		Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
 		bool monitorIsVideo,
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
-		int monitorPlaylistEntriesNumber,
-		int monitorSegmentDurationInSeconds,
+		int monitorVirtualVODPlaylistEntriesNumber,
+		int monitorVirtualVODSegmentDurationInSeconds,
 
 		pid_t* pChildPid)
 {
@@ -7416,11 +7422,12 @@ void FFMpeg::liveRecorder(
 		+ ", outputFileFormat: " + outputFileFormat
 
 		+ ", monitorHLS: " + to_string(monitorHLS)
+		+ ", virtualVOD: " + to_string(virtualVOD)
 		+ ", monitorIsVideo: " + to_string(monitorIsVideo)
 		+ ", monitorManifestDirectoryPath: " + monitorManifestDirectoryPath
 		+ ", monitorManifestFileName: " + monitorManifestFileName
-		+ ", monitorPlaylistEntriesNumber: " + to_string(monitorPlaylistEntriesNumber)
-		+ ", monitorSegmentDurationInSeconds: " + to_string(monitorSegmentDurationInSeconds)
+		+ ", monitorVirtualVODPlaylistEntriesNumber: " + to_string(monitorVirtualVODPlaylistEntriesNumber)
+		+ ", monitorVirtualVODSegmentDurationInSeconds: " + to_string(monitorVirtualVODSegmentDurationInSeconds)
 	);
 
 	setStatus(
@@ -7678,10 +7685,10 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back("1");
 		ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
 
-		if (monitorHLS)
+		if (monitorHLS || virtualVOD)
 		{
 			vector<string> ffmpegEncodingProfileArgumentList;
-			if (monitorEncodingProfileDetailsRoot != Json::nullValue)
+			if (monitorVirtualVODEncodingProfileDetailsRoot != Json::nullValue)
 			{
 				try
 				{
@@ -7711,7 +7718,7 @@ void FFMpeg::liveRecorder(
 
 
 					settingFfmpegParameters(
-						monitorEncodingProfileDetailsRoot,
+						monitorVirtualVODEncodingProfileDetailsRoot,
 						isVideo,
 
 						httpStreamingFileFormat,
@@ -7793,6 +7800,8 @@ void FFMpeg::liveRecorder(
 
 			{
 				string manifestFilePathName = monitorManifestDirectoryPath + "/" + monitorManifestFileName;
+				string segmentFilePathName = monitorManifestDirectoryPath + "/"
+					+ recordedFileNamePrefix + "_%s." + outputFileFormat;
 
 				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7856,9 +7865,9 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("append_list");
 					ffmpegArgumentList.push_back("-hls_time");
-					ffmpegArgumentList.push_back(to_string(monitorSegmentDurationInSeconds));
+					ffmpegArgumentList.push_back(to_string(monitorVirtualVODSegmentDurationInSeconds));
 					ffmpegArgumentList.push_back("-hls_list_size");
-					ffmpegArgumentList.push_back(to_string(monitorPlaylistEntriesNumber));
+					ffmpegArgumentList.push_back(to_string(monitorVirtualVODPlaylistEntriesNumber));
 
 					// Set the number of unreferenced segments to keep on disk
 					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
@@ -7872,6 +7881,14 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("delete_segments");
 
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("program_date_time");
+
+					ffmpegArgumentList.push_back("-strftime");
+					ffmpegArgumentList.push_back("1");
+					ffmpegArgumentList.push_back("-hls_segment_filename");
+					ffmpegArgumentList.push_back(segmentFilePathName);
+
 					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
 					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
 					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
@@ -7883,6 +7900,8 @@ void FFMpeg::liveRecorder(
 					// ffmpegArgumentList.push_back("-start_number");
 					// ffmpegArgumentList.push_back(to_string(10));
 				}
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("hls");
 				ffmpegArgumentList.push_back(manifestFilePathName);
 			}
 		}
