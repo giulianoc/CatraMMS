@@ -10621,7 +10621,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					// using a copy/move source URL
 					string virtualVODStagingContentsPath;
 
-					int64_t liveRecorderVirtualVODImageMediaItemKey;
+					int64_t liveRecorderVirtualVODImageMediaItemKey = -1;
 
 					{
 						{
@@ -10702,6 +10702,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								removeLinuxPathIfExist);
 						}
 
+						if (_liveRecorderVirtualVODImageLabel != "")
 						{
 							bool warningIfMissing = true;
 							pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
