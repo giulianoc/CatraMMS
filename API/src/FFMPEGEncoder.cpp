@@ -356,9 +356,13 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
     );
 
-    _liveRecorderVirtualVODIngestionCheckInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderVirtualVODIngestionCheckInSeconds", 5);
+    _liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->liveRecorderVirtualVODIngestionCheckInSeconds: " + to_string(_liveRecorderVirtualVODIngestionCheckInSeconds)
+        + ", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: " + to_string(_liveRecorderVirtualVODIngestionInSeconds)
+    );
+    _liveRecorderVirtualVODRetention = _configuration["ffmpeg"].get("liveRecorderVirtualVODRetention", "15m").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->liveRecorderVirtualVODRetention: " + _mmsAPIProtocol
     );
 
     _encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
@@ -5733,7 +5737,6 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						string liveRecorderVirtualVODUniqueName = ingestionJobLabel + "("
 							+ to_string(deliveryCode) + "_" + to_string(liveRecording->_ingestionJobKey)
 							+ ")";
-						string liveRecorderVirtualVODRetention = "3h";
 
 						int64_t userKey;
 						string apiKey;
@@ -5765,7 +5768,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							deliveryCode,
 							ingestionJobLabel,
 							liveRecorderVirtualVODUniqueName,
-							liveRecorderVirtualVODRetention,
+							_liveRecorderVirtualVODRetention,
 							liveRecording->_liveRecorderVirtualVODImageMediaItemKey,
 							userKey,
 							apiKey);
@@ -5818,7 +5821,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 			_logger->error(__FILEREF__ + errorMessage);
 		}
 
-		this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionCheckInSeconds));
+		this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
 	}
 }
 
@@ -5826,7 +5829,7 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 {
 	_liveRecorderVirtualVODIngestionThreadShutdown = true;
 
-	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionCheckInSeconds));
+	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
 }
 
 pair<string, int> FFMPEGEncoder::liveRecorder_processLastGeneratedLiveRecorderFiles(
@@ -7299,6 +7302,7 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 		throw runtime_error(errorMessage);
 	}
+
 
 	// build workflow
 	string workflowMetadata;

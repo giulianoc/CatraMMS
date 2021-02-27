@@ -194,7 +194,8 @@ private:
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
 
-	int							_liveRecorderVirtualVODIngestionCheckInSeconds;
+	int							_liveRecorderVirtualVODIngestionInSeconds;
+	string						_liveRecorderVirtualVODRetention;
 	bool						_liveRecorderVirtualVODIngestionThreadShutdown;
 	string						_liveRecorderVirtualVODImageLabel;
 

@@ -117,8 +117,7 @@ public:
     enum class LockType {
 		Ingestion						= 0,
 		Encoding						= 1,
-		MainAndBackupLiveRecordingHA	= 2,
-		UpdateLiveRecorderVirtualVOD	= 3
+		MainAndBackupLiveRecordingHA	= 2
     };
     static const char* toString(const LockType& lockType)
     {
@@ -130,8 +129,6 @@ public:
                 return "Encoding";
             case LockType::MainAndBackupLiveRecordingHA:
                 return "MainAndBackupLiveRecordingHA";
-            case LockType::UpdateLiveRecorderVirtualVOD:
-                return "UpdateLiveRecorderVirtualVOD";
             default:
                 throw runtime_error(string("Wrong LockType"));
         }
@@ -148,8 +145,6 @@ public:
             return LockType::Encoding;
 		else if (lowerCase == "mainandbackupliverecordingha")
             return LockType::MainAndBackupLiveRecordingHA;
-		else if (lowerCase == "updateliverecordervirtualvod")
-            return LockType::UpdateLiveRecorderVirtualVOD;
         else
             throw runtime_error(string("Wrong LockType")
                     + ", current lockType: " + lockType
@@ -1931,6 +1926,7 @@ public:
         int imageQuality
     );
     
+	/*
 	void updateLiveRecorderVirtualVOD (
 		int64_t workspaceKey,
 		string liveRecorderVirtualVODUniqueName,
@@ -1951,6 +1947,7 @@ public:
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks
 	);
+	*/
 
 	void addCrossReference (
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,

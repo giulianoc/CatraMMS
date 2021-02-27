@@ -1312,7 +1312,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 field = "retentionInMinutes";
                 mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
-                
+
+                field = "visible";
+                mediaItemRoot[field] = resultSet->getInt("visible") == 0 ? false : true;
+
                 int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
                 {                    
@@ -2338,7 +2341,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
+           			"mi.contentType, mi.retentionInMinutes, mi.visible from MMS_MediaItem mi ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -2623,7 +2626,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, " + temporaryTableName + " f ")
+           			"mi.contentType, mi.retentionInMinutes, mi.visible from MMS_MediaItem mi, " + temporaryTableName + " f ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -4955,11 +4958,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
-                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMSForRetention) values ("
+                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, visible, processorMMSForRetention) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
-                "?, NULL)";
+                "?, 1, NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -5682,7 +5685,7 @@ void MMSEngineDBFacade::addExternalUniqueName(
 		{
 			lastSQLCommand = 
 				string("update MMS_ExternalUniqueName ")
-				+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
+				+ "set visible = 0, uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
 					+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
 				+ "where workspaceKey = ? and uniqueName = ?";
 
@@ -5827,13 +5830,6 @@ void MMSEngineDBFacade::addTags(
 		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
 		{
 			string tag = localTagsRoot[tagIndex].asString();
-		/*
-		stringstream ssTagsCommaSeparated (parametersRoot.get(field, "").asString());
-		while (ssTagsCommaSeparated.good())
-		{
-			string tag;
-			getline(ssTagsCommaSeparated, tag, ',');
-		*/
 
 			tag = StringUtils::trim(tag);
 
@@ -6644,6 +6640,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
     return physicalPathKey;
 }
 
+/*
 void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 	int64_t workspaceKey,
 	string liveRecorderVirtualVODUniqueName,
@@ -7027,6 +7024,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
         throw e;
     }
 }
+*/
 
 void MMSEngineDBFacade::addCrossReference (
 	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,

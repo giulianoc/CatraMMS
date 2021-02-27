@@ -226,53 +226,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					}
 				}
             }
-
-			{
-				LockType lockType = LockType::UpdateLiveRecorderVirtualVOD;
-				int maxDurationInMinutes = 30;
-
-				lastSQLCommand = 
-					"select count(*) from MMS_Lock where type = ?";
-				shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-				int queryParameterIndex = 1;
-				preparedStatement->setString(queryParameterIndex++,
-					MMSEngineDBFacade::toString(lockType));
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", lastSQLCommand: " + lastSQLCommand
-					+ ", lockType: " + MMSEngineDBFacade::toString(lockType)
-					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
-				if (resultSet->next())
-				{
-					if (resultSet->getInt64(1) == 0)
-					{
-						lastSQLCommand = 
-							"insert into MMS_Lock (type, start, end, active, lastUpdate, lastDurationInMilliSecs, owner, maxDurationInMinutes, data) "
-							"values (?, NOW(), NOW(), 0, NOW(), 0, NULL, ?, NULL)";
-
-						shared_ptr<sql::PreparedStatement> preparedStatement (
-								conn->_sqlConnection->prepareStatement(lastSQLCommand));
-						int queryParameterIndex = 1;
-						preparedStatement->setString(queryParameterIndex++, toString(lockType));
-						preparedStatement->setInt(queryParameterIndex++, maxDurationInMinutes);
-
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", lastSQLCommand: " + lastSQLCommand
-							+ ", lockType: " + toString(lockType)
-							+ ", maxDurationInMinutes: " + to_string(maxDurationInMinutes)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-					}
-				}
-            }
         }
         catch(sql::SQLException se)
         {
@@ -1550,6 +1503,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "startPublishing        DATETIME NOT NULL,"
                     "endPublishing          DATETIME NOT NULL,"
                     "retentionInMinutes     BIGINT UNSIGNED NOT NULL,"
+					// just a metadata used by the GUI to hide obsolete LiveRecorderVirtualVOD
+					// This is automatically set to false when overrideUniqueName is applied
+					"visible				TINYINT NOT NULL,"
                     "processorMMSForRetention	VARCHAR (128) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
