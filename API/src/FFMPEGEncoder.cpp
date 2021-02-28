@@ -7334,7 +7334,7 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		field = "utcEndTimeInMilliSecs";
 		mmsDataRoot[field] = utcEndTimeInMilliSecs;
 
-		string sUtcEndTime;
+		string sUtcEndTimeForContentTitle;
 		{
 			char    utcEndTime_str [64];
 			tm      tmDateTime;
@@ -7345,19 +7345,31 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			// from utc to local time
 			localtime_r (&utcEndTimeInSeconds, &tmDateTime);
 
-			sprintf (utcEndTime_str,
-				"%04d-%02d-%02d %02d:%02d:%02d",                                                              
-				tmDateTime. tm_year + 1900,                                                                   
-				tmDateTime. tm_mon + 1,                                                                       
-				tmDateTime. tm_mday,                                                                          
-				tmDateTime. tm_hour,                                                                          
-				tmDateTime. tm_min,                                                                           
-				tmDateTime. tm_sec);                                                                          
+			{
+				sprintf (utcEndTime_str,
+					"%04d-%02d-%02d %02d:%02d:%02d",                                                              
+					tmDateTime. tm_year + 1900,                                                                   
+					tmDateTime. tm_mon + 1,                                                                       
+					tmDateTime. tm_mday,                                                                          
+					tmDateTime. tm_hour,                                                                          
+					tmDateTime. tm_min,                                                                           
+					tmDateTime. tm_sec);                                                                          
 
-			sUtcEndTime = utcEndTime_str;                                                       
+				string sUtcEndTime = utcEndTime_str;                                                       
 
-			field = "utcEndTime_str";
-			mmsDataRoot[field] = sUtcEndTime;                                                            
+				field = "utcEndTime_str";
+				mmsDataRoot[field] = sUtcEndTime;                                                            
+			}
+
+			{
+				sprintf (utcEndTime_str,
+					"%02d:%02d:%02d",                                                              
+					tmDateTime. tm_hour,                                                                          
+					tmDateTime. tm_min,                                                                           
+					tmDateTime. tm_sec);                                                                          
+
+				sUtcEndTimeForContentTitle = utcEndTime_str;                                                       
+			}
 		}
 
 		field = "deliveryCode";
@@ -7370,7 +7382,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 		Json::Value addContentRoot;
 
-		string addContentLabel = liveRecorderIngestionJobLabel + " (" + sUtcEndTime + ") building V-VOD...";
+		string addContentLabel = liveRecorderIngestionJobLabel
+			+ " V-VOD (up to " + sUtcEndTimeForContentTitle + ")";
 
 		field = "Label";
 		addContentRoot[field] = addContentLabel;
