@@ -3914,6 +3914,8 @@ void API::updateIngestionJob(
 					string newRecordingPeriodStart;
 					bool recordingPeriodEndModified = false;
 					string newRecordingPeriodEnd;
+					bool recordingVirtualVODModified = false;
+					bool newRecordingVirtualVOD;
 
 					{
 						field = "IngestionJobLabel";
@@ -3943,6 +3945,13 @@ void API::updateIngestionJob(
 							recordingPeriodEndModified = true;
 							newRecordingPeriodEnd = metadataRoot.get("RecordingPeriodEnd", "").asString();
 						}
+
+						field = "RecordingVirtualVOD";
+						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						{
+							recordingVirtualVODModified = true;
+							newRecordingVirtualVOD = JSONUtils::asBool(metadataRoot, "RecordingVirtualVOD", false);
+						}
 					}
 
 					if (recordingPeriodStartModified)
@@ -3969,6 +3978,7 @@ void API::updateIngestionJob(
 						channelLabelModified, newChannelLabel,
 						recordingPeriodStartModified, newRecordingPeriodStart,
 						recordingPeriodEndModified, newRecordingPeriodEnd,
+						recordingVirtualVODModified, newRecordingVirtualVOD,
 						admin
 					);
 

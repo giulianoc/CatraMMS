@@ -10344,6 +10344,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
 	bool autoRenew;
+	bool monitorHLS = false;
+	bool virtualVOD = false;
 	int monitorVirtualVODSegmentDurationInSeconds;
 	string outputFileFormat;
 	{
@@ -10380,6 +10382,12 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
         field = "autoRenew";
         autoRenew = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+
+        field = "monitorHLS";
+        monitorHLS = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+
+        field = "liveRecorderVirtualVOD";
+        virtualVOD = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "monitorVirtualVODSegmentDurationInSeconds";
         monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
@@ -10688,6 +10696,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							+ "_" + to_string(_encodingItem->_encodingJobKey)
 							;
 
+						if (virtualVOD)
 						{
 							bool removeLinuxPathIfExist = false;
 							bool neededForTranscoder = false;
@@ -10702,16 +10711,28 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								removeLinuxPathIfExist);
 						}
 
-						if (_liveRecorderVirtualVODImageLabel != "")
+						if (virtualVOD && _liveRecorderVirtualVODImageLabel != "")
 						{
-							bool warningIfMissing = true;
-							pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
-								_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-								_encodingItem->_workspace->_workspaceKey,
-								_liveRecorderVirtualVODImageLabel,
-								warningIfMissing);
+							try
+							{
+								bool warningIfMissing = true;
+								pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemDetails =
+									_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+									_encodingItem->_workspace->_workspaceKey,
+									_liveRecorderVirtualVODImageLabel,
+									warningIfMissing);
 
-							tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
+								tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
+							}
+							catch (exception e)
+							{
+								_logger->error(__FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName failed"
+									+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
+									+ ", exception: " + e.what()
+								);
+
+								liveRecorderVirtualVODImageMediaItemKey = -1;
+							}
 						}
 					}
 

@@ -5721,6 +5721,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 	bool channelLabelModified, string newChannelLabel,
 	bool recordingPeriodStartModified, string newRecordingPeriodStart,
 	bool recordingPeriodEndModified, string newRecordingPeriodEnd,
+	bool recordingVirtualVODModified, bool newRecordingVirtualVOD,
 	bool admin
 	)
 {
@@ -5766,6 +5767,16 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 				if (setSQL != "")
 					setSQL += ", ";
 				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.RecordingPeriod.End', ?)";
+			}
+
+			if (recordingVirtualVODModified)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+				if (newRecordingVirtualVOD)
+					setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.LiveRecorderVirtualVOD', '{}')";
+				else
+					setSQL += "metaDataContent = JSON_REMOVE(metaDataContent, '$.LiveRecorderVirtualVOD')";
 			}
 
 			setSQL = "set " + setSQL + " ";

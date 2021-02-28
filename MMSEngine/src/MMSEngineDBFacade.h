@@ -1383,6 +1383,7 @@ public:
 		bool channelLabelModified, string newChannerLabel,
 		bool recordingPeriodStartModified, string newRecordingPeriodStart,
 		bool recordingPeriodEndModified, string newRecordingPeriodEnd,
+		bool recordingVirtualVODModified, bool newRecordingVirtualVOD,
 		bool admin);
 
 	void getGroupOfTasksChildrenStatus(
