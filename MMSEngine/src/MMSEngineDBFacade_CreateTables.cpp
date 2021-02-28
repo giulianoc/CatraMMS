@@ -1503,9 +1503,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "startPublishing        DATETIME NOT NULL,"
                     "endPublishing          DATETIME NOT NULL,"
                     "retentionInMinutes     BIGINT UNSIGNED NOT NULL,"
-					// just a metadata used by the GUI to hide obsolete LiveRecorderVirtualVOD
+					// just a metadata to hide obsolete LiveRecorderVirtualVOD
 					// This is automatically set to false when overrideUniqueName is applied
-					"toBeVisible				TINYINT NOT NULL,"
+					"markedAsRemoved		TINYINT NOT NULL,"
                     "processorMMSForRetention	VARCHAR (128) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "

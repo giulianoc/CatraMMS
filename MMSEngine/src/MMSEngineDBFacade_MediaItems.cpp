@@ -1313,9 +1313,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 field = "retentionInMinutes";
                 mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
 
-                field = "toBeVisible";
-                mediaItemRoot[field] = resultSet->getInt("toBeVisible") == 0 ? false : true;
-
                 int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
                 {                    
@@ -2079,7 +2076,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         throw se;
     }    
     catch(runtime_error e)
-    {        
+    {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2225,7 +2222,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
     try
     {
         string sqlWhere;
-		sqlWhere = string ("where mi.workspaceKey = ? ");
+		sqlWhere = string ("where mi.workspaceKey = ? and mi.markedAsRemoved = 0 ");
         if (mediaItemKey != -1)
 		{
 			if (otherMediaItemsKey.size() > 0)
@@ -2341,7 +2338,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes, mi.toBeVisible from MMS_MediaItem mi ")
+           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -2626,7 +2623,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes, mi.toBeVisible from MMS_MediaItem mi, " + temporaryTableName + " f ")
+           			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, " + temporaryTableName + " f ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -4958,11 +4955,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
-                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, toBeVisible, processorMMSForRetention) values ("
+                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, markedAsRemoved, processorMMSForRetention) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
-                "?, 1, NULL)";
+                "?, 0, NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -5734,7 +5731,7 @@ void MMSEngineDBFacade::addExternalUniqueName(
 				{
 					lastSQLCommand = 
 						string("update MMS_MediaItem ")
-						+ "set toBeVisible = 0 "
+						+ "set markedAsRemoved = 1 "
 						+ "where workspaceKey = ? and mediaItemKey = ? ";
 
 					shared_ptr<sql::PreparedStatement> preparedStatement (
