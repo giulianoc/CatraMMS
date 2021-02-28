@@ -1313,8 +1313,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 field = "retentionInMinutes";
                 mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
 
-                field = "visible";
-                mediaItemRoot[field] = resultSet->getInt("visible") == 0 ? false : true;
+                field = "toBeVisible";
+                mediaItemRoot[field] = resultSet->getInt("toBeVisible") == 0 ? false : true;
 
                 int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
@@ -2341,7 +2341,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes, mi.visible from MMS_MediaItem mi ")
+           			"mi.contentType, mi.retentionInMinutes, mi.toBeVisible from MMS_MediaItem mi ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -2626,7 +2626,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-           			"mi.contentType, mi.retentionInMinutes, mi.visible from MMS_MediaItem mi, " + temporaryTableName + " f ")
+           			"mi.contentType, mi.retentionInMinutes, mi.toBeVisible from MMS_MediaItem mi, " + temporaryTableName + " f ")
            			+ sqlWhere
            			+ orderByCondition
            			+ "limit ? offset ?";
@@ -4958,7 +4958,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
-                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, visible, processorMMSForRetention) values ("
+                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, toBeVisible, processorMMSForRetention) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -5684,11 +5684,8 @@ void MMSEngineDBFacade::addExternalUniqueName(
 		if (allowUniqueNameOverride)
 		{
 			lastSQLCommand = 
-				string("update MMS_ExternalUniqueName ")
-				+ "set visible = 0, uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
-					+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
-				+ "where workspaceKey = ? and uniqueName = ?";
-
+				"select mediaItemKey from MMS_ExternalUniqueName "
+				"where workspaceKey = ? and uniqueName = ?";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -5696,15 +5693,68 @@ void MMSEngineDBFacade::addExternalUniqueName(
 			preparedStatement->setString(queryParameterIndex++, uniqueName);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = preparedStatement->executeUpdate();
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", uniqueName: " + uniqueName
-				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+			if (resultSet->next())
+			{
+				int64_t mediaItemKeyOfCurrentUniqueName = resultSet->getInt64("mediaItemKey");
+
+				{
+					lastSQLCommand = 
+						string("update MMS_ExternalUniqueName ")
+						+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
+							+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
+						+ "where workspaceKey = ? and uniqueName = ?";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+					preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", uniqueName: " + uniqueName
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+
+				{
+					lastSQLCommand = 
+						string("update MMS_MediaItem ")
+						+ "set toBeVisible = 0 "
+						+ "where workspaceKey = ? and mediaItemKey = ? ";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+					preparedStatement->setInt64(queryParameterIndex++, mediaItemKeyOfCurrentUniqueName);
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+			}
 		}
 
 		lastSQLCommand = 
@@ -6769,7 +6819,7 @@ void MMSEngineDBFacade::updateLiveRecorderVirtualVOD (
 
 		{
 			// Previous liveRecordingVOD was set to liveRecordingChunk, so it will
-			// not be visible into the MediaItems view
+			// not be toBeVisible into the MediaItems view
 			{
 				string previousDataType = "liveRecordingVOD";
 				string newDataType = "liveRecordingChunk_VOD";
