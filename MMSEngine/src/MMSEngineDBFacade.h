@@ -1478,6 +1478,7 @@ public:
 		bool userDataModified, string newUserData,
 		bool retentionInMinutesModified, int64_t newRetentionInMinutes,
 		bool tagsModified, Json::Value tagsRoot,
+		bool uniqueNameModified, string newUniqueName,
 		bool admin
 	);
 
@@ -2392,7 +2393,7 @@ private:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 
-	void addExternalUniqueName(
+	void manageExternalUniqueName(
 		shared_ptr<MySQLConnection> conn,
 		int64_t workspaceKey,
 		int64_t mediaItemKey,

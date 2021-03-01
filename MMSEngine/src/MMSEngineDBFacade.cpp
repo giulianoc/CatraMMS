@@ -923,7 +923,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 									{
 										// it should not happen duplicated unique name
 										bool allowUniqueNameOverride = true;
-										addExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
+										manageExternalUniqueName(conn, workspaceKey, mediaItemKeyValidated,
 											allowUniqueNameOverride, uniqueNameValidated);
 									}
 									catch(sql::SQLException se)
@@ -1161,7 +1161,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
 								{
 									// it should not happen duplicated unique name
 									bool allowUniqueNameOverride = true;
-									addExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
+									manageExternalUniqueName(conn, workspaceKey, mediaItemKeyChunk,
 										allowUniqueNameOverride, uniqueName);
 								}
 								catch(sql::SQLException se)

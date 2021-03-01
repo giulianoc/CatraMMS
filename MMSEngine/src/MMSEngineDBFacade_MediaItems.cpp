@@ -612,6 +612,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	bool userDataModified, string newUserData,
 	bool retentionInMinutesModified, int64_t newRetentionInMinutes,
 	bool tagsModified, Json::Value tagsRoot,
+	bool uniqueNameModified, string newUniqueName,
 	bool admin
 	)
 {
@@ -655,10 +656,13 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 
 			lastSQLCommand = 
 				string("update MMS_MediaItem ") + setSQL
-				+ "where mediaItemKey = ?";
+				+ "where mediaItemKey = ? "
 				// 2021-02: in case the user is not the owner and it is a shared workspace
-				//		the workspceke will not match
-				// "where workspaceKey = ? and mediaItemKey = ?";
+				//		the workspacekey will not match
+				// 2021-03: I think the above comment is wrong, the user, in that case,
+				//		will use an APIKey of the correct workspace, even if this is shared.
+				//		So let's add again the below sql condition
+				+ "and workspaceKey = ? ";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
@@ -673,8 +677,8 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 			}
 			if (retentionInMinutesModified)
 				preparedStatement->setInt64(queryParameterIndex++, newRetentionInMinutes);
-            // preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -683,8 +687,8 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 				+ ", newTitle: " + newTitle
 				+ ", newUserData: " + newUserData
 				+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
-				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -715,6 +719,18 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 			addTags(conn, mediaItemKey, tagsRoot);
 		}
 
+		if (uniqueNameModified)
+        {
+			bool allowUniqueNameOverride = false;
+
+			manageExternalUniqueName(
+				conn, workspaceKey,
+				mediaItemKey,
+
+				allowUniqueNameOverride,
+				newUniqueName
+			);
+		}
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -5028,7 +5044,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					allowUniqueNameOverride =
 						JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
 
-				addExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
+				manageExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
 					allowUniqueNameOverride, uniqueName);
             }
         }
@@ -5655,7 +5671,7 @@ int64_t MMSEngineDBFacade::parseRetention(string retention)
 	return retentionInMinutes;
 }
 
-void MMSEngineDBFacade::addExternalUniqueName(
+void MMSEngineDBFacade::manageExternalUniqueName(
 	shared_ptr<MySQLConnection> conn,
 	int64_t workspaceKey,
 	int64_t mediaItemKey,
@@ -5670,111 +5686,280 @@ void MMSEngineDBFacade::addExternalUniqueName(
 	{
 		if (uniqueName == "")
 		{
+			/*
 			string errorMessage = __FILEREF__ + "UniqueName is empty"
 				+ ", uniqueName: " + uniqueName
 			;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
+			*/
+
+			// delete it if present
+			{
+				lastSQLCommand = 
+					string("delete from MMS_ExternalUniqueName ")
+					+ "where workspaceKey = ? and mediaItemKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+
+			return;
 		}
 
-		if (allowUniqueNameOverride)
+		// look if it is an insert (we do NOT have one) or an update (we already have one)
+		string currentUniqueName;
 		{
 			lastSQLCommand = 
-				"select mediaItemKey from MMS_ExternalUniqueName "
-				"where workspaceKey = ? and uniqueName = ?";
+				"select uniqueName from MMS_ExternalUniqueName "
+				"where workspaceKey = ? and mediaItemKey = ?";
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-			preparedStatement->setString(queryParameterIndex++, uniqueName);
+			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", uniqueName: " + uniqueName
+				+ ", mediaItemKEy: " + to_string(mediaItemKey)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
 			if (resultSet->next())
-			{
-				int64_t mediaItemKeyOfCurrentUniqueName = resultSet->getInt64("mediaItemKey");
-
-				{
-					lastSQLCommand = 
-						string("update MMS_ExternalUniqueName ")
-						+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
-							+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
-						+ "where workspaceKey = ? and uniqueName = ?";
-
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-					preparedStatement->setString(queryParameterIndex++, uniqueName);
-
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", uniqueName: " + uniqueName
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-				}
-
-				{
-					lastSQLCommand = 
-						string("update MMS_MediaItem ")
-						+ "set markedAsRemoved = 1 "
-						+ "where workspaceKey = ? and mediaItemKey = ? ";
-
-					shared_ptr<sql::PreparedStatement> preparedStatement (
-						conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-					preparedStatement->setInt64(queryParameterIndex++, mediaItemKeyOfCurrentUniqueName);
-
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatement->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-				}
-			}
+				currentUniqueName = resultSet->getString("uniqueName");
 		}
 
-		lastSQLCommand = 
-			"insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) "
-			"values (?, ?, ?)";
+		if (currentUniqueName == "")
+		{
+			// insert
 
-		shared_ptr<sql::PreparedStatement> preparedStatement (
-			conn->_sqlConnection->prepareStatement(lastSQLCommand));
-		int queryParameterIndex = 1;
-		preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-		preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-		preparedStatement->setString(queryParameterIndex++, uniqueName);
+			if (allowUniqueNameOverride)
+			{
+				lastSQLCommand = 
+					"select mediaItemKey from MMS_ExternalUniqueName "
+					"where workspaceKey = ? and uniqueName = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, uniqueName);
 
-		chrono::system_clock::time_point startSql = chrono::system_clock::now();
-		preparedStatement->executeUpdate();
-		_logger->info(__FILEREF__ + "@SQL statistics@"
-			+ ", lastSQLCommand: " + lastSQLCommand
-			+ ", workspaceKey: " + to_string(workspaceKey)
-			+ ", mediaItemKey: " + to_string(mediaItemKey)
-			+ ", uniqueName: " + uniqueName
-			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - startSql).count()) + "@"
-		);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", uniqueName: " + uniqueName
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
+				{
+					int64_t mediaItemKeyOfCurrentUniqueName = resultSet->getInt64("mediaItemKey");
+
+					{
+						lastSQLCommand = 
+							string("update MMS_ExternalUniqueName ")
+							+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
+								+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
+							+ "where workspaceKey = ? and uniqueName = ?";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+						preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						int rowsUpdated = preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", uniqueName: " + uniqueName
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
+
+					{
+						lastSQLCommand = 
+							string("update MMS_MediaItem ")
+							+ "set markedAsRemoved = 1 "
+							+ "where workspaceKey = ? and mediaItemKey = ? ";
+
+						shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+						preparedStatement->setInt64(queryParameterIndex++, mediaItemKeyOfCurrentUniqueName);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						int rowsUpdated = preparedStatement->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", workspaceKey: " + to_string(workspaceKey)
+							+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
+							+ ", rowsUpdated: " + to_string(rowsUpdated)
+							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+					}
+				}
+			}
+
+			{
+				lastSQLCommand = 
+					"insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) "
+					"values (?, ?, ?)";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+				preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", uniqueName: " + uniqueName
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+		}
+		else
+		{
+			// update
+
+			if (allowUniqueNameOverride)
+			{
+				lastSQLCommand = 
+					"select mediaItemKey from MMS_ExternalUniqueName "
+					"where workspaceKey = ? and uniqueName = ?";
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", uniqueName: " + uniqueName
+					+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+				if (resultSet->next())
+				{
+					int64_t mediaItemKeyOfCurrentUniqueName = resultSet->getInt64("mediaItemKey");
+
+					if (mediaItemKeyOfCurrentUniqueName != mediaItemKey)
+					{
+						{
+							lastSQLCommand = 
+								string("update MMS_ExternalUniqueName ")
+								+ "set uniqueName = concat(uniqueName, '-', " + to_string(mediaItemKey)
+									+ ", '-', CAST(UNIX_TIMESTAMP(CURTIME(3)) * 1000 as unsigned)) "
+								+ "where workspaceKey = ? and uniqueName = ?";
+
+							shared_ptr<sql::PreparedStatement> preparedStatement (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+							preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							int rowsUpdated = preparedStatement->executeUpdate();
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", workspaceKey: " + to_string(workspaceKey)
+								+ ", uniqueName: " + uniqueName
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
+						}
+
+						{
+							lastSQLCommand = 
+								string("update MMS_MediaItem ")
+								+ "set markedAsRemoved = 1 "
+								+ "where workspaceKey = ? and mediaItemKey = ? ";
+
+							shared_ptr<sql::PreparedStatement> preparedStatement (
+								conn->_sqlConnection->prepareStatement(lastSQLCommand));
+							int queryParameterIndex = 1;
+							preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+							preparedStatement->setInt64(queryParameterIndex++, mediaItemKeyOfCurrentUniqueName);
+
+							chrono::system_clock::time_point startSql = chrono::system_clock::now();
+							int rowsUpdated = preparedStatement->executeUpdate();
+							_logger->info(__FILEREF__ + "@SQL statistics@"
+								+ ", lastSQLCommand: " + lastSQLCommand
+								+ ", workspaceKey: " + to_string(workspaceKey)
+								+ ", mediaItemKeyOfCurrentUniqueName: " + to_string(mediaItemKeyOfCurrentUniqueName)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+									chrono::system_clock::now() - startSql).count()) + "@"
+							);
+						}
+					}
+				}
+			}
+
+			{
+				lastSQLCommand = 
+					string("update MMS_ExternalUniqueName ")
+					+ "set uniqueName = ? "
+					+ "where workspaceKey = ? and mediaItemKey = ?";
+
+				shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatement->setString(queryParameterIndex++, uniqueName);
+				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+				preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = preparedStatement->executeUpdate();
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", workspaceKey: " + to_string(workspaceKey)
+					+ ", mediaItemKey: " + to_string(mediaItemKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
+			}
+		}
 	}
     catch(sql::SQLException se)
     {

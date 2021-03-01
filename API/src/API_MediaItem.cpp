@@ -96,6 +96,8 @@ void API::updateMediaItem(
 		int64_t newRetentionInMinutes;
 		bool tagsModified = false;
 		Json::Value newTagsRoot;
+		bool uniqueNameModified = false;
+		string newUniqueName;
 
         {
 			string field = "Title";
@@ -126,6 +128,12 @@ void API::updateMediaItem(
 				newTagsRoot = metadataRoot[field];
 			}
 
+			field = "UniqueName";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				uniqueNameModified = true;
+				newUniqueName = metadataRoot.get(field, "").asString();
+			}
         }
 
         try
@@ -142,6 +150,7 @@ void API::updateMediaItem(
 				userDataModified, newUserData,
 				retentionInMinutesModified, newRetentionInMinutes,
 				tagsModified, newTagsRoot,
+				uniqueNameModified, newUniqueName,
 				admin
 			);
 
