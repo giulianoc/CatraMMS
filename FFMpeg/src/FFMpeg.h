@@ -255,6 +255,7 @@ public:
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
         string outputFileFormat,
+		string segmenterType,
 
 		// monitorHLS
 		bool monitorHLS,

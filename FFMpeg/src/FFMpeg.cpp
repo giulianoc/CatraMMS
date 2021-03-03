@@ -7390,6 +7390,7 @@ void FFMpeg::liveRecorder(
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
         string outputFileFormat,
+		string segmenterType,	// streamSegmenter or hlsSegmenter
 
 		// monitorHLS-VirtualVOD
 		bool monitorHLS,
@@ -7673,17 +7674,65 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back("-c:a");
 		ffmpegArgumentList.push_back("copy");
 
-		ffmpegArgumentList.push_back("-f");
-		ffmpegArgumentList.push_back("segment");
-		ffmpegArgumentList.push_back("-segment_list");
-		ffmpegArgumentList.push_back(segmentListPathName);
-		ffmpegArgumentList.push_back("-segment_time");
-		ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
-		ffmpegArgumentList.push_back("-segment_atclocktime");
-		ffmpegArgumentList.push_back("1");
-		ffmpegArgumentList.push_back("-strftime");
-		ffmpegArgumentList.push_back("1");
-		ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
+		if (segmenterType == "streamSegmenter")
+		{
+			ffmpegArgumentList.push_back("-f");
+			ffmpegArgumentList.push_back("segment");
+			ffmpegArgumentList.push_back("-segment_list");
+			ffmpegArgumentList.push_back(segmentListPathName);
+			ffmpegArgumentList.push_back("-segment_time");
+			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+			ffmpegArgumentList.push_back("-segment_atclocktime");
+			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back("-strftime");
+			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
+		}
+		else // if (segmenterType == "hlsSegmenter")
+		{
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("append_list");
+			ffmpegArgumentList.push_back("-hls_time");
+			ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
+			ffmpegArgumentList.push_back("-hls_list_size");
+			ffmpegArgumentList.push_back("10");
+
+			// Set the number of unreferenced segments to keep on disk
+			// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+			// to download segments which were recently referenced in the playlist.
+			// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+			ffmpegArgumentList.push_back("-hls_delete_threshold");
+			ffmpegArgumentList.push_back(to_string(1));
+
+			// Segment files removed from the playlist are deleted after a period of time equal
+			// to the duration of the segment plus the duration of the playlist.
+			// I SAW the REMOVE IS AFTER 2 * <playlist duration>
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("delete_segments");
+
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("program_date_time");
+
+			ffmpegArgumentList.push_back("-strftime");
+			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back("-hls_segment_filename");
+			ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
+
+			// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+			// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+			// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+			// 2020-07-19: commented, if it is needed just test it
+			// ffmpegArgumentList.push_back("-hls_start_number_source");
+			// ffmpegArgumentList.push_back("datetime");
+
+			// 2020-07-19: commented, if it is needed just test it
+			// ffmpegArgumentList.push_back("-start_number");
+			// ffmpegArgumentList.push_back(to_string(10));
+
+			ffmpegArgumentList.push_back("-f");
+			ffmpegArgumentList.push_back("hls");
+			ffmpegArgumentList.push_back(segmentListPathName);
+		}
 
 		if (monitorHLS || virtualVOD)
 		{
@@ -7878,6 +7927,7 @@ void FFMpeg::liveRecorder(
 
 					// Segment files removed from the playlist are deleted after a period of time equal
 					// to the duration of the segment plus the duration of the playlist.
+					// I SAW the REMOVE IS AFTER 2 * <playlist duration>
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("delete_segments");
 

@@ -77,6 +77,7 @@ struct LiveRecording
 		string					_lastRecordedAssetFileName;
 		int						_lastRecordedAssetDurationInSeconds;
 		string					_channelLabel;
+		string					_segmenterType;
 		chrono::system_clock::time_point	_recordingStart;
 
 		bool					_virtualVOD;
@@ -255,7 +256,19 @@ private:
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
-	pair<string, int> liveRecorder_processLastGeneratedLiveRecorderFiles(
+	pair<string, int> liveRecorder_processStreamSegmenterOutput(
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		string channelType, 
+		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+		Json::Value encodingParametersRoot,
+		Json::Value liveRecorderParametersRoot,
+		string transcoderStagingContentsPath,
+		string stagingContentsPath,
+		string segmentListFileName,
+		string recordedFileNamePrefix,
+		string lastRecordedAssetFileName,
+		int lastRecordedAssetDurationInSeconds);
+	pair<string, int> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string channelType, 
 		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
@@ -284,7 +297,8 @@ private:
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot,
-		Json::Value encodingParametersRoot);
+		Json::Value encodingParametersRoot,
+		bool copy);
 	void liveRecorder_buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,
