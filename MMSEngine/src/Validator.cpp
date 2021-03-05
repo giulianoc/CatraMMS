@@ -4396,7 +4396,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 	else if (liveGridOutputType == "HLS")
 	{
 		vector<string> mandatoryFields = {
-			"OutputChannelLabel"
+			"DeliveryCode"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{

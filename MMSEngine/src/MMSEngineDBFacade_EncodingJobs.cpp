@@ -3795,7 +3795,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 					encodingItem->_liveGridData = make_shared<EncodingItem::LiveGridData>();
 
 					string field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot, field, 0);
+					int64_t encodingProfileKey = JSONUtils::asInt64(encodingItem->_encodingParametersRoot,
+						field, 0);
 
 					{
 						lastSQLCommand = 
@@ -3820,8 +3821,61 @@ void MMSEngineDBFacade::getEncodingJobs(
 						{
 							encodingItem->_liveGridData->_deliveryTechnology =
 								toDeliveryTechnology(encodingProfilesResultSet->getString("deliveryTechnology"));
-							encodingItem->_liveGridData->_jsonProfile =
+							string jsonEncodingProfile =
 								encodingProfilesResultSet->getString("jsonProfile");
+
+							{
+								Json::CharReaderBuilder builder;
+								Json::CharReader* reader = builder.newCharReader();
+								string errors;
+
+								bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+									jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+									&(encodingItem->_liveGridData->_encodingProfileDetailsRoot), &errors);
+								delete reader;
+
+								if (!parsingSuccessful)
+								{
+									string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+										+ ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+										+ ", errors: " + errors
+										+ ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
+									;
+									_logger->error(errorMessage);
+
+									// in case an encoding job row generate an error, we have to make it to Failed
+									// otherwise we will indefinitely get this error
+									{
+										_logger->info(__FILEREF__ + "EncodingJob update"
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+										);
+										lastSQLCommand = 
+											"update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+										shared_ptr<sql::PreparedStatement> preparedStatementUpdate (
+												conn->_sqlConnection->prepareStatement(lastSQLCommand));
+										int queryParameterIndex = 1;
+										preparedStatementUpdate->setString(queryParameterIndex++,
+												MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+										preparedStatementUpdate->setInt64(queryParameterIndex++,
+												encodingItem->_encodingJobKey);
+
+										chrono::system_clock::time_point startSql = chrono::system_clock::now();
+										int rowsUpdated = preparedStatementUpdate->executeUpdate();
+										_logger->info(__FILEREF__ + "@SQL statistics@"
+											+ ", lastSQLCommand: " + lastSQLCommand
+											+ ", EncodingStatus::End_Failed: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+											+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+											+ ", rowsUpdated: " + to_string(rowsUpdated)
+											+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+												chrono::system_clock::now() - startSql).count()) + "@"
+										);
+									}
+
+									continue;
+									// throw runtime_error(errorMessage);
+								}
+							}
 						}
 						else
 						{
@@ -11247,7 +11301,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
 		string outputType,
-		string outputChannelLabel, int64_t outputChannelConfKey,
+		string manifestDirectoryPath, string manifestFileName,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
 		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
@@ -11266,8 +11320,8 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
             + ", inputChannels.size: " + to_string(inputChannels.size())
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
             + ", outputType: " + outputType
-            + ", outputChannelLabel: " + outputChannelLabel
-            + ", outputChannelConfKey: " + to_string(outputChannelConfKey)
+            + ", manifestDirectoryPath: " + manifestDirectoryPath
+            + ", manifestFileName: " + manifestFileName,
             + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
             + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
             + ", srtURL: " + srtURL
@@ -11335,11 +11389,11 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 				field = "outputType";
 				parametersRoot[field] = outputType;
 
-				field = "outputChannelLabel";
-				parametersRoot[field] = outputChannelLabel;
+				field = "manifestDirectoryPath";
+				parametersRoot[field] = manifestDirectoryPath;
 
-				field = "outputChannelConfKey";
-				parametersRoot[field] = outputChannelConfKey;
+				field = "manifestFileName";
+				parametersRoot[field] = manifestFileName;
 
 				field = "segmentDurationInSeconds";
 				parametersRoot[field] = segmentDurationInSeconds;

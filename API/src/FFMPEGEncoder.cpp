@@ -5137,6 +5137,7 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_recordingStart = chrono::system_clock::now();
 
 		liveRecording->_segmenterType = "hlsSegmenter";
+		// liveRecording->_segmenterType = "streamSegmenter";
 
 		liveRecording->_ffmpeg->liveRecorder(
 			liveRecording->_ingestionJobKey,
@@ -5188,9 +5189,11 @@ void FFMPEGEncoder::liveRecorderThread(
 		bool urlForbidden				= false;
 		bool urlNotFound				= false;
 		addEncodingCompleted(encodingJobKey,
-				completedWithError, liveRecording->_errorMessage, killedByUser,
-				urlForbidden, urlNotFound);
+			completedWithError, liveRecording->_errorMessage, killedByUser,
+			urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
@@ -5269,6 +5272,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName))
 		{
@@ -5337,6 +5342,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName))
 		{
@@ -5405,6 +5412,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName))
 		{
@@ -5473,6 +5482,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 					+ liveRecording->_segmentListFileName))
 		{
@@ -5541,6 +5552,8 @@ void FFMPEGEncoder::liveRecorderThread(
 				completedWithError, liveRecording->_errorMessage, killedByUser,
 				urlForbidden, urlNotFound);
 
+		// here we have the deletion of the segments directory
+		// The monitor directory was removed inside the ffmpeg method
 		if (FileIO::fileExisting(liveRecording->_transcoderStagingContentsPath
 			+ liveRecording->_segmentListFileName))
 		{
@@ -5581,6 +5594,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 	{
 		try
 		{
+			chrono::system_clock::time_point startAllChannelsIngestionChunks = chrono::system_clock::now();
+
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
 			#ifdef __VECTOR__
@@ -5603,7 +5618,7 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 						+ ", liveRecording->_segmenterType: " + liveRecording->_segmenterType
 					);
 
-					chrono::system_clock::time_point now = chrono::system_clock::now();
+					chrono::system_clock::time_point startSingleChannelIngestionChunks = chrono::system_clock::now();
 
 					try
 					{
@@ -5689,15 +5704,23 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 
-					_logger->info(__FILEREF__ + "liveRecorder_processSegmenterOutput"
+					_logger->info(__FILEREF__ + "Single Channel Ingestion Chunks"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 						+ ", @MMS statistics@ - elapsed time: @" + to_string(
-							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
+							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+								- startSingleChannelIngestionChunks).count()
 						) + "@"
 					);
 				}
 			}
+
+			_logger->info(__FILEREF__ + "All Channels Ingestion Chunks"
+				+ ", @MMS statistics@ - elapsed time: @" + to_string(
+					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+						- startAllChannelsIngestionChunks).count()
+				) + "@"
+			);
 		}
 		catch(runtime_error e)
 		{
@@ -5734,6 +5757,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 	{
 		try
 		{
+			chrono::system_clock::time_point startAllChannelsVirtualVOD = chrono::system_clock::now();
+
 			lock_guard<mutex> locker(*_liveRecordingMutex);
 
 			#ifdef __VECTOR__
@@ -5757,7 +5782,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						+ ", virtualVOD: " + to_string(liveRecording->_virtualVOD)
 					);
 
-					chrono::system_clock::time_point now = chrono::system_clock::now();
+					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
 
 					try
 					{
@@ -5825,15 +5850,23 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 
-					_logger->info(__FILEREF__ + "liveRecorder_buildAndIngestVirtualVOD"
+					_logger->info(__FILEREF__ + "Single Channel Virtual VOD"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
 						+ ", @MMS statistics@ - elapsed time: @" + to_string(
-							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - now).count()
+							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+								- startSingleChannelVirtualVOD).count()
 						) + "@"
 					);
 				}
 			}
+
+			_logger->info(__FILEREF__ + "All Channels Virtual VOD"
+				+ ", @MMS statistics@ - elapsed time: @" + to_string(
+					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
+						- startAllChannelsVirtualVOD).count()
+				) + "@"
+			);
 		}
 		catch(runtime_error e)
 		{
@@ -6325,6 +6358,12 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 
 			bool toBeIngested = false;
 
+			_logger->info(__FILEREF__ + "Reading manifest"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", transcoderStagingContentsPath + segmentListFileName: " + transcoderStagingContentsPath + segmentListFileName
+			);
+
 			ifstream segmentList(transcoderStagingContentsPath + segmentListFileName);
 			if (!segmentList)
 			{
@@ -6338,9 +6377,25 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 				// throw runtime_error(errorMessage);
 			}
 
+			int ingestionNumber = 0;
 			string manifestLine;
 			while(getline(segmentList, manifestLine))
 			{
+				_logger->info(__FILEREF__ + "Reading manifest line"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestLine: " + manifestLine
+					+ ", toBeIngested: " + to_string(toBeIngested)
+					+ ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration)
+					+ ", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
+					+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
+					+ ", currentSegmentDuration: " + to_string(currentSegmentDuration)
+					+ ", currentSegmentUtcStartTimeInMillisecs: " + to_string(currentSegmentUtcStartTimeInMillisecs)
+					+ ", currentSegmentFileName: " + currentSegmentFileName
+					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
+					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
+				);
+
 				// #EXTINF:14.640000,
 				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
 				// <segment file name>
@@ -6419,6 +6474,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						toBeIngestedSegmentDuration = currentSegmentDuration;
 						toBeIngestedSegmentUtcStartTimeInMillisecs = currentSegmentUtcStartTimeInMillisecs;
 						toBeIngestedSegmentFileName = currentSegmentFileName;
+
+						toBeIngested = true;
 					}
 
 					// ingestion
@@ -6642,6 +6699,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						newLastRecordedAssetFileName = toBeIngestedSegmentFileName;
 					}
 
+					ingestionNumber++;
+
 					toBeIngestedSegmentDuration = -1.0;
 					toBeIngestedSegmentUtcStartTimeInMillisecs = -1;
 					toBeIngestedSegmentFileName = "";
@@ -6650,6 +6709,31 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 				{
 					toBeIngested = true;
 				}
+			}
+
+			// Scenario:
+			//	we have lastRecordedAssetFileName with a filename that does not exist into the playlist
+			// This is a scenario that should never happen but, in case it happens, we have to manage otherwise
+			// no chunks will be ingested
+			if (lastRecordedAssetFileName != ""		// file name is present
+				&& !toBeIngested					// file name does not exist into the playlist
+			)
+			{
+				_logger->error(__FILEREF__ + "Filename not found: sceanrio that should never happen"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", toBeIngested: " + to_string(toBeIngested)
+					+ ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration)
+					+ ", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
+					+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
+					+ ", currentSegmentDuration: " + to_string(currentSegmentDuration)
+					+ ", currentSegmentUtcStartTimeInMillisecs: " + to_string(currentSegmentUtcStartTimeInMillisecs)
+					+ ", currentSegmentFileName: " + currentSegmentFileName
+					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
+					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
+				);
+
+				newLastRecordedAssetFileName = "";
 			}
 		}
 	}
@@ -9407,17 +9491,24 @@ void FFMPEGEncoder::liveGridThread(
 		liveProxy->_ingestionJobKey = JSONUtils::asInt64(liveGridMetadata, "ingestionJobKey", -1);
 
 		Json::Value inputChannelsRoot = liveGridMetadata["inputChannels"];
-		string userAgent = liveGridMetadata.get("userAgent", "").asString();
+
+		Json::Value encodingParametersRoot = liveGridMetadata["encodingParametersRoot"];
+        Json::Value ingestedParametersRoot = liveGridMetadata["ingestedParametersRoot"];
+
+		string userAgent;
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserAgent"))
+            userAgent = ingestedParametersRoot.get("UserAgent", "").asString();
 		Json::Value encodingProfileDetailsRoot = liveGridMetadata["encodingProfileDetails"];
-		int gridColumns = JSONUtils::asInt(liveGridMetadata, "gridColumns", 0);
-		int gridWidth = JSONUtils::asInt(liveGridMetadata, "gridWidth", 0);
-		int gridHeight = JSONUtils::asInt(liveGridMetadata, "gridHeight", 0);
-		liveProxy->_liveGridOutputType = liveGridMetadata.get("outputType", "").asString();
-		string srtURL = liveGridMetadata.get("srtURL", "").asString();
-		int segmentDurationInSeconds = JSONUtils::asInt(liveGridMetadata, "segmentDurationInSeconds", 10);
-		int playlistEntriesNumber = JSONUtils::asInt(liveGridMetadata, "playlistEntriesNumber", 6);
-		string manifestDirectoryPath = liveGridMetadata.get("manifestDirectoryPath", "").asString();
-		string manifestFileName = liveGridMetadata.get("manifestFileName", "").asString();
+
+		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
+		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
+		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
+		liveProxy->_liveGridOutputType = encodingParametersRoot.get("outputType", "").asString();
+		string srtURL = ingestedParametersRoot.get("SRT_URL", "").asString();
+		int segmentDurationInSeconds = JSONUtils::asInt(encodingParametersRoot, "segmentDurationInSeconds", 10);
+		int playlistEntriesNumber = JSONUtils::asInt(encodingParametersRoot, "playlistEntriesNumber", 6);
+		string manifestDirectoryPath = encodingParametersRoot.get("manifestDirectoryPath", "").asString();
+		string manifestFileName = encodingParametersRoot.get("manifestFileName", "").asString();
 		liveProxy->_channelLabel = manifestFileName;
 
 		liveProxy->_manifestFilePathNames.clear();

@@ -2834,84 +2834,31 @@ void API::createDeliveryAuthorization(
 						;
 					}
 
-					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveRecorder"
+					_logger->info(__FILEREF__ + "createDeliveryAuthorization for AwaitingTheBeginning"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", deliveryCode: " + to_string(deliveryCode)
 						+ ", deliveryURL: " + deliveryURL
 					);
-
-					/*
-					 * old method using the liveURLConfKey ....
-					string field = "ConfigurationLabel";
-					string configurationLabel = ingestionJobRoot.get(field, "").asString();
-					field = "MonitorHLS";
+				}
+				else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
+				{
+					string field = "DeliveryCode";
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
-						string errorMessage = string("A Live-LiveRecorder without MonitorHLS cannot be delivered")
+						string errorMessage = string("A LiveGrid without DeliveryCode cannot be delivered")
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
-
-					int64_t liveURLConfKey;
-					bool warningIfMissing = false;
-					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(liveURLConfKey, ignore) = liveURLConfDetails;
+					deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
 
 					string deliveryURI;
 					string liveFileExtension = "m3u8";
 					tuple<string, string, string> liveDeliveryDetails
 						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(liveURLConfKey),
-						liveFileExtension, requestWorkspace);
-					tie(deliveryURI, ignore, deliveryFileName) =
-						liveDeliveryDetails;
-
-					authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						physicalPathKey,
-						liveURLConfKey,
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
-
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
-					*/
-				}
-				else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
-				{
-					string field = "OutputChannelLabel";
-					string configurationLabel = ingestionJobRoot.get(field, "").asString();
-					field = "OutputType";
-					string outputType = ingestionJobRoot.get(field, "").asString();
-					if (outputType == "")
-						outputType = "HLS";
-
-					int64_t liveURLConfKey;
-					bool warningIfMissing = false;
-					pair<int64_t, string> liveURLConfDetails = _mmsEngineDBFacade->getIPChannelConfDetails(
-						requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(liveURLConfKey, ignore) = liveURLConfDetails;
-
-					string deliveryURI;
-					string liveFileExtension;
-					if (outputType == "HLS")
-						liveFileExtension = "m3u8";
-					else
-						liveFileExtension = "mpd";
-					tuple<string, string, string> liveDeliveryDetails
-						= _mmsStorage->getLiveDeliveryDetails(
-						_mmsEngineDBFacade, to_string(liveURLConfKey),
+						_mmsEngineDBFacade, to_string(deliveryCode),
 						liveFileExtension, requestWorkspace);
 					tie(deliveryURI, ignore, deliveryFileName) =
 						liveDeliveryDetails;
@@ -2951,8 +2898,8 @@ void API::createDeliveryAuthorization(
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 							userKey,
 							clientIPAddress,
-							physicalPathKey,
-							liveURLConfKey,
+							-1,	// physicalPathKey,
+							deliveryCode,
 							deliveryURI,
 							ttlInSeconds,
 							maxRetries);
@@ -2965,6 +2912,12 @@ void API::createDeliveryAuthorization(
 							+ "?token=" + to_string(authorizationKey)
 						;
 					}
+
+					_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveGrid"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", deliveryCode: " + to_string(deliveryCode)
+						+ ", deliveryURL: " + deliveryURL
+					);
 				}
 			}
 
@@ -3338,6 +3291,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		time_t expirationTime = stoll(sExpirationTime);
 
 
+
 		string contentURIToBeVerified;
 
 		size_t endContentURIIndex = contentURI.find("?", endExpirationIndex);
@@ -3369,13 +3323,34 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			if (md5Base64 != tokenSigned)
 			{
-				string errorMessage = string("Wrong token (m3u8)")
-					+ ", md5Base64: " + md5Base64
-					+ ", tokenSigned: " + tokenSigned
-				;
-				_logger->warn(__FILEREF__ + errorMessage);
+				// we still try removing again the last directory to manage the scenario
+				// of multi bitrate encoding or multi audio tracks (one director for each audio)
+				{
+					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+					if (endPathIndex != string::npos)
+						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+				}
 
-				throw runtime_error(errorMessage);
+				string md5Base64 = getSignedPath(contentURIToBeVerified, expirationTime);
+
+				_logger->info(__FILEREF__ + "Authorization through path (m3u8 2)"
+					+ ", contentURI: " + contentURI
+					+ ", contentURIToBeVerified: " + contentURIToBeVerified
+					+ ", expirationTime: " + to_string(expirationTime)
+					+ ", tokenSigned: " + tokenSigned
+					+ ", md5Base64: " + md5Base64
+				);
+
+				if (md5Base64 != tokenSigned)
+				{
+					string errorMessage = string("Wrong token (m3u8)")
+						+ ", md5Base64: " + md5Base64
+						+ ", tokenSigned: " + tokenSigned
+					;
+					_logger->warn(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
 		}
 		else if (contentURIToBeVerified.size() >= tsSuffix.size()
@@ -3399,7 +3374,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			if (md5Base64 != tokenSigned)
 			{
-				// we still try removing again the last directory to manage the scenario of milti bitrate encoding
+				// we still try removing again the last directory to manage
+				// the scenario of multi bitrate encoding
 				{
 					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
 					if (endPathIndex != string::npos)

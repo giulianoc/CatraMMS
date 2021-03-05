@@ -689,7 +689,7 @@ public:
 			Json::Value								_ingestedParametersRoot;
 
 			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
-			string									_jsonProfile;
+            Json::Value								_encodingProfileDetailsRoot;
 		};
 
         shared_ptr<EncodeData>                      _encodeData;
@@ -1774,7 +1774,7 @@ public:
 		int64_t ingestionJobKey,
 		vector<tuple<int64_t, string, string>>& inputChannels,
 		int64_t encodingProfileKey,
-		string outputType, string outputChannelLabel, int64_t outputChannelConfKey,
+		string outputType, string manifestDirectoryPath, string manifestFileName,
 		int segmentDurationInSeconds, int playlistEntriesNumber,
 		string srtURL,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);

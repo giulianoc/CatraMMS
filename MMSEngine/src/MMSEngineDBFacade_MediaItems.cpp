@@ -3645,7 +3645,14 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			// So we do not need anymore the above check
 			string orderBy;
 			if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
-				orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
+			{
+				string segmenterType = "hlsSegmenter";
+				// string segmenterType = "streamSegmenter";
+				if (segmenterType == "hlsSegmenter")
+					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcStartTimeInMilliSecs') desc ";
+				else
+					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
+			}
 			else
 				orderBy = "order by ijo.mediaItemKey desc ";
 

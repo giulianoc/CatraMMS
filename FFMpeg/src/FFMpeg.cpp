@@ -7502,8 +7502,11 @@ void FFMpeg::liveRecorder(
 		{
 			// 2019-12-19: since the first chunk is removed, we will start a bit early
 			// than utcRecordingPeriodStart (50% less than segmentDurationInSeconds)
-			long secondsToStartEarly =
-				segmentDurationInSeconds * 50 / 100;
+			long secondsToStartEarly;
+			if (segmenterType == "streamSegmenter")
+				secondsToStartEarly = segmentDurationInSeconds * 50 / 100;
+			else
+				secondsToStartEarly = 0;
 
 			while (utcNow + secondsToStartEarly < utcRecordingPeriodStart)
 			{

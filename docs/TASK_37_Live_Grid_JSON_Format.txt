@@ -27,10 +27,12 @@
 		"EncodingProfileKey": 1,
 		"EncodingProfileLabel": "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
 
-		// mandatory. This channel will have the URL to be used for the delivery of the Live-Grid channel.
-		//	When the Live-Grid task will start, in case the OutputChannelLabel does not exist,
-		//	Live-Grid will add it and set his channel URL
-		"OutputChannelLabel": "TV1 and TV 2",
+		// mandatory
+		//	It identifies this specific delivery.
+		//	Internally the delivery code is used to
+		//		- build the delivery URL (so it is used to build
+		//			the path where the HLS segments are saved)
+		"DeliveryCode": 12345,
 
 		// optional. To be set with the EncodersPool label only in case a specific 
 		// encoders pool has to be used

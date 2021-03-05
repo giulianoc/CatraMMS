@@ -10267,8 +10267,13 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
         field = "monitorVirtualVODSegmentDurationInSeconds";
         monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
-		// since the first chunk is discarded, we will start recording before the period of the chunk
-		utcRecordingPeriodStart -= monitorVirtualVODSegmentDurationInSeconds;
+		string segmenterType = "hlsSegmenter";
+		// string segmenterType = "streamSegmenter";
+		if (segmenterType == "streamSegmenter")
+		{
+			// since the first chunk is discarded, we will start recording before the period of the chunk
+			utcRecordingPeriodStart -= monitorVirtualVODSegmentDurationInSeconds;
+		}
 
         field = "utcRecordingPeriodEnd";
         utcRecordingPeriodEnd = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
@@ -14788,23 +14793,23 @@ bool EncoderVideoAudioProxy::liveGrid()
 bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 {
 
+	Json::Value inputChannelsRoot;
+	long maxAttemptsNumberInCaseOfErrors;
 	string encodersPool;
+	long waitingSecondsBetweenAttemptsInCaseOfErrors;
+	/*
 	int gridColumns;
 	int gridWidth;
 	int gridHeight;
-	Json::Value inputChannelsRoot;
 	string outputType;
 	int64_t outputChannelConfKey;
 	int segmentDurationInSeconds;
 	int playlistEntriesNumber;
-	long waitingSecondsBetweenAttemptsInCaseOfErrors;
-	long maxAttemptsNumberInCaseOfErrors;
 	string userAgent;
 	string srtURL;
+	*/
 	{
-        string field = "EncodersPool";
-        encodersPool = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
-
+	/*
         field = "Columns";
         gridColumns = JSONUtils::asInt(_encodingItem->_liveGridData->_ingestedParametersRoot,
 			field, 0);
@@ -14819,10 +14824,23 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 
         field = "SRT_URL";
         srtURL = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
+		*/
+
+        string field = "EncodersPool";
+        encodersPool = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").asString();
 
         field = "inputChannels";
         inputChannelsRoot = _encodingItem->_encodingParametersRoot[field];
 
+        field = "maxAttemptsNumberInCaseOfErrors";
+        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot,
+			field, 0);
+
+        field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
+        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
+			_encodingItem->_encodingParametersRoot, field, 600);
+
+		/*
         field = "outputType";
         outputType = _encodingItem->_encodingParametersRoot.get(field, "").asString();
 
@@ -14835,19 +14853,12 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
         field = "playlistEntriesNumber";
         playlistEntriesNumber = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
-        field = "maxAttemptsNumberInCaseOfErrors";
-        maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot,
-			field, 0);
-
-        field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-        waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
-			_encodingItem->_encodingParametersRoot, field, 600);
-
         field = "UserAgent";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_liveGridData->_ingestedParametersRoot,
 			field))
 			userAgent = _encodingItem->_liveGridData->_ingestedParametersRoot.get(field, "").
 				asString();
+		*/
 	}
 
 	bool killedByUser = false;
@@ -15115,69 +15126,26 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 						}
 					}
 
-					string manifestDirectoryPath;
-					string manifestFileName;
+					/*
 					if (outputType == "HLS") // || outputType == "DASH")
 					{
-						// 2020-07-11: just as reminder, in case of Live-Grid (HLS),
-						//	the URL of the outputChannelConfKey channel is update
-						//	from MMSEngineProcessor.cpp and this URL is the same as the one built
-						//	in the next statements
-						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-							_mmsEngineDBFacade, to_string(outputChannelConfKey),
-							_encodingItem->_workspace);
 
-						manifestFileName = to_string(outputChannelConfKey) + ".m3u8";
 					}
-
-					Json::Value encodingProfileDetailsRoot;
-					{
-						try
-						{
-							Json::CharReaderBuilder builder;
-							Json::CharReader* reader = builder.newCharReader();
-							string errors;
-
-							bool parsingSuccessful = reader->parse(
-								_encodingItem->_liveGridData->_jsonProfile.c_str(),
-                                _encodingItem->_liveGridData->_jsonProfile.c_str() +
-									_encodingItem->_liveGridData->_jsonProfile.size(), 
-                                &encodingProfileDetailsRoot, &errors);
-							delete reader;
-
-							if (!parsingSuccessful)
-							{
-								string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
-									+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-									+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-									+ ", errors: " + errors
-									+ ", _encodeData->_jsonProfile: " + _encodingItem->_liveGridData->_jsonProfile
-								;
-								_logger->error(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-						}
-						catch(...)
-						{
-							string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", _encodeData->_jsonProfile: " + _encodingItem->_liveGridData->_jsonProfile
-							;
-							_logger->error(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
+					*/
 
 					Json::Value liveGridMetadata;
 
 					liveGridMetadata["ingestionJobKey"] =
 						(Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 					liveGridMetadata["inputChannels"] = inputChannelsRoot;
+					liveGridMetadata["ingestedParametersRoot"] =
+						_encodingItem->_liveGridData->_ingestedParametersRoot;
+					liveGridMetadata["encodingProfileDetails"] =
+						_encodingItem->_liveGridData->_encodingProfileDetailsRoot;
+					liveGridMetadata["encodingParametersRoot"] =
+						_encodingItem->_encodingParametersRoot;
+
+					/*
 					liveGridMetadata["userAgent"] = userAgent;
 					liveGridMetadata["encodingProfileDetails"] = encodingProfileDetailsRoot;
 					liveGridMetadata["gridColumns"] = gridColumns;
@@ -15189,6 +15157,7 @@ bool EncoderVideoAudioProxy::liveGrid_through_ffmpeg()
 					liveGridMetadata["srtURL"] = srtURL;
 					liveGridMetadata["manifestDirectoryPath"] = manifestDirectoryPath;
 					liveGridMetadata["manifestFileName"] = manifestFileName;
+					*/
 
 					{
 						Json::StreamWriterBuilder wbuilder;
