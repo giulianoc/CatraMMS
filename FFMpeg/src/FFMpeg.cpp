@@ -7421,6 +7421,7 @@ void FFMpeg::liveRecorder(
 		+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
 		+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 		+ ", outputFileFormat: " + outputFileFormat
+		+ ", segmenterType: " + segmenterType
 
 		+ ", monitorHLS: " + to_string(monitorHLS)
 		+ ", virtualVOD: " + to_string(virtualVOD)
@@ -7498,7 +7499,13 @@ void FFMpeg::liveRecorder(
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
-		if (utcNow < utcRecordingPeriodStart)
+		// 2021-03-06: I saw even if ffmpeg starts exactly at utcRecordingPeriodStart, the segments start time
+		//	is about utcRecordingPeriodStart + 5 seconds.
+		//	So, to be sure we have the recording at utcRecordingPeriodStart, we have to start ffmpeg
+		//	at lease 5 seconds ahead
+		int secondsAheadToStartFfmpeg = 10;
+		time_t utcRecordingPeriodStartFixed = utcRecordingPeriodStart - secondsAheadToStartFfmpeg;
+		if (utcNow < utcRecordingPeriodStartFixed)
 		{
 			// 2019-12-19: since the first chunk is removed, we will start a bit early
 			// than utcRecordingPeriodStart (50% less than segmentDurationInSeconds)
@@ -7508,9 +7515,9 @@ void FFMpeg::liveRecorder(
 			else
 				secondsToStartEarly = 0;
 
-			while (utcNow + secondsToStartEarly < utcRecordingPeriodStart)
+			while (utcNow + secondsToStartEarly < utcRecordingPeriodStartFixed)
 			{
-				time_t sleepTime = utcRecordingPeriodStart - (utcNow + secondsToStartEarly);
+				time_t sleepTime = utcRecordingPeriodStartFixed - (utcNow + secondsToStartEarly);
 
 				_logger->info(__FILEREF__ + "LiveRecorder timing. "
 						+ "Too early to start the LiveRecorder, just sleep "
@@ -7519,7 +7526,7 @@ void FFMpeg::liveRecorder(
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", utcNow: " + to_string(utcNow)
                     + ", secondsToStartEarly: " + to_string(secondsToStartEarly)
-                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+                    + ", utcRecordingPeriodStartFixed: " + to_string(utcRecordingPeriodStartFixed)
 					);
 
 				this_thread::sleep_for(chrono::seconds(sleepTime));
@@ -7539,29 +7546,27 @@ void FFMpeg::liveRecorder(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", utcNow: " + to_string(utcNow)
-                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+                    + ", utcRecordingPeriodStartFixed: " + to_string(utcRecordingPeriodStartFixed)
                     + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
                     + ", tooLateTime: " + to_string(tooLateTime)
             ;
-
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
 		else
 		{
-			time_t delayTime = utcNow - utcRecordingPeriodStart;
+			time_t delayTime = utcNow - utcRecordingPeriodStartFixed;
 
             string errorMessage = __FILEREF__ + "LiveRecorder timing. "
 				+ "We are a bit late to start the LiveRecorder, let's start it"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", utcNow: " + to_string(utcNow)
-                    + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+                    + ", utcRecordingPeriodStartFixed: " + to_string(utcRecordingPeriodStartFixed)
                     + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
                     + ", delayTime: " + to_string(delayTime)
             ;
-
             _logger->warn(errorMessage);
 		}
 
