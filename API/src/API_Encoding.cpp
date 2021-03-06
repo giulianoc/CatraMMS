@@ -330,6 +330,7 @@ void API::killOrCancelEncodingJob(
 
 			if (type == "LiveRecorder")
 			{
+				/*
 				if (highAvailability)
 				{
 					// first has to be killed the main encodingJob, it updates the encoder status
@@ -500,6 +501,7 @@ void API::killOrCancelEncodingJob(
 					}
 				}
 				else
+				*/
 				{
 					if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 					{

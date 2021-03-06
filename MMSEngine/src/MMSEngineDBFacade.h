@@ -1326,10 +1326,10 @@ public:
 	void setNotToBeExecutedStartingFromBecauseChunkNotSelected (
 			int64_t ingestionJobKey, string processorMMS);
 
-	void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
+	// void manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS);
 
-	bool liveRecorderMainAndBackupChunksManagementCompleted(
-		int64_t ingestionJobKey);
+	// bool liveRecorderMainAndBackupChunksManagementCompleted(
+	// 	int64_t ingestionJobKey);
 
 	void getRunningLiveRecorderVirtualVODsDetails(
 		vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>& runningLiveRecordersDetails
@@ -1725,7 +1725,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey, string ingestionJobLabel,
 		string channelType,
-		bool highAvailability,
+		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url,
 		string userAgent,
 		time_t utcRecordingPeriodStart,

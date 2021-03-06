@@ -23,7 +23,7 @@
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "MainAndBackupRunningHALiveRecordingEvent.h"
+// #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "EMailSender.h"
 #include "Magick++.h"
 #include <openssl/md5.h>
@@ -574,6 +574,7 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
+			/*
             case MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:	// 6
             {
                 _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:"
@@ -614,6 +615,7 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
+			*/
             case MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT:	// 7
             {
                 _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
@@ -9435,7 +9437,7 @@ void MMSEngineProcessor::manageLiveRecorder(
         bool autoRenew;
 		int segmentDurationInSeconds;
 		string outputFileFormat;
-		bool highAvailability = false;
+		// bool highAvailability = false;
 		bool liveRecorderVirtualVOD = false;
 		int liveRecorderVirtualVODMaxDurationInMinutes = 120;
 		int64_t virtualVODEncodingProfileKey = -1;
@@ -9538,6 +9540,7 @@ void MMSEngineProcessor::manageLiveRecorder(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				userAgent = parametersRoot.get(field, "").asString();
 
+			/*
             field = "HighAvailability";
 			if (channelType == "IP_MMSAsServer")
 				highAvailability = false;
@@ -9546,6 +9549,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					highAvailability = JSONUtils::asBool(parametersRoot, field, false);
             }
+			*/
 
             field = "RecordingPeriod";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
@@ -9789,6 +9793,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				throw runtime_error(errorMessage);
 			}
+			/*
 			else if (encodersNumber == 1 && highAvailability)
 			{
 				// in case of high availability and in case we have just ONE encoder, to avoid the below algorithm
@@ -9803,6 +9808,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				highAvailability = false;
 			}
+			*/
 		}
 
 		int64_t monitorVirtualVODEncodingProfileKey = -1;
@@ -9829,7 +9835,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			ingestionJobLabel, channelType, highAvailability,
+			ingestionJobLabel, channelType, // highAvailability,
 			configurationLabel, confKey, liveURL, userAgent,
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
@@ -18914,6 +18920,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
     }
 }
 
+/*
 void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
         shared_ptr<long> processorsThreadsNumber)
 {
@@ -18967,6 +18974,7 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
         );
     }
 }
+*/
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 	MMSEngineProcessor::getMediaSourceDetails(

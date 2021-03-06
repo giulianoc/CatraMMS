@@ -555,6 +555,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
     }    
 }
 
+/*
 void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string processorMMS)
 {
     string      lastSQLCommand;
@@ -581,20 +582,17 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-		/*
-		 * 2020-06-13: Transaction removed because:
-		 *	- it was causing several deadlock db error
-		 *	- it is not really needed
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
-        {
-            lastSQLCommand = 
-                "START TRANSACTION";
+		// * 2020-06-13: Transaction removed because:
+		// *	- it was causing several deadlock db error
+		// *	- it is not really needed
+        //autoCommit = false;
+        //{
+        //    lastSQLCommand = 
+        //        "START TRANSACTION";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-		*/
+        //    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+        //    statement->execute(lastSQLCommand);
+        //}
         
         {
 			// the setting of this variable is done also in EncoderVideoAudioProxy::processLiveRecorder
@@ -1212,17 +1210,14 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
             }
         }
         
-		/*
-        // conn->_sqlConnection->commit(); OR execute COMMIT
-        {
-            lastSQLCommand = 
-                "COMMIT";
+        //{
+        //    lastSQLCommand = 
+        //        "COMMIT";
 
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        autoCommit = true;
-		*/
+        //    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+        //    statement->execute(lastSQLCommand);
+        //}
+        //autoCommit = true;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1250,14 +1245,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
-				/*
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-				*/
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1283,13 +1275,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
                     + ", exceptionMessage: " + e.what()
                 );
 
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
+                // _logger->debug(__FILEREF__ + "DB connection unborrow"
+                //     + ", getConnectionId: " + to_string(conn->getConnectionId())
+                // );
+                // _connectionPool->unborrow(conn);
+				// conn = nullptr;
             }
         }
 
@@ -1307,14 +1297,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
-				/*
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-				*/
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1340,13 +1327,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
                     + ", exceptionMessage: " + e.what()
                 );
 
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
+                // _logger->debug(__FILEREF__ + "DB connection unborrow"
+                //     + ", getConnectionId: " + to_string(conn->getConnectionId())
+                // );
+                // _connectionPool->unborrow(conn);
+				// conn = nullptr;
             }
         }
 
@@ -1364,14 +1349,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
-				/*
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-				*/
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1397,13 +1379,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
                     + ", exceptionMessage: " + e.what()
                 );
 
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
+                // _logger->debug(__FILEREF__ + "DB connection unborrow"
+                //     + ", getConnectionId: " + to_string(conn->getConnectionId())
+                // );
+                // _connectionPool->unborrow(conn);
+				// conn = nullptr;
             }
         }
 
@@ -1420,14 +1400,11 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
         {
             try
             {
-				/*
-                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-                if (!autoCommit)
-                {
-                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-                    statement->execute("ROLLBACK");
-                }
-				*/
+                // if (!autoCommit)
+                // {
+                //     shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                //     statement->execute("ROLLBACK");
+                // }
 
                 _logger->debug(__FILEREF__ + "DB connection unborrow"
                     + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1453,20 +1430,20 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA(string proce
                     + ", exceptionMessage: " + e.what()
                 );
 
-				/*
-                _logger->debug(__FILEREF__ + "DB connection unborrow"
-                    + ", getConnectionId: " + to_string(conn->getConnectionId())
-                );
-                _connectionPool->unborrow(conn);
-				conn = nullptr;
-				*/
+                // _logger->debug(__FILEREF__ + "DB connection unborrow"
+                //     + ", getConnectionId: " + to_string(conn->getConnectionId())
+                // );
+                // _connectionPool->unborrow(conn);
+				// conn = nullptr;
             }
         }
 
         throw e;
     }
 }
+*/
 
+/*
 bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
 		int64_t ingestionJobKey)
 {
@@ -1575,6 +1552,7 @@ bool MMSEngineDBFacade::liveRecorderMainAndBackupChunksManagementCompleted(
         throw e;
     }    
 }
+*/
 
 void MMSEngineDBFacade::getRunningLiveRecorderVirtualVODsDetails(
 	vector<tuple<int64_t, int64_t, int, string, int, string, string, int64_t, string>>&

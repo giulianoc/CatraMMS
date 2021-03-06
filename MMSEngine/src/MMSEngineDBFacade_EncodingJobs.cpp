@@ -10027,7 +10027,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey, string ingestionJobLabel,
 	string channelType,
-	bool highAvailability,
+	// bool highAvailability,
 	string configurationLabel, int64_t confKey, string url,
 	string userAgent,
 	time_t utcRecordingPeriodStart,
@@ -10061,7 +10061,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ingestionJobLabel: " + ingestionJobLabel
             + ", channelType: " + channelType
-            + ", highAvailability: " + to_string(highAvailability)
+            // + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
             + ", url: " + url
@@ -10113,8 +10113,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "channelType";
 				parametersRoot[field] = channelType;
 
-				field = "highAvailability";
-				parametersRoot[field] = highAvailability;
+				// field = "highAvailability";
+				// parametersRoot[field] = highAvailability;
 
 				field = "main";
 				parametersRoot[field] = main;
@@ -10241,6 +10241,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 		int64_t backupEncodingJobKey = -1;
 
+		/*
 		if (highAvailability)
 		{
 			bool main = false;
@@ -10323,18 +10324,16 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				+ ", parameters.length: " + to_string(parameters.length()));
         
 			{
-				/*
-				int savedEncodingPriority = static_cast<int>(encodingPriority);
-				if (savedEncodingPriority > workspace->_maxEncodingPriority)
-				{
-					_logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
-						+ ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
-						+ ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
-					);
+				// int savedEncodingPriority = static_cast<int>(encodingPriority);
+				// if (savedEncodingPriority > workspace->_maxEncodingPriority)
+				// {
+				// 	_logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+				// 		+ ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+				// 		+ ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+				// 	);
 
-					savedEncodingPriority = workspace->_maxEncodingPriority;
-				}
-				*/
+				// 	savedEncodingPriority = workspace->_maxEncodingPriority;
+				// }
 				// 2019-04-23: we will force the encoding priority to high to be sure this EncodingJob
 				//	will be managed as soon as possible
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
@@ -10386,7 +10385,9 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
 		}
+		*/
 
+		/*
 		if (mainEncodingJobKey != -1 && backupEncodingJobKey != -1)
 		{
 			{
@@ -10457,6 +10458,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				}
 			}
 		}
+		*/
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {

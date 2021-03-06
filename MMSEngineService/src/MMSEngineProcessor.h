@@ -86,7 +86,7 @@ private:
     
 	int						_maxSecondsToWaitCheckIngestionLock;
 	int						_maxSecondsToWaitCheckEncodingJobLock;
-	int						_maxSecondsToWaitMainAndBackupLiveChunkLock;
+	// int						_maxSecondsToWaitMainAndBackupLiveChunkLock;
 
     // int                     _stagingRetentionInDays;
 
@@ -155,7 +155,7 @@ private:
 
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
-	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
+	// void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(
         int64_t ingestionJobKey,

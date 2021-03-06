@@ -28,8 +28,8 @@ SET (SOURCES
 	CheckRefreshPartitionFreeSizeTimes.cpp
 	ContentRetentionTimes.cpp
 	DBDataRetentionTimes.cpp
-	MainAndBackupRunningHALiveRecordingEvent.cpp
 )
+#	MainAndBackupRunningHALiveRecordingEvent.cpp
 
 SET (HEADERS
 	MMSEngineProcessor.h
@@ -38,8 +38,8 @@ SET (HEADERS
 	CheckRefreshPartitionFreeSizeTimes.h
 	ContentRetentionTimes.h
 	DBDataRetentionTimes.h
-	MainAndBackupRunningHALiveRecordingEvent.h
 )
+#	MainAndBackupRunningHALiveRecordingEvent.h
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(COMMAND ${LSB_RELEASE_EXEC} -is

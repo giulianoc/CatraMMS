@@ -10342,7 +10342,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	// string channelType;
 	string encodersPool;
 	int64_t channelConfKey;
-	bool highAvailability;
+	// bool highAvailability;
 	bool main;
 	string liveURL;
 	string userAgent;
@@ -10367,8 +10367,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         field = "confKey";
         channelConfKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
-        field = "highAvailability";
-        highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+        // field = "highAvailability";
+        // highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "main";
         main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
@@ -10432,16 +10432,15 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				//				a transcoder different by the mainTranscoder (if exist) is used
 				//		   else
 				//				sleep waiting main transcoder is assigned and come back to 1. The loop 1. and 2. is executed up to 60 secs
+				/*
 				if (highAvailability)
 				{
 					if (main)
 					{
-						/*
-						int64_t backupEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-							main, _encodingItem->_encodingJobKey);
+						// int64_t backupEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+						// 	main, _encodingItem->_encodingJobKey);
 
-						if (backupEncoderKey == -1)
-						*/
+						// if (backupEncoderKey == -1)
 						{
 							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
 								+ "BackupTranscoder is not selected yet. Just get a transcoder"
@@ -10451,36 +10450,32 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								+ ", main: " + to_string(main)
 							);
 
-							/*
-							string transcoderToSKip;
-							_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-									encodersPool, _encodingItem->_workspace, transcoderToSKip);
-							*/
+							// string transcoderToSKip;
+							// _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+							// 		encodersPool, _encodingItem->_workspace, transcoderToSKip);
 							int64_t encoderKeyToBeSkipped = -1;
 							pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 								encodersPool, _encodingItem->_workspace,
 								encoderKeyToBeSkipped);
 							tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 						}
-						/*
-						else
-						{
-							_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
-								+ "BackupTranscoder is already selected. Just get another transcoder"
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", highAvailability: " + to_string(highAvailability)
-								+ ", main: " + to_string(main)
-								+ ", backupEncoderKey: " + to_string(backupEncoderKey)
-							);
+						// else
+						// {
+						// 	_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder (main). "
+						// 		+ "BackupTranscoder is already selected. Just get another transcoder"
+						// 		+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						// 		+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						// 		+ ", highAvailability: " + to_string(highAvailability)
+						// 		+ ", main: " + to_string(main)
+						// 		+ ", backupEncoderKey: " + to_string(backupEncoderKey)
+						// 	);
 
-							int64_t encoderKeyToBeSkipped = backupEncoderKey;
-							pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-									encodersPool, _encodingItem->_workspace,
-									encoderKeyToBeSkipped);
-							tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
-						}
-						*/
+						// 	int64_t encoderKeyToBeSkipped = backupEncoderKey;
+						// 	pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+						// 			encodersPool, _encodingItem->_workspace,
+						// 			encoderKeyToBeSkipped);
+						// 	tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+						// }
 					}
 					else
 					{
@@ -10495,14 +10490,12 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 						while (!transcoderFound)
 						{
-							/*
-							string mainTranscoder;
-							int64_t mainEncoderKey;
-							pair<int64_t, string> otherTranscoder =
-								_mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
-									main, _encodingItem->_encodingJobKey);
-							tie(mainEncoderKey, mainTranscoder) = otherTranscoder;
-							*/
+							// string mainTranscoder;
+							// int64_t mainEncoderKey;
+							// pair<int64_t, string> otherTranscoder =
+							// 	_mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
+							// 		main, _encodingItem->_encodingJobKey);
+							// tie(mainEncoderKey, mainTranscoder) = otherTranscoder;
 							int64_t mainEncoderKey = _mmsEngineDBFacade->getLiveRecorderOtherTranscoder(
 									main, _encodingItem->_encodingJobKey);
 
@@ -10522,15 +10515,13 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									_logger->info(__FILEREF__ + errorMessage);
 
 									throw EncoderNotFound(errorMessage);
-									/*
-									int64_t encoderKeyToBeSkipped = -1;
-									pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
-											encodersPool, _encodingItem->_workspace,
-											encoderKeyToBeSkipped);
-									tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
+									// int64_t encoderKeyToBeSkipped = -1;
+									// pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
+									// 		encodersPool, _encodingItem->_workspace,
+									// 		encoderKeyToBeSkipped);
+									// tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost) = encoderURL;
 
-									transcoderFound = true;
-									*/
+									// transcoderFound = true;
 								}
 								else
 								{
@@ -10559,11 +10550,9 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", mainEncoderKey: " + to_string(mainEncoderKey)
 								);
 
-								/*
-								string transcoderToSKip = mainTranscoder;
-								_currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
-									encodersPool, _encodingItem->_workspace, transcoderToSKip);
-								*/
+								// string transcoderToSKip = mainTranscoder;
+								// _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(
+								// 	encodersPool, _encodingItem->_workspace, transcoderToSKip);
 								int64_t encoderKeyToBeSkipped = mainEncoderKey;
 								pair<int64_t, string> encoderURL = _encodersLoadBalancer->getEncoderURL(
 										encodersPool, _encodingItem->_workspace,
@@ -10576,6 +10565,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					}
 				}
 				else
+				*/
 				{
 					// no high availability
 
@@ -10583,7 +10573,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", highAvailability: " + to_string(highAvailability)
+						// + ", highAvailability: " + to_string(highAvailability)
 						);
 
 					/*
@@ -11716,6 +11706,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 {
     try
     {
+		/*
 		bool main;
 		bool highAvailability;
 		{
@@ -11725,6 +11716,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 			field = "highAvailability";
 			highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 		}
+		*/
 
 		/*
 		_logger->info(__FILEREF__ + "remove"
@@ -11733,12 +11725,13 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 		FileIO::remove(stagingEncodedAssetPathName);
 		*/
 
-		if (main)
+		// if (main)
 		{
 			// in case of highAvailability, the IngestionJob is not updated to Success until all the
 			// main and backup chunks are managed.
 			// This is to avoid the 'on success' task receives input MIKs that are not validated (and that
 			// will be removed soon)
+			/*
 			if (highAvailability)
 			{
 				// the setting of this variable is done also in MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA method
@@ -11806,6 +11799,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					);
 				}
 			}
+			*/
 
 			// Status will be success if at least one Chunk was generated, otherwise it will be failed
 			{
@@ -11824,12 +11818,14 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 					errorMessage);
 			}
 		}
+		/*
 		else
 		{
 			_logger->info(__FILEREF__ + "IngestionJob does not update because it's backup recording"
 				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 			);
 		}
+		*/
     }
     catch(runtime_error e)
     {

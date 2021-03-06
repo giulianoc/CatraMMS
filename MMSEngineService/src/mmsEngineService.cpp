@@ -14,7 +14,7 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
-#include "MainAndBackupRunningHALiveRecordingEvent.h"
+// #include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
@@ -301,6 +301,7 @@ int main (int iArgc, char *pArgv [])
     checkRefreshPartitionFreeSizeTimes->start();
     scheduler.activeTimes(checkRefreshPartitionFreeSizeTimes);
 
+	/*
     string           mainAndBackupRunningHALiveRecordingTimesSchedule = configuration["scheduler"].get("mainAndBackupRunningHALiveRecordingTimesSchedule", "").asString();
     logger->info(__FILEREF__ + "Creating and Starting MainAndBackupRunningHALiveRecordingEvent"
         + ", mainAndBackupRunningHALiveRecordingTimesSchedule: " + mainAndBackupRunningHALiveRecordingTimesSchedule
@@ -309,6 +310,7 @@ int main (int iArgc, char *pArgv [])
             make_shared<MainAndBackupRunningHALiveRecordingEvent>(mainAndBackupRunningHALiveRecordingTimesSchedule, multiEventsSet, logger);
     mainAndBackupRunningHALiveRecordingTimes->start();
     scheduler.activeTimes(mainAndBackupRunningHALiveRecordingTimes);
+	*/
 
 
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"
