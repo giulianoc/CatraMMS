@@ -1435,11 +1435,40 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		}
 	}
 
+	string toBeProcessedAt;
+	{
+		field = "ToBeProcessedAt";
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			toBeProcessedAt = parametersRoot.get(field, "").asString();
+		}
+		else
+		{
+			tm tmUTCDateTime;
+			char sToBeProcessedAt[64];
+
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			time_t utcNow  = chrono::system_clock::to_time_t(now);
+
+			gmtime_r (&utcNow, &tmUTCDateTime);
+			sprintf (sToBeProcessedAt, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+				tmUTCDateTime. tm_year + 1900,
+				tmUTCDateTime. tm_mon + 1,
+				tmUTCDateTime. tm_mday,
+				tmUTCDateTime. tm_hour,
+				tmUTCDateTime. tm_min,
+				tmUTCDateTime. tm_sec);
+
+			toBeProcessedAt = sToBeProcessedAt;
+		}
+	}
+
     _logger->info(__FILEREF__ + "add IngestionJob"
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
         + ", taskLabel: " + taskLabel
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
+        + ", toBeProcessedAt: " + toBeProcessedAt
         + ", dependOnIngestionJobKeysForStarting.size(): " + to_string(dependOnIngestionJobKeysForStarting.size())
         + ", dependOnSuccess: " + to_string(dependOnSuccess)
         + ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
@@ -1447,7 +1476,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
             workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
-			MMSEngineDBFacade::toIngestionType(type), 
+			MMSEngineDBFacade::toIngestionType(type), toBeProcessedAt,
             dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
 
 	_logger->info(__FILEREF__ + "Save Label..."
@@ -1806,8 +1835,35 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		}
     }
 
-	string taskMetadata;
+	string toBeProcessedAt;
+	{
+		field = "ToBeProcessedAt";
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			toBeProcessedAt = parametersRoot.get(field, "").asString();
+		}
+		else
+		{
+			tm tmUTCDateTime;
+			char sToBeProcessedAt[64];
 
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			time_t utcNow  = chrono::system_clock::to_time_t(now);
+
+			gmtime_r (&utcNow, &tmUTCDateTime);
+			sprintf (sToBeProcessedAt, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+				tmUTCDateTime. tm_year + 1900,
+				tmUTCDateTime. tm_mon + 1,
+				tmUTCDateTime. tm_mday,
+				tmUTCDateTime. tm_hour,
+				tmUTCDateTime. tm_min,
+				tmUTCDateTime. tm_sec);
+
+			toBeProcessedAt = sToBeProcessedAt;
+		}
+	}
+
+	string taskMetadata;
 	{
 		Json::StreamWriterBuilder wbuilder;
 
@@ -1819,6 +1875,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		+ ", groupOfTaskLabel: " + groupOfTaskLabel
 		+ ", taskMetadata: " + taskMetadata
 		+ ", IngestionType: " + type
+		+ ", toBeProcessedAt: " + toBeProcessedAt
 		+ ", newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(): "
 			+ to_string(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size())
 		+ ", newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.size(): "
@@ -1835,7 +1892,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	vector<int64_t> waitForGlobalIngestionJobKeys;
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
 		workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata,
-		MMSEngineDBFacade::toIngestionType(type),
+		MMSEngineDBFacade::toIngestionType(type), toBeProcessedAt,
 		referencesOutputPresent ? newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput
 			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
 			dependOnSuccess,

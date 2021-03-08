@@ -1318,6 +1318,13 @@ void Validator::validateAddContentMetadata(
 		validateCrossReference(label, crossReferenceRoot, mediaItemKeyMandatory);
 	}
 
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
+
     /*
     // Territories
     {
@@ -1362,6 +1369,13 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
@@ -1435,6 +1449,13 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
@@ -1490,6 +1511,13 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
             }
         }
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string label,
@@ -1565,6 +1593,13 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
             }
         }
     }        
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
@@ -1620,6 +1655,13 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
             }
         }
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
@@ -1674,6 +1716,13 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
             }
         }
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label,
@@ -1770,6 +1819,13 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
             }
         }
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateCutMetadata(int64_t workspaceKey, string label,
@@ -1867,6 +1923,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
             }
         }
     }        
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string label,
@@ -1942,6 +2005,13 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
             }
         }
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string label,
@@ -2129,6 +2199,13 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
             }
         }
     }        
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string label,
@@ -2230,6 +2307,13 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 			*/
         } 
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
@@ -2286,6 +2370,13 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 			}
 		}
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
@@ -2342,6 +2433,13 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 		{
         } 
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
@@ -2450,6 +2548,13 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 		{
         } 
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
@@ -2520,14 +2625,19 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 		{
         }  
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
-
-    
     vector<string> mandatoryFields = {
         "Tracks",
         "OutputFileFormat"
@@ -2658,6 +2768,13 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
             }
         }    
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string label,
@@ -2735,6 +2852,13 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
             }
         }    
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label,
@@ -2828,6 +2952,13 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
             }
         }    
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string label,
@@ -2951,6 +3082,13 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
             }
         }    
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
@@ -3071,6 +3209,13 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
             }
         }    
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
@@ -3312,175 +3457,14 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			throw runtime_error(errorMessage);
 		}
 	}
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
-
-/*
-time_t Validator::sDateSecondsToUtc(string sDate)
-{
-
-	unsigned long       ulUTCYear;
-	unsigned long       ulUTCMonth;
-	unsigned long       ulUTCDay;
-	unsigned long       ulUTCHour;
-	unsigned long       ulUTCMinutes;
-	unsigned long       ulUTCSeconds;
-	tm                  tmDate;
-	int                 sscanfReturn;
-
-
-	if ((sscanfReturn = sscanf (sDate.c_str(),
-		"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
-		&ulUTCYear,
-		&ulUTCMonth,
-		&ulUTCDay,
-		&ulUTCHour,
-		&ulUTCMinutes,
-		&ulUTCSeconds)) != 6)
-	{
-		string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-			+ ", sDate: " + sDate
-			+ ", sscanfReturn: " + to_string(sscanfReturn)
-		;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	time_t utcTime;
-
-	time (&utcTime);
-	gmtime_r(&utcTime, &tmDate);
-
-	tmDate.tm_year      = ulUTCYear - 1900;
-	tmDate.tm_mon       = ulUTCMonth - 1;
-	tmDate.tm_mday      = ulUTCDay;
-	tmDate.tm_hour      = ulUTCHour;                       
-	tmDate.tm_min       = ulUTCMinutes;
-	tmDate.tm_sec       = ulUTCSeconds;
-
-	utcTime = timegm(&tmDate);
-
-
-	return utcTime;
-}
-
-// 2021-02-26T15:41:15.477+0100 (ISO8610)
-// 2021-02-26T15:41:15.477Z
-int64_t Validator::sDateMilliSecondsToUtc(string sDate)
-{
-
-	unsigned long       ulUTCYear;
-	unsigned long       ulUTCMonth;
-	unsigned long       ulUTCDay;
-	unsigned long       ulUTCHour;
-	unsigned long       ulUTCMinutes;
-	unsigned long       ulUTCSeconds;
-	unsigned long		ulUTCMilliSeconds;
-	unsigned long		ulHourTimeZone;
-	unsigned long		ulMinuteTimeZone;
-	tm                  tmDate;
-	int                 sscanfReturn;
-
-
-	char signTimeZone = '+';
-	string dateFormat;
-	if (sDate.size() == 28)
-	{
-		// 2021-02-26T15:41:15.477+0100 (ISO8610)
-
-		signTimeZone = sDate[23];
-
-		dateFormat = string("%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3lu") + signTimeZone + "%2lu%2lu";
-	}
-	else if (sDate.size() == 24)
-	{
-		// 2021-02-26T15:41:15.477Z
-		dateFormat = string("%4lu-%2lu-%2luT%2lu:%2lu:%2lu.%3luZ");
-
-		ulHourTimeZone		= 0;
-		ulMinuteTimeZone	= 0;
-	}
-	else
-	{
-		string errorMessage = __FILEREF__ + "Wrong date format"
-			+ ", sDate: " + sDate
-		;
-		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-
-	if (sDate.size() == 28)
-	{
-		if ((sscanfReturn = sscanf (sDate.c_str(),
-			dateFormat.c_str(),
-			&ulUTCYear,
-			&ulUTCMonth,
-			&ulUTCDay,
-			&ulUTCHour,
-			&ulUTCMinutes,
-			&ulUTCSeconds,
-			&ulUTCMilliSeconds,
-			&ulHourTimeZone,
-			&ulMinuteTimeZone
-			)) != 9)
-		{
-			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-				+ ", sDate: " + sDate
-				+ ", sscanfReturn: " + to_string(sscanfReturn)
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else
-	{
-		if ((sscanfReturn = sscanf (sDate.c_str(),
-			dateFormat.c_str(),
-			&ulUTCYear,
-			&ulUTCMonth,
-			&ulUTCDay,
-			&ulUTCHour,
-			&ulUTCMinutes,
-			&ulUTCSeconds,
-			&ulUTCMilliSeconds)) != 7)
-		{
-			string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
-				+ ", sDate: " + sDate
-				+ ", sscanfReturn: " + to_string(sscanfReturn)
-			;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-
-	int64_t utcTime;
-
-	time (&utcTime);
-	gmtime_r(&utcTime, &tmDate);
-
-	tmDate.tm_year      = ulUTCYear - 1900;
-	tmDate.tm_mon       = ulUTCMonth - 1;
-	tmDate.tm_mday      = ulUTCDay;
-	tmDate.tm_hour      = ulUTCHour;                       
-	tmDate.tm_min       = ulUTCMinutes;
-	tmDate.tm_sec       = ulUTCSeconds;
-
-	utcTime = timegm(&tmDate) * 1000;
-	utcTime += ulUTCMilliSeconds;
-
-	if (signTimeZone == '+')
-		utcTime -= (((ulHourTimeZone * 3600) + (ulMinuteTimeZone * 60)) * 1000);
-	else // if (signTimeZone == '-')
-		utcTime += (((ulHourTimeZone * 3600) + (ulMinuteTimeZone * 60)) * 1000);
-
-
-	return utcTime;
-}
-*/
 
 void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
@@ -3735,6 +3719,13 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 			}
 		}
 	}
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, string label,
@@ -3900,6 +3891,13 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 			}
 		}
 	}
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string label,
@@ -3941,6 +3939,13 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
         
         throw runtime_error(errorMessage);
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
@@ -4055,6 +4060,13 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 			}
 		}
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
@@ -4182,6 +4194,13 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
             }
         }    
     }    
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string label,
@@ -4250,6 +4269,13 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
             }
         }
     }
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
+	}
 }
 
 void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
@@ -4415,6 +4441,13 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 				throw runtime_error(errorMessage);
 			}
 		}
+	}
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
 	}
 }
 
@@ -4610,6 +4643,13 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		_logger->error(__FILEREF__ + errorMessage);
         
 		throw runtime_error(errorMessage);
+	}
+
+    field = "ToBeProcessedAt";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string toBeProcessedAt = parametersRoot.get(field, "").asString();
+		DateTime::sDateSecondsToUtc(toBeProcessedAt);
 	}
 }
 

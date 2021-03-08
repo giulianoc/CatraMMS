@@ -1141,6 +1141,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
+                    "toBeProcessedAt			DATETIME NOT NULL,"
                     "priority					INT NOT NULL,"
                     "startProcessing            DATETIME NULL,"
                     "endProcessing              DATETIME NULL,"
@@ -1251,6 +1252,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJob_idx6 on MMS_IngestionJob (toBeProcessedAt)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
