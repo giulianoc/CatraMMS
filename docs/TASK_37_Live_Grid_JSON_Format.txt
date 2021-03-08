@@ -55,7 +55,14 @@
 		// optional. In case one of the URL fails, the LiveGrid task tries it again.
 		//		This parameter indicates how many seconds LiveGrid has to wait before to try again.
 		//		Default: 600
-		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600
+		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600,
+
+		// optional: If present, it specifies when the Task has to be executed. The processing of the task
+		//		can be delayed respect to the specified date based on his dependencies with other tasks.
+		//		The date format is:
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		//	If it is not present, by default it will be initialized with the ingesion time
+		"ProcessingStartingFrom": "2019-01-21T12:30:00Z"
 	}
 }
 

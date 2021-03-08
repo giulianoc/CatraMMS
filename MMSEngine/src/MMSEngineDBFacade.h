@@ -1354,7 +1354,7 @@ public:
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-		string toBeProcessedAt,
+		string processingStartingFrom,
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
 		vector<int64_t> waitForGlobalIngestionJobKeys
     );

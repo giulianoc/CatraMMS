@@ -77,7 +77,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Proxy' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ij.toBeProcessedAt <= NOW() and NOW() <= DATE_ADD(ij.toBeProcessedAt, INTERVAL ? DAY) "
+						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 						"and ("
 							"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
 							"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
@@ -194,7 +194,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Recorder' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ij.toBeProcessedAt <= NOW() and NOW() <= DATE_ADD(ij.toBeProcessedAt, INTERVAL ? DAY) "
+						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 						"and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0"
 						// "for update "
 						;
@@ -311,8 +311,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-							"and ij.toBeProcessedAt <= NOW() and NOW() <= DATE_ADD(ij.toBeProcessedAt, INTERVAL ? DAY) "
-							"order by ij.priority asc, ij.toBeProcessedAt asc "
+							"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+							"order by ij.priority asc, ij.processingStartingFrom asc "
 							"limit ? offset ?"
 							// "limit ? offset ? for update"
 							;
@@ -1209,7 +1209,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
     	int64_t ingestionRootKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-		string toBeProcessedAt,
+		string processingStartingFrom,
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         vector<int64_t> waitForGlobalIngestionJobKeys
 )
@@ -1284,7 +1284,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 lastSQLCommand = 
                     "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, "
 					"metaDataContent, ingestionType, priority, "
-					"toBeProcessedAt, "
+					"processingStartingFrom, "
 					"startProcessing, endProcessing, downloadingProgress, "
 					"uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
                                                   "NULL,            ?,                ?, "
@@ -1301,7 +1301,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
                 preparedStatement->setInt(queryParameterIndex++, getIngestionTypePriority(ingestionType));
-                preparedStatement->setString(queryParameterIndex++, toBeProcessedAt);
+                preparedStatement->setString(queryParameterIndex++, processingStartingFrom);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(
 					MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
 
@@ -1313,7 +1313,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 					+ ", label: " + label
 					+ ", metadataContent: " + metadataContent
 					+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
-					+ ", toBeProcessedAt: " + toBeProcessedAt
+					+ ", processingStartingFrom: " + processingStartingFrom
 					+ ", IngestionStatus::Start_TaskQueued: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 					+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
@@ -4422,7 +4422,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 {            
                     lastSQLCommand = 
                         "select ingestionJobKey, label, ingestionType, metaDataContent, processorMMS, "
-                        "DATE_FORMAT(convert_tz(toBeProcessedAt, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as toBeProcessedAt, "
+                        "DATE_FORMAT(convert_tz(processingStartingFrom, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as processingStartingFrom, "
                         "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                         "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
@@ -4677,7 +4677,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         {            
             lastSQLCommand = 
                 "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
-                "DATE_FORMAT(convert_tz(ij.toBeProcessedAt, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as toBeProcessedAt, "
+                "DATE_FORMAT(convert_tz(ij.processingStartingFrom, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as processingStartingFrom, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -4911,8 +4911,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         field = "mediaItems";
         ingestionJobRoot[field] = mediaItemsRoot;
 
-        field = "toBeProcessedAt";
-		ingestionJobRoot[field] = static_cast<string>(resultSet->getString("toBeProcessedAt"));
+        field = "processingStartingFrom";
+		ingestionJobRoot[field] = static_cast<string>(resultSet->getString("processingStartingFrom"));
 
         field = "startProcessing";
         if (resultSet->isNull("startProcessing"))
