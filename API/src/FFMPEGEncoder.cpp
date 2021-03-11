@@ -5624,18 +5624,18 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 					{
 						if (liveRecording->_encodingParametersRoot != Json::nullValue)
 						{
-							bool highAvailability;
-							bool main;
+							// bool highAvailability;
+							// bool main;
 							int segmentDurationInSeconds;
 							string outputFileFormat;
 							{
-								string field = "highAvailability";
-								highAvailability = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
+								// string field = "highAvailability";
+								// highAvailability = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
 
-								field = "main";
-								main = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
+								// field = "main";
+								// main = JSONUtils::asBool(liveRecording->_encodingParametersRoot, field, false);
 
-								field = "segmentDurationInSeconds";
+								string field = "segmentDurationInSeconds";
 								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot, field, 0);
 
 								field = "outputFileFormat";                                                                
@@ -5650,7 +5650,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
 									liveRecording->_channelType,
-									highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
+									// highAvailability, main,
+									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_liveRecorderParametersRoot,
 
@@ -5667,7 +5668,8 @@ void FFMPEGEncoder::liveRecorderChunksIngestionThread()
 									liveRecording->_ingestionJobKey,
 									liveRecording->_encodingJobKey,
 									liveRecording->_channelType,
-									highAvailability, main, segmentDurationInSeconds, outputFileFormat,                                                                              
+									// highAvailability, main,
+									segmentDurationInSeconds, outputFileFormat,                                                                              
 									liveRecording->_encodingParametersRoot,
 									liveRecording->_liveRecorderParametersRoot,
 
@@ -5899,7 +5901,8 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string channelType,
-	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+	// bool highAvailability, bool main,
+	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
 	string transcoderStagingContentsPath,
@@ -5919,8 +5922,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 		_logger->info(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", highAvailability: " + to_string(highAvailability)
-			+ ", main: " + to_string(main)
+			// + ", highAvailability: " + to_string(highAvailability)
+			// + ", main: " + to_string(main)
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", outputFileFormat: " + outputFileFormat
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
@@ -6101,8 +6104,9 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					mmsDataRoot["deliveryCode"] = deliveryCode;
 				}
 				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-				mmsDataRoot["main"] = main;
-				if (!highAvailability)
+				// mmsDataRoot["main"] = main;
+				mmsDataRoot["main"] = true;
+				// if (!highAvailability)
 				{
 					bool validated = true;
 					mmsDataRoot["validated"] = validated;
@@ -6203,8 +6207,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					addContentTitle += strCurrentRecordedFileTime;	// local time
 				}
 
-				if (!main)
-					addContentTitle += " (BCK)";
+				// if (!main)
+				// 	addContentTitle += " (BCK)";
 			}
 
 			if (isFirstChunk)
@@ -6238,7 +6242,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 					liveRecorder_ingestRecordedMedia(ingestionJobKey,
 						transcoderStagingContentsPath, currentRecordedAssetFileName,
 						stagingContentsPath,
-						addContentTitle, uniqueName, highAvailability, userDataRoot, outputFileFormat,
+						addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 						liveRecorderParametersRoot, encodingParametersRoot,
 						false);
 				}
@@ -6317,7 +6321,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string channelType,
-	bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+	// bool highAvailability, bool main,
+	int segmentDurationInSeconds, string outputFileFormat,
 	Json::Value encodingParametersRoot,
 	Json::Value liveRecorderParametersRoot,
 	string transcoderStagingContentsPath,
@@ -6336,8 +6341,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 		_logger->info(__FILEREF__ + "liveRecorder_processHLSSegmenterOutput"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", highAvailability: " + to_string(highAvailability)
-			+ ", main: " + to_string(main)
+			// + ", highAvailability: " + to_string(highAvailability)
+			// + ", main: " + to_string(main)
 			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 			+ ", outputFileFormat: " + outputFileFormat
 			+ ", transcoderStagingContentsPath: " + transcoderStagingContentsPath
@@ -6535,7 +6540,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									mmsDataRoot["deliveryCode"] = deliveryCode;
 								}
 								mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-								mmsDataRoot["main"] = main;
+								// mmsDataRoot["main"] = main;
+								mmsDataRoot["main"] = true;
 								// if (!highAvailability)
 								{
 									bool validated = true;
@@ -6641,8 +6647,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									addContentTitle += strCurrentRecordedFileTime;	// local time
 								}
 
-								if (!main)
-									addContentTitle += " (BCK)";
+								// if (!main)
+								// 	addContentTitle += " (BCK)";
 							}
 
 							{
@@ -6660,7 +6666,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 									liveRecorder_ingestRecordedMedia(ingestionJobKey,
 										transcoderStagingContentsPath, toBeIngestedSegmentFileName,
 										stagingContentsPath,
-										addContentTitle, uniqueName, highAvailability, userDataRoot, outputFileFormat,
+										addContentTitle, uniqueName, /* highAvailability, */ userDataRoot, outputFileFormat,
 										liveRecorderParametersRoot, encodingParametersRoot,
 										true);
 								}
@@ -6772,7 +6778,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 	string stagingContentsPath,
 	string addContentTitle,
 	string uniqueName,
-	bool highAvailability,
+	// bool highAvailability,
 	Json::Value userDataRoot,
 	string fileFormat,
 	Json::Value liveRecorderParametersRoot,
@@ -6949,7 +6955,7 @@ void FFMPEGEncoder::liveRecorder_ingestRecordedMedia(
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
 
-		if (!highAvailability)
+		// if (!highAvailability)
 		{
 			// in case of no high availability, we can set just now the UniqueName for this content
 			// in case of high availability, the unique name will be set only of the selected content

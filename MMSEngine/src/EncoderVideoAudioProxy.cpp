@@ -287,7 +287,7 @@ void EncoderVideoAudioProxy::operator()()
 
     string stagingEncodedAssetPathName;
 	bool killedByUser;
-	bool main = true;
+	// bool main = true;
     try
     {
         if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
@@ -328,8 +328,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
         {
-			tuple<bool, bool> killedByUserAndMain = liveRecorder();
-			tie(killedByUser, main) = killedByUserAndMain;
+			bool killedByUser = liveRecorder();
+			// tie(killedByUser, main) = killedByUserAndMain;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
         {
@@ -378,7 +378,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", main: " + to_string(main)
+				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 			);
@@ -391,7 +391,8 @@ void EncoderVideoAudioProxy::operator()()
 			_mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1);
+                _encodingItem->_ingestionJobKey);
+                // main ? _encodingItem->_ingestionJobKey : -1);
 		}
 		catch(runtime_error e)
 		{
@@ -399,7 +400,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", main: " + to_string(main)
+				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
@@ -411,7 +412,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", main: " + to_string(main)
+				// + ", main: " + to_string(main)
 				+ ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 				+ ", _encodingParameters: " + _encodingItem->_encodingParameters
 				+ ", e.what(): " + e.what()
@@ -473,7 +474,8 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -543,7 +545,8 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -600,7 +603,8 @@ void EncoderVideoAudioProxy::operator()()
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::KilledByUser, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what());
+                _encodingItem->_ingestionJobKey, e.what());
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what());
 		}
 		catch(...)
 		{
@@ -675,8 +679,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1,
-				e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -751,8 +755,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1,
-				e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -824,7 +828,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -896,7 +901,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -1142,7 +1148,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -1244,7 +1251,8 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+                _encodingItem->_ingestionJobKey, e.what(),
+                // main ? _encodingItem->_ingestionJobKey : -1, e.what(),
 				forceEncodingToBeFailed);
 		}
 		catch(...)
@@ -1293,7 +1301,8 @@ void EncoderVideoAudioProxy::operator()()
             _encodingItem->_encodingJobKey, 
             MMSEngineDBFacade::EncodingError::NoError,
             mediaItemKey, encodedPhysicalPathKey,
-           main ? _encodingItem->_ingestionJobKey : -1);
+			_encodingItem->_ingestionJobKey);
+           // main ? _encodingItem->_ingestionJobKey : -1);
     }
     catch(exception e)
     {
@@ -10250,7 +10259,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
     }
 }
 
-tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
+bool EncoderVideoAudioProxy::liveRecorder()
 {
 
 	time_t utcRecordingPeriodStart;
@@ -10320,8 +10329,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 		}
 	}
 
-	tuple<bool, bool> killedByUserAndMain = liveRecorder_through_ffmpeg();
-	if (get<0>(killedByUserAndMain))	// KilledByUser
+	bool killedByUser = liveRecorder_through_ffmpeg();
+	if (killedByUser)	// KilledByUser
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -10333,17 +10342,17 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder()
 		throw EncodingKilledByUser();
 	}
     
-	return killedByUserAndMain;
+	return killedByUser;
 }
 
-tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
+bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
 	// string channelType;
 	string encodersPool;
 	int64_t channelConfKey;
 	// bool highAvailability;
-	bool main;
+	// bool main;
 	string liveURL;
 	string userAgent;
 	time_t utcRecordingPeriodStart;
@@ -10370,8 +10379,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         // field = "highAvailability";
         // highAvailability = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
-        field = "main";
-        main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+        // field = "main";
+        // main = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
         field = "url";
         liveURL = _encodingItem->_encodingParametersRoot.get(field, "").asString();
@@ -11426,7 +11435,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 						+ ", liveURL: " + liveURL
-						+ ", main: " + to_string(main)
+						// + ", main: " + to_string(main)
 						+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
 						+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
 					);
@@ -11472,7 +11481,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
                     + ", liveURL: " + liveURL
-                    + ", main: " + to_string(main)
+                    // + ", main: " + to_string(main)
 					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNowToCheckExit)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingFinished: " + to_string(encodingFinished)
@@ -11489,7 +11498,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", liveURL: " + liveURL
-                    + ", main: " + to_string(main)
+                    // + ", main: " + to_string(main)
                     + ", autoRenew: " + to_string(autoRenew) 
                     + ", encodingFinished: " + to_string(encodingFinished)
                     + ", killedByUser: " + to_string(killedByUser) 
@@ -11650,7 +11659,7 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 	// Ingestion/Encoding Status will be success if at least one Chunk was generated
 	// otherwise it will be set as failed
-	if (main)
+	// if (main)
 	{
 		if (urlForbidden)
 		{
@@ -11699,7 +11708,8 @@ tuple<bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		}
 	}
 
-    return make_tuple(killedByUser, main);
+    // return make_tuple(killedByUser, main);
+    return killedByUser;
 }
 
 void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)

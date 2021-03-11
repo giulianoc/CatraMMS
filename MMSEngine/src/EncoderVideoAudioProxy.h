@@ -244,8 +244,8 @@ private:
     string faceIdentification();
     void processFaceIdentification(string stagingEncodedAssetPathName);    
 
-    tuple<bool, bool> liveRecorder();
-    tuple<bool, bool> liveRecorder_through_ffmpeg();
+    bool liveRecorder();
+    bool liveRecorder_through_ffmpeg();
     void processLiveRecorder(bool killedByUser);    
 	/*
 	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,

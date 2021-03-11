@@ -259,7 +259,8 @@ private:
 	pair<string, int> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string channelType, 
-		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+		// bool highAvailability, bool main,
+		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value liveRecorderParametersRoot,
 		string transcoderStagingContentsPath,
@@ -271,7 +272,8 @@ private:
 	pair<string, int> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string channelType, 
-		bool highAvailability, bool main, int segmentDurationInSeconds, string outputFileFormat,
+		// bool highAvailability, bool main,
+		int segmentDurationInSeconds, string outputFileFormat,
 		Json::Value encodingParametersRoot,
 		Json::Value liveRecorderParametersRoot,
 		string transcoderStagingContentsPath,
@@ -293,7 +295,7 @@ private:
 		string stagingContentsPath,
 		string addContentTitle,
 		string uniqueName,
-		bool highAvailability,
+		// bool highAvailability,
 		Json::Value userDataRoot,
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot,

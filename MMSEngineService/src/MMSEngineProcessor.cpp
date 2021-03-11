@@ -1043,6 +1043,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						//		To manage this scenario we will check if the dependency is a content coming
 						//		from Live-Recording using HighAvailability and, if it is validated=false
 						//		we will set NOT_TO_BE_EXECUTED to the potential tasks 
+						/* 2021-03-10: commented because we do not have HighAvailability field any more
 						if (dependencies.size() == 1)
 						{
 							string userData;
@@ -1281,6 +1282,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 							}
 						}
+						*/
                     }
                     catch(runtime_error e)
                     {

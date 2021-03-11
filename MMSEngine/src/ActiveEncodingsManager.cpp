@@ -1143,7 +1143,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
         
         throw MaxEncodingsManagerCapacityReached();
     }
-    
+
     _logger->info(__FILEREF__ + "Encoding Job Key added"
         + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
         + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)

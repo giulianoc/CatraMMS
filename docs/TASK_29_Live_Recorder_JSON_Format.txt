@@ -53,12 +53,6 @@
 		// optional: user agent used only in case actAsServer is false
 		"UserAgent": "",
 
-		// optional. If this parameter is true, MMS starts two recordings,
-		// a main and a backup recording. Both will ingest the chunk media items but 
-		// just one chunk is maintained in MMS, the second will be removed. Using this approach,
-		// in case one recording fails for some reason, the other chunk will be used
-		"HighAvailability": false,
-
 		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"RecordingPeriod": {
