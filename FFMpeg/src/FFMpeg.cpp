@@ -114,6 +114,20 @@ void FFMpeg::encodeContent(
 			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
 		);
 
+		if (!FileIO::fileExisting(mmsSourceAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceAssetPathName)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         string httpStreamingFileFormat;    
 		string ffmpegHttpStreamingParameter = "";
 
@@ -2009,6 +2023,32 @@ void FFMpeg::overlayImageOnVideo(
 
     try
     {
+		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Source video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (!FileIO::fileExisting(mmsSourceImageAssetPathName))
+		{
+			string errorMessage = string("Source image asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
         // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
         // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
@@ -2403,6 +2443,20 @@ void FFMpeg::overlayTextOnVideo(
 
     try
     {
+		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Source video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
         // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
         // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
@@ -2905,6 +2959,20 @@ void FFMpeg::awaitingTheBegining(
 
     try
     {
+		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Source video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		time_t utcNow;
 		{
 			{
@@ -3516,6 +3584,20 @@ void FFMpeg::videoSpeed(
 
     try
     {
+		if (!FileIO::fileExisting(mmsSourceVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsSourceVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Source video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
         // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
         // _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
         // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
@@ -4007,6 +4089,34 @@ void FFMpeg::pictureInPicture(
 
     try
     {
+		if (!FileIO::fileExisting(mmsMainVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsMainVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Main video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (!FileIO::fileExisting(mmsOverlayVideoAssetPathName)        
+			&& !FileIO::directoryExisting(mmsOverlayVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Overlay video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds)
 		{
 			string errorMessage = __FILEREF__ + "pictureInPicture: overlay video duration cannot be bigger than main video diration"
@@ -5040,6 +5150,18 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 	_logger->info(__FILEREF__ + "getMediaInfo"
 			", mmsAssetPathName: " + mmsAssetPathName
 			);
+
+	if (!FileIO::fileExisting(mmsAssetPathName)        
+		&& !FileIO::directoryExisting(mmsAssetPathName)
+	)
+	{
+		string errorMessage = string("Source asset path name not existing")
+			+ ", mmsAssetPathName: " + mmsAssetPathName
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
@@ -6337,7 +6459,21 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", mmsAssetPathName: " + mmsAssetPathName
         + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
     );
-    
+
+	if (!FileIO::fileExisting(mmsAssetPathName)        
+		&& !FileIO::directoryExisting(mmsAssetPathName)
+	)
+	{
+		string errorMessage = string("Asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", mmsAssetPathName: " + mmsAssetPathName
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
 	int iReturnedStatus = 0;
 
     // _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
@@ -6664,12 +6800,26 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
     for (string sourcePhysicalPath: sourcePhysicalPaths)
     {
-        _logger->info(__FILEREF__ + "ffmpeg: adding physical path"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", sourcePhysicalPath: " + sourcePhysicalPath
-        );
-        
-        concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
+		_logger->info(__FILEREF__ + "ffmpeg: adding physical path"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		);
+
+		if (!FileIO::fileExisting(sourcePhysicalPath)        
+			&& !FileIO::directoryExisting(sourcePhysicalPath)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				// + ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
     }
     concatListFile.close();
 
@@ -6810,6 +6960,20 @@ void FFMpeg::cut(
 		stagingEncodedAssetPathName
 		*/
 	);
+
+	if (!FileIO::fileExisting(sourcePhysicalPath)        
+		&& !FileIO::directoryExisting(sourcePhysicalPath)
+	)
+	{
+		string errorMessage = string("Source asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			// + ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
@@ -7010,6 +7174,20 @@ void FFMpeg::generateSlideshowMediaToIngest(
 			string sourcePhysicalPath = imagesSourcePhysicalPaths[imageIndex];
 			double slideDurationInSeconds;
 
+			if (!FileIO::fileExisting(sourcePhysicalPath)        
+				&& !FileIO::directoryExisting(sourcePhysicalPath)
+			)
+			{
+				string errorMessage = string("Source asset path name not existing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
 			if (audiosSourcePhysicalPaths.size() > 0)
 			{
 				if (imageIndex + 1 >= imagesSourcePhysicalPaths.size() &&
@@ -7078,6 +7256,20 @@ void FFMpeg::generateSlideshowMediaToIngest(
 		string lastSourcePhysicalPath;
 		for (string sourcePhysicalPath: audiosSourcePhysicalPaths)
 		{
+			if (!FileIO::fileExisting(sourcePhysicalPath)        
+				&& !FileIO::directoryExisting(sourcePhysicalPath)
+			)
+			{
+				string errorMessage = string("Source asset path name not existing")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				;
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
 			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
         
 			lastSourcePhysicalPath = sourcePhysicalPath;
@@ -7261,6 +7453,20 @@ void FFMpeg::extractTrackMediaToIngest(
 		stagingEncodedAssetPathName
 		*/
 	);
+
+	if (!FileIO::fileExisting(sourcePhysicalPath)        
+		&& !FileIO::directoryExisting(sourcePhysicalPath)
+	)
+	{
+		string errorMessage = string("Source asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			// + ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
     _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
@@ -11229,6 +11435,20 @@ void FFMpeg::changeFileFormat(
 
     try
     {
+		if (!FileIO::fileExisting(sourcePhysicalPath)        
+			&& !FileIO::directoryExisting(sourcePhysicalPath)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				// + ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		_outputFfmpegPathFileName =
 			_ffmpegTempDir + "/"
 			+ to_string(ingestionJobKey)
