@@ -115,4 +115,21 @@ if [ "$deploy" == "y" ]; then
 
 fi
 
+echo -n "deploy su test? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+
+	echo "mms-t-api-gui-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-api-gui-1:/opt/catramms
+	date
+
+	echo "mms-t-engine-db-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-engine-db-1:/opt/catramms
+	date
+
+	echo "mms-t-transcoder-fr-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
+	date
+
+fi
 

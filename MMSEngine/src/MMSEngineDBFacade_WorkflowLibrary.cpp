@@ -218,7 +218,10 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 					preparedStatement->setInt64(queryParameterIndex++, userKey);
 				}
 				// lastUpdateUserKey
-				preparedStatement->setInt64(queryParameterIndex++, userKey);
+				if (userKey == -1)
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+				else
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
 				preparedStatement->setString(queryParameterIndex++, label);
 				if (thumbnailMediaItemKey == -1)
 					preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
