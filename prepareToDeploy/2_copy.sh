@@ -14,11 +14,19 @@ linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", 
 tarFileName=$moduleName-$version-$linuxName.tar.gz
 
 
-echo -n "deploy su mms cloud? " 
+echo -n "deploy su mms cloud/test? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "mms-engine-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-engine-1:/opt/catramms
+	echo "mms-t-api-gui-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-api-gui-1:/opt/catramms
+	date
+
+	echo "mms-t-engine-db-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-engine-db-1:/opt/catramms
+	date
+
+	echo "mms-t-transcoder-fr-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
 	date
 fi
 
@@ -111,24 +119,6 @@ if [ "$deploy" == "y" ]; then
 
 	echo "cibortv-mms-transcoder-itaita-2"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-itaita-2:/opt/catramms
-	date
-
-fi
-
-echo -n "deploy su test? " 
-read deploy
-if [ "$deploy" == "y" ]; then
-
-	echo "mms-t-api-gui-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-api-gui-1:/opt/catramms
-	date
-
-	echo "mms-t-engine-db-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-engine-db-1:/opt/catramms
-	date
-
-	echo "mms-t-transcoder-fr-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
 	date
 
 fi
