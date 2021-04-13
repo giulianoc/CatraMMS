@@ -246,6 +246,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // workspaceType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
             // encodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
 
+			/* 2021-04-13: removed UNIQUE (name) because:
+			 * 1. we might have two users creating the same workspace name
+			 * 2. we are using workspace key as directory name, so it should be ok
+			 */
             lastSQLCommand = 
                 "create table if not exists MMS_Workspace ("
                     "workspaceKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
@@ -260,8 +264,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "maxIngestionsNumber            INT NOT NULL,"
                     "maxStorageInMB                 INT UNSIGNED NOT NULL,"
                     "languageCode                   VARCHAR (16) NOT NULL,"
-                    "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey),"
-                    "UNIQUE (name))"
+                    "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
