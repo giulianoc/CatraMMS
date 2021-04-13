@@ -4110,8 +4110,8 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
 		bool newEditEncodersPool, bool newApplicationRecorder)
 {
-    Json::Value workspaceDetailRoot;
-    string          lastSQLCommand;
+    Json::Value		workspaceDetailRoot;
+    string			lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -4337,7 +4337,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 flags.append("APPLICATION_RECORDER");
             }
 
-            lastSQLCommand = 
+            lastSQLCommand =
                 "update MMS_APIKey set flags = ? "
                 "where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4371,7 +4371,41 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 // throw runtime_error(errorMessage);
             }
         }
-                
+
+        {
+			lastSQLCommand = 
+				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, w.encodingPeriod, "
+				"w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
+				"a.apiKey, a.isOwner, a.isDefault, a.flags, "
+				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+				"from MMS_APIKey a, MMS_Workspace w "
+				"where a.workspaceKey = w.workspaceKey "
+				"and a.workspaceKey = ? "
+				"and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+			bool userAPIKeyInfo = true;
+            if (resultSet->next())
+            {
+				workspaceDetailRoot = getWorkspaceDetailsRoot (conn, resultSet, userAPIKeyInfo);
+            }
+        }
+
+		/*
         string field = "workspaceKey";
         workspaceDetailRoot[field] = workspaceKey;
 
@@ -4408,45 +4442,48 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         field = "languageCode";
         workspaceDetailRoot[field] = newLanguageCode;
 
+
+		Json::Value     userAPIKeyRoot;
+
         field = "admin";
-        workspaceDetailRoot[field] = admin ? true : false;
+        userAPIKeyRoot[field] = admin ? true : false;
 
         field = "createRemoveWorkspace";
-        workspaceDetailRoot[field] = newCreateRemoveWorkspace ? true : false;
+        userAPIKeyRoot[field] = newCreateRemoveWorkspace ? true : false;
 
         field = "ingestWorkflow";
-        workspaceDetailRoot[field] = newIngestWorkflow ? true : false;
+        userAPIKeyRoot[field] = newIngestWorkflow ? true : false;
 
         field = "createProfiles";
-        workspaceDetailRoot[field] = newCreateProfiles ? true : false;
+        userAPIKeyRoot[field] = newCreateProfiles ? true : false;
 
         field = "deliveryAuthorization";
-        workspaceDetailRoot[field] = newDeliveryAuthorization ? true : false;
+        userAPIKeyRoot[field] = newDeliveryAuthorization ? true : false;
 
         field = "shareWorkspace";
-        workspaceDetailRoot[field] = newShareWorkspace ? true : false;
+        userAPIKeyRoot[field] = newShareWorkspace ? true : false;
 
         field = "editMedia";
-        workspaceDetailRoot[field] = newEditMedia ? true : false;
+        userAPIKeyRoot[field] = newEditMedia ? true : false;
         
         field = "editConfiguration";
-        workspaceDetailRoot[field] = newEditConfiguration ? true : false;
+        userAPIKeyRoot[field] = newEditConfiguration ? true : false;
         
         field = "killEncoding";
-        workspaceDetailRoot[field] = newKillEncoding ? true : false;
+        userAPIKeyRoot[field] = newKillEncoding ? true : false;
         
         field = "cancelIngestionJob";
-        workspaceDetailRoot[field] = newCancelIngestionJob ? true : false;
+        userAPIKeyRoot[field] = newCancelIngestionJob ? true : false;
         
         field = "editEncodersPool";
-        workspaceDetailRoot[field] = newEditEncodersPool ? true : false;
+        userAPIKeyRoot[field] = newEditEncodersPool ? true : false;
 
         field = "applicationRecorder";
-        workspaceDetailRoot[field] = newApplicationRecorder ? true : false;
+        userAPIKeyRoot[field] = newApplicationRecorder ? true : false;
 
         {
             lastSQLCommand = 
-                "select w.name, a.apiKey, a.isOwner, "
+                "select w.name, a.apiKey, a.isOwner, a.isDefault, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and a.workspaceKey = ? and a.userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4466,21 +4503,24 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			);
             if (resultSet->next())
             {
-				/*
-                field = "workspaceName";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("name"));
-				*/
-
                 field = "creationDate";
                 workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
 
                 field = "apiKey";
-                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
+                userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
 
                 field = "owner";
-                workspaceDetailRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
+                userAPIKeyRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
+
+				field = "default";
+				userAPIKeyRoot[field] = resultSet->getInt("isDefault") == 1
+					? "true" : "false";
             }
         }
+
+		field = "userAPIKey";
+		workspaceDetailRoot[field] = userAPIKeyRoot;
+		*/
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
