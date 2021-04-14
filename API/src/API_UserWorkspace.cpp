@@ -1685,28 +1685,28 @@ void API::login(
 
 						field = "continent";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continent = JSONUtils::asBool(geoServiceResponse, field, "");
+							continent = geoServiceResponse.get(field, "").asString();
 						field = "continent_code";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							continentCode = JSONUtils::asBool(geoServiceResponse, field, "");
+							continentCode = geoServiceResponse.get(field, "").asString();
 						field = "country";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							country = JSONUtils::asBool(geoServiceResponse, field, "");
+							country = geoServiceResponse.get(field, "").asString();
 						field = "country_code";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							countryCode = JSONUtils::asBool(geoServiceResponse, field, "");
+							countryCode = geoServiceResponse.get(field, "").asString();
 						field = "region";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							region = JSONUtils::asBool(geoServiceResponse, field, "");
+							region = geoServiceResponse.get(field, "").asString();
 						field = "city";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							city = JSONUtils::asBool(geoServiceResponse, field, "");
+							city = geoServiceResponse.get(field, "").asString();
 						field = "org";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							org = JSONUtils::asBool(geoServiceResponse, field, "");
+							org = geoServiceResponse.get(field, "").asString();
 						field = "isp";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
-							isp = JSONUtils::asBool(geoServiceResponse, field, "");
+							isp = geoServiceResponse.get(field, "").asString();
 						field = "timezone_gmtOffset";
 						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
 							timezoneGMTOffset = JSONUtils::asInt(geoServiceResponse, field, -1);
