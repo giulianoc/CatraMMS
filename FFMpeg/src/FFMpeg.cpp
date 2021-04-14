@@ -5901,10 +5901,30 @@ void FFMpeg::getLiveStreamingInfo(
 
 		int liveDurationInSeconds = 5;
 
+		// user agent is an HTTP header and can be used only in case of http request
+		bool userAgentToBeUsed = false;
+		if (userAgent != "")
+		{
+			string httpPrefix = "http";	// it includes also https
+			if (liveURL.size() >= httpPrefix.size()
+				&& liveURL.compare(0, httpPrefix.size(), httpPrefix) == 0)
+			{
+				userAgentToBeUsed = true;
+			}
+			else
+			{
+				_logger->warn(__FILEREF__ + "getLiveStreamingInfo: user agent cannot be used if not http"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", liveURL: " + liveURL
+				);
+			}
+		}
+
 		ffmpegExecuteCommand = _ffmpegPath
 			+ "/ffmpeg "
 			+ "-nostdin "
-			+ (userAgent == "" ? "" : "-user_agent \"" + userAgent + "\" ")
+			+ (userAgentToBeUsed ? ("-user_agent \"" + userAgent + "\" ") : "")
 			+ "-re -i \"" + liveURL + "\" "
 			+ "-t " + to_string(liveDurationInSeconds) + " "
 			+ "-c:v copy "
@@ -7786,34 +7806,6 @@ void FFMpeg::liveRecorder(
 		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S_%s." + outputFileFormat;
 
-	#ifdef __EXECUTE__
-		ffmpegExecuteCommand = 
-			_ffmpegPath + "/ffmpeg "
-			+ (userAgent == "" ? "" : "-user_agent " + userAgent + " ")
-			+ "-i " + liveURL + " "
-			+ "-t " + to_string(utcRecordingPeriodEnd - utcNow) + " "
-			+ "-c:v copy "
-			+ "-c:a copy "
-			+ "-f segment "
-			+ "-segment_list " + segmentListPathName + " "
-			+ "-segment_time " + to_string(segmentDurationInSeconds) + " "
-			+ "-segment_atclocktime 1 "
-			+ "-strftime 1 \"" + segmentListPath + "/" + recordedFileNameTemplate + "\" "
-			+ "> " + _outputFfmpegPathFileName + " "
-			+ "2>&1"
-		;
-
-		#ifdef __APPLE__
-			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=")
-					+ getenv("DYLD_LIBRARY_PATH") + "; ");
-		#endif
-
-        _logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        );
-	#else
 		time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
 
 		_logger->info(__FILEREF__ + "LiveRecording timing. "
@@ -7849,9 +7841,29 @@ void FFMpeg::liveRecorder(
 			}
 		}
 
+		// user agent is an HTTP header and can be used only in case of http request
+		bool userAgentToBeUsed = false;
+		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		{
+			string httpPrefix = "http";	// it includes also https
+			if (liveURL.size() >= httpPrefix.size()
+				&& liveURL.compare(0, httpPrefix.size(), httpPrefix) == 0)
+			{
+				userAgentToBeUsed = true;
+			}
+			else
+			{
+				_logger->warn(__FILEREF__ + "user agent cannot be used if not http"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", liveURL: " + liveURL
+				);
+			}
+		}
+
 		ffmpegArgumentList.push_back("ffmpeg");
 		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
-		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		if (userAgentToBeUsed)
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
@@ -8180,7 +8192,6 @@ void FFMpeg::liveRecorder(
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
         );
-	#endif
 
         startFfmpegCommand = chrono::system_clock::now();
 
@@ -8782,6 +8793,26 @@ void FFMpeg::liveProxy(
 			}
 		}
 
+		// user agent is an HTTP header and can be used only in case of http request
+		bool userAgentToBeUsed = false;
+		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		{
+			string httpPrefix = "http";	// it includes also https
+			if (liveURL.size() >= httpPrefix.size()
+				&& liveURL.compare(0, httpPrefix.size(), httpPrefix) == 0)
+			{
+				userAgentToBeUsed = true;
+			}
+			else
+			{
+				_logger->warn(__FILEREF__ + "user agent cannot be used if not http"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", liveURL: " + liveURL
+				);
+			}
+		}
+
 		// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
 
 		ffmpegArgumentList.push_back("ffmpeg");
@@ -8798,7 +8829,7 @@ void FFMpeg::liveProxy(
 		//	-nostdin: Disabling interaction on standard input, it is useful, for example, if ffmpeg is
 		//		in the background process group
 		ffmpegArgumentList.push_back("-nostdin");
-		if (channelType == "IP_MMSAsClient" && userAgent != "")
+		if (userAgentToBeUsed)
 		{
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
