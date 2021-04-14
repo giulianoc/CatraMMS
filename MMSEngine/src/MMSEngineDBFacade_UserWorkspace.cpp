@@ -5422,3 +5422,162 @@ Json::Value MMSEngineDBFacade::updateUser (
     return loginDetailsRoot;
 }
 
+int64_t MMSEngineDBFacade::saveLoginStatistics(
+	int userKey, string ip,
+	string continent, string continentCode, string country, string countryCode,
+	string region, string city, string org, string isp, int timezoneGMTOffset
+)
+{
+	int64_t loginStatisticsKey;
+    string  lastSQLCommand;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+		conn = _connectionPool->borrow();
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+
+		{
+			lastSQLCommand = 
+				"insert into MMS_LoginStatistics (userKey, ip, continent, continentCode, "
+				"country, countryCode, region, city, org, isp, timezoneGMTOffset, successfulLogin) values ("
+				                             "?,       ?,  ?,         ?, "
+			    "?,       ?,           ?,      ?,    ?,   ?,   ?,                 NOW())";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setInt64(queryParameterIndex++, userKey);
+			if (ip == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, ip);
+			if (continent == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, continent);
+			if (continentCode == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, continentCode);
+			if (country == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, country);
+			if (countryCode == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, countryCode);
+			if (region == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, region);
+			if (city == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, city);
+			if (org == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, org);
+			if (isp == "")
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+			else
+				preparedStatement->setString(queryParameterIndex++, isp);
+			if (timezoneGMTOffset == -1)
+				preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+			else
+				preparedStatement->setInt(queryParameterIndex++, timezoneGMTOffset);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", ip: " + ip
+				+ ", continent: " + continent
+				+ ", continentCode: " + continentCode
+				+ ", country: " + country
+				+ ", countryCode: " + countryCode
+				+ ", region: " + region
+				+ ", city: " + city
+				+ ", org: " + org
+				+ ", isp: " + isp
+				+ ", timezoneGMTOffset: " + to_string(timezoneGMTOffset)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+
+			loginStatisticsKey = getLastInsertId(conn);
+		}
+
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		_connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+		if (conn != nullptr)
+		{
+			_logger->debug(__FILEREF__ + "DB connection unborrow"
+				+ ", getConnectionId: " + to_string(conn->getConnectionId())
+			);
+			_connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+        throw e;
+    }
+
+	return loginStatisticsKey;
+}
+

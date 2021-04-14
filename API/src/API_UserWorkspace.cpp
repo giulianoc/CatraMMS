@@ -15,11 +15,6 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
 #include "catralibraries/Convert.h"
 #include "Validator.h"
 */
@@ -27,6 +22,11 @@
 #include "catralibraries/LdapWrapper.h"
 #include "EMailSender.h"
 #include "API.h"
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
 #include <iterator>
 #include <vector>
 
@@ -1169,6 +1169,7 @@ void API::login(
 
 		Json::Value loginDetailsRoot;
 		int64_t userKey;
+		string remoteClientIPAddress;
 
         {
 			if (!_ldapEnabled)
@@ -1191,8 +1192,15 @@ void API::login(
 					}
 				}
 
-				string email = metadataRoot.get("EMail", "XXX").asString();
-				string password = metadataRoot.get("Password", "XXX").asString();
+				string field = "EMail";
+				string email = metadataRoot.get(field, "").asString();
+
+				field = "Password";
+				string password = metadataRoot.get(field, "").asString();
+
+				field = "RemoteClientIPAddress";
+				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+					remoteClientIPAddress = metadataRoot.get(field, "").asString();
 
 				try
 				{
@@ -1205,7 +1213,7 @@ void API::login(
 							password
 					);
 
-					string field = "ldapEnabled";
+					field = "ldapEnabled";
 					loginDetailsRoot[field] = _ldapEnabled;
 
 					field = "userKey";
@@ -1276,8 +1284,15 @@ void API::login(
 					}
 				}
 
-				string userName = metadataRoot.get("Name", "XXX").asString();
-				string password = metadataRoot.get("Password", "XXX").asString();
+				string field = "Name";
+				string userName = metadataRoot.get(field, "").asString();
+
+				field = "Password";
+				string password = metadataRoot.get(field, "").asString();
+
+				field = "RemoteClientIPAddress";
+				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+					remoteClientIPAddress = metadataRoot.get(field, "").asString();
 
 				try
 				{
@@ -1349,7 +1364,7 @@ void API::login(
 							string("")		// password in case of ActiveDirectory is empty
 						);
 
-						string field = "ldapEnabled";
+						field = "ldapEnabled";
 						loginDetailsRoot[field] = _ldapEnabled;
 
 						field = "userKey";
@@ -1494,6 +1509,414 @@ void API::login(
 				}
 			}
         }
+
+		if (_savingGEOUserInfo && remoteClientIPAddress != "")
+		{
+			try
+			{
+				_logger->info(__FILEREF__ + "Save Login Statistics"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+				);
+
+				string geoServiceURL;
+				ostringstream response;
+				bool responseInitialized = false;
+				string continent;
+				string continentCode;
+				string country;
+				string countryCode;
+				string region;
+				string city;
+				string org;
+				string isp;
+				int timezoneGMTOffset = -1;
+				try
+				{
+					geoServiceURL =
+						_geoServiceURL
+						+ remoteClientIPAddress
+					;
+
+					// list<string> header;
+
+					curlpp::Cleanup cleaner;
+					curlpp::Easy request;
+
+					// Setting the URL to retrive.
+					request.setOpt(new curlpp::options::Url(geoServiceURL));
+
+					// timeout consistent with nginx configuration (fastcgi_read_timeout)
+					request.setOpt(new curlpp::options::Timeout(_geoServiceTimeoutInSeconds));
+
+					string httpsPrefix("https");
+					if (geoServiceURL.size() >= httpsPrefix.size()
+						&& 0 == geoServiceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+					{
+						/*
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
+						typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
+						typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
+						typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+						*/
+
+
+						/*
+						// cert is stored PEM coded in file... 
+						// since PEM is default, we needn't set it for PEM 
+						// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+						curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+						equest.setOpt(sslCertType);
+
+						// set the cert for client authentication
+						// "testcert.pem"
+						// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+						curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+						request.setOpt(sslCert);
+						*/
+
+						/*
+						// sorry, for engine we must set the passphrase
+						//   (if the key has one...)
+						// const char *pPassphrase = NULL;
+						if(pPassphrase)
+						curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+						// if we use a key stored in a crypto engine,
+						//   we must set the key type to "ENG"
+						// pKeyType  = "PEM";
+						curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+						// set the private key (file or ID in engine)
+						// pKeyName  = "testkey.pem";
+						curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+						// set the file with the certs vaildating the server
+						// *pCACertFile = "cacert.pem";
+						curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+						*/
+
+						// disconnect if we can't validate server's cert
+						bool bSslVerifyPeer = false;
+						curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+						request.setOpt(sslVerifyPeer);
+
+						curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+						request.setOpt(sslVerifyHost);
+
+						// request.setOpt(new curlpp::options::SslEngineDefault());
+					}
+
+					// request.setOpt(new curlpp::options::HttpHeader(header));
+
+					request.setOpt(new curlpp::options::WriteStream(&response));
+
+					chrono::system_clock::time_point startGeoService
+						= chrono::system_clock::now();
+
+					responseInitialized = true;
+					request.perform();
+					chrono::system_clock::time_point endGeoService
+						= chrono::system_clock::now();
+
+					string sResponse = response.str();
+					// LF and CR create problems to the json parser...
+					while (sResponse.size() > 0 && (sResponse.back() == 10
+						|| sResponse.back() == 13))
+						sResponse.pop_back();
+
+					_logger->info(__FILEREF__ + "geoService"
+						+ ", geoServiceURL: " + geoServiceURL
+						+ ", sResponse: " + sResponse
+						+ ", @MMS statistics@ - geoServiceDuration (secs): @"
+							+ to_string(
+								chrono::duration_cast<chrono::seconds>(endGeoService - startGeoService).count()) + "@"
+					);
+
+					try
+					{
+						Json::Value geoServiceResponse;
+
+						Json::CharReaderBuilder builder;
+						Json::CharReader* reader = builder.newCharReader();
+						string errors;
+
+						bool parsingSuccessful = reader->parse(sResponse.c_str(),
+							sResponse.c_str() + sResponse.size(), 
+							&geoServiceResponse, &errors);
+						delete reader;
+
+						if (!parsingSuccessful)
+						{
+							string errorMessage = __FILEREF__ + "geoService. Failed to parse the response body"
+								+ ", errors: " + errors
+								+ ", sResponse: " + sResponse
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						bool geoSuccess;
+						string field = "success";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							geoSuccess = JSONUtils::asBool(geoServiceResponse, field, false);
+						else
+							geoSuccess = false;
+						if (!geoSuccess)
+						{
+							string errorMessage = __FILEREF__ + "geoService failed"
+								+ ", geoSuccess: " + to_string(geoSuccess)
+								+ ", sResponse: " + sResponse
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						field = "continent";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							continent = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "continent_code";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							continentCode = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "country";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							country = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "country_code";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							countryCode = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "region";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							region = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "city";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							city = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "org";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							org = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "isp";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							isp = JSONUtils::asBool(geoServiceResponse, field, "");
+						field = "timezone_gmtOffset";
+						if (JSONUtils::isMetadataPresent(geoServiceResponse, field))
+							timezoneGMTOffset = JSONUtils::asInt(geoServiceResponse, field, -1);
+					}
+					catch(...)
+					{
+						string errorMessage = string("geoService. Response Body json is not well format")
+							+ ", sResponse: " + sResponse
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch (curlpp::LogicError & e) 
+				{
+					_logger->error(__FILEREF__ + "geoService URL failed (LogicError)"
+						+ ", geoServiceURL: " + geoServiceURL 
+						+ ", exception: " + e.what()
+						+ ", response.str(): " + (responseInitialized ? response.str() : "")
+					);
+
+					throw e;
+				}
+				catch (curlpp::RuntimeError & e) 
+				{ 
+					string errorMessage = string("getService failed (RuntimeError)")
+						+ ", geoServiceURL: " + geoServiceURL 
+						+ ", exception: " + e.what()
+						+ ", response.str(): " + (responseInitialized ? response.str() : "")
+					;
+
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch (runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "geoService failed (exception)"
+						+ ", geoServiceURL: " + geoServiceURL 
+						+ ", exception: " + e.what()
+						+ ", response.str(): " + (responseInitialized ? response.str() : "")
+					);
+
+					throw e;
+				}
+				catch (exception e)
+				{
+					_logger->error(__FILEREF__ + "geoService failed (exception)"
+						+ ", geoServiceURL: " + geoServiceURL 
+						+ ", exception: " + e.what()
+						+ ", response.str(): " + (responseInitialized ? response.str() : "")
+					);
+
+					throw e;
+				}
+
+				try
+				{
+					_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveLoginStatistics"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					);
+
+					_mmsEngineDBFacade->saveLoginStatistics(userKey, remoteClientIPAddress,
+						continent, continentCode, country, countryCode,
+						region, city, org, isp, timezoneGMTOffset
+					);
+
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__
+						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__
+						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					+ ", e.what(): " + e.what()
+				);
+
+				// string errorMessage = string("Internal server error: ") + e.what();
+				// _logger->error(__FILEREF__ + errorMessage);
+
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					+ ", e.what(): " + e.what()
+				);
+
+				// string errorMessage = string("Internal server error");
+				// _logger->error(__FILEREF__ + errorMessage);
+
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			try
+			{
+				_logger->info(__FILEREF__ + "Save Login Statistics"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+				);
+
+				string continent;
+				string continentCode;
+				string country;
+				string countryCode;
+				string region;
+				string city;
+				string org;
+				string isp;
+				int timezoneGMTOffset = -1;
+
+				try
+				{
+					_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveLoginStatistics"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					);
+
+					_mmsEngineDBFacade->saveLoginStatistics(userKey, remoteClientIPAddress,
+						continent, continentCode, country, countryCode,
+						region, city, org, isp, timezoneGMTOffset
+					);
+
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__
+						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__
+						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
+						+ ", userKey: " + to_string(userKey)
+						+ ", remoteClientIPAddress: " + remoteClientIPAddress
+						+ ", e.what(): " + e.what()
+					);
+
+					throw e;
+				}
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					+ ", e.what(): " + e.what()
+				);
+
+				// string errorMessage = string("Internal server error: ") + e.what();
+				// _logger->error(__FILEREF__ + errorMessage);
+
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+			catch(exception e)
+			{
+				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
+					+ ", userKey: " + to_string(userKey)
+					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+					+ ", e.what(): " + e.what()
+				);
+
+				// string errorMessage = string("Internal server error");
+				// _logger->error(__FILEREF__ + errorMessage);
+
+				// sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+		}
 
         try
         {

@@ -367,6 +367,12 @@ API::API(Json::Value configuration,
 		+ ", api->activeDirectory->defaultWorkspaceKeys: " + _ldapDefaultWorkspaceKeys
 	);
 
+	_savingGEOUserInfo = JSONUtils::asBool(_configuration["mms"]["geoService"], "savingGEOUserInfo", false);
+	if (_savingGEOUserInfo)
+	{
+		_geoServiceURL = _configuration["mms"]["geoService"].get("geoServiceURL", "").asString();
+		_geoServiceTimeoutInSeconds = JSONUtils::asInt(_configuration["mms"]["geoService"], "geoServiceTimeoutInSeconds", 10);
+	}
 
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();

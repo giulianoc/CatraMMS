@@ -87,6 +87,10 @@ private:
     int                 _maxProgressCallFailures;
     string              _progressURI;
 
+	bool				_savingGEOUserInfo;
+	string				_geoServiceURL;
+	int					_geoServiceTimeoutInSeconds;
+
     int                 _maxPageSize;
     
     string              _apiProtocol;

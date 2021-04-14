@@ -332,6 +332,42 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+            lastSQLCommand = 
+                "create table if not exists MMS_LoginStatistics ("
+                    "loginStatisticsKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "userKey				BIGINT UNSIGNED NOT NULL,"
+                    "ip						VARCHAR (128) NOT NULL,"
+                    "continent				VARCHAR (128) NULL,"
+                    "continentCode			VARCHAR (128) NULL,"
+                    "country				VARCHAR (128) NULL,"
+                    "countryCode			VARCHAR (128) NULL,"
+                    "region					VARCHAR (128) NULL,"
+                    "city					VARCHAR (128) NULL,"
+                    "org					VARCHAR (128) NULL,"
+                    "isp					VARCHAR (128) NULL,"
+                    "timezoneGMTOffset		INT NULL,"
+                    "successfulLogin		DATETIME NULL,"
+                    "constraint MMS_LoginStatistics_PK PRIMARY KEY (loginStatisticsKey), "
+                    "constraint MMS_LoginStatistics_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
 			// isDefault: assume a User has access to two Workspaces, which one is the default for him?
 			//	default means the GUI APP starts with this (default) Workspace
             lastSQLCommand = 

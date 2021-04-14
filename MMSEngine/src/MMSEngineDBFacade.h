@@ -1231,7 +1231,10 @@ public:
 
     Json::Value login (string eMailAddress, string password);
 
-    // Json::Value getWorkspaceDetails (int64_t userKey);
+	int64_t saveLoginStatistics(
+		int userKey, string ip,
+		string continent, string continentCode, string country, string countryCode,
+		string region, string city, string org, string isp, int timezoneGMTOffset);
 
     pair<int64_t,int64_t> getWorkspaceUsage(
         int64_t workspaceKey);
