@@ -1630,7 +1630,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 }
 
 int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
-    shared_ptr<Workspace> workspace,
+	int64_t workspaceKey,
     MMSEngineDBFacade::ContentType contentType,
     string encodingProfileLabel,
 	bool contentTypeToBeUsed
@@ -1660,7 +1660,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 					"(workspaceKey = ? or workspaceKey is null) and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 			if (contentTypeToBeUsed)
 				preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
@@ -1669,7 +1669,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ (contentTypeToBeUsed ? (string(", contentType: ") + MMSEngineDBFacade::toString(contentType)) : "")
 				+ ", encodingProfileLabel: " + encodingProfileLabel
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -1682,7 +1682,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 				if (!contentTypeToBeUsed && resultSet->next())
 				{
 					string errorMessage = __FILEREF__ + "contentType has to be used because the label is not unique"
-                        + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+                        + ", workspaceKey: " + to_string(workspaceKey)
                         + ", contentType: " + MMSEngineDBFacade::toString(contentType)
                         + ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed)
                         + ", encodingProfileLabel: " + encodingProfileLabel
@@ -1696,7 +1696,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
             else
             {
                 string errorMessage = __FILEREF__ + "encodingProfileKey not found "
-					+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
 					+ ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed)
 					+ ", encodingProfileLabel: " + encodingProfileLabel

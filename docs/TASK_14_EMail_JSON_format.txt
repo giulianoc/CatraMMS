@@ -14,9 +14,11 @@
 			// of the ingestion job by which this EMail depend on.
 			// As reference can be used "ReferenceIngestionJobKey"
 
-			// The below object could contain optionally the "ErrorIfContentNotFound" boolean field
-			// to specify if the MMS has to continue or not in case of a content not found.
-			// Default is true
+			// The below object could contain optionally:
+			// - "ErrorIfContentNotFound" boolean field to specify if the MMS has to continue
+			//		or not in case of a content not found. Default is true
+			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			//		a specific profile
 
 			{ "ReferenceIngestionJobKey": 11 }
 		],

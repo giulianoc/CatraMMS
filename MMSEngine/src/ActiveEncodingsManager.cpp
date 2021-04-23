@@ -229,6 +229,8 @@ void ActiveEncodingsManager::operator()()
 
 						if (encodingJob->_encodingItem->_encodingType !=
 							MMSEngineDBFacade::EncodingType::LiveRecorder
+							&& encodingJob->_encodingItem->_encodingType !=
+								MMSEngineDBFacade::EncodingType::LiveProxy
 							&& chrono::duration_cast<chrono::hours>(
 								chrono::system_clock::now() - encodingJob->_encodingJobStart) >
 								chrono::hours(24))

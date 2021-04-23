@@ -4748,6 +4748,24 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 					warningIfMissing); 
                 tie(referenceContentType, ignore, ignore, ignore, ignore, ignore)
 					= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+
+				string fieldEncodingProfileKey = "ReferenceEncodingProfileKey";
+				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
+				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
+				{
+					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);    
+
+					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
+				}
+				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
+				{
+					string referenceEncodingProfileLabel = referenceRoot.get(field, "").asString();
+
+					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						workspaceKey, referenceMediaItemKey, referenceContentType,
+						referenceEncodingProfileLabel, warningIfMissing);
+				}
             }
             else if (referencePhysicalPathKey != -1)
             {
@@ -4756,7 +4774,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         workspaceKey, referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, ignore, ignore, ignore, ignore,
+                tie(referenceMediaItemKey, referenceContentType, ignore, ignore, ignore, ignore,
 					ignore) = mediaItemKeyDetails;
             }
             else if (referenceIngestionJobKey != -1)
@@ -4873,6 +4891,24 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
                 referenceMediaItemKey = mediaItemKeyAndContentType.first;
                 referenceContentType = mediaItemKeyAndContentType.second;
+
+				string fieldEncodingProfileKey = "ReferenceEncodingProfileKey";
+				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
+				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
+				{
+					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);    
+
+					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
+				}
+				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
+				{
+					string referenceEncodingProfileLabel = referenceRoot.get(field, "").asString();
+
+					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+						workspaceKey, referenceMediaItemKey, referenceContentType,
+						referenceEncodingProfileLabel, warningIfMissing);
+				}
             }
             else // referenceLabel
             {

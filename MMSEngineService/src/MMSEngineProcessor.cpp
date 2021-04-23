@@ -9640,13 +9640,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 							monitorHLSRoot.get(contentTypeField, "").asString());
 
 						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel);
+							workspace->_workspaceKey, contentType, encodingProfileLabel);
 					}
 					else
 					{
 						bool contentTypeToBeUsed = false;
 						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
 					}
 				}
 			}
@@ -9690,13 +9690,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 							virtualVODRoot.get(contentTypeField, "").asString());
 
 						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel);
+							workspace->_workspaceKey, contentType, encodingProfileLabel);
 					}
 					else
 					{
 						bool contentTypeToBeUsed = false;
 						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
 					}
 				}
 			}
@@ -10249,13 +10249,13 @@ void MMSEngineProcessor::manageLiveProxy(
 							outputRoot.get(contentTypeField, "").asString());
 
 						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel);
+							workspace->_workspaceKey, contentType, encodingProfileLabel);
 					}
 					else
 					{
 						bool contentTypeToBeUsed = false;
 						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
 					}
 
 					_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
@@ -10547,13 +10547,13 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 						parametersRoot.get(contentTypeField, "").asString());
 
 					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace, contentType, encodingProfileLabel);
+						workspace->_workspaceKey, contentType, encodingProfileLabel);
 				}
 				else
 				{
 					bool contentTypeToBeUsed = false;
 					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-						workspace, contentType, encodingProfileLabel, contentTypeToBeUsed);
+						workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
 				}
 
 				_logger->info(__FILEREF__ + "outputRoot encodingProfileLabel"
@@ -10686,7 +10686,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					workspace, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel);
+					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel);
 			}
 			else
 			{
@@ -16847,7 +16847,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			string encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
 
 			encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-				workspace, referenceContentType, encodingProfileLabel);
+				workspace->_workspaceKey, referenceContentType, encodingProfileLabel);
 
 			// check if the profile is already present for the source content
 			{

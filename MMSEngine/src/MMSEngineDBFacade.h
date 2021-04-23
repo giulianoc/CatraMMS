@@ -1645,7 +1645,7 @@ public:
 		int maxEncodingsNumber);
     
 	int64_t getEncodingProfileKeyByLabel (
-		shared_ptr<Workspace> workspace,
+		int64_t workspaceKey,
 		MMSEngineDBFacade::ContentType contentType,
 		string encodingProfileLabel,
 		bool contentTypeToBeUsed = true);
