@@ -41,7 +41,7 @@ void API::ingestion(
 {
     string api = "ingestion";
 
-    _logger->info(__FILEREF__ + "Received " + api
+    _logger->info(__FILEREF__ + "Received AAAAAA " + api
         + ", requestBody: " + requestBody
     );
 
@@ -210,7 +210,6 @@ _logger->error(__FILEREF__ + to_string(aaa++));
 				bool commit = false;
 				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
 			}
-
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
