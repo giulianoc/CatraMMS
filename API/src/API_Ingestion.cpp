@@ -71,14 +71,18 @@ void API::ingestion(
             // It is used when ReferenceLabel is used.
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
 
+int aaa = 0;
+_logger->error(__FILEREF__ + to_string(aaa++));
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 			dbTransactionStarted = true;
 
+_logger->error(__FILEREF__ + to_string(aaa++));
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
             validator.validateIngestedRootMetadata(workspace->_workspaceKey, 
                     requestBodyRoot);
         
+_logger->error(__FILEREF__ + to_string(aaa++));
             string field = "Type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -100,6 +104,7 @@ void API::ingestion(
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
     
+_logger->error(__FILEREF__ + to_string(aaa++));
             field = "Task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -122,6 +127,7 @@ void API::ingestion(
             }    
             string taskType = taskRoot.get(field, "XXX").asString();
             
+_logger->error(__FILEREF__ + to_string(aaa++));
             if (taskType == "GroupOfTasks")
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
@@ -134,6 +140,7 @@ void API::ingestion(
 				//	we do two cuts. The workflow generated than was: two cuts in parallel and then the concat.
 				//	This scenario works if localDependOnSuccess is 1
 				int localDependOnSuccess = 1;
+_logger->error(__FILEREF__ + to_string(aaa++));
                 ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
@@ -143,13 +150,13 @@ void API::ingestion(
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+_logger->error(__FILEREF__ + to_string(aaa++));
                 ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
                         responseBody);            
             }
 
-int aaa = 0;
 _logger->error(__FILEREF__ + to_string(aaa++));
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
