@@ -689,21 +689,35 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 		// Enter here if No References tag is present (so we have to add the inherit input)
 		// OR we want to add dependOnReferences to the Raferences tag
 
-		for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
-				referenceIndex > 0; --referenceIndex)
+		if (dependenciesToBeAddedToReferencesAtIndex != -1)
 		{
-			Json::Value referenceRoot;
-			string addedField = "ReferenceIngestionJobKey";
-			referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
-
-			// add at the beginning in referencesRoot
+			for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
+				referenceIndex > 0; --referenceIndex)
 			{
-				int previousSize = referencesRoot.size();
-				referencesRoot.resize(previousSize + 1);
-				for(int index = previousSize; index > dependenciesToBeAddedToReferencesAtIndex;
-					index--)
-					referencesRoot[index] = referencesRoot[index - 1];
-				referencesRoot[dependenciesToBeAddedToReferencesAtIndex] = referenceRoot;
+				Json::Value referenceRoot;
+				string addedField = "ReferenceIngestionJobKey";
+				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
+
+				// add at the beginning in referencesRoot
+				{
+					int previousSize = referencesRoot.size();
+					referencesRoot.resize(previousSize + 1);
+					for(int index = previousSize; index > dependenciesToBeAddedToReferencesAtIndex;
+						index--)
+						referencesRoot[index] = referencesRoot[index - 1];
+					referencesRoot[dependenciesToBeAddedToReferencesAtIndex] = referenceRoot;
+				}
+			}
+		}
+		else
+		{
+			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
+			{
+				Json::Value referenceRoot;
+				string addedField = "ReferenceIngestionJobKey";
+				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
+
+				referencesRoot.append(referenceRoot);
 			}
 		}
 
@@ -715,12 +729,11 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
             taskRoot[field] = parametersRoot;
         }
 
-        /*        
-        {
-            Json::StreamWriterBuilder wbuilder;
+        //{
+        //    Json::StreamWriterBuilder wbuilder;
 
-            taskMetadata = Json::writeString(wbuilder, parametersRoot);        
-        }
+        //    taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+        //}
         
         // commented because already logged in mmsEngineDBFacade
         // _logger->info(__FILEREF__ + "update IngestionJob"
@@ -728,8 +741,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         //    + ", taskMetadata: " + taskMetadata
         // );
 
-        _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
-        */
+        //_mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
     }
 }
 
