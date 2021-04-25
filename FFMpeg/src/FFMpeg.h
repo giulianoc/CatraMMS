@@ -450,8 +450,8 @@ private:
 	chrono::system_clock::time_point	_startFFMpegMethod;
 	int				_startCheckingFrameInfoInMinutes;
 
-    int				_waitingNFSSync_attemptNumber;
-    int				_waitingNFSSync_sleepTimeInSeconds;
+    int				_waitingNFSSync_maxMillisecondsToWait;
+    int				_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
 
 	string getDrawTextVideoFilterDescription(

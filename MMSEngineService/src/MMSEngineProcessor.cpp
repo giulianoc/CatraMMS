@@ -210,16 +210,16 @@ MMSEngineProcessor::MMSEngineProcessor(
         + ", api->delivery->deliveryHost: " + _deliveryHost
     );
 
-	_waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
-		"waitingNFSSync_attemptNumber", 1);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_maxMillisecondsToWait", 60000);
 	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", storage->waitingNFSSync_attemptNumber: " + to_string(_waitingNFSSync_attemptNumber)
+		+ ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
-	_waitingNFSSync_sleepTimeInSeconds = JSONUtils::asInt(configuration["storage"],
-		"waitingNFSSync_sleepTimeInSeconds", 3);
+	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", storage->waitingNFSSync_sleepTimeInSeconds: "
-		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
+		+ ", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: "
+		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
     if (_processorIdentifier == 0)
@@ -19116,10 +19116,8 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 		// (i.e.: generate frames task and other tasks), and the NFS is used, we saw sometimes
 		// FileIO::fileExisting returns false even if the file is there. This is due because of NFS 
 		// delay to present the file 
-		long maxMillisecondsToWait = 5000;
-		long milliSecondsWaitingBetweenChecks = 100;
 		if (!FileIO::fileExisting(mediaSourcePathName,
-			maxMillisecondsToWait, milliSecondsWaitingBetweenChecks))
+			_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
 		{
 			string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

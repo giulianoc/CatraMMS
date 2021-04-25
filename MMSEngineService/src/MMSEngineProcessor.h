@@ -130,8 +130,8 @@ private:
 	string					_mmsAPIIngestionURI;
     int						_mmsAPITimeoutInSeconds;
 
-	int						_waitingNFSSync_attemptNumber;
-	int						_waitingNFSSync_sleepTimeInSeconds;
+	int						_waitingNFSSync_maxMillisecondsToWait;
+	int						_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 

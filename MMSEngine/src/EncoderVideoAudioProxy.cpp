@@ -212,17 +212,17 @@ void EncoderVideoAudioProxy::init(
 		+ ", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
 	);
 
-    _waitingNFSSync_attemptNumber = JSONUtils::asInt(configuration["storage"],
-		"waitingNFSSync_attemptNumber", 1);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", storage->waitingNFSSync_attemptNumber: " + to_string(_waitingNFSSync_attemptNumber)
-    );
-    _waitingNFSSync_sleepTimeInSeconds = JSONUtils::asInt(configuration["storage"],
-		"waitingNFSSync_sleepTimeInSeconds", 3);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", storage->waitingNFSSync_sleepTimeInSeconds: "
-			+ to_string(_waitingNFSSync_sleepTimeInSeconds)
-    );
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_maxMillisecondsToWait", 60000);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
+	);
+	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: "
+		+ to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
+	);
 
 	/*
     _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
@@ -8891,74 +8891,34 @@ string EncoderVideoAudioProxy::faceRecognition()
 		throw runtime_error(errorMessage);
 	}
 
-	cv::VideoCapture capture;
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
-	int attemptIndex = 0;
-	bool captureFinished = false;
-	chrono::system_clock::time_point startCapture = chrono::system_clock::now();
-	while (!captureFinished)
+	if (!FileIO::fileExisting(sourcePhysicalPath,
+		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
 	{
-		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
-		if (!capture.isOpened())
-		{
-			if (FileIO::fileExisting(sourcePhysicalPath))
-			{
-				string errorMessage = __FILEREF__ + "Capture could not be opened"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-				_logger->error(errorMessage);
+		string errorMessage = __FILEREF__ + "Media Source file does not exist"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+		_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-			else
-			{
-				if (attemptIndex < _waitingNFSSync_attemptNumber)
-				{
-					attemptIndex++;
-
-					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-						+ ", attemptIndex: " + to_string(attemptIndex)
-						+ ", sleepTime: " + to_string(_waitingNFSSync_sleepTimeInSeconds)
-							;
-					_logger->warn(errorMessage);
-
-					this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
-				}
-				else
-				{
-					string errorMessage = __FILEREF__
-						+ "Capture could not be opened because the file does not exist"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath
-						+ ", attemptIndex: " + to_string(attemptIndex)
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else
-		{
-			captureFinished = true;
-		}
+		throw runtime_error(errorMessage);
 	}
 
-	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
-	_logger->info(__FILEREF__ + "capture.open"
-		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", @MMS statistics@ - duration (secs): @"
-			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
-	);
+	cv::VideoCapture capture;
+	capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
+	if (!capture.isOpened())
+	{
+		string errorMessage = __FILEREF__ + "Capture could not be opened"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	string faceRecognitionMediaPathName;
 	string fileFormat;
@@ -9833,74 +9793,34 @@ string EncoderVideoAudioProxy::faceIdentification()
 	cv::Ptr<cv::face::LBPHFaceRecognizer> recognizerModel = cv::face::LBPHFaceRecognizer::create();
 	recognizerModel->train(images, idImages);
 
-	cv::VideoCapture capture;
 	// sometimes the file was created by another MMSEngine and it is not found
 	// just because of nfs delay. For this reason we implemented a retry mechanism
-	int attemptIndex = 0;
-	bool captureFinished = false;
-	chrono::system_clock::time_point startCapture = chrono::system_clock::now();
-	while (!captureFinished)
+	if (!FileIO::fileExisting(sourcePhysicalPath,
+		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks))
 	{
-		capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
-		if (!capture.isOpened())
-		{
-			if (FileIO::fileExisting(sourcePhysicalPath))
-			{
-				string errorMessage = __FILEREF__ + "Capture could not be opened"
-					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-					+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-				_logger->error(errorMessage);
+		string errorMessage = __FILEREF__ + "Media Source file does not exist"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+		_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-			else
-			{
-				if (attemptIndex < _waitingNFSSync_attemptNumber)
-				{
-					attemptIndex++;
-
-					string errorMessage = __FILEREF__ + "The file does not exist, waiting because of nfs delay"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath;
-						+ ", attemptIndex: " + to_string(attemptIndex)
-						+ ", sleepTime: " + to_string(_waitingNFSSync_sleepTimeInSeconds)
-							;
-					_logger->warn(errorMessage);
-
-					this_thread::sleep_for(chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
-				}
-				else
-				{
-					string errorMessage = __FILEREF__
-						+ "Capture could not be opened because the file does not exist"
-						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-						+ ", sourcePhysicalPath: " + sourcePhysicalPath
-						+ ", attemptIndex: " + to_string(attemptIndex)
-						;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-		}
-		else
-		{
-			captureFinished = true;
-		}
+		throw runtime_error(errorMessage);
 	}
 
-	chrono::system_clock::time_point endCapture = chrono::system_clock::now();
-	_logger->info(__FILEREF__ + "capture.open"
-		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", @MMS statistics@ - duration (secs): @"
-			+ to_string(chrono::duration_cast<chrono::seconds>(endCapture - startCapture).count()) + "@"
-	);
+	cv::VideoCapture capture;
+	capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
+	if (!capture.isOpened())
+	{
+		string errorMessage = __FILEREF__ + "Capture could not be opened"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	string faceIdentificationMediaPathName;
 	string fileFormat;

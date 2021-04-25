@@ -37,16 +37,16 @@ FFMpeg::FFMpeg(Json::Value configuration,
         + ", youTubeDl->pythonPathName: " + _pythonPathName
     );
 
-    _waitingNFSSync_attemptNumber = asInt(configuration["storage"],
-		"waitingNFSSync_attemptNumber", 1);
+    _waitingNFSSync_maxMillisecondsToWait = asInt(configuration["storage"],
+		"waitingNFSSync_maxMillisecondsToWait", 60000);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_attemptNumber: "
 		+ to_string(_waitingNFSSync_attemptNumber)
     );
 	*/
-    _waitingNFSSync_sleepTimeInSeconds = asInt(configuration["storage"],
-		"waitingNFSSync_sleepTimeInSeconds", 3);
+    _waitingNFSSync_milliSecondsWaitingBetweenChecks = asInt(configuration["storage"],
+		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	/*
     _logger->info(__FILEREF__ + "Configuration item"
         + ", storage->waitingNFSSync_sleepTimeInSeconds: "
@@ -5152,10 +5152,8 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 			);
 
 	// milli secs to wait in case of nfs delay
-	long maxMillisecondsToWait = 60000;
-	long milliSecondsWaitingBetweenChecks = 100;
 	if (!FileIO::fileExisting(mmsAssetPathName,
-		maxMillisecondsToWait, milliSecondsWaitingBetweenChecks)        
+		_waitingNFSSync_maxMillisecondsToWait, _waitingNFSSync_milliSecondsWaitingBetweenChecks)        
 		&& !FileIO::directoryExisting(mmsAssetPathName)
 	)
 	{
@@ -5223,48 +5221,14 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
-				if (FileIO::fileExisting(mmsAssetPathName))
-				{
-					string errorMessage = __FILEREF__ +
-						"getMediaInfo: ffmpeg: ffprobe command failed"
-						+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-						+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-					;
-					_logger->error(errorMessage);
+				string errorMessage = __FILEREF__ +
+					"getMediaInfo: ffmpeg: ffprobe command failed"
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+				;
+				_logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);
-				}
-				else
-				{
-					if (attemptIndex < _waitingNFSSync_attemptNumber)
-					{
-						attemptIndex++;
-
-						string errorMessage = __FILEREF__
-							+ "getMediaInfo: The file does not exist, waiting because of nfs delay"
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-							+ ", attemptIndex: " + to_string(attemptIndex)
-							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-						;
-
-						_logger->warn(errorMessage);
-
-						this_thread::sleep_for(
-								chrono::seconds(_waitingNFSSync_sleepTimeInSeconds));
-					}
-					else
-					{
-						string errorMessage = __FILEREF__
-							+ "getMediaInfo: ffmpeg: ffprobe command failed because the file does not exist"
-							+ ", executeCommandStatus: " + to_string(executeCommandStatus)
-							+ ", attemptIndex: " + to_string(attemptIndex)
-							+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
+				throw runtime_error(errorMessage);
 			}
 			else
 			{

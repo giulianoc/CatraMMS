@@ -173,8 +173,8 @@ private:
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
-    int									_waitingNFSSync_attemptNumber;
-    int									_waitingNFSSync_sleepTimeInSeconds;
+    int									_waitingNFSSync_maxMillisecondsToWait;
+    int									_waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
 	long								_retrieveStreamingYouTubeURLPeriodInHours;
 	int									_maxEncoderNotReachableFailures;
