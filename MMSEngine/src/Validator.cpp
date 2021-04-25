@@ -4916,14 +4916,16 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         }
         catch(MediaItemKeyNotFound e)
         {
-            string errorMessage = __FILEREF__ + "Reference... was not found"
+            string errorMessage = __FILEREF__ + "fillDependencies failed (MediaItemKeyNotFound)"
+				+ ", workspaceKey,: " + to_string(workspaceKey)
 				+ ", label: " + label
 				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
 				+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
 				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
 				+ ", referenceUniqueName: " + referenceUniqueName
 				+ ", referenceLabel: " + to_string(referenceLabel)
-                    ;
+				+ ", e.what: " + e.what()
+			;
 			if (errorIfContentNotFound)
 			{
 				_logger->error(errorMessage);
@@ -4939,19 +4941,30 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
         }
         catch(runtime_error e)
         {
-            string errorMessage = __FILEREF__ + "Reference... was not found"
-                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                    ;
+            string errorMessage = __FILEREF__ + "fillDependencies failed (runtime_error)"
+				+ ", workspaceKey,: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+				+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", referenceUniqueName: " + referenceUniqueName
+				+ ", referenceLabel: " + to_string(referenceLabel)
+				+ ", e.what: " + e.what()
+			;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
         catch(exception e)
         {
-            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                    + ", workspaceKey,: " + to_string(workspaceKey)
-                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+            string errorMessage = __FILEREF__ + "fillDependencies failed (exception)"
+				+ ", workspaceKey,: " + to_string(workspaceKey)
+				+ ", label: " + label
+				+ ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+				+ ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+				+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+				+ ", referenceUniqueName: " + referenceUniqueName
+				+ ", referenceLabel: " + to_string(referenceLabel)
                     ;
             _logger->error(errorMessage);
 
