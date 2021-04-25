@@ -149,17 +149,23 @@ void API::ingestion(
                         responseBody);            
             }
 
+int aaa = 0;
+_logger->error(__FILEREF__ + to_string(aaa++));
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
             
+_logger->error(__FILEREF__ + to_string(aaa++));
             string beginOfResponseBody = string("{ ")
                 + "\"workflow\": { "
                     + "\"ingestionRootKey\": " + to_string(ingestionRootKey)
                     + ", \"label\": \"" + rootLabel + "\" "
                     + "}, "
                     + "\"tasks\": [ ";
+_logger->error(__FILEREF__ + to_string(aaa++));
             responseBody.insert(0, beginOfResponseBody);
+_logger->error(__FILEREF__ + to_string(aaa++));
             responseBody += " ] }";
+_logger->error(__FILEREF__ + to_string(aaa++));
         }
         catch(AlreadyLocked e)
         {
