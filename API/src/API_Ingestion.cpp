@@ -41,7 +41,7 @@ void API::ingestion(
 {
     string api = "ingestion";
 
-    _logger->info(__FILEREF__ + "Received AAAAAA " + api
+    _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
     );
 
@@ -71,18 +71,14 @@ void API::ingestion(
             // It is used when ReferenceLabel is used.
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
 
-int aaa = 0;
-_logger->error(__FILEREF__ + "AAAAAAAAA " + to_string(aaa++));
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 			dbTransactionStarted = true;
 
-_logger->error(__FILEREF__ + to_string(aaa++));
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
             validator.validateIngestedRootMetadata(workspace->_workspaceKey, 
                     requestBodyRoot);
         
-_logger->error(__FILEREF__ + to_string(aaa++));
             string field = "Type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -104,7 +100,6 @@ _logger->error(__FILEREF__ + to_string(aaa++));
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
     
-_logger->error(__FILEREF__ + to_string(aaa++));
             field = "Task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -127,7 +122,6 @@ _logger->error(__FILEREF__ + to_string(aaa++));
             }    
             string taskType = taskRoot.get(field, "XXX").asString();
             
-_logger->error(__FILEREF__ + to_string(aaa++));
             if (taskType == "GroupOfTasks")
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
@@ -140,7 +134,6 @@ _logger->error(__FILEREF__ + to_string(aaa++));
 				//	we do two cuts. The workflow generated than was: two cuts in parallel and then the concat.
 				//	This scenario works if localDependOnSuccess is 1
 				int localDependOnSuccess = 1;
-_logger->error(__FILEREF__ + to_string(aaa++));
                 ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
@@ -150,29 +143,23 @@ _logger->error(__FILEREF__ + to_string(aaa++));
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-_logger->error(__FILEREF__ + to_string(aaa++));
                 ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
                         responseBody);            
             }
 
-_logger->error(__FILEREF__ + to_string(aaa++));
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
             
-_logger->error(__FILEREF__ + to_string(aaa++));
             string beginOfResponseBody = string("{ ")
                 + "\"workflow\": { "
                     + "\"ingestionRootKey\": " + to_string(ingestionRootKey)
                     + ", \"label\": \"" + rootLabel + "\" "
                     + "}, "
                     + "\"tasks\": [ ";
-_logger->error(__FILEREF__ + to_string(aaa++));
             responseBody.insert(0, beginOfResponseBody);
-_logger->error(__FILEREF__ + to_string(aaa++));
             responseBody += " ] }";
-_logger->error(__FILEREF__ + to_string(aaa++));
         }
         catch(AlreadyLocked e)
         {
@@ -195,7 +182,6 @@ _logger->error(__FILEREF__ + to_string(aaa++));
 				bool commit = false;
 				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
 			}
-
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -691,6 +677,30 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 
 		if (dependenciesToBeAddedToReferencesAtIndex != -1)
 		{
+			{
+				int previousReferencesRootSize = referencesRoot.size();
+				int dependOnIngestionJobKeysSize = dependOnIngestionJobKeysOverallInput.size();
+
+				referencesRoot.resize(previousReferencesRootSize + dependOnIngestionJobKeysSize);
+				for(int index = previousReferencesRootSize - 1;
+					index >= dependenciesToBeAddedToReferencesAtIndex;
+					index--)
+					referencesRoot[index + dependOnIngestionJobKeysSize] = referencesRoot[index];
+
+				for(int index = dependenciesToBeAddedToReferencesAtIndex;
+					index < previousReferencesRootSize + dependOnIngestionJobKeysSize;
+					index++)
+				{
+					Json::Value referenceRoot;
+					string addedField = "ReferenceIngestionJobKey";
+					referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(
+						index - dependenciesToBeAddedToReferencesAtIndex);
+
+					referencesRoot[index] = referenceRoot;
+				}
+			}
+
+			/*
 			for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
 				referenceIndex > 0; --referenceIndex)
 			{
@@ -708,10 +718,13 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 					referencesRoot[dependenciesToBeAddedToReferencesAtIndex] = referenceRoot;
 				}
 			}
+			*/
 		}
 		else
 		{
-			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
+			for (int referenceIndex = 0;
+				referenceIndex < dependOnIngestionJobKeysOverallInput.size();
+				++referenceIndex)
 			{
 				Json::Value referenceRoot;
 				string addedField = "ReferenceIngestionJobKey";
