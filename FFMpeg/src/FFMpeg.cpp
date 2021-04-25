@@ -5151,7 +5151,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 			", mmsAssetPathName: " + mmsAssetPathName
 			);
 
-	if (!FileIO::fileExisting(mmsAssetPathName)        
+	// milli secs to wait in case of nfs delay
+	long maxMillisecondsToWait = 5000;
+	long milliSecondsWaitingBetweenChecks = 100;
+	if (!FileIO::fileExisting(mmsAssetPathName,
+		maxMillisecondsToWait, milliSecondsWaitingBetweenChecks)        
 		&& !FileIO::directoryExisting(mmsAssetPathName)
 	)
 	{
