@@ -27,8 +27,9 @@
 		// Optional. This tag is used in the scenario where it is needed to concatenate both
 		//	the media inherited by the parent Task and the media specified by the References tag
 		//	In this scenario this tag has to be set
-		//  Options: "", "atTheBeginning", "atTheEnd"
-		"DependenciesToBeAddedToReferences": "atTheEnd",
+		//  Options: "Beginning", "End", an integer specifying the position where
+		//		the dependencies have to be placed. 0 is same as Beginning
+		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

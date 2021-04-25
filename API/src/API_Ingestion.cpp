@@ -499,24 +499,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 	// mapLabelAndIngestionJobKey is extended with the ReferenceLabels
 	unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey)
 {
-	// Generally if the References tag is present, these will be used as references for the Task
-	// In case the References tag is NOT present, inherited references are used
-	// Sometimes, we want to use both, the references coming from the tag and the inherid references.
-	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
-	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
-	// In these case we use the "DependenciesToBeAddedToReferences" parameter.
-	string atTheBeginning = "AtTheBeginning";
-	string atTheEnd = "AtTheEnd";
-
-    string dependenciesToBeAddedToReferences;
-    string field = "DependenciesToBeAddedToReferences";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-		dependenciesToBeAddedToReferences = parametersRoot.get(field, "").asString();
-		if (dependenciesToBeAddedToReferences != atTheBeginning
-			&& dependenciesToBeAddedToReferences != atTheEnd)
-			dependenciesToBeAddedToReferences = "";
-	}
+	string field;
 
 	// initialize referencesRoot
     bool referencesSectionPresent = false;
@@ -532,7 +515,59 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         }
     }
 
-	// manage ReferenceLabel, inside the References Tag, If present ReferenceLabel,
+	// Generally if the References tag is present, these will be used as references for the Task
+	// In case the References tag is NOT present, inherited references are used
+	// Sometimes, we want to use both, the references coming from the tag and the inherid references.
+	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
+	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
+	// In these case we use the "DependenciesToBeAddedToReferencesAt" parameter.
+
+	// 2021-04-25: "DependenciesToBeAddedToReferencesAt" could be:
+	//	- AtTheBeginning
+	//	- AtTheEnd
+	//	- an integer specifying the position where to place the dependencies.
+	//		0 means AtTheBeginning
+	int dependenciesToBeAddedToReferencesAtIndex = -1;
+	{
+		string atTheBeginning = "Beginning";
+		string atTheEnd = "End";
+
+		string dependenciesToBeAddedToReferencesAt;
+		field = "DependenciesToBeAddedToReferencesAt";
+		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			dependenciesToBeAddedToReferencesAt = parametersRoot.get(field, "").asString();
+			if (dependenciesToBeAddedToReferencesAt != "")
+			{
+				if (dependenciesToBeAddedToReferencesAt == atTheBeginning)
+					dependenciesToBeAddedToReferencesAtIndex = 0;
+				else if (dependenciesToBeAddedToReferencesAt == atTheEnd)
+					dependenciesToBeAddedToReferencesAtIndex = referencesRoot.size();
+				else
+				{
+					try
+					{
+						dependenciesToBeAddedToReferencesAtIndex =
+							stoi(dependenciesToBeAddedToReferencesAt);
+						if (dependenciesToBeAddedToReferencesAtIndex > referencesRoot.size())
+							dependenciesToBeAddedToReferencesAtIndex = referencesRoot.size();
+	
+					}
+					catch (exception e)
+					{
+						string errorMessage = string("DependenciesToBeAddedToReferencesAt is not well format")
+							+ ", dependenciesToBeAddedToReferencesAt: " + dependenciesToBeAddedToReferencesAt
+						;
+						_logger->error(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+	}
+
+	// manage ReferenceLabel, inside the References Tag, If ReferenceLabel is present,
 	// replace it with ReferenceIngestionJobKey
     if (referencesSectionPresent)
     {
@@ -630,47 +665,33 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
         + ", IngestionType: " + ingestionType
         + ", parametersSectionPresent: " + to_string(parametersSectionPresent)
         + ", referencesSectionPresent: " + to_string(referencesSectionPresent)
-        + ", dependenciesToBeAddedToReferences: " + dependenciesToBeAddedToReferences
+        + ", dependenciesToBeAddedToReferencesAtIndex: "
+			+ to_string(dependenciesToBeAddedToReferencesAtIndex)
         + ", dependOnIngestionJobKeysOverallInput.size(): " + to_string(dependOnIngestionJobKeysOverallInput.size())
     );
 
 	// add to referencesRoot all the inherited references
-    if ((!referencesSectionPresent || dependenciesToBeAddedToReferences != "")
+    if ((!referencesSectionPresent || dependenciesToBeAddedToReferencesAtIndex != -1)
 			&& dependOnIngestionJobKeysOverallInput.size() > 0)
     {
 		// Enter here if No References tag is present (so we have to add the inherit input)
 		// OR we want to add dependOnReferences to the Raferences tag
 
-		if (dependenciesToBeAddedToReferences == atTheBeginning)
+		for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
+				referenceIndex > 0; --referenceIndex)
 		{
-			for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
-					referenceIndex > 0; --referenceIndex)
+			Json::Value referenceRoot;
+			string addedField = "ReferenceIngestionJobKey";
+			referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
+
+			// add at the beginning in referencesRoot
 			{
-				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
-				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
-            
-				// add at the beginning in referencesRoot
-				{
-					int previousSize = referencesRoot.size();
-					referencesRoot.resize(previousSize + 1);
-					for(int index = previousSize; index > 0 ; index--)
-					{
-						referencesRoot[index] = referencesRoot[index - 1];
-					}
-					referencesRoot[0]= referenceRoot;
-				}
-			}
-		}
-		else
-		{
-			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
-			{
-				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
-				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
-            
-				referencesRoot.append(referenceRoot);
+				int previousSize = referencesRoot.size();
+				referencesRoot.resize(previousSize + 1);
+				for(int index = previousSize; index > dependenciesToBeAddedToReferencesAtIndex;
+					index--)
+					referencesRoot[index] = referencesRoot[index - 1];
+				referencesRoot[dependenciesToBeAddedToReferencesAtIndex] = referenceRoot;
 			}
 		}
 

@@ -10,7 +10,9 @@
 		//	and the other Video is already inside MMS. In this case the References tag referes one Video
 		//	and the other is inherit from the parent Task.
 		//	In the above case, this tag has to be set to true
-		"DependenciesToBeAddedToReferences": false,
+		//  Options: "Beginning", "End", an integer specifying the position where
+		//		the dependencies have to be placed. 0 is same as Beginning
+		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory
 		"References": [

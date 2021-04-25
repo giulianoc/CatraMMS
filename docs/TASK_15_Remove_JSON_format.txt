@@ -42,8 +42,9 @@
 		// Optional. This tag is used in the scenario where the Contents to be removed are the one specified
 		//	by the References tag and also the one inherit from the parent Task
 		//	In this scenario this tag has to be set
-		//  Options: "", "atTheBeginning", "atTheEnd"
-		"DependenciesToBeAddedToReferences": "atTheEnd",
+		//  Options: "Beginning", "End", an integer specifying the position where
+		//		the dependencies have to be placed. 0 is same as Beginning
+		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

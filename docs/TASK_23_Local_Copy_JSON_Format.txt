@@ -33,8 +33,9 @@
 		// Optional. This tag is used in the scenario where it is needed to copy both
 		//	the media inherited by the parent Task and the media specified by the References tag
 		//	In this scenario this tag has to be set
-		//  Options: "", "atTheBeginning", "atTheEnd"
-		"DependenciesToBeAddedToReferences": "atTheEnd",
+		//  Options: "Beginning", "End", an integer specifying the position where
+		//		the dependencies have to be placed. 0 is same as Beginning
+		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory
 		"LocalPath": "/directory_1/directory_2/directory_3",
