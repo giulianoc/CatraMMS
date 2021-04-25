@@ -4753,14 +4753,14 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
 				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
 				{
-					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);    
+					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);    
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
-					string referenceEncodingProfileLabel = referenceRoot.get(field, "").asString();
+					string referenceEncodingProfileLabel = referenceRoot.get(fieldEncodingProfileLabel, "").asString();
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
@@ -4896,14 +4896,14 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				string fieldEncodingProfileLabel = "ReferenceEncodingProfileLabel";
 				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
 				{
-					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);    
+					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);    
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						referenceMediaItemKey, referenceEncodingProfileKey, warningIfMissing);
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
-					string referenceEncodingProfileLabel = referenceRoot.get(field, "").asString();
+					string referenceEncodingProfileLabel = referenceRoot.get(fieldEncodingProfileLabel, "").asString();
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
