@@ -72,7 +72,7 @@ void API::ingestion(
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
 
 int aaa = 0;
-_logger->error(__FILEREF__ + to_string(aaa++));
+_logger->error(__FILEREF__ + "AAAAAAAAA " + to_string(aaa++));
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 			dbTransactionStarted = true;
 
