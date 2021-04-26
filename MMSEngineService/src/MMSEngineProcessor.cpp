@@ -15605,59 +15605,62 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			{
 				firstMedia = false;
 
-				// try to retrieve time codes
-				Json::Value sourceUserDataRoot;
-				try
+				if (lastUserData != "")
 				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(lastUserData.c_str(),
-						lastUserData.c_str() + lastUserData.size(), 
-						&sourceUserDataRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
+					// try to retrieve time codes
+					Json::Value sourceUserDataRoot;
+					try
 					{
-						string errorMessage = __FILEREF__ + "failed to parse userData"
+						Json::CharReaderBuilder builder;
+						Json::CharReader* reader = builder.newCharReader();
+						string errors;
+
+						bool parsingSuccessful = reader->parse(lastUserData.c_str(),
+							lastUserData.c_str() + lastUserData.size(), 
+							&sourceUserDataRoot, &errors);
+						delete reader;
+
+						if (!parsingSuccessful)
+						{
+							string errorMessage = __FILEREF__ + "failed to parse userData"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errors: " + errors
+								+ ", lastUserData: " + lastUserData
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					catch(...)
+					{
+						string errorMessage = string("userData json is not well format")
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
 							+ ", lastUserData: " + lastUserData
 						;
-						_logger->error(errorMessage);
+						_logger->error(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
-				}
-				catch(...)
-				{
-					string errorMessage = string("userData json is not well format")
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", lastUserData: " + lastUserData
-					;
-					_logger->error(__FILEREF__ + errorMessage);
 
-					throw runtime_error(errorMessage);
-				}
-
-				string field = "mmsData";
-				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
-				{
-					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
-
-					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-					string utcChunkStartTimeField = "utcChunkStartTime";
-					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
+					string field = "mmsData";
+					if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 					{
-						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-					}
-					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
-					{
-						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
-						utcStartTimeInMilliSecs *= 1000;
+						Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+
+						string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
+						string utcChunkStartTimeField = "utcChunkStartTime";
+						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
+						{
+							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
+						}
+						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
+						{
+							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
+							utcStartTimeInMilliSecs *= 1000;
+						}
 					}
 				}
 			}
@@ -15733,59 +15736,62 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 		if (utcStartTimeInMilliSecs != -1)
 		{
-			// try to retrieve time codes
-			Json::Value sourceUserDataRoot;
-			try
+			if (lastUserData != "")
 			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(lastUserData.c_str(),
-					lastUserData.c_str() + lastUserData.size(), 
-					&sourceUserDataRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
+				// try to retrieve time codes
+				Json::Value sourceUserDataRoot;
+				try
 				{
-					string errorMessage = __FILEREF__ + "failed to parse userData"
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(lastUserData.c_str(),
+						lastUserData.c_str() + lastUserData.size(), 
+						&sourceUserDataRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse userData"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+							+ ", lastUserData: " + lastUserData
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(...)
+				{
+					string errorMessage = string("userData json is not well format")
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
 						+ ", lastUserData: " + lastUserData
 					;
-					_logger->error(errorMessage);
+					_logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-			}
-			catch(...)
-			{
-				string errorMessage = string("userData json is not well format")
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", lastUserData: " + lastUserData
-				;
-				_logger->error(__FILEREF__ + errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-
-			string field = "mmsData";
-			if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
-			{
-				Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
-
-				string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-				string utcChunkEndTimeField = "utcChunkEndTime";
-				if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
+				string field = "mmsData";
+				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 				{
-					utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-				}
-				else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
-				{
-					utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
-					utcEndTimeInMilliSecs *= 1000;
+					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+
+					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
+					string utcChunkEndTimeField = "utcChunkEndTime";
+					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
+					{
+						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
+					}
+					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
+					{
+						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
+						utcEndTimeInMilliSecs *= 1000;
+					}
 				}
 			}
 
@@ -15794,7 +15800,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			{
 				Json::Value destUserDataRoot;
 
-				field = "UserData";
+				string field = "UserData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 

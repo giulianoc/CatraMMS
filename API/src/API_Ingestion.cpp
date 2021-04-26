@@ -77,8 +77,8 @@ void API::ingestion(
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
             validator.validateIngestedRootMetadata(workspace->_workspaceKey, 
-                    requestBodyRoot);
-        
+				requestBodyRoot);
+
             string field = "Type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -88,18 +88,18 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }    
-            string rootType = requestBodyRoot.get(field, "XXX").asString();
+            string rootType = requestBodyRoot.get(field, "").asString();
 
             string rootLabel;
             field = "Label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                rootLabel = requestBodyRoot.get(field, "XXX").asString();
-            }    
-            
+                rootLabel = requestBodyRoot.get(field, "").asString();
+
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
-    
+			// field = "ingestionJobKey";
+			// requestBodyRoot[field] = ingestionRootKey;
+
             field = "Task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -108,9 +108,9 @@ void API::ingestion(
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
-            }    
+            }
             Json::Value taskRoot = requestBodyRoot[field];                        
-            
+
             field = "Type";
             if (!JSONUtils::isMetadataPresent(taskRoot, field))
             {
@@ -120,7 +120,7 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }    
-            string taskType = taskRoot.get(field, "XXX").asString();
+            string taskType = taskRoot.get(field, "").asString();
             
             if (taskType == "GroupOfTasks")
             {
@@ -681,16 +681,37 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 				int previousReferencesRootSize = referencesRoot.size();
 				int dependOnIngestionJobKeysSize = dependOnIngestionJobKeysOverallInput.size();
 
+				_logger->info(__FILEREF__ + "add to referencesRoot all the inherited references"
+					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+					+ ", taskOrGroupOfTasksLabel: " + taskOrGroupOfTasksLabel
+					+ ", previousReferencesRootSize: " + to_string(previousReferencesRootSize)
+					+ ", dependOnIngestionJobKeysSize: " + to_string(dependOnIngestionJobKeysSize)
+					+ ", dependenciesToBeAddedToReferencesAtIndex: "
+						+ to_string(dependenciesToBeAddedToReferencesAtIndex)
+				);
+
 				referencesRoot.resize(previousReferencesRootSize + dependOnIngestionJobKeysSize);
 				for(int index = previousReferencesRootSize - 1;
 					index >= dependenciesToBeAddedToReferencesAtIndex;
 					index--)
+				{
+					_logger->info(__FILEREF__ + "making 'space' in referencesRoot"
+						+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+						+ ", from " + to_string(index) + " to " + to_string(index + dependOnIngestionJobKeysSize)
+					);
+
 					referencesRoot[index + dependOnIngestionJobKeysSize] = referencesRoot[index];
+				}
 
 				for(int index = dependenciesToBeAddedToReferencesAtIndex;
-					index < previousReferencesRootSize + dependOnIngestionJobKeysSize;
+					index < dependenciesToBeAddedToReferencesAtIndex + dependOnIngestionJobKeysSize;
 					index++)
 				{
+					_logger->info(__FILEREF__ + "fill in dependOnIngestionJobKey"
+						+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+						+ ", from " + to_string(index - dependenciesToBeAddedToReferencesAtIndex) + " to " + to_string(index)
+					);
+
 					Json::Value referenceRoot;
 					string addedField = "ReferenceIngestionJobKey";
 					referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(
@@ -761,7 +782,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 // return: ingestionJobKey associated to this task
 vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
+		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
 
 		// dependOnSuccess == 0 -> OnError
 		// dependOnSuccess == 1 -> OnSuccess
@@ -776,13 +797,13 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         string& responseBody)
 {
     string field = "Type";
-    string type = taskRoot.get(field, "XXX").asString();
+    string type = taskRoot.get(field, "").asString();
 
     string taskLabel;
     field = "Label";
     if (JSONUtils::isMetadataPresent(taskRoot, field))
     {
-        taskLabel = taskRoot.get(field, "XXX").asString();
+        taskLabel = taskRoot.get(field, "").asString();
     }
 
 	_logger->info(__FILEREF__ + "Processing SingleTask..."
@@ -1254,204 +1275,6 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		dependOnIngestionJobKeysForStarting,
 		dependOnIngestionJobKeysOverallInput,
 		mapLabelAndIngestionJobKey);
-
-	/*
-	// Generally if the References tag is present, these will be used as references for the Task
-	// In case the References tag is NOT present, inherited references are used
-	// Sometimes, we want to use both, the references coming from the tag and the inherid references.
-	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
-	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
-	// In these case we use the "DependenciesToBeAddedToReferences" parameter.
-	string atTheBeginning = "AtTheBeginning";
-	string atTheEnd = "AtTheEnd";
-
-    string dependenciesToBeAddedToReferences;
-    field = "DependenciesToBeAddedToReferences";
-    if (JSONUtils::isMetadataPresent(parametersRoot, field))
-    {
-		dependenciesToBeAddedToReferences = parametersRoot.get(field, "").asString();
-		if (dependenciesToBeAddedToReferences != atTheBeginning
-				&& dependenciesToBeAddedToReferences != atTheEnd)
-			dependenciesToBeAddedToReferences = "";
-	}
-
-	// initialize referencesRoot
-    bool referencesSectionPresent = false;
-    Json::Value referencesRoot(Json::arrayValue);
-    if (parametersSectionPresent)
-    {
-        field = "References";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            referencesRoot = parametersRoot[field];
-
-            referencesSectionPresent = true;
-        }
-    }
-
-	// manage ReferenceLabel, inside the References Tag, If present ReferenceLabel,
-	// replace it with ReferenceIngestionJobKey
-    if (referencesSectionPresent)
-    {
-        bool referencesChanged = false;
-
-        for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
-        {
-            Json::Value referenceRoot = referencesRoot[referenceIndex];
-
-            field = "ReferenceLabel";
-            if (JSONUtils::isMetadataPresent(referenceRoot, field))
-            {
-                string referenceLabel = referenceRoot.get(field, "XXX").asString();
-
-                if (referenceLabel == "")
-                {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
-						+ ", processing label: " + taskLabel
-						+ ", referenceLabel: " + referenceLabel;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                
-                vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
-                
-                if (ingestionJobKeys.size() == 0)
-                {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
-						+ ", processing label: " + taskLabel
-						+ ", referenceLabel: " + referenceLabel;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                else if (ingestionJobKeys.size() > 1)
-                {
-                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
-                            + ", referenceLabel: " + referenceLabel
-                            + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-
-                field = "ReferenceIngestionJobKey";
-                referenceRoot[field] = ingestionJobKeys.back();
-                
-                referencesRoot[referenceIndex] = referenceRoot;
-                
-                field = "References";
-                parametersRoot[field] = referencesRoot;
-            
-                referencesChanged = true;
-                
-                // The workflow specifies expliticily a reference (input for the task).
-                // Probable this is because the Reference is not part of the
-                // 'dependOnIngestionJobKeysOverallInput' parameter that it is generally
-                // same of 'dependOnIngestionJobKeysForStarting'.
-                // For this reason we have to make sure this Reference is inside
-                // dependOnIngestionJobKeysForStarting in order to avoid the Task starts
-                // when the input is not yet ready
-                vector<int64_t>::iterator itrIngestionJobKey = find(
-                        dependOnIngestionJobKeysForStarting.begin(), dependOnIngestionJobKeysForStarting.end(), 
-                        ingestionJobKeys.back());
-                if (itrIngestionJobKey == dependOnIngestionJobKeysForStarting.end())
-                    dependOnIngestionJobKeysForStarting.push_back(ingestionJobKeys.back());
-            }
-        }
-        
-        // if (referencesChanged)
-        // {
-        //     {
-        //         Json::StreamWriterBuilder wbuilder;
-
-        //         taskMetadata = Json::writeString(wbuilder, parametersRoot);        
-        //     }
-
-            // commented because already logged in mmsEngineDBFacade
-            // _logger->info(__FILEREF__ + "update IngestionJob"
-            //     + ", localDependOnIngestionJobKey: " + to_string(localDependOnIngestionJobKey)
-            //    + ", taskMetadata: " + taskMetadata
-            // );
-
-        //     _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
-        // }
-    }
-
-    _logger->info(__FILEREF__ + "add to referencesRoot all the inherited references?"
-		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-        + ", taskLabel: " + taskLabel
-        + ", IngestionType: " + type
-        + ", parametersSectionPresent: " + to_string(parametersSectionPresent)
-        + ", referencesSectionPresent: " + to_string(referencesSectionPresent)
-        + ", dependenciesToBeAddedToReferences: " + dependenciesToBeAddedToReferences
-        + ", dependOnIngestionJobKeysOverallInput.size(): " + to_string(dependOnIngestionJobKeysOverallInput.size())
-    );
-
-	// add to referencesRoot all the inherited references
-    if ((!referencesSectionPresent || dependenciesToBeAddedToReferences != "")
-			&& dependOnIngestionJobKeysOverallInput.size() > 0)
-    {
-		// Enter here if No References tag is present (so we have to add the inherit input)
-		// OR we want to add dependOnReferences to the Raferences tag
-
-		if (dependenciesToBeAddedToReferences == atTheBeginning)
-		{
-			for (int referenceIndex = dependOnIngestionJobKeysOverallInput.size();
-					referenceIndex > 0; --referenceIndex)
-			{
-				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
-				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
-            
-				// add at the beginning in referencesRoot
-				{
-					int previousSize = referencesRoot.size();
-					referencesRoot.resize(previousSize + 1);
-					for(int index = previousSize; index > 0 ; index--)
-					{
-						referencesRoot[index] = referencesRoot[index - 1];
-					}
-					referencesRoot[0]= referenceRoot;
-				}
-			}
-		}
-		else
-		{
-			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
-			{
-				Json::Value referenceRoot;
-				string addedField = "ReferenceIngestionJobKey";
-				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
-            
-				referencesRoot.append(referenceRoot);
-			}
-		}
-
-        field = "Parameters";
-        string arrayField = "References";
-        parametersRoot[arrayField] = referencesRoot;
-        if (!parametersSectionPresent)
-        {
-            taskRoot[field] = parametersRoot;
-        }
-
-        // {
-        //     Json::StreamWriterBuilder wbuilder;
-
-        //     taskMetadata = Json::writeString(wbuilder, parametersRoot);        
-        // }
-        
-        // commented because already logged in mmsEngineDBFacade
-        // _logger->info(__FILEREF__ + "update IngestionJob"
-        //     + ", localDependOnIngestionJobKey: " + to_string(localDependOnIngestionJobKey)
-        //    + ", taskMetadata: " + taskMetadata
-        // );
-
-        // _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
-    }
-	*/
 
     string taskMetadata;
 
