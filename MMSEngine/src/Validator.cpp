@@ -5286,7 +5286,8 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
         "3gp",
         "3g2",
         "mxf",
-        "ts"
+        "ts",
+        "mts"
     };
 
     string lowerCaseFileFormat;

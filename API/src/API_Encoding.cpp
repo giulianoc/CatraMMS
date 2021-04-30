@@ -892,13 +892,13 @@ void API::addEncodingProfilesSet(
 
                 throw runtime_error(errorMessage);
             }
-            string label = encodingProfilesSetRoot.get(field, "XXX").asString();
-                        
+            string label = encodingProfilesSetRoot.get(field, "").asString();
+
             int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
                     workspace->_workspaceKey, contentType, label);
-            
-            field = "Profiles";
-            Json::Value profilesRoot = encodingProfilesSetRoot[field];
+
+			field = "Profiles";
+			Json::Value profilesRoot = encodingProfilesSetRoot[field];
 
             for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
             {
@@ -917,60 +917,9 @@ void API::addEncodingProfilesSet(
                         + "}"
                         );
             }
-            
-            /*            
-            if (JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
-            {
-                Json::Value profilesRoot = encodingProfilesSetRoot[field];
 
-                for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
-                {
-                    Json::Value profileRoot = profilesRoot[profileIndex];
-
-                    string field = "Label";
-                    if (!JSONUtils::isMetadataPresent(profileRoot, field))
-                    {
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + field;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                    string profileLabel = profileRoot.get(field, "XXX").asString();
-            
-                    MMSEngineDBFacade::EncodingTechnology encodingTechnology;
-                    
-                    if (contentType == MMSEngineDBFacade::ContentType::Image)
-                        encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
-                    else
-                        encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
-                       
-                    string jsonProfile;
-                    {
-                        Json::StreamWriterBuilder wbuilder;
-
-                        jsonProfile = Json::writeString(wbuilder, profileRoot);
-                    }
-                       
-                    int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(
-                        conn, workspace->_workspaceKey, profileLabel,
-                        contentType, encodingTechnology, jsonProfile,
-                        encodingProfilesSetKey);
-                    
-                    if (responseBody != "")
-                        responseBody += string(", ");
-                    responseBody += (
-                            string("{ ") 
-                            + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
-                            + ", \"label\": \"" + profileLabel + "\" "
-                            + "}"
-                            );
-                }
-            }
-            */
-            
             bool commit = true;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
             
             string beginOfResponseBody = string("{ ")
                 + "\"encodingProfilesSet\": { "
@@ -984,7 +933,7 @@ void API::addEncodingProfilesSet(
         catch(runtime_error e)
         {
             bool commit = false;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -995,7 +944,7 @@ void API::addEncodingProfilesSet(
         catch(exception e)
         {
             bool commit = false;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()

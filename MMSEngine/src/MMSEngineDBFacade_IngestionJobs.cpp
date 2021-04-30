@@ -1023,7 +1023,8 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 }
 
 shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
-    shared_ptr<MySQLConnection> conn, bool commit)
+    shared_ptr<MySQLConnection> conn, bool commit,
+	int64_t ingestionRootKey, string processedMetadataContent)
 {
     string      lastSQLCommand;
 
@@ -1036,12 +1037,49 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             + ", commit: " + to_string(commit)
         );
 
+		if (ingestionRootKey != -1)
+        {
+			lastSQLCommand = 
+				"update MMS_IngestionRoot set processedMetaDataContent = ? "
+				"where ingestionRootKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, processedMetadataContent);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", processedMetadataContent: " + processedMetadataContent
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processedMetadataContent: " + processedMetadataContent
+                        + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
         if (commit)
         {
             lastSQLCommand = 
                 "COMMIT";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -3533,7 +3571,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 }
 
 string MMSEngineDBFacade::getIngestionRootMetaDataContent (
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey
+	shared_ptr<Workspace> workspace, int64_t ingestionRootKey, bool processedMetadata
 )
 {    
     string      lastSQLCommand;
@@ -3543,17 +3581,24 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 
     try
     {
-        
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
         {
-            lastSQLCommand = 
-                string("select metaDataContent from MMS_IngestionRoot where workspaceKey = ? and ingestionRootKey = ?");
+			string columnName;
+			if (processedMetadata)
+				columnName = "processedMetaDataContent";
+			else
+				columnName = "metaDataContent";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			lastSQLCommand = 
+				string("select ") + columnName + " from MMS_IngestionRoot "
+				+ "where workspaceKey = ? and ingestionRootKey = ?";
+
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
@@ -3569,7 +3614,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 			);
             if (resultSet->next())
             {
-                metaDataContent = static_cast<string>(resultSet->getString("metaDataContent"));
+                metaDataContent = static_cast<string>(resultSet->getString(columnName));
             }
 			else
             {

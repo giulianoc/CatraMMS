@@ -51,7 +51,7 @@ void API::ingestion(
 
         Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
 
-        string responseBody;    
+        string responseBody;
         shared_ptr<MySQLConnection> conn;
 		bool dbTransactionStarted = false;
 
@@ -97,8 +97,8 @@ void API::ingestion(
 
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
-			// field = "ingestionJobKey";
-			// requestBodyRoot[field] = ingestionRootKey;
+			field = "ingestionRootKey";
+			requestBodyRoot[field] = ingestionRootKey;
 
             field = "Task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -109,7 +109,7 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value taskRoot = requestBodyRoot[field];                        
+            Json::Value& taskRoot = requestBodyRoot[field];                        
 
             field = "Type";
             if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -149,9 +149,16 @@ void API::ingestion(
                         responseBody);            
             }
 
-            bool commit = true;
-            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
-            
+			string processedMetadataContent;
+			{
+				Json::StreamWriterBuilder wbuilder;
+				processedMetadataContent = Json::writeString(wbuilder, requestBodyRoot);
+			}
+
+			bool commit = true;
+			_mmsEngineDBFacade->endIngestionJobs(conn, commit,
+				ingestionRootKey, processedMetadataContent);
+
             string beginOfResponseBody = string("{ ")
                 + "\"workflow\": { "
                     + "\"ingestionRootKey\": " + to_string(ingestionRootKey)
@@ -166,7 +173,7 @@ void API::ingestion(
 			if (dbTransactionStarted)
 			{
 				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 			}
 
             _logger->error(__FILEREF__ + "Ingestion locked"
@@ -180,7 +187,7 @@ void API::ingestion(
 			if (dbTransactionStarted)
 			{
 				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 			}
 
             _logger->error(__FILEREF__ + "request body parsing failed"
@@ -194,7 +201,7 @@ void API::ingestion(
 			if (dbTransactionStarted)
 			{
 				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit);
+				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 			}
 
             _logger->error(__FILEREF__ + "request body parsing failed"
@@ -258,7 +265,8 @@ void API::ingestion(
     }
 }
 
-Json::Value API::manageWorkflowVariables(string requestBody, Json::Value variablesValuesToBeUsedRoot)
+Json::Value API::manageWorkflowVariables(string requestBody,
+	Json::Value variablesValuesToBeUsedRoot)
 {
 	Json::Value requestBodyRoot;
 
@@ -782,7 +790,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 // return: ingestionJobKey associated to this task
 vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
-		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
+		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value& taskRoot, 
 
 		// dependOnSuccess == 0 -> OnError
 		// dependOnSuccess == 1 -> OnSuccess
@@ -851,7 +859,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 			else // if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
 			{
-				string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "XXX").asString();
+				string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "").asString();
         
 				encodingProfilesSetReference = encodingProfilesSetLabel;
             
@@ -877,7 +885,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "EncodingPriority";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				encodingPriority = parametersRoot.get(field, "XXX").asString();
+				encodingPriority = parametersRoot.get(field, "").asString();
 				/*
 				string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
 				MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
@@ -907,9 +915,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             
 				field = "Type";
 				newTaskRoot[field] = "Encode";
-            
+
 				Json::Value newParametersRoot;
-            
+
 				field = "References";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
@@ -1355,10 +1363,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         + ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
     );
 
-    int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
-            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
-			MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
-            dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
+	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
+		workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
+		MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
+		dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
+	field = "ingestionJobKey";
+	taskRoot[field] = localDependOnIngestionJobKeyExecution;
 
 	_logger->info(__FILEREF__ + "Save Label..."
 		+ ", ingestionRootKey: " + to_string(ingestionRootKey)
@@ -1399,7 +1409,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-	Json::Value groupOfTasksRoot, 
+	Json::Value& groupOfTasksRoot, 
 	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
 	vector<int64_t> dependOnIngestionJobKeysOverallInput,
 	unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
@@ -1412,7 +1422,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	string field = "Label";
 	if (JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
 	{
-		groupOfTaskLabel = groupOfTasksRoot.get(field, "XXX").asString();
+		groupOfTaskLabel = groupOfTasksRoot.get(field, "").asString();
 	}
 
 	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
@@ -1422,7 +1432,6 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 	// initialize parametersRoot
     field = "Parameters";
-    Json::Value parametersRoot;
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1431,7 +1440,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         throw runtime_error(errorMessage);
     }
-    parametersRoot = groupOfTasksRoot[field];
+    Json::Value& parametersRoot = groupOfTasksRoot[field];
 
     bool parallelTasks;
     
@@ -1444,7 +1453,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         throw runtime_error(errorMessage);
     }
-    string executionType = parametersRoot.get(field, "XXX").asString();
+    string executionType = parametersRoot.get(field, "").asString();
     if (executionType == "parallel")
         parallelTasks = true;
     else if (executionType == "sequential")
@@ -1467,7 +1476,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
         throw runtime_error(errorMessage);
     }
-    Json::Value tasksRoot = parametersRoot[field];
+    Json::Value& tasksRoot = parametersRoot[field];
 
 	/* 2021-02-20: A group that does not have any Task couls be a scenario,
 	 * so we do not have to raise an error. Same check commented in Validation.cpp
@@ -1496,7 +1505,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	//		So dependOnSuccessForTasks = -1 (OnComplete)
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
-        Json::Value taskRoot = tasksRoot[taskIndex];
+        Json::Value& taskRoot = tasksRoot[taskIndex];
 
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -1778,6 +1787,8 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
 			dependOnSuccess,
 			waitForGlobalIngestionJobKeys);
+	field = "ingestionJobKey";
+	groupOfTasksRoot[field] = localDependOnIngestionJobKeyExecution;
 
 	// for each group of tasks child, the group of tasks (parent) IngestionJobKey is set
 	{
@@ -1850,7 +1861,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-        Json::Value taskOrGroupOfTasksRoot, 
+        Json::Value& taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
         vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
         vector<int64_t>& referencesOutputIngestionJobKeys,
@@ -1861,7 +1872,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     string field = "OnSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
+        Json::Value& onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
@@ -1872,7 +1883,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onSuccessRoot[field];                        
+        Json::Value& taskRoot = onSuccessRoot[field];                        
 
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -1926,7 +1937,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     field = "OnError";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
+        Json::Value& onErrorRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
@@ -1937,7 +1948,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onErrorRoot[field];                        
+        Json::Value& taskRoot = onErrorRoot[field];                        
 
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -1948,7 +1959,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -1991,7 +2002,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     field = "OnComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
+        Json::Value& onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
         field = "Task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
@@ -2002,7 +2013,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onCompleteRoot[field];                        
+        Json::Value& taskRoot = onCompleteRoot[field];                        
 
         string field = "Type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -2013,7 +2024,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 
             throw runtime_error(errorMessage);
         }    
-        string taskType = taskRoot.get(field, "XXX").asString();
+        string taskType = taskRoot.get(field, "").asString();
 
 		vector<int64_t> localIngestionJobKeys;
         if (taskType == "GroupOfTasks")
@@ -3388,9 +3399,15 @@ void API::ingestionRootMetaDataContent(
 		}
 		ingestionRootKey = stoll(ingestionRootKeyIt->second);
 
+		bool processedMetadata = false;
+		auto processedMetadataIt = queryParameters.find("processedMetadata");
+		if (processedMetadataIt != queryParameters.end() && processedMetadataIt->second != "")
+			processedMetadata = (processedMetadataIt->second == "true" ? true : false);
+
         {
-            string ingestionRootMetaDataContent = _mmsEngineDBFacade->getIngestionRootMetaDataContent(
-                    workspace, ingestionRootKey);
+            string ingestionRootMetaDataContent =
+				_mmsEngineDBFacade->getIngestionRootMetaDataContent(
+				workspace, ingestionRootKey, processedMetadata);
 
             sendSuccess(request, 200, ingestionRootMetaDataContent);
         }

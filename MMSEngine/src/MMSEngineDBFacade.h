@@ -1395,7 +1395,8 @@ public:
 		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
 
     shared_ptr<MySQLConnection> endIngestionJobs (
-        shared_ptr<MySQLConnection> conn, bool commit);
+        shared_ptr<MySQLConnection> conn, bool commit,
+		int64_t ingestionRootKey, string processedMetadataContent);
 
     /*
     void updateIngestionJob (
@@ -1445,7 +1446,8 @@ public:
         bool sourceBinaryTransferred);
 
 	string getIngestionRootMetaDataContent (
-        shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
+		shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+		bool processedMetadata);
 
 	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 		getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey);

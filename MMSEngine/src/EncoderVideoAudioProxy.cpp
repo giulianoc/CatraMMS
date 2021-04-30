@@ -2272,6 +2272,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							+ "_" 
 							+ to_string(encodingProfileKey);
 
+						/*
 						if (fileFormatLowerCase == "mp4")
 							encodedFileName.append(".mp4");
 						else if (fileFormatLowerCase == "mov")
@@ -2296,6 +2297,15 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
+						}
+						*/
+						if (fileFormatLowerCase == "hls"
+							|| fileFormatLowerCase == "dash")
+							;
+						else
+						{
+							encodedFileName.append(".");
+							encodedFileName.append(fileFormatLowerCase);
 						}
 					}
 

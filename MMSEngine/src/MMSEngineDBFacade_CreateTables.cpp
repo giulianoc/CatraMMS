@@ -753,6 +753,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else if (fileFormatLowerCase == "ts")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								else if (fileFormatLowerCase == "mts")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else if (fileFormatLowerCase == "mkv")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else
@@ -1108,6 +1110,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "metaDataContent			MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
+                    "processedMetaDataContent	MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,"
                     "ingestionDate              DATETIME NOT NULL,"
                     "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"

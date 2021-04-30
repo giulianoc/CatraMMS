@@ -6828,11 +6828,16 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 		ffmpegExecuteCommand =
 			_ffmpegPath + "/ffmpeg "
 			+ "-f concat -safe 0 -i " + concatenationListPathName + " "
-			// -map 0:v and -map 0:a is to get all video-audio tracks
-			+ "-map 0:v -c:v copy -map 0:a -c:a copy "
-			+ concatenatedMediaPathName + " "
+		;
+		bool allVideoAudioTracks = true;
+		if (allVideoAudioTracks)
+			ffmpegExecuteCommand += "-map 0:v -c:v copy -map 0:a -c:a copy ";
+		else
+			ffmpegExecuteCommand += "-c copy ";
+		ffmpegExecuteCommand +=
+			(concatenatedMediaPathName + " "
 			+ "> " + _outputFfmpegPathFileName + " "
-			+ "2>&1"
+			+ "2>&1")
 		;
 	}
 	else
@@ -6840,11 +6845,16 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 		ffmpegExecuteCommand =
 			_ffmpegPath + "/ffmpeg "
 			+ "-f concat -safe 0 -i " + concatenationListPathName + " "
-			// -map 0:a is to get all audio tracks
-			+ "-map 0:a -c:a copy "
-			+ concatenatedMediaPathName + " "
+		;
+		bool allVideoAudioTracks = true;
+		if (allVideoAudioTracks)
+			ffmpegExecuteCommand += "-map 0:a -c:a copy ";
+		else
+			ffmpegExecuteCommand += "-c copy ";
+		ffmpegExecuteCommand +=
+			(concatenatedMediaPathName + " "
 			+ "> " + _outputFfmpegPathFileName + " "
-			+ "2>&1"
+			+ "2>&1")
 		;
 	}
 
@@ -11460,6 +11470,8 @@ void FFMpeg::changeFileFormat(
 			+ "-i " + sourcePhysicalPath + " "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
             + "-map 0:v -c:v copy -map 0:a -c:a copy "
+			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
+			+ "-q 0 "
 			+ destinationPathName + " "
 			+ "> " + _outputFfmpegPathFileName + " "
 			+ "2>&1"
@@ -12268,11 +12280,12 @@ void FFMpeg::settingFfmpegParameters(
         {
             httpStreamingFileFormat = "";
 
-			if (fileFormatLowerCase == "ts")
+			if (fileFormatLowerCase == "ts" || fileFormatLowerCase == "mts")
 			{
 				// if "-f ts filename.ts" is added the following error happens:
 				//		...Requested output format 'ts' is not a suitable output format
 				// Without "-f ts", just filename.ts works fine
+				// Same for mts
 				ffmpegFileFormatParameter = "";
 			}
 			else
@@ -13068,6 +13081,7 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
 		&& fileFormatLowerCase != "hls"
 		&& fileFormatLowerCase != "dash"
 		&& fileFormatLowerCase != "ts"
+		&& fileFormatLowerCase != "mts"
 		&& fileFormatLowerCase != "mkv"
 	)
     {

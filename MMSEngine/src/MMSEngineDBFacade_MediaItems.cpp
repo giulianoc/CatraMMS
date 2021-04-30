@@ -1237,7 +1237,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         
 			// getMediaItemsList_withTagsCheck creates a temporary table
 			resultSetAndNumFound = getMediaItemsList_withTagsCheck (
-					conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey, start, rows,
+					conn, workspaceKey, temporaryTableName, newMediaItemKey, otherMediaItemsKey,
+					start, rows,
 					contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
 					title, liveRecordingChunk, jsonCondition,
@@ -2644,7 +2645,8 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
            			+ orderByCondition
            			+ "limit ? offset ?";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);

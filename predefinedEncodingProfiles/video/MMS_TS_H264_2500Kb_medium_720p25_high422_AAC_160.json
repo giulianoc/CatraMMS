@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_TS_H264_2500Kb_medium_720p25_high422_AAC_160",
+	"FileFormat" : "ts",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "high422",
+		"Width" : 1280,
+		"Height" : 720,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 2500,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
+	}
+}
