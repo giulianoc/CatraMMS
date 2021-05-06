@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_MTS_H264_2500Kb_medium_1080p25_Main_AAC_160",
+	"FileFormat" : "mts",
+	"Video" :
+	{
+		"Codec" : "libx264",
+		"Profile" : "main",
+		"Width" : 1920,
+		"Height" : 1080,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 2500,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
+	}
+}

@@ -249,6 +249,9 @@ public:
 		string channelType,
         string liveURL,
 		int listenTimeoutInSeconds,
+		int captureLive_frameRate,
+		int captureLive_width,
+		int captureLive_height,
 
 		string userAgent,
         time_t utcRecordingPeriodStart, 
@@ -325,6 +328,11 @@ public:
 		string liveURL,
 		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
+
+		// parameters used only in case channelType is CaptureLive
+		int captureLive_frameRate,
+		int captureLive_width,
+		int captureLive_height,
 
 		string userAgent,
 		string otherInputOptions,

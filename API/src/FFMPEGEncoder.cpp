@@ -4992,8 +4992,21 @@ void FFMPEGEncoder::liveRecorderThread(
 		liveRecording->_channelLabel =  liveRecording->_liveRecorderParametersRoot.get("ConfigurationLabel", "").asString();
 
         liveRecording->_channelType = liveRecording->_liveRecorderParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
-		int listenTimeoutInSeconds = liveRecording->
+		int ipMMSAsServer_listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
+
+		int captureLive_frameRate = 0;
+		int captureLive_width = 0;
+		int captureLive_height = 0;
+		if (liveRecording->_channelType == "CaptureLive")
+		{
+			Json::Value captureLiveRoot =
+				(liveRecording->_liveRecorderParametersRoot)["CaptureLive"];
+
+			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", 25);
+			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
+			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+		}
 
         string liveURL;
 		if (liveRecording->_channelType == "Satellite")
@@ -5132,7 +5145,8 @@ void FFMPEGEncoder::liveRecorderThread(
 		// receives the stream and we do not know what it happens.
 		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 		if (liveRecording->_channelType == "IP_MMSAsServer")
-			liveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(listenTimeoutInSeconds);
+			liveRecording->_recordingStart = chrono::system_clock::now() +
+				chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 		else
 			liveRecording->_recordingStart = chrono::system_clock::now();
 
@@ -5147,7 +5161,10 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			liveRecording->_channelType,
 			StringUtils::trimTabToo(liveURL),
-			listenTimeoutInSeconds,
+			ipMMSAsServer_listenTimeoutInSeconds,
+			captureLive_frameRate,
+			captureLive_width,
+			captureLive_height,
 
 			userAgent,
 			utcRecordingPeriodStart,
@@ -8430,8 +8447,20 @@ void FFMPEGEncoder::liveProxyThread(
 		// string rtmpUrl = liveProxy->_ingestedParametersRoot.get("RtmpUrl", "").asString();
 
 		liveProxy->_channelType = liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
-		int listenTimeoutInSeconds = liveProxy->
+		int ipMMSAsServer_listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
+		int captureLive_frameRate = 0;
+		int captureLive_width = 0;
+		int captureLive_height = 0;
+		if (liveProxy->_channelType == "CaptureLive")
+		{
+			Json::Value captureLiveRoot =
+				(liveProxy->_ingestedParametersRoot)["CaptureLive"];
+
+			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", 25);
+			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
+			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+		}
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -8561,7 +8590,8 @@ void FFMPEGEncoder::liveProxyThread(
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 			if (liveProxy->_channelType == "IP_MMSAsServer")
-				liveProxy->_proxyStart = chrono::system_clock::now() + chrono::seconds(listenTimeoutInSeconds);
+				liveProxy->_proxyStart = chrono::system_clock::now() +
+					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 			else
 				liveProxy->_proxyStart = chrono::system_clock::now();
 
@@ -8571,7 +8601,10 @@ void FFMPEGEncoder::liveProxyThread(
 				maxWidth,
 				liveProxy->_channelType,
 				StringUtils::trimTabToo(liveURL),
-				listenTimeoutInSeconds,
+				ipMMSAsServer_listenTimeoutInSeconds,
+				captureLive_frameRate,
+				captureLive_width,
+				captureLive_height,
 				userAgent,
 				otherInputOptions,
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,

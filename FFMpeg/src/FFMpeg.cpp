@@ -7581,13 +7581,21 @@ void FFMpeg::liveRecorder(
 		string segmentListPathName,
 		string recordedFileNamePrefix,
 
-		// if actAsServer (true) means the liveURL should be like rtmp://<local transcoder IP to bind>:<port>
+		// if channelType is IP_MMSAsServer means the liveURL should be like
+		//		rtmp://<local transcoder IP to bind>:<port>
 		//		listening for an incoming connection
-		// if actAsServer (false) means the liveURL is "any thing" referring a stream
-		string channelType,	// IP, Satellite, IP_MMSAsServer
+		// else if channelType is CaptureLive means the liveURL should be like
+		//		/dev/video0
+		// else means the liveURL is "any thing" referring a stream
+		string channelType,	// IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive
         string liveURL,
-		// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
+		// Used only in case channelType is IP_MMSAsServer, Maximum time to wait for the incoming connection
 		int listenTimeoutInSeconds,
+
+		// parameters used only in case channelType is CaptureLive
+		int captureLive_frameRate,
+		int captureLive_width,
+		int captureLive_height,
 
 		string userAgent,
         time_t utcRecordingPeriodStart, 
@@ -7619,6 +7627,9 @@ void FFMpeg::liveRecorder(
 		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
+		+ ", captureLive_width: " + to_string(captureLive_width)
+		+ ", captureLive_height: " + to_string(captureLive_height)
 
 		+ ", userAgent: " + userAgent
 		+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
@@ -7646,13 +7657,9 @@ void FFMpeg::liveRecorder(
 		*/
 	);
 
-#ifdef __EXECUTE__
-	string ffmpegExecuteCommand;
-#else
 	vector<string> ffmpegArgumentList;
 	ostringstream ffmpegArgumentListStream;
 	int iReturnedStatus = 0;
-#endif
 	string segmentListPath;
 	chrono::system_clock::time_point startFfmpegCommand;
 	chrono::system_clock::time_point endFfmpegCommand;
@@ -7856,6 +7863,19 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList.push_back("-timeout");
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
+		}
+		else if (channelType == "CaptureLive")
+		{
+			// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
+			ffmpegArgumentList.push_back("-f");
+			ffmpegArgumentList.push_back("v4l2");
+
+			ffmpegArgumentList.push_back("-framerate");
+			ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+
+			ffmpegArgumentList.push_back("-video_size");
+			ffmpegArgumentList.push_back(
+				to_string(captureLive_width) + "x" + to_string(captureLive_height));
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
@@ -8173,22 +8193,6 @@ void FFMpeg::liveRecorder(
 
         startFfmpegCommand = chrono::system_clock::now();
 
-	#ifdef __EXECUTE__
-        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-	#else
 		bool redirectionStdOutput = true;
 		bool redirectionStdError = true;
 
@@ -8210,25 +8214,15 @@ void FFMpeg::liveRecorder(
 
             throw runtime_error(errorMessage);
         }
-	#endif
         
         endFfmpegCommand = chrono::system_clock::now();
 
-	#ifdef __EXECUTE__
-        _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-        );
-	#else
         _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
-	#endif
 
 		if (endFfmpegCommand - startFfmpegCommand < chrono::seconds(utcRecordingPeriodEnd - utcNow - 60))
 		{
@@ -8310,15 +8304,6 @@ void FFMpeg::liveRecorder(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		#ifdef __EXECUTE__
-			string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-			;
-		#else
 			string errorMessage;
 			if (iReturnedStatus == 9)	// 9 means: SIGKILL
 				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -8338,7 +8323,6 @@ void FFMpeg::liveRecorder(
 					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 					+ ", e.what(): " + e.what()
 				;
-		#endif
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
@@ -8482,13 +8466,21 @@ void FFMpeg::liveProxy(
 	int64_t encodingJobKey,
 	int maxWidth,
 
-	// if actAsServer (true) means the liveURL should be like rtmp://<local IP to bind>:<port>
+	// if channelType is IP_MMSAsServer means the liveURL is like
+	//		rtmp://<local IP to bind>:<port>
 	//		listening for an incoming connection
-	// if actAsServer (false) means the liveURL is "any thing" referring a stream
+	// else if channelType is CaptureLive means the liveURL is like
+	//		/dev/video0
+	// else liveURL is "any thing" referring a stream
 	string channelType,
 	string liveURL,
 	// Used only in case actAsServer is true, Maximum time to wait for the incoming connection
 	int listenTimeoutInSeconds,
+
+	// parameters used only in case channelType is CaptureLive
+	int captureLive_frameRate,
+	int captureLive_width,
+	int captureLive_height,
 
 	string userAgent,
 	string otherInputOptions,
@@ -8526,6 +8518,9 @@ void FFMpeg::liveProxy(
 		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
+		+ ", captureLive_width: " + to_string(captureLive_width)
+		+ ", captureLive_height: " + to_string(captureLive_height)
 		+ ", userAgent: " + userAgent
 		+ ", otherInputOptions: " + otherInputOptions
 		+ ", timePeriod: " + to_string(timePeriod)
@@ -8824,6 +8819,19 @@ void FFMpeg::liveProxy(
 				ffmpegArgumentList.push_back("-timeout");
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
+		}
+		else if (channelType == "CaptureLive")
+		{
+			// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
+			ffmpegArgumentList.push_back("-f");
+			ffmpegArgumentList.push_back("v4l2");
+
+			ffmpegArgumentList.push_back("-framerate");
+			ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+
+			ffmpegArgumentList.push_back("-video_size");
+			ffmpegArgumentList.push_back(
+				to_string(captureLive_width) + "x" + to_string(captureLive_height));
 		}
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);

@@ -9427,11 +9427,21 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		string channelType;
 		int64_t deliveryCode;
+
 		string actAsServerProtocol;
 		string actAsServerBindIP;
 		int actAsServerPort;
 		string actAsServerURI;
+
 		string configurationLabel;
+
+		string captureLive_deviceName;
+		/*
+		int captureLive_frameRate;
+		int captureLive_width;
+		int captureLive_height;
+		*/
+
 		string encodersPool;
 		string userAgent;
         string recordingPeriodStart;
@@ -9483,7 +9493,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				}
 				configurationLabel = parametersRoot.get(field, "XXX").asString();
 			}
-			else // if (channelType == "IP_MMSAsServer")
+			else if (channelType == "IP_MMSAsServer")
 			{
 				field = "ActAsServerProtocol";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -9532,6 +9542,65 @@ void MMSEngineProcessor::manageLiveRecorder(
 					throw runtime_error(errorMessage);
 				}
 				actAsServerURI = parametersRoot.get(field, "").asString();
+			}
+			else if (channelType == "CaptureLive")
+			{
+				field = "CaptureLive";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				Json::Value captureLiveRoot = parametersRoot[field];
+
+				field = "DeviceName";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
+
+				/*
+				field = "FrameRate";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+					captureLive_frameRate = 25;
+				else
+					captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, field, 25);
+
+				field = "Width";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_width = JSONUtils::asInt(captureLiveRoot, field, 0);
+
+				field = "Height";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_height = JSONUtils::asInt(captureLiveRoot, field, 0);
+				*/
 			}
 
             field = "EncodersPool";
@@ -9742,10 +9811,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		}
-		else // if (channelType == "IP_MMSAsServer")
+		else if (channelType == "IP_MMSAsServer")
 		{
 			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
 				+ ":" + to_string(actAsServerPort) + actAsServerURI;
+		}
+		else if (channelType == "CaptureLive")
+		{
+			liveURL = "/dev/" + captureLive_deviceName;
 		}
 
 		string monitorManifestDirectoryPath;
@@ -9773,7 +9846,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
 			}
-			else // if (channelType == "IP_MMSAsServer")
+			else if (channelType == "IP_MMSAsServer")
+			{
+				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+					_mmsEngineDBFacade, to_string(deliveryCode),
+					workspace);
+
+				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+			}
+			else if (channelType == "CaptureLive")
 			{
 				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 					_mmsEngineDBFacade, to_string(deliveryCode),
@@ -9913,11 +9994,21 @@ void MMSEngineProcessor::manageLiveProxy(
 		*/
 
 		string channelType;
+
 		string actAsServerProtocol;
 		string actAsServerBindIP;
 		int actAsServerPort;
 		string actAsServerURI;
+
 		string configurationLabel;
+
+		string captureLive_deviceName;
+		/*
+		int captureLive_frameRate;
+		int captureLive_width;
+		int captureLive_height;
+		*/
+
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
 		long maxAttemptsNumberInCaseOfErrors;
 		Json::Value outputsRoot;
@@ -10008,6 +10099,65 @@ void MMSEngineProcessor::manageLiveProxy(
 					throw runtime_error(errorMessage);
 				}
 				actAsServerURI = parametersRoot.get(field, "").asString();
+			}
+			else if (channelType == "CaptureLive")
+			{
+				field = "CaptureLive";
+				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				Json::Value captureLiveRoot = parametersRoot[field];
+
+				field = "DeviceName";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
+
+				/*
+				field = "FrameRate";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+					captureLive_frameRate = 25;
+				else
+					captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, field, 25);
+
+				field = "Width";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_width = JSONUtils::asInt(captureLiveRoot, field, 0);
+
+				field = "Height";
+				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				captureLive_height = JSONUtils::asInt(captureLiveRoot, field, 0);
+				*/
 			}
 
 			timePeriod = false;
@@ -10108,10 +10258,14 @@ void MMSEngineProcessor::manageLiveProxy(
 			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
 		}
-		else // if (channelType == "IP_MMSAsServer)
+		else if (channelType == "IP_MMSAsServer")
 		{
 			liveURL = actAsServerProtocol + "://" + actAsServerBindIP
 				+ ":" + to_string(actAsServerPort) + actAsServerURI;
+		}
+		else if (channelType == "CaptureLive")
+		{
+			liveURL = "/dev/" + captureLive_deviceName;
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);
@@ -10203,7 +10357,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
-					else // if (channelType == "IP_MMSAsServer")
+					else if (channelType == "IP_MMSAsServer")
 					{
 						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
 							_mmsEngineDBFacade, to_string(deliveryCode),
@@ -10211,7 +10365,14 @@ void MMSEngineProcessor::manageLiveProxy(
 
 						manifestFileName = to_string(deliveryCode) + ".m3u8";
 					}
+					else if (channelType == "CaptureLive")
+					{
+						manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+							_mmsEngineDBFacade, to_string(deliveryCode),
+							workspace);
 
+						manifestFileName = to_string(deliveryCode) + ".m3u8";
+					}
 
 					/*
 						manifestFilePathName = _mmsStorage->getLiveDeliveryAssetPathName(

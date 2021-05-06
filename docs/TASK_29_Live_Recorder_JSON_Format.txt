@@ -14,7 +14,7 @@
 	// - IngestionJobLabel, string, ingestion job label of the Live Recorder
 	"Parameters": {
 
-		// optional, possible values: IP_MMSAsClient, Satellite or IP_MMSAsServer.
+		// optional, possible values: IP_MMSAsClient, Satellite, IP_MMSAsServer or CaptureLive
 		//	Default is IP_MMSAsClient
 		"ChannelType": "IP_MMSAsClient",
 
@@ -35,6 +35,21 @@
 		//	- if channelType is IP, it refers an IP Channel Configuration
 		//	- if channelType is Satellite, it refers a Satellite Channel Configuration
 		"ConfigurationLabel": "",
+
+		// mandatory only if ChannelType is CaptureLive
+		"CaptureLive": {
+			// mandatory, live input device, i.e.: video0
+			"DeviceName": "video0",
+
+			// optional, live input framerate, default: 25
+			"FrameRate": 25,
+
+			// mandatory, live input width
+			"Width": 640,
+
+			// mandatory, live input height
+			"Height": 640
+		}
 
 		// mandatory
 		//	It identifies this specific recording. In case for example

@@ -3233,7 +3233,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		if (!isChannelTypeValid(channelType))
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
-                + "IP, Satellite or IP_MMSAsServer"
+                + "IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive"
                 + ")"
                 + ", Field: " + field
                 + ", channelType: " + channelType
@@ -3281,7 +3281,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			throw runtime_error(errorMessage);
 		}
 	}
-	else // if (channelType == "IP_MMSAsServer")
+	else if (channelType == "IP_MMSAsServer")
 	{
 		vector<string> mandatoryFields = {
 			"ActAsServerProtocol",
@@ -3292,6 +3292,48 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		for (string mandatoryField: mandatoryFields)
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+          
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (channelType == "CaptureLive")
+	{
+		field = "CaptureLive";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+               ;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value captureLiveRoot = parametersRoot[field];
+
+		vector<string> mandatoryFields = {
+			"DeviceName",
+			"Width",
+			"Height"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(captureLiveRoot, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -3539,6 +3581,48 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		for (string mandatoryField: mandatoryFields)
 		{
 			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			{
+				Json::StreamWriterBuilder wbuilder;
+				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+          
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + mandatoryField
+					+ ", sParametersRoot: " + sParametersRoot
+					+ ", label: " + label
+					;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	else if (channelType == "CaptureLive")
+	{
+		field = "CaptureLive";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + field
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+               ;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		Json::Value captureLiveRoot = parametersRoot[field];
+
+		vector<string> mandatoryFields = {
+			"DeviceName",
+			"Width",
+			"Height"
+		};
+		for (string mandatoryField: mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(captureLiveRoot, mandatoryField))
 			{
 				Json::StreamWriterBuilder wbuilder;
 				string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
@@ -5421,7 +5505,8 @@ bool Validator::isChannelTypeValid(string channelType)
     vector<string> validChannelTypes = {
         "IP_MMSAsClient",
         "Satellite",
-		"IP_MMSAsServer"
+		"IP_MMSAsServer",
+		"CaptureLive"
     };
 
     for (string validChannelType: validChannelTypes)
