@@ -28,6 +28,10 @@ if [ "$deploy" == "y" ]; then
 	echo "mms-t-transcoder-fr-1"
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
 	date
+
+	echo "192.168.0.121"
+	scp /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.121:/opt/catramms
+	date
 fi
 
 echo -n "deploy su rsis-lab-mmst? " 

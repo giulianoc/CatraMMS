@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_MP4_H264_2000Kb_veryfast_720p25_Main_AAC_92",
+	"FileFormat" : "mp4",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "main",
+		"Width" : 1280,
+		"Height" : 720,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 2000,
+		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 92,
+		"ChannelsNumber": 2
+	}
+}
