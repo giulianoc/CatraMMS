@@ -3327,9 +3327,10 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		Json::Value captureLiveRoot = parametersRoot[field];
 
 		vector<string> mandatoryFields = {
-			"DeviceName",
+			"VideoDeviceName",
 			"Width",
-			"Height"
+			"Height",
+			"AudioDeviceName"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -3616,9 +3617,10 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		Json::Value captureLiveRoot = parametersRoot[field];
 
 		vector<string> mandatoryFields = {
-			"DeviceName",
+			"VideoDeviceName",
 			"Width",
-			"Height"
+			"Height",
+			"AudioDeviceName"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{

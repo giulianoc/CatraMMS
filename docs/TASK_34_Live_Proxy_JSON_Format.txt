@@ -31,8 +31,8 @@
 
 		// mandatory only if ChannelType is CaptureLive
 		"CaptureLive": {
-			// mandatory, live input device, i.e.: video0
-			"DeviceName": "video0",
+			// mandatory, video live input device, i.e.: 0
+			"VideoDeviceNumber": 0,
 
 			// optional, live input framerate, default: 25
 			"FrameRate": 25,
@@ -41,7 +41,10 @@
 			"Width": 640,
 
 			// mandatory, live input height
-			"Height": 640
+			"Height": 640,
+
+			// mandatory, audio live input device, i.e.: 0 or 1 or ...
+			"AudioDeviceNumber": 0
 		}
 
 		// optional. To be set with the EncodersPool label only in case 

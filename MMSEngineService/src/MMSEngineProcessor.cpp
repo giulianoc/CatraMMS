@@ -9435,13 +9435,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		string configurationLabel;
 
-		string captureLive_deviceName;
-		/*
-		int captureLive_frameRate;
-		int captureLive_width;
-		int captureLive_height;
-		*/
-
 		string encodersPool;
 		string userAgent;
         string recordingPeriodStart;
@@ -9545,6 +9538,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			else if (channelType == "CaptureLive")
 			{
+				/*
 				field = "CaptureLive";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
@@ -9570,7 +9564,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 				}
 				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
 
-				/*
 				field = "FrameRate";
 				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
 					captureLive_frameRate = 25;
@@ -9818,7 +9811,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 		else if (channelType == "CaptureLive")
 		{
-			liveURL = "/dev/" + captureLive_deviceName;
+			// liveURL = "/dev/" + captureLive_deviceName;
 		}
 
 		string monitorManifestDirectoryPath;
@@ -10002,8 +9995,8 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		string configurationLabel;
 
-		string captureLive_deviceName;
 		/*
+		string captureLive_deviceName;
 		int captureLive_frameRate;
 		int captureLive_width;
 		int captureLive_height;
@@ -10102,6 +10095,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 			else if (channelType == "CaptureLive")
 			{
+				/*
 				field = "CaptureLive";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
@@ -10127,7 +10121,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 				captureLive_deviceName = captureLiveRoot.get(field, "").asString();
 
-				/*
 				field = "FrameRate";
 				if (!JSONUtils::isMetadataPresent(captureLiveRoot, field))
 					captureLive_frameRate = 25;
@@ -10265,7 +10258,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		}
 		else if (channelType == "CaptureLive")
 		{
-			liveURL = "/dev/" + captureLive_deviceName;
+			// liveURL = "/dev/" + captureLive_deviceName;
 		}
 
 		Json::Value localOutputsRoot(Json::arrayValue);

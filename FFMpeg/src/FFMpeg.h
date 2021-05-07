@@ -249,9 +249,11 @@ public:
 		string channelType,
         string liveURL,
 		int listenTimeoutInSeconds,
+		int captureLive_videoDeviceNumber,
 		int captureLive_frameRate,
 		int captureLive_width,
 		int captureLive_height,
+		int captureLive_audioDeviceNumber,
 
 		string userAgent,
         time_t utcRecordingPeriodStart, 
@@ -330,9 +332,11 @@ public:
 		int listenTimeoutInSeconds,
 
 		// parameters used only in case channelType is CaptureLive
+		int captureLive_videoDeviceNumber,
 		int captureLive_frameRate,
 		int captureLive_width,
 		int captureLive_height,
+		int captureLive_audioDeviceNumber,
 
 		string userAgent,
 		string otherInputOptions,

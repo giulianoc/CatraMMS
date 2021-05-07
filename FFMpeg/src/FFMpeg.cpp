@@ -7584,8 +7584,7 @@ void FFMpeg::liveRecorder(
 		// if channelType is IP_MMSAsServer means the liveURL should be like
 		//		rtmp://<local transcoder IP to bind>:<port>
 		//		listening for an incoming connection
-		// else if channelType is CaptureLive means the liveURL should be like
-		//		/dev/video0
+		// else if channelType is CaptureLive, liveURL is not used
 		// else means the liveURL is "any thing" referring a stream
 		string channelType,	// IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive
         string liveURL,
@@ -7593,9 +7592,11 @@ void FFMpeg::liveRecorder(
 		int listenTimeoutInSeconds,
 
 		// parameters used only in case channelType is CaptureLive
+		int captureLive_videoDeviceNumber,
 		int captureLive_frameRate,
 		int captureLive_width,
 		int captureLive_height,
+		int captureLive_audioDeviceNumber,
 
 		string userAgent,
         time_t utcRecordingPeriodStart, 
@@ -7627,9 +7628,11 @@ void FFMpeg::liveRecorder(
 		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
 		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
 		+ ", captureLive_width: " + to_string(captureLive_width)
 		+ ", captureLive_height: " + to_string(captureLive_height)
+		+ ", captureLive_audioDeviceNumber: " + to_string(captureLive_audioDeviceNumber)
 
 		+ ", userAgent: " + userAgent
 		+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
@@ -7853,6 +7856,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-user_agent");
 			ffmpegArgumentList.push_back(userAgent);
 		}
+
 		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-listen");
@@ -7863,22 +7867,47 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList.push_back("-timeout");
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
+
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(liveURL);
+		}
+		else if (channelType == "IP_MMSAsClient")
+		{
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(liveURL);
 		}
 		else if (channelType == "CaptureLive")
 		{
-			// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
-			ffmpegArgumentList.push_back("-f");
-			ffmpegArgumentList.push_back("v4l2");
+			// audio
+			{
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("alsa");
 
-			ffmpegArgumentList.push_back("-framerate");
-			ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
+			}
 
-			ffmpegArgumentList.push_back("-video_size");
-			ffmpegArgumentList.push_back(
-				to_string(captureLive_width) + "x" + to_string(captureLive_height));
+			// video
+			{
+				// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("v4l2");
+
+				if (captureLive_frameRate != -1)
+				{
+					ffmpegArgumentList.push_back("-framerate");
+					ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+				}
+
+				ffmpegArgumentList.push_back("-video_size");
+				ffmpegArgumentList.push_back(
+					to_string(captureLive_width) + "x" + to_string(captureLive_height));
+
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("/dev/video") + to_string(captureLive_videoDeviceNumber));
+			}
 		}
-		ffmpegArgumentList.push_back("-i");
-		ffmpegArgumentList.push_back(liveURL);
+
 		{
 			ffmpegArgumentList.push_back("-t");
 			ffmpegArgumentList.push_back(to_string(streamingDuration));
@@ -8469,8 +8498,7 @@ void FFMpeg::liveProxy(
 	// if channelType is IP_MMSAsServer means the liveURL is like
 	//		rtmp://<local IP to bind>:<port>
 	//		listening for an incoming connection
-	// else if channelType is CaptureLive means the liveURL is like
-	//		/dev/video0
+	// else if channelType is CaptureLive liveURL is not used
 	// else liveURL is "any thing" referring a stream
 	string channelType,
 	string liveURL,
@@ -8478,9 +8506,11 @@ void FFMpeg::liveProxy(
 	int listenTimeoutInSeconds,
 
 	// parameters used only in case channelType is CaptureLive
+	int captureLive_videoDeviceNumber,
 	int captureLive_frameRate,
 	int captureLive_width,
 	int captureLive_height,
+	int captureLive_audioDeviceNumber,
 
 	string userAgent,
 	string otherInputOptions,
@@ -8518,9 +8548,11 @@ void FFMpeg::liveProxy(
 		+ ", channelType: " + channelType
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
+		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
 		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
 		+ ", captureLive_width: " + to_string(captureLive_width)
 		+ ", captureLive_height: " + to_string(captureLive_height)
+		+ ", captureLive_audioDeviceNumber: " + to_string(captureLive_audioDeviceNumber)
 		+ ", userAgent: " + userAgent
 		+ ", otherInputOptions: " + otherInputOptions
 		+ ", timePeriod: " + to_string(timePeriod)
@@ -8819,22 +8851,47 @@ void FFMpeg::liveProxy(
 				ffmpegArgumentList.push_back("-timeout");
 				ffmpegArgumentList.push_back(to_string(listenTimeoutInSeconds));
 			}
+
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(liveURL);
+		}
+		else if (channelType == "IP_MMSAsClient")
+		{
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(liveURL);
 		}
 		else if (channelType == "CaptureLive")
 		{
-			// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
-			ffmpegArgumentList.push_back("-f");
-			ffmpegArgumentList.push_back("v4l2");
+			// audio
+			{
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("alsa");
 
-			ffmpegArgumentList.push_back("-framerate");
-			ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
+			}
 
-			ffmpegArgumentList.push_back("-video_size");
-			ffmpegArgumentList.push_back(
-				to_string(captureLive_width) + "x" + to_string(captureLive_height));
+			// video
+			{
+				// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("v4l2");
+
+				if (captureLive_frameRate != -1)
+				{
+					ffmpegArgumentList.push_back("-framerate");
+					ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
+				}
+
+				ffmpegArgumentList.push_back("-video_size");
+				ffmpegArgumentList.push_back(
+					to_string(captureLive_width) + "x" + to_string(captureLive_height));
+
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("/dev/video") + to_string(captureLive_videoDeviceNumber));
+			}
 		}
-		ffmpegArgumentList.push_back("-i");
-		ffmpegArgumentList.push_back(liveURL);
+
 		if (timePeriod)
 		{
 			ffmpegArgumentList.push_back("-t");

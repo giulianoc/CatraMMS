@@ -4995,17 +4995,21 @@ void FFMPEGEncoder::liveRecorderThread(
 		int ipMMSAsServer_listenTimeoutInSeconds = liveRecording->
 			_liveRecorderParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 
-		int captureLive_frameRate = 0;
+		int captureLive_videoDeviceNumber = -1;
+		int captureLive_frameRate = -1;
 		int captureLive_width = 0;
 		int captureLive_height = 0;
+		int captureLive_audioDeviceNumber = -1;
 		if (liveRecording->_channelType == "CaptureLive")
 		{
 			Json::Value captureLiveRoot =
 				(liveRecording->_liveRecorderParametersRoot)["CaptureLive"];
 
-			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", 25);
+			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
+			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
 			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
 			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
 		}
 
         string liveURL;
@@ -5162,9 +5166,11 @@ void FFMPEGEncoder::liveRecorderThread(
 			liveRecording->_channelType,
 			StringUtils::trimTabToo(liveURL),
 			ipMMSAsServer_listenTimeoutInSeconds,
+			captureLive_videoDeviceNumber,
 			captureLive_frameRate,
 			captureLive_width,
 			captureLive_height,
+			captureLive_audioDeviceNumber,
 
 			userAgent,
 			utcRecordingPeriodStart,
@@ -8449,17 +8455,21 @@ void FFMPEGEncoder::liveProxyThread(
 		liveProxy->_channelType = liveProxy->_ingestedParametersRoot.get("ChannelType", "IP_MMSAsClient").asString();
 		int ipMMSAsServer_listenTimeoutInSeconds = liveProxy->
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
-		int captureLive_frameRate = 0;
+		int captureLive_videoDeviceNumber = -1;
+		int captureLive_frameRate = -1;
 		int captureLive_width = 0;
 		int captureLive_height = 0;
+		int captureLive_audioDeviceNumber = -1;
 		if (liveProxy->_channelType == "CaptureLive")
 		{
 			Json::Value captureLiveRoot =
 				(liveProxy->_ingestedParametersRoot)["CaptureLive"];
 
-			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", 25);
+			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
+			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
 			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
 			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
 		}
 
 		time_t utcProxyPeriodStart = -1;
@@ -8602,9 +8612,11 @@ void FFMPEGEncoder::liveProxyThread(
 				liveProxy->_channelType,
 				StringUtils::trimTabToo(liveURL),
 				ipMMSAsServer_listenTimeoutInSeconds,
+				captureLive_videoDeviceNumber,
 				captureLive_frameRate,
 				captureLive_width,
 				captureLive_height,
+				captureLive_audioDeviceNumber,
 				userAgent,
 				otherInputOptions,
 				timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
