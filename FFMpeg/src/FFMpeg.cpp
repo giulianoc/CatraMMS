@@ -2084,37 +2084,9 @@ void FFMpeg::overlayImageOnVideo(
                     + ffmpegImagePosition_X_InPixel + ":"
                     + ffmpegImagePosition_Y_InPixel
                     ;
-		#ifdef __EXECUTE__
-            string ffmpegExecuteCommand;
-		#else
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
-		#endif
             {
-			#ifdef __EXECUTE__
-                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-                string globalOptions = "-y ";
-                string inputOptions = "";
-                string outputOptions =
-                        ffmpegFilterComplex + " "
-                        ;
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions
-                        + "-i " + mmsSourceVideoAssetPathName + " "
-                        + "-i " + mmsSourceImageAssetPathName + " "
-                        + outputOptions
-                        
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-			#else
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -2126,33 +2098,11 @@ void FFMpeg::overlayImageOnVideo(
 				// output options
 				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "overlayImageOnVideo: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "overlayImageOnVideo: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -2183,39 +2133,20 @@ void FFMpeg::overlayImageOnVideo(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "overlayImageOnVideo: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-                    );
-				#else
                     _logger->info(__FILEREF__ + "overlayImageOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -2235,7 +2166,6 @@ void FFMpeg::overlayImageOnVideo(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
@@ -2267,19 +2197,11 @@ void FFMpeg::overlayImageOnVideo(
 
             if (ulFileSize == 0)
             {
-			#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-			#else
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-			#endif
 
                 _logger->error(errorMessage);
 
@@ -2477,36 +2399,9 @@ void FFMpeg::overlayTextOnVideo(
 				text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
 				fontColor, textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity, -1);
 
-		#ifdef __EXECUTE__
-            string ffmpegExecuteCommand;
-		#else
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
-		#endif
             {
-			#ifdef __EXECUTE__
-                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-                string globalOptions = "-y ";
-                string inputOptions = "";
-                string outputOptions =
-                        ffmpegDrawTextFilter + " "
-                        ;
-                
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions
-                        + "-i " + mmsSourceVideoAssetPathName + " "
-                        + outputOptions
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-			#else
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -2518,33 +2413,11 @@ void FFMpeg::overlayTextOnVideo(
 				ffmpegArgumentList.push_back("-vf");
 				ffmpegArgumentList.push_back(ffmpegDrawTextFilter);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "overlayTextOnVideo: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "overlayTextOnVideo: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -2575,39 +2448,21 @@ void FFMpeg::overlayTextOnVideo(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "overlayTextOnVideo: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-                    );
-				#else
                     _logger->info(__FILEREF__ + "overlayTextOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @"
+							+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -2627,7 +2482,6 @@ void FFMpeg::overlayTextOnVideo(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
@@ -2659,19 +2513,11 @@ void FFMpeg::overlayTextOnVideo(
 
             if (ulFileSize == 0)
             {
-			#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-			#else
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-			#endif
 
                 _logger->error(errorMessage);
 
@@ -4188,42 +4034,9 @@ void FFMpeg::pictureInPicture(
 			ffmpegFilterComplex +=
 				(ffmpegOverlayPosition_X_InPixel + ":" + ffmpegOverlayPosition_Y_InPixel)
 			;
-		#ifdef __EXECUTE__
-            string ffmpegExecuteCommand;
-		#else
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
-		#endif
             {
-			#ifdef __EXECUTE__
-                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
-                string globalOptions = "-y ";
-                string inputOptions = "";
-                string outputOptions =
-                        ffmpegFilterComplex + " "
-                        ;
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + globalOptions
-                        + inputOptions;
-				if (soundOfMain)
-					ffmpegExecuteCommand +=
-                        ("-i " + mmsMainVideoAssetPathName + " " + "-i " + mmsOverlayVideoAssetPathName + " ");
-				else
-					ffmpegExecuteCommand +=
-                        ("-i " + mmsOverlayVideoAssetPathName + " " + "-i " + mmsMainVideoAssetPathName + " ");
-				ffmpegExecuteCommand +=
-					(outputOptions
-
-					+ stagingEncodedAssetPathName + " "
-					+ "> " + _outputFfmpegPathFileName 
-					+ " 2>&1")
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-			#else
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -4245,33 +4058,11 @@ void FFMpeg::pictureInPicture(
 				// output options
 				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
-			#endif
 
                 try
                 {
                     chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "pictureInPicture: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    );
-
-                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "pictureInPicture: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-				#else
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
@@ -4302,39 +4093,20 @@ void FFMpeg::pictureInPicture(
 
                         throw runtime_error(errorMessage);
                     }
-				#endif
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				#ifdef __EXECUTE__
-                    _logger->info(__FILEREF__ + "pictureInPicture: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
-                    );
-				#else
                     _logger->info(__FILEREF__ + "pictureInPicture: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
-				#endif
                 }
                 catch(runtime_error e)
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-				#ifdef __EXECUTE__
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -4354,7 +4126,6 @@ void FFMpeg::pictureInPicture(
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-				#endif
                     _logger->error(errorMessage);
 
                     _logger->info(__FILEREF__ + "Remove"
@@ -4386,19 +4157,11 @@ void FFMpeg::pictureInPicture(
 
             if (ulFileSize == 0)
             {
-			#ifdef __EXECUTE__
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-			#else
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                 ;
-			#endif
 
                 _logger->error(errorMessage);
 
