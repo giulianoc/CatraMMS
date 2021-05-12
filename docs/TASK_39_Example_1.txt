@@ -1,0 +1,9 @@
+"Task": {
+	"Label"="My ",
+
+	"Type": "Intro-Outro-Overlay",
+
+	"Parameters": {
+		"ConfigurationLabel": "my "
+	}
+}

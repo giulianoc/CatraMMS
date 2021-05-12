@@ -1,0 +1,66 @@
+"Task": {
+	// optional
+	"Label"="My Intro And Outro Overlay",
+
+	// mandatory
+	"Type": "Intro-Outro-Overlay",
+
+	"Parameters": {
+
+		// mandatory
+		"References": [
+			// mandatory. Three References to identify:
+			//	- the intro video
+			//	- the main video
+			//	- the outro video
+			// The order here is important, the first video is the intro,
+			//	then the main video and last is the outro video
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... 
+			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
+
+			// The below object could contain optionally:
+			// - "ErrorIfContentNotFound" boolean field to specify if the MMS has to continue
+			//		or not in case of a content not found. Default is true
+			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
+			//		a specific profile
+
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 },
+			{ "ReferenceMediaItemKey": 13 }
+		],
+
+		// mandatory: it specifies the duration in seconds of the overlay
+		//	of the last part of the intro video with the initial part of the main video
+		"IntroOverlayDurationInSeconds": 4,
+
+		// mandatory: it specifies the duration in seconds of the overlay
+		//	of the initial part of the outro video with the last part of the main video
+		"OutroOverlayDurationInSeconds": 2,
+
+		// optional: default is true
+		"MuteIntroOverlay": true,
+
+		// optional: default is true
+		"MuteOutroOverlay": true,
+
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
+		"EncodersPool": "",
+
+		// mandatory: this is the encoding profile to be used for the creation
+		//	of the overlayed video.
+		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.
+		"EncodingProfileKey": 1,
+		"EncodingProfileLabel": "Profile sport",
+
+		// optional: If present, it specifies when the Task has to be executed.
+		//		The processing of the task can be delayed respect to the specified date
+		//		based on his dependencies with other tasks.
+		//		The date format is:
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		//	If it is not present, by default it will be initialized with the ingesion time
+		"ProcessingStartingFrom": "2019-01-21T12:30:00Z"
+	}
+}
+
