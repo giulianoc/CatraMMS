@@ -309,6 +309,12 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+	void manageIntroOutroOverlayTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
     void manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,

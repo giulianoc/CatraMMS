@@ -334,15 +334,15 @@ string MMSStorage::getIngestionRootRepository(string storage) {
 }
 
 tuple<int64_t, string, int, string, string, int64_t, string>
-	MMSStorage::getPhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	MMSStorage::getPhysicalPathDetails(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		int64_t mediaItemKey, int64_t encodingProfileKey,
 		bool warningIfMissing)
 {
     try
     {
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-			string, string, string, string, int64_t, bool> storageDetails =
-			mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
+				string, string, string, string, int64_t, bool>
+			storageDetails = mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey,
 			warningIfMissing);
 
 		int64_t physicalPathKey;
@@ -376,7 +376,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     }
     catch(MediaItemKeyNotFound e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
 			+ ", e.what(): " + e.what()
@@ -390,7 +390,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     }
     catch(runtime_error e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
 			+ ", e.what(): " + e.what()
@@ -402,7 +402,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     }
     catch(exception e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
         ;
@@ -413,7 +413,7 @@ tuple<int64_t, string, int, string, string, int64_t, string>
     }
 }
 
-tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPath(
+tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey)
 {
     try
@@ -451,7 +451,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPath(
     }
     catch(MediaItemKeyNotFound e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
 			+ ", e.what(): " + e.what()
         ;
@@ -462,7 +462,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPath(
     }
     catch(runtime_error e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
 			+ ", e.what(): " + e.what()
         ;
@@ -473,7 +473,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPath(
     }
     catch(exception e)
     {
-        string errorMessage = string("getPhysicalPath failed")
+        string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
         ;
 

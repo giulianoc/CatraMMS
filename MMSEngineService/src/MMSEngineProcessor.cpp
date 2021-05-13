@@ -808,7 +808,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                 tie(ingestionJobKey, ingestionJobLabel, workspace, ingestionDate, metaDataContent,
 					ingestionType, ingestionStatus) = ingestionToBeManaged;
-                
+
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2501,6 +2501,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             catch(exception e)
                             {
                                 _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::IntroOutroOverlay)
+                        {
+                            try
+                            {
+                                manageIntroOutroOverlayTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -7878,7 +7979,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -7898,7 +7999,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -8050,7 +8151,7 @@ void MMSEngineProcessor::postOnFacebookTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8082,7 +8183,7 @@ void MMSEngineProcessor::postOnFacebookTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8291,7 +8392,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8322,7 +8423,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, sizeInBytes, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8655,7 +8756,7 @@ void MMSEngineProcessor::httpCallbackTask(
 						int64_t encodingProfileKey = -1;
 						bool warningIfMissing = false;
 						tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+							_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 
 						string physicalPath;
 						string fileName;
@@ -8724,7 +8825,7 @@ void MMSEngineProcessor::httpCallbackTask(
 					{
 						int64_t encodingProfileKey = -1;
 						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-							_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, physicalPathKey);
+							_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
 
 						string physicalPath;
 						string fileName;
@@ -8908,7 +9009,7 @@ void MMSEngineProcessor::localCopyContentTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -8930,7 +9031,7 @@ void MMSEngineProcessor::localCopyContentTask(
 
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -9102,7 +9203,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -9135,7 +9236,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -9301,7 +9402,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -9332,7 +9433,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -10553,7 +10654,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
                 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPath;
 
@@ -10564,7 +10665,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 			else
 			{
 				tuple<string, int, string, string, int64_t, string> physicalPath =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsSourceVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPath;
 
@@ -13251,7 +13352,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
             }
@@ -13259,7 +13360,7 @@ void MMSEngineProcessor::changeFileFormatThread(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -14146,7 +14247,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -14168,7 +14269,7 @@ void MMSEngineProcessor::extractTracksContentThread(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				/*
@@ -15288,7 +15389,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 			bool warningIfMissing = false;
 			tuple<int64_t, string, int, string, string, int64_t, string>
 				physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+				= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
             tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -15298,7 +15399,7 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
         {
 			tuple<string, int, string, string, int64_t, string>
 				physicalPathFileNameSizeInBytesAndDeliveryFileName =
-				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+				_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -15499,7 +15600,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             // int64_t encodingProfileKey = -1;
-            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
+            // string sourcePhysicalPath = _mmsStorage->getPhysicalPathDetails(keyAndDependencyType.first, encodingProfileKey);
 
             int64_t sourceMediaItemKey;
             int64_t sourcePhysicalPathKey;
@@ -15516,7 +15617,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 				int64_t encodingProfileKey = -1;
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathDetails;
 
@@ -15525,7 +15626,7 @@ void MMSEngineProcessor::manageSlideShowTask(
             else
             {
 				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
                 sourcePhysicalPathKey = key;
@@ -15710,7 +15811,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
                 tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -15720,7 +15821,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             {
 				tuple<string, int, string, string, int64_t, string>
 					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore)
 					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 
@@ -16328,7 +16429,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			int64_t encodingProfileKey = -1;
 			bool warningIfMissing = false;
 			tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-				= _mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+				= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
 			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
 				physicalPathDetails;
 
@@ -16337,7 +16438,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         else
         {
 			tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-				_mmsStorage->getPhysicalPath(_mmsEngineDBFacade, key);
+				_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
 			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
             sourcePhysicalPathKey = key;
@@ -17418,6 +17519,286 @@ void MMSEngineProcessor::managePictureInPictureTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageIntroOutroOverlayTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 3)
+        {
+            string errorMessage = __FILEREF__ + "Wrong number of dependencies"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "EncodingPriority";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
+
+		int64_t introVideoPhysicalPathKey;
+		string introVideoAssetPathName;
+		int64_t introVideoDurationInMilliSeconds;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType = dependencies[0];
+
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
+
+			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType== Validator::DependencyType::MediaItemKey)
+			{
+				int64_t sourceMediaItemKey = key;
+
+				bool warningIfMissing = false;
+				introVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+					sourceMediaItemKey,
+					-1,	// encodingProfileKey
+					warningIfMissing);
+			}
+			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
+			{
+				introVideoPhysicalPathKey = key;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong dependencyType"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, introVideoPhysicalPathKey);
+				tie(introVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
+
+			introVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+				-1, introVideoPhysicalPathKey);
+		}
+
+		int64_t mainVideoPhysicalPathKey;
+		string mainVideoAssetPathName;
+		int64_t mainVideoDurationInMilliSeconds;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType = dependencies[1];
+
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
+
+			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType== Validator::DependencyType::MediaItemKey)
+			{
+				int64_t sourceMediaItemKey = key;
+
+				bool warningIfMissing = false;
+				mainVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+					sourceMediaItemKey,
+					-1,	// encodingProfileKey
+					warningIfMissing);
+			}
+			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
+			{
+				mainVideoPhysicalPathKey = key;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong dependencyType"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, mainVideoPhysicalPathKey);
+				tie(mainVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
+
+			mainVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+				-1, mainVideoPhysicalPathKey);
+		}
+
+		int64_t outroVideoPhysicalPathKey;
+		string outroVideoAssetPathName;
+		int64_t outroVideoDurationInMilliSeconds;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType = dependencies[2];
+
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
+
+			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType== Validator::DependencyType::MediaItemKey)
+			{
+				int64_t sourceMediaItemKey = key;
+
+				bool warningIfMissing = false;
+				outroVideoPhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+					sourceMediaItemKey,
+					-1,	// encodingProfileKey
+					warningIfMissing);
+			}
+			else if (dependencyType == Validator::DependencyType::PhysicalPathKey)
+			{
+				outroVideoPhysicalPathKey = key;
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Wrong dependencyType"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", dependencyType: " + to_string(static_cast<int>(dependencyType));
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, outroVideoPhysicalPathKey);
+				tie(outroVideoAssetPathName, ignore, ignore, ignore, ignore, ignore)
+					= physicalPathDetails;
+			}
+
+			outroVideoDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+				-1, outroVideoPhysicalPathKey);
+		}
+
+		int64_t encodingProfileKey;
+		Json::Value encodingProfileDetailsRoot;
+		{
+			string keyField = "EncodingProfileKey";
+			string labelField = "EncodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, videoContentType, encodingProfileLabel);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + keyField
+					+ ", Field: " + labelField
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+					workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+						&encodingProfileDetailsRoot,
+						&errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+
+		_mmsEngineDBFacade->addEncoding_IntroOutroOverlayJob (workspace, ingestionJobKey,
+			encodingProfileKey,
+			encodingProfileDetailsRoot,
+
+			introVideoPhysicalPathKey,
+			introVideoAssetPathName,
+			introVideoDurationInMilliSeconds,
+			mainVideoPhysicalPathKey,
+			mainVideoAssetPathName,
+			mainVideoDurationInMilliSeconds,
+			outroVideoPhysicalPathKey,
+			outroVideoAssetPathName,
+			outroVideoDurationInMilliSeconds,
+
+			encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

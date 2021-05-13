@@ -4290,6 +4290,539 @@ void FFMpeg::pictureInPicture(
     }
 }
 
+void FFMpeg::introOutroOverlay(
+        string introVideoAssetPathName,
+        int64_t introVideoDurationInMilliSeconds,
+        string mainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+        string outroVideoAssetPathName,
+        int64_t outroVideoDurationInMilliSeconds,
+
+		int64_t introOverlayDurationInSeconds,
+		int64_t outroOverlayDurationInSeconds,
+
+		bool muteIntroOverlay,
+		bool muteOutroOverlay,
+
+		Json::Value encodingProfileDetailsRoot,
+
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid)
+{
+	int iReturnedStatus = 0;
+
+	_currentApiName = "introOutroOverlay";
+
+	setStatus(
+		ingestionJobKey,
+		encodingJobKey,
+		mainVideoDurationInMilliSeconds,
+		mainVideoAssetPathName,
+		stagingEncodedAssetPathName
+	);
+
+    try
+    {
+		if (!FileIO::fileExisting(introVideoAssetPathName))
+		{
+			string errorMessage = string("video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", introVideoAssetPathName: " + introVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if (!FileIO::fileExisting(mainVideoAssetPathName))
+		{
+			string errorMessage = string("video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", mainVideoAssetPathName: " + mainVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if (!FileIO::fileExisting(outroVideoAssetPathName))
+		{
+			string errorMessage = string("video asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", outroVideoAssetPathName: " + outroVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		if (encodingProfileDetailsRoot == Json::nullValue)
+		{
+			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		vector<string> ffmpegEncodingProfileArgumentList;
+		{
+			try
+			{
+				string httpStreamingFileFormat;    
+				string ffmpegHttpStreamingParameter = "";
+				bool encodingProfileIsVideo;
+
+				string ffmpegFileFormatParameter = "";
+
+				string ffmpegVideoCodecParameter = "";
+				string ffmpegVideoProfileParameter = "";
+				string ffmpegVideoResolutionParameter = "";
+				int videoBitRateInKbps = -1;
+				string ffmpegVideoBitRateParameter = "";
+				string ffmpegVideoOtherParameters = "";
+				string ffmpegVideoMaxRateParameter = "";
+				string ffmpegVideoBufSizeParameter = "";
+				string ffmpegVideoFrameRateParameter = "";
+				string ffmpegVideoKeyFramesRateParameter = "";
+				bool twoPasses;
+
+				string ffmpegAudioCodecParameter = "";
+				string ffmpegAudioBitRateParameter = "";
+				string ffmpegAudioOtherParameters = "";
+				string ffmpegAudioChannelsParameter = "";
+				string ffmpegAudioSampleRateParameter = "";
+
+
+				settingFfmpegParameters(
+					encodingProfileDetailsRoot,
+					encodingProfileIsVideo,
+
+					httpStreamingFileFormat,
+					ffmpegHttpStreamingParameter,
+
+					ffmpegFileFormatParameter,
+
+					ffmpegVideoCodecParameter,
+					ffmpegVideoProfileParameter,
+					ffmpegVideoResolutionParameter,
+					videoBitRateInKbps,
+					ffmpegVideoBitRateParameter,
+					ffmpegVideoOtherParameters,
+					twoPasses,
+					ffmpegVideoMaxRateParameter,
+					ffmpegVideoBufSizeParameter,
+					ffmpegVideoFrameRateParameter,
+					ffmpegVideoKeyFramesRateParameter,
+
+					ffmpegAudioCodecParameter,
+					ffmpegAudioBitRateParameter,
+					ffmpegAudioOtherParameters,
+					ffmpegAudioChannelsParameter,
+					ffmpegAudioSampleRateParameter
+				);
+
+				/*
+				if (httpStreamingFileFormat != "")
+				{
+					string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				else */
+				if (twoPasses)
+				{
+					// siamo sicuri che non sia possibile?
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				// we cannot have two video filters parameters (-vf), one is for the overlay.
+				// If it is needed we have to combine both using the same -vf parameter and using the
+				// comma (,) as separator. For now we will just comment it and the resolution will be the one
+				// coming from the video (no changes)
+				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				ffmpegEncodingProfileArgumentList.push_back("-threads");
+				ffmpegEncodingProfileArgumentList.push_back("0");
+				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				throw e;
+			}
+		}
+
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + ".ffmpegoutput";
+
+/*
+ffmpeg \
+	-i 2_conAlphaBianco/ICML_INTRO.mov \
+	-i intervista.mts \
+	-i 2_conAlphaBianco/ICML_OUTRO.mov \
+	-filter_complex \
+		"[0:a]volume=enable='between(t,8,12)':volume=0[intro_overlay_muted]; \
+		[1:v]tpad=start_duration=8:start_mode=add:color=white[main_video_moved]; \
+		[1:a]adelay=delays=8s:all=1[main_audio_moved]; \
+		[2:v]setpts=PTS+125/TB[outro_video_moved]; \
+		[2:a]volume=enable='between(t,0,3)':volume=0,adelay=delays=125s:all=1[outro_audio_overlayMuted_and_moved]; \
+		[main_video_moved][0:v]overlay=eof_action=pass[overlay_intro_main]; \
+		[overlay_intro_main][outro_video_moved]overlay=enable='gte(t,125)'[final_video]; \
+		[main_audio_moved][intro_overlay_muted][outro_audio_overlayMuted_and_moved]amix=inputs=3[final_audio]" \
+		-map "[final_video]" -map "[final_audio]" -c:v libx264 -profile:v high -bf 2 -g 30 -crf 18 \
+		-pix_fmt yuv420p \
+		output.mp4 -y
+*/
+		{
+			string ffmpegFilterComplex = "-filter_complex ";
+			{
+				long introStartOverlayInSeconds =
+					introVideoDurationInMilliSeconds - (introOverlayDurationInSeconds * 1000);
+				long introVideoDurationInSeconds = introVideoDurationInMilliSeconds / 1000;
+				long outroStartOverlayInSeconds = introStartOverlayInSeconds +
+					(mainVideoDurationInMilliSeconds / 1000) - outroOverlayDurationInSeconds;
+
+				if (introStartOverlayInSeconds < 0 || outroStartOverlayInSeconds < 0)
+				{
+					string errorMessage = __FILEREF__ + "introOutroOverlay: wrong durations"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", introStartOverlayInSeconds: " + to_string(introStartOverlayInSeconds)
+						+ ", outroStartOverlayInSeconds: " + to_string(outroStartOverlayInSeconds)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				if (muteIntroOverlay)
+					ffmpegFilterComplex += "[0:a]volume=enable='between(t," +
+						to_string(introStartOverlayInSeconds) + "," +
+						to_string(introVideoDurationInSeconds) + ")':volume=0[intro_overlay_muted];";
+				ffmpegFilterComplex += "[1:v]tpad=start_duration=" + to_string(introStartOverlayInSeconds) +
+					":start_mode=add:color=white[main_video_moved];";
+				ffmpegFilterComplex += "[1:a]adelay=delays=" + to_string(introStartOverlayInSeconds) +
+					"s:all=1[main_audio_moved];";
+				ffmpegFilterComplex += "[2:v]setpts=PTS+" + to_string(outroStartOverlayInSeconds) +
+					"/TB[outro_video_moved];";
+				ffmpegFilterComplex += "[2:a]";
+				if (muteOutroOverlay)
+					ffmpegFilterComplex += "volume=enable='between(t,0," +
+						to_string(outroOverlayDurationInSeconds) + ")':volume=0,";
+				ffmpegFilterComplex += "adelay=delays=" + to_string(outroStartOverlayInSeconds) +
+					"s:all=1[outro_audio_overlayMuted_and_moved];";
+				ffmpegFilterComplex +=
+					"[main_video_moved][0:v]overlay=eof_action=pass[overlay_intro_main];";
+				ffmpegFilterComplex += "[overlay_intro_main][outro_video_moved]overlay=enable='gte(t," +
+					to_string(outroStartOverlayInSeconds) + ")'[final_video];";
+				ffmpegFilterComplex += "[main_audio_moved]";
+				if (muteIntroOverlay)
+					ffmpegFilterComplex += "[intro_overlay_muted]";
+				else
+					ffmpegFilterComplex += "[0:a]";
+				ffmpegFilterComplex += "[outro_audio_overlayMuted_and_moved]amix=inputs=3[final_audio]";
+			}
+
+			vector<string> ffmpegArgumentList;
+			ostringstream ffmpegArgumentListStream;
+            {
+				ffmpegArgumentList.push_back("ffmpeg");
+				// global options
+				ffmpegArgumentList.push_back("-y");
+
+				// input options
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(introVideoAssetPathName);
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mainVideoAssetPathName);
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(outroVideoAssetPathName);
+
+				// output options
+				addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("[final_video]");
+				ffmpegArgumentList.push_back("-map");
+				ffmpegArgumentList.push_back("[final_audio]");
+
+				// encoding parameters
+				for (string parameter: ffmpegEncodingProfileArgumentList)
+					addToArguments(parameter, ffmpegArgumentList);
+
+				ffmpegArgumentList.push_back("-pix_fmt");
+				ffmpegArgumentList.push_back("yuv420p");
+
+				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+
+                try
+                {
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+					if (!ffmpegArgumentList.empty())
+						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+							ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+                    _logger->info(__FILEREF__ + "introOutroOverlay: Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                    );
+
+					bool redirectionStdOutput = true;
+					bool redirectionStdError = true;
+
+					ProcessUtility::forkAndExec (
+						_ffmpegPath + "/ffmpeg",
+						ffmpegArgumentList,
+						_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+						pChildPid, &iReturnedStatus);
+					if (iReturnedStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "introOutroOverlay: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "introOutroOverlay: Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
+							to_string(chrono::duration_cast<chrono::seconds>(
+							endFfmpegCommand - startFfmpegCommand).count()) + "@"
+                    );
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+                    _logger->error(errorMessage);
+
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                    bool exceptionInCaseOfError = false;
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
+                }
+
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+                bool exceptionInCaseOfError = false;
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+            }
+
+            _logger->info(__FILEREF__ + "introOutroOverlay file generated"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            bool inCaseOfLinkHasItToBeRead = false;
+            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+
+            if (ulFileSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                ;
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType =
+				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType =
+				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType =
+				FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+}
+
 /*
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 	FFMpeg::getMediaInfo(string mmsAssetPathName)

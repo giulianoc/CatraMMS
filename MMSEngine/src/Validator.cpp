@@ -947,6 +947,28 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         Json::Value parametersRoot = taskRoot[field]; 
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Intro-Outro-Overlay")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::IntroOutroOverlay;
+        
+        field = "Parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
+    }
     else if (type == "Live-Proxy")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveProxy;
@@ -1201,6 +1223,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
     {
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::IntroOutroOverlay)
+    {
+        validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
@@ -4361,6 +4388,157 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
 		DateTime::sDateSecondsToUtc(processingStartingFrom);
+	}
+}
+
+void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot, bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+		// input: 3 videos: intro, outro and main video
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 3)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it has not three elements"
+                    + ", Field: " + field
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+        if (validateDependenciesToo)
+        {
+            if (dependencies.size() != 3)
+            {
+                string errorMessage = __FILEREF__ + "Wrong dependencies number"
+                        + ", dependencies.size: " + to_string(dependencies.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            // if (dependencies.size() == 3)
+            {
+                int64_t key_1;
+                MMSEngineDBFacade::ContentType referenceContentType_1;
+                Validator::DependencyType dependencyType_1;
+
+                tie(key_1, referenceContentType_1, dependencyType_1) = dependencies[0];
+
+                int64_t key_2;
+                MMSEngineDBFacade::ContentType referenceContentType_2;
+                Validator::DependencyType dependencyType_2;
+
+                tie(key_2, referenceContentType_2, dependencyType_2) = dependencies[1];
+
+                int64_t key_3;
+                MMSEngineDBFacade::ContentType referenceContentType_3;
+                Validator::DependencyType dependencyType_3;
+
+                tie(key_3, referenceContentType_3, dependencyType_3) = dependencies[2];
+
+                if (referenceContentType_1 != MMSEngineDBFacade::ContentType::Video
+					|| referenceContentType_2 != MMSEngineDBFacade::ContentType::Video
+					|| referenceContentType_3 != MMSEngineDBFacade::ContentType::Video
+				)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer all a video content"
+						+ ", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1))
+						+ ", referenceMediaItemKey_1: " + to_string(key_1)
+						+ ", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1)
+						+ ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2))
+						+ ", referenceMediaItemKey_2: " + to_string(key_2)
+						+ ", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2)
+						+ ", dependencyType_3: " + to_string(static_cast<int>(dependencyType_3))
+						+ ", referenceMediaItemKey_3: " + to_string(key_3)
+						+ ", referenceContentType_3: " + MMSEngineDBFacade::toString(referenceContentType_3)
+						+ ", label: " + label
+					;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+    }
+
+	string keyField = "EncodingProfileKey";
+	string labelField = "EncodingProfileLabel";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, keyField)
+		&& !JSONUtils::isMetadataPresent(parametersRoot, labelField))
+	{
+		string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+			+ ", Field: " + keyField
+			+ ", Field: " + labelField
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	vector<string> mandatoryFields = {
+		"IntroOverlayDurationInSeconds",
+		"OutroOverlayDurationInSeconds"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    field = "IntroOverlayDurationInSeconds";
+	int introOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+	if (introOverlayDurationInSeconds <= 0)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
+			+ ", Field: " + field
+			+ ", introOverlayDurationInSeconds: " + to_string(introOverlayDurationInSeconds)
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
+	}
+
+    field = "OutroOverlayDurationInSeconds";
+	int outroOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+	if (outroOverlayDurationInSeconds <= 0)
+	{
+		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)"
+			+ ", Field: " + field
+			+ ", outroOverlayDurationInSeconds: " + to_string(outroOverlayDurationInSeconds)
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+       
+		throw runtime_error(errorMessage);
 	}
 }
 

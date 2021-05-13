@@ -170,6 +170,7 @@ private:
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
+    string								_ffmpegIntroOutroOverlayURI;
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
@@ -294,6 +295,10 @@ private:
     pair<string, bool> pictureInPicture();
     pair<string, bool> pictureInPicture_through_ffmpeg();
     void processPictureInPicture(string stagingEncodedAssetPathName, bool killedByUser);    
+
+    pair<string, bool> introOutroOverlay();
+    pair<string, bool> introOutroOverlay_through_ffmpeg();
+    void processIntroOutroOverlay(string stagingEncodedAssetPathName, bool killedByUser);    
 
     tuple<bool, bool, bool, string, bool, bool, int, int> getEncodingStatus();
 

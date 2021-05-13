@@ -1752,10 +1752,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							MMSEngineDBFacade::ContentType contentType;
 							MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 
-                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology>
+                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
                                 encodingProfileDetails = getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
 
-                            tie(label, contentType, deliveryTechnology) = encodingProfileDetails;
+                            tie(label, contentType, deliveryTechnology, ignore) = encodingProfileDetails;
 
 							field = "deliveryTechnology";
                             profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);

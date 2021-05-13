@@ -169,6 +169,27 @@ public:
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
+	void introOutroOverlay(
+        string introVideoAssetPathName,
+        int64_t introVideoDurationInMilliSeconds,
+        string mainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+        string outroVideoAssetPathName,
+        int64_t outroVideoDurationInMilliSeconds,
+
+		int64_t introOverlayDurationInSeconds,
+		int64_t outroOverlayDurationInSeconds,
+
+		bool muteIntroOverlay,
+		bool muteOutroOverlay,
+
+		Json::Value encodingProfileDetailsRoot,
+
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
     int getEncodingProgress();
 
 	bool nonMonotonousDTSInOutputLog();

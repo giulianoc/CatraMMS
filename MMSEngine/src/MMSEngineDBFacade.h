@@ -302,7 +302,8 @@ public:
 		PictureInPicture	= 10,
 		LiveProxy			= 11,
 		LiveGrid			= 12,
-		AwaitingTheBeginning	= 13
+		AwaitingTheBeginning	= 13,
+		IntroOutroOverlay	= 14
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -336,6 +337,8 @@ public:
                 return "LiveGrid";
             case EncodingType::AwaitingTheBeginning:
                 return "AwaitingTheBeginning";
+            case EncodingType::IntroOutroOverlay:
+                return "IntroOutroOverlay";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -344,7 +347,8 @@ public:
     {
         string lowerCase;
         lowerCase.resize(encodingType.size());
-        transform(encodingType.begin(), encodingType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+        transform(encodingType.begin(), encodingType.end(), lowerCase.begin(),
+			[](unsigned char c){return tolower(c); } );
 
         if (lowerCase == "encodevideoaudio")
             return EncodingType::EncodeVideoAudio;
@@ -374,6 +378,8 @@ public:
             return EncodingType::LiveGrid;
         else if (lowerCase == "awaitingthebeginning")
             return EncodingType::AwaitingTheBeginning;
+        else if (lowerCase == "introoutrooverlay")
+            return EncodingType::IntroOutroOverlay;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -559,10 +565,16 @@ public:
         long long                               _ingestionJobKey;
         EncodingPriority                        _encodingPriority;
         EncodingType                            _encodingType;
-        string                                  _encodingParameters;
+
+		// Key of the Encoder used by this job:
 		int64_t									_encoderKey;
 		string									_stagingEncodedAssetPathName;
-        // MMS_EncodingJob -> parameters
+
+        // MMS_IngestionJob -> metadata:
+		Json::Value								_ingestedParametersRoot;
+
+        // MMS_EncodingJob -> parameters:
+        string                                  _encodingParameters;
         Json::Value                             _encodingParametersRoot;
 
         shared_ptr<Workspace>                   _workspace;
@@ -570,17 +582,11 @@ public:
         struct EncodeData {
             string                                  _fileName;
             string                                  _relativePath;
-			/*
-            unsigned long                           _mmsPartitionNumber;
-			*/
             long long                               _mediaItemKey;
             int64_t                                 _durationInMilliSeconds;
             ContentType                             _contentType;
             MMSEngineDBFacade::DeliveryTechnology   _deliveryTechnology;
             string                                  _jsonProfile;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_ingestedParametersRoot;
         };
 
         struct OverlayImageOnVideoData {
@@ -592,9 +598,6 @@ public:
             // unsigned long                           _mmsImagePartitionNumber;
             string                                  _imageFileName;
             string                                  _imageRelativePath;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
         };
         
         struct OverlayTextOnVideoData {
@@ -602,9 +605,6 @@ public:
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
         };
 
         struct GenerateFramesData {
@@ -612,32 +612,20 @@ public:
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
         };
 
-        struct SlideShowData {
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
-        };
+        // struct SlideShowData {
+        // };
 
-        struct FaceRecognitionData {
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
-        };
+        // struct FaceRecognitionData {
+        // };
 
-        struct FaceIdentificationData {
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
-        };
+        // struct FaceIdentificationData {
+        // };
 
 		struct LiveRecorderData {
             Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
 			MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
-
-			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_ingestedParametersRoot;
 		};
 
         struct VideoSpeedData {
@@ -645,9 +633,6 @@ public:
             string                                  _videoFileName;
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
         };
 
         struct PictureInPictureData {
@@ -660,34 +645,25 @@ public:
             string                                  _overlayVideoFileName;
             string                                  _overlayVideoRelativePath;
             int64_t                                 _overlayVideoDurationInMilliSeconds;
-
-            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-            Json::Value                             _ingestedParametersRoot;
         };
+
+        // struct IntroOutroOverlayData {
+        // };
 
 		struct LiveProxyData {
 			// int64_t									_encodingProfileKey;
             // string									_jsonEncodingProfile;
 			// ContentType								_contentType;
 			Json::Value								_outputsRoot;
-
-			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_ingestedParametersRoot;
 		};
 
 		struct AwaitingTheBeginningData {
 			int64_t									_encodingProfileKey;
 			ContentType								_encodingProfileContentType;
 			Json::Value								_encodingProfileDetailsRoot;
-
-			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_ingestedParametersRoot;
 		};
 
 		struct LiveGridData {
-			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
-			Json::Value								_ingestedParametersRoot;
-
 			MMSEngineDBFacade::DeliveryTechnology	_deliveryTechnology;
             Json::Value								_encodingProfileDetailsRoot;
 		};
@@ -696,12 +672,13 @@ public:
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
         shared_ptr<GenerateFramesData>              _generateFramesData;
-        shared_ptr<SlideShowData>                   _slideShowData;
-        shared_ptr<FaceRecognitionData>				_faceRecognitionData;
-        shared_ptr<FaceIdentificationData>			_faceIdentificationData;
+        // shared_ptr<SlideShowData>                   _slideShowData;
+        // shared_ptr<FaceRecognitionData>				_faceRecognitionData;
+        // shared_ptr<FaceIdentificationData>			_faceIdentificationData;
 		shared_ptr<LiveRecorderData>				_liveRecorderData;
 		shared_ptr<VideoSpeedData>					_videoSpeedData;
 		shared_ptr<PictureInPictureData>			_pictureInPictureData;
+		// shared_ptr<IntroOutroOverlayData>			_introOutroOverlayData;
 		shared_ptr<LiveProxyData>					_liveProxyData;
 		shared_ptr<AwaitingTheBeginningData>		_awaitingTheBeginningData;
 		shared_ptr<LiveGridData>					_liveGridData;
@@ -744,13 +721,14 @@ public:
         LiveCut					= 27,
         LiveGrid				= 28,
         AwaitingTheBeginning	= 29,
+        IntroOutroOverlay		= 30,
 
-        EmailNotification       = 30,
-        MediaCrossReference		= 31,
-        WorkflowAsLibrary		= 32,
-        ContentUpdate           = 50,
-        ContentRemove           = 60,
-        GroupOfTasks			= 70
+        EmailNotification       = 60,	// 30,
+        MediaCrossReference		= 61,	// 31,
+        WorkflowAsLibrary		= 62,	// 32,
+        ContentUpdate           = 80,	// 50,
+        ContentRemove           = 90,	// 60,
+        GroupOfTasks			= 100	// 70
     };
     static const char* toString(const IngestionType& ingestionType)
     {
@@ -816,6 +794,8 @@ public:
 				return "Live-Grid";
 			case IngestionType::AwaitingTheBeginning:
 				return "Awaiting-The-Beginning";
+			case IngestionType::IntroOutroOverlay:
+				return "Intro-Outro-Overlay";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -839,7 +819,8 @@ public:
     {
         string lowerCase;
         lowerCase.resize(ingestionType.size());
-        transform(ingestionType.begin(), ingestionType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+        transform(ingestionType.begin(), ingestionType.end(), lowerCase.begin(),
+			[](unsigned char c){return tolower(c); } );
 
         if (lowerCase == "add-content")
             return IngestionType::AddContent;
@@ -899,6 +880,8 @@ public:
             return IngestionType::LiveGrid;
         else if (lowerCase == "awaiting-the-beginning")
             return IngestionType::AwaitingTheBeginning;
+        else if (lowerCase == "intro-outro-overlay")
+            return IngestionType::IntroOutroOverlay;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1602,9 +1585,8 @@ public:
         int64_t workspaceKey,
         string label);
 
-    tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology> getEncodingProfileDetailsByKey(
-		int64_t workspaceKey,
-		int64_t encodingProfileKey);
+    tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+		getEncodingProfileDetailsByKey( int64_t workspaceKey, int64_t encodingProfileKey);
 
     tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> getStorageDetails(
         int64_t physicalPathKey);
@@ -1800,6 +1782,27 @@ public:
         string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
 		string overlay_Width_InPixel, string overlay_Height_InPixel,
 		bool soundOfMain, EncodingPriority encodingPriority);
+
+	void addEncoding_IntroOutroOverlayJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+
+		int64_t encodingProfileKey,
+		Json::Value encodingProfileDetailsRoot,
+
+		int64_t introVideoPhysicalPathKey,
+		string introVideoAssetPathName,
+		int64_t introVideoDurationInMilliSeconds,
+
+		int64_t mainVideoPhysicalPathKey,
+		string mainVideoAssetPathName,
+		int64_t mainVideoDurationInMilliSeconds,
+
+		int64_t outroVideoPhysicalPathKey,
+		string outroVideoAssetPathName,
+		int64_t outroVideoDurationInMilliSeconds,
+
+		EncodingPriority encodingPriority);
 
 	void updateIngestionAndEncodingLiveRecordingPeriod (
 		int64_t ingestionJobKey,

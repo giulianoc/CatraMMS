@@ -780,7 +780,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
         bool contentTypePresent, ContentType contentType
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value contentListRoot;
     
@@ -1071,7 +1071,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         bool contentTypePresent, ContentType contentType,
 		string label
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value contentListRoot;
     
@@ -1776,7 +1776,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 	return encodingProfileKey;
 }
 
-tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology>
+tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
 	MMSEngineDBFacade::getEncodingProfileDetailsByKey(
     int64_t workspaceKey, int64_t encodingProfileKey
 )
@@ -1796,9 +1796,10 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 		string label;
 		MMSEngineDBFacade::ContentType contentType;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
+		string jsonProfile;
         {
             lastSQLCommand = 
-                "select label, contentType, deliveryTechnology from MMS_EncodingProfile where "
+                "select label, contentType, deliveryTechnology, jsonProfile from MMS_EncodingProfile where "
 				"(workspaceKey = ? or workspaceKey is null) and encodingProfileKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1823,6 +1824,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 					resultSet->getString("contentType"));
 				deliveryTechnology = MMSEngineDBFacade::toDeliveryTechnology(
 					resultSet->getString("deliveryTechnology"));
+                jsonProfile = resultSet->getString("jsonProfile");
             }
             else
             {
@@ -1843,7 +1845,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
         _connectionPool->unborrow(conn);
 		conn = nullptr;
 
-		return make_tuple(label, contentType, deliveryTechnology);
+		return make_tuple(label, contentType, deliveryTechnology, jsonProfile);
     }
     catch(sql::SQLException se)
     {

@@ -5029,6 +5029,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::LiveRecorder
                 || ingestionType == IngestionType::VideoSpeed
                 || ingestionType == IngestionType::PictureInPicture
+                || ingestionType == IngestionType::IntroOutroOverlay
                 || ingestionType == IngestionType::LiveProxy
                 || ingestionType == IngestionType::LiveGrid
                 || ingestionType == IngestionType::AwaitingTheBeginning
@@ -5036,6 +5037,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         {
 			// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,
 			//	we will take the main one. In case HighAvailability is false, we still have the main field set to true
+			// 2021-05-12: HighAvailability true is not used anymore
+			/*
 			if (ingestionType == IngestionType::LiveRecorder)
 				lastSQLCommand = 
 					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
@@ -5045,11 +5048,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 					"and JSON_EXTRACT(parameters, '$.main') = true "
 					;
 			else
+			*/
 				lastSQLCommand = 
 					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
 					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
 					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
+					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob "
+					"where ingestionJobKey = ? "
 					;
 
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
