@@ -2881,7 +2881,7 @@ void FFMpeg::awaitingTheBegining(
 			{
 				string httpStreamingFileFormat;    
 				string ffmpegHttpStreamingParameter = "";
-				bool encodingProfileIsVideo;
+				bool encodingProfileIsVideo = true;
 
 				string ffmpegFileFormatParameter = "";
 
@@ -4315,10 +4315,28 @@ void FFMpeg::introOutroOverlay(
 
 	_currentApiName = "introOutroOverlay";
 
+	_logger->info(__FILEREF__ + "Received " + _currentApiName
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", introVideoAssetPathName: " + introVideoAssetPathName
+		+ ", introVideoDurationInMilliSeconds: " + to_string(introVideoDurationInMilliSeconds)
+		+ ", mainVideoAssetPathName: " + mainVideoAssetPathName
+		+ ", mainVideoDurationInMilliSeconds: " + to_string(mainVideoDurationInMilliSeconds)
+		+ ", outroVideoAssetPathName: " + outroVideoAssetPathName
+		+ ", outroVideoDurationInMilliSeconds: " + to_string(outroVideoDurationInMilliSeconds)
+		+ ", introOverlayDurationInSeconds: " + to_string(introOverlayDurationInSeconds)
+		+ ", outroOverlayDurationInSeconds: " + to_string(outroOverlayDurationInSeconds)
+		+ ", muteIntroOverlay: " + to_string(muteIntroOverlay)
+		+ ", muteOutroOverlay: " + to_string(muteOutroOverlay)
+		+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+	);
+
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey,
-		mainVideoDurationInMilliSeconds,
+		mainVideoDurationInMilliSeconds
+			+ (introVideoDurationInMilliSeconds - introOverlayDurationInSeconds)
+			+ (outroVideoDurationInMilliSeconds - outroOverlayDurationInSeconds),
 		mainVideoAssetPathName,
 		stagingEncodedAssetPathName
 	);
@@ -4376,7 +4394,7 @@ void FFMpeg::introOutroOverlay(
 			{
 				string httpStreamingFileFormat;    
 				string ffmpegHttpStreamingParameter = "";
-				bool encodingProfileIsVideo;
+				bool encodingProfileIsVideo = true;
 
 				string ffmpegFileFormatParameter = "";
 
@@ -4515,7 +4533,7 @@ ffmpeg \
 			string ffmpegFilterComplex = "-filter_complex ";
 			{
 				long introStartOverlayInSeconds =
-					introVideoDurationInMilliSeconds - (introOverlayDurationInSeconds * 1000);
+					(introVideoDurationInMilliSeconds - (introOverlayDurationInSeconds * 1000)) / 1000;
 				long introVideoDurationInSeconds = introVideoDurationInMilliSeconds / 1000;
 				long outroStartOverlayInSeconds = introStartOverlayInSeconds +
 					(mainVideoDurationInMilliSeconds / 1000) - outroOverlayDurationInSeconds;
@@ -8195,12 +8213,16 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
 				}
 
-				ffmpegArgumentList.push_back("-video_size");
-				ffmpegArgumentList.push_back(
-					to_string(captureLive_width) + "x" + to_string(captureLive_height));
+				if (captureLive_width != -1 && captureLive_height != -1)
+				{
+					ffmpegArgumentList.push_back("-video_size");
+					ffmpegArgumentList.push_back(
+						to_string(captureLive_width) + "x" + to_string(captureLive_height));
+				}
 
 				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(string("/dev/video") + to_string(captureLive_videoDeviceNumber));
+				ffmpegArgumentList.push_back(string("/dev/video")
+					+ to_string(captureLive_videoDeviceNumber));
 			}
 		}
 
@@ -9179,12 +9201,16 @@ void FFMpeg::liveProxy(
 					ffmpegArgumentList.push_back(to_string(captureLive_frameRate));
 				}
 
-				ffmpegArgumentList.push_back("-video_size");
-				ffmpegArgumentList.push_back(
-					to_string(captureLive_width) + "x" + to_string(captureLive_height));
+				if (captureLive_width != -1 && captureLive_height != -1)
+				{
+					ffmpegArgumentList.push_back("-video_size");
+					ffmpegArgumentList.push_back(
+						to_string(captureLive_width) + "x" + to_string(captureLive_height));
+				}
 
 				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(string("/dev/video") + to_string(captureLive_videoDeviceNumber));
+				ffmpegArgumentList.push_back(string("/dev/video") +
+					to_string(captureLive_videoDeviceNumber));
 			}
 		}
 

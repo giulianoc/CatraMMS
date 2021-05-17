@@ -7506,6 +7506,7 @@ pair<string, bool> EncoderVideoAudioProxy::introOutroOverlay_through_ffmpeg()
                 Json::Value introOutroOverlayMedatada;
 
                 introOutroOverlayMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
+                introOutroOverlayMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 
                 introOutroOverlayMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 introOutroOverlayMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);

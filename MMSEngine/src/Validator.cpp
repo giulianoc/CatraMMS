@@ -3355,8 +3355,8 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 		vector<string> mandatoryFields = {
 			"VideoDeviceNumber",
-			"Width",
-			"Height",
+			// "Width",
+			// "Height",
 			"AudioDeviceNumber"
 		};
 		for (string mandatoryField: mandatoryFields)
@@ -3645,8 +3645,8 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 		vector<string> mandatoryFields = {
 			"VideoDeviceNumber",
-			"Width",
-			"Height",
+			// "Width",
+			// "Height",
 			"AudioDeviceNumber"
 		};
 		for (string mandatoryField: mandatoryFields)

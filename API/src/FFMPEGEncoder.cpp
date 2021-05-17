@@ -5139,20 +5139,20 @@ void FFMPEGEncoder::introOutroOverlayThread(
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 		encoding->_ffmpeg->introOutroOverlay(
-			introOutroOverlayMetadata.get("introVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata, "introVideoDurationInMilliSeconds", -1),
-			introOutroOverlayMetadata.get("mainVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata, "mainVideoDurationInMilliSeconds", -1),
-			introOutroOverlayMetadata.get("outroVideoAssetPathName", "").asString(),
-			JSONUtils::asInt64(introOutroOverlayMetadata, "outroVideoDurationInMilliSeconds", -1),
+			introOutroOverlayMetadata["encodingParametersRoot"].get("introVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "introVideoDurationInMilliSeconds", -1),
+			introOutroOverlayMetadata["encodingParametersRoot"].get("mainVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "mainVideoDurationInMilliSeconds", -1),
+			introOutroOverlayMetadata["encodingParametersRoot"].get("outroVideoAssetPathName", "").asString(),
+			JSONUtils::asInt64(introOutroOverlayMetadata["encodingParametersRoot"], "outroVideoDurationInMilliSeconds", -1),
 
-			JSONUtils::asInt64(introOutroOverlayMetadata, "introOverlayDurationInSeconds", -1),
-			JSONUtils::asInt64(introOutroOverlayMetadata, "outroOverlayDurationInSeconds", -1),
+			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "IntroOverlayDurationInSeconds", -1),
+			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "OutroOverlayDurationInSeconds", -1),
 
-			JSONUtils::asBool(introOutroOverlayMetadata, "muteIntroOverlay", -1),
-			JSONUtils::asBool(introOutroOverlayMetadata, "muteOutroOverlay", -1),
+			JSONUtils::asBool(introOutroOverlayMetadata["ingestedParametersRoot"], "MuteIntroOverlay", true),
+			JSONUtils::asBool(introOutroOverlayMetadata["ingestedParametersRoot"], "MuteOutroOverlay", true),
 
-			introOutroOverlayMetadata["encodingProfileDetailsRoot"],
+			introOutroOverlayMetadata["encodingParametersRoot"]["encodingProfileDetailsRoot"],
 
 			stagingEncodedAssetPathName,
 
@@ -5444,8 +5444,8 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		int captureLive_videoDeviceNumber = -1;
 		int captureLive_frameRate = -1;
-		int captureLive_width = 0;
-		int captureLive_height = 0;
+		int captureLive_width = -1;
+		int captureLive_height = -1;
 		int captureLive_audioDeviceNumber = -1;
 		if (liveRecording->_channelType == "CaptureLive")
 		{
@@ -5454,8 +5454,8 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
 			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
-			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
-			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", -1);
+			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", -1);
 			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
 		}
 
@@ -8904,8 +8904,8 @@ void FFMPEGEncoder::liveProxyThread(
 			_ingestedParametersRoot.get("ActAsServerListenTimeout", -1).asInt();
 		int captureLive_videoDeviceNumber = -1;
 		int captureLive_frameRate = -1;
-		int captureLive_width = 0;
-		int captureLive_height = 0;
+		int captureLive_width = -1;
+		int captureLive_height = -1;
 		int captureLive_audioDeviceNumber = -1;
 		if (liveProxy->_channelType == "CaptureLive")
 		{
@@ -8914,8 +8914,8 @@ void FFMPEGEncoder::liveProxyThread(
 
 			captureLive_videoDeviceNumber = JSONUtils::asInt(captureLiveRoot, "VideoDeviceNumber", -1);
 			captureLive_frameRate = JSONUtils::asInt(captureLiveRoot, "FrameRate", -1);
-			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", 0);
-			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", 0);
+			captureLive_width = JSONUtils::asInt(captureLiveRoot, "Width", -1);
+			captureLive_height = JSONUtils::asInt(captureLiveRoot, "Height", -1);
 			captureLive_audioDeviceNumber = JSONUtils::asInt(captureLiveRoot, "AudioDeviceNumber", -1);
 		}
 
