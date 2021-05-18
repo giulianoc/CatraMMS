@@ -34,17 +34,23 @@
 			// mandatory, video live input device, i.e.: 0
 			"VideoDeviceNumber": 0,
 
+			// optional, live input format, i.e.: mjpeg, yuyv422, ...
+			"VideoInputFormat": "mjpeg",
+
 			// optional, live input framerate, default: 25
 			"FrameRate": 25,
 
-			// mandatory, live input width
+			// optional, live input width
 			"Width": 640,
 
-			// mandatory, live input height
+			// optional, live input height
 			"Height": 640,
 
 			// mandatory, audio live input device, i.e.: 0 or 1 or ...
-			"AudioDeviceNumber": 0
+			"AudioDeviceNumber": 0,
+
+			// optional, audio live input channels number, i.e.: 1 (mono), 2 (stereo), ...
+			"ChannelsNumber": 2
 		}
 
 		// optional. To be set with the EncodersPool label only in case 

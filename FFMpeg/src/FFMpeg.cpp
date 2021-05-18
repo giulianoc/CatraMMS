@@ -7907,10 +7907,12 @@ void FFMpeg::liveRecorder(
 
 		// parameters used only in case channelType is CaptureLive
 		int captureLive_videoDeviceNumber,
+		string captureLive_videoInputFormat,
 		int captureLive_frameRate,
 		int captureLive_width,
 		int captureLive_height,
 		int captureLive_audioDeviceNumber,
+		int captureLive_channelsNumber,
 
 		string userAgent,
         time_t utcRecordingPeriodStart, 
@@ -7943,10 +7945,12 @@ void FFMpeg::liveRecorder(
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
+		+ ", captureLive_videoInputFormat: " + captureLive_videoInputFormat
 		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
 		+ ", captureLive_width: " + to_string(captureLive_width)
 		+ ", captureLive_height: " + to_string(captureLive_height)
 		+ ", captureLive_audioDeviceNumber: " + to_string(captureLive_audioDeviceNumber)
+		+ ", captureLive_channelsNumber: " + to_string(captureLive_channelsNumber)
 
 		+ ", userAgent: " + userAgent
 		+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
@@ -8192,20 +8196,20 @@ void FFMpeg::liveRecorder(
 		}
 		else if (channelType == "CaptureLive")
 		{
-			// audio
-			{
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("alsa");
-
-				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
-			}
-
 			// video
 			{
 				// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
 				ffmpegArgumentList.push_back("-f");
 				ffmpegArgumentList.push_back("v4l2");
+
+				ffmpegArgumentList.push_back("-thread_queue_size");
+				ffmpegArgumentList.push_back("4096");
+
+				if (captureLive_videoInputFormat != "")
+				{
+					ffmpegArgumentList.push_back("-input_format");
+					ffmpegArgumentList.push_back(captureLive_videoInputFormat);
+				}
 
 				if (captureLive_frameRate != -1)
 				{
@@ -8223,6 +8227,24 @@ void FFMpeg::liveRecorder(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(string("/dev/video")
 					+ to_string(captureLive_videoDeviceNumber));
+			}
+
+			// audio
+			{
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("alsa");
+
+				ffmpegArgumentList.push_back("-thread_queue_size");
+				ffmpegArgumentList.push_back("2048");
+
+				if (captureLive_channelsNumber != -1)
+				{
+					ffmpegArgumentList.push_back("-ac");
+					ffmpegArgumentList.push_back(to_string(captureLive_channelsNumber));
+				}
+
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
 			}
 		}
 
@@ -8825,10 +8847,12 @@ void FFMpeg::liveProxy(
 
 	// parameters used only in case channelType is CaptureLive
 	int captureLive_videoDeviceNumber,
+	string captureLive_videoInputFormat,
 	int captureLive_frameRate,
 	int captureLive_width,
 	int captureLive_height,
 	int captureLive_audioDeviceNumber,
+	int captureLive_channelsNumber,
 
 	string userAgent,
 	string otherInputOptions,
@@ -8867,10 +8891,12 @@ void FFMpeg::liveProxy(
 		+ ", liveURL: " + liveURL
 		+ ", listenTimeoutInSeconds: " + to_string(listenTimeoutInSeconds)
 		+ ", captureLive_videoDeviceNumber: " + to_string(captureLive_videoDeviceNumber)
+		+ ", captureLive_videoInputFormat: " + captureLive_videoInputFormat
 		+ ", captureLive_frameRate: " + to_string(captureLive_frameRate)
 		+ ", captureLive_width: " + to_string(captureLive_width)
 		+ ", captureLive_height: " + to_string(captureLive_height)
 		+ ", captureLive_audioDeviceNumber: " + to_string(captureLive_audioDeviceNumber)
+		+ ", captureLive_channelsNumber: " + to_string(captureLive_channelsNumber)
 		+ ", userAgent: " + userAgent
 		+ ", otherInputOptions: " + otherInputOptions
 		+ ", timePeriod: " + to_string(timePeriod)
@@ -9180,20 +9206,20 @@ void FFMpeg::liveProxy(
 		}
 		else if (channelType == "CaptureLive")
 		{
-			// audio
-			{
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("alsa");
-
-				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
-			}
-
 			// video
 			{
 				// -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0
 				ffmpegArgumentList.push_back("-f");
 				ffmpegArgumentList.push_back("v4l2");
+
+				ffmpegArgumentList.push_back("-thread_queue_size");
+				ffmpegArgumentList.push_back("4096");
+
+				if (captureLive_videoInputFormat != "")
+				{
+					ffmpegArgumentList.push_back("-input_format");
+					ffmpegArgumentList.push_back(captureLive_videoInputFormat);
+				}
 
 				if (captureLive_frameRate != -1)
 				{
@@ -9209,8 +9235,26 @@ void FFMpeg::liveProxy(
 				}
 
 				ffmpegArgumentList.push_back("-i");
-				ffmpegArgumentList.push_back(string("/dev/video") +
-					to_string(captureLive_videoDeviceNumber));
+				ffmpegArgumentList.push_back(string("/dev/video")
+					+ to_string(captureLive_videoDeviceNumber));
+			}
+
+			// audio
+			{
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("alsa");
+
+				ffmpegArgumentList.push_back("-thread_queue_size");
+				ffmpegArgumentList.push_back("2048");
+
+				if (captureLive_channelsNumber != -1)
+				{
+					ffmpegArgumentList.push_back("-ac");
+					ffmpegArgumentList.push_back(to_string(captureLive_channelsNumber));
+				}
+
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(string("hw:") + to_string(captureLive_audioDeviceNumber));
 			}
 		}
 
