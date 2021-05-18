@@ -4320,7 +4320,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 	Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
-    
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";
@@ -4330,12 +4330,15 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 		// before the check was
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
-		// the "DependOnIngestionJobKeysToBeAddedToReferences" thg
+		// the "DependOnIngestionJobKeysToBeAddedToReferences" tag. It means now may be we have
+		// 1 reference and DependOnIngestionJobKeysToBeAddedToReferences will add more
+		// references when the task will be executed
         if (referencesRoot.size() > 2)
         {
             string errorMessage = __FILEREF__ + "Field is present but it has more than two elements"
                     + ", Field: " + field
                     + ", label: " + label
+					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
                     ;
             _logger->error(errorMessage);
 
@@ -4402,12 +4405,19 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		// input: 3 videos: intro, outro and main video
+		// before the check was
+		//	if (referencesRoot.size() != 3)
+		// This was changed to > 3 because it could be used
+		// the "DependOnIngestionJobKeysToBeAddedToReferences" tag. It means now may be we have
+		// 1 reference and DependOnIngestionJobKeysToBeAddedToReferences will add more
+		// references when the task will be executed
         Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() != 3)
+        if (referencesRoot.size() > 3)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it has not three elements"
+            string errorMessage = __FILEREF__ + "Field is present but it is not the right number of elements"
                     + ", Field: " + field
                     + ", label: " + label
+					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
                     ;
             _logger->error(errorMessage);
 

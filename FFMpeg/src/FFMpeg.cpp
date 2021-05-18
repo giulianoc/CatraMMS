@@ -2946,6 +2946,7 @@ void FFMpeg::awaitingTheBegining(
 				else */
 				if (twoPasses)
 				{
+					/*
 					string errorMessage = __FILEREF__ + "in case of awaitingTheBeginning it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2954,6 +2955,15 @@ void FFMpeg::awaitingTheBegining(
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of awaitingTheBeginning it is not possible to have a two passes encoding. Change it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
 				}
 
 				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -4460,6 +4470,7 @@ void FFMpeg::introOutroOverlay(
 				if (twoPasses)
 				{
 					// siamo sicuri che non sia possibile?
+					/*
 					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4468,6 +4479,15 @@ void FFMpeg::introOutroOverlay(
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
 				}
 
 				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -8400,6 +8420,7 @@ void FFMpeg::liveRecorder(
 					}
 					else */ if (twoPasses)
 					{
+						/*
 						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -8408,6 +8429,15 @@ void FFMpeg::liveRecorder(
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
+						*/
+						twoPasses = false;
+
+						string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have a two passes encoding. Change it to false"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", twoPasses: " + to_string(twoPasses)
+						;
+						_logger->warn(errorMessage);
 					}
 
 					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -9366,6 +9396,7 @@ void FFMpeg::liveProxy(
 					}
 					else */ if (twoPasses)
 					{
+						/*
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -9373,6 +9404,15 @@ void FFMpeg::liveProxy(
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
+						*/
+						twoPasses = false;
+
+						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", twoPasses: " + to_string(twoPasses)
+						;
+						_logger->warn(errorMessage);
 					}
 
 					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -9602,6 +9642,7 @@ void FFMpeg::liveProxy(
 					}
 					else */ if (twoPasses)
 					{
+						/*
 						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -9609,6 +9650,15 @@ void FFMpeg::liveProxy(
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
+						*/
+						twoPasses = false;
+
+						string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", twoPasses: " + to_string(twoPasses)
+						;
+						_logger->warn(errorMessage);
 					}
 
 					addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -10194,6 +10244,7 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			}
 			else */ if (twoPasses)
 			{
+				/*
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -10201,6 +10252,15 @@ void FFMpeg::liveProxyByHTTPStreaming(
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
+				*/
+				twoPasses = false;
+
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", twoPasses: " + to_string(twoPasses)
+				;
+				_logger->warn(errorMessage);
 			}
 
 			ffmpegEncodingProfileArgumentList.clear();
@@ -10791,6 +10851,7 @@ void FFMpeg::liveProxyByStream(
 			}
 			else */ if (twoPasses)
 			{
+				/*
 				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -10798,6 +10859,15 @@ void FFMpeg::liveProxyByStream(
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
+				*/
+				twoPasses = false;
+
+				string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", twoPasses: " + to_string(twoPasses)
+				;
+				_logger->warn(errorMessage);
 			}
 
 			ffmpegEncodingProfileArgumentList.clear();
