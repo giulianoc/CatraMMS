@@ -1540,8 +1540,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
 
-        createDeliveryAuthorization(request, userKey, workspace,
-                clientIPAddress, queryParameters);
+		createDeliveryAuthorization(request, userKey, workspace,
+			clientIPAddress, queryParameters);
     }
     else if (method == "createDeliveryCDN77Authorization")
     {
@@ -2200,13 +2200,6 @@ void API::createDeliveryAuthorization(
 				mediaItemKey = -1;
         }
 
-        int64_t encodingProfileKey = -1;
-        auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
-        if (encodingProfileKeyIt != queryParameters.end())
-        {
-			encodingProfileKey = stoll(encodingProfileKeyIt->second);
-        }
-
         string uniqueName;
         auto uniqueNameIt = queryParameters.find("uniqueName");
         if (uniqueNameIt != queryParameters.end())
@@ -2221,6 +2214,31 @@ void API::createDeliveryAuthorization(
 			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
 
 			uniqueName = curlpp::unescape(firstDecoding);
+        }
+
+        int64_t encodingProfileKey = -1;
+        auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
+        if (encodingProfileKeyIt != queryParameters.end())
+		{
+			encodingProfileKey = stoll(encodingProfileKeyIt->second);
+			if (encodingProfileKey == 0)
+				encodingProfileKey = -1;
+		}
+
+        string encodingProfileLabel;
+        auto encodingProfileLabelIt = queryParameters.find("encodingProfileLabel");
+        if (encodingProfileLabelIt != queryParameters.end())
+        {
+			encodingProfileLabel = encodingProfileLabelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(encodingProfileLabel, regex(plus), plusDecoded);
+
+			encodingProfileLabel = curlpp::unescape(firstDecoding);
         }
 
 		// this is for live authorization
@@ -2240,10 +2258,10 @@ void API::createDeliveryAuthorization(
         }
 
 		if (physicalPathKey == -1
-				&& ((mediaItemKey == -1 && uniqueName == "") || encodingProfileKey == -1)
-				&& ingestionJobKey == -1)
+			&& ((mediaItemKey == -1 && uniqueName == "") || (encodingProfileKey == -1 && encodingProfileLabel == ""))
+			&& ingestionJobKey == -1)
 		{
-            string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/encodingProfileKey or ingestionJobKey parameters have to be present");
+            string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or ingestionJobKey parameters have to be present");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
@@ -2315,6 +2333,8 @@ void API::createDeliveryAuthorization(
 				{
 					if (uniqueName != "" && mediaItemKey == -1)
 					{
+						// initialize mediaItemKey
+
 						bool warningIfMissing = false;
 						pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
 							_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
@@ -2323,9 +2343,32 @@ void API::createDeliveryAuthorization(
 						tie(mediaItemKey, ignore) = mediaItemKeyDetails;
 					}
 
+					if (encodingProfileKey == -1 && encodingProfileLabel != "")
+					{
+						// initialize encodingProfileKey
+
+						MMSEngineDBFacade::ContentType contentType;
+
+						tuple<MMSEngineDBFacade::ContentType, string, string, string,
+							int64_t, int64_t> mediaItemDetails;
+						mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
+							requestWorkspace->_workspaceKey, mediaItemKey,
+							false	// warningIfMissing
+						);
+						tie(contentType, ignore, ignore, ignore, ignore, ignore) =
+							mediaItemDetails;
+
+						encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+							requestWorkspace->_workspaceKey,
+							contentType,
+							encodingProfileLabel,
+							true	// contentTypeToBeUsed
+						);
+					}
+
 					tuple<int64_t, string, string> physicalPathKeyDeliveryFileNameAndDeliveryURI =
-						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, mediaItemKey, encodingProfileKey, save,
-						requestWorkspace);
+						_mmsStorage->getVODDeliveryURI(_mmsEngineDBFacade, mediaItemKey,
+							encodingProfileKey, save, requestWorkspace);
 					tie(physicalPathKey, deliveryFileName, deliveryURI) =
 						physicalPathKeyDeliveryFileNameAndDeliveryURI;
 				}
