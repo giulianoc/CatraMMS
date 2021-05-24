@@ -77,7 +77,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Proxy' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
+						//	rispetto a processingStartingFrom perchè il seguente scenario non era gestito:
+						//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
+						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
+						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
+						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
+						//	non considera la condizione di job "troppo vecchio"
+						"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 						"and ("
 							"JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') is null "
 							"or JSON_EXTRACT(ij.metaDataContent, '$.TimePeriod') = false "
@@ -194,7 +201,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
 						"and ij.ingestionType = 'Live-Recorder' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
+						//	rispetto a processingStartingFrom perchè il seguente scenario non era gestito:
+						//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
+						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
+						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
+						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
+						//	non considera la condizione di job "troppo vecchio"
+						"and ij.processingStartingFrom <= NOW() " // and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 						"and UNIX_TIMESTAMP(convert_tz(STR_TO_DATE(JSON_EXTRACT(ij.metaDataContent, '$.RecordingPeriod.Start'), '\"%Y-%m-%dT%H:%i:%sZ\"'), '+00:00', @@session.time_zone)) - UNIX_TIMESTAMP(DATE_ADD(NOW(), INTERVAL ? MINUTE)) < 0"
 						// "for update "
 						;
