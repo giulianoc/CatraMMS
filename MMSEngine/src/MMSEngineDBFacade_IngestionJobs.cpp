@@ -78,7 +78,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"and ij.ingestionType = 'Live-Proxy' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
-						//	rispetto a processingStartingFrom perchè il seguente scenario non era gestito:
+						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
 						//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
 						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
 						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
@@ -108,8 +108,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 				preparedStatement->setString(queryParameterIndexIngestionJob++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
-					_doNotManageIngestionsOlderThanDays);
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++,
+				// 	_doNotManageIngestionsOlderThanDays);
 				preparedStatement->setInt(queryParameterIndexIngestionJob++,
 					minutesAheadToConsiderLiveProxy);
 
@@ -202,8 +202,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						"and ij.ingestionType = 'Live-Recorder' "
 						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 						// 2021-05-24: Ho dovuto commentare il controllo successivo che non considera i jobs troppo "vecchi"
-						//	rispetto a processingStartingFrom perchè il seguente scenario non era gestito:
-						//	1. viene schedulato NOW un LiveProxy che dovrà partire fra 30 gg
+						//	rispetto al campo processingStartingFrom perchè il seguente scenario non era gestito:
+						//	1. viene schedulato NOW un LiveRecorder che dovrà partire fra 30 gg
 						//	In questo scenario il job non partirebbe perchè quando la condizione del TimePeriod
 						//	sarebbe 'vera', la condizione del job "troppo vecchio" è false
 						//	Per questo motivo ho commentato la condizione sotto che, essendo un job con TimePeriod,
@@ -226,9 +226,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				preparedStatement->setString(queryParameterIndexIngestionJob++,
 				   	MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 				preparedStatement->setString(queryParameterIndexIngestionJob++,
-				   	MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-				preparedStatement->setInt(queryParameterIndexIngestionJob++,
-					_doNotManageIngestionsOlderThanDays);
+					MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+				// preparedStatement->setInt(queryParameterIndexIngestionJob++,
+				// 	_doNotManageIngestionsOlderThanDays);
 				preparedStatement->setInt(queryParameterIndexIngestionJob++,
 					minutesAheadToConsiderLiveRecorder);
 
