@@ -250,7 +250,7 @@ void ActiveEncodingsManager::operator()()
 						else
 						{
 							_logger->info(__FILEREF__ + "EncodingJob still running"
-								+ "elapsed (minutes): " + 
+								+ ", elapsed (minutes): " + 
 									to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
 								+ ", workspace: " + encodingJob->_encodingItem->_workspace->_name
 								+ ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)

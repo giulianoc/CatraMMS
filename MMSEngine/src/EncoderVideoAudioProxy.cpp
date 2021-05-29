@@ -12690,10 +12690,23 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 	//	In this scenarios, we have to retry again without waiting the crontab check
 	// 2020-03-12: Removing the urlNotFound management generated duplication of ffmpeg process
 	//	For this reason we rollbacked as it was before
+	// 2021-05-29: LiveProxy has to exit if:
+	//	- was killed OR
+	//	- if timePeriod true
+	//		- no way to exit (we have to respect the timePeriod)
+	//	- if timePeriod false
+	//		- exit if too many error or urlForbidden or urlNotFound
 	time_t utcNowCheckToExit = 0;
-	while (!killedByUser && !urlForbidden && !urlNotFound
+	// while (!killedByUser && !urlForbidden && !urlNotFound
 		// check on currentAttemptsNumberInCaseOfErrors is done only if there is no timePeriod
-		&& (timePeriod || currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+	// 	&& (timePeriod || currentAttemptsNumberInCaseOfErrors < maxAttemptsNumberInCaseOfErrors)
+	// )
+	while (!	// while we are NOT in the exit condition
+		(
+			// exit condition 
+			killedByUser ||
+			(!timePeriod && (urlForbidden || urlNotFound || currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors))
+		)
 	)
 	{
 		if (timePeriod)

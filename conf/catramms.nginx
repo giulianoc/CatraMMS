@@ -1,5 +1,6 @@
 server {
 	server_name mms.catrasoft.cloud catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen 80;
 
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
@@ -8,6 +9,7 @@ server {
 
 server {
 	server_name mms.catrasoft.cloud catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen 443 ssl http2;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
@@ -23,6 +25,7 @@ server {
 #in case of nginx load balancer
 server {
         server_name mms-api-1.restream.ovh;
+		#better to bind to a specific IP, better if internal IP
         listen 192.168.1.105:80;
 
         include /opt/catramms/CatraMMS/conf/catrammsAPIServer.nginx;
@@ -31,6 +34,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-api-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen mms-api-1.catrasoft.cloud:80;
 
 	return 301 https://mms-api.catrasoft.cloud$request_uri;
@@ -39,6 +43,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-api-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen 443 ssl http2;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
@@ -51,6 +56,7 @@ server {
 
 #encoder
 server {
+	#better to bind to a specific IP, better if internal IP
 	listen 80;
 
 	# mmsengine-1 is for the calls directly to the encoder server (progress and status(isFinished))
@@ -64,6 +70,7 @@ server {
 #in case of nginx load balancer
 server {
 	server_name mms-delivery-1.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
 	set $deliveryHostName 192.168.1.105;
@@ -74,6 +81,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-delivery-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	#listen 80;
 	listen 443;
 
@@ -90,6 +98,7 @@ server {
 #in case of direct call from client
 server {
     server_name mms-delivery.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
     listen 127.0.0.1:80;
 
     set $deliveryHostName 127.0.0.1;
@@ -102,6 +111,7 @@ server {
 #in case of nginx load balancer
 server {
 	server_name mms-delivery-path-1.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
 	set $deliveryHostName 192.168.1.105;
@@ -112,6 +122,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-delivery-path-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	#listen 80;
 	listen 443;
 
@@ -128,6 +139,7 @@ server {
 #in case of direct call from client
 server {
     server_name mms-delivery-path.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
     listen 127.0.0.1:80;
 
     set $deliveryHostName 127.0.0.1;
@@ -140,6 +152,7 @@ server {
 #in case of nginx load balancer
 server {
 	server_name mms-delivery-f.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
 	include /opt/catramms/CatraMMS/conf/catrammsDelivery-fServer.nginx;
@@ -148,6 +161,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-delivery-f.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	#listen 80;
 	listen 443;
 
@@ -163,6 +177,7 @@ server {
 #in case of nginx load balancer
 server {
 	server_name mms-binary.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
 	set $binaryHostName 192.168.1.105;
@@ -172,6 +187,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-binary.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen 443;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
@@ -185,6 +201,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-binary-1.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen mms-binary-1.restream.ovh:80;
 
 	set $binaryHostName 127.0.0.1;
@@ -194,6 +211,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-binary-1.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 127.0.0.1:80;
 
 	set $binaryHostName 127.0.0.1;
@@ -205,6 +223,7 @@ server {
 #in case of nginx load balancer
 server {
 	server_name mms-gui.restream.ovh;
+	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
 	include /opt/catramms/CatraMMS/conf/catrammsGUIServer.nginx;
@@ -213,6 +232,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-gui-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen mms-gui-1.restream.ovh:80;
 
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
@@ -222,6 +242,7 @@ server {
 #in case of direct call from client
 server {
 	server_name mms-gui-1.catrasoft.cloud;
+	#better to bind to a specific IP, better if internal IP
 	listen 443 ssl http2;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;

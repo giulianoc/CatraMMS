@@ -39,28 +39,30 @@ elif [ $commandIndex -eq 16 -a "$healthCheckType" != "" ]
 then
 	#mms service health check
 
-	toBeRestarted=0
+	toBeRestartedBecauseEngine=0
+	toBeRestartedBecauseLoadBalancer=0
+	toBeRestartedBecauseAPIOrEncoder=0
 	if [ "$healthCheckType" == "engine" ]
 	then
 		pgrep -f mmsEngineService > /dev/null
-		toBeRestarted=$?
+		toBeRestartedBecauseEngine=$?
 	elif [ "$healthCheckType" == "load-balancer" ]
 	then
 		pgrep -f nginx > /dev/null
-		toBeRestarted=$?
+		toBeRestartedBecauseLoadBalancer=$?
 	elif [ "$healthCheckURL" != "" ]
 	then
 		serviceStatus=$(curl -k -s --max-time 30 "$healthCheckURL")
 		if [ "$serviceStatus" == "" ]
 		then
-			toBeRestarted=1
+			toBeRestartedBecauseAPIOrEncoder=1
 		else
-			toBeRestarted=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
+			toBeRestartedBecauseAPIOrEncoder=$(echo $serviceStatus | awk '{ if (index($0, "up and running") == 0) printf("1"); else printf("0"); }')
 		fi
 
 		failuresNumberFileName=/tmp/failuresNumber.$healthCheckType.txt
 		maxFailuresNumber=2
-		if [ $toBeRestarted -eq 1 ]
+		if [ $toBeRestartedBecauseAPIOrEncoder -eq 1 ]
 		then
 			#curl failed, check failuresNumber
 
@@ -71,11 +73,11 @@ then
 
 				if [ $failuresNumber -ge $maxFailuresNumber ]
 				then
-					toBeRestarted=1
+					toBeRestartedBecauseAPIOrEncoder=1
 
 					echo "0" > $failuresNumberFileName
 				else
-					toBeRestarted=0
+					toBeRestartedBecauseAPIOrEncoder=0
 
 					failuresNumber=$((failuresNumber+1))
 
@@ -84,7 +86,7 @@ then
 			else
 				#first failure
 
-				toBeRestarted=0
+				toBeRestartedBecauseAPIOrEncoder=0
 
 				echo "1" > $failuresNumberFileName
 			fi
@@ -93,11 +95,22 @@ then
 		fi
 	fi
 
-	if [ $toBeRestarted -eq 1 ]
+	toBeRestartedBecauseEngine=0
+	toBeRestartedBecauseLoadBalancer=0
+	toBeRestartedBecauseAPIOrEncoder=0
+	if [ $toBeRestartedBecauseEngine -eq 1 -o $toBeRestartedBecauseLoadBalancer -eq 1 -o $toBeRestartedBecauseAPIOrEncoder -eq 1 ]
 	then
 		#restart
 
-		echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART" >> ~/MMS_RESTART.txt
+		if [ $toBeRestartedBecauseEngine -eq 1 ]
+		then
+			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE ENGINE" >> ~/MMS_RESTART.txt
+		elif [ $toBeRestartedBecauseLoadBalancer -eq 1 ]
+		then
+			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE LOAD BALANCER" >> ~/MMS_RESTART.txt
+		else
+			echo "$(date +'%Y-%m-%d %H-%M-%S') BEGIN MMS SERVICE RESTART BECAUSE API or ENCODER" >> ~/MMS_RESTART.txt
+		fi
 
 		~/mmsStopALL.sh
 		sleep 1
