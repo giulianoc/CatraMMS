@@ -6845,9 +6845,8 @@ pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 				+ ", transcoderStagingContentsPath + segmentListFileName: " + transcoderStagingContentsPath + segmentListFileName
 			);
 
-			string segmentListPathName = transcoderStagingContentsPath + segmentListFileName;
 			ifstream segmentList;
-			segmentList.open(segmentListPathName.c_str(), ifstream::in);
+			segmentList.open(transcoderStagingContentsPath + segmentListFileName, ifstream::in);
 			if (!segmentList)
 			{
 				string errorMessage = __FILEREF__ + "No segment list file found yet"
