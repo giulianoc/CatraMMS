@@ -1404,10 +1404,10 @@ string EncoderVideoAudioProxy::encodeContentImage()
 				+ "_" 
 				+ to_string(encodingProfileKey);
     
-			tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
+			tuple<string, int, string, string, int64_t, string> physicalPathDetails =
 				_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, sourcePhysicalPathKey);
 			tie(mmsSourceAssetPathName, ignore, ignore, ignore, ignore, ignore)
-				= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				= physicalPathDetails;
 
 			// added the check of the file size is zero because in this case the
 			// magick library cause the crash of the xmms engine

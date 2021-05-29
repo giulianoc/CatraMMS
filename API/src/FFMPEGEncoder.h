@@ -75,7 +75,7 @@ struct LiveRecording
         string					_segmentListFileName;
         string					_recordedFileNamePrefix;
 		string					_lastRecordedAssetFileName;
-		int						_lastRecordedAssetDurationInSeconds;
+		double					_lastRecordedAssetDurationInSeconds;
 		string					_channelLabel;
 		string					_segmenterType;
 		chrono::system_clock::time_point	_recordingStart;
@@ -256,7 +256,7 @@ private:
         shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
-	pair<string, int> liveRecorder_processStreamSegmenterOutput(
+	pair<string, double> liveRecorder_processStreamSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string channelType, 
 		// bool highAvailability, bool main,
@@ -268,8 +268,8 @@ private:
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
-		int lastRecordedAssetDurationInSeconds);
-	pair<string, int> liveRecorder_processHLSSegmenterOutput(
+		double lastRecordedAssetDurationInSeconds);
+	pair<string, double> liveRecorder_processHLSSegmenterOutput(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
 		string channelType, 
 		// bool highAvailability, bool main,
@@ -281,7 +281,7 @@ private:
 		string segmentListFileName,
 		string recordedFileNamePrefix,
 		string lastRecordedAssetFileName,
-		int lastRecordedAssetDurationInSeconds);
+		double lastRecordedAssetDurationInSeconds);
 	time_t liveRecorder_getMediaLiveRecorderStartTime(int64_t ingestionJobKey, int64_t encodingJobKey,
 			string mediaLiveRecorderFileName, int segmentDurationInSeconds, bool isFirstChunk);
 	time_t liveRecorder_getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey,

@@ -418,8 +418,8 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathD
 {
     try
     {
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool> storageDetails =
-			mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
+			string, string, int64_t, bool> storageDetails = mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		int mmsPartitionNumber;
@@ -434,6 +434,7 @@ tuple<string, int, string, string, int64_t, string> MMSStorage::getPhysicalPathD
             deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
 
 		_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+			+ ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
 			+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
 			+ ", workspaceDirectoryName: " + workspace->_directoryName
 			+ ", relativePath: " + relativePath

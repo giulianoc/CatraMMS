@@ -6374,7 +6374,7 @@ void FFMPEGEncoder::stopLiveRecorderVirtualVODIngestionThread()
 	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
 }
 
-pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
+pair<string, double> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string channelType,
 	// bool highAvailability, bool main,
@@ -6386,13 +6386,13 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	int lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds)
 {
 
 	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
 	// the same lastRecordedAssetFileName has to be returned
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
-	int newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
+	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
     try
     {
 		_logger->info(__FILEREF__ + "liveRecorder_processStreamSegmenterOutput"
@@ -6794,7 +6794,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processStreamSegmenterOutput(
 	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
 }
 
-pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
+pair<string, double> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string channelType,
 	// bool highAvailability, bool main,
@@ -6806,11 +6806,11 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	int lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds)
 {
 
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
-	int newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
+	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
 
     try
     {
@@ -6938,8 +6938,8 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 					)
 					||
 					// case 2: we are NOT in the toBeIngested status
-					//	but we are just started to ingest (lastRecordedAssetFileName == "")
-					//	and we are all the details of the ingested segment
+					//	but we just started to ingest (lastRecordedAssetFileName == "")
+					//	and we have all the details of the ingested segment
 					(
 						!toBeIngested
 						&& currentSegmentDuration != -1.0
@@ -7179,6 +7179,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 						}
 
 						newLastRecordedAssetFileName = toBeIngestedSegmentFileName;
+						newLastRecordedAssetDurationInSeconds = toBeIngestedSegmentDuration;
 					}
 
 					ingestionNumber++;
@@ -7201,7 +7202,7 @@ pair<string, int> FFMPEGEncoder::liveRecorder_processHLSSegmenterOutput(
 				&& !toBeIngested					// file name does not exist into the playlist
 			)
 			{
-				_logger->error(__FILEREF__ + "Filename not found: sceanrio that should never happen"
+				_logger->error(__FILEREF__ + "Filename not found: scenario that should never happen"
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", toBeIngested: " + to_string(toBeIngested)
