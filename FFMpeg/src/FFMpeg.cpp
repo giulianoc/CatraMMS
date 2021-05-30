@@ -3072,17 +3072,17 @@ void FFMpeg::awaitingTheBegining(
 						ffmpegArgumentList.push_back("-hls_list_size");
 						ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
+						// Segment files removed from the playlist are deleted after a period of time
+						// equal to the duration of the segment plus the duration of the playlist
+						ffmpegArgumentList.push_back("-hls_flags");
+						ffmpegArgumentList.push_back("delete_segments");
+
 						// Set the number of unreferenced segments to keep on disk
 						// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
 						// to download segments which were recently referenced in the playlist.
 						// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
 						ffmpegArgumentList.push_back("-hls_delete_threshold");
 						ffmpegArgumentList.push_back(to_string(1));
-
-						// Segment files removed from the playlist are deleted after a period of time equal
-						// to the duration of the segment plus the duration of the playlist.
-						ffmpegArgumentList.push_back("-hls_flags");
-						ffmpegArgumentList.push_back("delete_segments");
 
 						// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
 						// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
@@ -8310,18 +8310,17 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-hls_list_size");
 			ffmpegArgumentList.push_back("10");
 
+			// Segment files removed from the playlist are deleted after a period of time
+			// equal to the duration of the segment plus the duration of the playlist
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("delete_segments");
+
 			// Set the number of unreferenced segments to keep on disk
 			// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
 			// to download segments which were recently referenced in the playlist.
 			// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
 			ffmpegArgumentList.push_back("-hls_delete_threshold");
 			ffmpegArgumentList.push_back(to_string(1));
-
-			// Segment files removed from the playlist are deleted after a period of time equal
-			// to the duration of the segment plus the duration of the playlist.
-			// I SAW the REMOVE IS AFTER 2 * <playlist duration>
-			ffmpegArgumentList.push_back("-hls_flags");
-			ffmpegArgumentList.push_back("delete_segments");
 
 			ffmpegArgumentList.push_back("-hls_flags");
 			ffmpegArgumentList.push_back("program_date_time");
@@ -8544,6 +8543,11 @@ void FFMpeg::liveRecorder(
 					ffmpegArgumentList.push_back("-hls_list_size");
 					ffmpegArgumentList.push_back(to_string(monitorVirtualVODPlaylistEntriesNumber));
 
+					// Segment files removed from the playlist are deleted after a period of time
+					// equal to the duration of the segment plus the duration of the playlist
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("delete_segments");
+
 					// Set the number of unreferenced segments to keep on disk
 					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
 					// to download segments which were recently referenced in the playlist.
@@ -8553,9 +8557,6 @@ void FFMpeg::liveRecorder(
 
 					// Segment files removed from the playlist are deleted after a period of time equal
 					// to the duration of the segment plus the duration of the playlist.
-					// I SAW the REMOVE IS AFTER 2 * <playlist duration>
-					ffmpegArgumentList.push_back("-hls_flags");
-					ffmpegArgumentList.push_back("delete_segments");
 
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("program_date_time");
@@ -9514,6 +9515,11 @@ void FFMpeg::liveProxy(
 					ffmpegArgumentList.push_back("-hls_list_size");
 					ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
+					// Segment files removed from the playlist are deleted after a period of time
+					// equal to the duration of the segment plus the duration of the playlist
+					ffmpegArgumentList.push_back("-hls_flags");
+					ffmpegArgumentList.push_back("delete_segments");
+
 					// Set the number of unreferenced segments to keep on disk
 					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
 					// to download segments which were recently referenced in the playlist.
@@ -9521,10 +9527,6 @@ void FFMpeg::liveProxy(
 					ffmpegArgumentList.push_back("-hls_delete_threshold");
 					ffmpegArgumentList.push_back(to_string(1));
 
-					// Segment files removed from the playlist are deleted after a period of time equal
-					// to the duration of the segment plus the duration of the playlist.
-					ffmpegArgumentList.push_back("-hls_flags");
-					ffmpegArgumentList.push_back("delete_segments");
 
 					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
 					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
@@ -10413,17 +10415,17 @@ void FFMpeg::liveProxyByHTTPStreaming(
 			ffmpegArgumentList.push_back("-hls_list_size");
 			ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
+			// Segment files removed from the playlist are deleted after a period of time
+			// equal to the duration of the segment plus the duration of the playlist
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("delete_segments");
+
 			// Set the number of unreferenced segments to keep on disk
 			// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
 			// to download segments which were recently referenced in the playlist.
 			// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
 			ffmpegArgumentList.push_back("-hls_delete_threshold");
 			ffmpegArgumentList.push_back(to_string(1));
-
-			// Segment files removed from the playlist are deleted after a period of time equal
-			// to the duration of the segment plus the duration of the playlist.
-			ffmpegArgumentList.push_back("-hls_flags");
-			ffmpegArgumentList.push_back("delete_segments");
 
 			// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
 			// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
@@ -11541,11 +11543,17 @@ void FFMpeg::liveGrid(
 					ffmpegArgumentList.push_back("-hls_list_size");
 					ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
-					ffmpegArgumentList.push_back("-hls_delete_threshold");
-					ffmpegArgumentList.push_back(to_string(1));
-
+					// Segment files removed from the playlist are deleted after a period of time
+					// equal to the duration of the segment plus the duration of the playlist
 					ffmpegArgumentList.push_back("-hls_flags");
 					ffmpegArgumentList.push_back("delete_segments");
+
+					// Set the number of unreferenced segments to keep on disk
+					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+					// to download segments which were recently referenced in the playlist.
+					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+					ffmpegArgumentList.push_back("-hls_delete_threshold");
+					ffmpegArgumentList.push_back(to_string(1));
 
 					// 2020-07-11: without -hls_start_number_source we have video-audio out of sync
 					ffmpegArgumentList.push_back("-hls_start_number_source");
@@ -11611,11 +11619,17 @@ void FFMpeg::liveGrid(
 							ffmpegArgumentList.push_back("-hls_list_size");
 							ffmpegArgumentList.push_back(to_string(playlistEntriesNumber));
 
-							ffmpegArgumentList.push_back("-hls_delete_threshold");
-							ffmpegArgumentList.push_back(to_string(1));
-
+							// Segment files removed from the playlist are deleted after a period of time
+							// equal to the duration of the segment plus the duration of the playlist
 							ffmpegArgumentList.push_back("-hls_flags");
 							ffmpegArgumentList.push_back("delete_segments");
+
+							// Set the number of unreferenced segments to keep on disk
+							// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+							// to download segments which were recently referenced in the playlist.
+							// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+							ffmpegArgumentList.push_back("-hls_delete_threshold");
+							ffmpegArgumentList.push_back(to_string(1));
 
 							// 2020-07-11: without -hls_start_number_source we have video-audio out of sync
 							ffmpegArgumentList.push_back("-hls_start_number_source");

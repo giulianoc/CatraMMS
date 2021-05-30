@@ -9545,9 +9545,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string outputFileFormat;
 		// bool highAvailability = false;
 		bool liveRecorderVirtualVOD = false;
-		int liveRecorderVirtualVODMaxDurationInMinutes = 120;
+		int liveRecorderVirtualVODMaxDurationInMinutes = 30;
 		int64_t virtualVODEncodingProfileKey = -1;
-		int virtualVODSegmentDurationInSeconds = 0;
+		int virtualVODSegmentDurationInSeconds = 10;
 		bool monitorHLS = false;
 		int monitorPlaylistEntriesNumber = 0;
 		int monitorSegmentDurationInSeconds = 0;
@@ -9827,7 +9827,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				field = "LiveRecorderVirtualVODMaxDuration";
 				if (!JSONUtils::isMetadataPresent(virtualVODRoot, field))
-					liveRecorderVirtualVODMaxDurationInMinutes = 120;
+					liveRecorderVirtualVODMaxDurationInMinutes = 30;
 				else
 					liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(virtualVODRoot, field, 120);
 

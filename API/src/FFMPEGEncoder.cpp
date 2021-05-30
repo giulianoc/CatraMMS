@@ -6331,7 +6331,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					_logger->info(__FILEREF__ + "Single Channel Virtual VOD"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-						+ ", @MMS statistics@ - elapsed time: @" + to_string(
+						+ ", @MMS statistics@ - elapsed time (secs): @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
 								- startSingleChannelVirtualVOD).count()
 						) + "@"
@@ -8079,6 +8079,26 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			}
 		}
 
+		string sourceManifestPathFileName = sourceSegmentsDirectoryPathName + "/" +
+			sourceManifestFileName;
+		if (!FileIO::isFileExisting (sourceManifestPathFileName.c_str()))
+		{
+			string errorMessage = string("manifest file not existing")
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// 2021-05-30: it is not a good idea to copy all the directory (manifest and ts files) because
+		//	ffmpeg is not accurate to remove the obsolete ts files, so we will have the manifest files
+		//	having for example 300 ts references but the directory contains thousands of ts files.
+		//	So we will copy only the manifest file and ONLY the ts files referenced into the manifest file
+
+		/*
 		// copy manifest and TS files into the stagingLiveRecorderVirtualVODPathName
 		{
 			_logger->info(__FILEREF__ + "Coping directory"
@@ -8102,9 +8122,36 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 					+ to_string(chrono::duration_cast<chrono::seconds>(endCoping - startCoping).count()) + "@"
 			);
 		}
+		*/
 
 		string copiedManifestPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
 			sourceManifestFileName;
+
+		// create the destination directory and copy the manifest file
+		{
+			if (!FileIO::directoryExisting(stagingLiveRecorderVirtualVODPathName))
+			{
+				bool noErrorIfExists = true;
+				bool recursive = true;
+				_logger->info(__FILEREF__ + "Creating directory"
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+				);
+				FileIO::createDirectory(stagingLiveRecorderVirtualVODPathName,
+					S_IRUSR | S_IWUSR | S_IXUSR |
+					S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+			}
+
+			_logger->info(__FILEREF__ + "Coping"
+				+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+				+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+				+ ", sourceManifestPathFileName: " + sourceManifestPathFileName
+				+ ", copiedManifestPathFileName: " + copiedManifestPathFileName
+			);
+			FileIO::copyFile(sourceManifestPathFileName, copiedManifestPathFileName);
+		}
+
 		if (!FileIO::isFileExisting (copiedManifestPathFileName.c_str()))
 		{
 			string errorMessage = string("manifest file not existing")
@@ -8119,6 +8166,7 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 		// read start time of the first segment
 		// read start time and duration of the last segment
+		// copy ts file into the directory
 		double firstSegmentDuration = -1.0;
 		int64_t firstSegmentUtcStartTimeInMillisecs = -1;
 		double lastSegmentDuration = -1.0;
@@ -8148,6 +8196,7 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 			{
 				// #EXTINF:14.640000,
 				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
+				// liveRecorder_1479919_334303_1622362660.ts
 
 				string prefix ("#EXTINF:");
 				if (manifestLine.size() >= prefix.size()
@@ -8166,7 +8215,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 						throw runtime_error(errorMessage);
 					}
 
-					lastSegmentDuration = stod(manifestLine.substr(prefix.size(), endOfSegmentDuration - prefix.size()));
+					lastSegmentDuration = stod(manifestLine.substr(prefix.size(),
+						endOfSegmentDuration - prefix.size()));
 				}
 
 				prefix = "#EXT-X-PROGRAM-DATE-TIME:";
@@ -8178,6 +8228,22 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				{
 					firstSegmentDuration = lastSegmentDuration;
 					firstSegmentUtcStartTimeInMillisecs = lastSegmentUtcStartTimeInMillisecs;
+				}
+
+				if (manifestLine != "" && manifestLine[0] != '#')
+				{
+					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" +
+						manifestLine;
+					string copiedTSPathFileName = stagingLiveRecorderVirtualVODPathName + "/" +
+						manifestLine;
+
+					_logger->info(__FILEREF__ + "Coping"
+						+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+						+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+						+ ", sourceTSPathFileName: " + sourceTSPathFileName
+						+ ", copiedTSPathFileName: " + copiedTSPathFileName
+					);
+					FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
 				}
 			}
 		}
@@ -8230,7 +8296,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End tar command "
 					+ ", executeCommand: " + executeCommand
-					+ ", @MMS statistics@ - tarDuration (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+					+ ", @MMS statistics@ - tarDuration (millisecs): @"
+						+ to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
 				);
 				if (executeCommandStatus != 0)
 				{
@@ -8370,28 +8437,28 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 			{
 				sprintf (utcEndTime_str,
-					"%04d-%02d-%02d %02d:%02d:%02d",                                                              
-					tmDateTime. tm_year + 1900,                                                                   
-					tmDateTime. tm_mon + 1,                                                                       
-					tmDateTime. tm_mday,                                                                          
-					tmDateTime. tm_hour,                                                                          
-					tmDateTime. tm_min,                                                                           
-					tmDateTime. tm_sec);                                                                          
+					"%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
 
-				string sUtcEndTime = utcEndTime_str;                                                       
+				string sUtcEndTime = utcEndTime_str;
 
 				field = "utcEndTime_str";
-				mmsDataRoot[field] = sUtcEndTime;                                                            
+				mmsDataRoot[field] = sUtcEndTime;
 			}
 
 			{
 				sprintf (utcEndTime_str,
-					"%02d:%02d:%02d",                                                              
-					tmDateTime. tm_hour,                                                                          
-					tmDateTime. tm_min,                                                                           
-					tmDateTime. tm_sec);                                                                          
+					"%02d:%02d:%02d",
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
 
-				sUtcEndTimeForContentTitle = utcEndTime_str;                                                       
+				sUtcEndTimeForContentTitle = utcEndTime_str;
 			}
 		}
 
@@ -8419,7 +8486,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		field = "FileFormat";
 		addContentParametersRoot[field] = "m3u8";
 
-		string sourceURL = string("copy") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
+		// 2021-05-30: changed from copy to move with the idea to have better performance
+		string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
         field = "SourceURL";
         addContentParametersRoot[field] = sourceURL;
 
