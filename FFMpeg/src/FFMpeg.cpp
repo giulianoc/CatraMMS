@@ -8513,6 +8513,9 @@ void FFMpeg::liveRecorder(
 					addToArguments(monitorOtherOutputOptions, ffmpegArgumentList);
 				*/
 
+				ffmpegArgumentList.push_back("-f");
+				ffmpegArgumentList.push_back("hls");
+
 				if (ffmpegEncodingProfileArgumentList.size() > 0)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
@@ -8573,8 +8576,6 @@ void FFMpeg::liveRecorder(
 					// ffmpegArgumentList.push_back("-start_number");
 					// ffmpegArgumentList.push_back(to_string(10));
 				}
-				ffmpegArgumentList.push_back("-f");
-				ffmpegArgumentList.push_back("hls");
 				ffmpegArgumentList.push_back(manifestFilePathName);
 			}
 		}
