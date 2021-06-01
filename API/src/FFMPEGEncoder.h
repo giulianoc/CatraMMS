@@ -301,7 +301,7 @@ private:
 		Json::Value liveRecorderParametersRoot,
 		Json::Value encodingParametersRoot,
 		bool copy);
-	void liveRecorder_buildAndIngestVirtualVOD(
+	long liveRecorder_buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey,
 		int64_t liveRecorderEncodingJobKey,
 

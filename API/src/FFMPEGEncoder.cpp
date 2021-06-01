@@ -6262,6 +6262,8 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 
 					chrono::system_clock::time_point startSingleChannelVirtualVOD = chrono::system_clock::now();
 
+					long segmentsNumber = 0;
+
 					try
 					{
 						int64_t deliveryCode = JSONUtils::asInt64(
@@ -6291,7 +6293,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 							}
 						}
 
-						liveRecorder_buildAndIngestVirtualVOD(
+						segmentsNumber = liveRecorder_buildAndIngestVirtualVOD(
 							liveRecording->_ingestionJobKey,
 							liveRecording->_encodingJobKey,
 
@@ -6331,6 +6333,7 @@ void FFMPEGEncoder::liveRecorderVirtualVODIngestionThread()
 					_logger->info(__FILEREF__ + "Single Channel Virtual VOD"
 						+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+						+ ", segmentsNumber: " + to_string(segmentsNumber)
 						+ ", @MMS statistics@ - elapsed time (secs): @" + to_string(
 							chrono::duration_cast<chrono::seconds>(chrono::system_clock::now()
 								- startSingleChannelVirtualVOD).count()
@@ -8032,7 +8035,7 @@ time_t FFMPEGEncoder::liveRecorder_getMediaLiveRecorderEndTime(
 	return utcCurrentRecordedFileLastModificationTime;
 }
 
-void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
+long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	int64_t liveRecorderIngestionJobKey,
 	int64_t liveRecorderEncodingJobKey,
 
@@ -8049,6 +8052,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 	string liveRecorderApiKey
 )
 {
+
+	long segmentsNumber = 0;
 
 	// let's build the live recorder virtual VOD
 	// - copy current manifest and TS files
@@ -8191,6 +8196,7 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 				throw runtime_error(errorMessage);
 			}
 
+			segmentsNumber = 0;
 			string manifestLine;
 			while(getline(ifManifestFile, manifestLine))
 			{
@@ -8244,6 +8250,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 						+ ", copiedTSPathFileName: " + copiedTSPathFileName
 					);
 					FileIO::copyFile(sourceTSPathFileName, copiedTSPathFileName);
+
+					segmentsNumber++;
 				}
 			}
 		}
@@ -8817,6 +8825,8 @@ void FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 
 		throw runtime_error(errorMessage);
 	}
+
+	return segmentsNumber;
 }
 
 void FFMPEGEncoder::liveProxyThread(
