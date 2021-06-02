@@ -5600,10 +5600,10 @@ void FFMPEGEncoder::liveRecorderThread(
 		// receives the stream and we do not know what it happens.
 		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 		if (liveRecording->_channelType == "IP_MMSAsServer")
-			liveRecording->_recordingStart = chrono::system_clock::now() +
+			liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart) + // chrono::system_clock::now() +
 				chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 		else
-			liveRecording->_recordingStart = chrono::system_clock::now();
+			liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);	// chrono::system_clock::now();
 
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
@@ -9137,10 +9137,21 @@ void FFMPEGEncoder::liveProxyThread(
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 			if (liveProxy->_channelType == "IP_MMSAsServer")
-				liveProxy->_proxyStart = chrono::system_clock::now() +
-					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+			{
+				if (utcProxyPeriodStart != -1)
+					liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) + // chrono::system_clock::now() +
+						chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+				else
+					liveProxy->_proxyStart = chrono::system_clock::now() +
+						chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+			}
 			else
-				liveProxy->_proxyStart = chrono::system_clock::now();
+			{
+				if (utcProxyPeriodStart != -1)
+					liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+				else
+					liveProxy->_proxyStart = chrono::system_clock::now();
+			}
 
 			liveProxy->_ffmpeg->liveProxy(
 				liveProxy->_ingestionJobKey,
@@ -10596,8 +10607,13 @@ void FFMPEGEncoder::monitorThread()
 					string localErrorMessage;
 
 					{
-						int64_t liveProxyLiveTimeInMinutes =
-							chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
+						// liveProxy->_proxyStart could be a bit in the future
+						int64_t liveProxyLiveTimeInMinutes;
+						if (now > liveProxy->_proxyStart)
+							liveProxyLiveTimeInMinutes	=
+								chrono::duration_cast<chrono::minutes>(now - liveProxy->_proxyStart).count();
+						else
+							liveProxyLiveTimeInMinutes	= 0;
 
 						// checks are done after 3 minutes LiveProxy started, in order to be sure
 						// the manifest file was already created
@@ -11319,8 +11335,13 @@ void FFMPEGEncoder::monitorThread()
 
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 
-					int64_t liveRecordingLiveTimeInMinutes =
-						chrono::duration_cast<chrono::minutes>(now - liveRecording->_recordingStart).count();
+					// liveRecording->_recordingStart could be a bit in the future
+					int64_t liveRecordingLiveTimeInMinutes;
+					if (now > liveRecording->_recordingStart)
+						liveRecordingLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(
+							now - liveRecording->_recordingStart).count();
+					else
+						liveRecordingLiveTimeInMinutes = 0;
 
 					int segmentDurationInSeconds;
 					string field = "segmentDurationInSeconds";
