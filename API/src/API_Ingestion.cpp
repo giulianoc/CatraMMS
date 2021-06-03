@@ -295,18 +295,40 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		}
 
 		/*
+		 * Definition of the Variables into the Workflow:
 		"Variables": {
 			"var n. 1": {
 				"Type": "int",	// or string
+				"IsNull": false,
 				"Value": 10,
 				"Description": "..."
 			},
 			"var n. 2": {
 				"Type": "string",
+				"IsNull": false,
 				"Value": "...",
 				"Description": "..."
 			}
 		}
+
+		Workflow instantiated (example):
+			"Task": {
+				"Label": "Use of a WorkflowAsLibrary",
+
+				"Parameters": {
+					"WorkflowAsLibraryLabel": "Best Picture of the Video",
+					"WorkflowAsLibraryType": "MMS",
+
+					"ImageRetention": "1d",
+					"ImageTags": "FACE",
+					"Ingester": "Admin",
+					"InitialFramesNumberToBeSkipped": 1500,
+					"InstantInSeconds": 60,
+					"Label": "Image label",
+					"Title": "My Title"
+				},
+				"Type": "Workflow-As-Library"
+			}
 		 */
 		string field = "Variables";
 		if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -335,31 +357,66 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						field = "Type";
 						string variableType = variableDetails.get(field, "XXX").asString();
 
+						field = "IsNull";
+						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
+
 						if (variablesValuesToBeUsedRoot == Json::nullValue)
 						{
 							field = "Value";
 							if (variableType == "string")
 							{
-								sValue = variableDetails.get(field, "").asString();
+								if (variableIsNull)
+								{
+									sValue = "";
+								}
+								else
+								{
+									sValue = variableDetails.get(field, "").asString();
 
-								// scenario, the json will be: "field": "${var_name}"
-								//	so in case the value of the variable contains " we have
-								//	to replace it with \"
-								sValue = regex_replace(sValue, regex("\""), "\\\"");
+									// scenario, the json will be: "field": "${var_name}"
+									//	so in case the value of the variable contains " we have
+									//	to replace it with \"
+									sValue = regex_replace(sValue, regex("\""), "\\\"");
+								}
 							}
 							else if (variableType == "integer")
-								sValue = to_string(JSONUtils::asInt64(variableDetails, field, 0));
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+									sValue = to_string(JSONUtils::asInt64(variableDetails, field, 0));
+							}
 							else if (variableType == "decimal")
-								sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+									sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
+							}
 							else if (variableType == "boolean")
 							{
-								bool bValue = JSONUtils::asBool(variableDetails, field, false);
-								sValue = bValue ? "true" : "false";
+								if (variableIsNull)
+									sValue = "null";
+								else
+								{
+									bool bValue = JSONUtils::asBool(variableDetails, field, false);
+									sValue = bValue ? "true" : "false";
+								}
 							}
 							else if (variableType == "datetime")
-								sValue = variableDetails.get(field, "").asString();
+							{
+								if (variableIsNull)
+									sValue = "";
+								else
+									sValue = variableDetails.get(field, "").asString();
+							}
 							else if (variableType == "datetime-millisecs")
-								sValue = variableDetails.get(field, "").asString();
+							{
+								if (variableIsNull)
+									sValue = "";
+								else
+									sValue = variableDetails.get(field, "").asString();
+							}
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"

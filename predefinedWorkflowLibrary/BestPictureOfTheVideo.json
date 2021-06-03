@@ -2,53 +2,68 @@
   "Variables": {
     "Title": {
       "Position": 0,
+	  "IsNull": false,
       "Description": "Title of the Picture",
       "Type": "string",
       "Value": "My Title"
     },
     "ImageTags": {
       "Position": 1,
+	  "IsNull": false,
       "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
       "Type": "string",
       "Value": "[ \"FACE\" ]"
     },
     "InstantInSeconds": {
       "Position": 2,
+	  "IsNull": false,
       "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
       "Type": "decimal",
       "Value": 60
     },
     "UniqueName": {
       "Position": 3,
+	  "IsNull": false,
       "Type": "string",
       "Value": ""
     },
     "AllowUniqueNameOverride": {
       "Position": 4,
+	  "IsNull": false,
       "Type": "boolean",
       "Value": false
     },
     "ImageRetention": {
       "Position": 5,
+	  "IsNull": false,
       "Type": "string",
       "Value": "1d"
     },
     "Ingester": {
       "Position": 6,
+	  "IsNull": false,
       "Type": "string",
       "Value": "Admin"
     },
     "InitialFramesNumberToBeSkipped": {
       "Position": 7,
+	  "IsNull": false,
       "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
       "Type": "integer",
       "Value": 1500
     },
     "ImageUserData": {
       "Position": 8,
+	  "IsNull": false,
       "Type": "string",
 	  "Value": "",
       "Description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
+    },
+    "ProcessingStartingFrom": {
+      "IsNull": true,
+      "Position": 9,
+      "Type": "datetime",
+      "Value": ""
     }
   },
   "Label": "Best Picture of the Video",
@@ -58,6 +73,7 @@
     "Type": "GroupOfTasks",
     "Parameters": {
       "ExecutionType": "parallel",
+	  "ProcessingStartingFrom": "${ProcessingStartingFrom}",
       "ReferencesOutput": [
         {"ReferenceLabel": "Frame Containing Face: ${Title}"},
         {"ReferenceLabel": "Frame: ${Title}"}
@@ -72,13 +88,15 @@
 			"Label": "Encoding profiles (Frame): ${Title}",
 			"Parameters": {
 				"ExecutionType": "parallel",
+				"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 				"Tasks": [
 					{
 						"Label": "Encode image MMS_JPG_240 (Frame): ${Title}",
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_JPG_240"
+							"EncodingProfileLabel": "MMS_JPG_240",
+							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
 						"Type": "Encode"
 					},
@@ -87,7 +105,8 @@
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_PNG_240"
+							"EncodingProfileLabel": "MMS_PNG_240",
+							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
 						"Type": "Encode"
 					}
@@ -101,6 +120,7 @@
             "Height": 480,
             "Ingester": "${Ingester}",
             "InstantInSeconds": "${InstantInSeconds}",
+			"ProcessingStartingFrom": "${ProcessingStartingFrom}",
             "Retention": "${ImageRetention}",
             "Tags": "${ImageTags}",
             "Title": "${Title}",
@@ -112,13 +132,15 @@
           "Label": "Encoding profiles (FrameContainingFace): ${Title}",
           "Parameters": {
 			"ExecutionType": "parallel",
+			"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 			"Tasks": [
 				{
 					"Label": "Encode image MMS_JPG_240 (FrameContainingFace): ${Title}",
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_JPG_240"
+						"EncodingProfileLabel": "MMS_JPG_240",
+						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
 					"Type": "Encode"
 				},
@@ -127,7 +149,8 @@
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_PNG_240"
+						"EncodingProfileLabel": "MMS_PNG_240",
+						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
 					"Type": "Encode"
 				}
@@ -144,6 +167,7 @@
           "InitialFramesNumberToBeSkipped": "${InitialFramesNumberToBeSkipped}",
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",
+		  "ProcessingStartingFrom": "${ProcessingStartingFrom}",
           "Retention": "${ImageRetention}",
           "Tags": "${ImageTags}",
           "Title": "${Title}",

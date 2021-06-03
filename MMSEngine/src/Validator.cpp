@@ -1349,7 +1349,15 @@ void Validator::validateAddContentMetadata(
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 
     /*
@@ -1401,7 +1409,15 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1481,7 +1497,15 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1543,7 +1567,15 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1625,7 +1657,15 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1687,7 +1727,15 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1748,7 +1796,15 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1851,7 +1907,15 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -1955,7 +2019,15 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2037,7 +2109,15 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2231,7 +2311,15 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2339,7 +2427,15 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2402,7 +2498,15 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2465,7 +2569,15 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2580,7 +2692,15 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2657,7 +2777,15 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2800,7 +2928,15 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2884,7 +3020,15 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -2984,7 +3128,15 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -3114,7 +3266,15 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -3241,7 +3401,15 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -3532,7 +3700,15 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -3837,7 +4013,15 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4009,7 +4193,15 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4057,7 +4249,15 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4178,7 +4378,15 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4312,7 +4520,15 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4390,7 +4606,15 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4721,7 +4945,15 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 
@@ -4923,7 +5155,15 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = parametersRoot.get(field, "").asString();
-		DateTime::sDateSecondsToUtc(processingStartingFrom);
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
 	}
 }
 

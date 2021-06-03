@@ -5600,10 +5600,21 @@ void FFMPEGEncoder::liveRecorderThread(
 		// receives the stream and we do not know what it happens.
 		// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 		if (liveRecording->_channelType == "IP_MMSAsServer")
-			liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart) + // chrono::system_clock::now() +
-				chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+		{
+			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
+				liveRecording->_recordingStart = chrono::system_clock::now() +
+					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+			else
+				liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart) +
+					chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+		}
 		else
-			liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);	// chrono::system_clock::now();
+		{
+			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
+				liveRecording->_recordingStart = chrono::system_clock::now();
+			else
+				liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);
+		}
 
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
@@ -9139,8 +9150,14 @@ void FFMPEGEncoder::liveProxyThread(
 			if (liveProxy->_channelType == "IP_MMSAsServer")
 			{
 				if (utcProxyPeriodStart != -1)
-					liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) + // chrono::system_clock::now() +
-						chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+				{
+					if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
+						liveProxy->_proxyStart = chrono::system_clock::now() +
+							chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+					else
+						liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart) +
+							chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+				}
 				else
 					liveProxy->_proxyStart = chrono::system_clock::now() +
 						chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
@@ -9148,7 +9165,12 @@ void FFMPEGEncoder::liveProxyThread(
 			else
 			{
 				if (utcProxyPeriodStart != -1)
-					liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+				{
+					if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
+						liveProxy->_proxyStart = chrono::system_clock::now();
+					else
+						liveProxy->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+				}
 				else
 					liveProxy->_proxyStart = chrono::system_clock::now();
 			}
