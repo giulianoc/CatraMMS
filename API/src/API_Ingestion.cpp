@@ -1385,10 +1385,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 	{
 		field = "ProcessingStartingFrom";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
 			processingStartingFrom = parametersRoot.get(field, "").asString();
-		}
-		else
+
+		if (processingStartingFrom == "")
 		{
 			tm tmUTCDateTime;
 			char sProcessingStartingFrom[64];
@@ -1786,10 +1785,9 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	{
 		field = "ProcessingStartingFrom";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-		{
 			processingStartingFrom = parametersRoot.get(field, "").asString();
-		}
-		else
+
+		if (processingStartingFrom == "")
 		{
 			tm tmUTCDateTime;
 			char sProcessingStartingFrom[64];
