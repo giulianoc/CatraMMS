@@ -2646,11 +2646,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
-                                || ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
-                                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
-                                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames
-                                )
+							|| ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+							|| ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+							|| ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+							|| ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames
+							)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
