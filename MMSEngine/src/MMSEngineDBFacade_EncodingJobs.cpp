@@ -3523,7 +3523,8 @@ int MMSEngineDBFacade::updateEncodingJob (
 					+ ", encodingProgress: " + "NULL"
 					);
                 lastSQLCommand = 
-                    string("update MMS_EncodingJob set status = ?, processorMMS = NULL") + transcoderUpdate + ", failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
+                    string("update MMS_EncodingJob set status = ?, processorMMS = NULL")
+					+ transcoderUpdate + ", failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -3823,7 +3824,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", encodingJobKey: " + to_string(encodingJobKey)
             );
         }
-        
+
         if (newEncodingStatus == EncodingStatus::End_Success)
         {
             // In the Generate-Frames scenario we will have mediaItemKey and encodedPhysicalPathKey set to -1.
@@ -3892,7 +3893,7 @@ int MMSEngineDBFacade::updateEncodingJob (
             );                            
             updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
         }
-        else if (newEncodingStatus == EncodingStatus::End_CanceledByMMS)
+        else if (newEncodingStatus == EncodingStatus::End_CanceledByMMS && ingestionJobKey != -1)
         {
             IngestionStatus ingestionStatus = IngestionStatus::End_CanceledByMMS;
             string errorMessage;

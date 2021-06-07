@@ -105,7 +105,7 @@ protected:
     // void sendEmail(string to, string subject, vector<string>& emailBody);
     
 private:
-    int             _managedRequestsNumber;
+    int             _requestIdentifier;
     unsigned long   _maxAPIContentLength;
 	string			_encoderUser;
 	string			_encoderPassword;

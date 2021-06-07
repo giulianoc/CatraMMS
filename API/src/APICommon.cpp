@@ -57,7 +57,7 @@ void APICommon::init(Json::Value configuration,
 
 	_hostName			= System::getHostName();                                                  
 
-    _managedRequestsNumber = 0;
+    _requestIdentifier = 0;
     _maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
@@ -113,20 +113,25 @@ int APICommon::operator()()
     bool shutdown = false;    
     while (!shutdown)
     {
+        _requestIdentifier++;
+
         int returnAcceptCode;
         {
             _logger->info(__FILEREF__ + "APICommon::ready"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", threadId: " + sThreadId
-            );        
+            );
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
             _logger->info(__FILEREF__ + "APICommon::listen"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", threadId: " + sThreadId
             );        
 
             returnAcceptCode = FCGX_Accept_r(&request);
         }
         _logger->info(__FILEREF__ + "FCGX_Accept_r"
+			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
             + ", returnAcceptCode: " + to_string(returnAcceptCode)
         );
         
@@ -139,10 +144,8 @@ int APICommon::operator()()
             continue;
         }
 
-        _managedRequestsNumber++;
-
-        _logger->info(__FILEREF__ + "Request managed"
-            + ", _managedRequestsNumber: " + to_string(_managedRequestsNumber)
+        _logger->info(__FILEREF__ + "Request to be managed"
+            + ", _requestIdentifier: " + to_string(_requestIdentifier)
             + ", threadId: " + sThreadId
         );        
 
@@ -188,6 +191,7 @@ int APICommon::operator()()
                             if (/* !requestToUploadBinary && */ contentLength > _maxAPIContentLength)
                             {
                                 string errorMessage = string("No binary request, ContentLength too long")
+									+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                                     + ", contentLength: " + to_string(contentLength)
                                     + ", _maxAPIContentLength: " + to_string(_maxAPIContentLength)
                                 ;
@@ -322,6 +326,7 @@ int APICommon::operator()()
                 if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
                 {
                     _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
+						+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                         + ", Authorization: " + it->second
                     );
 
@@ -334,6 +339,7 @@ int APICommon::operator()()
                 if (userNameSeparator == string::npos)
                 {
                     _logger->error(__FILEREF__ + "Wrong Authentication format"
+						+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                         + ", usernameAndPasswordBase64: " + usernameAndPasswordBase64
                         + ", usernameAndPassword: " + usernameAndPassword
                     );
@@ -351,6 +357,7 @@ int APICommon::operator()()
 					if (get<0>(userKeyWorkspaceAndFlags) != stoll(userKey))
 					{
 						_logger->error(__FILEREF__ + "Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+							+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 							+ ", username of basic authorization (userKey): " + userKey
 							+ ", userKey associated to the APIKey: " + to_string(get<0>(userKeyWorkspaceAndFlags))
 							+ ", apiKey: " + apiKey
@@ -364,6 +371,7 @@ int APICommon::operator()()
 					if (userKey != _encoderUser || apiKey != _encoderPassword)
 					{
 						_logger->error(__FILEREF__ + "Username/password of the basic authorization are wrong"
+							+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 							+ ", userKey: " + userKey
 							+ ", apiKey: " + apiKey
 						);
@@ -372,7 +380,9 @@ int APICommon::operator()()
 					}
 				}
 
-				_logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
+				_logger->info(__FILEREF__ + "APIKey and Workspace verified successful"
+					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
+				);
             }
             catch(WrongBasicAuthentication e)
             {
@@ -393,6 +403,7 @@ int APICommon::operator()()
             catch(APIKeyNotFoundOrExpired e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                     + ", e.what(): " + e.what()
                 );
 
@@ -409,6 +420,7 @@ int APICommon::operator()()
             catch(runtime_error e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                     + ", e.what(): " + e.what()
                 );
 
@@ -425,6 +437,7 @@ int APICommon::operator()()
             catch(exception e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                     + ", e.what(): " + e.what()
                 );
 
@@ -465,18 +478,21 @@ int APICommon::operator()()
         catch(AlreadyLocked e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", e: " + e.what()
             );
         }
         catch(runtime_error e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", e: " + e.what()
             );
         }
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
                 + ", e: " + e.what()
             );
         }
@@ -488,6 +504,7 @@ int APICommon::operator()()
 				method = methodIt->second;
 			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
 			_logger->info(__FILEREF__ + "manageRequestAndResponse"
+				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 				+ ", method: " + method
 				+ ", requestURI: " + requestURI
 				+ ", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent)
@@ -497,6 +514,7 @@ int APICommon::operator()()
 		}
 
         _logger->info(__FILEREF__ + "APICommon::request finished"
+			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
             + ", threadId: " + sThreadId
         );
 
@@ -504,6 +522,10 @@ int APICommon::operator()()
 
          // Note: the fcgi_streambuf destructor will auto flush
     }
+
+	_logger->info(__FILEREF__ + "APICommon SHUTDOWN"
+		+ ", threadId: " + sThreadId
+	);
 
    // restore stdio streambufs
 //    cin.rdbuf(cin_streambuf);
