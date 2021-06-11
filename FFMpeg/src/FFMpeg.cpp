@@ -4627,6 +4627,7 @@ ffmpeg \
 					addToArguments(parameter, ffmpegArgumentList);
 
 				ffmpegArgumentList.push_back("-pix_fmt");
+				// yuv420p: the only option for broad compatibility
 				ffmpegArgumentList.push_back("yuv420p");
 
 				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
@@ -7654,6 +7655,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 	ffmpegArgumentList.push_back("-vsync");
 	ffmpegArgumentList.push_back(videoSyncMethod);
 	ffmpegArgumentList.push_back("-pix_fmt");
+	// yuv420p: the only option for broad compatibility
 	ffmpegArgumentList.push_back("yuv420p");
 	if (audiosSourcePhysicalPaths.size() > 0)
 		ffmpegArgumentList.push_back("-shortest");

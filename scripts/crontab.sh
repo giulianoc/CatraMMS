@@ -95,9 +95,6 @@ then
 		fi
 	fi
 
-	toBeRestartedBecauseEngine=0
-	toBeRestartedBecauseLoadBalancer=0
-	toBeRestartedBecauseAPIOrEncoder=0
 	if [ $toBeRestartedBecauseEngine -eq 1 -o $toBeRestartedBecauseLoadBalancer -eq 1 -o $toBeRestartedBecauseAPIOrEncoder -eq 1 ]
 	then
 		#restart
