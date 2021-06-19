@@ -16,6 +16,14 @@
 			"End": "2019-01-21T13:30:00:999Z",
 		},
 
+		// optional: in case the live chunks/segments identified by DeliveryCode have more
+		//		than one profile, this field permits to select a specific profile
+		//		to be used for the generation of the Cut file.
+		//		In case both EncodingProfileKeyToBeUsed and EncodingProfileLabelToBeUsed
+		//		are present, EncodingProfileKeyToBeUsed is used.
+		"ChunkEncodingProfileKey": -1,
+		"ChunkEncodingProfileLabel": "",
+
 		// optional: it indicates the max seconds to wait in case the last chunk is not finished yet
 		"MaxWaitingForLastChunkInSeconds": 90,
 

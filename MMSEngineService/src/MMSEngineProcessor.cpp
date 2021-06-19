@@ -12216,6 +12216,9 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
+		int64_t chunkEncodingProfileKey = 4;
+		// int64_t chunkEncodingProfileKey = -1;
+		string chunkEncodingProfileLabel;
         string cutPeriodStartTimeInMilliSeconds;
         string cutPeriodEndTimeInMilliSeconds;
 		int maxWaitingForLastChunkInSeconds = 90;
@@ -12280,6 +12283,14 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				throw runtime_error(errorMessage);
 			}
 			deliveryCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
+
+			field = "ChunkEncodingProfileKey";
+			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+
+			field = "ChunkEncodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				chunkEncodingProfileLabel = liveCutParametersRoot.get(field, "").asString();
 
 			field = "MaxWaitingForLastChunkInSeconds";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
@@ -12681,6 +12692,17 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 						field = "ReferenceMediaItemKey";
 						mediaItemKeyReferenceRoot[field] = mediaItemKey;
+
+						if (chunkEncodingProfileKey != -1)
+						{
+							field = "ReferenceEncodingProfileKey";
+							mediaItemKeyReferenceRoot[field] = chunkEncodingProfileKey;
+						}
+						else if (chunkEncodingProfileLabel != "")
+						{
+							field = "ReferenceEncodingProfileLabel";
+							mediaItemKeyReferenceRoot[field] = chunkEncodingProfileLabel;
+						}
 
 						mediaItemKeyReferencesRoot.append(mediaItemKeyReferenceRoot);
 					}
