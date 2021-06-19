@@ -2920,6 +2920,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
                                 if (_processorsThreadsNumber.use_count() >
 										_processorThreads + _maxAdditionalProcessorThreads)
                                 {
@@ -2949,7 +2953,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
-								*/
                                 {
                                     thread generateAndIngestConcatenationThread(
 										&MMSEngineProcessor::generateAndIngestConcatenationThread, this, 
@@ -3061,6 +3064,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
                                 if (_processorsThreadsNumber.use_count() >
 									_processorThreads + _maxAdditionalProcessorThreads)
                                 {
@@ -3088,7 +3095,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
-								*/
                                 {
                                     thread generateAndIngestCutMediaThread(&MMSEngineProcessor::generateAndIngestCutMediaThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -3294,6 +3300,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
                                 if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
@@ -3320,7 +3330,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
                                 }
                                 else
-								*/
                                 {
                                     thread extractTracksContentThread(&MMSEngineProcessor::extractTracksContentThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -4651,6 +4660,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
 								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 								{
 									_logger->warn(__FILEREF__ + "Not enough available threads to manage liveCutThread, activity is postponed"
@@ -4678,7 +4691,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									);
 								}
 								else
-								*/
 								{
 									string segmenterType = "hlsSegmenter";
 									// string segmenterType = "streamSegmenter";
@@ -4797,6 +4809,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             try
                             {
 								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
 								if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
                                 {
                                     _logger->warn(__FILEREF__
@@ -4825,7 +4841,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 								}
 								else
-								*/
                                 {
                                     thread changeFileFormatThread(&MMSEngineProcessor::changeFileFormatThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
@@ -7895,6 +7910,10 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
         }
 
 		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+		* 2021-06-19: we still have to check the thread limit because,
+		*		in case handleCheckIngestionEvent gets 20 events,
+		*		we have still to postpone all the events overcoming the thread limit
+		*/
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -7923,7 +7942,6 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             
             return;
         }
-		*/
 
         string configurationLabel;
         {
@@ -8066,6 +8084,10 @@ void MMSEngineProcessor::postOnFacebookTask(
         }
 
 		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+		* 2021-06-19: we still have to check the thread limit because,
+		*		in case handleCheckIngestionEvent gets 20 events,
+		*		we have still to postpone all the events overcoming the thread limit
+		*/
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8094,7 +8116,6 @@ void MMSEngineProcessor::postOnFacebookTask(
             
             return;
         }
-		*/
 
         string facebookConfigurationLabel;
         string facebookNodeId;
@@ -8292,6 +8313,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
         }
 
 		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+		* 2021-06-19: we still have to check the thread limit because,
+		*		in case handleCheckIngestionEvent gets 20 events,
+		*		we have still to postpone all the events overcoming the thread limit
+		*/
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8320,7 +8345,6 @@ void MMSEngineProcessor::postOnYouTubeTask(
             
             return;
         }
-		*/
 
         string youTubeConfigurationLabel;
         string youTubeTitle;
@@ -8526,6 +8550,10 @@ void MMSEngineProcessor::httpCallbackTask(
          */
 
 		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+		* 2021-06-19: we still have to check the thread limit because,
+		*		in case handleCheckIngestionEvent gets 20 events,
+		*		we have still to postpone all the events overcoming the thread limit
+		*/
         if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
         {
             _logger->warn(__FILEREF__
@@ -8555,7 +8583,6 @@ void MMSEngineProcessor::httpCallbackTask(
             
             return;
         }
-		*/
 
         string httpProtocol;
         string httpHostName;
@@ -8929,6 +8956,10 @@ void MMSEngineProcessor::localCopyContentTask(
         }
 
 		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+		* 2021-06-19: we still have to check the thread limit because,
+		*		in case handleCheckIngestionEvent gets 20 events,
+		*		we have still to postpone all the events overcoming the thread limit
+		*/
         if (_processorsThreadsNumber.use_count() + dependencies.size() >
 				_processorThreads + _maxAdditionalProcessorThreads)
         {
@@ -8957,7 +8988,6 @@ void MMSEngineProcessor::localCopyContentTask(
             
             return;
         }
-		*/
 
         string localPath;
         string localFileName;

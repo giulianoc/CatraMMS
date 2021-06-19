@@ -1681,7 +1681,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_ExternalUniqueName ("
                     "workspaceKey			BIGINT UNSIGNED NOT NULL,"
-                    "uniqueName      		VARCHAR (128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
+                    "uniqueName      		VARCHAR (512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "mediaItemKey  			BIGINT UNSIGNED NOT NULL,"
                     "constraint MMS_ExternalUniqueName_PK PRIMARY KEY (workspaceKey, uniqueName), "
                     "constraint MMS_ExternalUniqueName_FK foreign key (workspaceKey) "

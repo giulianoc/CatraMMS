@@ -1,0 +1,28 @@
+{
+  "Label": "Example Proxy From Capture",
+  "Task": {
+    "Label": "Example Proxy From Capture",
+    "Parameters": {
+      "ActAsServerListenTimeout": -1,
+      "CaptureLive": {
+        "AudioDeviceNumber": 1,
+        "ChannelsNumber": 2,
+        "FrameRate": 30,
+        "Height": 720,
+        "VideoDeviceNumber": 2,
+        "VideoInputFormat": "mjpeg",
+        "Width": 1280
+      },
+      "ChannelType": "CaptureLive",
+      "Outputs": [{
+        "EncodingProfileKey": 1,
+        "OtherOutputOptions": "-pix_fmt yuv420p",
+        "OutputType": "HLS"
+      }],
+      "TimePeriod": false
+    },
+    "Type": "Live-Proxy"
+  },
+  "Type": "Workflow"
+}
+
