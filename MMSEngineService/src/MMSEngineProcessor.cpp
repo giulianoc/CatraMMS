@@ -12216,8 +12216,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		// string ipConfigurationLabel;
 		// string satConfigurationLabel;
 		int64_t deliveryCode;
-		int64_t chunkEncodingProfileKey = 4;
-		// int64_t chunkEncodingProfileKey = -1;
+		int64_t chunkEncodingProfileKey = -1;
 		string chunkEncodingProfileLabel;
         string cutPeriodStartTimeInMilliSeconds;
         string cutPeriodEndTimeInMilliSeconds;
