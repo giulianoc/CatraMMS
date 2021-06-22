@@ -6,7 +6,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType,
 		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
-        int maxIngestionJobs
+        int maxIngestionJobs,
+		bool tasksNotInvolvingMMSEngineThreads
 )
 {
     string      lastSQLCommand;
@@ -322,8 +323,36 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"ij.status, ij.ingestionType, "
 							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
-							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') "
+							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null ";
+					if (tasksNotInvolvingMMSEngineThreads)
+					{
+						string tasksNotInvolvingMMSEngineThreadsList =
+							"'GroupOfTask'"
+							", 'RemoveContent'"
+							", 'Encode'"
+							", 'VideoSpeed'"
+							", 'PictureInPicture'"
+							", 'IntroOutroOverlay'"
+							", 'PeriodicalFrames'"
+							", 'IFrames'"
+							", 'MotionJPEGByPeriodicalFrames'"
+							", 'MotionJPEGByIFrames'"
+							", 'Slideshow'"
+							", 'OverlayImageOnVideo'"
+							", 'OverlayTextOnVideo'"
+							", 'MediaCrossReference'"
+							", 'FaceRecognition'"
+							", 'FaceIdentification'"
+							", 'AwaitingTheBeginning'"
+							", 'LiveGrid'"
+						;
+						lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
+					}
+					else
+					{
+						lastSQLCommand += "and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') ";
+					}
+					lastSQLCommand +=
 							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
 							"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
 							"order by ij.priority asc, ij.processingStartingFrom asc "

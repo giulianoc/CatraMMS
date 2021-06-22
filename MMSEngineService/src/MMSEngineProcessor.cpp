@@ -741,20 +741,27 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
         try
         {
+			// getIngestionsToBeManaged
+			//	- in case we reached the max number of threads in MMS Engine, we still have to call getIngestionsToBeManaged
+			//		but it has to return ONLY tasks that do not involve creation of threads (a lot of important tasks
+			//		do not involve threads in MMS Engine)
+			//	That is to avoid to block every thing in case we reached the max number of threads in MMS Engine
+			bool tasksNotInvolvingMMSEngineThreads = false;
+
 			if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 			{
-				_logger->warn(__FILEREF__ + "Not enough available threads to manage more Tasks"
+				_logger->warn(__FILEREF__ + "Not enough available threads to manage Tasks involving more threads"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 					+ ", _processorThreads + _maxAdditionalProcessorThreads: "
 						+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 				);
 
-				return;
+				tasksNotInvolvingMMSEngineThreads = true;
 			}
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-				_processorMMS, _maxIngestionJobsPerEvent 
+				_processorMMS, _maxIngestionJobsPerEvent, tasksNotInvolvingMMSEngineThreads
             );
 
             _logger->info(__FILEREF__ + "getIngestionsToBeManaged result"
@@ -3639,15 +3646,57 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread emailNotificationThread(&MMSEngineProcessor::emailNotificationThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    emailNotificationThread.detach();
+                                }
+								/*
                                 manageEmailNotificationTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "manageEmailNotificationTask failed"
+                                _logger->error(__FILEREF__ + "emailNotificationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -3692,7 +3741,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "manageEmailNotificationTask failed"
+                                _logger->error(__FILEREF__ + "emailNotificationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -18255,15 +18304,22 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
     }
 }
 
-void MMSEngineProcessor::manageEmailNotificationTask(
+void MMSEngineProcessor::emailNotificationThread(
+		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
 )
 {
     try
     {
+		_logger->info(__FILEREF__ + "emailNotificationThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
 		/*
         if (dependencies.size() == 0)
         {
@@ -18474,14 +18530,41 @@ void MMSEngineProcessor::manageEmailNotificationTask(
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "sendEmail failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
-        throw e;
+        return;
     }
     catch(exception e)
     {
@@ -18490,9 +18573,36 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
         
-        throw e;
+        return;
     }
 }
 

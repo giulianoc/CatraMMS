@@ -1305,8 +1305,8 @@ public:
 
     void getIngestionsToBeManaged(
         vector<tuple<int64_t, string, shared_ptr<Workspace>,string, string, IngestionType,
-		IngestionStatus>>& ingestionsToBeManaged, string processorMMS, int maxIngestionJobs
-        // int maxIngestionJobsWithDependencyToCheck
+		IngestionStatus>>& ingestionsToBeManaged, string processorMMS, int maxIngestionJobs,
+		bool tasksNotInvolvingThreads
     );
 
 	void setNotToBeExecutedStartingFromBecauseChunkNotSelected (

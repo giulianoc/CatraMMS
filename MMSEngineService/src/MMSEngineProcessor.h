@@ -379,11 +379,12 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
 
-    void manageEmailNotificationTask(
+    void emailNotificationThread(
+		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
 
     void manageMediaCrossReferenceTask(
         int64_t ingestionJobKey,
