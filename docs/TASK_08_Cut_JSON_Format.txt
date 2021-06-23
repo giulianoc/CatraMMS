@@ -49,15 +49,29 @@
 		// optional, default is true
 		// - true means Key-Frame Seeking, faster, no frame accuracy, the start of your video will be aligned
 		//		with the nearest Key frame, not the nearest frame independent of encoding format
-		// - false means All-Frame Seeking (output seeking), slower, considers all frames (including Predicted frames),
-		//		If you use this option and try to play your output clip, you may notice that the clip starts frozen,
-		//		or with black frames in the beginning
-		// So Key frame seeking causes missalignment and All-frame seeking causes broken frames, is there another option?
-		// Yes, instead of performing a stream copy we can decode the source video, and then re-encode the output clip.
-		// If you want to copy a frame-exact section of video you have to re-encode.
+		// - false means Frame-Accurate, it will reencoding, considers all frames (including Predicted frames),
 		"KeyFrameSeeking": true,
 
-		// optional: by default the file format of the output is the same of the source media to be cut. Only in case the source file format is m3u8, the default output format will be ts.
+		// optional. To be set with the EncodersPool label only in case 
+		// a specific encoders pool has to be used
+		// It is used only in case of KeyFrameSeeking false because a reencoding is needed
+		"EncodersPool": "",
+
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than
+		// the allowed for this Workspace,
+		// the MaxEncodingPriority of the Workspace will be used.
+		// It is used only in case of KeyFrameSeeking false because a reencoding is needed
+		"EncodingPriority": "Low",
+
+		// mandatory ONLY in case of KeyFrameSeeking false because a reencoding is needed
+		//	This is the encoding profile to be used for the creation
+		//	of the cut video.
+		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.
+		"EncodingProfileKey": 1,
+		"EncodingProfileLabel": "Profile sport",
+
+		// optional (not used in case of KeyFrameSeeking false): by default the file format of the output is the same of the source media to be cut. Only in case the source file format is m3u8, the default output format will be ts.
 		//	This parameter is needed only in case the default output file format has to be changed
 		"OutputFileFormat": "mp4",
 

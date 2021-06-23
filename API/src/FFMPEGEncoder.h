@@ -353,6 +353,12 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+	void cutThread(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody);
+
 	void addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError, string errorMessage,
 		bool killedByUser, bool urlForbidden, bool urlNotFound);

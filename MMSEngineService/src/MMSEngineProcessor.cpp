@@ -12959,8 +12959,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
 				//	Using keyFrameSeeking false the Cut is accurate.
-				// bool keyFrameSeeking = false;
-				bool keyFrameSeeking = true;
+				bool keyFrameSeeking = false;
 				field = "KeyFrameSeeking";
 				cutParametersRoot[field] = keyFrameSeeking;
 
@@ -16328,9 +16327,9 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ ", framesNumber: " + to_string(framesNumber)
 				);
 
-				ffmpeg.cut(ingestionJobKey, concatenatedMediaPathName, 
+				ffmpeg.cut_keyFrameSeeking(ingestionJobKey, concatenatedMediaPathName, 
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-					keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
+					startTimeInSeconds, endTimeInSeconds, framesNumber,
 					cutMediaPathName);
 
 				_logger->info(__FILEREF__ + "cut done"
@@ -16513,62 +16512,68 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
             throw runtime_error(errorMessage);
         }
-        
-        int64_t sourceMediaItemKey;
-        int64_t sourcePhysicalPathKey;
-        string sourcePhysicalPath;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
 
-        int64_t key;
-        MMSEngineDBFacade::ContentType referenceContentType;
-        Validator::DependencyType dependencyType;
+		int64_t sourceMediaItemKey;
+		int64_t sourcePhysicalPathKey;
+		string sourcePhysicalPath;
+		{
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType
+				= dependencies.back();
 
-        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			int64_t key;
+			MMSEngineDBFacade::ContentType referenceContentType;
+			Validator::DependencyType dependencyType;
 
-        if (dependencyType == Validator::DependencyType::MediaItemKey)
-        {
-			int64_t encodingProfileKey = -1;
+			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey,
+						warningIfMissing);
+				tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
+					physicalPathDetails;
+
+				sourceMediaItemKey = key;
+			}
+			else
+			{
+				tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+				tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+
+				sourcePhysicalPathKey = key;
+
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
+					mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+				tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+					= mediaItemDetails;
+			}
+		}
+
+		MMSEngineDBFacade::ContentType contentType;
+		string userData;
+		{
 			bool warningIfMissing = false;
-			tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails
-				= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-			tie(sourcePhysicalPathKey, sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) =
-				physicalPathDetails;
 
-            sourceMediaItemKey = key;
-        }
-        else
-        {
-			tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-				_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-			tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+			tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
+				mediaItemDetails
+					= _mmsEngineDBFacade->getMediaItemKeyDetails(
+					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
 
-            sourcePhysicalPathKey = key;
-
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
-            tie(sourceMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore)
+			string localTitle;
+			string ingestionDate;
+			int64_t localIngestionJobKey;
+			tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
 				= mediaItemDetails;
-        }
-
-        bool warningIfMissing = false;
-
-        tuple<MMSEngineDBFacade::ContentType,string,string,string, int64_t, int64_t>
-			mediaItemDetails
-                = _mmsEngineDBFacade->getMediaItemKeyDetails(
-				workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing);
-        
-        MMSEngineDBFacade::ContentType contentType;
-        string localTitle;
-        string userData;
-        string ingestionDate;
-		int64_t localIngestionJobKey;
-        tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
-			= mediaItemDetails;
+		}
 
         if (contentType != MMSEngineDBFacade::ContentType::Video
-                && contentType != MMSEngineDBFacade::ContentType::Audio)
+			&& contentType != MMSEngineDBFacade::ContentType::Audio)
         {
             string errorMessage = __FILEREF__ + "It is not possible to cut a media that is not video or audio"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16580,435 +16585,514 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             throw runtime_error(errorMessage);
         }
 
-
 		bool keyFrameSeeking = true;
         string field = "KeyFrameSeeking";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
 			keyFrameSeeking = JSONUtils::asBool(parametersRoot, field, true);
-        }
 
-        string outputFileFormat;
-        field = "OutputFileFormat";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            outputFileFormat = parametersRoot.get(field, "XXX").asString();
-        }
+		int64_t sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
+			sourceMediaItemKey, sourcePhysicalPathKey);
 
-        // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-        // force the cut file to have the same avgFrameRate of the source media
-        string forcedAvgFrameRate;
-        int64_t durationInMilliSeconds;
-        try
-        {
-            if (contentType == MMSEngineDBFacade::ContentType::Video
-				|| contentType == MMSEngineDBFacade::ContentType::Audio)
+		// check start time / end time
+		int framesNumber = -1;
+		double startTimeInSeconds;
+		double endTimeInSeconds = 0.0;
+		{
+			field = "StartTimeInSeconds";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				durationInMilliSeconds =
-					_mmsEngineDBFacade->getMediaDurationInMilliseconds(
-					sourceMediaItemKey, sourcePhysicalPathKey);
-			}
-
-            if (contentType == MMSEngineDBFacade::ContentType::Video)
-            {
-				vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
-				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
-
-				_mmsEngineDBFacade->getVideoDetails(
-					sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
-				if (videoTracks.size() == 0)
-				{
-					string errorMessage = __FILEREF__ + "No video track are present"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
-
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
-
-				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
-            }
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", e.what(): " + e.what()
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", e.what(): " + e.what()
-            ;
-
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        double startTimeInSeconds;
-        field = "StartTimeInSeconds";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
-
-        double endTimeInSeconds = 0.0;
-        field = "EndTimeInSeconds";
-        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-        {
-			if (contentType == MMSEngineDBFacade::ContentType::Audio)
-			{
-				// endTimeInSeconds in case of Audio is mandatory
-				// because we cannot use the other option (FramesNumber)
-
-				string errorMessage = __FILEREF__ + "Field is not present or it is null, endTimeInSeconds in case of Audio is mandatory because we cannot use the other option (FramesNumber)"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-        }
-		endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+			startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
-        int framesNumber = -1;
-		if (contentType == MMSEngineDBFacade::ContentType::Video)
-		{
-			field = "FramesNumber";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-		}
-
-		// 2021-02-05: default is set to true because often we have the error
-		//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
-		//	For this reason this field is set to true by default
-        bool fixEndTimeIfOvercomeDuration = true;
-        field = "FixEndTimeIfOvercomeDuration";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
-
-		/*
-        if (endTimeInSeconds == -1 && framesNumber == -1)
-        {
-            string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-		*/
-
-		if (framesNumber == -1)
-		{
-			if (endTimeInSeconds < 0)
+			field = "EndTimeInSeconds";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				// if negative, it has to be subtract by the durationInMilliSeconds
-				double newEndTimeInSeconds  = (durationInMilliSeconds - (endTimeInSeconds * -1000)) / 1000;
+				if (contentType == MMSEngineDBFacade::ContentType::Audio)
+				{
+					// endTimeInSeconds in case of Audio is mandatory
+					// because we cannot use the other option (FramesNumber)
 
-				_logger->error(__FILEREF__ + "endTimeInSeconds was changed"
+					string errorMessage = __FILEREF__ + "Field is not present or it is null, endTimeInSeconds in case of Audio is mandatory because we cannot use the other option (FramesNumber)"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+			endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+
+			if (contentType == MMSEngineDBFacade::ContentType::Video)
+			{
+				field = "FramesNumber";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
+			}
+
+			// 2021-02-05: default is set to true because often we have the error
+			//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
+			//	For this reason this field is set to true by default
+			bool fixEndTimeIfOvercomeDuration = true;
+			field = "FixEndTimeIfOvercomeDuration";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
+
+			/*
+			if (endTimeInSeconds == -1 && framesNumber == -1)
+			{
+				string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-                    + ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-                    + ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds)
-                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-				);
+                    ;
+				_logger->error(errorMessage);
 
-				endTimeInSeconds = newEndTimeInSeconds;
+				throw runtime_error(errorMessage);
+			}
+			*/
+
+			if (framesNumber == -1)
+			{
+				if (endTimeInSeconds < 0)
+				{
+					// if negative, it has to be subtract by the durationInMilliSeconds
+					double newEndTimeInSeconds  = (sourceDurationInMilliSeconds
+						- (endTimeInSeconds * -1000)) / 1000;
+
+					_logger->error(__FILEREF__ + "endTimeInSeconds was changed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+						+ ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds)
+						+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+					);
+
+					endTimeInSeconds = newEndTimeInSeconds;
+				}
+			}
+
+			if (startTimeInSeconds > endTimeInSeconds)
+			{
+				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+						+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				if (framesNumber == -1)
+				{
+					if (sourceDurationInMilliSeconds < endTimeInSeconds * 1000)
+					{
+						if (fixEndTimeIfOvercomeDuration)
+						{
+							double previousEndTimeInSeconds = endTimeInSeconds;
+							endTimeInSeconds = sourceDurationInMilliSeconds / 1000;
+
+							_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
+								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+								+ ", previousEndTimeInSeconds: " + to_string(previousEndTimeInSeconds)
+								+ ", new endTimeInSeconds: " + to_string(endTimeInSeconds)
+								+ ", sourceDurationInMilliSeconds (input media): " + to_string(sourceDurationInMilliSeconds)
+							);
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+								+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+								+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+								+ ", sourceDurationInMilliSeconds (input media): " + to_string(sourceDurationInMilliSeconds)
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
 			}
 		}
 
-        if (startTimeInSeconds > endTimeInSeconds)
-        {
-            string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-                    + ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-            ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-		else
+		if (keyFrameSeeking)
 		{
-			if (framesNumber == -1)
-			{
-				if (durationInMilliSeconds < endTimeInSeconds * 1000)
-				{
-					if (fixEndTimeIfOvercomeDuration)
-					{
-						double previousEndTimeInSeconds = endTimeInSeconds;
-						endTimeInSeconds = durationInMilliSeconds / 1000;
+			string outputFileFormat;
+			field = "OutputFileFormat";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				outputFileFormat = parametersRoot.get(field, "").asString();
 
-						_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
-							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-							+ ", previousEndTimeInSeconds: " + to_string(previousEndTimeInSeconds)
-							+ ", new endTimeInSeconds: " + to_string(endTimeInSeconds)
-							+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
-						);
-					}
-					else
+			// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+			// force the cut file to have the same avgFrameRate of the source media
+			string forcedAvgFrameRate;
+			{
+				try
+				{
+					if (contentType == MMSEngineDBFacade::ContentType::Video)
 					{
-						string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
+						vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+						vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+						_mmsEngineDBFacade->getVideoDetails(
+							sourceMediaItemKey, sourcePhysicalPathKey, videoTracks, audioTracks);
+						if (videoTracks.size() == 0)
+						{
+							string errorMessage = __FILEREF__ + "No video track are present"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack
+							= videoTracks[0];
+
+						tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore,
+							ignore, ignore) = videoTrack;
+					}
+				}
+				catch(runtime_error e)
+				{
+					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				catch(exception e)
+				{
+					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", e.what(): " + e.what()
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			// In case the media has TimeCode, we will report them in the new content
+			if (framesNumber == -1 && userData != "")
+			{
+				// try to retrieve time codes
+				Json::Value sourceUserDataRoot;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(userData.c_str(),
+						userData.c_str() + userData.size(), 
+						&sourceUserDataRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse userData"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-							+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-							+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-							+ ", durationInMilliSeconds (input media): " + to_string(durationInMilliSeconds)
+							+ ", errors: " + errors
+							+ ", userData: " + userData
 						;
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
-			}
-		}
-
-		// In case the media has TimeCode, we will report them in the new content
-		if (framesNumber == -1 && userData != "")
-		{
-			// try to retrieve time codes
-			Json::Value sourceUserDataRoot;
-			try
-			{
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				string errors;
-
-				bool parsingSuccessful = reader->parse(userData.c_str(),
-					userData.c_str() + userData.size(), 
-					&sourceUserDataRoot, &errors);
-				delete reader;
-
-				if (!parsingSuccessful)
+				catch(...)
 				{
-					string errorMessage = __FILEREF__ + "failed to parse userData"
+					string errorMessage = string("userData json is not well format")
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", errors: " + errors
 						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+
+				int64_t utcStartTimeInMilliSecs = -1;
+				int64_t utcEndTimeInMilliSecs = -1;
+
+				string field = "mmsData";
+				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
+				{
+					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+
+					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
+					string utcChunkStartTimeField = "utcChunkStartTime";
+					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
+					{
+						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
+					}
+					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
+					{
+						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
+						utcStartTimeInMilliSecs *= 1000;
+					}
+
+					if (utcStartTimeInMilliSecs != -1)
+					{
+						string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
+						string utcChunkEndTimeField = "utcChunkEndTime";
+						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
+						{
+							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
+						}
+						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
+						{
+							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
+							utcEndTimeInMilliSecs *= 1000;
+						}
+
+						// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs will be set in parametersRoot
+						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
+						{
+							int64_t initialUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
+							utcStartTimeInMilliSecs += ((int64_t) (startTimeInSeconds * 1000));
+							utcEndTimeInMilliSecs = initialUtcStartTimeInMilliSecs + ((int64_t) (endTimeInSeconds * 1000));
+
+							Json::Value destUserDataRoot;
+
+							field = "UserData";
+							if (JSONUtils::isMetadataPresent(parametersRoot, field))
+								destUserDataRoot = parametersRoot[field];
+
+							Json::Value destMmsDataRoot;
+
+							field = "mmsData";
+							if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+								destMmsDataRoot = destUserDataRoot[field];
+
+							field = "utcStartTimeInMilliSecs";
+							if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+								destMmsDataRoot.removeMember(field);
+							destMmsDataRoot[field] = utcStartTimeInMilliSecs;
+
+							field = "utcEndTimeInMilliSecs";
+							if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+								destMmsDataRoot.removeMember(field);
+							destMmsDataRoot[field] = utcEndTimeInMilliSecs;
+
+							field = "mmsData";
+							destUserDataRoot[field] = destMmsDataRoot;
+
+							field = "UserData";
+							parametersRoot[field] = destUserDataRoot;
+						}
+					}
+				}
+			}
+
+			// this is a cut so destination file name shall have the same
+			// extension as the source file name
+			string fileFormat;
+			if (outputFileFormat == "")
+			{
+				size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
+				if (extensionIndex == string::npos)
+				{
+					string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", sourcePhysicalPath: " + sourcePhysicalPath
 					;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
+				string extension = sourcePhysicalPath.substr(extensionIndex + 1);
+
+				if (extension == "m3u8")
+					fileFormat = "ts";
+				else
+					fileFormat = extension;
 			}
-			catch(...)
-			{
-				string errorMessage = string("userData json is not well format")
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", userData: " + userData
-				;
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-
-			int64_t utcStartTimeInMilliSecs = -1;
-			int64_t utcEndTimeInMilliSecs = -1;
-
-			string field = "mmsData";
-			if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
-			{
-				Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
-
-				string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-				string utcChunkStartTimeField = "utcChunkStartTime";
-				if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-				{
-					utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-				}
-				else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
-				{
-					utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
-					utcStartTimeInMilliSecs *= 1000;
-				}
-
-				if (utcStartTimeInMilliSecs != -1)
-				{
-					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-					string utcChunkEndTimeField = "utcChunkEndTime";
-					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-					{
-						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-					}
-					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
-					{
-						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
-						utcEndTimeInMilliSecs *= 1000;
-					}
-
-					// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs will be set in parametersRoot
-					if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
-					{
-						int64_t initialUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-						utcStartTimeInMilliSecs += ((int64_t) (startTimeInSeconds * 1000));
-						utcEndTimeInMilliSecs = initialUtcStartTimeInMilliSecs + ((int64_t) (endTimeInSeconds * 1000));
-
-						Json::Value destUserDataRoot;
-
-						field = "UserData";
-						if (JSONUtils::isMetadataPresent(parametersRoot, field))
-							destUserDataRoot = parametersRoot[field];
-
-						Json::Value destMmsDataRoot;
-
-						field = "mmsData";
-						if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
-							destMmsDataRoot = destUserDataRoot[field];
-
-						field = "utcStartTimeInMilliSecs";
-						if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-							destMmsDataRoot.removeMember(field);
-						destMmsDataRoot[field] = utcStartTimeInMilliSecs;
-
-						field = "utcEndTimeInMilliSecs";
-						if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-							destMmsDataRoot.removeMember(field);
-						destMmsDataRoot[field] = utcEndTimeInMilliSecs;
-
-						field = "mmsData";
-						destUserDataRoot[field] = destMmsDataRoot;
-
-						field = "UserData";
-						parametersRoot[field] = destUserDataRoot;
-					}
-				}
-			}
-		}
-
-        // this is a cut so destination file name shall have the same
-        // extension as the source file name
-        string fileFormat;
-        if (outputFileFormat == "")
-        {
-            size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
-            if (extensionIndex == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", sourcePhysicalPath: " + sourcePhysicalPath
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			string extension = sourcePhysicalPath.substr(extensionIndex + 1);
-
-			if (extension == "m3u8")
-				fileFormat = "ts";
 			else
-				fileFormat = extension;
-        }
-        else
-        {
-            fileFormat = outputFileFormat;
-        }
+			{
+				fileFormat = outputFileFormat;
+			}
 
-        string localSourceFileName = to_string(ingestionJobKey)
+			string localSourceFileName = to_string(ingestionJobKey)
                 + "_cut"
                 + "." + fileFormat // + "_source"
                 ;
         
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
-        string cutMediaPathName = workspaceIngestionRepository + "/"
+			string cutMediaPathName = workspaceIngestionRepository + "/"
                 + localSourceFileName;
         
-        FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.cut(ingestionJobKey, sourcePhysicalPath, 
+			FFMpeg ffmpeg (_configuration, _logger);
+			ffmpeg.cut_keyFrameSeeking(ingestionJobKey, sourcePhysicalPath, 
 				contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                keyFrameSeeking, startTimeInSeconds, endTimeInSeconds, framesNumber,
+                startTimeInSeconds, endTimeInSeconds, framesNumber,
                 cutMediaPathName);
 
-        _logger->info(__FILEREF__ + "cut done"
+			_logger->info(__FILEREF__ + "cut done"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", cutMediaPathName: " + cutMediaPathName
-        );
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", cutMediaPathName: " + cutMediaPathName
+			);
         
-        string title;
-		int64_t imageOfVideoMediaItemKey = -1;
-		int64_t cutOfVideoMediaItemKey = -1;
-		int64_t cutOfAudioMediaItemKey = -1;
-		if (contentType == MMSEngineDBFacade::ContentType::Video)
-			cutOfVideoMediaItemKey = sourceMediaItemKey;
-		else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-			cutOfAudioMediaItemKey = sourceMediaItemKey;
-        string mediaMetaDataContent = generateMediaMetadataToIngest(
-			ingestionJobKey,
-			fileFormat,
-			title,
-			imageOfVideoMediaItemKey,
-			cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-			parametersRoot
-        );
+			string title;
+			int64_t imageOfVideoMediaItemKey = -1;
+			int64_t cutOfVideoMediaItemKey = -1;
+			int64_t cutOfAudioMediaItemKey = -1;
+			if (contentType == MMSEngineDBFacade::ContentType::Video)
+				cutOfVideoMediaItemKey = sourceMediaItemKey;
+			else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+				cutOfAudioMediaItemKey = sourceMediaItemKey;
+			string mediaMetaDataContent = generateMediaMetadataToIngest(
+				ingestionJobKey,
+				fileFormat,
+				title,
+				imageOfVideoMediaItemKey,
+				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+				parametersRoot
+			);
 
-        {
-            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+			{
+				shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                     ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+				localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+				localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+				localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-            localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
-            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-            // force the concat file to have the same avgFrameRate of the source media
-            if (forcedAvgFrameRate != "" && contentType == MMSEngineDBFacade::ContentType::Video)
-                localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+				localAssetIngestionEvent->setExternalReadOnlyStorage(false);
+				localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+				localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+				localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
+				localAssetIngestionEvent->setWorkspace(workspace);
+				localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+				localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+				// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+				// force the concat file to have the same avgFrameRate of the source media
+				if (forcedAvgFrameRate != "" && contentType == MMSEngineDBFacade::ContentType::Video)
+					localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
 
-            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
-            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-            _multiEventsSet->addEvent(event);
+				shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+				_multiEventsSet->addEvent(event);
 
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                + ", getEventKey().second: " + to_string(event->getEventKey().second));
-        }
-    }
+				_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+					+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+			}
+		}
+		else
+		{
+			MMSEngineDBFacade::EncodingPriority encodingPriority;
+			string field = "EncodingPriority";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				encodingPriority =
+					static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+			else
+				encodingPriority =
+					MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "").asString());
+
+			int64_t encodingProfileKey;
+			Json::Value encodingProfileDetailsRoot;
+			{
+				string keyField = "EncodingProfileKey";
+				string labelField = "EncodingProfileLabel";
+				if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+				{
+					encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				}
+				else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+				{
+					string encodingProfileLabel = parametersRoot.get(labelField, "").asString();
+
+					MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
+					encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+						workspace->_workspaceKey, videoContentType, encodingProfileLabel);
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", Field: " + keyField
+						+ ", Field: " + labelField
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				{
+					string jsonEncodingProfile;
+
+					tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+						encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+						workspace->_workspaceKey, encodingProfileKey);
+					tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+					{
+						Json::CharReaderBuilder builder;
+						Json::CharReader* reader = builder.newCharReader();
+						string errors;
+
+						bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+							jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+							&encodingProfileDetailsRoot,
+							&errors);
+						delete reader;
+
+						if (!parsingSuccessful)
+						{
+							string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errors: " + errors
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+			}
+
+			_mmsEngineDBFacade->addEncoding_CutFrameAccurate(workspace, ingestionJobKey,
+				sourcePhysicalPathKey,
+				sourcePhysicalPath,
+				// sourceDurationInMilliSeconds,
+				endTimeInSeconds,
+				encodingProfileKey,
+				encodingProfileDetailsRoot, encodingPriority);
+		}
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"

@@ -245,15 +245,28 @@ public:
         string slideshowMediaPathName,
 		pid_t* pChildPid);
 
-    void cut(
+    void cut_keyFrameSeeking(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
 		bool isVideo,
-		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,
         string cutMediaPathName);
+
+	void cut_frameAccurate(
+		int64_t ingestionJobKey,
+		string sourceVideoAssetPathName,
+		// no keyFrameSeeking needs reencoding otherwise the key frame is always used
+		// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
+		// because FFmpeg will re-encode the video and start with an I-frame.
+		int64_t encodingJobKey,
+		Json::Value encodingProfileDetailsRoot,
+		double startTimeInSeconds,
+		double endTimeInSeconds,
+		int framesNumber,
+		string stagingEncodedAssetPathName,
+		pid_t* pChildPid);
 
     void extractTrackMediaToIngest(
         int64_t ingestionJobKey,

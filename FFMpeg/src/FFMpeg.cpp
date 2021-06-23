@@ -7271,11 +7271,11 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::cut(
+// audio and video (keyFrameSeeking)
+void FFMpeg::cut_keyFrameSeeking(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
 		bool isVideo,
-		bool keyFrameSeeking,
         double startTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,
@@ -7334,8 +7334,24 @@ void FFMpeg::cut(
 			(see http://www.markbuckler.com/post/cutting-ffmpeg/)
     */
     string ffmpegExecuteCommand;
-	if (isVideo && keyFrameSeeking)
+	if (isVideo)
 	{
+		// Putting the -ss parameter before the -i parameter is called input seeking and
+		// is very fast because FFmpeg jumps from I-frame to I-frame to reach the seek-point.
+		// Since the seeking operation jumps between I-frames, it is not going to accurately stop
+		// on the frame (or time) that you requested. It will search for the nearest I-frame
+		// and start the copy operation from that point.
+		//
+		// If we insert the -ss parameter after the -i parameter, it is called output seeking.
+		// Here is a problem. In video compression, you have I-frames that are indepently encoded
+		// and you have predicted frames (P, B) that depend on other frames for decoding.
+		// If the start time that you specified falls on a Predicted Frame, the copy operation
+		// will start with that frame (call it X). It is possible that the frames that “X”
+		// requires in order to be decoded are missing in the output! Consequently,
+		// it is possible that the output video will not start smoothly and
+		// might have some stutter, or black video until the first I-frame is reached.
+		// We are not using this option.
+
 		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-ss " + to_string(startTimeInSeconds) + " "
@@ -7352,40 +7368,21 @@ void FFMpeg::cut(
 	}
 	else
 	{
-		if (isVideo)
-		{
-			ffmpegExecuteCommand = 
-				_ffmpegPath + "/ffmpeg "
-				+ "-i " + sourcePhysicalPath + " "
-				+ "-ss " + to_string(startTimeInSeconds) + " "
-				+ (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-				+ "-async 1 "
-				// commented because aresample filtering requires encoding and here we are just streamcopy
-				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-				// -map 0:v and -map 0:a is to get all video-audio tracks
-				+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
-				+ "> " + _outputFfmpegPathFileName + " "
-				+ "2>&1"
-			;
-		}
-		else
-		{
-			// audio
+		// audio
 
-			ffmpegExecuteCommand = 
-				_ffmpegPath + "/ffmpeg "
-				+ "-i " + sourcePhysicalPath + " "
-				+ "-ss " + to_string(startTimeInSeconds) + " "
-				+ "-to " + to_string(endTimeInSeconds) + " "
-				+ "-async 1 "
-				// commented because aresample filtering requires encoding and here we are just streamcopy
-				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-				// -map 0:v and -map 0:a is to get all video-audio tracks
-				+ "-map 0:a -c:a copy " + cutMediaPathName + " "
-				+ "> " + _outputFfmpegPathFileName + " "
-				+ "2>&1"
-			;
-		}
+		ffmpegExecuteCommand = 
+			_ffmpegPath + "/ffmpeg "
+			+ "-ss " + to_string(startTimeInSeconds) + " "
+			+ "-to " + to_string(endTimeInSeconds) + " "
+			+ "-i " + sourcePhysicalPath + " "
+			+ "-async 1 "
+			// commented because aresample filtering requires encoding and here we are just streamcopy
+			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+			+ "-map 0:a -c:a copy " + cutMediaPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
 	}
 
     #ifdef __APPLE__
@@ -7445,6 +7442,449 @@ void FFMpeg::cut(
         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+// only video, frame accurate, opposite to 'key frame seeking' --> needs reencoding
+void FFMpeg::cut_frameAccurate(
+	int64_t ingestionJobKey,
+	string sourceVideoAssetPathName,
+	// no keyFrameSeeking needs reencoding otherwise the key frame is always used
+	// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
+	// because FFmpeg will re-encode the video and start with an I-frame.
+	int64_t encodingJobKey,
+	Json::Value encodingProfileDetailsRoot,
+	double startTimeInSeconds,
+	double endTimeInSeconds,
+	int framesNumber,
+	string stagingEncodedAssetPathName,
+	pid_t* pChildPid)
+{
+
+	_currentApiName = "cut";
+
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
+	try
+	{
+		if (!FileIO::fileExisting(sourceVideoAssetPathName)        
+			&& !FileIO::directoryExisting(sourceVideoAssetPathName)
+		)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				// + ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		_outputFfmpegPathFileName =
+            _ffmpegTempDir + "/"
+            + to_string(ingestionJobKey)
+            + ".cut.log"
+            ;
+
+		/*
+			-ss: When used as an output option (before an output url), decodes but discards input 
+				until the timestamps reach position.
+				Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
+			2019-09-24: Added -async 1 option because the Escenic transcoder (ffmpeg) was failing
+				The generated error was: Too many packets buffered for output stream
+				(look https://trac.ffmpeg.org/ticket/6375)
+				-async samples_per_second
+					Audio sync method. "Stretches/squeezes" the audio stream to match the timestamps, the parameter is
+					the maximum samples per second by which the audio is changed.  -async 1 is a special case where only
+					the start of the audio stream is corrected without any later correction.
+				-af "aresample=async=1:min_hard_comp=0.100000:first_pts=0" helps to keep your audio lined up
+					with the beginning of your video. It is common for a container to have the beginning
+					of the video and the beginning of the audio start at different points. By using this your container
+					should have little to no audio drift or offset as it will pad the audio with silence or trim audio
+					with negative PTS timestamps if the audio does not actually start at the beginning of the video.
+			2019-09-26: introduced the concept of 'Key-Frame Seeking' vs 'All-Frame Seeking' vs 'Full Re-Encoding'
+				(see http://www.markbuckler.com/post/cutting-ffmpeg/)
+		*/
+
+		if (encodingProfileDetailsRoot == Json::nullValue)
+		{
+			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		vector<string> ffmpegEncodingProfileArgumentList;
+		{
+			try
+			{
+				string httpStreamingFileFormat;    
+				string ffmpegHttpStreamingParameter = "";
+				bool encodingProfileIsVideo = true;
+
+				string ffmpegFileFormatParameter = "";
+
+				string ffmpegVideoCodecParameter = "";
+				string ffmpegVideoProfileParameter = "";
+				string ffmpegVideoResolutionParameter = "";
+				int videoBitRateInKbps = -1;
+				string ffmpegVideoBitRateParameter = "";
+				string ffmpegVideoOtherParameters = "";
+				string ffmpegVideoMaxRateParameter = "";
+				string ffmpegVideoBufSizeParameter = "";
+				string ffmpegVideoFrameRateParameter = "";
+				string ffmpegVideoKeyFramesRateParameter = "";
+				bool twoPasses;
+
+				string ffmpegAudioCodecParameter = "";
+				string ffmpegAudioBitRateParameter = "";
+				string ffmpegAudioOtherParameters = "";
+				string ffmpegAudioChannelsParameter = "";
+				string ffmpegAudioSampleRateParameter = "";
+
+
+				settingFfmpegParameters(
+					encodingProfileDetailsRoot,
+					encodingProfileIsVideo,
+
+					httpStreamingFileFormat,
+					ffmpegHttpStreamingParameter,
+
+					ffmpegFileFormatParameter,
+
+					ffmpegVideoCodecParameter,
+					ffmpegVideoProfileParameter,
+					ffmpegVideoResolutionParameter,
+					videoBitRateInKbps,
+					ffmpegVideoBitRateParameter,
+					ffmpegVideoOtherParameters,
+					twoPasses,
+					ffmpegVideoMaxRateParameter,
+					ffmpegVideoBufSizeParameter,
+					ffmpegVideoFrameRateParameter,
+					ffmpegVideoKeyFramesRateParameter,
+
+					ffmpegAudioCodecParameter,
+					ffmpegAudioBitRateParameter,
+					ffmpegAudioOtherParameters,
+					ffmpegAudioChannelsParameter,
+					ffmpegAudioSampleRateParameter
+				);
+
+				/*
+				if (httpStreamingFileFormat != "")
+				{
+					// let's make it simple, in case of cut we do not use http streaming output
+					string errorMessage = __FILEREF__ + "in case of cut we are not using an httpStreaming encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				else */
+				if (twoPasses)
+				{
+					// let's make it simple, in case of cut we do not use twoPasses
+					/*
+					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+					*/
+					twoPasses = false;
+
+					string errorMessage = __FILEREF__ + "in case of cut we are not using two passes encoding. Changed it to false"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", twoPasses: " + to_string(twoPasses)
+					;
+					_logger->warn(errorMessage);
+				}
+
+				addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoProfileParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoMaxRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoBufSizeParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoFrameRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegEncodingProfileArgumentList);
+				// we cannot have two video filters parameters (-vf), one is for the overlay.
+				// If it is needed we have to combine both using the same -vf parameter and using the
+				// comma (,) as separator. For now we will just comment it and the resolution will be the one
+				// coming from the video (no changes)
+				// addToArguments(ffmpegVideoResolutionParameter, ffmpegEncodingProfileArgumentList);
+				ffmpegEncodingProfileArgumentList.push_back("-threads");
+				ffmpegEncodingProfileArgumentList.push_back("0");
+				addToArguments(ffmpegAudioCodecParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioBitRateParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioOtherParameters, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
+				addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				throw e;
+			}
+		}
+
+		vector<string> ffmpegArgumentList;
+		ostringstream ffmpegArgumentListStream;
+		{
+			ffmpegArgumentList.push_back("ffmpeg");
+			// global options
+			ffmpegArgumentList.push_back("-y");
+			// input options
+			ffmpegArgumentList.push_back("-i");
+			ffmpegArgumentList.push_back(sourceVideoAssetPathName);
+			ffmpegArgumentList.push_back("-ss");
+			ffmpegArgumentList.push_back(to_string(startTimeInSeconds));
+			if (framesNumber != -1)
+			{
+				ffmpegArgumentList.push_back("-vframes");
+				ffmpegArgumentList.push_back(to_string(framesNumber));
+			}
+			else
+			{
+				ffmpegArgumentList.push_back("-to");
+				ffmpegArgumentList.push_back(to_string(endTimeInSeconds));
+			}
+			ffmpegArgumentList.push_back("-async");
+			ffmpegArgumentList.push_back(to_string(1));
+
+			for (string parameter: ffmpegEncodingProfileArgumentList)
+				addToArguments(parameter, ffmpegArgumentList);
+
+			ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+
+			int iReturnedStatus = 0;
+
+			try
+			{
+				chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+				if (!ffmpegArgumentList.empty())
+					copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
+						ostream_iterator<string>(ffmpegArgumentListStream, " "));
+
+				_logger->info(__FILEREF__ + "cut with reencoding: Executing ffmpeg command"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				);
+
+				bool redirectionStdOutput = true;
+				bool redirectionStdError = true;
+
+				ProcessUtility::forkAndExec (
+					_ffmpegPath + "/ffmpeg",
+					ffmpegArgumentList,
+					_outputFfmpegPathFileName, redirectionStdOutput, redirectionStdError,
+					pChildPid, &iReturnedStatus);
+				if (iReturnedStatus != 0)
+				{
+					string errorMessage = __FILEREF__ + "cut with reencoding: ffmpeg command failed"      
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", iReturnedStatus: " + to_string(iReturnedStatus)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+				_logger->info(__FILEREF__ + "cut with reencoding: Executed ffmpeg command"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+				);
+			}
+			catch(runtime_error e)
+			{
+				string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+					_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+				string errorMessage;
+				if (iReturnedStatus == 9)   // 9 means: SIGKILL
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
+				else
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
+				_logger->error(errorMessage);
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				bool exceptionInCaseOfError = false;
+				FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+				if (iReturnedStatus == 9)   // 9 means: SIGKILL
+					throw FFMpegEncodingKilledByUser();
+				else
+					throw e;
+			}
+
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+			bool exceptionInCaseOfError = false;
+			FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+		}
+	}
+	catch(FFMpegEncodingKilledByUser e)
+	{
+		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			+ ", e.what(): " + e.what()
+		);
+
+		if (FileIO::fileExisting(stagingEncodedAssetPathName)
+			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		{
+			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			);
+
+			// file in case of .3gp content OR directory in case of IPhone content
+			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+			}
+			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				FileIO::remove(stagingEncodedAssetPathName);
+			}
+		}
+
+		throw e;
+	}
+	catch(runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			+ ", e.what(): " + e.what()
+		);
+
+		if (FileIO::fileExisting(stagingEncodedAssetPathName)
+			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		{
+			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			);
+
+			// file in case of .3gp content OR directory in case of IPhone content
+			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+			}
+			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				FileIO::remove(stagingEncodedAssetPathName);
+			}
+		}
+
+		throw e;
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		);
+
+		if (FileIO::fileExisting(stagingEncodedAssetPathName)
+			|| FileIO::directoryExisting(stagingEncodedAssetPathName))
+		{
+			FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			);
+
+			// file in case of .3gp content OR directory in case of IPhone content
+			if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+			}
+			else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				FileIO::remove(stagingEncodedAssetPathName);
+			}
+		}
+
+		throw e;
+	}
 }
 
 void FFMpeg::generateSlideshowMediaToIngest(

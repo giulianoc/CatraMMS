@@ -171,6 +171,7 @@ private:
     string                              _ffmpegVideoSpeedURI;
     string                              _ffmpegPictureInPictureURI;
     string								_ffmpegIntroOutroOverlayURI;
+    string								_ffmpegCutFrameAccurateURI;
 
 	int									_timeBeforeToPrepareResourcesInMinutes;
     
@@ -299,6 +300,10 @@ private:
     pair<string, bool> introOutroOverlay();
     pair<string, bool> introOutroOverlay_through_ffmpeg();
     void processIntroOutroOverlay(string stagingEncodedAssetPathName, bool killedByUser);    
+
+    pair<string, bool> cutFrameAccurate();
+    pair<string, bool> cutFrameAccurate_through_ffmpeg();
+    void processCutFrameAccurate(string stagingEncodedAssetPathName, bool killedByUser);    
 
     tuple<bool, bool, bool, string, bool, bool, int, int> getEncodingStatus();
 

@@ -303,7 +303,8 @@ public:
 		LiveProxy			= 11,
 		LiveGrid			= 12,
 		AwaitingTheBeginning	= 13,
-		IntroOutroOverlay	= 14
+		IntroOutroOverlay	= 14,
+		CutFrameAccurate	= 15
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -339,6 +340,8 @@ public:
                 return "AwaitingTheBeginning";
             case EncodingType::IntroOutroOverlay:
                 return "IntroOutroOverlay";
+            case EncodingType::CutFrameAccurate:
+                return "CutFrameAccurate";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -380,6 +383,8 @@ public:
             return EncodingType::AwaitingTheBeginning;
         else if (lowerCase == "introoutrooverlay")
             return EncodingType::IntroOutroOverlay;
+        else if (lowerCase == "cutframeaccurate")
+            return EncodingType::CutFrameAccurate;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -1801,6 +1806,20 @@ public:
 		int64_t outroVideoPhysicalPathKey,
 		string outroVideoAssetPathName,
 		int64_t outroVideoDurationInMilliSeconds,
+
+		EncodingPriority encodingPriority);
+
+	void addEncoding_CutFrameAccurate (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+
+		int64_t sourceVideoPhysicalPathKey,
+		string sourceVideoAssetPathName,
+		// int64_t sourceDurationInMilliSeconds,
+		double endTimeInSeconds,
+
+		int64_t encodingProfileKey,
+		Json::Value encodingProfileDetailsRoot,
 
 		EncodingPriority encodingPriority);
 
