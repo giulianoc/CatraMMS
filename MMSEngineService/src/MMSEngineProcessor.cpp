@@ -12959,7 +12959,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
 				//	Using keyFrameSeeking false the Cut is accurate.
-				bool keyFrameSeeking = false;
+				// bool keyFrameSeeking = false;
+				bool keyFrameSeeking = true;
 				field = "KeyFrameSeeking";
 				cutParametersRoot[field] = keyFrameSeeking;
 
