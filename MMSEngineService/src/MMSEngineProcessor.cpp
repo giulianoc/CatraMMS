@@ -16555,6 +16555,13 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					= mediaItemDetails;
 			}
 		}
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread media item"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourceMediaItemKey" + to_string(sourceMediaItemKey)
+			+ ", sourcePhysicalPathKey" + to_string(sourcePhysicalPathKey)
+			+ ", sourcePhysicalPath" + sourcePhysicalPath
+		);
 
 		MMSEngineDBFacade::ContentType contentType;
 		string userData;
@@ -16572,6 +16579,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			tie(contentType, localTitle, userData, ingestionDate, ignore, localIngestionJobKey)
 				= mediaItemDetails;
 		}
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread userData"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", userData" + userData
+		);
 
         if (contentType != MMSEngineDBFacade::ContentType::Video
 			&& contentType != MMSEngineDBFacade::ContentType::Audio)
@@ -16588,6 +16600,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		int64_t sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 			sourceMediaItemKey, sourcePhysicalPathKey);
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread duration"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", sourceDurationInMilliSeconds" + to_string(sourceDurationInMilliSeconds)
+		);
 
 		// check start time / end time
 		int framesNumber = -1;
@@ -16728,6 +16745,13 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 		}
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread timing"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", framesNumber" + to_string(framesNumber)
+			+ ", startTimeInSeconds" + to_string(startTimeInSeconds)
+			+ ", endTimeInSeconds" + to_string(endTimeInSeconds)
+		);
 
 		int64_t newUtcStartTimeInMilliSecs = -1;
 		int64_t newUtcEndTimeInMilliSecs = -1;
@@ -16818,6 +16842,12 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 		}
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread new start/end"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", newUtcStartTimeInMilliSecs" + to_string(newUtcStartTimeInMilliSecs)
+			+ ", newUtcEndTimeInMilliSecs" + to_string(newUtcEndTimeInMilliSecs)
+		);
 
 		string cutType = "KeyFrameSeeking";
         string field = "CutType";
@@ -16886,6 +16916,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 			}
+			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread frame rate"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", forcedAvgFrameRate" + forcedAvgFrameRate
+			);
 
 			// this is a cut so destination file name shall have the same
 			// extension as the source file name
@@ -16915,6 +16950,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				fileFormat = outputFileFormat;
 			}
+			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread file format"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", fileFormatorcedAvgFrameRate" + fileFormat
+			);
 
 			if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
 			{
@@ -16946,6 +16986,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				field = "UserData";
 				parametersRoot[field] = destUserDataRoot;
 			}
+			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread usr data management"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			);
 
 			string localSourceFileName = to_string(ingestionJobKey)
                 + "_cut"
