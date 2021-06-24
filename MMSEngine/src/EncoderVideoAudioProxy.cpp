@@ -188,7 +188,7 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->ffmpegIntroOutroOverlayURI: " + _ffmpegIntroOutroOverlayURI
     );
-    _ffmpegCutFrameAccurateURI = _configuration["ffmpeg"].get("CutFrameAccurateURI", "").asString();
+    _ffmpegCutFrameAccurateURI = _configuration["ffmpeg"].get("cutFrameAccurateURI", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->ffmpegCutFrameAccurateURI: " + _ffmpegCutFrameAccurateURI
     );

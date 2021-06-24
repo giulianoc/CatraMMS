@@ -17056,10 +17056,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		}
 		else
 		{
-		_logger->info(__FILEREF__ + "2 generateAndIngestCutMediaThread new start/end"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		);
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
 			string field = "EncodingPriority";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
