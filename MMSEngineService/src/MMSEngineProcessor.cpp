@@ -16854,6 +16854,20 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			cutType = JSONUtils::asBool(parametersRoot, field, "KeyFrameSeeking");
 
+		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread new start/end"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", cutType: " + cutType
+			+ ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+			+ ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+			+ ", sourceDurationInMilliSeconds: " + to_string(sourceDurationInMilliSeconds)
+			+ ", framesNumber: " + to_string(framesNumber)
+			+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+			+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+			+ ", newUtcStartTimeInMilliSecs: " + to_string(newUtcStartTimeInMilliSecs)
+			+ ", newUtcEndTimeInMilliSecs: " + to_string(newUtcEndTimeInMilliSecs)
+		);
 		if (cutType == "KeyFrameSeeking" || cutType == "FrameAccurateWithoutEncoding")
 		{
 			string outputFileFormat;
@@ -16861,6 +16875,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputFileFormat = parametersRoot.get(field, "").asString();
 
+		_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
 			// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
 			// force the cut file to have the same avgFrameRate of the source media
 			string forcedAvgFrameRate;
@@ -17065,6 +17083,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		}
 		else
 		{
+		_logger->info(__FILEREF__ + "2 generateAndIngestCutMediaThread new start/end"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		);
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
 			string field = "EncodingPriority";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
