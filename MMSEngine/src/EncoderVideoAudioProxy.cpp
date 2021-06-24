@@ -4504,7 +4504,9 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -5554,7 +5556,9 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -6564,6 +6568,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(string stagingEncodedAssetPathNam
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
 			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -7363,7 +7368,9 @@ void EncoderVideoAudioProxy::processPictureInPicture(string stagingEncodedAssetP
         
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -8076,7 +8083,9 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay(string stagingEncodedAsset
         
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -8822,10 +8831,51 @@ void EncoderVideoAudioProxy::processCutFrameAccurate(string stagingEncodedAssetP
         }
         string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-        
+		string field = "sourceVideoMediaItemKey";
+        int64_t sourceVideoMediaItemKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+		field = "newUtcStartTimeInMilliSecs";
+        int64_t newUtcStartTimeInMilliSecs = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+		field = "newUtcEndTimeInMilliSecs";
+        int64_t newUtcEndTimeInMilliSecs = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+
+		if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
+		{
+			Json::Value destUserDataRoot;
+
+			field = "UserData";
+			if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
+				destUserDataRoot = _encodingItem->_ingestedParametersRoot[field];
+
+			Json::Value destMmsDataRoot;
+
+			field = "mmsData";
+			if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+				destMmsDataRoot = destUserDataRoot[field];
+
+			field = "utcStartTimeInMilliSecs";
+			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				destMmsDataRoot.removeMember(field);
+			destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
+
+			field = "utcEndTimeInMilliSecs";
+			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				destMmsDataRoot.removeMember(field);
+			destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
+
+			field = "mmsData";
+			destUserDataRoot[field] = destMmsDataRoot;
+
+			field = "UserData";
+			_encodingItem->_ingestedParametersRoot[field] = destUserDataRoot;
+		}
+
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			sourceVideoMediaItemKey, newUtcStartTimeInMilliSecs / 1000, newUtcEndTimeInMilliSecs / 1000,
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -10246,7 +10296,9 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-            fileFormat, faceOfVideoMediaItemKey, _encodingItem->_ingestedParametersRoot);
+            fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
+			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -10754,6 +10806,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 						string mediaMetaDataContent = generateMediaMetadataToIngest(
 							_encodingItem->_ingestionJobKey,
 							fileFormat, faceOfVideoMediaItemKey,
+							-1, -1, -1, // cutOfVideoMediaItemKey
 							_encodingItem->_ingestedParametersRoot);
     
 						shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -10815,6 +10868,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				int64_t faceOfVideoMediaItemKey = sourceMediaItemKey;
 				string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 					fileFormat, faceOfVideoMediaItemKey,
+					-1, -1, -1, // cutOfVideoMediaItemKey
 					_encodingItem->_ingestedParametersRoot);
   
 				shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -10861,6 +10915,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 			int64_t faceOfVideoMediaItemKey = sourceMediaItemKey;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 				fileFormat, faceOfVideoMediaItemKey,
+				-1, -1, -1, // cutOfVideoMediaItemKey
 				_encodingItem->_ingestedParametersRoot);
   
 			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -11016,6 +11071,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
 			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -11610,6 +11666,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
 		int64_t faceOfVideoMediaItemKey = -1;
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
             fileFormat, faceOfVideoMediaItemKey,
+			-1, -1, -1, // cutOfVideoMediaItemKey
 			_encodingItem->_ingestedParametersRoot);
     
         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
@@ -18042,6 +18099,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,
 		int64_t faceOfVideoMediaItemKey,
+		int64_t cutOfVideoMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
         Json::Value parametersRoot
 )
 {
@@ -18083,6 +18141,35 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 
 		field = "CrossReference";
         parametersRoot[field] = crossReferenceRoot;
+	}
+	else if (cutOfVideoMediaItemKey != -1)
+	{
+		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
+		MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
+
+		Json::Value crossReferenceRoot;
+
+		field = "Type";
+		crossReferenceRoot[field] =
+			MMSEngineDBFacade::toString(crossReferenceType);
+
+		field = "MediaItemKey";
+		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
+
+		Json::Value crossReferenceParametersRoot;
+		{
+			field = "StartTimeInSeconds";
+			crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+			field = "EndTimeInSeconds";
+			crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+			field = "Parameters";
+			crossReferenceRoot[field] = crossReferenceParametersRoot;
+		}
+
+		field = "CrossReference";
+		parametersRoot[field] = crossReferenceRoot;
 	}
 
     string mediaMetadata;

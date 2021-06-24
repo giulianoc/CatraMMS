@@ -245,16 +245,17 @@ public:
         string slideshowMediaPathName,
 		pid_t* pChildPid);
 
-    void cut_keyFrameSeeking(
+	void cutWithoutEncoding(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		string cutType,
 		bool isVideo,
         double startTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,
         string cutMediaPathName);
 
-	void cut_frameAccurate(
+	void cutFrameAccurateWithEncoding(
 		int64_t ingestionJobKey,
 		string sourceVideoAssetPathName,
 		// no keyFrameSeeking needs reencoding otherwise the key frame is always used

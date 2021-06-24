@@ -7271,10 +7271,11 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-// audio and video (keyFrameSeeking)
-void FFMpeg::cut_keyFrameSeeking(
+// audio and video 
+void FFMpeg::cutWithoutEncoding(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
+		string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
 		bool isVideo,
         double startTimeInSeconds,
         double endTimeInSeconds,
@@ -7352,18 +7353,27 @@ void FFMpeg::cut_keyFrameSeeking(
 		// might have some stutter, or black video until the first I-frame is reached.
 		// We are not using this option.
 
+		string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
 		ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
-            + "-ss " + to_string(startTimeInSeconds) + " "
-            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-            + "-i " + sourcePhysicalPath + " "
-			+ "-async 1 "
-			// commented because aresample filtering requires encoding and here we are just streamcopy
-            // + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-			// -map 0:v and -map 0:a is to get all video-audio tracks
-            + "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
+		;
+		if (cutType == "KeyFrameSeeking")	// input seeking
+            ffmpegExecuteCommand += "-ss " + to_string(startTimeInSeconds) + " "
+				+ "-i " + sourcePhysicalPath + " "
+			;
+		else // if (cutType == "FrameAccurateWithoutEncoding") output seeking
+			ffmpegExecuteCommand += "-i " + sourcePhysicalPath + " "
+				+ "-ss " + to_string(startTimeInSeconds) + " "
+			;
+
+			ffmpegExecuteCommand += (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+				+ "-async 1 "
+				// commented because aresample filtering requires encoding and here we are just streamcopy
+				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+				// -map 0:v and -map 0:a is to get all video-audio tracks
+				+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
+				+ "> " + _outputFfmpegPathFileName + " "
+				+ "2>&1"
             ;
 	}
 	else
@@ -7444,8 +7454,8 @@ void FFMpeg::cut_keyFrameSeeking(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-// only video, frame accurate, opposite to 'key frame seeking' --> needs reencoding
-void FFMpeg::cut_frameAccurate(
+// only video
+void FFMpeg::cutFrameAccurateWithEncoding(
 	int64_t ingestionJobKey,
 	string sourceVideoAssetPathName,
 	// no keyFrameSeeking needs reencoding otherwise the key frame is always used

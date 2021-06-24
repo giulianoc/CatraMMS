@@ -1956,6 +1956,23 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
+    field = "CutType";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+		string cutType = parametersRoot.get(field, "").asString();
+
+        if (!isCutTypeValid(cutType))
+        {
+            string errorMessage = string("Unknown cutType")
+                + ", cutType: " + cutType
+                + ", label: " + label
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
@@ -2013,7 +2030,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
                 }
             }
         }
-    }        
+    }
 
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5836,6 +5853,23 @@ bool Validator::isImageFileFormat(string fileFormat)
     for (string suffix: suffixes)
     {
         if (lowerCaseFileFormat == suffix) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isCutTypeValid(string cutType)
+{
+    vector<string> validCutTypes = {
+        "KeyFrameSeeking",
+        "FrameAccurateWithEncoding",
+        "FrameAccurateWithoutEncoding"
+    };
+
+    for (string validCutType: validCutTypes)
+    {
+        if (cutType == validCutType) 
             return true;
     }
     

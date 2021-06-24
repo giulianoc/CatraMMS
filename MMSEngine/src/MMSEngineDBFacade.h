@@ -1813,6 +1813,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 
+		int64_t sourceVideoMediaItemKey,
 		int64_t sourceVideoPhysicalPathKey,
 		string sourceVideoAssetPathName,
 		// int64_t sourceDurationInMilliSeconds,
@@ -1821,7 +1822,8 @@ public:
 		int64_t encodingProfileKey,
 		Json::Value encodingProfileDetailsRoot,
 
-		EncodingPriority encodingPriority);
+		EncodingPriority encodingPriority,
+		int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs);
 
 	void updateIngestionAndEncodingLiveRecordingPeriod (
 		int64_t ingestionJobKey,

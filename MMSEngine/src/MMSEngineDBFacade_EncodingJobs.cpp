@@ -11738,6 +11738,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 
+	int64_t sourceVideoMediaItemKey,
 	int64_t sourceVideoPhysicalPathKey,
 	string sourceVideoAssetPathName,
 	// int64_t sourceDurationInMilliSeconds,
@@ -11746,7 +11747,8 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 	int64_t encodingProfileKey,
 	Json::Value encodingProfileDetailsRoot,
 
-	EncodingPriority encodingPriority)
+	EncodingPriority encodingPriority,
+	int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs)
 {
 
     string      lastSQLCommand;
@@ -11776,8 +11778,11 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 		{
 			Json::Value parametersRoot;
 
+			string field = "sourceVideoMediaItemKey";
+			parametersRoot[field] = sourceVideoMediaItemKey;
+
 			// used in CatraMMSAPI.java
-			string field = "sourceVideoPhysicalPathKey";
+			field = "sourceVideoPhysicalPathKey";
 			parametersRoot[field] = sourceVideoPhysicalPathKey;
 
 			field = "sourceVideoAssetPathName";
@@ -11794,6 +11799,12 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 
 			field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
+
+			field = "newUtcStartTimeInMilliSecs";
+			parametersRoot[field] = newUtcStartTimeInMilliSecs;
+
+			field = "newUtcEndTimeInMilliSecs";
+			parametersRoot[field] = newUtcEndTimeInMilliSecs;
 
 			Json::StreamWriterBuilder wbuilder;
 			parameters = Json::writeString(wbuilder, parametersRoot);

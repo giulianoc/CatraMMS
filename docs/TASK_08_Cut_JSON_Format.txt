@@ -46,11 +46,19 @@
 		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
 		"FramesNumber": 10,
 
-		// optional, default is true
-		// - true means Key-Frame Seeking, faster, no frame accuracy, the start of your video will be aligned
-		//		with the nearest Key frame, not the nearest frame independent of encoding format
-		// - false means Frame-Accurate, it will reencoding, considers all frames (including Predicted frames),
-		"KeyFrameSeeking": true,
+		// optional
+		// - KeyFrameSeeking: the start of your video will be aligned with the Key frame
+		//		nearest to the requested start time. No frame accuracy, it jumps from I-frame
+		//		to I-frame to reach the seek-point. (very fast)
+		// - FrameAccurateWithEncoding: frame-accurate cut because the video will be re-encoded
+		//		and it will start with an I-frame. It considers all frames including
+		//		Predicted frames (B, P). (slow)
+		// - FrameAccurateWithoutEncoding: With this option, if the start time that
+		//		you specified falls on a Predicted Frame, it is possible that the output video
+		//		will not start smoothly and might have some stutter, or black video until
+		//		the first I-frame is reached
+		// Default is KeyFrameSeeking
+		"CutType": "KeyFrameSeeking",
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used

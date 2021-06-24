@@ -5585,7 +5585,7 @@ void FFMPEGEncoder::cutThread(
         int64_t encodingJobKey = JSONUtils::asInt64(cutMetadata, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(cutMetadata, "ingestionJobKey", -1);
 
-		encoding->_ffmpeg->cut_frameAccurate(
+		encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			ingestionJobKey,
 			cutMetadata["encodingParametersRoot"].get("sourceVideoAssetPathName", "").asString(),
 			encodingJobKey,

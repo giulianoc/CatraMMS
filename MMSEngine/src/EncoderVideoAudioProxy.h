@@ -311,6 +311,7 @@ private:
         int64_t ingestionJobKey,
         string fileFormat,
 		int64_t faceOfVideoMediaItemKey,
+		int64_t cutOfVideoMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
         Json::Value parametersRoot);
 
 	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);

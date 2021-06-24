@@ -40,6 +40,8 @@ public:
 
     bool isImageFileFormat(string fileFormat);
 
+    bool isCutTypeValid(string cutType);
+
     bool isFontTypeValid(string fontType);
     
     bool isColorValid(string fontColor);

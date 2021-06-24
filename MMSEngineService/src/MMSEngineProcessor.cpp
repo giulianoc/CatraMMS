@@ -11818,9 +11818,9 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
 				//	Using keyFrameSeeking false the Cut is accurate.
-				bool keyFrameSeeking = false;
-				field = "KeyFrameSeeking";
-				cutParametersRoot[field] = keyFrameSeeking;
+				string cutType = "FrameAccurateWithoutEncoding";
+				field = "CutType";
+				cutParametersRoot[field] = cutType;
 
 				bool fixEndTimeIfOvercomeDuration;
 				if (!errorIfAChunkIsMissing)
@@ -12959,9 +12959,9 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
 				//	Using keyFrameSeeking false the Cut is accurate.
-				bool keyFrameSeeking = false;
-				field = "KeyFrameSeeking";
-				cutParametersRoot[field] = keyFrameSeeking;
+				string cutType = "FrameAccurateWithoutEncoding";
+				field = "CutType";
+				cutParametersRoot[field] = cutType;
 
 				bool fixEndTimeIfOvercomeDuration;
 				if (!errorIfAChunkIsMissing)
@@ -16301,7 +16301,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				string cutMediaPathName = workspaceIngestionRepository + "/" 
 					+ localCutSourceFileName;
 
-				bool keyFrameSeeking = false;
+				string cutType = "KeyFrameSeeking";
 				double startTimeInSeconds;
 				double endTimeInSeconds;
 				if (maxDurationInSeconds < 0.0)
@@ -16321,13 +16321,14 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", concatenatedMediaPathName: " + concatenatedMediaPathName
-					+ ", keyFrameSeeking: " + to_string(keyFrameSeeking)
+					+ ", cutType: " + cutType
 					+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
 					+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
 					+ ", framesNumber: " + to_string(framesNumber)
 				);
 
-				ffmpeg.cut_keyFrameSeeking(ingestionJobKey, concatenatedMediaPathName, 
+				ffmpeg.cutWithoutEncoding(ingestionJobKey, concatenatedMediaPathName, 
+					cutType,
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
 					startTimeInSeconds, endTimeInSeconds, framesNumber,
 					cutMediaPathName);
@@ -16585,11 +16586,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             throw runtime_error(errorMessage);
         }
 
-		bool keyFrameSeeking = true;
-        string field = "KeyFrameSeeking";
-        if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			keyFrameSeeking = JSONUtils::asBool(parametersRoot, field, true);
-
 		int64_t sourceDurationInMilliSeconds = _mmsEngineDBFacade->getMediaDurationInMilliseconds(
 			sourceMediaItemKey, sourcePhysicalPathKey);
 
@@ -16598,7 +16594,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		double startTimeInSeconds;
 		double endTimeInSeconds = 0.0;
 		{
-			field = "StartTimeInSeconds";
+			string field = "StartTimeInSeconds";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -16733,7 +16729,102 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			}
 		}
 
-		if (keyFrameSeeking)
+		int64_t newUtcStartTimeInMilliSecs = -1;
+		int64_t newUtcEndTimeInMilliSecs = -1;
+		{
+			// In case the media has TimeCode, we will report them in the new content
+			if (framesNumber == -1 && userData != "")
+			{
+				// try to retrieve time codes
+				Json::Value sourceUserDataRoot;
+				try
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(userData.c_str(),
+						userData.c_str() + userData.size(), 
+						&sourceUserDataRoot, &errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse userData"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+							+ ", userData: " + userData
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				catch(...)
+				{
+					string errorMessage = string("userData json is not well format")
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", userData: " + userData
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				int64_t utcStartTimeInMilliSecs = -1;
+				int64_t utcEndTimeInMilliSecs = -1;
+
+				string field = "mmsData";
+				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
+				{
+					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+
+					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
+					string utcChunkStartTimeField = "utcChunkStartTime";
+					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
+					{
+						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
+					}
+					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
+					{
+						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
+						utcStartTimeInMilliSecs *= 1000;
+					}
+
+					if (utcStartTimeInMilliSecs != -1)
+					{
+						string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
+						string utcChunkEndTimeField = "utcChunkEndTime";
+						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
+						{
+							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
+						}
+						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
+						{
+							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
+							utcEndTimeInMilliSecs *= 1000;
+						}
+
+						// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs will be set in parametersRoot
+						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
+						{
+							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
+							newUtcStartTimeInMilliSecs += ((int64_t) (startTimeInSeconds * 1000));
+							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs + ((int64_t) (endTimeInSeconds * 1000));
+						}
+					}
+				}
+			}
+		}
+
+		string cutType = "KeyFrameSeeking";
+        string field = "CutType";
+        if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			cutType = JSONUtils::asBool(parametersRoot, field, "KeyFrameSeeking");
+
+		if (cutType == "KeyFrameSeeking" || cutType == "FrameAccurateWithoutEncoding")
 		{
 			string outputFileFormat;
 			field = "OutputFileFormat";
@@ -16796,121 +16887,6 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 
-			// In case the media has TimeCode, we will report them in the new content
-			if (framesNumber == -1 && userData != "")
-			{
-				// try to retrieve time codes
-				Json::Value sourceUserDataRoot;
-				try
-				{
-					Json::CharReaderBuilder builder;
-					Json::CharReader* reader = builder.newCharReader();
-					string errors;
-
-					bool parsingSuccessful = reader->parse(userData.c_str(),
-						userData.c_str() + userData.size(), 
-						&sourceUserDataRoot, &errors);
-					delete reader;
-
-					if (!parsingSuccessful)
-					{
-						string errorMessage = __FILEREF__ + "failed to parse userData"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errors: " + errors
-							+ ", userData: " + userData
-						;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				catch(...)
-				{
-					string errorMessage = string("userData json is not well format")
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", userData: " + userData
-					;
-					_logger->error(__FILEREF__ + errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-
-				int64_t utcStartTimeInMilliSecs = -1;
-				int64_t utcEndTimeInMilliSecs = -1;
-
-				string field = "mmsData";
-				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
-				{
-					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
-
-					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-					string utcChunkStartTimeField = "utcChunkStartTime";
-					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-					{
-						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-					}
-					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
-					{
-						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
-						utcStartTimeInMilliSecs *= 1000;
-					}
-
-					if (utcStartTimeInMilliSecs != -1)
-					{
-						string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-						string utcChunkEndTimeField = "utcChunkEndTime";
-						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-						{
-							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-						}
-						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
-						{
-							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
-							utcEndTimeInMilliSecs *= 1000;
-						}
-
-						// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs will be set in parametersRoot
-						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
-						{
-							int64_t initialUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							utcStartTimeInMilliSecs += ((int64_t) (startTimeInSeconds * 1000));
-							utcEndTimeInMilliSecs = initialUtcStartTimeInMilliSecs + ((int64_t) (endTimeInSeconds * 1000));
-
-							Json::Value destUserDataRoot;
-
-							field = "UserData";
-							if (JSONUtils::isMetadataPresent(parametersRoot, field))
-								destUserDataRoot = parametersRoot[field];
-
-							Json::Value destMmsDataRoot;
-
-							field = "mmsData";
-							if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
-								destMmsDataRoot = destUserDataRoot[field];
-
-							field = "utcStartTimeInMilliSecs";
-							if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-								destMmsDataRoot.removeMember(field);
-							destMmsDataRoot[field] = utcStartTimeInMilliSecs;
-
-							field = "utcEndTimeInMilliSecs";
-							if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-								destMmsDataRoot.removeMember(field);
-							destMmsDataRoot[field] = utcEndTimeInMilliSecs;
-
-							field = "mmsData";
-							destUserDataRoot[field] = destMmsDataRoot;
-
-							field = "UserData";
-							parametersRoot[field] = destUserDataRoot;
-						}
-					}
-				}
-			}
-
 			// this is a cut so destination file name shall have the same
 			// extension as the source file name
 			string fileFormat;
@@ -16940,6 +16916,37 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				fileFormat = outputFileFormat;
 			}
 
+			if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
+			{
+				Json::Value destUserDataRoot;
+
+				field = "UserData";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+					destUserDataRoot = parametersRoot[field];
+
+				Json::Value destMmsDataRoot;
+
+				field = "mmsData";
+				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+					destMmsDataRoot = destUserDataRoot[field];
+
+				field = "utcStartTimeInMilliSecs";
+				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+					destMmsDataRoot.removeMember(field);
+				destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
+
+				field = "utcEndTimeInMilliSecs";
+				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+					destMmsDataRoot.removeMember(field);
+				destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
+
+				field = "mmsData";
+				destUserDataRoot[field] = destMmsDataRoot;
+
+				field = "UserData";
+				parametersRoot[field] = destUserDataRoot;
+			}
+
 			string localSourceFileName = to_string(ingestionJobKey)
                 + "_cut"
                 + "." + fileFormat // + "_source"
@@ -16951,10 +16958,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
                 + localSourceFileName;
         
 			FFMpeg ffmpeg (_configuration, _logger);
-			ffmpeg.cut_keyFrameSeeking(ingestionJobKey, sourcePhysicalPath, 
+			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourcePhysicalPath, 
+				cutType,
 				contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                startTimeInSeconds, endTimeInSeconds, framesNumber,
-                cutMediaPathName);
+				startTimeInSeconds, endTimeInSeconds, framesNumber,
+				cutMediaPathName);
 
 			_logger->info(__FILEREF__ + "cut done"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17085,12 +17093,14 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			}
 
 			_mmsEngineDBFacade->addEncoding_CutFrameAccurate(workspace, ingestionJobKey,
+				sourceMediaItemKey,
 				sourcePhysicalPathKey,
 				sourcePhysicalPath,
 				// sourceDurationInMilliSeconds,
 				endTimeInSeconds,
 				encodingProfileKey,
-				encodingProfileDetailsRoot, encodingPriority);
+				encodingProfileDetailsRoot, encodingPriority,
+				newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs);
 		}
 	}
     catch(runtime_error e)
