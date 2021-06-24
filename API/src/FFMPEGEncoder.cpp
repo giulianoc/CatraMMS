@@ -9028,7 +9028,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		Json::Value workflowRoot;
 
 		field = "Label";
-		workflowRoot[field] = addContentLabel;
+		workflowRoot[field] = addContentLabel + " (virtual VOD)";
 
 		field = "Type";
 		workflowRoot[field] = "Workflow";
