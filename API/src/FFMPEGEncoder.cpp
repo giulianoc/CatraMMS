@@ -679,7 +679,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-    else if (method == "cut")
+    else if (method == "cutFrameAccurate")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
@@ -781,9 +781,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
-				thread cutThread(&FFMPEGEncoder::cutThread,
+				thread cutFrameAccurateThread(&FFMPEGEncoder::cutFrameAccurateThread,
 					this, selectedEncoding, encodingJobKey, requestBody);
-				cutThread.detach();
+				cutFrameAccurateThread.detach();
 
 				#ifdef __VECTOR__
 				#else	// __MAP__
@@ -802,7 +802,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				#else	// __MAP__
 				#endif
 
-				_logger->error(__FILEREF__ + "cutThread failed"
+				_logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
 					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
@@ -828,7 +828,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "cutThread failed"
+            _logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
@@ -3120,8 +3120,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
     else
     {
         string errorMessage = string("No API is matched")
-            + ", requestURI: " +requestURI
-            + ", requestMethod: " +requestMethod;
+            + ", requestURI: " + requestURI
+            + ", method: " + method
+            + ", requestMethod: " + requestMethod;
         _logger->error(__FILEREF__ + errorMessage);
 
         sendError(request, 400, errorMessage);
@@ -5526,13 +5527,13 @@ void FFMPEGEncoder::introOutroOverlayThread(
     }
 }
 
-void FFMPEGEncoder::cutThread(
+void FFMPEGEncoder::cutFrameAccurateThread(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         int64_t encodingJobKey,
         string requestBody)
 {
-	string api = "cut";
+	string api = "cutFrameAccurate";
 
 	_logger->info(__FILEREF__ + "Received " + api
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
