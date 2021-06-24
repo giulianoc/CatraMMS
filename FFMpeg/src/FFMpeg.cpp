@@ -7364,28 +7364,29 @@ void FFMpeg::cutWithoutEncoding(
 		// might have some stutter, or black video until the first I-frame is reached.
 		// We are not using this option.
 
-		string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
-		ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-		;
+		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
 		if (cutType == "KeyFrameSeeking")	// input seeking
-            ffmpegExecuteCommand += "-ss " + to_string(startTimeInSeconds) + " "
-				+ "-i " + sourcePhysicalPath + " "
+            ffmpegExecuteCommand += (string("-ss ") + to_string(startTimeInSeconds) + " "
+				+ "-i " + sourcePhysicalPath + " ")
 			;
 		else // if (cutType == "FrameAccurateWithoutEncoding") output seeking
-			ffmpegExecuteCommand += "-i " + sourcePhysicalPath + " "
-				+ "-ss " + to_string(startTimeInSeconds) + " "
+			ffmpegExecuteCommand += (string("-i ") + sourcePhysicalPath + " "
+				+ "-ss " + to_string(startTimeInSeconds) + " ")
 			;
 
-			ffmpegExecuteCommand += (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
-				+ "-async 1 "
+		if (framesNumber != -1)
+			ffmpegExecuteCommand += (string("-vframes ") + to_string(framesNumber) + " ");
+		else
+			ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds) + " ");
+
+		ffmpegExecuteCommand +=	(string("-async 1 ")
 				// commented because aresample filtering requires encoding and here we are just streamcopy
-				// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
-				// -map 0:v and -map 0:a is to get all video-audio tracks
-				+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
-				+ "> " + _outputFfmpegPathFileName + " "
-				+ "2>&1"
-            ;
+			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+			+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1")
+		;
 	}
 	else
 	{

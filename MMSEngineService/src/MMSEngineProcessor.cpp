@@ -4745,8 +4745,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									// string segmenterType = "streamSegmenter";
 									if (segmenterType == "hlsSegmenter")
 									{
-										thread liveCutThread(&MMSEngineProcessor::liveCutThread_hlsSegmenter, this, 
-											_processorsThreadsNumber, ingestionJobKey,
+										thread liveCutThread(
+											&MMSEngineProcessor::liveCutThread_hlsSegmenter, this, 
+											_processorsThreadsNumber,
+											ingestionJobKey, ingestionJobLabel,
 											workspace,
 											parametersRoot
 										);
@@ -12249,6 +12251,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 	shared_ptr<long> processorsThreadsNumber,
 	int64_t ingestionJobKey,
+	string ingestionJobLabel,
 	shared_ptr<Workspace> workspace,
 	Json::Value liveCutParametersRoot
 )
@@ -13135,7 +13138,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value workflowRoot;
 			{
 				string field = "Label";
-				workflowRoot[field] = string("Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				workflowRoot[field] = ingestionJobLabel + ". Cut from " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 

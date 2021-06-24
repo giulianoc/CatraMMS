@@ -260,6 +260,7 @@ private:
 	void liveCutThread_hlsSegmenter(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
+		string ingestionJobLabel,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
