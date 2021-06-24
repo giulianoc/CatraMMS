@@ -7295,6 +7295,17 @@ void FFMpeg::cutWithoutEncoding(
 		*/
 	);
 
+	_logger->info(__FILEREF__ + "Received cutWithoutEncoding"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		+ ", cutType: " + cutType
+		+ ", isVideo: " + to_string(isVideo)
+		+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+		+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+		+ ", framesNumber: " + to_string(framesNumber)
+		+ ", cutMediaPathName: " + cutMediaPathName
+		);
+
 	if (!FileIO::fileExisting(sourcePhysicalPath)        
 		&& !FileIO::directoryExisting(sourcePhysicalPath)
 	)
@@ -7383,8 +7394,8 @@ void FFMpeg::cutWithoutEncoding(
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-ss " + to_string(startTimeInSeconds) + " "
-			+ "-to " + to_string(endTimeInSeconds) + " "
 			+ "-i " + sourcePhysicalPath + " "
+			+ "-to " + to_string(endTimeInSeconds) + " "
 			+ "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
 			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
@@ -7481,6 +7492,16 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 		stagingEncodedAssetPathName
 		*/
 	);
+
+	_logger->info(__FILEREF__ + "Received cutFrameAccurateWithEncoding"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+		+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+		+ ", framesNumber: " + to_string(framesNumber)
+		+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		);
 
 	try
 	{
