@@ -7485,13 +7485,11 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	_currentApiName = "cut";
 
 	setStatus(
-		ingestionJobKey
-		/*
-		encodingJobKey
-		videoDurationInMilliSeconds,
-		mmsAssetPathName
+		ingestionJobKey,
+		encodingJobKey,
+		framesNumber == -1 ? ((endTimeInSeconds - startTimeInSeconds) * 1000) : -1,
+		sourceVideoAssetPathName,
 		stagingEncodedAssetPathName
-		*/
 	);
 
 	_logger->info(__FILEREF__ + "Received cutFrameAccurateWithEncoding"
@@ -7705,8 +7703,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				ffmpegArgumentList.push_back("-to");
 				ffmpegArgumentList.push_back(to_string(endTimeInSeconds));
 			}
-			ffmpegArgumentList.push_back("-async");
-			ffmpegArgumentList.push_back(to_string(1));
+			// ffmpegArgumentList.push_back("-async");
+			// ffmpegArgumentList.push_back(to_string(1));
 
 			for (string parameter: ffmpegEncodingProfileArgumentList)
 				addToArguments(parameter, ffmpegArgumentList);

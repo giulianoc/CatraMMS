@@ -8227,56 +8227,18 @@ pair<string, bool> EncoderVideoAudioProxy::cutFrameAccurate_through_ffmpeg()
 					transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
 						[](unsigned char c){return tolower(c); } );
 
-					string encodedFileName =
-						to_string(_encodingItem->_ingestionJobKey)
+					string workspaceIngestionRepository =
+						_mmsStorage->getWorkspaceIngestionRepository(
+						_encodingItem->_workspace);
+                    stagingEncodedAssetPathName =
+                        workspaceIngestionRepository + "/"
+                        + to_string(_encodingItem->_ingestionJobKey)
 						+ "_"
 						+ to_string(_encodingItem->_encodingJobKey)
 						+ "_"
 						+ to_string(encodingProfileKey)
+                        + "." + fileFormatLowerCase
 					;
-					if (fileFormatLowerCase == "hls"
-						|| fileFormatLowerCase == "dash")
-						;
-					else
-					{
-						encodedFileName.append(".");
-						encodedFileName.append(fileFormatLowerCase);
-					}
-
-					bool removeLinuxPathIfExist = true;
-					bool neededForTranscoder = false;
-					stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-						neededForTranscoder,
-						_encodingItem->_workspace->_directoryName,
-						to_string(_encodingItem->_encodingJobKey),
-						"/",    // _encodingItem->_relativePath,
-						encodedFileName,
-						-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
-						-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
-						removeLinuxPathIfExist);
-
-					if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
-					{
-						// In this case, the path is a directory where to place the segments
-
-						if (!FileIO::directoryExisting(stagingEncodedAssetPathName))
-						{
-							_logger->info(__FILEREF__ + "Create directory"
-								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-								+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-							);
-
-							bool noErrorIfExists = true;
-							bool recursive = true;
-							FileIO::createDirectory(
-								stagingEncodedAssetPathName,
-								S_IRUSR | S_IWUSR | S_IXUSR |
-								S_IRGRP | S_IXGRP |
-								S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-						}
-					}
 				}
 
                 Json::Value cutFrameAccurateMedatada;
