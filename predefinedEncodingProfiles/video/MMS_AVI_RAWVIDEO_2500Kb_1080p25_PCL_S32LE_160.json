@@ -1,0 +1,21 @@
+{
+	"Label" : "MMS_AVI_RAWVIDEO_2500Kb_1080p25_PCL_S32LE_160",
+	"FileFormat" : "avi",
+	"Video" : 
+	{
+		"Codec" : "rawvideo",
+		"Profile" : "",
+		"Width" : 1920,
+		"Height" : 1080,
+		"FrameRate": 25,
+		"TwoPasses" : false,
+		"KBitRate" : 2500,
+		"OtherOutputParameters": "-pix_fmt yuv422p"
+	},
+	"Audio" : 
+	{
+		"Codec" : "pcm_s32le",
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
+	}
+}
