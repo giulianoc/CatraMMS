@@ -14072,6 +14072,14 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
 		&& fileFormatLowerCase != "mts"
 		&& fileFormatLowerCase != "mkv"
 		&& fileFormatLowerCase != "avi"
+		&& fileFormatLowerCase != "flv"
+		&& fileFormatLowerCase != "ogg"
+		&& fileFormatLowerCase != "wmv"
+		&& fileFormatLowerCase != "yuv"
+		&& fileFormatLowerCase != "mpg"
+		&& fileFormatLowerCase != "mpeg"
+		&& fileFormatLowerCase != "mjpeg"
+		&& fileFormatLowerCase != "mxf"
 	)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
