@@ -14095,7 +14095,9 @@ void FFMpeg::encodingVideoCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger)
 {    
     if (codec != "libx264" 
-            && codec != "libvpx")
+            && codec != "libvpx"
+            && codec != "rawvideo"
+			)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: Video codec is wrong"
                 + ", codec: " + codec;
@@ -14156,6 +14158,7 @@ void FFMpeg::encodingAudioCodecValidation(string codec,
             && codec != "libfdk_aac" 
             && codec != "libvo_aacenc" 
             && codec != "libvorbis"
+            && codec != "pcm_s32le"
     )
     {
         string errorMessage = __FILEREF__ + "ffmpeg: Audio codec is wrong"
