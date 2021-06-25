@@ -757,6 +757,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 								else if (fileFormatLowerCase == "mkv")
 									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								else if (fileFormatLowerCase == "avi")
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								else
+									deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
+								/*
 								else
 								{
 									string errorMessage = __FILEREF__ + "Wrong fileFormat"
@@ -767,6 +772,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 									continue;
 								}
+								*/
 							}
 							else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
 									&& 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
