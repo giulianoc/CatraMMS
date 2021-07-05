@@ -2025,17 +2025,17 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 
 			if (encodersPoolLabel == "")
 				lastSQLCommand = 
-					string("select e.encoderKey, e.protocol, e.serverName, e.port ")
+					string("select e.encoderKey, e.enabled, e.protocol, e.serverName, e.port ")
 					+ "from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm " 
 					+ "where e.encoderKey = ewm.encoderKey and ewm.workspaceKey = ? "
-					+ "and e.enabled = 1 order by e.serverName "
+					+ "order by e.serverName "
 					+ "limit 1 offset ?";
 			else
 				lastSQLCommand = 
-					string("select e.encoderKey, e.protocol, e.serverName, e.port ")
+					string("select e.encoderKey, e.enabled, e.protocol, e.serverName, e.port ")
 					+ "from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm " 
 					+ "where e.encoderKey = eepm.encoderKey and eepm.encodersPoolKey = ? "
-					+ "and e.enabled = 1 order by e.serverName "
+					+ "order by e.serverName "
 					+ "limit 1 offset ?";
 
 			shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -2062,7 +2062,19 @@ tuple<int64_t, string, string, int> MMSEngineDBFacade::getEncoderByEncodersPool(
 			{
 				encoderKey = resultSet->getInt64("encoderKey");
 
-				if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
+				bool enabled = resultSet->getInt("enabled") == 1 ? true : false;
+
+				if (!enabled)
+				{
+					_logger->info(__FILEREF__ + "getEncoderByEncodersPool, skipped encoderKey because encoder not enabled"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+						+ ", encodersPoolLabel: " + encodersPoolLabel
+						+ ", enabled: " + to_string(enabled)
+					);
+
+					continue;
+				}
+				else if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
 				{
 					_logger->info(__FILEREF__ + "getEncoderByEncodersPool, skipped encoderKey"
 						+ ", workspaceKey: " + to_string(workspaceKey)
