@@ -7868,7 +7868,7 @@ void MMSEngineProcessor::removeContentTask(
 				string errorMessage = __FILEREF__ + "Remove Content failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
 					+ ", dependencies.size(): " + to_string(dependencies.size())
 					+ ", e.what(): " + e.what()
 				;

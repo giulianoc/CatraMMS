@@ -127,16 +127,16 @@ if [ "$deploy" == "y" ]; then
 
 fi
 
-echo -n "deploy su mms icml? " 
-read deploy
-if [ "$deploy" == "y" ]; then
-	echo "icml-1"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-1:/opt/catramms
-	date
+#echo -n "deploy su mms icml? " 
+#read deploy
+#if [ "$deploy" == "y" ]; then
+#	echo "icml-1"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-1:/opt/catramms
+#	date
 
-	echo "icml-2"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-2:/opt/catramms
-	date
+#	echo "icml-2"
+#	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@icml-2:/opt/catramms
+#	date
 
-fi
+#fi
 
