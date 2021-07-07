@@ -45,7 +45,7 @@ struct LiveProxyAndGrid
 
 		string					_liveGridOutputType;	// only for LiveGrid
 		// Json::Value				_liveProxyOutputsRoot;	// only for LiveProxy
-		vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>> _liveProxyOutputRoots;
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>> _liveProxyOutputRoots;
 
 		int64_t					_ingestionJobKey;
 		Json::Value				_ingestedParametersRoot;

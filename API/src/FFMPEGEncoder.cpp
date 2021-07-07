@@ -9368,6 +9368,7 @@ void FFMPEGEncoder::liveProxyThread(
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				string otherOutputOptions;
+				string audioVolumeChange;
 				Json::Value encodingProfileDetailsRoot = Json::nullValue;
 				string manifestDirectoryPath;
 				string manifestFileName;
@@ -9383,6 +9384,7 @@ void FFMPEGEncoder::liveProxyThread(
 				if (outputType == "HLS" || outputType == "DASH")
 				{
 					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 					manifestDirectoryPath = outputRoot.get("manifestDirectoryPath", "").asString();
 					manifestFileName = outputRoot.get("manifestFileName", "").asString();
@@ -9396,6 +9398,7 @@ void FFMPEGEncoder::liveProxyThread(
 				else if (outputType == "RTMP_Stream")
 				{
 					otherOutputOptions = outputRoot.get("otherOutputOptions", "").asString();
+					audioVolumeChange = outputRoot.get("audioVolumeChange", "").asString();
 					encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 					rtmpUrl = outputRoot.get("rtmpUrl", "").asString();
 
@@ -9413,9 +9416,10 @@ void FFMPEGEncoder::liveProxyThread(
 					throw runtime_error(errorMessage);
 				}
 
-				tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
-					= make_tuple(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,
-						manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl);
+				tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
+					= make_tuple(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot,
+						manifestDirectoryPath, manifestFileName, segmentDurationInSeconds, playlistEntriesNumber,
+						isVideo, rtmpUrl);
 
 				liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
 			}
@@ -9514,10 +9518,11 @@ void FFMPEGEncoder::liveProxyThread(
 			+ ", liveProxy->_liveProxyOutputsRoot.size: " + to_string(liveProxy->_liveProxyOutputRoots.size())
 			);
 
-		for (tuple<string, string, Json::Value, string, string, int, int, bool, string>  outputRoot: liveProxy->_liveProxyOutputRoots)
+		for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string>  outputRoot: liveProxy->_liveProxyOutputRoots)
 		{
 			string outputType;
 			string otherOutputOptions;
+			string audioVolumeChange;
 			Json::Value encodingProfileDetailsRoot;
 			string manifestDirectoryPath;
 			string manifestFileName;
@@ -9526,7 +9531,7 @@ void FFMPEGEncoder::liveProxyThread(
 			bool isVideo;
 			string rtmpUrl;
 
-			tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
+			tie(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot, manifestDirectoryPath,       
 				manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
 				= outputRoot;
 
@@ -10059,6 +10064,7 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 		string outputType;
 		// otherOutputOptions is not used for awaitingTheBeginning
 		string otherOutputOptions;
+		string audioVolumeChange;
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
 		string manifestDirectoryPath;
 		string manifestFileName;
@@ -10109,8 +10115,10 @@ void FFMPEGEncoder::awaitingTheBeginningThread(
 		{
 			liveProxy->_liveProxyOutputRoots.clear();
 
-			tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot
-				= make_tuple(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,
+			tuple<string, string, string, Json::Value, string, string, int, int, bool, string>
+				tOutputRoot
+				= make_tuple(outputType, otherOutputOptions, audioVolumeChange,
+					encodingProfileDetailsRoot, manifestDirectoryPath,
 					manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl);
 
 			liveProxy->_liveProxyOutputRoots.push_back(tOutputRoot);
@@ -11093,11 +11101,12 @@ void FFMPEGEncoder::monitorThread()
 					//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
 							string otherOutputOptions;
+							string audioVolumeChange;
 							Json::Value encodingProfileDetailsRoot;
 							string manifestDirectoryPath;
 							string manifestFileName;
@@ -11106,8 +11115,10 @@ void FFMPEGEncoder::monitorThread()
 							bool isVideo;
 							string rtmpUrl;
 
-							tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+							tie(outputType, otherOutputOptions, audioVolumeChange,
+								encodingProfileDetailsRoot, manifestDirectoryPath,       
+								manifestFileName, segmentDurationInSeconds,
+								playlistEntriesNumber, isVideo, rtmpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)
@@ -11258,11 +11269,12 @@ void FFMPEGEncoder::monitorThread()
 					//		rtmp(Proxy)/SRT(Grid):		frame increasing check
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
 							string otherOutputOptions;
+							string audioVolumeChange;
 							Json::Value encodingProfileDetailsRoot;
 							string manifestDirectoryPath;
 							string manifestFileName;
@@ -11271,8 +11283,10 @@ void FFMPEGEncoder::monitorThread()
 							bool isVideo;
 							string rtmpUrl;
 
-							tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+							tie(outputType, otherOutputOptions, audioVolumeChange,
+								encodingProfileDetailsRoot, manifestDirectoryPath,       
+								manifestFileName, segmentDurationInSeconds,
+								playlistEntriesNumber, isVideo, rtmpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)
@@ -11613,11 +11627,12 @@ void FFMPEGEncoder::monitorThread()
 					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
 					if (liveProxyWorking)
 					{
-						for (tuple<string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
+						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
 							liveProxy->_liveProxyOutputRoots)
 						{
 							string outputType;
 							string otherOutputOptions;
+							string audioVolumeChange;
 							Json::Value encodingProfileDetailsRoot;
 							string manifestDirectoryPath;
 							string manifestFileName;
@@ -11626,8 +11641,10 @@ void FFMPEGEncoder::monitorThread()
 							bool isVideo;
 							string rtmpUrl;
 
-							tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
-								manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
+							tie(outputType, otherOutputOptions, audioVolumeChange,
+								encodingProfileDetailsRoot, manifestDirectoryPath,       
+								manifestFileName, segmentDurationInSeconds,
+								playlistEntriesNumber, isVideo, rtmpUrl)
 								= outputRoot;
 
 							if (!liveProxyWorking)

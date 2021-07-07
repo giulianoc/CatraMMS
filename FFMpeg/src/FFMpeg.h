@@ -396,7 +396,7 @@ public:
 		//      Json::Value encodingProfileDetailsRoot,
 		//      string rtmpUrl,
 		//
-		vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
 
 		pid_t* pChildPid);
 

@@ -10452,6 +10452,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				string outputType;
 				string otherOutputOptions;
+				string audioVolumeChange;
 				int64_t deliveryCode;
 				int segmentDurationInSeconds = 0;
 				int playlistEntriesNumber = 0;
@@ -10470,6 +10471,10 @@ void MMSEngineProcessor::manageLiveProxy(
 				field = "OtherOutputOptions";
 				if (JSONUtils::isMetadataPresent(outputRoot, field))
 					otherOutputOptions = outputRoot.get(field, "").asString();
+
+				field = "AudioVolumeChange";
+				if (JSONUtils::isMetadataPresent(outputRoot, field))
+					audioVolumeChange = outputRoot.get(field, "").asString();
 
 				if (outputType == "HLS" || outputType == "DASH")
 				{
@@ -10609,6 +10614,9 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				field = "otherOutputOptions";
 				localOutputRoot[field] = otherOutputOptions;
+
+				field = "audioVolumeChange";
+				localOutputRoot[field] = audioVolumeChange;
 
 				field = "segmentDurationInSeconds";
 				localOutputRoot[field] = segmentDurationInSeconds;

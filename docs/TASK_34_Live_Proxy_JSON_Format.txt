@@ -129,6 +129,13 @@
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
 				"OtherOutputOptions": "-map 0:1",
 
+				// optional: To change the audio volume
+				//	- 0.5: If we want our volume to be half of the input volume
+				//	- 1.5: 150% of current volume
+				//	- 10dB: increase the volume by 10dB
+				//	- -5dB: reduce the volume by 5dB
+				"AudioVolumeChange": "2.5",
+
 				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
 				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
 				//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too

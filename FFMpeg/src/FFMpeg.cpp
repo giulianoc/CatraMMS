@@ -9381,7 +9381,7 @@ void FFMpeg::liveProxy(
 	//      string encodingProfileContentType
 	//      string rtmpUrl,
 	//
-	vector<tuple<string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
 
 	pid_t* pChildPid)
 {
@@ -9781,11 +9781,12 @@ void FFMpeg::liveProxy(
 		throw runtime_error(errorMessage);
 	}
 
-	for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+	for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
 		outputRoots)
 	{
 		string outputType;
 		string otherOutputOptions;
+		string audioVolumeChange;
 		Json::Value encodingProfileDetailsRoot;
 		string manifestDirectoryPath;
 		string manifestFileName;
@@ -9794,12 +9795,18 @@ void FFMpeg::liveProxy(
 		bool isVideo;
 		string rtmpUrl;
 
-		tie(outputType, otherOutputOptions, encodingProfileDetailsRoot, manifestDirectoryPath,       
+		tie(outputType, otherOutputOptions, audioVolumeChange, encodingProfileDetailsRoot, manifestDirectoryPath,       
 			manifestFileName, segmentDurationInSeconds, playlistEntriesNumber, isVideo, rtmpUrl)
 			= tOutputRoot;
 
 		if (outputType == "HLS" || outputType == "DASH")
 		{
+			if (audioVolumeChange != "")
+			{
+				ffmpegArgumentList.push_back("-filter:a");
+				ffmpegArgumentList.push_back(string("volume=") + audioVolumeChange);
+			}
+
 			vector<string> ffmpegEncodingProfileArgumentList;
 			if (encodingProfileDetailsRoot != Json::nullValue)
 			{
@@ -10047,6 +10054,12 @@ void FFMpeg::liveProxy(
 				throw runtime_error(errorMessage);
 			}
 
+			if (audioVolumeChange != "")
+			{
+				ffmpegArgumentList.push_back("-filter:a");
+				ffmpegArgumentList.push_back(string("volume=") + audioVolumeChange);
+			}
+
 			vector<string> ffmpegEncodingProfileArgumentList;
 			if (encodingProfileDetailsRoot != Json::nullValue)
 			{
@@ -10277,11 +10290,12 @@ void FFMpeg::liveProxy(
 			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
 
-		for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+		for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
 			outputRoots)
 		{
 			string outputType;
 			// string otherOutputOptions;
+			// string audioVolumeChange;
 			// Json::Value encodingProfileDetailsRoot;
 			string manifestDirectoryPath;
 			// string manifestFileName;
@@ -10290,7 +10304,7 @@ void FFMpeg::liveProxy(
 			// bool isVideo;
 			// string rtmpUrl;
 
-			tie(outputType, ignore, ignore, manifestDirectoryPath,       
+			tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
 				ignore, ignore, ignore, ignore, ignore)
 				= tOutputRoot;
 
@@ -10411,11 +10425,12 @@ void FFMpeg::liveProxy(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-		for (tuple<string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
+		for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> tOutputRoot:
 			outputRoots)
 		{
 			string outputType;
 			// string otherOutputOptions;
+			// string audioVolumeChange;
 			// Json::Value encodingProfileDetailsRoot;
 			string manifestDirectoryPath;
 			// string manifestFileName;
@@ -10424,7 +10439,7 @@ void FFMpeg::liveProxy(
 			// bool isVideo;
 			// string rtmpUrl;
 
-			tie(outputType, ignore, ignore, manifestDirectoryPath,       
+			tie(outputType, ignore, ignore, ignore, manifestDirectoryPath,       
 				ignore, ignore, ignore, ignore, ignore)
 				= tOutputRoot;
 
