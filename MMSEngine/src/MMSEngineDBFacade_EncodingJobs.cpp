@@ -104,8 +104,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 					}
 				}
 
-                shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
-                        make_shared<MMSEngineDBFacade::EncodingItem>();
+				shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
+					make_shared<MMSEngineDBFacade::EncodingItem>();
 
                 encodingItem->_encodingJobKey = encodingJobKey;
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
@@ -453,20 +453,10 @@ void MMSEngineDBFacade::getEncodingJobs(
                     }
 					Json::Value outputsRoot = encodingItem->_encodingParametersRoot[field];
 
+					/*
 					for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 					{
 						Json::Value outputRoot = outputsRoot[outputIndex];
-
-						/*
-						{
-							Json::StreamWriterBuilder wbuilder;
-							string sOutputRoot = Json::writeString(wbuilder, outputRoot);
-							_logger->info(__FILEREF__ + "outputsRoot encodingProfileKey check"
-								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-								+ ", sOutputRoot: " + sOutputRoot
-							);
-						}
-						*/
 
 						field = "encodingProfileKey";	// added by MMSEngineProcessor
 						// if not present it will be -1
@@ -607,32 +597,9 @@ void MMSEngineDBFacade::getEncodingJobs(
 						field = "encodingProfileContentType";
 						outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
 
-						/*
-						{
-							Json::StreamWriterBuilder wbuilder;
-							string sOutputRoot = Json::writeString(wbuilder, outputRoot);
-							_logger->info(__FILEREF__ + "2. outputsRoot encodingProfileKey check"
-								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-								+ ", sOutputRoot: " + sOutputRoot
-							);
-						}
-						*/
-
 						outputsRoot[outputIndex] = outputRoot;
-
-						/*
-						{
-							Json::StreamWriterBuilder wbuilder;
-							string sOutputRoot = Json::writeString(wbuilder, outputsRoot);
-							_logger->info(__FILEREF__ + "3. outputsRoot encodingProfileKey check"
-								+ ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-								+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-								+ ", sOutputRoot: " + sOutputRoot
-							);
-						}
-						*/
 					}
+					*/
 					encodingItem->_liveProxyData->_outputsRoot = outputsRoot;
 					/*
 					{
@@ -9088,7 +9055,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	// common between monitor and virtual vod
 	int64_t monitorVirtualVODEncodingProfileKey,
 	int monitorVirtualVODSegmentDurationInSeconds,
-	int monitorVirtualVODPlaylistEntriesNumber
+	int monitorVirtualVODPlaylistEntriesNumber,
+	Json::Value outputsRoot
 )
 {
 
@@ -9208,6 +9176,9 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 				field = "monitorVirtualVODPlaylistEntriesNumber";
 				parametersRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
+
+				field = "outputsRoot";
+				parametersRoot[field] = outputsRoot;
 
 				Json::StreamWriterBuilder wbuilder;
 				parameters = Json::writeString(wbuilder, parametersRoot);

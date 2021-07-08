@@ -3713,6 +3713,82 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
+	field = "Outputs";
+	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		Json::Value outputsRoot = parametersRoot[field];
+
+		for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		{
+			Json::Value outputRoot = outputsRoot[outputIndex];
+
+			field = "OutputType";
+			string liveProxyOutputType;
+			if (JSONUtils::isMetadataPresent(outputRoot, field))
+			{
+				liveProxyOutputType = outputRoot.get(field, "").asString();
+				if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
+				{
+					string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Stream or HLS or DASH)"
+						+ ", Field: " + field
+						+ ", liveProxyOutputType: " + liveProxyOutputType
+						+ ", label: " + label
+						;
+					_logger->error(__FILEREF__ + errorMessage);
+        
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			if (liveProxyOutputType == "HLS")
+			{
+				vector<string> mandatoryFields = {
+					"DeliveryCode"
+				};
+				for (string mandatoryField: mandatoryFields)
+				{
+					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+            
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", Field: " + mandatoryField
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+							;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+			else if (liveProxyOutputType == "RTMP_Stream")
+			{
+				vector<string> mandatoryFields = {
+					"RtmpUrl"
+				};
+				for (string mandatoryField: mandatoryFields)
+				{
+					if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+					{
+						Json::StreamWriterBuilder wbuilder;
+						string sParametersRoot = Json::writeString(wbuilder, outputRoot);
+
+						string errorMessage = __FILEREF__ + "Field is not present or it is null"
+							+ ", Field: " + mandatoryField
+							+ ", sParametersRoot: " + sParametersRoot
+							+ ", label: " + label
+							;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+		}
+	}
+
     field = "ProcessingStartingFrom";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{

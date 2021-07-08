@@ -1737,7 +1737,8 @@ public:
 		// common between monitor and virtual vod
 		int64_t monitorVirtualVODEncodingProfileKey,
 		int monitorVirtualVODSegmentDurationInSeconds,
-		int monitorVirtualVODPlaylistEntriesNumber);
+		int monitorVirtualVODPlaylistEntriesNumber,
+		Json::Value outputsRoot);
 
 	void addEncoding_LiveProxyJob (
 		shared_ptr<Workspace> workspace,
