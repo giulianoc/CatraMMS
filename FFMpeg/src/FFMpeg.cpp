@@ -8382,48 +8382,68 @@ void FFMpeg::extractTrackMediaToIngest(
 }
 
 void FFMpeg::liveRecorder(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-		string segmentListPathName,
-		string recordedFileNamePrefix,
+    int64_t ingestionJobKey,
+    int64_t encodingJobKey,
+	string segmentListPathName,
+	string recordedFileNamePrefix,
 
-		// if channelType is IP_MMSAsServer means the liveURL should be like
-		//		rtmp://<local transcoder IP to bind>:<port>
-		//		listening for an incoming connection
-		// else if channelType is CaptureLive, liveURL is not used
-		// else means the liveURL is "any thing" referring a stream
-		string channelType,	// IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive
-        string liveURL,
-		// Used only in case channelType is IP_MMSAsServer, Maximum time to wait for the incoming connection
-		int listenTimeoutInSeconds,
+	// if channelType is IP_MMSAsServer means the liveURL should be like
+	//		rtmp://<local transcoder IP to bind>:<port>
+	//		listening for an incoming connection
+	// else if channelType is CaptureLive, liveURL is not used
+	// else means the liveURL is "any thing" referring a stream
+	string channelType,	// IP_MMSAsClient, Satellite, IP_MMSAsServer, CaptureLive
+    string liveURL,
+	// Used only in case channelType is IP_MMSAsServer, Maximum time to wait for the incoming connection
+	int listenTimeoutInSeconds,
 
-		// parameters used only in case channelType is CaptureLive
-		int captureLive_videoDeviceNumber,
-		string captureLive_videoInputFormat,
-		int captureLive_frameRate,
-		int captureLive_width,
-		int captureLive_height,
-		int captureLive_audioDeviceNumber,
-		int captureLive_channelsNumber,
+	// parameters used only in case channelType is CaptureLive
+	int captureLive_videoDeviceNumber,
+	string captureLive_videoInputFormat,
+	int captureLive_frameRate,
+	int captureLive_width,
+	int captureLive_height,
+	int captureLive_audioDeviceNumber,
+	int captureLive_channelsNumber,
 
-		string userAgent,
-        time_t utcRecordingPeriodStart, 
-        time_t utcRecordingPeriodEnd, 
-        int segmentDurationInSeconds,
-        string outputFileFormat,
-		string segmenterType,	// streamSegmenter or hlsSegmenter
+	string userAgent,
+    time_t utcRecordingPeriodStart, 
+    time_t utcRecordingPeriodEnd, 
+    int segmentDurationInSeconds,
+    string outputFileFormat,
+	string segmenterType,	// streamSegmenter or hlsSegmenter
 
-		// monitorHLS-VirtualVOD
-		bool monitorHLS,
-		bool virtualVOD,
-		Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
-		bool monitorIsVideo,
-		string monitorManifestDirectoryPath,
-		string monitorManifestFileName,
-		int monitorVirtualVODPlaylistEntriesNumber,
-		int monitorVirtualVODSegmentDurationInSeconds,
+	// monitorHLS-VirtualVOD
+	bool monitorHLS,
+	bool virtualVOD,
+	Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
+	bool monitorIsVideo,
+	string monitorManifestDirectoryPath,
+	string monitorManifestFileName,
+	int monitorVirtualVODPlaylistEntriesNumber,
+	int monitorVirtualVODSegmentDurationInSeconds,
 
-		pid_t* pChildPid)
+	// array, each element is an output containing the following fields
+	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
+	//  #in case of HLS or DASH
+	//		string otherOutputOptions
+	//		string audioVolumeChange
+	//      Json::Value encodingProfileDetailsRoot,
+	//      string encodingProfileContentType
+	//      int segmentDurationInSeconds,
+	//      int playlistEntriesNumber,
+	//      string manifestDirectoryPath,
+	//      string manifestFileName,
+	//  #in case of RTMP_Stream
+	//		string otherOutputOptions
+	//		string audioVolumeChange
+	//      Json::Value encodingProfileDetailsRoot,
+	//      string encodingProfileContentType
+	//      string rtmpUrl,
+	//
+	vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
+
+	pid_t* pChildPid)
 {
 	_currentApiName = "liveRecorder";
 
@@ -9369,6 +9389,7 @@ void FFMpeg::liveProxy(
 	//  string outputType (it could be: HLS, DASH, RTMP_Stream)
 	//  #in case of HLS or DASH
 	//		string otherOutputOptions
+	//		string audioVolumeChange
 	//      Json::Value encodingProfileDetailsRoot,
 	//      string encodingProfileContentType
 	//      int segmentDurationInSeconds,
@@ -9377,6 +9398,7 @@ void FFMpeg::liveProxy(
 	//      string manifestFileName,
 	//  #in case of RTMP_Stream
 	//		string otherOutputOptions
+	//		string audioVolumeChange
 	//      Json::Value encodingProfileDetailsRoot,
 	//      string encodingProfileContentType
 	//      string rtmpUrl,

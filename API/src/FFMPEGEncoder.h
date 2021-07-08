@@ -51,7 +51,7 @@ struct LiveProxyAndGrid
 		Json::Value				_ingestedParametersRoot;
         string					_channelType;
 		string					_channelLabel;
-		vector<string>			_manifestFilePathNames;
+		// vector<string>			_manifestFilePathNames;
 		chrono::system_clock::time_point	_proxyStart;
 };
 
@@ -66,6 +66,8 @@ struct LiveRecording
 
 		string					_errorMessage;
 
+		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>> _liveRecorderOutputRoots;
+		// vector<string>			_manifestFilePathNames;
 		int64_t					_ingestionJobKey;
 		Json::Value				_encodingParametersRoot;
 		Json::Value				_liveRecorderParametersRoot;
