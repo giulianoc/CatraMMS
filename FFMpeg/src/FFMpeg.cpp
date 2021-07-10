@@ -9017,8 +9017,6 @@ void FFMpeg::liveRecorder(
 							S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 					}
 
-					addToArguments(otherOutputOptions, ffmpegArgumentList);
-
 					if (ffmpegEncodingProfileArgumentList.size() > 0)
 					{
 						for (string parameter: ffmpegEncodingProfileArgumentList)
@@ -9039,6 +9037,9 @@ void FFMpeg::liveRecorder(
 							ffmpegArgumentList.push_back("copy");
 						}
 					}
+
+					addToArguments(otherOutputOptions, ffmpegArgumentList);
+
 					if (outputType == "HLS")
 					{
 						ffmpegArgumentList.push_back("-hls_flags");

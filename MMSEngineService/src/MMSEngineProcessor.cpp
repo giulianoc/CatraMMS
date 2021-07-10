@@ -10137,7 +10137,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string segmentFilePathName = monitorManifestDirectoryPath + "/"
 					+ recordedFileNamePrefix + "_%s." + outputFileFormat;
 
-				otherOutputOptions = "-f hls -hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName;
+				otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
 			}
 
 			int monitorVirtualVODSegmentDurationInSeconds;
