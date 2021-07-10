@@ -629,8 +629,8 @@ public:
         // };
 
 		struct LiveRecorderData {
-            Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
-			MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
+            // Json::Value								_monitorVirtualVODEncodingProfileDetailsRoot;
+			// MMSEngineDBFacade::ContentType			_monitorVirtualVODEncodingProfileContentType;
 		};
 
         struct VideoSpeedData {
@@ -1729,15 +1729,10 @@ public:
 		EncodingPriority encodingPriority,
 
 		bool monitorHLS,
+		bool liveRecorderVirtualVOD,
 		string monitorManifestDirectoryPath,
 		string monitorManifestFileName,
 
-		bool liveRecorderVirtualVOD,
-
-		// common between monitor and virtual vod
-		int64_t monitorVirtualVODEncodingProfileKey,
-		int monitorVirtualVODSegmentDurationInSeconds,
-		int monitorVirtualVODPlaylistEntriesNumber,
 		Json::Value outputsRoot);
 
 	void addEncoding_LiveProxyJob (

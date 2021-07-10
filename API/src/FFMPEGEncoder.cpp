@@ -5860,7 +5860,7 @@ void FFMPEGEncoder::liveRecorderThread(
 		// _transcoderStagingContentsPath is a transcoder LOCAL path, this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
         liveRecording->_transcoderStagingContentsPath = liveRecorderMedatada.get("transcoderStagingContentsPath", "XXX").asString();
-        string userAgent = liveRecorderMedatada.get("userAgent", "XXX").asString();
+        string userAgent = liveRecorderMedatada.get("userAgent", "").asString();
 
 		// this is the global shared path where the chunks would be moved for the ingestion
         liveRecording->_stagingContentsPath = liveRecorderMedatada.get("stagingContentsPath", "").asString();
@@ -5939,12 +5939,12 @@ void FFMPEGEncoder::liveRecorderThread(
 
 		bool monitorHLS;
 		bool virtualVOD;
-		Json::Value monitorVirtualVODEncodingProfileDetailsRoot = Json::nullValue;
-		bool monitorIsVideo = true;
-		string monitorManifestDirectoryPath;
-		string monitorManifestFileName;
-		int monitorVirtualVODPlaylistEntriesNumber = -1;
-		int monitorVirtualVODSegmentDurationInSeconds = -1;
+		// Json::Value monitorVirtualVODEncodingProfileDetailsRoot = Json::nullValue;
+		// bool monitorIsVideo = true;
+		// string monitorManifestDirectoryPath;
+		// string monitorManifestFileName;
+		// int monitorVirtualVODPlaylistEntriesNumber = -1;
+		// int monitorVirtualVODSegmentDurationInSeconds = -1;
 		{
 			monitorHLS = JSONUtils::asBool(liveRecording->_encodingParametersRoot,
 				"monitorHLS", false);
@@ -5959,6 +5959,7 @@ void FFMPEGEncoder::liveRecorderThread(
 					.get("monitorManifestDirectoryPath", "").asString();
 				liveRecording->_monitorVirtualVODManifestFileName = liveRecording->_encodingParametersRoot
 					.get("monitorManifestFileName", "").asString();
+				/*
 				monitorVirtualVODPlaylistEntriesNumber = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
 					"monitorVirtualVODPlaylistEntriesNumber", 6);
 				monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(liveRecording->_encodingParametersRoot,
@@ -6006,6 +6007,7 @@ void FFMPEGEncoder::liveRecorderThread(
 						// throw e;
 					}
 				}
+				*/
 			}
 		}
 
@@ -6192,12 +6194,12 @@ void FFMPEGEncoder::liveRecorderThread(
 
 			monitorHLS,
 			liveRecording->_virtualVOD,
-			monitorVirtualVODEncodingProfileDetailsRoot,
-			monitorIsVideo,
-			liveRecording->_monitorVirtualVODManifestDirectoryPath,
-			liveRecording->_monitorVirtualVODManifestFileName,
-			monitorVirtualVODPlaylistEntriesNumber,
-			monitorVirtualVODSegmentDurationInSeconds,
+			// monitorVirtualVODEncodingProfileDetailsRoot,
+			// monitorIsVideo,
+			// liveRecording->_monitorVirtualVODManifestDirectoryPath,
+			// liveRecording->_monitorVirtualVODManifestFileName,
+			// monitorVirtualVODPlaylistEntriesNumber,
+			// monitorVirtualVODSegmentDurationInSeconds,
 
 			liveRecording->_liveRecorderOutputRoots,
 
@@ -11162,6 +11164,7 @@ void FFMPEGEncoder::monitorThread()
 					// First health check
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 					//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+					bool rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
 						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
@@ -11280,46 +11283,50 @@ void FFMPEGEncoder::monitorThread()
 							}
 							else	// rtmp (Proxy) or SRT (Grid)
 							{
-								try
-								{
-									// First health check (rtmp), looks the log and check there is no message like
-									//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-									//	This message causes proxy not working
-									if (liveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
-									{
-										liveProxyWorking = false;
-
-										_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", channelLabel: " + liveProxy->_channelLabel
-											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-										);
-
-										localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								rtmpOutputFound = true;
 							}
+						}
+					}
+					if (liveProxyWorking && rtmpOutputFound)
+					{
+						try
+						{
+							// First health check (rtmp), looks the log and check there is no message like
+							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+							//	This message causes proxy not working
+							if (liveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
+							{
+								liveProxyWorking = false;
+
+								_logger->error(__FILEREF__ + "liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", channelLabel: " + liveProxy->_channelLabel
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
+							}
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) Non-monotonous DTS failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
 
@@ -11331,6 +11338,7 @@ void FFMPEGEncoder::monitorThread()
 					//						This is already implemented by the HLS parameters (into the ffmpeg command)
 					//						We do it for the DASH option and in case ffmpeg does not work
 					//		rtmp(Proxy)/SRT(Grid):		frame increasing check
+					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
 						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
@@ -11636,52 +11644,56 @@ void FFMPEGEncoder::monitorThread()
 							}
 							else
 							{
-								try
-								{
-									// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-									int secondsToWaitBetweenSamples = 3;
-									if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-									{
-										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", channelLabel: " + liveProxy->_channelLabel
-											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-										);
-
-										liveProxyWorking = false;
-
-										localErrorMessage = " restarted because of 'frame is not increasing'";
-									}
-								}
-								catch(FFMpegEncodingStatusNotAvailable e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->warn(__FILEREF__ + errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								rtmpOutputFound = true;
 							}
+						}
+					}
+					if (liveProxyWorking && rtmpOutputFound)
+					{
+						try
+						{
+							// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
+							int secondsToWaitBetweenSamples = 3;
+							if (!liveProxy->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", channelLabel: " + liveProxy->_channelLabel
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								liveProxyWorking = false;
+
+								localErrorMessage = " restarted because of 'frame is not increasing'";
+							}
+						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) frame increasing check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
 
@@ -11690,6 +11702,7 @@ void FFMPEGEncoder::monitorThread()
 					//		rtmp(Proxy)/SRT(Grid):	the ffmpeg is up and running, it is not working and,
 					//			looking in the output log file, we have:
 					//			[https @ 0x555a8e428a00] HTTP error 403 Forbidden
+					rtmpOutputFound = false;
 					if (liveProxyWorking)
 					{
 						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
@@ -11720,49 +11733,53 @@ void FFMPEGEncoder::monitorThread()
 							}
 							else
 							{
-								try
-								{
-									if (liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
-									{
-										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-											+ ", channelLabel: " + liveProxy->_channelLabel
-											+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
-										);
-
-										liveProxyWorking = false;
-										localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
-									}
-								}
-								catch(FFMpegEncodingStatusNotAvailable e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->warn(__FILEREF__ + errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
-										+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
-										+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								rtmpOutputFound = true;
 							}
+						}
+					}
+					if (liveProxyWorking && rtmpOutputFound)
+					{
+						try
+						{
+							if (liveProxy->_ffmpeg->forbiddenErrorInOutputLog())
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+									+ ", channelLabel: " + liveProxy->_channelLabel
+									+ ", liveProxy->_childPid: " + to_string(liveProxy->_childPid)
+								);
+
+								liveProxyWorking = false;
+								localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
+							}
+						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveProxyMonitorCheck (rtmp) HTTP error 403 Forbidden check failed")
+								+ ", liveProxy->_ingestionJobKey: " + to_string(liveProxy->_ingestionJobKey)
+								+ ", liveProxy->_encodingJobKey: " + to_string(liveProxy->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
 
@@ -11992,6 +12009,8 @@ void FFMPEGEncoder::monitorThread()
 					// Second health check
 					//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 					//		rtmp(Proxy):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+					//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
+					bool rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
 						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
@@ -12099,46 +12118,50 @@ void FFMPEGEncoder::monitorThread()
 							}
 							else	// rtmp (Proxy) 
 							{
-								try
-								{
-									// First health check (rtmp), looks the log and check there is no message like
-									//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
-									//	This message causes proxy not working
-									if (liveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
-									{
-										liveRecorderWorking = false;
-
-										_logger->error(__FILEREF__ + "liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveProxy (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-											+ ", channelLabel: " + liveRecording->_channelLabel
-											+ ", liveProxy->_childPid: " + to_string(liveRecording->_childPid)
-										);
-
-										localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
-									}
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
-										+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
-										+ ", liveRecorder->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", liveRecorder->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								rtmpOutputFound = true;
 							}
+						}
+					}
+					if (liveRecorderWorking && rtmpOutputFound)
+					{
+						try
+						{
+							// First health check (rtmp), looks the log and check there is no message like
+							//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to 95383372. This may result in incorrect timestamps in the output file.
+							//	This message causes proxy not working
+							if (liveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
+							{
+								liveRecorderWorking = false;
+
+								_logger->error(__FILEREF__ + "liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. LiveRecorder (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+									+ ", channelLabel: " + liveRecording->_channelLabel
+									+ ", liveProxy->_childPid: " + to_string(liveRecording->_childPid)
+								);
+
+								localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
+							}
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) Non-monotonous DTS failed")
+								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+
+							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
 
@@ -12149,6 +12172,8 @@ void FFMPEGEncoder::monitorThread()
 					//						This is already implemented by the HLS parameters (into the ffmpeg command)
 					//						We do it for the DASH option and in case ffmpeg does not work
 					//		rtmp(Proxy):		frame increasing check
+					//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
+					rtmpOutputFound = false;
 					if (liveRecorderWorking)
 					{
 						for (tuple<string, string, string, Json::Value, string, string, int, int, bool, string> outputRoot:
@@ -12436,52 +12461,56 @@ void FFMPEGEncoder::monitorThread()
 							}
 							else
 							{
-								try
-								{
-									// Second health check, rtmp(Proxy), looks if the frame is increasing
-									int secondsToWaitBetweenSamples = 3;
-									if (!liveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
-									{
-										_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
-											+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-											+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-											+ ", channelLabel: " + liveRecording->_channelLabel
-											+ ", _childPid: " + to_string(liveRecording->_childPid)
-										);
-
-										liveRecorderWorking = false;
-
-										localErrorMessage = " restarted because of 'frame is not increasing'";
-									}
-								}
-								catch(FFMpegEncodingStatusNotAvailable e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->warn(__FILEREF__ + errorMessage);
-								}
-								catch(runtime_error e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
-								catch(exception e)
-								{
-									string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
-										+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
-										+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
-										+ ", e.what(): " + e.what()
-									;
-									_logger->error(__FILEREF__ + errorMessage);
-								}
+								rtmpOutputFound = true;
 							}
+						}
+					}
+					if (liveRecorderWorking && rtmpOutputFound)
+					{
+						try
+						{
+							// Second health check, rtmp(Proxy), looks if the frame is increasing
+							int secondsToWaitBetweenSamples = 3;
+							if (!liveRecording->_ffmpeg->isFrameIncreasing(secondsToWaitBetweenSamples))
+							{
+								_logger->error(__FILEREF__ + "ProcessUtility::killProcess. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
+									+ ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+									+ ", channelLabel: " + liveRecording->_channelLabel
+									+ ", _childPid: " + to_string(liveRecording->_childPid)
+								);
+
+								liveRecorderWorking = false;
+
+								localErrorMessage = " restarted because of 'frame is not increasing'";
+							}
+						}
+						catch(FFMpegEncodingStatusNotAvailable e)
+						{
+							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+						}
+						catch(exception e)
+						{
+							string errorMessage = string ("liveRecorderMonitorCheck (rtmp) frame increasing check failed")
+								+ ", _ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(liveRecording->_encodingJobKey)
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
 						}
 					}
 

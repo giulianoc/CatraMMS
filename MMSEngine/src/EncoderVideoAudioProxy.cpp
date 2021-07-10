@@ -11694,7 +11694,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
-	int monitorVirtualVODSegmentDurationInSeconds;
+	// int monitorVirtualVODSegmentDurationInSeconds;
 	bool autoRenew;
 	{
         string field = "autoRenew";
@@ -11703,15 +11703,17 @@ bool EncoderVideoAudioProxy::liveRecorder()
         field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
 
-        field = "monitorVirtualVODSegmentDurationInSeconds";
-        monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
+        // field = "monitorVirtualVODSegmentDurationInSeconds";
+        // monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
 		string segmenterType = "hlsSegmenter";
 		// string segmenterType = "streamSegmenter";
 		if (segmenterType == "streamSegmenter")
 		{
 			// since the first chunk is discarded, we will start recording before the period of the chunk
-			utcRecordingPeriodStart -= monitorVirtualVODSegmentDurationInSeconds;
+			// 2021-07-09: commented because we do not have monitorVirtualVODSegmentDurationInSeconds anymore
+			//	(since it is inside outputsRoot)
+			// utcRecordingPeriodStart -= monitorVirtualVODSegmentDurationInSeconds;
 		}
 
         field = "utcRecordingPeriodEnd";
@@ -11790,7 +11792,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool autoRenew;
 	bool monitorHLS = false;
 	bool virtualVOD = false;
-	int monitorVirtualVODSegmentDurationInSeconds;
+	// int monitorVirtualVODSegmentDurationInSeconds;
 	string outputFileFormat;
 	{
 		/*
@@ -11831,8 +11833,8 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         field = "liveRecorderVirtualVOD";
         virtualVOD = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
 
-        field = "monitorVirtualVODSegmentDurationInSeconds";
-        monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
+        // field = "monitorVirtualVODSegmentDurationInSeconds";
+        // monitorVirtualVODSegmentDurationInSeconds = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
 
         field = "outputFileFormat";
         outputFileFormat = _encodingItem->_encodingParametersRoot.get(field, "XXX").asString();
@@ -12352,11 +12354,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						_encodingItem->_encodingParametersRoot;
 					liveRecorderMedatada["liveRecorderParametersRoot"] =
 						_encodingItem->_ingestedParametersRoot;
-					liveRecorderMedatada["monitorVirtualVODEncodingProfileContentType"] =
-						MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData
-							->_monitorVirtualVODEncodingProfileContentType);
-					liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"] =
-						_encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileDetailsRoot;
+					// liveRecorderMedatada["monitorVirtualVODEncodingProfileContentType"] =
+					// 	MMSEngineDBFacade::toString(_encodingItem->_liveRecorderData
+					// 		->_monitorVirtualVODEncodingProfileContentType);
+					// liveRecorderMedatada["monitorVirtualVODEncodingProfileDetailsRoot"] =
+					// 	_encodingItem->_liveRecorderData->_monitorVirtualVODEncodingProfileDetailsRoot;
 					liveRecorderMedatada["liveURL"] = localLiveURL;
 
 					{

@@ -9885,13 +9885,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 							monitorHLSRoot.get(contentTypeField, "").asString());
 
 						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel);
+							workspace->_workspaceKey, contentType,
+							encodingProfileLabel);
 					}
 					else
 					{
 						bool contentTypeToBeUsed = false;
 						monitorEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
+							workspace->_workspaceKey, contentType,
+							encodingProfileLabel, contentTypeToBeUsed);
 					}
 				}
 			}
@@ -9941,7 +9943,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 					{
 						bool contentTypeToBeUsed = false;
 						virtualVODEncodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-							workspace->_workspaceKey, contentType, encodingProfileLabel, contentTypeToBeUsed);
+							workspace->_workspaceKey, contentType,
+							encodingProfileLabel, contentTypeToBeUsed);
 					}
 				}
 			}
@@ -10001,49 +10004,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			// liveURL = "/dev/" + captureLive_deviceName;
 		}
 
-		string monitorManifestDirectoryPath;
-		string monitorManifestFileName;
-		if(monitorHLS || liveRecorderVirtualVOD)
-		{
-			string manifestExtension;
-			manifestExtension = "m3u8";
-
-			if (channelType == "IP_MMSAsClient")
-			{
-				// monitorHLS is true
-				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					_mmsEngineDBFacade, to_string(deliveryCode),
-					workspace);
-
-				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
-			else if (channelType == "Satellite")
-			{
-				// monitorHLS is true
-				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					_mmsEngineDBFacade, to_string(deliveryCode),
-					workspace);
-
-				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
-			else if (channelType == "IP_MMSAsServer")
-			{
-				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					_mmsEngineDBFacade, to_string(deliveryCode),
-					workspace);
-
-				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
-			else if (channelType == "CaptureLive")
-			{
-				monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					_mmsEngineDBFacade, to_string(deliveryCode),
-					workspace);
-
-				monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
-		}
-
 		{
 			int encodersNumber = _mmsEngineDBFacade->getEncodersNumberByEncodersPool(
 				workspace->_workspaceKey, encodersPool);
@@ -10074,30 +10034,171 @@ void MMSEngineProcessor::manageLiveRecorder(
 			*/
 		}
 
-		int64_t monitorVirtualVODEncodingProfileKey = -1;
-		if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey != -1)
-			monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
-		else if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey == -1)
-			monitorVirtualVODEncodingProfileKey = monitorEncodingProfileKey;
-		else if (monitorEncodingProfileKey == -1 && virtualVODEncodingProfileKey != -1)
-			monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
-
-		int monitorVirtualVODSegmentDurationInSeconds;
-		if (liveRecorderVirtualVOD)
-			monitorVirtualVODSegmentDurationInSeconds = virtualVODSegmentDurationInSeconds;
-		else
-			monitorVirtualVODSegmentDurationInSeconds = monitorSegmentDurationInSeconds;
-
-		int monitorVirtualVODPlaylistEntriesNumber;
-		if (liveRecorderVirtualVOD)
-		{
-			monitorVirtualVODPlaylistEntriesNumber = (liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
-				monitorVirtualVODSegmentDurationInSeconds;
-		}
-		else
-			monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
-
 		Json::Value localOutputsRoot(Json::arrayValue);
+
+		// in case we have monitorHLS and/or liveRecorderVirtualVOD, this will be "translate"
+		// in one entry added to the outputsRoot
+		string monitorManifestDirectoryPath;
+		string monitorManifestFileName;
+		if(monitorHLS || liveRecorderVirtualVOD)
+		{
+			int64_t monitorVirtualVODEncodingProfileKey = -1;
+			{
+				if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey != -1)
+					monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+				else if (monitorEncodingProfileKey != -1 && virtualVODEncodingProfileKey == -1)
+					monitorVirtualVODEncodingProfileKey = monitorEncodingProfileKey;
+				else if (monitorEncodingProfileKey == -1 && virtualVODEncodingProfileKey != -1)
+					monitorVirtualVODEncodingProfileKey = virtualVODEncodingProfileKey;
+			}
+
+			Json::Value encodingProfileDetailsRoot = Json::nullValue;
+			MMSEngineDBFacade::ContentType encodingProfileContentType;
+			if (monitorVirtualVODEncodingProfileKey != -1)
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
+					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+					workspace->_workspaceKey, monitorVirtualVODEncodingProfileKey);
+				tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) =
+					encodingProfileDetails;
+
+				{
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					string errors;
+
+					bool parsingSuccessful = reader->parse(jsonEncodingProfile.c_str(),
+						jsonEncodingProfile.c_str() + jsonEncodingProfile.size(), 
+						&encodingProfileDetailsRoot,
+						&errors);
+					delete reader;
+
+					if (!parsingSuccessful)
+					{
+						string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", errors: " + errors
+						;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+			}
+
+			{
+				string manifestExtension;
+				manifestExtension = "m3u8";
+
+				if (channelType == "IP_MMSAsClient")
+				{
+					// monitorHLS is true
+					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						workspace);
+
+					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+				}
+				else if (channelType == "Satellite")
+				{
+					// monitorHLS is true
+					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						workspace);
+
+					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+				}
+				else if (channelType == "IP_MMSAsServer")
+				{
+					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						workspace);
+
+					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+				}
+				else if (channelType == "CaptureLive")
+				{
+					monitorManifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
+						_mmsEngineDBFacade, to_string(deliveryCode),
+						workspace);
+
+					monitorManifestFileName = to_string(deliveryCode) + ".m3u8";
+				}
+			}
+
+			string otherOutputOptions;
+			{
+				string recordedFileNamePrefix = string("liveRecorder_")
+					+ to_string(ingestionJobKey)
+					// + "_" + to_string(_encodingItem->_encodingJobKey)
+				;
+				string segmentFilePathName = monitorManifestDirectoryPath + "/"
+					+ recordedFileNamePrefix + "_%s." + outputFileFormat;
+
+				otherOutputOptions = "-f hls -hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName;
+			}
+
+			int monitorVirtualVODSegmentDurationInSeconds;
+			{
+				if (liveRecorderVirtualVOD)
+					monitorVirtualVODSegmentDurationInSeconds = virtualVODSegmentDurationInSeconds;
+				else
+					monitorVirtualVODSegmentDurationInSeconds = monitorSegmentDurationInSeconds;
+			}
+
+			int monitorVirtualVODPlaylistEntriesNumber;
+			{
+				if (liveRecorderVirtualVOD)
+				{
+					monitorVirtualVODPlaylistEntriesNumber = (liveRecorderVirtualVODMaxDurationInMinutes * 60) / 
+						monitorVirtualVODSegmentDurationInSeconds;
+				}
+				else
+					monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
+			}
+
+			Json::Value localOutputRoot;
+
+			field = "outputType";
+			localOutputRoot[field] = string("HLS");
+
+			field = "otherOutputOptions";
+			localOutputRoot[field] = otherOutputOptions;
+
+			field = "audioVolumeChange";
+			localOutputRoot[field] = string("");
+
+			field = "segmentDurationInSeconds";
+			localOutputRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
+
+			field = "playlistEntriesNumber";
+			localOutputRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
+
+			{
+				field = "encodingProfileKey";
+				localOutputRoot[field] = monitorVirtualVODEncodingProfileKey;
+
+				field = "encodingProfileDetails";
+				localOutputRoot[field] = encodingProfileDetailsRoot;
+
+				field = "encodingProfileContentType";
+				localOutputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+			}
+
+			field = "manifestDirectoryPath";
+			localOutputRoot[field] = monitorManifestDirectoryPath;
+
+			field = "manifestFileName";
+			localOutputRoot[field] = monitorManifestFileName;
+
+			field = "rtmpUrl";
+			localOutputRoot[field] = string("");
+
+			localOutputsRoot.append(localOutputRoot);
+		}
+
 		if (outputsRoot != Json::nullValue)
 		{
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -10345,13 +10446,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 
-			monitorHLS, monitorManifestDirectoryPath, monitorManifestFileName,
+			monitorHLS,
 			liveRecorderVirtualVOD,
+			monitorManifestDirectoryPath,	// used by FFMPEGEncoder.cpp to build virtualVOD
+			monitorManifestFileName,	// used by FFMPEGEncoder.cpp to build virtualVOD
 
-			// common between monitor and virtual vod
-			monitorVirtualVODEncodingProfileKey,
-			monitorVirtualVODSegmentDurationInSeconds,
-			monitorVirtualVODPlaylistEntriesNumber,
 			localOutputsRoot);
 
 		/*

@@ -302,12 +302,12 @@ public:
 		// monitorHLS
 		bool monitorHLS,
 		bool virtualVOD,
-		Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
-		bool monitorIsVideo,
-		string monitorManifestDirectoryPath,
-		string monitorManifestFileName,
-		int monitorVirtualVODPlaylistEntriesNumber,
-		int monitorVirtualVODSegmentDurationInSeconds,
+		// Json::Value monitorVirtualVODEncodingProfileDetailsRoot,
+		// bool monitorIsVideo,
+		// string monitorManifestDirectoryPath,
+		// string monitorManifestFileName,
+		// int monitorVirtualVODPlaylistEntriesNumber,
+		// int monitorVirtualVODSegmentDurationInSeconds,
 
 		vector<tuple<string, string, string, Json::Value, string, string, int, int, bool, string>>& outputRoots,
 

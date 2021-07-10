@@ -83,8 +83,8 @@ struct LiveRecording
 		chrono::system_clock::time_point	_recordingStart;
 
 		bool					_virtualVOD;
-		string					_monitorVirtualVODManifestDirectoryPath;
-		string					_monitorVirtualVODManifestFileName;
+		string					_monitorVirtualVODManifestDirectoryPath;	// used to build virtualVOD
+		string					_monitorVirtualVODManifestFileName;			// used to build virtualVOD
 		string					_virtualVODStagingContentsPath;
 		int64_t					_liveRecorderVirtualVODImageMediaItemKey;
 };

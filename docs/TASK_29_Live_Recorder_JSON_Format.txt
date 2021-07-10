@@ -69,7 +69,7 @@
 		//	In these scenarios, delivery code identifies each delivery.
 		//	Internally the delivery code is used to
 		//		- build the delivery URL (so it is used to build
-		//			the path where the HLS segments are saved)
+		//			the path where the Monitor HLS segments are saved)
 		//		- to label the generated chunks
 		//		- as input in the Live-Cut task
 		"DeliveryCode": 12345,
@@ -150,6 +150,57 @@
 			// optional. Default: 10
 			"SegmentDurationInSeconds": 10
 		},
+
+		// Optional. This json array lists all the Outputs the Live-Recorder task has to generate.
+		"Outputs" = [
+			{
+				// optional, possible values: HLS, DASH, RTMP_Stream. Default: HLS
+				"OutputType": "HLS",
+
+				// DeliveryCode is used only in case of HLS and DASH
+				//	It identifies this specific delivery. In case for example
+				//	- we have two HLS Outputs or
+				//	- we have the same channel delivered
+				//		as Recording monitor HLS and Live Proxy Output
+				//	In these scenarios, delivery code identifies each delivery.
+				//	Internally the delivery code is used to
+				//		- build the delivery URL (so it is used to build
+				//			the path where the HLS segments are saved)
+				// mandatory only if OutputType is HLS or DASH.
+				"DeliveryCode": 12345,
+
+				// optional, used only in case of HLS, Default: 10
+				"SegmentDurationInSeconds": 10,
+
+				// optional, used only in case of HLS, Default: 6
+				"PlaylistEntriesNumber": 6,
+
+				// mandatory only in case of RTMP_Stream
+				"RtmpUrl": "...",
+
+				// optional: It is possible to use this field to specify any other output options.
+				// Examples:
+				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
+				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
+				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
+				"OtherOutputOptions": "-map 0:1",
+
+				// optional: To change the audio volume
+				//	- 0.5: If we want our volume to be half of the input volume
+				//	- 1.5: 150% of current volume
+				//	- 10dB: increase the volume by 10dB
+				//	- -5dB: reduce the volume by 5dB
+				"AudioVolumeChange": "2.5",
+
+				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
+				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
+				//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
+				//		Possible values for the ContentType are: video, audio
+				"EncodingProfileKey": 1,
+				"EncodingProfileLabel": "Profile sport",
+				"ContentType": "video"
+			}
+		],
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

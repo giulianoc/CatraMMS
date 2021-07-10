@@ -2439,7 +2439,7 @@ void API::createDeliveryAuthorization(
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
 					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
-					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder	// scenario with monitorHLS true
+					&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder
 					&& ingestionType != MMSEngineDBFacade::IngestionType::AwaitingTheBeginning
 				)
 				{
@@ -2532,7 +2532,7 @@ void API::createDeliveryAuthorization(
 
 					string outputType = "HLS";	// default HLS
 
-					if (deliveryCode == -1)
+					if (deliveryCode == -1)	// requested delivery code (it is an input)
 					{
 						if (outputsDeliveryCodesAndOutputTypes.size() == 0)
 						{
@@ -2566,12 +2566,13 @@ void API::createDeliveryAuthorization(
 						}
 						else if (outputsDeliveryCodesAndOutputTypes.size() > 1)
 						{
-							string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
+							string errorMessage = string("Live authorization with several delivery code. Just get the first")
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							;
-							_logger->error(__FILEREF__ + errorMessage);
+							_logger->warn(__FILEREF__ + errorMessage);
 
-							throw runtime_error(errorMessage);
+							deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
+							outputType = outputsDeliveryCodesAndOutputTypes[0].second;
 						}
 						else
 						{
@@ -2674,28 +2675,135 @@ void API::createDeliveryAuthorization(
 				}
 				else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 				{
+					bool monitorHLS = false;
+					
 					string field = "MonitorHLS";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-					{
-						string errorMessage = string("A Live-LiveRecorder without MonitorHLS cannot be delivered")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(__FILEREF__ + errorMessage);
+					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+						monitorHLS = true;
 
-						throw runtime_error(errorMessage);
+					vector<pair<int64_t, string>> outputsDeliveryCodesAndOutputTypes;
+					field = "Outputs";
+					if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					{
+						Json::Value outputsRoot = ingestionJobRoot[field];
+						for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+						{
+							Json::Value outputRoot = outputsRoot[outputIndex];
+
+							string outputType;
+
+							field = "OutputType";
+							if (!JSONUtils::isMetadataPresent(outputRoot, field))
+								outputType = "HLS";
+							else
+								outputType = outputRoot.get(field, "HLS").asString();
+
+							if (outputType == "HLS" || outputType == "DASH")
+							{
+								field = "DeliveryCode";
+								if (JSONUtils::isMetadataPresent(outputRoot, field))
+								{
+									int64_t localDeliveryCode = outputRoot.get(field, 0).asInt64();
+
+									outputsDeliveryCodesAndOutputTypes.push_back(
+										make_pair(localDeliveryCode, outputType));
+								}
+							}
+						}
 					}
 
-					field = "DeliveryCode";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
-					{
-						string errorMessage = string("A Live-LiveRecorder Monitor HLS without DeliveryCode cannot be delivered")
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						;
-						_logger->error(__FILEREF__ + errorMessage);
+					string outputType = "HLS";	// default HLS
 
-						throw runtime_error(errorMessage);
+					if (!monitorHLS && deliveryCode == -1)
+					{
+						// no monitorHLS and no input delivery code
+
+						if (outputsDeliveryCodesAndOutputTypes.size() == 0)
+						{
+							string errorMessage = string("Live authorization without DeliveryCode cannot be delivered")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						else if (outputsDeliveryCodesAndOutputTypes.size() > 1)
+						{
+							string errorMessage = string("Live authorization with several delivery code. Just get the first")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->warn(__FILEREF__ + errorMessage);
+
+							deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
+							outputType = outputsDeliveryCodesAndOutputTypes[0].second;
+						}
+						else
+						{
+							// we have just one delivery code, it will be this one
+							deliveryCode = outputsDeliveryCodesAndOutputTypes[0].first;
+							outputType = outputsDeliveryCodesAndOutputTypes[0].second;
+						}
 					}
-					deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+					else if (!monitorHLS && deliveryCode != -1)
+					{
+						// no monitorHLS and delivery code received as input
+						bool deliveryCodeFound = false;
+
+						for (pair<int64_t, string> deliveryCodeAndOutputType: outputsDeliveryCodesAndOutputTypes)
+						{
+							if (deliveryCodeAndOutputType.first == deliveryCode)
+							{
+								deliveryCodeFound = true;
+
+								outputType = deliveryCodeAndOutputType.second;
+
+								break;
+							}
+						}
+
+						if (!deliveryCodeFound)
+						{
+							string errorMessage = string("DeliveryCode received does not exist for the ingestionJob")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (monitorHLS && deliveryCode == -1)
+					{
+						// monitorHLS and no delivery code received as input
+
+						field = "DeliveryCode";
+						if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+						{
+							string errorMessage = string("A Live-LiveRecorder Monitor HLS without DeliveryCode cannot be delivered")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+					}
+					else if (monitorHLS && deliveryCode != -1)	// requested delivery code (it is an input)
+					{
+						// monitorHLS and delivery code received as input
+						// monitorHLS is selected
+
+						field = "DeliveryCode";
+						if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+						{
+							string errorMessage = string("A Live-LiveRecorder Monitor HLS without DeliveryCode cannot be delivered")
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+					}
 
 					string deliveryURI;
 					string liveFileExtension = "m3u8";
