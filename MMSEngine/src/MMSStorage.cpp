@@ -1837,17 +1837,18 @@ void MMSStorage::contentInRepository(
 */
 
 string MMSStorage::moveAssetInMMSRepository(
-        string sourceAssetPathName,
-        string workspaceDirectoryName,
-        string destinationAssetFileName,
-        string relativePath,
+	int64_t ingestionJobKey,
+	string sourceAssetPathName,
+	string workspaceDirectoryName,
+	string destinationAssetFileName,
+	string relativePath,
 
-        bool partitionIndexToBeCalculated,
-        unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+	bool partitionIndexToBeCalculated,
+	unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
-        bool deliveryRepositoriesToo,
-        Workspace::TerritoriesHashMap& phmTerritories
-        )
+	bool deliveryRepositoriesToo,
+	Workspace::TerritoriesHashMap& phmTerritories
+)
 {
     FileIO::DirectoryEntryType_t detSourceFileType;
 
@@ -1855,6 +1856,7 @@ string MMSStorage::moveAssetInMMSRepository(
 			|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
 		string errorMessage = string("Wrong argument")                                                          
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", relativePath: " + relativePath;
 
         _logger->error(__FILEREF__ + errorMessage);
@@ -1918,6 +1920,7 @@ string MMSStorage::moveAssetInMMSRepository(
 				else
 					localFreeSpaceToLeaveInEachPartitionInMB = _freeSpaceToLeaveInEachPartitionInMB;
 				_logger->info(__FILEREF__ + "FreeSpaceToLeaveInEachPartitionInMB"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", freeSpaceConfField: " + freeSpaceConfField
 					+ ", _freeSpaceToLeaveInEachPartitionInMB: "
 						+ to_string(_freeSpaceToLeaveInEachPartitionInMB)
@@ -1930,6 +1933,7 @@ string MMSStorage::moveAssetInMMSRepository(
                     (localFreeSpaceToLeaveInEachPartitionInMB * 1000)) 
             {
                 _logger->info(__FILEREF__ + "Partition space too low"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", _ulCurrentMMSPartitionIndex: " + to_string(_ulCurrentMMSPartitionIndex)
                     + ", mmsPartitionsFreeSizeInKB: " + to_string(mmsPartitionsFreeSizeInKB)
                     + ", localFreeSpaceToLeaveInEachPartitionInMB * 1000: " + to_string(localFreeSpaceToLeaveInEachPartitionInMB * 1000)
@@ -1959,6 +1963,7 @@ string MMSStorage::moveAssetInMMSRepository(
         if (ulMMSPartitionIndex == _mmsPartitionsInfo.size()) 
         {
             string errorMessage = string("No more space in MMS Partitions")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                     ;
             for (ulMMSPartitionIndex = 0;
@@ -1992,6 +1997,7 @@ string MMSStorage::moveAssetInMMSRepository(
     }
 
     _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", workspaceDirectoryName: " + workspaceDirectoryName
         + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
         + ", mmsAssetPathName: " + mmsAssetPathName
@@ -2028,6 +2034,7 @@ string MMSStorage::moveAssetInMMSRepository(
 			);
 			*/
             _logger->info(__FILEREF__ + "Copy directory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", from: " + sourceAssetPathName
                 + ", to: " + mmsAssetPathName
             );
@@ -2039,6 +2046,7 @@ string MMSStorage::moveAssetInMMSRepository(
                     S_IROTH | S_IXOTH);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
 			_logger->info(__FILEREF__ + "Copy directory statistics"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", from: " + sourceAssetPathName
                 + ", to: " + mmsAssetPathName
 				+ ", @MMS COPY statistics@ - elapsed (secs): @"
@@ -2048,6 +2056,7 @@ string MMSStorage::moveAssetInMMSRepository(
 			try
 			{
 				_logger->info(__FILEREF__ + "Remove directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", sourceAssetPathName: " + sourceAssetPathName
 				);
 				bool bRemoveRecursively = true;
@@ -2058,27 +2067,55 @@ string MMSStorage::moveAssetInMMSRepository(
 				// we will not raise an exception, it is a staging directory,
 				// it will be removed by cronjob (see the comment above)
 				_logger->error(__FILEREF__ + "FileIO::removeDirectory failed"
-						+ ", sourceAssetPathName: " + sourceAssetPathName
-						+ ", e.what(): " + e.what()
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", sourceAssetPathName: " + sourceAssetPathName
+					+ ", e.what(): " + e.what()
 				);
 			}
         }
         else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
             _logger->info(__FILEREF__ + "Move file"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", from: " + sourceAssetPathName
                 + ", to: " + mmsAssetPathName
+                + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
             );
 
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
             FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+
+            unsigned long ulDestFileSizeInBytes;
+			{
+				bool inCaseOfLinkHasItToBeRead = false;
+				ulDestFileSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);
+			}
+
 			_logger->info(__FILEREF__ + "Move file statistics"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", from: " + sourceAssetPathName
                 + ", to: " + mmsAssetPathName
+                + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+                + ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes)
 				+ ", @MMS MOVE statistics@ - elapsed (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
+
+			if (ullFSEntrySizeInBytes != ulDestFileSizeInBytes)
+			{
+				string errorMessage = string("Source and destination file have different sizes")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", source: " + sourceAssetPathName
+					+ ", dest: " + mmsAssetPathName
+					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+					+ ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes)
+				;
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
         }
     }
 
@@ -2092,6 +2129,7 @@ string MMSStorage::moveAssetInMMSRepository(
 		partitionInfo._currentFreeSizeInBytes			-= ullFSEntrySizeInBytes;
 
 		_logger->info(__FILEREF__ + "Partition free size info"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", mmsPartitionNumber: " + to_string(_ulCurrentMMSPartitionIndex)
 			+ ", _currentFreeSizeInBytes: " + to_string(partitionInfo._currentFreeSizeInBytes)
 		);

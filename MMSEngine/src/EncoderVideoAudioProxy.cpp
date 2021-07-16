@@ -1915,6 +1915,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
         bool deliveryRepositoriesToo = true;
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+			_encodingItem->_ingestionJobKey,
             stagingEncodedAssetPathName,
             _encodingItem->_workspace->_directoryName,
             encodedFileName,
@@ -3455,6 +3456,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
         bool deliveryRepositoriesToo = true;
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+			_encodingItem->_ingestionJobKey,
             stagingEncodedAssetPathName,
             _encodingItem->_workspace->_directoryName,
             encodedFileName,

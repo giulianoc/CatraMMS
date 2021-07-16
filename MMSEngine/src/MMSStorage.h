@@ -119,6 +119,7 @@ public:
 	bool addDateTimeToFileName);
 
     string moveAssetInMMSRepository (
+		int64_t ingestionJobKey,
         string sourceAssetPathName,
         string workspaceDirectoryName,
         string destinationFileName,

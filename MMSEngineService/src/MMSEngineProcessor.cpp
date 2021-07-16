@@ -5904,6 +5904,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			bool partitionIndexToBeCalculated   = true;
 			bool deliveryRepositoriesToo        = true;
 			mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+				localAssetIngestionEvent.getIngestionJobKey(),
 				binaryPathName,
 				localAssetIngestionEvent.getWorkspace()->_directoryName,
 				mediaSourceFileName,
@@ -14159,6 +14160,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					bool deliveryRepositoriesToo = true;
 
 					mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(
+						ingestionJobKey,
 						stagingChangeFileFormatAssetPathName,
 						workspace->_directoryName,
 						changeFormatFileName,
