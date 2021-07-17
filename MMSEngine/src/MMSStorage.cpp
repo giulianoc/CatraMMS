@@ -49,6 +49,9 @@ MMSStorage::MMSStorage(
 
 		MMSStorage::createDirectories(configuration, _logger);
 
+		refreshPartitionsFreeSizes() ;
+
+		/*
 		// Partitions staff
 		{
 			char pMMSPartitionName [64];
@@ -87,19 +90,17 @@ MMSStorage::MMSStorage(
 				);
 				if (FileIO::fileExisting(partitionInfoPathName))
 				{
-					/*
-					* In case of a partition where only a subset of it is dedicated to MMS,
-					* we cannot use getFileSystemInfo because it will return info about the entire partition.
-					* So this conf file will tell us
-					*	- the max size of this storage to be used
-					*	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
-					*		calculate the usage of any directory/files
-					* Sample of file:
-					{
-						"partitionUsageType": "getDirectoryUsage",
-						"maxStorageUsageInKB": 1500000000
-					}
-					*/
+					// In case of a partition where only a subset of it is dedicated to MMS,
+					// we cannot use getFileSystemInfo because it will return info about the entire partition.
+					// So this conf file will tell us
+					//	- the max size of this storage to be used
+					//	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
+					//		calculate the usage of any directory/files
+					// Sample of file:
+					// 
+					// partitionUsageType": "getDirectoryUsage",
+					// maxStorageUsageInKB": 1500000000
+					// 
 					Json::Value partitionInfoJson;
 
 					try
@@ -149,6 +150,7 @@ MMSStorage::MMSStorage(
 				throw runtime_error("No MMS partition found");
 			}
 		}
+		*/
 	}
 	catch(runtime_error e)
 	{
@@ -2255,6 +2257,107 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 	lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
+	_mmsPartitionsInfo.clear();
+
+	{
+		char pMMSPartitionName [64];
+
+
+		unsigned long ulMMSPartitionsNumber = 0;
+		bool mmsAvailablePartitions = true;
+
+		_ulCurrentMMSPartitionIndex = 0;
+
+		// inizializzare PartitionInfos
+		while (mmsAvailablePartitions) 
+		{
+			string partitionPathName(MMSStorage::getMMSRootRepository(_storage));
+			sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber++);
+			partitionPathName.append(pMMSPartitionName);
+
+			PartitionInfo	partitionInfo;
+
+			partitionInfo._partitionPathName = partitionPathName;
+
+			if (!FileIO::directoryExisting(partitionPathName))
+			{
+				mmsAvailablePartitions = false;
+
+				continue;
+			}
+
+			string partitionInfoPathName = partitionPathName;
+
+			partitionInfoPathName.append("/partitionInfo.json");
+			_logger->info(__FILEREF__ + "Looking for the Partition info file"
+				+ ", partitionInfoPathName: " + partitionInfoPathName
+			);
+			if (FileIO::fileExisting(partitionInfoPathName))
+			{
+				/*
+				* In case of a partition where only a subset of it is dedicated to MMS,
+				* we cannot use getFileSystemInfo because it will return info about the entire partition.
+				* So this conf file will tell us
+				*	- the max size of this storage to be used
+				*	- the procedure to be used to get the current MMS Usage, in particular getDirectoryUsage
+				*		calculate the usage of any directory/files
+				* Sample of file:
+				{
+					"partitionUsageType": "getDirectoryUsage",
+					"maxStorageUsageInKB": 1500000000
+				}
+				*/
+				Json::Value partitionInfoJson;
+
+				try
+				{
+					ifstream partitionInfoFile(partitionInfoPathName.c_str(), std::ifstream::binary);
+					partitionInfoFile >> partitionInfoJson;
+
+					// getFileSystemInfo (default and more performant) or getDirectoryUsage
+					string field = "partitionUsageType";
+					if (!JSONUtils::isMetadataPresent(partitionInfoJson, field))
+						partitionInfo._partitionUsageType = "getFileSystemInfo";
+					else
+					{
+						partitionInfo._partitionUsageType	= partitionInfoJson.get(field, "").asString();
+						if (partitionInfo._partitionUsageType != "getDirectoryUsage")
+							partitionInfo._partitionUsageType = "getFileSystemInfo";
+					}
+
+					field = "maxStorageUsageInKB";
+					if (JSONUtils::isMetadataPresent(partitionInfoJson, field))
+						partitionInfo._maxStorageUsageInKB       = JSONUtils::asInt64(partitionInfoJson, field, -1);
+					else
+						partitionInfo._maxStorageUsageInKB       = -1;
+				}
+				catch(...)
+				{
+					_logger->error(__FILEREF__ + "wrong json partition info format"
+						+ ", partitionInfoPathName: " + partitionInfoPathName
+					);
+				}
+			}
+			else
+			{
+				partitionInfo._partitionUsageType		= "getFileSystemInfo";
+				partitionInfo._maxStorageUsageInKB		= -1;
+			}
+
+			refreshPartitionFreeSizes(partitionInfo);
+
+			_mmsPartitionsInfo.push_back(partitionInfo);
+		}
+
+		if (_mmsPartitionsInfo.size() == 0)
+		{
+			_logger->error(__FILEREF__ + "No partition available");
+
+			throw runtime_error("No MMS partition found");
+		}
+	}
+
+	/*
 	for (unsigned long ulMMSPartitionIndex = 0;
 		ulMMSPartitionIndex < _mmsPartitionsInfo.size();
 		ulMMSPartitionIndex++) 
@@ -2276,6 +2379,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			);
 		}
 	}
+	*/
 }
 
 void MMSStorage::refreshPartitionFreeSizes(PartitionInfo& partitionInfo) 

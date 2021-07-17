@@ -359,8 +359,15 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed"
 					+ ", processorMMS: " + processorMMS
 					);
+			// 2021-07-17: Scenario:
+			//	1. added the new MMS_0003 partition
+			//	2. restarted the engine during the upload of a content
+			//	Found the following combination:
+			//		processorMMS is NULL, status is SourceDownloadingInProgress, sourceBinaryTransferred is 0
+			//	Since we cannot have the above combination (processorMMS is NULL, status is SourceDownloadingInProgress)
+			//	then next update was changed to consider also processorMMS as null
             lastSQLCommand = 
-                "update MMS_IngestionJob set status = ? where processorMMS = ? and "
+                "update MMS_IngestionJob set status = ? where (processorMMS is NULL or processorMMS = ?) and "
                 "status in (?, ?, ?) and sourceBinaryTransferred = 0";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
