@@ -198,7 +198,7 @@ public:
 
     // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
-	pair<int64_t, long> getMediaInfo(string mmsAssetPathName,
+	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey, string mmsAssetPathName,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 

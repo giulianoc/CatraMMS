@@ -1633,6 +1633,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
 									{
 										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										* 2021-06-19: we still have to check the thread limit because,
+										*		in case handleCheckIngestionEvent gets 20 events,
+										*		we have still to postpone all the events overcoming the thread limit
+										*/
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1660,7 +1664,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
-										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -1687,6 +1690,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
 									{
 										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										* 2021-06-19: we still have to check the thread limit because,
+										*		in case handleCheckIngestionEvent gets 20 events,
+										*		we have still to postpone all the events overcoming the thread limit
+										*/
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1717,7 +1724,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
-										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -1744,6 +1750,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
 									{
 										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										* 2021-06-19: we still have to check the thread limit because,
+										*		in case handleCheckIngestionEvent gets 20 events,
+										*		we have still to postpone all the events overcoming the thread limit
+										*/
 										if (_processorsThreadsNumber.use_count() >
 											_processorThreads + _maxAdditionalProcessorThreads)
 										{
@@ -1774,7 +1784,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 										}
 										else
-										*/
 										{
 											string errorMessage = "";
 											string processorMMS = "";
@@ -1936,6 +1945,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								// threads check is done inside ftpDeliveryContentTask
                                 ftpDeliveryContentTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
@@ -2048,7 +2058,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     throw runtime_error(errorMessage);
                                 }
-                                
+
+								// threads check is done inside localCopyContentTask
                                 localCopyContentTask(
                                         ingestionJobKey,
                                         ingestionStatus,
@@ -2151,6 +2162,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								// threads check is done inside httpCallbackTask
                                 httpCallbackTask(
                                         ingestionJobKey,
                                         ingestionStatus,
@@ -2677,6 +2689,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 else // Frame
                                 {
 									/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+									* 2021-06-19: we still have to check the thread limit because,
+									*		in case handleCheckIngestionEvent gets 20 events,
+									*		we have still to postpone all the events overcoming the thread limit
+									*/
 									if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 									{
 										_logger->warn(__FILEREF__
@@ -2706,7 +2722,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 									}
 									else
-									*/
 									{
 										thread generateAndIngestFramesThread(&MMSEngineProcessor::generateAndIngestFramesThread,
 												this, _processorsThreadsNumber, ingestionJobKey, workspace,
@@ -3892,6 +3907,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								// threads check is done inside postOnFacebookTask
                                 postOnFacebookTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
@@ -3994,6 +4010,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								// threads check is done inside postOnYouTubeTask
                                 postOnYouTubeTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
@@ -6333,10 +6350,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 
 			if (mediaFileFormat == "m3u8")
-				mediaInfoDetails = ffmpeg.getMediaInfo(mmsAssetPathName + "/" + m3u8FileName,
-						videoTracks, audioTracks);
+				mediaInfoDetails = ffmpeg.getMediaInfo(localAssetIngestionEvent.getIngestionJobKey(),
+					mmsAssetPathName + "/" + m3u8FileName,
+					videoTracks, audioTracks);
 			else
-				mediaInfoDetails = ffmpeg.getMediaInfo(mmsAssetPathName, videoTracks, audioTracks);
+				mediaInfoDetails = ffmpeg.getMediaInfo(localAssetIngestionEvent.getIngestionJobKey(),
+					mmsAssetPathName, videoTracks, audioTracks);
 
 			int64_t durationInMilliSeconds = -1;
 			long bitRate = -1;
@@ -14066,7 +14085,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					);
 					FFMpeg ffmpeg (_configuration, _logger);
 					// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-					mediaInfoDetails = ffmpeg.getMediaInfo(stagingChangeFileFormatAssetPathName,
+					mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
+							stagingChangeFileFormatAssetPathName,
 							videoTracks, audioTracks);
 
 					// tie(durationInMilliSeconds, bitRate, 
@@ -16675,7 +16695,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			);
 			FFMpeg ffmpeg (_configuration, _logger);
 			// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
-			mediaInfoDetails = ffmpeg.getMediaInfo(concatenatedMediaPathName, videoTracks, audioTracks);
+			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey, concatenatedMediaPathName, videoTracks, audioTracks);
 
 			//tie(durationInMilliSeconds, ignore,
 			//	ignore, ignore, ignore, ignore, ignore, ignore,

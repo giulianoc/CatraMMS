@@ -3299,13 +3299,15 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 		// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
-			mediaInfoDetails = ffmpeg.getMediaInfo(stagingEncodedAssetPathName + "/" + manifestFileName,
-					videoTracks, audioTracks);
+			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
+				stagingEncodedAssetPathName + "/" + manifestFileName,
+				videoTracks, audioTracks);
 		}
 		else
 		{
-			mediaInfoDetails = ffmpeg.getMediaInfo(stagingEncodedAssetPathName,
-					videoTracks, audioTracks);
+			mediaInfoDetails = ffmpeg.getMediaInfo(_encodingItem->_ingestionJobKey,
+				stagingEncodedAssetPathName,
+				videoTracks, audioTracks);
 		}
 
         // tie(durationInMilliSeconds, bitRate, 

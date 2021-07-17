@@ -5476,14 +5476,17 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 }
 */
 
-pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
+pair<int64_t, long> FFMpeg::getMediaInfo(
+	int64_t ingestionJobKey,
+	string mmsAssetPathName,
 	vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 	vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks)
 {
 	_currentApiName = "getMediaInfo";
 
 	_logger->info(__FILEREF__ + "getMediaInfo"
-			", mmsAssetPathName: " + mmsAssetPathName
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", mmsAssetPathName: " + mmsAssetPathName
 			);
 
 	// milli secs to wait in case of nfs delay
@@ -5493,6 +5496,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 	)
 	{
 		string errorMessage = string("Source asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", mmsAssetPathName: " + mmsAssetPathName
 		;
 		_logger->error(__FILEREF__ + errorMessage);
@@ -5504,7 +5508,8 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
     if (fileNameIndex == string::npos)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the asset path name"
-                + ", mmsAssetPathName: " + mmsAssetPathName;
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", mmsAssetPathName: " + mmsAssetPathName;
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -5526,13 +5531,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         "-show_entries format=duration": Get entries of a field named duration inside a section named format
     */
     string ffprobeExecuteCommand = 
-            _ffmpegPath + "/ffprobe "
-            // + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
-            + "-v quiet -print_format json -show_streams -show_format "
-            + mmsAssetPathName + " "
-            + "> " + detailsPathFileName 
-            + " 2>&1"
-            ;
+		_ffmpegPath + "/ffprobe "
+		// + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
+		+ "-v quiet -print_format json -show_streams -show_format "
+		+ mmsAssetPathName + " "
+		+ "> " + detailsPathFileName 
+		+ " 2>&1"
+	;
 
     #ifdef __APPLE__
         ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
@@ -5541,7 +5546,8 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
     try
     {
         _logger->info(__FILEREF__ + "getMediaInfo: Executing ffprobe command"
-            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
         );
 
         chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -5556,8 +5562,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
-				string errorMessage = __FILEREF__ +
-					"getMediaInfo: ffmpeg: ffprobe command failed"
+				string errorMessage = __FILEREF__
+					+ "getMediaInfo: ffmpeg: ffprobe command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
 					+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
 				;
@@ -5574,6 +5581,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             + ", @FFMPEG statistics@ - duration (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
@@ -5584,13 +5592,15 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
-                + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
@@ -5714,6 +5724,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         buffer << detailsFile.rdbuf();
         
         _logger->info(__FILEREF__ + "Details found"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", details: " + buffer.str()
         );
@@ -5738,10 +5749,11 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
             if (!parsingSuccessful)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the media details"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", errors: " + errors
-                        + ", mediaDetails: " + mediaDetails
-                        ;
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+					+ ", errors: " + errors
+					+ ", mediaDetails: " + mediaDetails
+				;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -5750,9 +5762,10 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         catch(...)
         {
             string errorMessage = string("ffmpeg: media json is not well format")
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", mediaDetails: " + mediaDetails
-                    ;
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+				+ ", mediaDetails: " + mediaDetails
+			;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
@@ -5762,8 +5775,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         if (!isMetadataPresent(detailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+				+ ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -5780,8 +5794,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
             if (!isMetadataPresent(streamRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", Field: " + field;
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -5805,8 +5820,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5819,8 +5835,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 					field = "codec_tag_string";
 					if (!isMetadataPresent(streamRoot, field))
 					{
-						string errorMessage =
-							__FILEREF__ + "ffmpeg: Field is not present or it is null"
+						string errorMessage = __FILEREF__
+							+ "ffmpeg: Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
 						_logger->error(errorMessage);
@@ -5855,8 +5872,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5867,8 +5885,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5879,8 +5898,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5895,8 +5915,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                         // I didn't find bit_rate also in a ts file, let's set it as a warning
                         
                         string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                                + ", mmsAssetPathName: " + mmsAssetPathName
-                                + ", Field: " + field;
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
                         _logger->warn(errorMessage);
 
                         // throw runtime_error(errorMessage);
@@ -5913,6 +5934,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
 					if (videoCodecName != "" && videoCodecName != "mjpeg")
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", mmsAssetPathName: " + mmsAssetPathName
 							+ ", Field: " + field;
 						_logger->warn(errorMessage);
@@ -5950,8 +5972,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5962,8 +5985,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5974,8 +5998,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -5986,8 +6011,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                 if (!isMetadataPresent(streamRoot, field))
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -6000,8 +6026,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
                     // I didn't find bit_rate in a webm file, let's set it as a warning
 
                     string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
                     _logger->warn(errorMessage);
 
                     // throw runtime_error(errorMessage);
@@ -6041,8 +6068,9 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         if (!isMetadataPresent(detailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -6057,6 +6085,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
             if (firstVideoCodecName != "" && firstVideoCodecName != "mjpeg")
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
                 _logger->warn(errorMessage);
@@ -6081,6 +6110,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
             if (firstVideoCodecName != "" && firstVideoCodecName != "mjpeg")
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", firstVideoCodecName: " + firstVideoCodecName;
                     + ", Field: " + field;
@@ -6096,6 +6126,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
         }
 
         _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
@@ -6103,11 +6134,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
     catch(runtime_error e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
-                + ", e.what(): " + e.what()
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
@@ -6117,11 +6150,13 @@ pair<int64_t, long> FFMpeg::getMediaInfo(string mmsAssetPathName,
     catch(exception e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
-                + ", e.what(): " + e.what()
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
