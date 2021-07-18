@@ -2357,6 +2357,22 @@ void MMSStorage::refreshPartitionsFreeSizes()
 		}
 	}
 
+	{
+		string infoMessage = string("refreshPartitionsFreeSizes. MMS Partitions info")
+			+ ", _mmsPartitionsInfo.size: " + to_string(_mmsPartitionsInfo.size())
+		;
+		for (ulMMSPartitionIndex = 0;
+			ulMMSPartitionIndex < _mmsPartitionsInfo.size();
+			ulMMSPartitionIndex++) 
+		{
+			infoMessage +=
+				(", _mmsPartitionsInfo [" + to_string(ulMMSPartitionIndex) + "]: "
+					+ to_string((_mmsPartitionsInfo[ulMMSPartitionIndex])._currentFreeSizeInBytes))
+			;
+		}
+
+		_logger->info(__FILEREF__ + infoMessage);
+	}
 	/*
 	for (unsigned long ulMMSPartitionIndex = 0;
 		ulMMSPartitionIndex < _mmsPartitionsInfo.size();
