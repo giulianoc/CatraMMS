@@ -2361,7 +2361,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 		string infoMessage = string("refreshPartitionsFreeSizes. MMS Partitions info")
 			+ ", _mmsPartitionsInfo.size: " + to_string(_mmsPartitionsInfo.size())
 		;
-		for (ulMMSPartitionIndex = 0;
+		for (int ulMMSPartitionIndex = 0;
 			ulMMSPartitionIndex < _mmsPartitionsInfo.size();
 			ulMMSPartitionIndex++) 
 		{
