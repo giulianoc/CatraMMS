@@ -2154,7 +2154,7 @@ public:
     Json::Value getSourceSATChannelConfList (
         int64_t workspaceKey, int64_t confKey,
 		int start, int rows,
-		int64_t serviceId, string name, int64_t frequency,
+		int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
 		string nameOrder);
 

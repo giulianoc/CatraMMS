@@ -32,7 +32,8 @@ SET (CONFs
 	catrammsEncoderServer.nginx
 	mms.cfg
 	crontab.txt
-	satellite_channels_hotbird_zap_2020_12_28.conf
+	3_EXTENDED_2021_07_19.channel.dvbv5.conf
+	3_UNIVERSAL_2021_07_19.channel.dvbv5.conf
 	partitionInfo.json
 )
 

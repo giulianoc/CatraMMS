@@ -2171,7 +2171,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "country					VARCHAR (64) NULL,"
                     "deliverySystem				VARCHAR (64) NULL,"
                     "constraint MMS_Conf_SourceSATChannel_PK PRIMARY KEY (confKey), "
-                    "UNIQUE (serviceId, name, frequency, videoPid, audioPids)) "
+                    "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

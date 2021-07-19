@@ -4093,7 +4093,7 @@ void MMSEngineDBFacade::removeSourceSATChannelConf(
 Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 	int64_t workspaceKey, int64_t confKey,
 	int start, int rows,
-	int64_t serviceId, string name, int64_t frequency,
+	int64_t serviceId, string name, int64_t frequency, string lnb,
 	int videoPid, string audioPids,
 	string nameOrder)
 {
@@ -4112,6 +4112,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", frequency: " + to_string(frequency)
+            + ", lnb: " + lnb
             + ", serviceId: " + to_string(serviceId)
             + ", name: " + name
             + ", videoPid: " + to_string(videoPid)
@@ -4166,6 +4167,12 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 				requestParametersRoot[field] = frequency;
 			}
             
+            if (lnb != "")
+			{
+				field = "lnb";
+				requestParametersRoot[field] = lnb;
+			}
+            
             if (videoPid != -1)
 			{
 				field = "videoPid";
@@ -4217,6 +4224,13 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 			else
 				sqlWhere += ("and sc.frequency = ? ");
 		}
+        if (lnb != "")
+		{
+			if (sqlWhere == "")
+				sqlWhere += ("LOWER(sc.lnb) like LOWER(?) ");
+			else
+				sqlWhere += ("and LOWER(sc.lnb) like LOWER(?) ");
+		}
         if (videoPid != -1)
 		{
 			if (sqlWhere == "")
@@ -4250,6 +4264,8 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
             if (frequency != -1)
 				preparedStatement->setInt64(queryParameterIndex++, frequency);
+            if (lnb != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + lnb + "%");
             if (videoPid != -1)
 				preparedStatement->setInt(queryParameterIndex++, videoPid);
             if (audioPids != "")
@@ -4262,6 +4278,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", name: " + "%" + name + "%"
 				+ ", frequency: " + to_string(frequency)
+				+ ", lnb: " + "%" + lnb + "%"
 				+ ", videoPid: " + to_string(videoPid)
 				+ ", audioPids: " + audioPids
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -4311,6 +4328,8 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
                 preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
             if (frequency != -1)
 				preparedStatement->setInt64(queryParameterIndex++, frequency);
+            if (lnb != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + lnb + "%");
             if (videoPid != -1)
 				preparedStatement->setInt(queryParameterIndex++, videoPid);
             if (audioPids != "")
@@ -4325,6 +4344,7 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
 				+ ", serviceId: " + to_string(serviceId)
 				+ ", name: " + "%" + name + "%"
 				+ ", frequency: " + to_string(frequency)
+				+ ", lnb: " + "%" + lnb + "%"
 				+ ", videoPid: " + to_string(videoPid)
 				+ ", audioPids: " + audioPids
 				+ ", rows: " + to_string(rows)

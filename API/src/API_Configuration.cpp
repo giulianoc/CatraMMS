@@ -2934,6 +2934,22 @@ void API::sourceSatChannelConfList(
 			name = curlpp::unescape(firstDecoding);
 		}
 
+		string lnb;
+		auto lnbIt = queryParameters.find("lnb");
+		if (lnbIt != queryParameters.end() && lnbIt->second != "")
+		{
+			lnb = lnbIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(lnb, regex(plus), plusDecoded);
+
+			lnb = curlpp::unescape(firstDecoding);
+		}
+
 		int64_t frequency = -1;
 		auto frequencyIt = queryParameters.find("frequency");
 		if (frequencyIt != queryParameters.end() && frequencyIt->second != "")
@@ -2974,7 +2990,7 @@ void API::sourceSatChannelConfList(
         {
             Json::Value channelConfListRoot = _mmsEngineDBFacade->getSourceSATChannelConfList(
                     workspace->_workspaceKey, confKey, start, rows,
-					serviceId, name, frequency, videoPid, audioPids, nameOrder);
+					serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, channelConfListRoot);
