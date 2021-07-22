@@ -1642,6 +1642,7 @@ void API::addSATChannelConf(
     {
 		int64_t sourceSATConfKey;
 
+        string label;
         string region;
         string country;
 		int64_t imageMediaItemKey = -1;
@@ -1686,6 +1687,17 @@ void API::addSATChannelConf(
                 throw runtime_error(errorMessage);
             }
 			sourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);            
+
+			field = "Label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+			label = requestBodyRoot.get(field, "").asString();            
 
 			field = "Region";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1735,7 +1747,7 @@ void API::addSATChannelConf(
         try
         {
 			int64_t confKey = _mmsEngineDBFacade->addSATChannelConf(
-				workspace->_workspaceKey, sourceSATConfKey, region, country, 
+				workspace->_workspaceKey, sourceSATConfKey, label, region, country, 
 				imageMediaItemKey, imageUniqueName, position, channelData);
 
 			sResponse = (
@@ -1812,6 +1824,8 @@ void API::modifySATChannelConf(
     {
 		bool sourceSATConfKeyToBeModified;
 		int64_t sourceSATConfKey = -1;
+		bool labelToBeModified;
+        string label;
 		bool regionToBeModified;
         string region;
 		bool countryToBeModified;
@@ -1855,6 +1869,13 @@ void API::modifySATChannelConf(
             {
 				sourceSATConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				sourceSATConfKeyToBeModified = true;
+            }
+
+            field = "Label";
+            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+            {
+				label = requestBodyRoot.get(field, "").asString();            
+				labelToBeModified = true;
             }
 
             field = "Region";
@@ -1938,6 +1959,7 @@ void API::modifySATChannelConf(
             _mmsEngineDBFacade->modifySATChannelConf(
                 confKey, workspace->_workspaceKey,
 				sourceSATConfKeyToBeModified, sourceSATConfKey,
+				labelToBeModified, label,
 				regionToBeModified, region,
 				countryToBeModified, country,
 				imageToBeModified, imageMediaItemKey, imageUniqueName,
@@ -2127,6 +2149,22 @@ void API::satChannelConfList(
 				rows = _maxPageSize;
 		}
 
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && labelIt->second != "")
+		{
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = curlpp::unescape(firstDecoding);
+		}
+
 		string region;
 		auto regionIt = queryParameters.find("region");
 		if (regionIt != queryParameters.end() && regionIt->second != "")
@@ -2159,37 +2197,21 @@ void API::satChannelConfList(
 			country = curlpp::unescape(firstDecoding);
 		}
 
-		string name;
-		auto nameIt = queryParameters.find("name");
-		if (nameIt != queryParameters.end() && nameIt->second != "")
+		string labelOrder;
+		auto labelOrderIt = queryParameters.find("labelOrder");
+		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
 		{
-			name = nameIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(name, regex(plus), plusDecoded);
-
-			name = curlpp::unescape(firstDecoding);
-		}
-
-		string nameOrder;
-		auto nameOrderIt = queryParameters.find("nameOrder");
-		if (nameOrderIt != queryParameters.end() && nameOrderIt->second != "")
-		{
-			if (nameOrderIt->second == "asc" || nameOrderIt->second == "desc")
-				nameOrder = nameOrderIt->second;
+			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
+				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "satChannelList: 'nameOrder' parameter is unknown"
-					+ ", nameOrder: " + nameOrderIt->second);
+				_logger->warn(__FILEREF__ + "satChannelList: 'labelOrder' parameter is unknown"
+					+ ", labelOrder: " + labelOrderIt->second);
 		}
 
         {
             Json::Value channelConfListRoot = _mmsEngineDBFacade->getSATChannelConfList(
-                    workspace->_workspaceKey, confKey, region, country, start, rows,
-					name, nameOrder);
+                    workspace->_workspaceKey, confKey, label, region, country, start, rows,
+					labelOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, channelConfListRoot);

@@ -34,6 +34,7 @@ SET (CONFs
 	crontab.txt
 	3_EXTENDED_2021_07_19.channel.dvbv5.conf
 	3_UNIVERSAL_2021_07_19.channel.dvbv5.conf
+	3_UNIVERSAL.channel.dvbv5.conf
 	partitionInfo.json
 )
 

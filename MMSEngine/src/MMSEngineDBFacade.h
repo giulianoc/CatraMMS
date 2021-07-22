@@ -2077,6 +2077,7 @@ public:
     int64_t addSATChannelConf(
         int64_t workspaceKey,
 		int64_t sourceSATConfKey,
+		string label,
 		string region,
 		string country,
 		int64_t imageMediaItemKey,
@@ -2089,6 +2090,7 @@ public:
 		int64_t workspaceKey,
 
 		bool sourceSATConfKeyToBeModified, int64_t sourceSATConfKey,
+		bool labelToBeModified, string label,
 		bool regionToBeModified, string region,
 		bool countryToBeModified, string country,
 		bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
@@ -2101,10 +2103,9 @@ public:
 
     Json::Value getSATChannelConfList (
         int64_t workspaceKey, int64_t serviceId,
-		string region, string country,
+		string label, string region, string country,
 		int start, int rows,
-		string name,
-		string nameOrder);
+		string labelOrder);
 
 	int64_t addSourceSATChannelConf(
 		int64_t serviceId,

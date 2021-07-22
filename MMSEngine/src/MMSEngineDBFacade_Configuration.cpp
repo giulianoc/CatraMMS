@@ -2537,6 +2537,7 @@ tuple<string, string, string> MMSEngineDBFacade::getIPChannelConfDetails(
 int64_t MMSEngineDBFacade::addSATChannelConf(
 	int64_t workspaceKey,
 	int64_t sourceSATConfKey,
+	string label,
 	string region,
 	string country,
 	int64_t imageMediaItemKey,
@@ -2565,14 +2566,15 @@ int64_t MMSEngineDBFacade::addSATChannelConf(
 			}
 
             lastSQLCommand = 
-                "insert into MMS_Conf_SATChannel(workspaceKey, sourceSATConfKey, region, country,"
+                "insert into MMS_Conf_SATChannel(workspaceKey, label, sourceSATConfKey, region, country,"
 				"imageMediaItemKey, imageUniqueName, position, channelData) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?)";
+                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setInt64(queryParameterIndex++, sourceSATConfKey);
 			if (region == "")
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -2610,6 +2612,7 @@ int64_t MMSEngineDBFacade::addSATChannelConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", label: " + label
 				+ ", sourceSATConfKey: " + to_string(sourceSATConfKey)
 				+ ", region: " + region
 				+ ", country: " + country
@@ -2696,6 +2699,7 @@ void MMSEngineDBFacade::modifySATChannelConf(
 	int64_t confKey,
 	int64_t workspaceKey,
 	bool sourceSATConfKeyToBeModified, int64_t sourceSATConfKey,
+	bool labelToBeModified, string label,
 	bool regionToBeModified, string region,
 	bool countryToBeModified, string country,
 	bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
@@ -2722,6 +2726,14 @@ void MMSEngineDBFacade::modifySATChannelConf(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += ("sourceSATConfKey = ?");
+				oneParameterPresent = true;
+			}
+
+			if (labelToBeModified)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("label = ?");
 				oneParameterPresent = true;
 			}
 
@@ -2792,6 +2804,13 @@ void MMSEngineDBFacade::modifySATChannelConf(
             int queryParameterIndex = 1;
 			if (sourceSATConfKeyToBeModified)
 				preparedStatement->setInt64(queryParameterIndex++, sourceSATConfKey);
+			if (labelToBeModified)
+			{
+				if (label == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, label);
+			}
 			if (regionToBeModified)
 			{
 				if (region == "")
@@ -2845,6 +2864,7 @@ void MMSEngineDBFacade::modifySATChannelConf(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", sourceSATConfKey (" + to_string(sourceSATConfKeyToBeModified) + "): " + to_string(sourceSATConfKey)
+				+ ", label (" + to_string(labelToBeModified) + "): " + label
 				+ ", region (" + to_string(regionToBeModified) + "): " + region
 				+ ", country (" + to_string(countryToBeModified) + "): " + country
 				+ ", imageMediaItemKey (" + to_string(imageToBeModified) + "): " + to_string(imageMediaItemKey)
@@ -3054,10 +3074,9 @@ void MMSEngineDBFacade::removeSATChannelConf(
 
 Json::Value MMSEngineDBFacade::getSATChannelConfList (
 	int64_t workspaceKey, int64_t confKey,
-	string region, string country,
+	string label, string region, string country,
 	int start, int rows,
-	string name,
-	string nameOrder)
+	string labelOrder)
 {
     string      lastSQLCommand;
     Json::Value channelConfListRoot;
@@ -3071,12 +3090,12 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
         _logger->info(__FILEREF__ + "getSATChannelConfList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", confKey: " + to_string(confKey)
+            + ", label: " + label
             + ", region: " + region
             + ", country: " + country
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
-            + ", name: " + name
-            + ", nameOrder: " + nameOrder
+            + ", labelOrder: " + labelOrder
         );
         
         conn = _connectionPool->borrow();	
@@ -3098,6 +3117,12 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 				requestParametersRoot[field] = confKey;
 			}
             
+            if (label != "")
+			{
+				field = "label";
+				requestParametersRoot[field] = label;
+			}
+
             if (region != "")
 			{
 				field = "region";
@@ -3120,16 +3145,10 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 				requestParametersRoot[field] = rows;
 			}
             
-            if (name != "")
+            if (labelOrder != "")
 			{
-				field = "name";
-				requestParametersRoot[field] = name;
-			}
-
-            if (nameOrder != "")
-			{
-				field = "nameOrder";
-				requestParametersRoot[field] = nameOrder;
+				field = "labelOrder";
+				requestParametersRoot[field] = labelOrder;
 			}
 
             field = "requestParameters";
@@ -3139,12 +3158,14 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 		string sqlWhere = "where csc.sourceSATConfKey = sc.confKey and csc.workspaceKey = ? ";
         if (confKey != -1)
 			sqlWhere += ("and sc.confKey = ? ");
+		if (label != "")
+			sqlWhere += ("and LOWER(csc.label) like LOWER(?) ");
 		if (region != "")
 			sqlWhere += ("and csc.region like ? ");
 		if (country != "")
 			sqlWhere += ("and csc.country like ? ");
-        if (name != "")
-			sqlWhere += ("and LOWER(sc.name) like LOWER(?) ");
+        // if (name != "")
+		// 	sqlWhere += ("and LOWER(sc.name) like LOWER(?) ");
 
         Json::Value responseRoot;
         {
@@ -3157,21 +3178,24 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (confKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			if (label != "")
+				preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
 			if (region != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + region + "%");
 			if (country != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + country + "%");
-            if (name != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
+            // if (name != "")
+            //     preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + "%" + label + "%"
 				+ ", region: " + "%" + region + "%"
 				+ ", country: " + "%" + country + "%"
-				+ ", name: " + "%" + name + "%"
+				// + ", name: " + "%" + name + "%"
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -3192,13 +3216,13 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
         Json::Value channelRoot(Json::arrayValue);
         {
 			string orderByCondition;
-			if (nameOrder == "")
+			if (labelOrder == "")
 				orderByCondition = " ";
 			else
-				orderByCondition = "order by sc.name " + nameOrder + " ";
+				orderByCondition = "order by csc.label " + labelOrder + " ";
 
 			lastSQLCommand = 
-				string("select csc.confKey, csc.sourceSATConfKey, sc.name, "
+				string("select csc.confKey, csc.sourceSATConfKey, csc.label, "
 					"csc.region, csc.country, "
 					"csc.imageMediaItemKey, csc.imageUniqueName, csc.position, csc.channelData "
 					"from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc ") 
@@ -3212,12 +3236,14 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 			preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             if (confKey != -1)
 				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			if (label != "")
+				preparedStatement->setString(queryParameterIndex++, string("%") + label + "%");
 			if (region != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + region + "%");
 			if (country != "")
 				preparedStatement->setString(queryParameterIndex++, string("%") + country + "%");
-            if (name != "")
-                preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
+            // if (name != "")
+            //     preparedStatement->setString(queryParameterIndex++, string("%") + name + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3226,9 +3252,10 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + "%" + label + "%"
 				+ ", region: " + "%" + region + "%"
 				+ ", country: " + "%" + country + "%"
-				+ ", name: " + "%" + name + "%"
+				// + ", name: " + "%" + name + "%"
 				+ ", rows: " + to_string(rows)
 				+ ", start: " + to_string(start)
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
@@ -3245,8 +3272,8 @@ Json::Value MMSEngineDBFacade::getSATChannelConfList (
                 field = "sourceSATConfKey";
                 channelConfRoot[field] = resultSet->getInt64("sourceSATConfKey");
 
-                field = "name";
-                channelConfRoot[field] = static_cast<string>(resultSet->getString("name"));
+                field = "label";
+                channelConfRoot[field] = static_cast<string>(resultSet->getString("label"));
 
 				field = "region";
 				if (resultSet->isNull("region"))
@@ -4554,7 +4581,7 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
         );
         
         {
-            lastSQLCommand = string("select confKey from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc")
+			lastSQLCommand = string("select confKey from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc")
 				+ "where csc.serviceId = sc.serviceId and csc.workspaceKey = ? and sc.name = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (

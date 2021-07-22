@@ -40,6 +40,7 @@ SET (SCRIPTs
 	sqlQueries.txt
 	checkStatistics.sh
 	satelliteController.sh
+	satelliteController.sh.1
 	deploy.sh
 )
 
