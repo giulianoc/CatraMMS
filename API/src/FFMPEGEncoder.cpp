@@ -9671,17 +9671,17 @@ void FFMPEGEncoder::liveProxyThread(
 			// create/update dvblast configuration file
 			{
 				int64_t satelliteServiceId = JSONUtils::asInt64(
-					liveProxyMetadata, "satelliteServiceId", -1);
+					liveProxyMetadata["encodingParametersRoot"], "satelliteServiceId", -1);
 				int64_t satelliteFrequency = JSONUtils::asInt64(
-					liveProxyMetadata, "satelliteFrequency", -1);
+					liveProxyMetadata["encodingParametersRoot"], "satelliteFrequency", -1);
 				int64_t satelliteSymbolRate = JSONUtils::asInt64(
-					liveProxyMetadata, "satelliteSymbolRate", -1);
-				string satelliteModulation = liveProxyMetadata.
+					liveProxyMetadata["encodingParametersRoot"], "satelliteSymbolRate", -1);
+				string satelliteModulation = liveProxyMetadata["encodingParametersRoot"].
 					get("satelliteModulation", "").asString();
 				int satelliteVideoPid = JSONUtils::asInt64(
-					liveProxyMetadata, "satelliteVideoPID", -1);
+					liveProxyMetadata["encodingParametersRoot"], "satelliteVideoPID", -1);
 				int satelliteAudioItalianPid = JSONUtils::asInt64(
-					liveProxyMetadata, "satelliteAudioItalianPid", -1);
+					liveProxyMetadata["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
 					liveProxy->_ingestionJobKey, encodingJobKey,
