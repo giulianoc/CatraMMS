@@ -125,8 +125,8 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-itaita-2:/opt/catramms
 	date
 
-	echo "192.168.0.200"
-	scp /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.200:/opt/catramms
+	echo "cibortv-mms-transcoder-sat-1"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-sat-1:/opt/catramms
 	date
 fi
 

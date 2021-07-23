@@ -12,7 +12,7 @@
 #When the mmsEncoder stops the channel will updates the content of the dvblast configuration file removing
 #	the configuration and leaving the file empty. This script, in this scenario, kills the process and remove the configuration file
 
-satelliteChannelsDir=/var/catramms/satellite
+satelliteChannelConfigurationDirectory=/var/catramms/satellite
 satelliteLogsChannelsDir=/var/catramms/logs/satellite
 dvbChannelsPathName=/opt/catramms/CatraMMS/conf/3_UNIVERSAL.channel.dvbv5.conf
 frontendToBeUsed=1
@@ -20,7 +20,7 @@ frontendToBeUsed=1
 debug=1
 
 
-mkdir -p $satelliteChannelsDir
+mkdir -p $satelliteChannelConfigurationDirectory
 mkdir -p $satelliteLogsChannelsDir
 
 #retention log file
@@ -145,7 +145,7 @@ isProcessRunningFunc()
 }
 
 # MAIN MAIN MAIN
-configurationFiles=$(ls $satelliteChannelsDir)
+configurationFiles=$(ls $satelliteChannelConfigurationDirectory)
 for configurationFileName in $configurationFiles
 do
 	#for each <frequency>-<symbol rate>-<modulation>
@@ -182,7 +182,7 @@ do
 		if [ $isProcessRunning -eq 0 ]; then
 			echo "Process is not up and running, start it"
 
-			startOfProcess $frequency $symbolRate $modulation $satelliteChannelsDir/$configurationFileName $pidProcessPathName
+			startOfProcess $frequency $symbolRate $modulation $satelliteChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		fi
 
 		continue
@@ -208,7 +208,7 @@ do
 		fi
 	fi
 
-	if [ ! -s $satelliteChannelsDir/$configurationFileName ]; then
+	if [ ! -s $satelliteChannelConfigurationDirectory/$configurationFileName ]; then
 		if [ $debug -eq 1 ]; then
 			echo "dvblast configuration file empty, channel is removed, configurationFileName: $configurationFileName"
 		fi
@@ -216,17 +216,17 @@ do
 		#process is alredy killed (see above statements)
 
 		if [ $debug -eq 1 ]; then
-			echo "rm -f $satelliteChannelsDir/$configurationFileName"
+			echo "rm -f $satelliteChannelConfigurationDirectory/$configurationFileName"
 		fi
-		rm -f $satelliteChannelsDir/$configurationFileName
+		rm -f $satelliteChannelConfigurationDirectory/$configurationFileName
 	else
-		startOfProcess $frequency $symbolRate $modulation $satelliteChannelsDir/$configurationFileName $pidProcessPathName
+		startOfProcess $frequency $symbolRate $modulation $satelliteChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
 		processReturn=$?
 		if [ $processReturn -eq 0 ]; then
 			if [ $debug -eq 1 ]; then
-				echo "mv $satelliteChannelsDir/$frequencySymbolRateModulation.changed $satelliteChannelsDir/$frequencySymbolRateModulation.txt"
+				echo "mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.txt"
 			fi
-			mv $satelliteChannelsDir/$frequencySymbolRateModulation.changed $satelliteChannelsDir/$frequencySymbolRateModulation.txt
+			mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.txt
 		else
 			if [ $debug -eq 1 ]; then
 				echo "Start of the process failed, processReturn: $processReturn"

@@ -10001,12 +10001,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t confKey = -1;
 		string liveURL;
 
-		int64_t satelliteServiceId;
-		int64_t satelliteFrequency;
-		int64_t satelliteSymbolRate;
+		int64_t satelliteServiceId = -1;
+		int64_t satelliteFrequency = -1;
+		int64_t satelliteSymbolRate = -1;
 		string satelliteModulation;
-		int satelliteVideoPid;
-		int satelliteAudioItalianPid;
+		int satelliteVideoPid = -1;
+		int satelliteAudioItalianPid = -1;
 
 		if (channelType == "IP_MMSAsClient")
 		{
@@ -10477,6 +10477,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodStart, utcRecordingPeriodEnd,
 			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority,
 
+			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+
 			monitorHLS,
 			liveRecorderVirtualVOD,
 			monitorManifestDirectoryPath,	// used by FFMPEGEncoder.cpp to build virtualVOD
@@ -10797,12 +10800,12 @@ void MMSEngineProcessor::manageLiveProxy(
 		int64_t confKey = -1;
 		string liveURL;
 
-		int64_t satelliteServiceId;
-		int64_t satelliteFrequency;
-		int64_t satelliteSymbolRate;
+		int64_t satelliteServiceId = -1;
+		int64_t satelliteFrequency = -1;
+		int64_t satelliteSymbolRate = -1;
 		string satelliteModulation;
-		int satelliteVideoPid;
-		int satelliteAudioItalianPid;
+		int satelliteVideoPid = -1;
+		int satelliteAudioItalianPid = -1;
 
 		if (channelType == "IP_MMSAsClient")
 		{
@@ -11074,6 +11077,10 @@ void MMSEngineProcessor::manageLiveProxy(
 
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(workspace, ingestionJobKey,
 			channelType, confKey, configurationLabel, liveURL,
+
+			satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+			satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+
 			timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			localOutputsRoot);

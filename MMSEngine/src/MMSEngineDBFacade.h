@@ -1728,6 +1728,9 @@ public:
 		string outputFileFormat,
 		EncodingPriority encodingPriority,
 
+		int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
+		string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
+
 		bool monitorHLS,
 		bool liveRecorderVirtualVOD,
 		string monitorManifestDirectoryPath,
@@ -1740,6 +1743,10 @@ public:
 		int64_t ingestionJobKey,
 		string channelType,
 		int64_t liveURLConfKey, string configurationLabel, string url,
+
+		int64_t satelliteServiceId, int64_t satelliteFrequency, int64_t satelliteSymbolRate,
+		string satelliteModulation, int satelliteVideoPid, int satelliteAudioItalianPid,
+
 		bool timePeriod, int64_t utcProxyPeriodStart, int64_t utcProxyPeriodEnd,
 		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 		Json::Value outputsRoot);

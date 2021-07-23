@@ -130,7 +130,7 @@ public:
 		map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 		chrono::system_clock::time_point* lastEncodingCompletedCheck,
 
-		mutex* satelliteChannelsUdpPortsMutex,
+		mutex* satelliteChannelsPortsMutex,
 		long* satelliteChannelPort_CurrentOffset,
 
 		shared_ptr<spdlog::logger> logger);
@@ -202,12 +202,14 @@ private:
 	bool						_liveRecorderVirtualVODIngestionThreadShutdown;
 	string						_liveRecorderVirtualVODImageLabel;
 
+	string						_satelliteChannelConfigurationDirectory;
+
     mutex*						_encodingCompletedMutex;
 	int							_encodingCompletedRetentionInSeconds;
     map<int64_t, shared_ptr<EncodingCompleted>>*	_encodingCompletedMap;
 	chrono::system_clock::time_point*				_lastEncodingCompletedCheck;
 
-	mutex*						_satelliteChannelsUdpPortsMutex;
+	mutex*						_satelliteChannelsPortsMutex;
 	long*						_satelliteChannelPort_CurrentOffset;
 	long						_satelliteChannelPort_Start;
 	long						_satelliteChannelPort_MaxNumberOfOffsets;
@@ -368,6 +370,19 @@ private:
 	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);
 
 	void encodingCompletedRetention();
+
+	void createOrUpdateSatelliteDvbLastConfigurationFile(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		string multicastIP,
+		string multicastPort,
+		int64_t satelliteServiceId,
+		int64_t satelliteFrequency,
+		int64_t satelliteSymbolRate,
+		string satelliteModulation,
+		int satelliteVideoPid,
+		int satelliteAudioItalianPid
+	);
 };
 
 #endif
