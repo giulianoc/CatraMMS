@@ -5925,17 +5925,17 @@ void FFMPEGEncoder::liveRecorderThread(
 			// create/update dvblast configuration file
 			{
 				int64_t satelliteServiceId = JSONUtils::asInt64(
-					liveRecorderMedatada, "satelliteServiceId", -1);
+					liveRecorderMedatada["encodingParametersRoot"], "satelliteServiceId", -1);
 				int64_t satelliteFrequency = JSONUtils::asInt64(
-					liveRecorderMedatada, "satelliteFrequency", -1);
+					liveRecorderMedatada["encodingParametersRoot"], "satelliteFrequency", -1);
 				int64_t satelliteSymbolRate = JSONUtils::asInt64(
-					liveRecorderMedatada, "satelliteSymbolRate", -1);
-				string satelliteModulation = liveRecorderMedatada.
+					liveRecorderMedatada["encodingParametersRoot"], "satelliteSymbolRate", -1);
+				string satelliteModulation = liveRecorderMedatada["encodingParametersRoot"].
 					get("satelliteModulation", "").asString();
 				int satelliteVideoPid = JSONUtils::asInt(
-					liveRecorderMedatada, "satelliteVideoPid", -1);
+					liveRecorderMedatada["encodingParametersRoot"], "satelliteVideoPid", -1);
 				int satelliteAudioItalianPid = JSONUtils::asInt(
-					liveRecorderMedatada, "satelliteAudioItalianPid", -1);
+					liveRecorderMedatada["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
 					liveRecording->_ingestionJobKey, encodingJobKey,
