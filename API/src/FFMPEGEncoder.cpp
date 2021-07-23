@@ -12735,20 +12735,23 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 	string localModulation;
 
 	// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-	if (satelliteModulation == "PSK/8")
-		localModulation = "psk_8";
-	else if (satelliteModulation == "QPSK")
-		localModulation = "qpsk";
-	else
+	if (satelliteModulation != "")
 	{
-		string errorMessage = __FILEREF__ + "unknown modulation"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", satelliteModulation: " + satelliteModulation
-		;
-		_logger->error(errorMessage);
+		if (satelliteModulation == "PSK/8")
+			localModulation = "psk_8";
+		else if (satelliteModulation == "QPSK")
+			localModulation = "qpsk";
+		else
+		{
+			string errorMessage = __FILEREF__ + "unknown modulation"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", satelliteModulation: " + satelliteModulation
+			;
+			_logger->error(errorMessage);
 
-		throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
 	}
 
 	string dvblastConfigurationPathName =
