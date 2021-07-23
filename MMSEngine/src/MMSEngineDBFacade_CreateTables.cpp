@@ -2200,6 +2200,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create table if not exists MMS_Conf_SATChannel ("
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
 					"workspaceKey				BIGINT UNSIGNED NOT NULL,"
+                    "label						VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
 					"sourceSATConfKey			BIGINT UNSIGNED NOT NULL,"
                     "region						VARCHAR (128) NULL,"
                     "country					VARCHAR (128) NULL,"
@@ -2211,7 +2212,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_SATChannel_FK foreign key (workspaceKey) "
 						"references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_Conf_SATChannel_FK2 foreign key (sourceSATConfKey) "
-						"references MMS_Conf_SourceSATChannel (confKey) on delete cascade) "
+						"references MMS_Conf_SourceSATChannel (confKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
