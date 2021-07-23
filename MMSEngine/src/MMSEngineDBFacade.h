@@ -2159,7 +2159,7 @@ public:
 		int videoPid, string audioPids,
 		string nameOrder);
 
-    int64_t getSATChannelConfDetails(
+    tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> getSATChannelConfDetails(
         int64_t workspaceKey, string name,
 		bool warningIfMissing);
 

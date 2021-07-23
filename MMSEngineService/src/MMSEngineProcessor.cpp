@@ -10001,6 +10001,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int64_t confKey = -1;
 		string liveURL;
 
+		int64_t satelliteServiceId;
+		int64_t satelliteFrequency;
+		int64_t satelliteSymbolRate;
+		string satelliteModulation;
+		int satelliteVideoPid;
+		int satelliteAudioItalianPid;
+
 		if (channelType == "IP_MMSAsClient")
 		{
 			bool warningIfMissing = false;
@@ -10011,8 +10018,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 		else if (channelType == "Satellite")
 		{
 			bool warningIfMissing = false;
-			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+			tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> satChannelConfDetails =
+				_mmsEngineDBFacade->getSATChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+
+			tie(confKey, satelliteServiceId, satelliteFrequency, satelliteSymbolRate, satelliteModulation,
+				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
 		else if (channelType == "IP_MMSAsServer")
 		{
@@ -10786,6 +10797,13 @@ void MMSEngineProcessor::manageLiveProxy(
 		int64_t confKey = -1;
 		string liveURL;
 
+		int64_t satelliteServiceId;
+		int64_t satelliteFrequency;
+		int64_t satelliteSymbolRate;
+		string satelliteModulation;
+		int satelliteVideoPid;
+		int satelliteAudioItalianPid;
+
 		if (channelType == "IP_MMSAsClient")
 		{
 			bool warningIfMissing = false;
@@ -10796,8 +10814,12 @@ void MMSEngineProcessor::manageLiveProxy(
 		else if (channelType == "Satellite")
 		{
 			bool warningIfMissing = false;
-			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
+			tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> satChannelConfDetails =
+				_mmsEngineDBFacade->getSATChannelConfDetails(
 				workspace->_workspaceKey, configurationLabel, warningIfMissing);
+
+			tie(confKey, satelliteServiceId, satelliteFrequency, satelliteSymbolRate, satelliteModulation,
+				satelliteVideoPid, satelliteAudioItalianPid) = satChannelConfDetails;
 		}
 		else if (channelType == "IP_MMSAsServer")
 		{

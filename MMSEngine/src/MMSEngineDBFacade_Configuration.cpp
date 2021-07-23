@@ -4558,13 +4558,12 @@ Json::Value MMSEngineDBFacade::getSourceSATChannelConfList (
     return channelConfListRoot;
 }
 
-int64_t MMSEngineDBFacade::getSATChannelConfDetails(
-    int64_t workspaceKey, string name,
+tuple<int64_t, int64_t, int64_t, int64_t, string, int, int> MMSEngineDBFacade::getSATChannelConfDetails(
+    int64_t workspaceKey, string label,
 	bool warningIfMissing
 )
 {
     string      lastSQLCommand;
-	int64_t		confKey;
     
     shared_ptr<MySQLConnection> conn = nullptr;
 
@@ -4572,7 +4571,7 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
     {
         _logger->info(__FILEREF__ + "getSATChannelConfDetails"
             + ", workspaceKey: " + to_string(workspaceKey)
-            + ", name: " + name
+            + ", label: " + label
         );
 
         conn = _connectionPool->borrow();
@@ -4580,21 +4579,32 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
+		int64_t confKey;
+		int64_t serviceId;
+		int64_t frequency;
+		int64_t symbolRate;
+		string modulation;
+		int videoPid;
+		int audioItalianPid;
         {
-			lastSQLCommand = string("select confKey from MMS_Conf_SATChannel csc, MMS_Conf_SourceSATChannel sc")
-				+ "where csc.serviceId = sc.serviceId and csc.workspaceKey = ? and sc.name = ?";
+			lastSQLCommand = "select s.confKey, ss.serviceId, ss.frequency, ss.symbolRate, "
+				"ss.modulation, ss.videoPid, ss.audioItalianPid "
+				"from MMS_Conf_SATChannel s, MMS_Conf_SourceSATChannel ss "
+				"where s.sourceSATConfKey = ss.confKey "
+				"and s.workspaceKey = ? and s.label = ?"
+			;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, name);
+            preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", name: " + name
+				+ ", label: " + label
 				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -4603,7 +4613,7 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
             {
                 string errorMessage = __FILEREF__ + "Configuration name is not found"
                     + ", workspaceKey: " + to_string(workspaceKey)
-                    + ", name: " + name
+                    + ", label: " + label
                 ;
                 if (warningIfMissing)
                     _logger->warn(errorMessage);
@@ -4613,7 +4623,13 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
 				throw ConfKeyNotFound(errorMessage);                    
             }
 
-            confKey = resultSet->getInt64("confKey");
+			confKey = resultSet->getInt64("confKey");
+			serviceId = resultSet->getInt64("serviceId");
+			frequency = resultSet->getInt64("frequency");
+			symbolRate = resultSet->getInt64("symbolRate");
+			modulation = resultSet->getString("modulation");
+			videoPid = resultSet->getInt("videoPid");
+			audioItalianPid = resultSet->getInt("audioItalianPid");
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -4621,6 +4637,8 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
         );
         _connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return make_tuple(confKey, serviceId, frequency, symbolRate, modulation, videoPid, audioItalianPid);
     }
     catch(sql::SQLException se)
     {
@@ -4704,8 +4722,6 @@ int64_t MMSEngineDBFacade::getSATChannelConfDetails(
 
         throw e;
     } 
-    
-    return confKey;
 }
 
 int64_t MMSEngineDBFacade::addFTPConf(
