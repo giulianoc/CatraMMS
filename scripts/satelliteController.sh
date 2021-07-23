@@ -145,6 +145,11 @@ isProcessRunningFunc()
 }
 
 # MAIN MAIN MAIN
+
+if [ $debug -eq 1 ]; then
+	echo "script finished"
+fi
+
 configurationFiles=$(ls $satelliteChannelConfigurationDirectory)
 for configurationFileName in $configurationFiles
 do
