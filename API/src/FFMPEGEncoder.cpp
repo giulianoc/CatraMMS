@@ -12754,6 +12754,24 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 		}
 	}
 
+	if (!FileIO::directoryExisting(_satelliteChannelConfigurationDirectory))
+	{
+		_logger->info(__FILEREF__ + "Create directory"
+			+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _encodingJobKey: " + to_string(encodingJobKey)
+			+ ", _satelliteChannelConfigurationDirectory: " + _satelliteChannelConfigurationDirectory
+		);
+
+		bool noErrorIfExists = true;
+		bool recursive = true;
+		FileIO::createDirectory(
+			_satelliteChannelConfigurationDirectory,
+			S_IRUSR | S_IWUSR | S_IXUSR |
+			S_IRGRP | S_IWUSR | S_IXGRP |
+			S_IROTH | S_IWUSR | S_IXOTH,
+			noErrorIfExists, recursive);
+	}
+
 	string dvblastConfigurationPathName =
 		_satelliteChannelConfigurationDirectory
 		+ "/" + to_string(satelliteFrequency)
@@ -12799,9 +12817,22 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+		+ ", configuration: " + configuration
 	);
 
 	ofstream configurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
+	if (!configurationFile)
+	{
+		string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
 	configurationFile << configuration << endl;
 }
 
