@@ -104,11 +104,11 @@ startOfProcess()
 		modulationParameter="-m $modulation"
 	fi
 
+	logPathName=$satelliteLogsChannelsDir/$frequency".log"
 	if [ $debug -eq 1 ]; then
-		echo "Start of the process. frequency: $frequency, deviceNumber: $deviceNumber, symbolRate: $symbolRate, modulation: $modulation, dvblastConfPathName: $dvblastConfPathName, pidProcessPathName: $pidProcessPathName"
+		echo "Start of the process. nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &"
 	fi
 
-	logPathName=$satelliteLogsChannelsDir/$frequency".log"
 	nohup dvblast -f $frequency -a $deviceNumber -s $symbolRate $modulationParameter -n $frontendToBeUsed -c $dvblastConfPathName > $logPathName 2>&1 &
 	echo $! > $pidProcessPathName
 	#I saw it returned 0 even if the process failed. Better to check if the process is running
@@ -231,7 +231,7 @@ do
 			if [ $debug -eq 1 ]; then
 				echo "mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.txt"
 			fi
-			mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.changed $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation.txt
+			mv $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation".changed" $satelliteChannelConfigurationDirectory/$frequencySymbolRateModulation".txt"
 		else
 			if [ $debug -eq 1 ]; then
 				echo "Start of the process failed, processReturn: $processReturn"

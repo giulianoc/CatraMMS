@@ -8722,7 +8722,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back(userAgent);
 		}
 
-		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+		if (channelType == "IP_MMSAsServer")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");
@@ -8736,7 +8736,7 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "IP_MMSAsClient")
+		else if (channelType == "IP_MMSAsClient" || channelType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
@@ -10287,7 +10287,7 @@ void FFMpeg::liveProxy(
 		}
 		ffmpegArgumentList.push_back("-re");
 		addToArguments(otherInputOptions, ffmpegArgumentList);
-		if (channelType == "IP_MMSAsServer" || channelType == "Satellite")
+		if (channelType == "IP_MMSAsServer")
 		{
 			ffmpegArgumentList.push_back("-listen");
 			ffmpegArgumentList.push_back("1");
@@ -10301,7 +10301,7 @@ void FFMpeg::liveProxy(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);
 		}
-		else if (channelType == "IP_MMSAsClient")
+		else if (channelType == "IP_MMSAsClient" || channelType == "Satellite")
 		{
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(liveURL);

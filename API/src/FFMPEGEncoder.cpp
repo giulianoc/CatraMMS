@@ -12805,13 +12805,16 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 		configuration += "\n";
 	}
 
-	configuration += (
+	string configurationToBeAdded =
 		multicastIP + ":" + multicastPort 
 		+ " 1 "
 		+ to_string(satelliteServiceId)
 		+ " "
 		+ to_string(satelliteVideoPid) + "," + to_string(satelliteAudioItalianPid)
-	);
+	;
+
+	if (configuration.find(configurationToBeAdded) == string::npos)
+		configuration += configurationToBeAdded;
 
 	_logger->info(__FILEREF__ + "Creation dvblast configuration file"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
