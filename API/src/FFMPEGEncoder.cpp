@@ -5932,9 +5932,9 @@ void FFMPEGEncoder::liveRecorderThread(
 					liveRecorderMedatada, "satelliteSymbolRate", -1);
 				string satelliteModulation = liveRecorderMedatada.
 					get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt64(
-					liveRecorderMedatada, "satelliteVideoPID", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt64(
+				int satelliteVideoPid = JSONUtils::asInt(
+					liveRecorderMedatada, "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(
 					liveRecorderMedatada, "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
@@ -9678,9 +9678,9 @@ void FFMPEGEncoder::liveProxyThread(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteSymbolRate", -1);
 				string satelliteModulation = liveProxyMetadata["encodingParametersRoot"].
 					get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt64(
-					liveProxyMetadata["encodingParametersRoot"], "satelliteVideoPID", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt64(
+				int satelliteVideoPid = JSONUtils::asInt(
+					liveProxyMetadata["encodingParametersRoot"], "satelliteVideoPid", -1);
+				int satelliteAudioItalianPid = JSONUtils::asInt(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
