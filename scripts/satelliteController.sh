@@ -213,9 +213,10 @@ do
 		fi
 	fi
 
-	if [ ! -s $satelliteChannelConfigurationDirectory/$configurationFileName ]; then
+	fileSize=$(stat -c%s "$satelliteChannelConfigurationDirectory/$configurationFileName")
+	if [ $fileSize -lt 10 ]; then
 		if [ $debug -eq 1 ]; then
-			echo "dvblast configuration file empty, channel is removed, configurationFileName: $configurationFileName"
+			echo "dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName"
 		fi
 
 		#process is alredy killed (see above statements)

@@ -5820,6 +5820,15 @@ void FFMPEGEncoder::liveRecorderThread(
 		+ ", requestBody: " + requestBody
 	);
 
+	string satelliteMulticastIP;
+	string satelliteMulticastPort;
+	int64_t satelliteServiceId = -1;
+	int64_t satelliteFrequency = -1;
+	int64_t satelliteSymbolRate = -1;
+	string satelliteModulation;
+	int satelliteVideoPid = -1;
+	int satelliteAudioItalianPid = -1;
+
     try
     {
         liveRecording->_killedBecauseOfNotWorking = false;
@@ -5913,35 +5922,36 @@ void FFMPEGEncoder::liveRecorderThread(
 		{
 			lock_guard<mutex> locker(*_satelliteChannelsPortsMutex);
 
-			string multicastIP = "239.255.1.1";
-			string multicastPort = to_string(*_satelliteChannelPort_CurrentOffset
+			satelliteMulticastIP = "239.255.1.1";
+			satelliteMulticastPort = to_string(*_satelliteChannelPort_CurrentOffset
 				+ _satelliteChannelPort_Start);
 
-			liveURL = string("udp://@") + multicastIP + ":" + multicastPort;
+			liveURL = string("udp://@") + satelliteMulticastIP + ":" + satelliteMulticastPort;
 
 			*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
 				% _satelliteChannelPort_MaxNumberOfOffsets;
 
 			// create/update dvblast configuration file
 			{
-				int64_t satelliteServiceId = JSONUtils::asInt64(
+				satelliteServiceId = JSONUtils::asInt64(
 					liveRecorderMedatada["encodingParametersRoot"], "satelliteServiceId", -1);
-				int64_t satelliteFrequency = JSONUtils::asInt64(
+				satelliteFrequency = JSONUtils::asInt64(
 					liveRecorderMedatada["encodingParametersRoot"], "satelliteFrequency", -1);
-				int64_t satelliteSymbolRate = JSONUtils::asInt64(
+				satelliteSymbolRate = JSONUtils::asInt64(
 					liveRecorderMedatada["encodingParametersRoot"], "satelliteSymbolRate", -1);
-				string satelliteModulation = liveRecorderMedatada["encodingParametersRoot"].
+				satelliteModulation = liveRecorderMedatada["encodingParametersRoot"].
 					get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt(
+				satelliteVideoPid = JSONUtils::asInt(
 					liveRecorderMedatada["encodingParametersRoot"], "satelliteVideoPid", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt(
+				satelliteAudioItalianPid = JSONUtils::asInt(
 					liveRecorderMedatada["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
 					liveRecording->_ingestionJobKey, encodingJobKey,
-					multicastIP, multicastPort,
+					satelliteMulticastIP, satelliteMulticastPort,
 					satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
-					satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid);
+					satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+					true);
 			}
 		}
 		else
@@ -6231,6 +6241,19 @@ void FFMPEGEncoder::liveRecorderThread(
 			&(liveRecording->_childPid)
 		);
 
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
 		// to wait the ingestion of the last chunk
 		this_thread::sleep_for(chrono::seconds(2 * _liveRecorderChunksIngestionCheckInSeconds));
 
@@ -6292,6 +6315,19 @@ void FFMPEGEncoder::liveRecorderThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
@@ -6372,6 +6408,19 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLForbidden e)
     {
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
@@ -6443,6 +6492,19 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(FFMpegURLNotFound e)
     {
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
@@ -6514,6 +6576,19 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(runtime_error e)
     {
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
@@ -6585,6 +6660,19 @@ void FFMPEGEncoder::liveRecorderThread(
     }
     catch(exception e)
     {
+		if (liveRecording->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveRecording->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveRecording->_running = false;
 		liveRecording->_encodingParametersRoot = Json::nullValue;
         liveRecording->_ingestionJobKey		= 0;
@@ -9435,6 +9523,14 @@ void FFMPEGEncoder::liveProxyThread(
         + ", requestBody: " + requestBody
     );
 
+	string satelliteMulticastIP;
+	string satelliteMulticastPort;
+	int64_t satelliteServiceId = -1;
+	int64_t satelliteFrequency = -1;
+	int64_t satelliteSymbolRate = -1;
+	string satelliteModulation;
+	int satelliteVideoPid = -1;
+	int satelliteAudioItalianPid = -1;
     try
     {
 		liveProxy->_killedBecauseOfNotWorking = false;
@@ -9659,35 +9755,36 @@ void FFMPEGEncoder::liveProxyThread(
 		{
 			lock_guard<mutex> locker(*_satelliteChannelsPortsMutex);
 
-			string multicastIP = "239.255.1.1";
-			string multicastPort = to_string(*_satelliteChannelPort_CurrentOffset
+			satelliteMulticastIP = "239.255.1.1";
+			satelliteMulticastPort = to_string(*_satelliteChannelPort_CurrentOffset
 				+ _satelliteChannelPort_Start);
 
-			liveURL = string("udp://@") + multicastIP + ":" + multicastPort;
+			liveURL = string("udp://@") + satelliteMulticastIP + ":" + satelliteMulticastPort;
 
 			*_satelliteChannelPort_CurrentOffset = (*_satelliteChannelPort_CurrentOffset + 1)
 				% _satelliteChannelPort_MaxNumberOfOffsets;
 
 			// create/update dvblast configuration file
 			{
-				int64_t satelliteServiceId = JSONUtils::asInt64(
+				satelliteServiceId = JSONUtils::asInt64(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteServiceId", -1);
-				int64_t satelliteFrequency = JSONUtils::asInt64(
+				satelliteFrequency = JSONUtils::asInt64(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteFrequency", -1);
-				int64_t satelliteSymbolRate = JSONUtils::asInt64(
+				satelliteSymbolRate = JSONUtils::asInt64(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteSymbolRate", -1);
-				string satelliteModulation = liveProxyMetadata["encodingParametersRoot"].
+				satelliteModulation = liveProxyMetadata["encodingParametersRoot"].
 					get("satelliteModulation", "").asString();
-				int satelliteVideoPid = JSONUtils::asInt(
+				satelliteVideoPid = JSONUtils::asInt(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteVideoPid", -1);
-				int satelliteAudioItalianPid = JSONUtils::asInt(
+				satelliteAudioItalianPid = JSONUtils::asInt(
 					liveProxyMetadata["encodingParametersRoot"], "satelliteAudioItalianPid", -1);
 
 				createOrUpdateSatelliteDvbLastConfigurationFile(
 					liveProxy->_ingestionJobKey, encodingJobKey,
-					multicastIP, multicastPort,
+					satelliteMulticastIP, satelliteMulticastPort,
 					satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
-					satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid);
+					satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+					true);
 			}
 		}
 		else
@@ -9764,6 +9861,19 @@ void FFMPEGEncoder::liveProxyThread(
 				&(liveProxy->_childPid));
 		}
 
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
         liveProxy->_childPid = 0;
@@ -9808,6 +9918,19 @@ void FFMPEGEncoder::liveProxyThread(
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
@@ -9875,6 +9998,19 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLForbidden e)
     {
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
@@ -9937,6 +10073,19 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(FFMpegURLNotFound e)
     {
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
@@ -9999,6 +10148,19 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(runtime_error e)
     {
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
@@ -10061,6 +10223,19 @@ void FFMPEGEncoder::liveProxyThread(
     }
     catch(exception e)
     {
+		if (liveProxy->_channelType == "Satellite"
+			&& satelliteServiceId != -1	// this is just to be sure variables are initialized
+		)
+		{
+			// remove configuration from dvblast configuration file
+			createOrUpdateSatelliteDvbLastConfigurationFile(
+				liveProxy->_ingestionJobKey, encodingJobKey,
+				satelliteMulticastIP, satelliteMulticastPort,
+				satelliteServiceId, satelliteFrequency, satelliteSymbolRate,
+				satelliteModulation, satelliteVideoPid, satelliteAudioItalianPid,
+				false);
+		}
+
         liveProxy->_running = false;
 		liveProxy->_method = "";
 		liveProxy->_ingestionJobKey = 0;
@@ -12729,113 +12904,139 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 	int64_t satelliteSymbolRate,
 	string satelliteModulation,
 	int satelliteVideoPid,
-	int satelliteAudioItalianPid
+	int satelliteAudioItalianPid,
+	bool toBeAdded
 )
 {
-	string localModulation;
-
-	// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-	if (satelliteModulation != "")
+	try
 	{
-		if (satelliteModulation == "PSK/8")
-			localModulation = "psk_8";
-		else if (satelliteModulation == "QPSK")
-			localModulation = "qpsk";
-		else
+		string localModulation;
+
+		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
+		if (satelliteModulation != "")
 		{
-			string errorMessage = __FILEREF__ + "unknown modulation"
+			if (satelliteModulation == "PSK/8")
+				localModulation = "psk_8";
+			else if (satelliteModulation == "QPSK")
+				localModulation = "qpsk";
+			else
+			{
+				string errorMessage = __FILEREF__ + "unknown modulation"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", satelliteModulation: " + satelliteModulation
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		if (!FileIO::directoryExisting(_satelliteChannelConfigurationDirectory))
+		{
+			_logger->info(__FILEREF__ + "Create directory"
+				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(encodingJobKey)
+				+ ", _satelliteChannelConfigurationDirectory: " + _satelliteChannelConfigurationDirectory
+			);
+
+			bool noErrorIfExists = true;
+			bool recursive = true;
+			FileIO::createDirectory(
+				_satelliteChannelConfigurationDirectory,
+				S_IRUSR | S_IWUSR | S_IXUSR |
+				S_IRGRP | S_IWUSR | S_IXGRP |
+				S_IROTH | S_IWUSR | S_IXOTH,
+				noErrorIfExists, recursive);
+		}
+
+		string dvblastConfigurationPathName =
+			_satelliteChannelConfigurationDirectory
+			+ "/" + to_string(satelliteFrequency)
+			+ "-" + to_string(satelliteSymbolRate)
+			+ "-" + localModulation
+		;
+
+		string configuration;
+		if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
+		{
+			ifstream configurationFile(dvblastConfigurationPathName + ".txt");
+			stringstream buffer;
+			buffer << configurationFile.rdbuf();
+			configuration = buffer.str();
+			configuration += "\n";
+
+			_logger->info(__FILEREF__ + "Remove dvblast configuration file to create the new one"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", satelliteModulation: " + satelliteModulation
+				+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
+			);
+
+			FileIO::remove(dvblastConfigurationPathName + ".txt");
+		}
+		else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
+		{
+			ifstream configurationFile(dvblastConfigurationPathName + ".changed");
+			stringstream buffer;
+			buffer << configurationFile.rdbuf();
+			configuration = buffer.str();
+			configuration += "\n";
+		}
+
+		string newConfiguration =
+			"\n"
+			+ multicastIP + ":" + multicastPort 
+			+ " 1 "
+			+ to_string(satelliteServiceId)
+			+ " "
+			+ to_string(satelliteVideoPid) + "," + to_string(satelliteAudioItalianPid)
+		;
+
+		size_t newConfigurationIndex = configuration.find(newConfiguration);
+		if (toBeAdded)
+		{
+			// added only if not already present
+			if (newConfigurationIndex == string::npos)
+				configuration += newConfiguration;
+		}
+		else
+		{
+			// newConfiguration has to be removed
+			if (newConfigurationIndex != string::npos)
+				configuration.erase(newConfigurationIndex, newConfiguration.size());
+		}
+
+		_logger->info(__FILEREF__ + "Creation dvblast configuration file"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+			+ ", configuration: " + configuration
+		);
+
+		ofstream configurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
+		if (!configurationFile)
+		{
+			string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
 			;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+
+		configurationFile << configuration;
 	}
-
-	if (!FileIO::directoryExisting(_satelliteChannelConfigurationDirectory))
+	catch (...)
 	{
-		_logger->info(__FILEREF__ + "Create directory"
-			+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _encodingJobKey: " + to_string(encodingJobKey)
-			+ ", _satelliteChannelConfigurationDirectory: " + _satelliteChannelConfigurationDirectory
-		);
-
-		bool noErrorIfExists = true;
-		bool recursive = true;
-		FileIO::createDirectory(
-			_satelliteChannelConfigurationDirectory,
-			S_IRUSR | S_IWUSR | S_IXUSR |
-			S_IRGRP | S_IWUSR | S_IXGRP |
-			S_IROTH | S_IWUSR | S_IXOTH,
-			noErrorIfExists, recursive);
-	}
-
-	string dvblastConfigurationPathName =
-		_satelliteChannelConfigurationDirectory
-		+ "/" + to_string(satelliteFrequency)
-		+ "-" + to_string(satelliteSymbolRate)
-		+ "-" + localModulation
-	;
-
-	string configuration;
-	if (FileIO::fileExisting(dvblastConfigurationPathName + ".txt"))
-	{
-		ifstream configurationFile(dvblastConfigurationPathName + ".txt");
-		stringstream buffer;
-		buffer << configurationFile.rdbuf();
-		configuration = buffer.str();
-		configuration += "\n";
-
-		_logger->info(__FILEREF__ + "Remove dvblast configuration file"
+		// make sure do not raise an exception to the calling method to avoid
+		// to interrupt "closure" encoding procedure
+		string errorMessage = __FILEREF__ + "createOrUpdateSatelliteDvbLastConfigurationFile failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
-		);
-
-		FileIO::remove(dvblastConfigurationPathName + ".txt");
-	}
-	else if (FileIO::fileExisting(dvblastConfigurationPathName + ".changed"))
-	{
-		ifstream configurationFile(dvblastConfigurationPathName + ".changed");
-		stringstream buffer;
-		buffer << configurationFile.rdbuf();
-		configuration = buffer.str();
-		configuration += "\n";
-	}
-
-	string configurationToBeAdded =
-		multicastIP + ":" + multicastPort 
-		+ " 1 "
-		+ to_string(satelliteServiceId)
-		+ " "
-		+ to_string(satelliteVideoPid) + "," + to_string(satelliteAudioItalianPid)
-	;
-
-	if (configuration.find(configurationToBeAdded) == string::npos)
-		configuration += configurationToBeAdded;
-
-	_logger->info(__FILEREF__ + "Creation dvblast configuration file"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
-		+ ", configuration: " + configuration
-	);
-
-	ofstream configurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
-	if (!configurationFile)
-	{
-		string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(encodingJobKey)
-			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
 		;
 		_logger->error(errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
-
-	configurationFile << configuration << endl;
 }
 

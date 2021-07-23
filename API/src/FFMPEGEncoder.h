@@ -381,7 +381,8 @@ private:
 		int64_t satelliteSymbolRate,
 		string satelliteModulation,
 		int satelliteVideoPid,
-		int satelliteAudioItalianPid
+		int satelliteAudioItalianPid,
+		bool toBeAdded
 	);
 };
 
