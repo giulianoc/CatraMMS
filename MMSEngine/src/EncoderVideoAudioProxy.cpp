@@ -13733,6 +13733,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 					liveProxyMetadata["outputsRoot"] = _encodingItem->_liveProxyData->_outputsRoot;
 					liveProxyMetadata["configurationLabel"] = configurationLabel;
 					liveProxyMetadata["liveProxyIngestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
+					liveProxyMetadata["encodingParametersRoot"] =
+						_encodingItem->_encodingParametersRoot;
 					{
 						Json::StreamWriterBuilder wbuilder;
 
