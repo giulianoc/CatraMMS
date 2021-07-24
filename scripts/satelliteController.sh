@@ -214,7 +214,8 @@ do
 	fi
 
 	fileSize=$(stat -c%s "$satelliteChannelConfigurationDirectory/$configurationFileName")
-	if [ $fileSize -lt 10 ]; then
+	#15 because we cannot have a conf less than 15 chars
+	if [ $fileSize -lt 15 ]; then
 		if [ $debug -eq 1 ]; then
 			echo "dvblast configuration file is empty ($fileSize), channel is removed, configurationFileName: $configurationFileName"
 		fi

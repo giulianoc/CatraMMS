@@ -384,6 +384,15 @@ private:
 		int satelliteAudioItalianPid,
 		bool toBeAdded
 	);
+
+	pair<string, string> getSatelliteMulticastFromDvblastConfigurationFile(
+		int64_t ingestionJobKey,
+		int64_t encodingJobKey,
+		int64_t satelliteServiceId,
+		int64_t satelliteFrequency,
+		int64_t satelliteSymbolRate,
+		string satelliteModulation
+	);
 };
 
 #endif
