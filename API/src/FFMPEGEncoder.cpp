@@ -13079,6 +13079,8 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 				wroteFirstLine = true;
 			}
 		}
+
+		ofConfigurationFile << endl;
 	}
 	catch (...)
 	{
