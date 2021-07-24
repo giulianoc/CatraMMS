@@ -13043,6 +13043,7 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 		}
 
 		bool configurationAlreadyPresent = false;
+		bool wroteFirstLine = false;
 		for(string configuration: vConfiguration)
 		{
 			if (toBeAdded)
@@ -13050,12 +13051,20 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 				if (newConfiguration == configuration)
 					configurationAlreadyPresent = true;
 
+				if (wroteFirstLine)
+					ofConfigurationFile << endl;
 				ofConfigurationFile << configuration;
+				wroteFirstLine = true;
 			}
 			else
 			{
 				if (newConfiguration != configuration)
+				{
+					if (wroteFirstLine)
+						ofConfigurationFile << endl;
 					ofConfigurationFile << configuration;
+					wroteFirstLine = true;
+				}
 			}
 		}
 
@@ -13063,7 +13072,12 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 		{
 			// added only if not already present
 			if (!configurationAlreadyPresent)
+			{
+				if (wroteFirstLine)
+					ofConfigurationFile << endl;
 				ofConfigurationFile << newConfiguration;
+				wroteFirstLine = true;
+			}
 		}
 	}
 	catch (...)
