@@ -12934,6 +12934,20 @@ void FFMPEGEncoder::createOrUpdateSatelliteDvbLastConfigurationFile(
 {
 	try
 	{
+		_logger->info(__FILEREF__ + "Received createOrUpdateSatelliteDvbLastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", multicastIP: " + multicastIP
+			+ ", multicastPort: " + multicastPort
+			+ ", satelliteServiceId: " + to_string(satelliteServiceId)
+			+ ", satelliteFrequency: " + to_string(satelliteFrequency)
+			+ ", satelliteSymbolRate: " + to_string(satelliteSymbolRate)
+			+ ", satelliteModulation: " + satelliteModulation
+			+ ", satelliteVideoPid: " + to_string(satelliteVideoPid)
+			+ ", satelliteAudioItalianPid: " + to_string(satelliteAudioItalianPid)
+			+ ", toBeAdded: " + to_string(toBeAdded)
+		);
+
 		string localModulation;
 
 		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
@@ -13108,6 +13122,15 @@ pair<string, string> FFMPEGEncoder::getSatelliteMulticastFromDvblastConfiguratio
 
 	try
 	{
+		_logger->info(__FILEREF__ + "Received getSatelliteMulticastFromDvblastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", satelliteServiceId: " + to_string(satelliteServiceId)
+			+ ", satelliteFrequency: " + to_string(satelliteFrequency)
+			+ ", satelliteSymbolRate: " + to_string(satelliteSymbolRate)
+			+ ", satelliteModulation: " + satelliteModulation
+		);
+
 		string localModulation;
 
 		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
@@ -13175,6 +13198,17 @@ pair<string, string> FFMPEGEncoder::getSatelliteMulticastFromDvblastConfiguratio
 			}
             configurationFile.close();
         }
+
+		_logger->info(__FILEREF__ + "Received getSatelliteMulticastFromDvblastConfigurationFile"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", satelliteServiceId: " + to_string(satelliteServiceId)
+			+ ", satelliteFrequency: " + to_string(satelliteFrequency)
+			+ ", satelliteSymbolRate: " + to_string(satelliteSymbolRate)
+			+ ", satelliteModulation: " + satelliteModulation
+			+ ", multicastIP: " + multicastIP
+			+ ", multicastPort: " + multicastPort
+		);
 	}
 	catch (...)
 	{
