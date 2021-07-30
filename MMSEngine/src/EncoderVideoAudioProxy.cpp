@@ -14257,6 +14257,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							try
 							{
 								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", encodingProgress: " + to_string(encodingProgress)
 								);
@@ -14287,6 +14288,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 							try
 							{
 								_logger->info(__FILEREF__ + "updateEncodingPid"
+									+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 									+ ", encodingPid: " + to_string(encodingPid)
 								);
@@ -14400,6 +14402,42 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
 						+ ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
 						+ ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 					);
+
+					try
+					{
+						char strDateTime [64];
+						{
+							time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+							tm tmDateTime;
+							localtime_r (&utcTime, &tmDateTime);
+							sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+								tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+								tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+						}
+						string errorMessage = string(strDateTime) + " LiveProxy media file completed unexpected";
+
+						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+							_encodingItem->_ingestionJobKey, errorMessage);
+					}
+					catch(runtime_error e)
+					{
+						_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+							+ ", _ingestionJobKey: " +
+								to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: "
+								+ to_string(_encodingItem->_encodingJobKey)
+							+ ", e.what(): " + e.what()
+						);
+					}
+					catch(exception e)
+					{
+						_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+							+ ", _ingestionJobKey: " +
+								to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: "
+								+ to_string(_encodingItem->_encodingJobKey)
+						);
+					}
 				}
 				else
 				{
@@ -14431,6 +14469,42 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg()
                     + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@"
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
+
+				try
+				{
+					char strDateTime [64];
+					{
+						time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						tm tmDateTime;
+						localtime_r (&utcTime, &tmDateTime);
+						sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+							tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
+							tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
+					}
+					string errorMessage = string(strDateTime) + " LiveProxy media file completed unexpected";
+
+					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
+						_encodingItem->_ingestionJobKey, errorMessage);
+				}
+				catch(runtime_error e)
+				{
+					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						+ ", _ingestionJobKey: " +
+							to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: "
+							+ to_string(_encodingItem->_encodingJobKey)
+						+ ", e.what(): " + e.what()
+					);
+				}
+				catch(exception e)
+				{
+					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
+						+ ", _ingestionJobKey: " +
+							to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: "
+							+ to_string(_encodingItem->_encodingJobKey)
+					);
+				}
 			}
 		}
 		catch(MaxConcurrentJobsReached e)
