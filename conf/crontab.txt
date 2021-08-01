@@ -14,7 +14,7 @@
 20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
 22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 13
 24 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 14
-0 3 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 15
+0 3 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 15 0 "dbUser dbPwd dbName"
 * * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 engine
 * * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 load-balancer
 * * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 "http://mms-api.catrasoft.cloud/catramms/v1/status"

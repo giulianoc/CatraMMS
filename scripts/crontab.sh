@@ -13,14 +13,16 @@ tenDaysInMinutes=14400
 
 if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 -a $# -ne 4 ]
 then
-    echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [load-balancer OR engine OR api OR encoder] [<healthCheckURL>]" >> /tmp/crontab.log
+	echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [[load-balancer OR engine OR api OR encoder] [<healthCheckURL>]] [<db user> <db password>]" >> /tmp/crontab.log
 
     exit
 fi
 
 commandIndex=$1
 timeoutInMinutes=$2
+#third parameter could be healthCheckType or dbDetails (depend on commandIndex)
 healthCheckType=$3
+dbDetails=$3
 healthCheckURL=$4
 
 if [ $commandIndex -eq 0 ]
@@ -275,13 +277,27 @@ else
 		#2020-12-09: added / at the end of dumpDirectory (because it is a link,
 		#'find' would not work)
 		dumpDirectory=/var/catramms/storage/dbDump/
-		dumpFileName=$(date +"%Y-%m-%d").sql
-		mysqldump -u mms -pf_-nI*eD-17-R*U -h db-server-active mms > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
+		arrayOfDBUserPwd=($dbDetails)
+		dbUserPwdNumber="${#arrayOfDBUserPwd[@]}"
+		dbUserPwdIndex=0
+		#echo $dbUserPwdNumber
+		while [[ $dbUserPwdIndex -lt $dbUserPwdNumber ]]; do
+			dbUser=${arrayOfDBUserPwd[$dbUserPwdIndex]}
+			dbPwd=${arrayOfDBUserPwd[$((dbUserPwdIndex+1))]}
+			dbName=${arrayOfDBUserPwd[$((dbUserPwdIndex+2))]}
 
-		if [ "$timeoutInMinutes" == "" ]
+			dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
+			#echo $dbUser $dbPwd $dbName $dumpFileName
+			mysqldump -u $dbUser -p$dbPwd -h db-server-active $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
+
+			dbUserPwdIndex=$((dbUserPwdIndex+3))
+		done
+
+		if [[ "$timeoutInMinutes" == "" || "$timeoutInMinutes" == "0" ]]
 		then
 			timeoutInMinutes=$tenDaysInMinutes
 		fi
+		#echo $tenDaysInMinutes
 		commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete"
 
 		timeoutValue="1h"
