@@ -23,6 +23,7 @@
 SET (WORKFLOWs
 	BestPictureOfTheVideo.json
 	ExampleProxyFromCapture.json
+	Recording.json
 )
 
 install (FILES ${WORKFLOWs} DESTINATION predefinedWorkflowLibrary)

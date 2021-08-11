@@ -1,0 +1,61 @@
+{
+  "Label": "Recording",
+  "Task": {
+    "Label": "<no label>",
+    "OnSuccess": {"Task": {
+      "Label": "VOD creation",
+      "OnSuccess": {"Task": {
+        "Label": "VOD encoding",
+        "Parameters": {
+          "ContentType": "video",
+          "EncodingPriority": "Low",
+          "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+        },
+        "Type": "Encode"
+      }},
+      "Parameters": {
+        "AllowUniqueNameOverride": false,
+        "Ingester": "Giuliano Catrambone",
+        "Retention": "1h"
+      },
+      "Type": "Concat-Demuxer"
+    }},
+    "Parameters": {
+      "ExecutionType": "parallel",
+      "Tasks": [{
+        "Label": "Recorder",
+        "OnSuccess": {"Task": {
+          "Label": "Chunk encoding",
+          "Parameters": {
+            "ContentType": "video",
+            "EncodingPriority": "Low",
+            "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+          },
+          "Type": "Encode"
+        }},
+        "Parameters": {
+          "ActAsServerListenTimeout": -1,
+          "AllowUniqueNameOverride": false,
+          "CaptureLive": {},
+          "ChannelType": "IP_MMSAsClient",
+          "ConfigurationLabel": "R101",
+          "DeliveryCode": 12345,
+          "EncodingPriority": "Low",
+          "Ingester": "Giuliano Catrambone",
+          "OutputFileFormat": "ts",
+          "Outputs": [],
+          "RecordingPeriod": {
+            "AutoRenew": false,
+            "End": "2021-08-11T13:34:57Z",
+            "Start": "2021-08-11T13:24:57Z"
+          },
+          "Retention": "1h",
+          "SegmentDuration": 60
+        },
+        "Type": "Live-Recorder"
+      }]
+    },
+    "Type": "GroupOfTasks"
+  },
+  "Type": "Workflow"
+}
