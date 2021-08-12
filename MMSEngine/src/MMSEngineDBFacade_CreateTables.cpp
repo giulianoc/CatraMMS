@@ -1401,6 +1401,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_WorkflowLibrary_PK PRIMARY KEY (workflowLibraryKey), "
                     "constraint MMS_WorkflowLibrary_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
+					"constraint MMS_WorkflowLibrary_FK2 foreign key (creatorUserKey) "
+						"references MMS_User (userKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);

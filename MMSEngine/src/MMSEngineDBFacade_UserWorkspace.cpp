@@ -2957,7 +2957,7 @@ void MMSEngineDBFacade::deleteWorkspace(
             }
         }
 
-		if (!isOwner)
+		if (!isOwner && !admin)
 		{
 			string errorMessage = __FILEREF__ + "The user requesting the deletion does not have the ownership rights and the delete cannot be done"
 				+ ", workspaceKey: " + to_string(workspaceKey)
@@ -2985,6 +2985,49 @@ void MMSEngineDBFacade::deleteWorkspace(
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+        }
+
+        // if the user does not have any workspace, even the user is removed
+        {
+            lastSQLCommand = 
+                "select count(*) from MMS_APIKey where userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", userKey: " + to_string(userKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (resultSet->next())
+            {
+				if (resultSet->getInt64(1) == 0)
+				{
+					// in all the tables depending from User we have 'on delete cascade'
+					// So all should be removed automatically from DB
+					lastSQLCommand = 
+						"delete from MMS_User where userKey = ?";
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, userKey);
+            
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", userKey: " + to_string(userKey)
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+            }
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT

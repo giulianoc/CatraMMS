@@ -5,13 +5,40 @@
     "OnSuccess": {"Task": {
       "Label": "VOD creation",
       "OnSuccess": {"Task": {
-        "Label": "VOD encoding",
+        "Label": "<no label>",
         "Parameters": {
-          "ContentType": "video",
-          "EncodingPriority": "Low",
-          "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+          "ExecutionType": "parallel",
+          "Tasks": [
+            {
+              "Label": "VOD encoding",
+              "Parameters": {
+                "ContentType": "video",
+                "EncodingPriority": "Low",
+                "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+              },
+              "Type": "Encode"
+            },
+            {
+              "Label": "Creation picture for the VOD",
+              "Parameters": {
+                "AllowUniqueNameOverride": false,
+                "ImageRetention": "1d",
+                "ImageTags": "[ \"FACE\" ]",
+                "ImageUserData": "",
+                "Ingester": "Admin",
+                "InitialFramesNumberToBeSkipped": 1500,
+                "InstantInSeconds": 60,
+                "ProcessingStartingFrom": "2021-08-11T13:56:23Z",
+                "Title": "My Title",
+                "UniqueName": "",
+                "WorkflowAsLibraryLabel": "Best Picture of the Video",
+                "WorkflowAsLibraryType": "MMS"
+              },
+              "Type": "Workflow-As-Library"
+            }
+          ]
         },
-        "Type": "Encode"
+        "Type": "GroupOfTasks"
       }},
       "Parameters": {
         "AllowUniqueNameOverride": false,

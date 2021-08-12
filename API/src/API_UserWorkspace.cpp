@@ -2507,7 +2507,7 @@ void API::deleteWorkspace(
                 + ", userKey: " + to_string(userKey)
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
-            
+
             _mmsEngineDBFacade->deleteWorkspace(
                     userKey, workspace->_workspaceKey);
 

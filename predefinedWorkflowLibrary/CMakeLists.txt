@@ -22,7 +22,7 @@
 
 SET (WORKFLOWs
 	BestPictureOfTheVideo.json
-	ExampleProxyFromCapture.json
+	ProxyFromCapture.json
 	Recording.json
 )
 

@@ -2159,6 +2159,20 @@ void MMSStorage::deleteWorkspace(
 	}
 
 	{
+		string liveRootDirectory = MMSStorage::getLiveRootRepository(_storage);
+		liveRootDirectory.append(workspace->_directoryName);
+
+        if (FileIO::directoryExisting(liveRootDirectory))
+        {
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", liveRootDirectory: " + liveRootDirectory
+			);
+			bool removeRecursively = true;
+			FileIO::removeDirectory(liveRootDirectory, removeRecursively);
+        }
+	}
+
+	{
 		lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
 		for (unsigned long ulMMSPartitionIndex = 0;
