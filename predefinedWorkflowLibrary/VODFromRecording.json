@@ -1,0 +1,62 @@
+{
+  "Label": "VOD from Recording",
+  "Task": {
+    "Label": "Cut from Recording",
+    "OnSuccess": {"Task": {
+      "Label": "<no label>",
+      "Parameters": {
+        "ExecutionType": "parallel",
+        "Tasks": [
+          {
+            "Label": "Picture of VOD",
+            "Parameters": {
+              "AllowUniqueNameOverride": false,
+              "ImageRetention": "1d",
+              "ImageTags": "[ \"FACE\" ]",
+              "ImageUserData": "",
+              "Ingester": "Admin",
+              "InitialFramesNumberToBeSkipped": 1500,
+              "InstantInSeconds": 60,
+              "ProcessingStartingFrom": "2021-08-14T09:46:49Z",
+              "Title": "My Title",
+              "UniqueName": "",
+              "WorkflowAsLibraryLabel": "Best Picture of the Video",
+              "WorkflowAsLibraryType": "MMS"
+            },
+            "Type": "Workflow-As-Library"
+          },
+          {
+            "Label": "VOD encoding",
+            "Parameters": {
+              "ContentType": "video",
+              "EncodingPriority": "Low",
+              "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+            },
+            "Type": "Encode"
+          },
+          {
+            "Label": "Generate MP4 profile",
+            "Parameters": {"OutputFileFormat": "mp4"},
+            "Type": "Change-File-Format"
+          }
+        ]
+      },
+      "Type": "GroupOfTasks"
+    }},
+    "Parameters": {
+      "AllowUniqueNameOverride": false,
+      "CutPeriod": {
+        "End": "2021-08-14T09:46:38.409Z",
+        "Start": "2021-08-14T09:36:38.409Z"
+      },
+      "DeliveryCode": 1234,
+      "ErrorIfAChunkIsMissing": false,
+      "Ingester": "Giuliano Catrambone",
+      "MaxWaitingForLastChunkInSeconds": 90,
+      "Retention": "1h",
+      "Title": "Cut from Recording"
+    },
+    "Type": "Live-Cut"
+  },
+  "Type": "Workflow"
+}
