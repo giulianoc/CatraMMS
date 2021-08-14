@@ -70,18 +70,19 @@ elif [ "$command" == "stop" ]
 then
 	touch $processorShutdownPathName
 
-	begin=$(date --utc +"%s")
-	now=$(date --utc +"%s")
-	isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
-	while [ $((now-begin)) -lt 10 -a isRunning != "" ]
+	maxSecondsToWait=10
+	currentSeconds=0
+	while [ $currentSeconds -lt $maxSecondsToWait -a "$isRunning" != "" ]
 	do
+		currentSeconds=$((currentSeconds+1))
+
+		echo "Waiting shutdown ... ($currentSeconds)"
 		sleep 1
-		now=$(date --utc +"%s")
 		isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
 	done
 
 	#PIDFILE is not created in case of nodaemon
-	if [ isRunning != "" ]
+	if [ "$isRunning" != "" ]
 	then
 		echo "Shutdown didn't work, process is now killed"
 

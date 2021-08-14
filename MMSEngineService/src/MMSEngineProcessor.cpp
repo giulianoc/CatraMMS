@@ -285,20 +285,22 @@ void MMSEngineProcessor::operator ()()
     bool processorShutdown = false;
     while(!processorShutdown)
     {
+		if (isProcessorShutdown())
+		{
+			_logger->info(__FILEREF__ + "Processor was shutdown"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			);
+
+			processorShutdown = true;
+
+			continue;
+		}
+
         shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(
 				MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
             // cout << "No event found or event not yet expired" << endl;
-
-			if (isProcessorShutdown())
-			{
-				_logger->info(__FILEREF__ + "Processor was shutdown"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				);
-
-				processorShutdown = true;
-			}
 
             continue;
         }
