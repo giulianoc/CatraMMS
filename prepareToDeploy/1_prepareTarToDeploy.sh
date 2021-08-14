@@ -41,9 +41,9 @@ git commit -am "$tagMessage"
 
 echo ""
 printf "${RED}"
-echo "git push"
+echo "git push https://f926e5b9eb7147ba06f14d700fb89d90ccfc2989@github.com/giulianoc/CatraMMS.git"
 printf "${NC}"
-git push
+git push https://f926e5b9eb7147ba06f14d700fb89d90ccfc2989@github.com/giulianoc/CatraMMS.git
 
 echo ""
 printf "${RED}"
