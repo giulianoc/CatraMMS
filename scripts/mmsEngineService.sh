@@ -47,8 +47,13 @@ export LD_PRELOAD=libz.so.1
 
 export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/curlpp/lib:$CatraMMS_PATH/curlpp/lib64:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib
 
+processorShutdownPathName=/tmp/processorShutdown.txt
+
 if [ "$command" == "start" ]
 then
+	#to be sure there is no shutdown file
+	rm -f $processorShutdownPathName
+
 	#to generate a core in case of sigabrt signal
 	#1. run below ulimit command
 	#2. run mmsEngineService as nodaemon with '&' to run as background
@@ -63,7 +68,26 @@ then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
+	touch $processorShutdownPathName
+
+	begin=$(date --utc +"%s")
+	now=$(date --utc +"%s")
+	isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
+	while [ $((now-begin)) -lt 10 -a isRunning != "" ]
+	do
+		sleep 1
+		now=$(date --utc +"%s")
+		isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
+	done
+
 	#PIDFILE is not created in case of nodaemon
-	kill -9 `cat $PIDFILE`
+	if [ isRunning != "" ]
+	then
+		echo "Shutdown didn't work, process is now killed"
+
+		kill -9 `cat $PIDFILE`
+	fi
+	
+	rm -f $processorShutdownPathName
 fi
 

@@ -262,6 +262,15 @@ bool MMSEngineProcessor::isMaintenanceMode()
     return f.good();
 }
 
+bool MMSEngineProcessor::isProcessorShutdown()
+{
+	string processorShutdownPathName = "/tmp/processorShutdown.txt";
+
+	ifstream f(processorShutdownPathName.c_str());
+
+    return f.good();
+}
+
 void MMSEngineProcessor::operator ()() 
 {
     bool blocking = true;
@@ -273,14 +282,23 @@ void MMSEngineProcessor::operator ()()
         + ", _processorIdentifier: " + to_string(_processorIdentifier)
     );
 
-    bool endEvent = false;
-    while(!endEvent)
+    bool processorShutdown = false;
+    while(!processorShutdown)
     {
         shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(
 				MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
             // cout << "No event found or event not yet expired" << endl;
+
+			if (isProcessorShutdown())
+			{
+				_logger->info(__FILEREF__ + "Processor was shutdown"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				);
+
+				processorShutdown = true;
+			}
 
             continue;
         }

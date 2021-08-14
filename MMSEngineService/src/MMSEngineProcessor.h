@@ -136,6 +136,7 @@ private:
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
 	bool isMaintenanceMode();
+	bool isProcessorShutdown();
 
     void handleCheckIngestionEvent();
 

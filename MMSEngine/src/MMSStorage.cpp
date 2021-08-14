@@ -1287,7 +1287,8 @@ string MMSStorage::creatingDirsUsingTerritories(
     return mmsAssetPathName;
 }
 
-void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t physicalPathKey)
+void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	int64_t physicalPathKey)
 {
 
     try
@@ -1296,8 +1297,8 @@ void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFac
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,string,string,
-			string,string,int64_t, bool> storageDetails =
+        tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,
+			string,string, string,string,int64_t, bool> storageDetails =
             mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -1367,7 +1368,8 @@ void MMSStorage::removePhysicalPath(shared_ptr<MMSEngineDBFacade> mmsEngineDBFac
     }    
 }
 
-void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, int64_t mediaItemKey)
+void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	int64_t mediaItemKey)
 {
     try
     {
@@ -1375,12 +1377,12 @@ void MMSStorage::removeMediaItem(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
             + ", mediaItemKey: " + to_string(mediaItemKey)
         );
 
-        vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>>
-			allStorageDetails;
+        vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string,
+			int64_t, bool>> allStorageDetails;
         mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-        for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>&
-				storageDetails: allStorageDetails)
+        for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string,
+				int64_t, bool>& storageDetails: allStorageDetails)
         {
 			MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
             int mmsPartitionNumber;
