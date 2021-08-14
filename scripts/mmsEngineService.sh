@@ -72,6 +72,7 @@ then
 
 	maxSecondsToWait=10
 	currentSeconds=0
+	isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
 	while [ $currentSeconds -lt $maxSecondsToWait -a "$isRunning" != "" ]
 	do
 		currentSeconds=$((currentSeconds+1))
