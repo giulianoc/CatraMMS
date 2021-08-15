@@ -90,6 +90,8 @@ private:
 
 	// void getEncodingsProgressThread();
 
+	bool isProcessorShutdown();
+
     void processEncodingJob(EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 	/*

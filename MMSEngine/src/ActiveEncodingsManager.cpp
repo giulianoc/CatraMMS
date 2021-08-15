@@ -11,6 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include <fstream>
 #include "JSONUtils.h"
 #include "ActiveEncodingsManager.h"
 #include "catralibraries/System.h"
@@ -97,6 +98,15 @@ ActiveEncodingsManager::~ActiveEncodingsManager()
 {
 }
 
+bool ActiveEncodingsManager::isProcessorShutdown()
+{
+	string processorShutdownPathName = "/tmp/processorShutdown.txt";
+
+	ifstream f(processorShutdownPathName.c_str());
+
+    return f.good();
+}
+
 void ActiveEncodingsManager::operator()()
 {
     bool shutdown = false;
@@ -116,6 +126,16 @@ void ActiveEncodingsManager::operator()()
     {
         try
         {
+			if (isProcessorShutdown())
+			{
+				_logger->info(__FILEREF__ + "ActiveEncodingsManager was shutdown"
+				);
+
+				shutdown = true;
+
+				continue;
+			}
+
             unique_lock<mutex>  locker(_mtEncodingJobs);
 
             // _logger->info("Reviewing current Encoding Jobs...");

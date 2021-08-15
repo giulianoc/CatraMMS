@@ -127,6 +127,7 @@ public:
 
         bool isPartitionIndexToBeCalculated,
         unsigned long *pulMMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+		FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
 
         bool deliveryRepositoriesToo,
         Workspace::TerritoriesHashMap& phmTerritories

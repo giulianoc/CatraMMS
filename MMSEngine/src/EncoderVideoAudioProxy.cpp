@@ -1897,6 +1897,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
+	FileIO::DirectoryEntryType_t sourceFileType;
     try
     {
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -1923,6 +1924,7 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
 
             partitionIndexToBeCalculated,
             &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+			&sourceFileType,
 
             deliveryRepositoriesToo,
             _encodingItem->_workspace->_territories
@@ -2103,17 +2105,31 @@ int64_t EncoderVideoAudioProxy::processEncodedImage(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
-            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-		bool exceptionInCaseOfErr = false;
-        _logger->info(__FILEREF__ + "Remove"
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-        FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
+		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+		{
+			_logger->info(__FILEREF__ + "Remove directory"
+				+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+
+			Boolean_t bRemoveRecursively = true;
+			FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
+		}
+		else
+		{
+			bool exceptionInCaseOfErr = false;
+			_logger->info(__FILEREF__ + "Remove"
+				+ ", mmsAssetPathName: " + mmsAssetPathName
+			);
+			FileIO::remove(mmsAssetPathName, exceptionInCaseOfErr);
+		}
 
         throw e;
     }
@@ -3405,6 +3421,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
+	FileIO::DirectoryEntryType_t sourceFileType;
     try
     {
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -3466,6 +3483,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 
             partitionIndexToBeCalculated,
             &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+			&sourceFileType,
 
             deliveryRepositoriesToo,
             _encodingItem->_workspace->_territories
@@ -3593,6 +3611,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
     {
         unsigned long long mmsAssetSizeInBytes;
         {
+			/*
             FileIO::DirectoryEntryType_t detSourceFileType = 
                     FileIO::getDirectoryEntryType(mmsAssetPathName);
 
@@ -3610,8 +3629,9 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
                 _logger->error(errorMessage);
                 throw runtime_error(errorMessage);
             }
+			*/
 
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
             }
@@ -3712,33 +3732,30 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
 			+ ", e.what(): " + e.what()
         );
 
-        if (FileIO::fileExisting(mmsAssetPathName)
-                || FileIO::directoryExisting(mmsAssetPathName))
-        {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            _logger->info(__FILEREF__ + "Remove"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "removeDirectory"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "remove"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                FileIO::remove(mmsAssetPathName);
-            }
-        }
+		// file in case of .3gp content OR directory in case of IPhone content
+		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+		{
+			if (FileIO::directoryExisting(mmsAssetPathName))
+			{
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
+			}
+		}
+		else if (sourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+		{
+			if (FileIO::fileExisting(mmsAssetPathName))
+			{
+				_logger->info(__FILEREF__ + "remove"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
+		}
 
         throw e;
     }
@@ -3752,33 +3769,30 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        if (FileIO::fileExisting(mmsAssetPathName)
-                || FileIO::directoryExisting(mmsAssetPathName))
-        {
-            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            _logger->info(__FILEREF__ + "Remove"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", mmsAssetPathName: " + mmsAssetPathName
-            );
-
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                _logger->info(__FILEREF__ + "removeDirectory"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                Boolean_t bRemoveRecursively = true;
-                FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-            }
-            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                _logger->info(__FILEREF__ + "remove"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                );
-                FileIO::remove(mmsAssetPathName);
-            }
-        }
+		// file in case of .3gp content OR directory in case of IPhone content
+		if (sourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+		{
+			if (FileIO::directoryExisting(mmsAssetPathName))
+			{
+				_logger->info(__FILEREF__ + "removeDirectory"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				Boolean_t bRemoveRecursively = true;
+				FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
+			}
+		}
+		else if (sourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+		{
+			if (FileIO::fileExisting(mmsAssetPathName))
+			{
+				_logger->info(__FILEREF__ + "remove"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", mmsAssetPathName: " + mmsAssetPathName
+				);
+				FileIO::remove(mmsAssetPathName);
+			}
+		}
 
         throw e;
     }

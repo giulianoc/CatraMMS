@@ -313,12 +313,10 @@ int main (int iArgc, char *pArgv [])
 	*/
 
 
-    logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"
-            );
+    logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager");
     activeEncodingsManagerThread.join();
-    
+
     {
-		/*
         for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessorsThread.size(); mmsProcessorIndex++)
         {
             logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
@@ -326,20 +324,14 @@ int main (int iArgc, char *pArgv [])
                     );
             mmsEngineProcessorsThread[mmsProcessorIndex]->join();
         }
-		*/
-		int mmsProcessorIndex = 0;
-		logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
-			+ ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
-		);
-		mmsEngineProcessorsThread[mmsProcessorIndex]->join();
     }
-        
-    logger->info(__FILEREF__ + "Waiting Scheduler2"
-            );
-    schedulerThread.join();
 
-    logger->info(__FILEREF__ + "Shutdown done"
-            );
+	// logger->info(__FILEREF__ + "Waiting Scheduler2"
+	//	);
+    // schedulerThread.join();
+
+	logger->info(__FILEREF__ + "Shutdown done"
+		);
     
     return 0;
 }

@@ -1849,12 +1849,12 @@ string MMSStorage::moveAssetInMMSRepository(
 
 	bool partitionIndexToBeCalculated,
 	unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+    FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
 
 	bool deliveryRepositoriesToo,
 	Workspace::TerritoriesHashMap& phmTerritories
 )
 {
-    FileIO::DirectoryEntryType_t detSourceFileType;
 
     if ((relativePath.size() > 0 && relativePath.front() != '/')
 			|| pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
@@ -1872,10 +1872,10 @@ string MMSStorage::moveAssetInMMSRepository(
 
     // file in case of .3gp content OR
     // directory in case of IPhone content
-    detSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
+    *pSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
 
-    if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-            detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
+    if (*pSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
+            *pSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
     {
         _logger->error(__FILEREF__ + "Wrong directory entry type");
 
@@ -1884,11 +1884,11 @@ string MMSStorage::moveAssetInMMSRepository(
 
 	unsigned long long ullFSEntrySizeInBytes;
     {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        if (*pSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
             ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(sourceAssetPathName);
         } 
-        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        else // if (*pSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
             unsigned long ulFileSizeInBytes;
             bool inCaseOfLinkHasItToBeRead = false;
@@ -2012,7 +2012,7 @@ string MMSStorage::moveAssetInMMSRepository(
     // move the file in case of .3gp content OR
     // move the directory in case of IPhone content
     {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        if (*pSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
 			// 2020-04-11: I saw sometimes the below moveDirectory fails because the removeDirectory fails
 			//	And this is because it fails the deletion of files like .nfs0000000103c87546000004d7
