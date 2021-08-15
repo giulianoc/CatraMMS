@@ -322,13 +322,17 @@ int main (int iArgc, char *pArgv [])
             logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
                 + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
                     );
+			// I guess if join is called once the thread is already exits generates
+			// memory leak. I do not care about this because the process is going down
             mmsEngineProcessorsThread[mmsProcessorIndex]->join();
         }
     }
 
-	// logger->info(__FILEREF__ + "Waiting Scheduler2"
-	//	);
-    // schedulerThread.join();
+	scheduler.cancel();
+	logger->info(__FILEREF__ + "Waiting Scheduler2");
+	// I guess if join is called once the thread is already exits generates
+	// memory leak. I do not care about this because the process is going down
+    schedulerThread.join();
 
 	logger->info(__FILEREF__ + "Shutdown done"
 		);

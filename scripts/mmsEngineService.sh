@@ -72,14 +72,15 @@ then
 
 	maxSecondsToWait=10
 	currentSeconds=0
-	isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
+	isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v stop)
 	while [ $currentSeconds -lt $maxSecondsToWait -a "$isRunning" != "" ]
 	do
 		currentSeconds=$((currentSeconds+1))
 
 		echo "Waiting shutdown ... ($currentSeconds)"
 		sleep 1
-		isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status)
+		isRunning=$(ps -ef | grep "mmsEngineService" | grep -v grep | grep -v stop)
+		#echo "isRunning: $isRunning"
 	done
 
 	#PIDFILE is not created in case of nodaemon
