@@ -16607,7 +16607,6 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", key: " + to_string(key)
-				+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
 			);
 
             int64_t sourceMediaItemKey;
@@ -16870,6 +16869,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			{
 				Json::Value destUserDataRoot;
 
+				/*
 				{
 					Json::StreamWriterBuilder wbuilder;
 					string json = Json::writeString(wbuilder, parametersRoot);
@@ -16880,6 +16880,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 						+ ", parametersRoot: " + json
 					);
 				}
+				*/
 
 				string field = "UserData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -16902,6 +16903,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
 
+				/*
 				{
 					Json::StreamWriterBuilder wbuilder;
 					string json = Json::writeString(wbuilder, destMmsDataRoot);
@@ -16922,15 +16924,19 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 						+ ", parametersRoot: " + json
 					);
 				}
+				*/
 
-				// next statements provokes an std::exception
-				/*
+				// next statements will provoke an std::exception in case parametersRoot -> UserData
+				// is a string (i.e.: "UserData" : "{\"matchId\": 363615, \"groupName\": \"CI\",
+				//		\"homeTeamName\": \"Pescara Calcio\", \"awayTeamName\": \"Olbia Calcio 1905\",
+				//		\"start\": 1629398700000 }")
+				//	and NOT a json
+
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;
 
 				field = "UserData";
 				parametersRoot[field] = destUserDataRoot;
-				*/
 			}
 		}
 
