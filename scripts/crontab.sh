@@ -258,19 +258,19 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneHourInMinutes
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSRepository-free/* -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -mmin +$timeoutInMinutes -type f -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 14 ]
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneHourInMinutes
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSRepository-free/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -empty -mmin +$timeoutInMinutes -type d -delete"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
 	then

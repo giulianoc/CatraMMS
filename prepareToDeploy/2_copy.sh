@@ -13,6 +13,12 @@ linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", 
 
 tarFileName=$moduleName-$version-$linuxName.tar.gz
 
+#make it downloadable from public
+echo -n "Load package to MMSRepository-free? " 
+read deploy
+if [ "$deploy" == "y" ]; then
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-api-gui-1:/var/catramms/storage/MMSRepository-free/packages
+fi
 
 echo -n "deploy su mms cloud/test? " 
 read deploy

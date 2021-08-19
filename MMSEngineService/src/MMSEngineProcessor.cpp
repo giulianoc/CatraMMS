@@ -16603,6 +16603,13 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
             tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
+			_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", key: " + to_string(key)
+				+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+			);
+
             int64_t sourceMediaItemKey;
             int64_t sourcePhysicalPathKey;
             string sourcePhysicalPath;
@@ -16788,7 +16795,12 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
             }
-        }
+		}
+
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 1"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 
 		if (utcStartTimeInMilliSecs != -1)
 		{
@@ -16886,6 +16898,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			}
 		}
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 2"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 		// this is a concat, so destination file name shall have the same
         // extension as the source file name
         string fileFormat;
@@ -16913,6 +16929,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         string concatenatedMediaPathName = workspaceIngestionRepository + "/" 
                 + localSourceFileName;
         
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 3"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
         if (sourcePhysicalPaths.size() == 1)
         {
             string sourcePhysicalPath = sourcePhysicalPaths.at(0);
@@ -16939,6 +16959,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             + ", concatenatedMediaPathName: " + concatenatedMediaPathName
         );
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 4"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
         double maxDurationInSeconds = 0.0;
         double extraSecondsToCutWhenMaxDurationIsReached = 0.0;
         string field = "MaxDurationInSeconds";
@@ -17053,6 +17077,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			}
 		}
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 5"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 		{
 			string title;
 			int64_t imageOfVideoMediaItemKey = -1;
@@ -17104,6 +17132,10 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 			}
         }
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 6"
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
     }
     catch(runtime_error e)
     {
