@@ -16870,19 +16870,20 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			{
 				Json::Value destUserDataRoot;
 
-int aaa = 0;
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string json = Json::writeString(wbuilder, parametersRoot);
+
+					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", parametersRoot: " + json
+					);
+				}
+
 				string field = "UserData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
-
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 
 				Json::Value destMmsDataRoot;
 
@@ -16890,42 +16891,46 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(
 				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
 					destMmsDataRoot = destUserDataRoot[field];
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 				field = "utcStartTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = utcStartTimeInMilliSecs;
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 				field = "utcEndTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string json = Json::writeString(wbuilder, destMmsDataRoot);
+
+					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", destMmsDataRoot: " + json
+					);
+				}
+				{
+					Json::StreamWriterBuilder wbuilder;
+					string json = Json::writeString(wbuilder, parametersRoot);
+
+					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", parametersRoot: " + json
+					);
+				}
+
+				// next statements provokes an std::exception
+				/*
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 				field = "UserData";
 				parametersRoot[field] = destUserDataRoot;
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
+				*/
 			}
 		}
 
