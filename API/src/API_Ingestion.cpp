@@ -272,6 +272,10 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 	try
 	{
+		_logger->info(__FILEREF__ + "manageWorkflowVariables"
+			+ ", requestBody: " + requestBody
+		);
+
 		{
 			Json::CharReaderBuilder builder;
 			Json::CharReader* reader = builder.newCharReader();
