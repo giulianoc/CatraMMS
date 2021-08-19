@@ -16797,10 +16797,12 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             }
 		}
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 1"
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
+		_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread, retrying time code"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", utcStartTimeInMilliSecs: " + to_string(utcStartTimeInMilliSecs)
+			+ ", lastUserData: " + lastUserData
+		);
 
 		if (utcStartTimeInMilliSecs != -1)
 		{
@@ -16868,10 +16870,19 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 1"
 			{
 				Json::Value destUserDataRoot;
 
+int aaa = 0;
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 				string field = "UserData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 
 				Json::Value destMmsDataRoot;
 
@@ -16879,29 +16890,45 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 1"
 				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
 					destMmsDataRoot = destUserDataRoot[field];
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 				field = "utcStartTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = utcStartTimeInMilliSecs;
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 				field = "utcEndTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
 
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;
 
-				field = "UserData";
-				parametersRoot[field] = destUserDataRoot;
-			}
-		}
-
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 2"
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
 + ", _processorIdentifier: " + to_string(_processorIdentifier)
 + ", ingestionJobKey: " + to_string(ingestionJobKey)
 );
+				field = "UserData";
+				parametersRoot[field] = destUserDataRoot;
+_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread " + to_string(aaa++)
++ ", _processorIdentifier: " + to_string(_processorIdentifier)
++ ", ingestionJobKey: " + to_string(ingestionJobKey)
+);
+			}
+		}
+
 		// this is a concat, so destination file name shall have the same
         // extension as the source file name
         string fileFormat;
@@ -16929,10 +16956,6 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 2"
         string concatenatedMediaPathName = workspaceIngestionRepository + "/" 
                 + localSourceFileName;
         
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 3"
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
         if (sourcePhysicalPaths.size() == 1)
         {
             string sourcePhysicalPath = sourcePhysicalPaths.at(0);
@@ -16959,10 +16982,6 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 3"
             + ", concatenatedMediaPathName: " + concatenatedMediaPathName
         );
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 4"
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
         double maxDurationInSeconds = 0.0;
         double extraSecondsToCutWhenMaxDurationIsReached = 0.0;
         string field = "MaxDurationInSeconds";
@@ -17077,10 +17096,6 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 4"
 			}
 		}
 
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 5"
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
 		{
 			string title;
 			int64_t imageOfVideoMediaItemKey = -1;
@@ -17132,10 +17147,6 @@ _logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 5"
 					+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 			}
         }
-_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread 6"
-+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-);
     }
     catch(runtime_error e)
     {
