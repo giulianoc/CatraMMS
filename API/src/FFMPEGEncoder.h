@@ -102,7 +102,10 @@ struct EncodingCompleted
 
 class FFMPEGEncoder: public APICommon {
 public:
-    FFMPEGEncoder(Json::Value configuration, 
+    FFMPEGEncoder(
+		Json::Value configuration, 
+		Json::Value encoderCapabilityConfiguration,
+
 		mutex* fcgiAcceptMutex,
 
 		mutex* encodingMutex,
@@ -170,6 +173,8 @@ public:
 	void stopMonitorThread();
     
 private:
+	Json::Value					_encoderCapabilityConfiguration;
+
     mutex*						_encodingMutex;
 	#ifdef __VECTOR__
 		vector<shared_ptr<Encoding>>* _encodingsCapability;

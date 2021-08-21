@@ -72,6 +72,8 @@ time-zone()
 
 install-packages()
 {
+	moduleName=$1
+
 	read -n 1 -s -r -p "install-packages..."
 	echo ""
 
@@ -84,6 +86,14 @@ install-packages()
 	read -n 1 -s -r -p "upgrade..."
 	echo ""
 	apt -y upgrade
+
+	if [ "$moduleName" == "storage" ]; then
+
+		#for storage just nfs is enougth
+		apt install nfs-kernel-server
+
+		return
+	fi
 
 	echo ""
 	read -n 1 -s -r -p "install build-essential git..."
@@ -316,9 +326,9 @@ install-mms-packages()
 	mkdir /opt/catramms/nginx/conf/sites-enabled
 
 	if [ "$moduleName" == "load-balancer" ]; then
-		ln -s ~/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
 	else
-		ln -s ~/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
 	fi
 
 
@@ -403,9 +413,14 @@ firewall-rules()
 		ufw allow 80
 		ufw allow 443
 		ufw allow 8088
+	elif [ "$moduleName" == "storage" ]; then
+		ufw allow nfs
+		ufw allow 111
+		ufw allow 13035
 	fi
 
 	ufw enable
+	ufw status verbose
 
 	#to delete a rule it's the same command to allow with 'delete' after ufw, i.e.: ufw delete allow ssh
 
@@ -441,7 +456,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleName (load-balancer or engine or api or encoder)>"
+	echo "usage $0 <moduleName (load-balancer or engine or api or encoder or storage)>"
 
 	exit
 fi
@@ -451,29 +466,50 @@ moduleName=$1
 #ssh-port
 #mms-account-creation
 #time-zone
-#install-packages
-#create-directory
-#install-mms-packages $moduleName
+#install-packages $moduleName
+
+if [ "$moduleName" == "storage" ]; then
+	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
+	echo "- open /etc/default/nfs-kernel-server"
+	echo "-	comment out the line RPCMOUNTDOPTS=--manage-gids"
+	echo "- add the following line RPCMOUNTDOPTS=\"-p 13025\""
+	echo "- Restart NFSd with sudo /etc/init.d/nfs-kernel-server restart"
+else
+	echo ""
+	#create-directory
+	#install-mms-packages $moduleName
+fi
 firewall-rules $moduleName
 
-echo ""
-echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
-echo ""
-echo "- in case of api/engine/load-balancer, initialize /etc/hosts"
-echo ""
-echo "- run the commands as mms user 'sudo mkdir /mmsRepository0001; sudo chown mms:mms /mmsRepository0001; ln -s /mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
-echo ""
-echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mmsStorage): mkdir /mmsStorage/IngestionRepository; mkdir /mmsStorage/MMSGUI; mkdir /mmsStorage/MMSWorkingAreaRepository; mkdir /mmsStorage/MMSRepository-free; mkdir /mmsStorage/MMSLive; mkdir /mmsStorage/dbDump; mkdir /mmsStorage/commonConfiguration; chown -R mms:mms /mmsStorage/*"
-echo ""
-echo "- in case it is NOT an external transcoder OR it is a nginx-load-balancer, in /etc/fstab add:"
-echo "10.24.71.41:zpool-127340/mmsStorage	/mmsStorage	nfs	rw,_netdev,mountproto=tcp	0	0"
-echo "for each MMSRepository:"
-echo "10.24.71.41:zpool-127340/mmsRepository0000	/mmsRepository0000	nfs	rw,_netdev,mountproto=tcp	0	0"
-echo "if the NAS Repository does not have the access to the IP of the new server, add it, go to the OVH Site, login to the CiborTV project, click on Server → NAS e CDN, Aggiungi un accesso per mmsStorage, Aggiungi un accesso per mmsRepository0000"
-echo ""
+if [ "$moduleName" == "storage" ]; then
+
+	echo "- fdisk and mkfs to format the disks"
+	echo "- mkdir /MMSRepository/MMS_XXXX"
+	echo "- initialize /etc/fstab"
+	echo "- mount -a"
+	echo "- chown -R mms:mms /MMSRepository"
+	echo "- initialize /etc/exports"
+	echo "- exportfs -ra"
+else
+	echo ""
+	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
+	echo ""
+	echo "- in case of api/engine/load-balancer, initialize /etc/hosts"
+	echo ""
+	echo "- run the commands as mms user 'sudo mkdir /mmsRepository0001; sudo chown mms:mms /mmsRepository0001; ln -s /mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001' for the others repositories"
+	echo ""
+	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mmsStorage): mkdir /mmsStorage/IngestionRepository; mkdir /mmsStorage/MMSGUI; mkdir /mmsStorage/MMSWorkingAreaRepository; mkdir /mmsStorage/MMSRepository-free; mkdir /mmsStorage/MMSLive; mkdir /mmsStorage/dbDump; mkdir /mmsStorage/commonConfiguration; chown -R mms:mms /mmsStorage/*"
+	echo ""
+	echo "- in case it is NOT an external transcoder OR it is a nginx-load-balancer, in /etc/fstab add:"
+	echo "10.24.71.41:zpool-127340/mmsStorage	/mmsStorage	nfs	rw,_netdev,mountproto=tcp	0	0"
+	echo "for each MMSRepository:"
+	echo "10.24.71.41:zpool-127340/mmsRepository0000	/mmsRepository0000	nfs	rw,_netdev,mountproto=tcp	0	0"
+	echo "if the NAS Repository does not have the access to the IP of the new server, add it, go to the OVH Site, login to the CiborTV project, click on Server → NAS e CDN, Aggiungi un accesso per mmsStorage, Aggiungi un accesso per mmsRepository0000"
+	echo ""
+fi
 
 if [ "$moduleName" == "encoder" ]; then
-	echo "add the new hostname in every /etc/hosts of every api and engine servers
+	echo "add the new hostname in every /etc/hosts of every api and engine servers"
 fi
 
 echo "if a temporary user has to be removed 'deluser test'"

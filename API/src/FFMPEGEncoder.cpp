@@ -46,7 +46,25 @@ int main(int argc, char** argv)
 			return 1;
 		}
     
+		string sEncoderCapabilityConfiguration;
+		{
+			string sConfigurationPathName = configurationPathName;
+			size_t endOfDirectoryIndex = sConfigurationPathName.find_last_of("/");
+			if (endOfDirectoryIndex == string::npos)
+			{
+				cerr << "MMS API: not able to get sEncoderCapabilityConfiguration" << endl;
+        
+				return 1;
+			}
+
+			sEncoderCapabilityConfiguration = sConfigurationPathName.substr(0, endOfDirectoryIndex);
+		}
+
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
+
+		sEncoderCapabilityConfiguration += "/mms_encoderCapability.cfg";
+		Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
+			sEncoderCapabilityConfiguration.c_str());
     
 		string logPathName =  configuration["log"]["encoder"].get("pathName", "").asString();
 		string logType =  configuration["log"]["encoder"].get("type", "").asString();
@@ -181,7 +199,8 @@ int main(int argc, char** argv)
 
 		#ifdef __VECTOR__
 		{
-			int maxEncodingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxEncodingsCapability", 0);
+			int maxEncodingsCapability =  JSONUtils::asInt(
+				encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
 			logger->info(__FILEREF__ + "Configuration item"
 				+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
 			);
@@ -196,7 +215,8 @@ int main(int argc, char** argv)
 				encodingsCapability.push_back(encoding);
 			}
 
-			int maxLiveProxiesCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxLiveProxiesCapability", 0);
+			int maxLiveProxiesCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+					"maxLiveProxiesCapability", 10);
 			logger->info(__FILEREF__ + "Configuration item"
 				+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
 			);
@@ -212,7 +232,8 @@ int main(int argc, char** argv)
 				liveProxiesCapability.push_back(liveProxy);
 			}
 
-			int maxLiveRecordingsCapability =  JSONUtils::asInt(configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
+			int maxLiveRecordingsCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+					"maxLiveRecordingsCapability", 10);
 			logger->info(__FILEREF__ + "Configuration item"
 				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
 			);
@@ -241,7 +262,10 @@ int main(int argc, char** argv)
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
-			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(configuration, 
+			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(
+				configuration, 
+				encoderCapabilityConfiguration, 
+
 				&fcgiAcceptMutex,
 
 				&encodingMutex,
@@ -310,7 +334,11 @@ int main(int argc, char** argv)
     return 0;
 }
 
-FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration, 
+FFMPEGEncoder::FFMPEGEncoder(
+		
+		Json::Value configuration, 
+		Json::Value encoderCapabilityConfiguration,
+
         mutex* fcgiAcceptMutex,
 
 		mutex* encodingMutex,
@@ -346,6 +374,8 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         fcgiAcceptMutex,
         logger) 
 {
+	_encoderCapabilityConfiguration = encoderCapabilityConfiguration;
+
     _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
@@ -409,21 +439,24 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
-	_maxEncodingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxEncodingsCapability", 0);
+	_maxEncodingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+		"maxEncodingsCapability", 1);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
 	);
 
 	_liveProxyMutex = liveProxyMutex;
 	_liveProxiesCapability = liveProxiesCapability;
-	_maxLiveProxiesCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveProxiesCapability", 0);
+	_maxLiveProxiesCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+		"maxLiveProxiesCapability", 10);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
 	);
 
 	_liveRecordingMutex = liveRecordingMutex;
 	_liveRecordingsCapability = liveRecordingsCapability;
-	_maxLiveRecordingsCapability =  JSONUtils::asInt(_configuration["ffmpeg"], "maxLiveRecordingsCapability", 0);
+	_maxLiveRecordingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+		"maxLiveRecordingsCapability", 10);
 	logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
 	);
