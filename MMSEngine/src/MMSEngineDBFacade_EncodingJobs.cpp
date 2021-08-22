@@ -2964,16 +2964,36 @@ void MMSEngineDBFacade::getEncodingJobs(
 						+ ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
 						+ ", status: " + MMSEngineDBFacade::toString(EncodingStatus::Processing)
 						+ ", processorMMS: " + processorMMS
-						// + ", encodingJobStart: " + "NULL"
+						// 2021-08-22: scenario:
+						//	1. the encoding is selected here to be run
+						//	2. we have a long queue of encodings and it will not be run
+						//		for about 6 hours
+						//	3. After 6 hours the encoding finally starts but,
+						//		since the encodingJobStart field is not updated,
+						//		it seems like the duration of the encoding is 6 hours + real duration.
+						//		Also the encoding duration estimates will be wrong.
+						// To solve this scenario, we added encodingJobStart in the update command
+						// because:
+						//	1. once the encoding was selected from the above select, it means
+						//		it is the time to be processed
+						//	2. even if we update the encodingJobStart field to NOW() and
+						//		it will not be run because of the queue, the encoding will continue
+						//		to be retrieved from the above select because the condition
+						//		ej.encodingJobStart <= NOW() continue to be true
+						+ ", encodingJobStart: " + "NOW()"
 						);
                     lastSQLCommand = 
-                        "update MMS_EncodingJob set status = ?, processorMMS = ? " // , encodingJobStart = NULL 
+                        "update MMS_EncodingJob set status = ?, processorMMS = ?"
+						", encodingJobStart = NOW() "
 						"where encodingJobKey = ? and processorMMS is null";
-                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+						conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++,
+						MMSEngineDBFacade::toString(EncodingStatus::Processing));
                     preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
-                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++,
+						encodingItem->_encodingJobKey);
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
