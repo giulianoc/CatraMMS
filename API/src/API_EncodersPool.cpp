@@ -37,14 +37,14 @@ void API::addEncoder(
         string protocol;
         string serverName;
         int port;
-        int maxTranscodingCapability;
-        int maxLiveProxiesCapabilities;
-        int maxLiveRecordingCapabilities;
+        // int maxTranscodingCapability;
+        // int maxLiveProxiesCapabilities;
+        // int maxLiveRecordingCapabilities;
 
         try
         {
             Json::Value requestBodyRoot;
-            
+
             {
                 Json::CharReaderBuilder builder;
                 Json::CharReader* reader = builder.newCharReader();
@@ -125,6 +125,7 @@ void API::addEncoder(
 					port = 443;
 			}
 
+			/*
             field = "MaxTranscodingCapability";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				maxTranscodingCapability = requestBodyRoot.get(field, 5).asInt();            
@@ -142,6 +143,7 @@ void API::addEncoder(
 				maxLiveRecordingCapabilities = requestBodyRoot.get(field, 5).asInt();            
 			else
 				maxLiveRecordingCapabilities = 5;            
+			*/
         }
         catch(runtime_error e)
         {
@@ -167,8 +169,8 @@ void API::addEncoder(
         try
         {
 			int64_t encoderKey = _mmsEngineDBFacade->addEncoder(
-                label, external, enabled, protocol, serverName, port, maxTranscodingCapability,
-				maxLiveProxiesCapabilities, maxLiveRecordingCapabilities);
+                label, external, enabled, protocol, serverName, port);
+				// maxTranscodingCapability, maxLiveProxiesCapabilities, maxLiveRecordingCapabilities);
 
             sResponse = (
                     string("{ ") 
@@ -260,6 +262,7 @@ void API::modifyEncoder(
         int port;
 		bool portToBeModified;
 
+		/*
         int maxTranscodingCapability;
 		bool maxTranscodingCapabilityToBeModified;
 
@@ -268,6 +271,7 @@ void API::modifyEncoder(
 
         int maxLiveRecordingCapabilities;
 		bool maxLiveRecordingCapabilitiesToBeModified;
+		*/
 
         try
         {
@@ -349,6 +353,7 @@ void API::modifyEncoder(
 			else
 				portToBeModified = false;
 
+			/*
             field = "MaxTranscodingCapability";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
@@ -375,6 +380,7 @@ void API::modifyEncoder(
             }
 			else
 				maxLiveRecordingCapabilitiesToBeModified = false;
+			*/
         }
         catch(runtime_error e)
         {
@@ -419,10 +425,10 @@ void API::modifyEncoder(
 				enabledToBeModified, enabled,
 				protocolToBeModified, protocol,
 				serverNameToBeModified, serverName,
-				portToBeModified, port,
-				maxTranscodingCapabilityToBeModified, maxTranscodingCapability,
-				maxLiveProxiesCapabilitiesToBeModified, maxLiveProxiesCapabilities,
-				maxLiveRecordingCapabilitiesToBeModified, maxLiveRecordingCapabilities
+				portToBeModified, port
+				// maxTranscodingCapabilityToBeModified, maxTranscodingCapability,
+				// maxLiveProxiesCapabilitiesToBeModified, maxLiveProxiesCapabilities,
+				// maxLiveRecordingCapabilitiesToBeModified, maxLiveRecordingCapabilities
 			);
 
             sResponse = (

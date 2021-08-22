@@ -13347,6 +13347,12 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 
 				maxEncodingsCapability = VECTOR_MAX_CAPACITY;
 			}
+
+			maxEncodingsCapability = calculateCapabilitiesBasedOnOtherRunningProcesses(
+				maxEncodingsCapability,
+				-1,
+				-1
+			);
 		}
 		else
 		{
@@ -13396,6 +13402,12 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 
 				maxLiveProxiesCapability = VECTOR_MAX_CAPACITY;
 			}
+
+			maxLiveProxiesCapability = calculateCapabilitiesBasedOnOtherRunningProcesses(
+				-1,
+				maxLiveProxiesCapability,
+				-1
+			);
 		}
 		else
 		{
@@ -13445,6 +13457,12 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 
 				maxLiveRecordingsCapability = VECTOR_MAX_CAPACITY;
 			}
+
+			maxLiveRecordingsCapability = calculateCapabilitiesBasedOnOtherRunningProcesses(
+				-1,
+				-1,
+				maxLiveRecordingsCapability
+			);
 		}
 		else
 		{
@@ -13465,5 +13483,195 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	);
 
 	return maxLiveRecordingsCapability;
+}
+
+int FFMPEGEncoder::calculateCapabilitiesBasedOnOtherRunningProcesses(
+	int configuredMaxEncodingsCapability,	// != -1 if we want to calculate maxEncodingsCapability
+	int configuredMaxLiveProxiesCapability,	// != -1 if we want to calculate maxLiveProxiesCapability
+	int configuredMaxLiveRecordingsCapability	// != -1 if we want to calculate maxLiveRecordingsCapability
+)
+{
+
+	// proportion are: 1 encoding likes 3 recorders (1 encoding) likes 6 proxies
+
+	int oneEncodingEqualsToRecorderNumber = 3;
+	int oneEncodingEqualsToProxyNumber = 6;
+	int oneRecorderEqualsToProxyNumber = 3;
+
+	if (configuredMaxEncodingsCapability != -1)
+	{
+		int currentLiveProxiesRunning = 0;
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			{
+				if (liveProxy->_running)
+					currentLiveProxiesRunning++;
+			}
+			#else	// __MAP__
+			currentLiveProxiesRunning = _liveProxiesCapability->size();
+			#endif
+		}
+
+		int currentLiveRecorderRunning = 0;
+		{
+			lock_guard<mutex> locker(*_liveRecordingMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			{
+				if (liveRecording->_running)
+					currentLiveRecorderRunning++;
+			}
+			#else	// __MAP__
+			currentLiveRecorderRunning = _liveRecordingsCapability->size();
+			#endif
+		}
+
+		int encodingsToBeSubtractedBecauseOfProxies = currentLiveProxiesRunning / oneEncodingEqualsToProxyNumber;
+		int encodingsToBeSubtractedBecauseOfRecorders = currentLiveRecorderRunning / oneEncodingEqualsToRecorderNumber;
+
+		int newMaxEncodingsCapability;
+		if (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders
+				> configuredMaxEncodingsCapability)
+			newMaxEncodingsCapability = 0;
+		else
+			newMaxEncodingsCapability = configuredMaxEncodingsCapability
+				- (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders);
+
+		if (encodingsToBeSubtractedBecauseOfProxies + encodingsToBeSubtractedBecauseOfRecorders > 0)
+			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
+				+ ", configuredMaxEncodingsCapability: " + to_string(configuredMaxEncodingsCapability)
+				+ ", currentLiveProxiesRunning: " + to_string(currentLiveProxiesRunning)
+				+ ", encodingsToBeSubtractedBecauseOfProxies: " + to_string(encodingsToBeSubtractedBecauseOfProxies)
+				+ ", currentLiveRecorderRunning: " + to_string(currentLiveRecorderRunning)
+				+ ", encodingsToBeSubtractedBecauseOfRecorders: " + to_string(encodingsToBeSubtractedBecauseOfRecorders)
+				+ ", newMaxEncodingsCapability: " + to_string(newMaxEncodingsCapability)
+			);
+
+		return newMaxEncodingsCapability;
+	}
+	else if (configuredMaxLiveProxiesCapability != -1)
+	{
+		int currentEncodingsRunning = 0;
+		{
+			lock_guard<mutex> locker(*_encodingMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (encoding->_running)
+					currentEncodingsRunning++;
+			}
+			#else	// __MAP__
+			currentEncodingsRunning = _encodingsCapability->size();
+			#endif
+		}
+
+		int currentLiveRecorderRunning = 0;
+		{
+			lock_guard<mutex> locker(*_liveRecordingMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			{
+				if (liveRecording->_running)
+					currentLiveRecorderRunning++;
+			}
+			#else	// __MAP__
+			currentLiveRecorderRunning = _liveRecordingsCapability->size();
+			#endif
+		}
+
+		int proxiesToBeSubtractedBecauseOfEncodings = currentEncodingsRunning * oneEncodingEqualsToProxyNumber;
+		int proxiesToBeSubtractedBecauseOfRecorders = currentLiveRecorderRunning * oneRecorderEqualsToProxyNumber;
+
+		int newMaxLiveProxiesCapability;
+		if (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders
+				> configuredMaxLiveProxiesCapability)
+			newMaxLiveProxiesCapability = 0;
+		else
+			newMaxLiveProxiesCapability = configuredMaxLiveProxiesCapability
+				- (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders);
+
+		if (proxiesToBeSubtractedBecauseOfEncodings + proxiesToBeSubtractedBecauseOfRecorders > 0)
+			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
+				+ ", configuredMaxLiveProxiesCapability: " + to_string(configuredMaxLiveProxiesCapability)
+				+ ", currentEncodingsRunning: " + to_string(currentEncodingsRunning)
+				+ ", proxiesToBeSubtractedBecauseOfEncodings: " + to_string(proxiesToBeSubtractedBecauseOfEncodings)
+				+ ", currentLiveRecorderRunning: " + to_string(currentLiveRecorderRunning)
+				+ ", proxiesToBeSubtractedBecauseOfRecorders: " + to_string(proxiesToBeSubtractedBecauseOfRecorders)
+				+ ", newMaxLiveProxiesCapability: " + to_string(newMaxLiveProxiesCapability)
+			);
+
+		return newMaxLiveProxiesCapability;
+	}
+	else if (configuredMaxLiveRecordingsCapability != -1)
+	{
+		int currentEncodingsRunning = 0;
+		{
+			lock_guard<mutex> locker(*_encodingMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			{
+				if (encoding->_running)
+					currentEncodingsRunning++;
+			}
+			#else	// __MAP__
+			currentEncodingsRunning = _encodingsCapability->size();
+			#endif
+		}
+
+		int currentLiveProxiesRunning = 0;
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			#ifdef __VECTOR__
+			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			{
+				if (liveProxy->_running)
+					currentLiveProxiesRunning++;
+			}
+			#else	// __MAP__
+			currentLiveProxiesRunning = _liveProxiesCapability->size();
+			#endif
+		}
+
+		int newMaxLiveRecordingsCapability;
+		int recordersToBeSubtractedBecauseOfEncodings = currentEncodingsRunning * oneEncodingEqualsToRecorderNumber;
+		int recordersToBeSubtractedBecauseOfProxies = currentLiveProxiesRunning / oneRecorderEqualsToProxyNumber;
+
+		if (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies
+				> configuredMaxLiveRecordingsCapability)
+			newMaxLiveRecordingsCapability = 0;
+		else
+			newMaxLiveRecordingsCapability = configuredMaxLiveRecordingsCapability
+				- (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies);
+
+		if (recordersToBeSubtractedBecauseOfEncodings + recordersToBeSubtractedBecauseOfProxies > 0)
+			_logger->warn(__FILEREF__ + "getMaxXXXXCapability. capability reduced because of other processes running"
+				+ ", configuredMaxLiveRecordingsCapability: " + to_string(configuredMaxLiveRecordingsCapability)
+				+ ", currentEncodingsRunning: " + to_string(currentEncodingsRunning)
+				+ ", recordersToBeSubtractedBecauseOfEncodings: " + to_string(recordersToBeSubtractedBecauseOfEncodings)
+				+ ", currentLiveProxiesRunning: " + to_string(currentLiveProxiesRunning)
+				+ ", recordersToBeSubtractedBecauseOfProxies: " + to_string(recordersToBeSubtractedBecauseOfProxies)
+				+ ", newMaxLiveRecordingsCapability: " + to_string(newMaxLiveRecordingsCapability)
+			);
+
+		return newMaxLiveRecordingsCapability;
+	}
+	else
+	{
+		_logger->error(__FILEREF__ + "getMaxXXXXCapability. Wrong call to calculateCapabilitiesBasedOnOtherRunningProcesses"
+				+ ", configuredMaxEncodingsCapability: " + to_string(configuredMaxEncodingsCapability)
+				+ ", configuredMaxLiveProxiesCapability: " + to_string(configuredMaxLiveProxiesCapability)
+				+ ", configuredMaxLiveRecordingsCapability: " + to_string(configuredMaxLiveRecordingsCapability)
+			);
+
+		return 0;
+	}
 }
 

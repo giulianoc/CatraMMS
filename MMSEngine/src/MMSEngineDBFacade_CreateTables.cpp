@@ -1002,9 +1002,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "protocol				VARCHAR (16) NOT NULL,"
                     "serverName				VARCHAR (64) NOT NULL,"
                     "port					INT UNSIGNED NOT NULL,"
-                    "maxTranscodingCapability		INT UNSIGNED NOT NULL,"
-                    "maxLiveProxiesCapabilities		INT UNSIGNED NOT NULL,"
-                    "maxLiveRecordingCapabilities	INT UNSIGNED NOT NULL,"
+                    // "maxTranscodingCapability		INT UNSIGNED NOT NULL,"
+                    // "maxLiveProxiesCapabilities		INT UNSIGNED NOT NULL,"
+                    // "maxLiveRecordingCapabilities	INT UNSIGNED NOT NULL,"
                     "constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
                     "UNIQUE (label)) "
                     "ENGINE=InnoDB";

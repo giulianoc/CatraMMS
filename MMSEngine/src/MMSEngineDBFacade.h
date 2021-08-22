@@ -2237,10 +2237,10 @@ public:
 		bool enabled,
 		string protocol,
 		string serverName,
-		int port,
-		int maxTranscodingCapability,
-		int maxLiveProxiesCapabilities,
-		int maxLiveRecordingCapabilities
+		int port
+		// int maxTranscodingCapability,
+		// int maxLiveProxiesCapabilities,
+		// int maxLiveRecordingCapabilities
 	);
 
 	void modifyEncoder(
@@ -2250,10 +2250,10 @@ public:
 		bool enabledToBeModified, bool enabled,
 		bool protocolToBeModified, string protocol,
 		bool serverNameToBeModified, string serverName,
-		bool portToBeModified, int port,
-		bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
-		bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
-		bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
+		bool portToBeModified, int port
+		// bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
+		// bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
+		// bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
 	);
 
 	void removeEncoder(

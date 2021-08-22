@@ -9,10 +9,12 @@ int64_t MMSEngineDBFacade::addEncoder(
 	bool enabled,
     string protocol,
 	string serverName,
-	int port,
+	int port
+	/*
 	int maxTranscodingCapability,
 	int maxLiveProxiesCapabilities,
 	int maxLiveRecordingCapabilities
+	*/
 	)
 {
     string      lastSQLCommand;
@@ -29,10 +31,10 @@ int64_t MMSEngineDBFacade::addEncoder(
         
         {
             lastSQLCommand = 
-                "insert into MMS_Encoder(label, external, enabled, protocol, serverName, port, "
-				"maxTranscodingCapability, maxLiveProxiesCapabilities, "
-				"maxLiveRecordingCapabilities) values ("
-                "?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "insert into MMS_Encoder(label, external, enabled, protocol, serverName, port "
+				// "maxTranscodingCapability, maxLiveProxiesCapabilities, maxLiveRecordingCapabilities"
+				") values ("
+                "?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -43,9 +45,9 @@ int64_t MMSEngineDBFacade::addEncoder(
             preparedStatement->setString(queryParameterIndex++, protocol);
             preparedStatement->setString(queryParameterIndex++, serverName);
             preparedStatement->setInt(queryParameterIndex++, port);
-            preparedStatement->setInt(queryParameterIndex++, maxTranscodingCapability);
-            preparedStatement->setInt(queryParameterIndex++, maxLiveProxiesCapabilities);
-            preparedStatement->setInt(queryParameterIndex++, maxLiveRecordingCapabilities);
+            // preparedStatement->setInt(queryParameterIndex++, maxTranscodingCapability);
+            // preparedStatement->setInt(queryParameterIndex++, maxLiveProxiesCapabilities);
+            // preparedStatement->setInt(queryParameterIndex++, maxLiveRecordingCapabilities);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             preparedStatement->executeUpdate();
@@ -57,9 +59,9 @@ int64_t MMSEngineDBFacade::addEncoder(
 				+ ", protocol: " + protocol
 				+ ", serverName: " + serverName
 				+ ", port: " + to_string(port)
-				+ ", maxTranscodingCapability: " + to_string(maxTranscodingCapability)
-				+ ", maxLiveProxiesCapabilities: " + to_string(maxLiveProxiesCapabilities)
-				+ ", maxLiveRecordingCapabilities: " + to_string(maxLiveRecordingCapabilities)
+				// + ", maxTranscodingCapability: " + to_string(maxTranscodingCapability)
+				// + ", maxLiveProxiesCapabilities: " + to_string(maxLiveProxiesCapabilities)
+				// + ", maxLiveRecordingCapabilities: " + to_string(maxLiveRecordingCapabilities)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -142,10 +144,10 @@ void MMSEngineDBFacade::modifyEncoder(
     bool enabledToBeModified, bool enabled,
     bool protocolToBeModified, string protocol,
 	bool serverNameToBeModified, string serverName,
-	bool portToBeModified, int port,
-	bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
-	bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
-	bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
+	bool portToBeModified, int port
+	// bool maxTranscodingCapabilityToBeModified, int maxTranscodingCapability,
+	// bool maxLiveProxiesCapabilitiesToBeModified, int maxLiveProxiesCapabilities,
+	// bool maxLiveRecordingCapabilitiesToBeModified, int maxLiveRecordingCapabilities
 	)
 {
     string      lastSQLCommand;
@@ -211,6 +213,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				oneParameterPresent = true;
 			}
 
+			/*
 			if (maxTranscodingCapabilityToBeModified)
 			{
 				if (oneParameterPresent)
@@ -234,6 +237,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				setSQL += ("maxLiveRecordingCapabilities = ?");
 				oneParameterPresent = true;
 			}
+			*/
 
 			if (!oneParameterPresent)
             {
@@ -265,12 +269,12 @@ void MMSEngineDBFacade::modifyEncoder(
 				preparedStatement->setString(queryParameterIndex++, serverName);
 			if (portToBeModified)
 				preparedStatement->setInt(queryParameterIndex++, port);
-			if (maxTranscodingCapabilityToBeModified)
-				preparedStatement->setInt(queryParameterIndex++, maxTranscodingCapability);
-			if (maxLiveProxiesCapabilitiesToBeModified)
-				preparedStatement->setInt(queryParameterIndex++, maxLiveProxiesCapabilities);
-			if (maxLiveRecordingCapabilitiesToBeModified)
-				preparedStatement->setInt(queryParameterIndex++, maxLiveRecordingCapabilities);
+			// if (maxTranscodingCapabilityToBeModified)
+			// 	preparedStatement->setInt(queryParameterIndex++, maxTranscodingCapability);
+			// if (maxLiveProxiesCapabilitiesToBeModified)
+			// 	preparedStatement->setInt(queryParameterIndex++, maxLiveProxiesCapabilities);
+			// if (maxLiveRecordingCapabilitiesToBeModified)
+			// 	preparedStatement->setInt(queryParameterIndex++, maxLiveRecordingCapabilities);
             preparedStatement->setInt64(queryParameterIndex++, encoderKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -283,12 +287,12 @@ void MMSEngineDBFacade::modifyEncoder(
 				+ ", protocol (" + to_string(protocolToBeModified) + "): " + protocol
 				+ ", serverName (" + to_string(serverNameToBeModified) + "): " + serverName
 				+ ", port (" + to_string(portToBeModified) + "): " + to_string(port)
-				+ ", maxTranscodingCapability (" + to_string(maxTranscodingCapabilityToBeModified)
-					+ "): " + to_string(maxTranscodingCapability)
-				+ ", maxLiveProxiesCapabilities (" + to_string(maxLiveProxiesCapabilitiesToBeModified) + "): "
-					+ to_string(maxLiveProxiesCapabilities)
-				+ ", maxLiveRecordingCapabilities (" + to_string(maxLiveRecordingCapabilitiesToBeModified) + "): "
-					+ to_string(maxLiveRecordingCapabilities)
+				// + ", maxTranscodingCapability (" + to_string(maxTranscodingCapabilityToBeModified)
+				// 	+ "): " + to_string(maxTranscodingCapability)
+				// + ", maxLiveProxiesCapabilities (" + to_string(maxLiveProxiesCapabilitiesToBeModified) + "): "
+				// 	+ to_string(maxLiveProxiesCapabilities)
+				// + ", maxLiveRecordingCapabilities (" + to_string(maxLiveRecordingCapabilitiesToBeModified) + "): "
+				// 	+ to_string(maxLiveRecordingCapabilities)
 				+ ", encoderKey: " + to_string(encoderKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(

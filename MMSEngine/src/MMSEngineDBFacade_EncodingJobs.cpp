@@ -664,9 +664,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 						+ ", processorMMS: " + processorMMS
 						// + ", encodingJobStart: " + "NULL"
 						);
-                    lastSQLCommand = 
-                        "update MMS_EncodingJob set status = ?, processorMMS = ? " // , encodingJobStart = NULL "
-						"where encodingJobKey = ? and processorMMS is null";
+					// encodingJobStart: See comment below marked as '2021-08-22'
+					if (!encodingResultSet->isNull("utcProxyPeriodStart"))
+						lastSQLCommand = 
+							"update MMS_EncodingJob set status = ?, processorMMS = ? "
+							"where encodingJobKey = ? and processorMMS is null";
+					else
+						lastSQLCommand = 
+							"update MMS_EncodingJob set status = ?, processorMMS = ?"
+							", encodingJobStart = NOW() "
+							"where encodingJobKey = ? and processorMMS is null";
                     shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
 							conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
