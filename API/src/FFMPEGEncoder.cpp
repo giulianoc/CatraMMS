@@ -46,26 +46,8 @@ int main(int argc, char** argv)
 			return 1;
 		}
     
-		string sEncoderCapabilityConfiguration;
-		{
-			string sConfigurationPathName = configurationPathName;
-			size_t endOfDirectoryIndex = sConfigurationPathName.find_last_of("/");
-			if (endOfDirectoryIndex == string::npos)
-			{
-				cerr << "MMS API: not able to get sEncoderCapabilityConfiguration" << endl;
-        
-				return 1;
-			}
-
-			sEncoderCapabilityConfiguration = sConfigurationPathName.substr(0, endOfDirectoryIndex);
-		}
-
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
 
-		sEncoderCapabilityConfiguration += "/mms_encoderCapability.cfg";
-		Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
-			sEncoderCapabilityConfiguration.c_str());
-    
 		string logPathName =  configuration["log"]["encoder"].get("pathName", "").asString();
 		string logType =  configuration["log"]["encoder"].get("type", "").asString();
 		bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
@@ -150,6 +132,30 @@ int main(int argc, char** argv)
             configuration, dbPoolSize, logger);
 		*/
 
+		string encoderCapabilityConfigurationPathName;
+		{
+			string sConfigurationPathName = configurationPathName;
+			size_t endOfDirectoryIndex = sConfigurationPathName.find_last_of("/");
+			if (endOfDirectoryIndex == string::npos)
+			{
+				logger->error(__FILEREF__
+					+ "MMS API: not able to get encoderCapabilityConfigurationPathName"
+					+ ", sConfigurationPathName: " + sConfigurationPathName
+				);
+        
+				return 1;
+			}
+
+			encoderCapabilityConfigurationPathName = sConfigurationPathName.substr(
+				0, endOfDirectoryIndex);
+			encoderCapabilityConfigurationPathName += "/mms_encoderCapability.cfg";
+
+			logger->info(__FILEREF__ + "Encoder Capability"
+				+ ", encoderCapabilityConfigurationPathName: "
+					+ encoderCapabilityConfigurationPathName
+			);
+		}
+
 		MMSStorage::createDirectories(configuration, logger);
 		/*
 		{
@@ -199,13 +205,13 @@ int main(int argc, char** argv)
 
 		#ifdef __VECTOR__
 		{
-			int maxEncodingsCapability =  JSONUtils::asInt(
-				encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
-			logger->info(__FILEREF__ + "Configuration item"
-				+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
-			);
+			// int maxEncodingsCapability =  JSONUtils::asInt(
+			// 	encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
+			// logger->info(__FILEREF__ + "Configuration item"
+			// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
+			// );
 
-			for (int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
+			for (int encodingIndex = 0; encodingIndex < VECTOR_MAX_CAPACITY; encodingIndex++)
 			{
 				shared_ptr<Encoding>    encoding = make_shared<Encoding>();
 				encoding->_running   = false;
@@ -215,13 +221,13 @@ int main(int argc, char** argv)
 				encodingsCapability.push_back(encoding);
 			}
 
-			int maxLiveProxiesCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
-					"maxLiveProxiesCapability", 10);
-			logger->info(__FILEREF__ + "Configuration item"
-				+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
-			);
+			// int maxLiveProxiesCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+			// 		"maxLiveProxiesCapability", 10);
+			// logger->info(__FILEREF__ + "Configuration item"
+			// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
+			// );
 
-			for (int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
+			for (int liveProxyIndex = 0; liveProxyIndex < VECTOR_MAX_CAPACITY; liveProxyIndex++)
 			{
 				shared_ptr<LiveProxyAndGrid>    liveProxy = make_shared<LiveProxyAndGrid>();
 				liveProxy->_running					= false;
@@ -232,13 +238,14 @@ int main(int argc, char** argv)
 				liveProxiesCapability.push_back(liveProxy);
 			}
 
-			int maxLiveRecordingsCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
-					"maxLiveRecordingsCapability", 10);
-			logger->info(__FILEREF__ + "Configuration item"
-				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
-			);
+			// int maxLiveRecordingsCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+			// 		"maxLiveRecordingsCapability", 10);
+			// logger->info(__FILEREF__ + "Configuration item"
+			// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
+			// );
 
-			for (int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability; liveRecordingIndex++)
+			for (int liveRecordingIndex = 0; liveRecordingIndex < VECTOR_MAX_CAPACITY;
+				liveRecordingIndex++)
 			{
 				shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
 				liveRecording->_running   = false;
@@ -264,7 +271,7 @@ int main(int argc, char** argv)
 		{
 			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(
 				configuration, 
-				encoderCapabilityConfiguration, 
+				encoderCapabilityConfigurationPathName, 
 
 				&fcgiAcceptMutex,
 
@@ -337,7 +344,7 @@ int main(int argc, char** argv)
 FFMPEGEncoder::FFMPEGEncoder(
 		
 		Json::Value configuration, 
-		Json::Value encoderCapabilityConfiguration,
+		string encoderCapabilityConfigurationPathName,
 
         mutex* fcgiAcceptMutex,
 
@@ -374,7 +381,7 @@ FFMPEGEncoder::FFMPEGEncoder(
         fcgiAcceptMutex,
         logger) 
 {
-	_encoderCapabilityConfiguration = encoderCapabilityConfiguration;
+	_encoderCapabilityConfigurationPathName = encoderCapabilityConfigurationPathName;
 
     _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -439,27 +446,27 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
-	_maxEncodingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-		"maxEncodingsCapability", 1);
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
-	);
+	// _maxEncodingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+	// 	"maxEncodingsCapability", 1);
+	// _logger->info(__FILEREF__ + "Configuration item"
+	// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
+	// );
 
 	_liveProxyMutex = liveProxyMutex;
 	_liveProxiesCapability = liveProxiesCapability;
-	_maxLiveProxiesCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-		"maxLiveProxiesCapability", 10);
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
-	);
+	// _maxLiveProxiesCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+	// 	"maxLiveProxiesCapability", 10);
+	// _logger->info(__FILEREF__ + "Configuration item"
+	// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(_maxLiveProxiesCapability)
+	// );
 
 	_liveRecordingMutex = liveRecordingMutex;
 	_liveRecordingsCapability = liveRecordingsCapability;
-	_maxLiveRecordingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
-		"maxLiveRecordingsCapability", 10);
-	logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
-	);
+	// _maxLiveRecordingsCapability =  JSONUtils::asInt(_encoderCapabilityConfiguration["ffmpeg"],
+	// 	"maxLiveRecordingsCapability", 10);
+	// logger->info(__FILEREF__ + "Configuration item"
+	// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxLiveRecordingsCapability)
+	// );
 
 	_satelliteChannelPort_Start = 8000;
 	_satelliteChannelPort_MaxNumberOfOffsets = 100;
@@ -577,8 +584,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -611,7 +622,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -739,8 +751,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -773,7 +789,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -902,8 +919,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -936,7 +957,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1064,8 +1086,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1098,7 +1124,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1226,8 +1253,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1260,7 +1291,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1388,8 +1420,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1422,7 +1458,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1550,8 +1587,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1584,7 +1625,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1712,8 +1754,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1746,7 +1792,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -1874,8 +1921,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<Encoding>    selectedEncoding;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			// for (shared_ptr<Encoding> encoding: *_encodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 			{
+				shared_ptr<Encoding> encoding = (*_encodingsCapability)[encodingIndex];
+
 				if (!encoding->_running)
 				{
 					if (!freeEncodingFound)
@@ -1908,7 +1959,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_encodingsCapability->size() >= _maxEncodingsCapability)
+			int maxEncodingsCapability = getMaxEncodingsCapability();
+			if (_encodingsCapability->size() >= maxEncodingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -2036,8 +2088,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<LiveRecording>    selectedLiveRecording;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			// for (shared_ptr<LiveRecording> liveRecording: *_liveRecordingsCapability)
+			int maxLiveRecordingsCapability = getMaxLiveRecordingsCapability();
+			for(int liveRecordingIndex = 0; liveRecordingIndex < maxLiveRecordingsCapability;
+				liveRecordingIndex++)
 			{
+				shared_ptr<LiveRecording> liveRecording = (*_liveRecordingsCapability)[liveRecordingIndex];
+
 				if (!liveRecording->_running)
 				{
 					if (!freeEncodingFound)
@@ -2070,7 +2127,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_liveRecordingsCapability->size() >= _maxLiveRecordingsCapability)
+			int maxLiveRecordingsCapability = getMaxLiveRecordingsCapability();
+			if (_liveRecordingsCapability->size() >= maxLiveRecordingsCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -2202,8 +2260,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			shared_ptr<LiveProxyAndGrid>    selectedLiveProxy;
 			bool					freeEncodingFound = false;
 			bool					encodingAlreadyRunning = false;
-			for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			// for (shared_ptr<LiveProxyAndGrid> liveProxy: *_liveProxiesCapability)
+			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
+			for(int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
 			{
+				shared_ptr<LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
+
 				if (!liveProxy->_running)
 				{
 					if (!freeEncodingFound)
@@ -2236,7 +2298,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				return;
 			}
 			#else	// __MAP__
-			if (_liveProxiesCapability->size() >= _maxLiveProxiesCapability)
+			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
+			if (_liveProxiesCapability->size() >= maxLiveProxiesCapability)
 			{
 				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 					+ ", " + NoEncodingAvailable().what();
@@ -13255,5 +13318,152 @@ pair<string, string> FFMPEGEncoder::getSatelliteMulticastFromDvblastConfiguratio
 	}
 
 	return make_pair(multicastIP, multicastPort);
+}
+
+int FFMPEGEncoder::getMaxEncodingsCapability(void)
+{
+	int maxEncodingsCapability = 1;
+
+	try
+	{
+		if (FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
+		{
+			Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
+				_encoderCapabilityConfigurationPathName.c_str());
+
+			maxEncodingsCapability = JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+				"maxEncodingsCapability", 1);
+			_logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
+			);
+
+			if (maxEncodingsCapability > VECTOR_MAX_CAPACITY)
+			{
+				_logger->error(__FILEREF__ + "getMaxXXXXCapability. maxEncodingsCapability cannot be bigger than VECTOR_MAX_CAPACITY"
+					+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+					+ ", maxEncodingsCapability: " + to_string(maxEncodingsCapability)
+					+ ", VECTOR_MAX_CAPACITY: " + to_string(VECTOR_MAX_CAPACITY)
+				);
+
+				maxEncodingsCapability = VECTOR_MAX_CAPACITY;
+			}
+		}
+		else
+		{
+			_logger->error(__FILEREF__ + "getMaxXXXXCapability. Encoder Capability Configuration Path Name is not present"
+				+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+			);
+		}
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "getMaxXXXXCapability failed"
+			+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+		);
+	}
+
+	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+		+ ", maxEncodingsCapability: " + to_string(maxEncodingsCapability)
+	);
+
+	return maxEncodingsCapability;
+}
+
+int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
+{
+	int maxLiveProxiesCapability = 1;
+
+	try
+	{
+		if (FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
+		{
+			Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
+				_encoderCapabilityConfigurationPathName.c_str());
+
+			maxLiveProxiesCapability = JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+				"maxLiveProxiesCapability", 1);
+			_logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
+			);
+
+			if (maxLiveProxiesCapability > VECTOR_MAX_CAPACITY)
+			{
+				_logger->error(__FILEREF__ + "getMaxXXXXCapability. maxLiveProxiesCapability cannot be bigger than VECTOR_MAX_CAPACITY"
+					+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+					+ ", maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
+					+ ", VECTOR_MAX_CAPACITY: " + to_string(VECTOR_MAX_CAPACITY)
+				);
+
+				maxLiveProxiesCapability = VECTOR_MAX_CAPACITY;
+			}
+		}
+		else
+		{
+			_logger->error(__FILEREF__ + "getMaxXXXXCapability. Encoder Capability Configuration Path Name is not present"
+				+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+			);
+		}
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "getMaxXXXXCapability failed"
+			+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+		);
+	}
+
+	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+		+ ", maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
+	);
+
+	return maxLiveProxiesCapability;
+}
+
+int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
+{
+	int maxLiveRecordingsCapability = 1;
+
+	try
+	{
+		if (FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
+		{
+			Json::Value encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
+				_encoderCapabilityConfigurationPathName.c_str());
+
+			maxLiveRecordingsCapability = JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+				"maxLiveRecordingsCapability", 1);
+			_logger->info(__FILEREF__ + "Configuration item"
+				+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
+			);
+
+			if (maxLiveRecordingsCapability > VECTOR_MAX_CAPACITY)
+			{
+				_logger->error(__FILEREF__ + "getMaxXXXXCapability. maxLiveRecordingsCapability cannot be bigger than VECTOR_MAX_CAPACITY"
+					+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+					+ ", maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
+					+ ", VECTOR_MAX_CAPACITY: " + to_string(VECTOR_MAX_CAPACITY)
+				);
+
+				maxLiveRecordingsCapability = VECTOR_MAX_CAPACITY;
+			}
+		}
+		else
+		{
+			_logger->error(__FILEREF__ + "getMaxXXXXCapability. Encoder Capability Configuration Path Name is not present"
+				+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+			);
+		}
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "getMaxLiveRecordingsCapability failed"
+			+ ", _encoderCapabilityConfigurationPathName: " + _encoderCapabilityConfigurationPathName
+		);
+	}
+
+	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+		+ ", maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
+	);
+
+	return maxLiveRecordingsCapability;
 }
 

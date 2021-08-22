@@ -35,9 +35,9 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@mms-t-transcoder-fr-1:/opt/catramms
 	date
 
-	echo "192.168.0.121"
-	scp /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.121:/opt/catramms
-	date
+	#echo "192.168.0.121"
+	#scp /opt/catrasoftware/deploy/$tarFileName mms@192.168.0.121:/opt/catramms
+	#date
 fi
 
 echo -n "deploy su rsis-lab-mmst? " 
@@ -91,28 +91,12 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-4:/opt/catramms
 	date
 
-	echo "cibortv-mms-transcoder-fr-5"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-5:/opt/catramms
+	echo "cibortv-mms-transcoder-fr-11"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-11:/opt/catramms
 	date
 
-	echo "cibortv-mms-transcoder-fr-6"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-6:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-fr-7"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-7:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-fr-8"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-8:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-fr-9"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-9:/opt/catramms
-	date
-
-	echo "cibortv-mms-transcoder-fr-10"
-	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-10:/opt/catramms
+	echo "cibortv-mms-transcoder-fr-12"
+	scp -P 9255 /opt/catrasoftware/deploy/$tarFileName mms@cibortv-mms-transcoder-fr-12:/opt/catramms
 	date
 
 	echo "cibortv-mms-transcoder-ita-1"

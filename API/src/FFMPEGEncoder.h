@@ -18,6 +18,11 @@
 #include "FFMpeg.h"
 
 #define __VECTOR__
+// #define __MAP__
+// 2021-08-22: in case the VECTOR is used, we will set the size of the vector to a big value
+// and use the _maxXXXXCapacity configuration variable to manage
+// dinamically (without stopping the encoder) the capacity
+#define VECTOR_MAX_CAPACITY 100
 
 // see comment 2020-11-30
 #define __VECTOR__NO_LOCK_FOR_ENCODINGSTATUS
@@ -104,7 +109,7 @@ class FFMPEGEncoder: public APICommon {
 public:
     FFMPEGEncoder(
 		Json::Value configuration, 
-		Json::Value encoderCapabilityConfiguration,
+		string encoderCapabilityConfigurationPathName,
 
 		mutex* fcgiAcceptMutex,
 
@@ -173,7 +178,7 @@ public:
 	void stopMonitorThread();
     
 private:
-	Json::Value					_encoderCapabilityConfiguration;
+	string						_encoderCapabilityConfigurationPathName;
 
     mutex*						_encodingMutex;
 	#ifdef __VECTOR__
@@ -181,7 +186,9 @@ private:
 	#else	// __MAP__
 		map<int64_t, shared_ptr<Encoding>>* _encodingsCapability;
 	#endif
-	int							_maxEncodingsCapability;
+	// commented because retrieved dinamically
+	// int							_maxEncodingsCapability;
+	int getMaxEncodingsCapability(void);
 
     mutex*						_liveProxyMutex;
 	#ifdef __VECTOR__
@@ -189,7 +196,9 @@ private:
 	#else	// __MAP__
 		map<int64_t, shared_ptr<LiveProxyAndGrid>>* _liveProxiesCapability;
 	#endif
-	int							_maxLiveProxiesCapability;
+	// commented because retrieved dinamically
+	// int							_maxLiveProxiesCapability;
+	int getMaxLiveProxiesCapability(void);
 
     mutex*						_liveRecordingMutex;
 	#ifdef __VECTOR__
@@ -197,7 +206,9 @@ private:
 	#else	// __MAP__
 		map<int64_t, shared_ptr<LiveRecording>>* _liveRecordingsCapability;
 	#endif
-	int							_maxLiveRecordingsCapability;
+	// commented because retrieved dinamically
+	// int							_maxLiveRecordingsCapability;
+	int getMaxLiveRecordingsCapability(void);
 
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
