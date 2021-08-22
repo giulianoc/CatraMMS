@@ -906,8 +906,9 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			if (allEncoders)
 				lastSQLCommand = 
 					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-						"e.serverName, e.port, e.maxTranscodingCapability, "
-						"e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
+						"e.serverName, e.port "
+						// ", e.maxTranscodingCapability, "
+						// "e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e ") 
                 + sqlWhere
 				+ orderByCondition
@@ -915,8 +916,9 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			else
 				lastSQLCommand = 
 					string("select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-						"e.serverName, e.port, e.maxTranscodingCapability, "
-						"e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
+						"e.serverName, e.port "
+						// ", e.maxTranscodingCapability, "
+						// "e.maxLiveProxiesCapabilities, e.maxLiveRecordingCapabilities "
 						"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm ") 
                 + sqlWhere
 				+ orderByCondition
@@ -1063,6 +1065,7 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 		field = "port";
 		encoderRoot[field] = resultSet->getInt("port");
 
+		/*
 		field = "maxTranscodingCapability";
 		encoderRoot[field] = resultSet->getInt("maxTranscodingCapability");
 
@@ -1071,6 +1074,7 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 
 		field = "maxLiveRecordingCapabilities";
 		encoderRoot[field] = resultSet->getInt("maxLiveRecordingCapabilities");
+		*/
     }
     catch(sql::SQLException se)
     {
@@ -1298,8 +1302,9 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 						{
 							lastSQLCommand = 
 								string("select encoderKey, label, external, enabled, protocol, "
-									"serverName, port, maxTranscodingCapability, "
-									"maxLiveProxiesCapabilities, maxLiveRecordingCapabilities "
+									"serverName, port "
+									// , maxTranscodingCapability, "
+									// "maxLiveProxiesCapabilities, maxLiveRecordingCapabilities "
 									"from MMS_Encoder ")
 								+ "where encoderKey = ? ";
 
