@@ -13330,6 +13330,7 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 
 		GetCpuUsage_t gcuGetCpuUsage;
 
+		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
 		if (cpuUsage > cpuUsageThreshold)
@@ -13409,6 +13410,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 
 		GetCpuUsage_t gcuGetCpuUsage;
 
+		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
 		if (cpuUsage > cpuUsageThreshold)
@@ -13488,6 +13490,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 
 		GetCpuUsage_t gcuGetCpuUsage;
 
+		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
 		if (cpuUsage > cpuUsageThreshold)
