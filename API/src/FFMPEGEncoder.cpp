@@ -133,6 +133,7 @@ int main(int argc, char** argv)
             configuration, dbPoolSize, logger);
 		*/
 
+		/*
 		string encoderCapabilityConfigurationPathName;
 		{
 			string sConfigurationPathName = configurationPathName;
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
 					+ encoderCapabilityConfigurationPathName
 			);
 		}
+		*/
 
 		MMSStorage::createDirectories(configuration, logger);
 		/*
@@ -272,7 +274,7 @@ int main(int argc, char** argv)
 		{
 			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(
 				configuration, 
-				encoderCapabilityConfigurationPathName, 
+				// encoderCapabilityConfigurationPathName, 
 
 				&fcgiAcceptMutex,
 
@@ -345,7 +347,7 @@ int main(int argc, char** argv)
 FFMPEGEncoder::FFMPEGEncoder(
 		
 		Json::Value configuration, 
-		string encoderCapabilityConfigurationPathName,
+		// string encoderCapabilityConfigurationPathName,
 
         mutex* fcgiAcceptMutex,
 
@@ -382,7 +384,7 @@ FFMPEGEncoder::FFMPEGEncoder(
         fcgiAcceptMutex,
         logger) 
 {
-	_encoderCapabilityConfigurationPathName = encoderCapabilityConfigurationPathName;
+	// _encoderCapabilityConfigurationPathName = encoderCapabilityConfigurationPathName;
 
     _monitorCheckInSeconds =  JSONUtils::asInt(_configuration["ffmpeg"], "monitorCheckInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
@@ -444,6 +446,22 @@ FFMPEGEncoder::FFMPEGEncoder(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
     );
+
+	_cpuUsageThresholdForEncoding =  JSONUtils::asInt(_configuration["ffmpeg"],
+		"cpuUsageThresholdForEncoding", 50);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->cpuUsageThresholdForEncoding: " + to_string(_cpuUsageThresholdForEncoding)
+	);
+	_cpuUsageThresholdForRecording =  JSONUtils::asInt(_configuration["ffmpeg"],
+		"cpuUsageThresholdForRecording", 60);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->cpuUsageThresholdForRecording: " + to_string(_cpuUsageThresholdForRecording)
+	);
+	_cpuUsageThresholdForProxy =  JSONUtils::asInt(_configuration["ffmpeg"],
+		"cpuUsageThresholdForProxy", 70);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", ffmpeg->cpuUsageThresholdForProxy: " + to_string(_cpuUsageThresholdForProxy)
+	);
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
@@ -13328,17 +13346,15 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 		int cpuUsageThreshold = 50;
 		int maxCapability;
 
-		// GetCpuUsage constructor calls getCpuUsage too
-		GetCpuUsage_t gcuGetCpuUsage;
 
 		// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		this_thread::sleep_for(chrono::seconds(1));
-		gcuGetCpuUsage.getCpuUsage();
+		_gcuGetCpuUsage.getCpuUsage();
 		this_thread::sleep_for(chrono::seconds(1));
-		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
 
-		if (cpuUsage > cpuUsageThreshold)
-			maxCapability = 1;						// no to be done
+		if (cpuUsage > _cpuUsageThresholdForEncoding)
+			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
@@ -13409,19 +13425,15 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
-		int cpuUsageThreshold = 70;
 		int maxCapability;
 
-		// GetCpuUsage constructor calls getCpuUsage too
-		GetCpuUsage_t gcuGetCpuUsage;
-
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		gcuGetCpuUsage.getCpuUsage();
+		_gcuGetCpuUsage.getCpuUsage();
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
 
-		if (cpuUsage > cpuUsageThreshold)
-			maxCapability = 1;						// no to be done
+		if (cpuUsage > _cpuUsageThresholdForProxy)
+			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
@@ -13492,19 +13504,15 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
-		int cpuUsageThreshold = 60;
 		int maxCapability;
 
-		// GetCpuUsage constructor calls getCpuUsage too
-		GetCpuUsage_t gcuGetCpuUsage;
-
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		gcuGetCpuUsage.getCpuUsage();
+		_gcuGetCpuUsage.getCpuUsage();
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
 
-		if (cpuUsage > cpuUsageThreshold)
-			maxCapability = 1;						// no to be done
+		if (cpuUsage > _cpuUsageThresholdForRecording)
+			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 

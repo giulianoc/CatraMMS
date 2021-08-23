@@ -109,7 +109,7 @@ class FFMPEGEncoder: public APICommon {
 public:
     FFMPEGEncoder(
 		Json::Value configuration, 
-		string encoderCapabilityConfigurationPathName,
+		// string encoderCapabilityConfigurationPathName,
 
 		mutex* fcgiAcceptMutex,
 
@@ -178,7 +178,12 @@ public:
 	void stopMonitorThread();
     
 private:
-	string						_encoderCapabilityConfigurationPathName;
+	// string						_encoderCapabilityConfigurationPathName;
+
+	GetCpuUsage_t				_gcuGetCpuUsage;
+	int							_cpuUsageThresholdForEncoding;
+	int							_cpuUsageThresholdForProxy;
+	int							_cpuUsageThresholdForRecording;
 
     mutex*						_encodingMutex;
 	#ifdef __VECTOR__

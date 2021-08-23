@@ -31,7 +31,7 @@ SET (CONFs
 	catrammsBinaryServer.nginx
 	catrammsEncoderServer.nginx
 	mms.cfg
-	mms_encoderCapability.cfg
+	mms_encoderCapability.cfg.notUsedAnymore
 	crontab.txt
 	3_EXTENDED_2021_07_19.channel.dvbv5.conf
 	3_UNIVERSAL_2021_07_19.channel.dvbv5.conf
