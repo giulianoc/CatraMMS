@@ -177,10 +177,17 @@ public:
 	void monitorThread();
 	void stopMonitorThread();
     
+	void cpuUsageThread();
+	void stopCPUUsageThread();
+
 private:
 	// string						_encoderCapabilityConfigurationPathName;
 
-	GetCpuUsage_t				_gcuGetCpuUsage;
+	GetCpuUsage_t				_getCpuUsage;
+	mutex*						_cpuUsageMutex;
+	int							_cpuUsage;
+	bool						_cpuUsageThreadShutdown;
+
 	int							_cpuUsageThresholdForEncoding;
 	int							_cpuUsageThresholdForProxy;
 	int							_cpuUsageThresholdForRecording;

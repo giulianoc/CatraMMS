@@ -313,11 +313,14 @@ int main(int argc, char** argv)
 
 			thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
 
+			thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
+
 			ffmpegEncoderThreads[0].join();
         
 			ffmpegEncoders[0]->stopLiveRecorderVirtualVODIngestionThread();
 			ffmpegEncoders[0]->stopLiveRecorderChunksIngestionThread();
 			ffmpegEncoders[0]->stopMonitorThread();
+			ffmpegEncoders[0]->stopCPUUsageThread();
 		}
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
@@ -490,6 +493,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_satelliteChannelPort_Start = 8000;
 	_satelliteChannelPort_MaxNumberOfOffsets = 100;
 
+	_cpuUsageThreadShutdown = false;
 	_monitorThreadShutdown = false;
 	_liveRecorderChunksIngestionThreadShutdown = false;
 	_liveRecorderVirtualVODIngestionThreadShutdown = false;
@@ -12965,6 +12969,50 @@ void FFMPEGEncoder::stopMonitorThread()
 	this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
 }
 
+void FFMPEGEncoder::cpuUsageThread()
+{
+
+	while(!_cpuUsageThreadShutdown)
+	{
+		this_thread::sleep_for(chrono::seconds(1));
+
+		try
+		{
+			lock_guard<mutex> locker(*_cpuUsageMutex);
+
+			_cpuUsage = _getCpuUsage.getCpuUsage();
+
+			_logger->info(__FILEREF__ + "cpuUsageThread"
+				+ ", _cpuUsage: " + to_string(_cpuUsage)
+			);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = string ("cpuUsage thread failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = string ("cpuUsage thread failed")
+				+ ", e.what(): " + e.what()
+			;
+
+			_logger->error(__FILEREF__ + errorMessage);
+		}
+	}
+}
+
+void FFMPEGEncoder::stopCPUUsageThread()
+{
+
+	_cpuUsageThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(1));
+}
+
 void FFMPEGEncoder::addEncodingCompleted(
         int64_t encodingJobKey, bool completedWithError,
 		string errorMessage,
@@ -13343,23 +13391,18 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
-		int cpuUsageThreshold = 50;
+		lock_guard<mutex> locker(*_cpuUsageMutex);
+
 		int maxCapability;
 
 
-		// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		this_thread::sleep_for(chrono::seconds(1));
-		_gcuGetCpuUsage.getCpuUsage();
-		this_thread::sleep_for(chrono::seconds(1));
-		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
-
-		if (cpuUsage > _cpuUsageThresholdForEncoding)
+		if (_cpuUsage > _cpuUsageThresholdForEncoding)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", _cpuUsage: " + to_string(_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -13425,20 +13468,17 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
+		lock_guard<mutex> locker(*_cpuUsageMutex);
+
 		int maxCapability;
 
-		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		_gcuGetCpuUsage.getCpuUsage();
-		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
-
-		if (cpuUsage > _cpuUsageThresholdForProxy)
+		if (_cpuUsage > _cpuUsageThresholdForProxy)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", _cpuUsage: " + to_string(_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -13504,20 +13544,17 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
+		lock_guard<mutex> locker(*_cpuUsageMutex);
+
 		int maxCapability;
 
-		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		_gcuGetCpuUsage.getCpuUsage();
-		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
-		int cpuUsage = _gcuGetCpuUsage.getCpuUsage();
-
-		if (cpuUsage > _cpuUsageThresholdForRecording)
+		if (_cpuUsage > _cpuUsageThresholdForRecording)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", _cpuUsage: " + to_string(_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
