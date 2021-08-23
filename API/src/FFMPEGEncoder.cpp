@@ -13325,7 +13325,7 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
-		int cpuUsageThreshold = 70;
+		int cpuUsageThreshold = 50;
 		int maxCapability;
 
 		// GetCpuUsage constructor calls getCpuUsage too
@@ -13492,7 +13492,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
 	{
-		int cpuUsageThreshold = 70;
+		int cpuUsageThreshold = 60;
 		int maxCapability;
 
 		// GetCpuUsage constructor calls getCpuUsage too
