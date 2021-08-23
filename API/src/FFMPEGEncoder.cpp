@@ -12994,9 +12994,9 @@ void FFMPEGEncoder::cpuUsageThread()
 
 			*_cpuUsage = _getCpuUsage.getCpuUsage();
 
-			_logger->info(__FILEREF__ + "cpuUsageThread"
-				+ ", _cpuUsage: " + to_string(*_cpuUsage)
-			);
+			// _logger->info(__FILEREF__ + "cpuUsageThread"
+			// 	+ ", _cpuUsage: " + to_string(*_cpuUsage)
+			// );
 		}
 		catch(runtime_error e)
 		{
