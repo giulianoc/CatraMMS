@@ -13328,9 +13328,13 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 		int cpuUsageThreshold = 70;
 		int maxCapability;
 
+		// GetCpuUsage constructor calls getCpuUsage too
 		GetCpuUsage_t gcuGetCpuUsage;
 
-		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
+		// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
+		this_thread::sleep_for(chrono::seconds(1));
+		gcuGetCpuUsage.getCpuUsage();
+		this_thread::sleep_for(chrono::seconds(1));
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
 		if (cpuUsage > cpuUsageThreshold)
@@ -13408,8 +13412,11 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 		int cpuUsageThreshold = 70;
 		int maxCapability;
 
+		// GetCpuUsage constructor calls getCpuUsage too
 		GetCpuUsage_t gcuGetCpuUsage;
 
+		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
+		gcuGetCpuUsage.getCpuUsage();
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
@@ -13488,8 +13495,11 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 		int cpuUsageThreshold = 70;
 		int maxCapability;
 
+		// GetCpuUsage constructor calls getCpuUsage too
 		GetCpuUsage_t gcuGetCpuUsage;
 
+		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
+		gcuGetCpuUsage.getCpuUsage();
 		sleep(1);	// needed otherwise gcuGetCpuUsage.getCpuUsage will return 0
 		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
 
