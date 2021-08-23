@@ -180,6 +180,9 @@ int main(int argc, char** argv)
 
 		mutex fcgiAcceptMutex;
 
+		mutex cpuUsageMutex;
+		int cpuUsage;
+
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
 		#ifdef __VECTOR__
@@ -278,6 +281,9 @@ int main(int argc, char** argv)
 
 				&fcgiAcceptMutex,
 
+				&cpuUsageMutex,
+				&cpuUsage,
+
 				&encodingMutex,
 				&encodingsCapability,
 
@@ -353,6 +359,9 @@ FFMPEGEncoder::FFMPEGEncoder(
 		// string encoderCapabilityConfigurationPathName,
 
         mutex* fcgiAcceptMutex,
+
+        mutex* cpuUsageMutex,
+		int* cpuUsage,
 
 		mutex* encodingMutex,
 		#ifdef __VECTOR__
@@ -465,6 +474,9 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->cpuUsageThresholdForProxy: " + to_string(_cpuUsageThresholdForProxy)
 	);
+
+	_cpuUsageMutex = cpuUsageMutex;
+	_cpuUsage = cpuUsage;
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
@@ -12980,10 +12992,10 @@ void FFMPEGEncoder::cpuUsageThread()
 		{
 			lock_guard<mutex> locker(*_cpuUsageMutex);
 
-			_cpuUsage = _getCpuUsage.getCpuUsage();
+			*_cpuUsage = _getCpuUsage.getCpuUsage();
 
 			_logger->info(__FILEREF__ + "cpuUsageThread"
-				+ ", _cpuUsage: " + to_string(_cpuUsage)
+				+ ", _cpuUsage: " + to_string(*_cpuUsage)
 			);
 		}
 		catch(runtime_error e)
@@ -13396,13 +13408,13 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 		int maxCapability;
 
 
-		if (_cpuUsage > _cpuUsageThresholdForEncoding)
+		if (*_cpuUsage > _cpuUsageThresholdForEncoding)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(_cpuUsage)
+			+ ", _cpuUsage: " + to_string(*_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -13472,13 +13484,13 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 
 		int maxCapability;
 
-		if (_cpuUsage > _cpuUsageThresholdForProxy)
+		if (*_cpuUsage > _cpuUsageThresholdForProxy)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(_cpuUsage)
+			+ ", _cpuUsage: " + to_string(*_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 
@@ -13548,13 +13560,13 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 
 		int maxCapability;
 
-		if (_cpuUsage > _cpuUsageThresholdForRecording)
+		if (*_cpuUsage > _cpuUsageThresholdForRecording)
 			maxCapability = 0;						// no to be done
 		else
 			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
 
 		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
-			+ ", _cpuUsage: " + to_string(_cpuUsage)
+			+ ", _cpuUsage: " + to_string(*_cpuUsage)
 			+ ", maxCapability: " + to_string(maxCapability)
 		);
 

@@ -113,6 +113,9 @@ public:
 
 		mutex* fcgiAcceptMutex,
 
+		mutex* cpuUsageMutex,
+		int *cpuUsage,
+
 		mutex* encodingMutex,
 		#ifdef __VECTOR__
 			vector<shared_ptr<Encoding>>* encodingsCapability,
@@ -185,7 +188,7 @@ private:
 
 	GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
-	int							_cpuUsage;
+	int							*_cpuUsage;
 	bool						_cpuUsageThreadShutdown;
 
 	int							_cpuUsageThresholdForEncoding;
