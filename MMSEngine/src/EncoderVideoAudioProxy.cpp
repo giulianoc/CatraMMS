@@ -2720,11 +2720,11 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     
                     if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
-                        string errorMessage = string("No Encodings available")
-                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                                + ", sResponse: " + sResponse
-                                ;
+						string errorMessage = string("No Encodings available")
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+							+ ", sResponse: " + sResponse
+						;
                         _logger->warn(__FILEREF__ + errorMessage);
 
                         throw MaxConcurrentJobsReached();

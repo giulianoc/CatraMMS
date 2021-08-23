@@ -23,6 +23,7 @@
 #include "catralibraries/FileIO.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/StringUtils.h"
+#include "catralibraries/GetCpuUsage.h"
 #include "FFMPEGEncoder.h"
 #include "MMSStorage.h"
 
@@ -13322,6 +13323,29 @@ pair<string, string> FFMPEGEncoder::getSatelliteMulticastFromDvblastConfiguratio
 
 int FFMPEGEncoder::getMaxEncodingsCapability(void)
 {
+	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
+	{
+		int cpuUsageThreshold = 70;
+		int maxCapability;
+
+		GetCpuUsage_t gcuGetCpuUsage;
+
+		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+
+		if (cpuUsage > cpuUsageThreshold)
+			maxCapability = 1;						// no to be done
+		else
+			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+
+		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", maxCapability: " + to_string(maxCapability)
+		);
+
+		return maxCapability;
+	}
+
+	/*
 	int maxEncodingsCapability = 1;
 
 	try
@@ -13373,10 +13397,34 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 	);
 
 	return maxEncodingsCapability;
+	*/
 }
 
 int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 {
+	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
+	{
+		int cpuUsageThreshold = 70;
+		int maxCapability;
+
+		GetCpuUsage_t gcuGetCpuUsage;
+
+		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+
+		if (cpuUsage > cpuUsageThreshold)
+			maxCapability = 1;						// no to be done
+		else
+			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+
+		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", maxCapability: " + to_string(maxCapability)
+		);
+
+		return maxCapability;
+	}
+
+	/*
 	int maxLiveProxiesCapability = 1;
 
 	try
@@ -13428,11 +13476,34 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 	);
 
 	return maxLiveProxiesCapability;
+	*/
 }
 
 int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 {
-	int maxLiveRecordingsCapability = 1;
+	// 2021-08-23: Use of the cpu usage to determine if an activity has to be done
+	{
+		int cpuUsageThreshold = 70;
+		int maxCapability;
+
+		GetCpuUsage_t gcuGetCpuUsage;
+
+		int cpuUsage = gcuGetCpuUsage.getCpuUsage();
+
+		if (cpuUsage > cpuUsageThreshold)
+			maxCapability = 1;						// no to be done
+		else
+			maxCapability = VECTOR_MAX_CAPACITY;	// it could be done
+
+		_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+			+ ", cpuUsage: " + to_string(cpuUsage)
+			+ ", maxCapability: " + to_string(maxCapability)
+		);
+
+		return maxCapability;
+	}
+
+	/*
 
 	try
 	{
@@ -13483,8 +13554,10 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	);
 
 	return maxLiveRecordingsCapability;
+	*/
 }
 
+/*
 int FFMPEGEncoder::calculateCapabilitiesBasedOnOtherRunningProcesses(
 	int configuredMaxEncodingsCapability,	// != -1 if we want to calculate maxEncodingsCapability
 	int configuredMaxLiveProxiesCapability,	// != -1 if we want to calculate maxLiveProxiesCapability
@@ -13674,4 +13747,5 @@ int FFMPEGEncoder::calculateCapabilitiesBasedOnOtherRunningProcesses(
 		return 0;
 	}
 }
+*/
 

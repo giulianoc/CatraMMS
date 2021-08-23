@@ -210,11 +210,11 @@ private:
 	// int							_maxLiveRecordingsCapability;
 	int getMaxLiveRecordingsCapability(void);
 
-	int calculateCapabilitiesBasedOnOtherRunningProcesses(
-		int configuredMaxEncodingsCapability,
-		int configuredMaxLiveProxiesCapability,
-		int configuredMaxLiveRecordingsCapability
-	);
+	// int calculateCapabilitiesBasedOnOtherRunningProcesses(
+	// 	int configuredMaxEncodingsCapability,
+	// 	int configuredMaxLiveProxiesCapability,
+	// 	int configuredMaxLiveRecordingsCapability
+	// );
 
 	int							_liveRecorderChunksIngestionCheckInSeconds;
 	bool						_liveRecorderChunksIngestionThreadShutdown;
