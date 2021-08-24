@@ -301,7 +301,9 @@ void API::registerUser(
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true");
+			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
+				+ to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
+				+ "&confirmationCode=" + get<2>(workspaceKeyUserKeyAndConfirmationCode));
 
             string to = email;
             string subject = "Confirmation code";
