@@ -8,7 +8,7 @@
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. Just one Reference needed to identify the video to encode
+			// mandatory. One or more References to identify the videos to be encoded
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the video that is supposed has to be encoded.

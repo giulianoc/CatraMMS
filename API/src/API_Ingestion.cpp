@@ -942,47 +942,110 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     
     if (type == "Encode")
     {
+		// we will create a group of tasks and add there the Encode task in two scenarios:
+		// case 1. in case of EncodingProfilesSet
+		// case 2. in case we will have more than one References
+
 		string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
 		string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
+		string referencesField = "References";
 
 		if (parametersSectionPresent && 
+			(
+			// case 1
             (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
 				|| JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
             )
+			||
+			// case 2
+			(JSONUtils::isMetadataPresent(parametersRoot, referencesField)
+				&& parametersRoot[referencesField].size() > 1)
+			)
 		)
 		{
-			// to manage the encode of 'profiles set' we will replace the single Task with
-			// a GroupOfTasks where every task is just for one profile
-        
-			string encodingProfilesSetReference;
-        
+			// we will replace the single Task with a GroupOfTasks where every task
+			// is just for one profile/one reference
+
+			// case 1
+			bool profilesSetPresent = false;
+			// case 2
+			bool multiReferencesPresent = false;
+
+			// we will use the vector for case 1
 			vector<int64_t> encodingProfilesSetKeys;
-			if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+
+            if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+				|| JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
 			{
-				int64_t encodingProfilesSetKey = JSONUtils::asInt64(parametersRoot, encodingProfilesSetKeyField, 0);
+				// case 1
+
+				profilesSetPresent = true;
+
+				string encodingProfilesSetReference;
+
+				if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+				{
+					int64_t encodingProfilesSetKey = JSONUtils::asInt64(parametersRoot, encodingProfilesSetKeyField, 0);
         
-				encodingProfilesSetReference = to_string(encodingProfilesSetKey);
+					encodingProfilesSetReference = to_string(encodingProfilesSetKey);
             
-				encodingProfilesSetKeys = 
-					_mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
-					workspace->_workspaceKey, encodingProfilesSetKey);
-			}
-			else // if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
-			{
-				string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "").asString();
+					encodingProfilesSetKeys = 
+						_mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
+						workspace->_workspaceKey, encodingProfilesSetKey);
+
+					{
+						Json::Value removed;
+						parametersRoot.removeMember(encodingProfilesSetKeyField, &removed);
+					}
+				}
+				else // if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
+				{
+					string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "").asString();
         
-				encodingProfilesSetReference = encodingProfilesSetLabel;
+					encodingProfilesSetReference = encodingProfilesSetLabel;
             
-				encodingProfilesSetKeys = 
-					_mmsEngineDBFacade->getEncodingProfileKeysBySetLabel(
-						workspace->_workspaceKey, encodingProfilesSetLabel);
+					encodingProfilesSetKeys = 
+						_mmsEngineDBFacade->getEncodingProfileKeysBySetLabel(
+							workspace->_workspaceKey, encodingProfilesSetLabel);
+
+					{
+						Json::Value removed;
+						parametersRoot.removeMember(encodingProfilesSetLabelField, &removed);
+					}
+				}
+
+				if (encodingProfilesSetKeys.size() == 0)
+				{
+					string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
+						+ ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference
+						+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+						+ ", type: " + type
+						+ ", taskLabel: " + taskLabel
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
-        
-			if (encodingProfilesSetKeys.size() == 0)
+
+			// both, case 1 and case 2 could have multiple references
+			Json::Value multiReferencesRoot;
+			if (JSONUtils::isMetadataPresent(parametersRoot, referencesField)
+				&& parametersRoot[referencesField].size() > 1)
 			{
-				string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
-                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference
-					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				multiReferencesPresent = true;
+
+				multiReferencesRoot = parametersRoot[referencesField];
+
+				{
+					Json::Value removed;
+					parametersRoot.removeMember(referencesField, &removed);
+				}
+			}
+
+			if (!profilesSetPresent && !multiReferencesPresent)
+			{
+				string errorMessage = __FILEREF__ + "It's not possible to be here"
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
 				;
@@ -990,63 +1053,104 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 				throw runtime_error(errorMessage);
 			}
-        
-			string encodingPriority;
-			field = "EncodingPriority";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				encodingPriority = parametersRoot.get(field, "").asString();
-				/*
-				string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
-				MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
-                    MMSEngineDBFacade::toEncodingPriority(sRequestedEncodingPriority);
-            
-				encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
-				*/
-			}
-			/*
-			else
-			{
-				encodingPriority = MMSEngineDBFacade::toString(
-                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
-			}
-			*/
-        
-            
+
+			// based of the removeMember, parametersRoot will be:
+			// in case of profiles set, without the profiles set parameter
+			// in case of multiple references, without the References parameter
+
 			Json::Value newTasksRoot(Json::arrayValue);
-        
-			for (int64_t encodingProfileKey: encodingProfilesSetKeys)
+
+			if (profilesSetPresent && multiReferencesPresent)
 			{
-				Json::Value newTaskRoot;
-				string localLabel = taskLabel + " - EncodingProfileKey " + to_string(encodingProfileKey);
-
-				field = "Label";
-				newTaskRoot[field] = localLabel;
-            
-				field = "Type";
-				newTaskRoot[field] = "Encode";
-
-				Json::Value newParametersRoot;
-
-				field = "References";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				for (int64_t encodingProfileKey: encodingProfilesSetKeys)
 				{
-					newParametersRoot[field] = parametersRoot[field];
+					for(int referenceIndex = 0; referenceIndex < multiReferencesRoot.size(); referenceIndex++)
+					{
+						Json::Value newTaskRoot;
+						string localLabel = taskLabel + " - EncodingProfileKey: " + to_string(encodingProfileKey)
+							+ " - referenceIndex: " + to_string(referenceIndex)
+						;
+							
+						field = "Label";
+						newTaskRoot[field] = localLabel;
+
+						field = "Type";
+						newTaskRoot[field] = "Encode";
+
+						Json::Value newParametersRoot = parametersRoot;
+
+						field = "EncodingProfileKey";
+						newParametersRoot[field] = encodingProfileKey;
+
+						{
+							Json::Value newReferencesRoot(Json::arrayValue);
+							newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
+
+							field = "References";
+							newParametersRoot[field] = newReferencesRoot;
+						}
+
+						field = "Parameters";
+						newTaskRoot[field] = newParametersRoot;
+
+						newTasksRoot.append(newTaskRoot);
+					}
 				}
-            
-				field = "EncodingProfileKey";
-				newParametersRoot[field] = encodingProfileKey;
-            
-				if (encodingPriority != "")
+			}
+			else if (profilesSetPresent && !multiReferencesPresent)
+			{
+				for (int64_t encodingProfileKey: encodingProfilesSetKeys)
 				{
-					field = "EncodingPriority";
-					newParametersRoot[field] = encodingPriority;
+					Json::Value newTaskRoot;
+					string localLabel = taskLabel + " - EncodingProfileKey: " + to_string(encodingProfileKey)
+					;
+						
+					field = "Label";
+					newTaskRoot[field] = localLabel;
+
+					field = "Type";
+					newTaskRoot[field] = "Encode";
+
+					Json::Value newParametersRoot = parametersRoot;
+
+					field = "EncodingProfileKey";
+					newParametersRoot[field] = encodingProfileKey;
+
+					field = "Parameters";
+					newTaskRoot[field] = newParametersRoot;
+
+					newTasksRoot.append(newTaskRoot);
 				}
-            
-				field = "Parameters";
-				newTaskRoot[field] = newParametersRoot;
-            
-				newTasksRoot.append(newTaskRoot);
+			}
+			else if (!profilesSetPresent && multiReferencesPresent)
+			{
+				for(int referenceIndex = 0; referenceIndex < multiReferencesRoot.size(); referenceIndex++)
+				{
+					Json::Value newTaskRoot;
+					string localLabel = taskLabel + " - referenceIndex: " + to_string(referenceIndex)
+					;
+						
+					field = "Label";
+					newTaskRoot[field] = localLabel;
+
+					field = "Type";
+					newTaskRoot[field] = "Encode";
+
+					Json::Value newParametersRoot = parametersRoot;
+
+					{
+						Json::Value newReferencesRoot(Json::arrayValue);
+						newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
+
+						field = "References";
+						newParametersRoot[field] = newReferencesRoot;
+					}
+
+					field = "Parameters";
+					newTaskRoot[field] = newParametersRoot;
+
+					newTasksRoot.append(newTaskRoot);
+				}
 			}
         
 			Json::Value newParametersTasksGroupRoot;
@@ -1056,7 +1160,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			field = "Tasks";
 			newParametersTasksGroupRoot[field] = newTasksRoot;
-        
+
 			Json::Value newTasksGroupRoot;
 
 			field = "Type";
@@ -1088,7 +1192,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 responseBody); 
 		}
-    }
+	}
     else if (type == "Live-Recorder")
     {
 		// 1. Live-Recorder needs the UserKey/ApiKey for the ingestion of the chunks.
