@@ -276,6 +276,22 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 			+ ", requestBody: " + requestBody
 		);
 
+		if (variablesValuesToBeUsedRoot == Json::nullValue)
+		{
+			_logger->info(__FILEREF__ + "manageWorkflowVariables"
+				+ ", sVariablesValuesToBeUsedRoot is null"
+			);
+		}
+		else
+		{
+			Json::StreamWriterBuilder wbuilder;
+			string sVariablesValuesToBeUsedRoot = Json::writeString(wbuilder, variablesValuesToBeUsedRoot);
+
+			_logger->info(__FILEREF__ + "manageWorkflowVariables"
+				+ ", sVariablesValuesToBeUsedRoot: " + sVariablesValuesToBeUsedRoot
+			);
+		}
+
 		{
 			Json::CharReaderBuilder builder;
 			Json::CharReader* reader = builder.newCharReader();
@@ -354,6 +370,11 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 					if (sKey.length() > 2)
 						sKey = sKey.substr(1, sKey.length() - 2);
 
+					_logger->info(__FILEREF__ + "variable processing"
+						+ ", sKey: " + sKey
+					);
+
+					string variableToBeReplaced;
 					string sValue;
 					{
 						Json::Value variableDetails = (*it);
@@ -363,6 +384,11 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 						field = "IsNull";
 						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
+
+						if (variableType != "json")
+							variableToBeReplaced = string("${") + sKey + "}";
+						else
+							variableToBeReplaced = string("\"${") + sKey + "}\"";
 
 						if (variablesValuesToBeUsedRoot == Json::nullValue)
 						{
@@ -421,6 +447,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								else
 									sValue = variableDetails.get(field, "").asString();
 							}
+							else if (variableType == "json")
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+								{
+									Json::StreamWriterBuilder wbuilder;
+									sValue = Json::writeString(wbuilder, variableDetails[field]);
+								}
+							}
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
@@ -431,6 +467,13 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 								throw runtime_error(errorMessage);
 							}
+
+							_logger->info(__FILEREF__ + "variable information"
+								+ ", sKey: " + sKey
+								+ ", variableType: " + variableType
+								+ ", variableIsNull: " + to_string(variableIsNull)
+								+ ", sValue: " + sValue
+							);
 						}
 						else
 						{
@@ -456,6 +499,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else if (variableType == "datetime-millisecs")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
+							else if (variableType == "json")
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+								{
+									Json::StreamWriterBuilder wbuilder;
+									sValue = Json::writeString(wbuilder, variablesValuesToBeUsedRoot[sKey]);
+								}
+							}
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
@@ -466,20 +519,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 								throw runtime_error(errorMessage);
 							}
+
+							_logger->info(__FILEREF__ + "variable information"
+								+ ", sKey: " + sKey
+								+ ", variableType: " + variableType
+								+ ", variableIsNull: " + to_string(variableIsNull)
+								+ ", sValue: " + sValue
+							);
 						}
 					}
 
-					/*
-						string sValue = Json::writeString(wbuilder, value);        
-						// The value could be a string (in this case we have to remove the " at the beginning
-						// and at the end) or could be a integer (in this case we do not have to remove anythink)
-						if (sValue.length() > 2 && sValue.front() == '"' && sValue.back() == '"')
-							sValue = sValue.substr(1, sValue.length() - 2);
-					*/
-
-					// string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
-					// localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
-					string variableToBeReplaced = string("${") + sKey + "}";
 					_logger->info(__FILEREF__ + "requestBody, replace"
 						+ ", variableToBeReplaced: " + variableToBeReplaced
 						+ ", sValue: " + sValue
