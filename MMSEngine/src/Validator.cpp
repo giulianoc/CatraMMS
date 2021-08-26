@@ -1510,6 +1510,9 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
+		/*
+		 * 2021-08-26: removed the check because we are adding the option to manage
+		 * several contents
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1520,6 +1523,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
+		*/
 
         // Json::Value referenceRoot = referencesRoot[0];
 
