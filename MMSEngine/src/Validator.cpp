@@ -213,7 +213,8 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     }
 }
 
-void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot, bool validateDependenciesToo)
+void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot,
+	bool validateDependenciesToo)
 {
     string field = "OnSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
@@ -351,12 +352,13 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     }    
 }
 
-vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 	Validator::validateSingleTaskMetadata(
 	int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
-    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>           dependencies;
+    vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
+		dependencies;
 
     string field = "Type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -418,7 +420,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
+        validateRemoveContentMetadata(workspaceKey, label, parametersRoot,
+			dependencies);
     }
     else if (type == "Encode")
     {
@@ -439,7 +442,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
+        validateEncodeMetadata(workspaceKey, label, parametersRoot,
+			dependencies);
     }
     else if (type == "Frame")
     {
@@ -460,7 +464,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFrameMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateFrameMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);        
     }
     else if (type == "Periodical-Frames")
     {
@@ -481,7 +486,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Motion-JPEG-by-Periodical-Frames")
     {
@@ -502,7 +508,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "I-Frames")
     {
@@ -523,7 +530,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Motion-JPEG-by-I-Frames")
     {
@@ -544,7 +552,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Slideshow")
     {
@@ -565,7 +574,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateSlideshowMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateSlideshowMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Concat-Demuxer")
     {
@@ -586,7 +596,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Cut")
     {
@@ -607,7 +618,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Overlay-Image-On-Video")
     {
@@ -628,7 +640,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);        
     }
     else if (type == "Overlay-Text-On-Video")
     {
@@ -649,7 +662,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);        
     }
     else if (type == "Email-Notification")
     {
@@ -671,7 +685,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
 
         Json::Value parametersRoot = taskRoot[field]; 
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot,
-				validateDependenciesToo, dependencies);        
+				validateDependenciesToo, dependencies);
     }
     else if (type == "Media-Cross-Reference")
     {
@@ -693,7 +707,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
 
         Json::Value parametersRoot = taskRoot[field]; 
         validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot,
-				validateDependenciesToo, dependencies);        
+				validateDependenciesToo, dependencies);
     }
     else if (type == "FTP-Delivery")
     {
@@ -714,7 +728,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "HTTP-Callback")
     {
@@ -735,7 +750,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Local-Copy")
     {
@@ -756,7 +772,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateLocalCopyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateLocalCopyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Extract-Tracks")
     {
@@ -777,7 +794,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Post-On-Facebook")
     {
@@ -798,7 +816,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Post-On-YouTube")
     {
@@ -819,7 +838,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Face-Recognition")
     {
@@ -840,7 +860,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Face-Identification")
     {
@@ -861,7 +882,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
     }
     else if (type == "Live-Recorder")
     {
@@ -882,7 +904,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Change-File-Format")
     {
@@ -903,7 +926,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Video-Speed")
     {
@@ -924,7 +948,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Picture-In-Picture")
     {
@@ -945,7 +970,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Intro-Outro-Overlay")
     {
@@ -988,7 +1014,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Awaiting-The-Beginning")
     {
@@ -1009,7 +1036,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot,
+			validateDependenciesToo, dependencies);
     }
     else if (type == "Live-Grid")
     {
@@ -1052,7 +1080,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else if (type == "Workflow-As-Library")
     {
@@ -1073,7 +1102,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+        validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
     }
     else
     {
@@ -1089,11 +1119,12 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     return dependencies;
 }
 
-vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
+vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
 	Validator::validateSingleTaskMetadata(int64_t workspaceKey,
 	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
 {
-    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>                     dependencies;
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
+		dependencies;
 
     // we can validate dependencies too because this method is called by the processor
     // when the dependencies would be already generated
@@ -1107,153 +1138,155 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
     {
-        validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
+        validateRemoveContentMetadata(workspaceKey, label, parametersRoot,
+			dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
     {
-        validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
+        validateEncodeMetadata(workspaceKey, label, parametersRoot,
+			dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
     {
         validateFrameMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
     {
         validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
     {
         validateIFramesMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
     {
         validateSlideshowMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
     {
         validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
     {
         validateCutMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
     {
         validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayTextOnVideo)
     {
         validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
     {
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
     {
         validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
     {
         validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
     {
         validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
     {
         validateLocalCopyMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTracks)
     {
         validateExtractTracksMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnFacebook)
     {
         validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnYouTube)
     {
         validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
     {
         validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
     {
         validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
     {
         validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
     {
         validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::VideoSpeed)
     {
         validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
     {
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::IntroOutroOverlay)
     {
         validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
     {
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::AwaitingTheBeginning)
     {
         validateAwaitingTheBeginningMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
     {
         validateLiveGridMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
     {
         validateLiveCutMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::WorkflowAsLibrary)
     {
         validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, 
-                validateDependenciesToo, dependencies);        
+                validateDependenciesToo, dependencies);
     }
     else
     {
@@ -1379,7 +1412,10 @@ void Validator::validateAddContentMetadata(
 }
 
 void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+    Json::Value parametersRoot,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies
+	)
 {
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
@@ -1423,7 +1459,8 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
 	string field = "EncodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -1489,8 +1526,8 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = true;
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                encodingProfileFieldsToBeManaged);
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
     }
 
     field = "ProcessingStartingFrom";
@@ -1511,7 +1548,9 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
      
@@ -1544,8 +1583,10 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -1581,7 +1622,10 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
 
 void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies
+	)
 {
     vector<string> mandatoryFields = {
         // "SourceFileName",
@@ -1634,8 +1678,10 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -1671,7 +1717,9 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 
 void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -1695,8 +1743,8 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                encodingProfileFieldsToBeManaged);
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
         {
             if (dependencies.size() == 1)
@@ -1704,8 +1752,10 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -1741,7 +1791,9 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
@@ -1763,17 +1815,20 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                encodingProfileFieldsToBeManaged);
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
         {
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+					keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Image
 						&& referenceContentType != MMSEngineDBFacade::ContentType::Audio)
@@ -1810,7 +1865,9 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
             
@@ -1857,13 +1914,16 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
 
             MMSEngineDBFacade::ContentType firstContentType;
             bool firstContentTypeInitialized = false;
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (firstContentTypeInitialized)
                 {
@@ -1921,7 +1981,9 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
 
 void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -1993,8 +2055,8 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
         fillDependencies(workspaceKey, label, parametersRoot, dependencies,
-                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                encodingProfileFieldsToBeManaged);
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
         {
             if (dependencies.size() != 1)
@@ -2012,8 +2074,10 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video
                         && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
@@ -2050,7 +2114,9 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     
     // References is optional because in case of dependency managed automatically
@@ -2086,14 +2152,18 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
                 int64_t key_1;
                 MMSEngineDBFacade::ContentType referenceContentType_1;
                 Validator::DependencyType dependencyType_1;
+				bool stopIfReferenceProcessingError_1;
 
-                tie(key_1, referenceContentType_1, dependencyType_1) = dependencies[0];
+                tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+					= dependencies[0];
 
                 int64_t key_2;
                 MMSEngineDBFacade::ContentType referenceContentType_2;
                 Validator::DependencyType dependencyType_2;
+				bool stopIfReferenceProcessingError_2;
 
-                tie(key_2, referenceContentType_2, dependencyType_2) = dependencies[1];
+                tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+					= dependencies[1];
 
                 if (referenceContentType_1 == MMSEngineDBFacade::ContentType::Video
                         && referenceContentType_2 == MMSEngineDBFacade::ContentType::Image)
@@ -2140,7 +2210,9 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
 
 void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -2305,8 +2377,10 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -2342,7 +2416,9 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 
 void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -2459,7 +2535,9 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, 
 	bool validateDependenciesToo,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies
+)
 {
     // see sample in directory samples
 
@@ -2529,7 +2607,9 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 
 void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -2600,7 +2680,9 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -2723,7 +2805,9 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
         
@@ -2808,7 +2892,9 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     vector<string> mandatoryFields = {
         "Tracks",
@@ -2916,13 +3002,16 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
 		if (validateDependenciesToo)
 		{
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video
                         && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
@@ -2959,8 +3048,10 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
 void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
-{     
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
+{
     vector<string> mandatoryFields = {
         "NodeId",   // page_id || user_id || event_id || group_id
         "ConfigurationLabel"
@@ -3008,13 +3099,16 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 
 		if (validateDependenciesToo)
 		{
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video
                         && referenceContentType != MMSEngineDBFacade::ContentType::Image)
@@ -3051,8 +3145,10 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 
 void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
-{     
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
+{
     vector<string> mandatoryFields = {
         "ConfigurationLabel"
     };
@@ -3117,13 +3213,16 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 
 		if (validateDependenciesToo)
 		{
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -3159,7 +3258,9 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 
 void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
         
     vector<string> mandatoryFields = {
@@ -3254,14 +3355,16 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 			}
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 					keyAndDependencyType	=  dependencies[0];
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -3297,7 +3400,9 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 
 void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
         
     vector<string> mandatoryFields = {
@@ -3389,14 +3494,16 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 			}
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
-					keyAndDependencyType	=  dependencies[0];
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType	=  dependencies[0];
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -3433,7 +3540,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
 	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
-		Validator::DependencyType>>& dependencies)
+		Validator::DependencyType, bool>>& dependencies)
 {
 
 	string channelType = "IP_MMSAsClient";
@@ -3807,7 +3914,9 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
-	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
 {
         
 	string channelType = "IP_MMSAsClient";
@@ -4120,7 +4229,9 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot,
-	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
 
     // References is optional because in case of dependency managed automatically
@@ -4140,9 +4251,11 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
             throw runtime_error(errorMessage);
         }
 
+		bool stopIfReferenceProcessingError;
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+        fillDependencies(workspaceKey, label, parametersRoot,
+				dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         if (validateDependenciesToo)
@@ -4152,8 +4265,10 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = dependencies[0];
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= dependencies[0];
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -4300,7 +4415,9 @@ void Validator::validateAwaitingTheBeginningMetadata(int64_t workspaceKey, strin
 
 void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     vector<string> mandatoryFields = {
         "WorkflowAsLibraryType",
@@ -4356,7 +4473,9 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
 
 void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, 
-	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     vector<string> mandatoryFields = {
         "OutputFileFormat"
@@ -4425,13 +4544,16 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
 		if (validateDependenciesToo)
 		{
-			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+			for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
 			{
 				int64_t key;
 				MMSEngineDBFacade::ContentType referenceContentType;
 				Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-				tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
 				if (isImage)
 				{
@@ -4485,7 +4607,9 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
 void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
         
 	/*
@@ -4584,14 +4708,16 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
             }
 
             // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 					keyAndDependencyType	=  dependencies[0];
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
                 if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
                 {
@@ -4627,7 +4753,9 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 
 void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, 
-        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	bool validateDependenciesToo,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
 
     // References is optional because in case of dependency managed automatically
@@ -4666,14 +4794,18 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
                 int64_t key_1;
                 MMSEngineDBFacade::ContentType referenceContentType_1;
                 Validator::DependencyType dependencyType_1;
+				bool stopIfReferenceProcessingError_1;
 
-                tie(key_1, referenceContentType_1, dependencyType_1) = dependencies[0];
+                tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+					= dependencies[0];
 
                 int64_t key_2;
                 MMSEngineDBFacade::ContentType referenceContentType_2;
                 Validator::DependencyType dependencyType_2;
+				bool stopIfReferenceProcessingError_2;
 
-                tie(key_2, referenceContentType_2, dependencyType_2) = dependencies[1];
+                tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+					= dependencies[1];
 
                 if (referenceContentType_1 != MMSEngineDBFacade::ContentType::Video
                         || referenceContentType_2 != MMSEngineDBFacade::ContentType::Video)
@@ -4713,7 +4845,8 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 
 void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, bool validateDependenciesToo,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
 
     // References is optional because in case of dependency managed automatically
@@ -4764,20 +4897,26 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
                 int64_t key_1;
                 MMSEngineDBFacade::ContentType referenceContentType_1;
                 Validator::DependencyType dependencyType_1;
+				bool stopIfReferenceProcessingError_1;
 
-                tie(key_1, referenceContentType_1, dependencyType_1) = dependencies[0];
+                tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+					= dependencies[0];
 
                 int64_t key_2;
                 MMSEngineDBFacade::ContentType referenceContentType_2;
                 Validator::DependencyType dependencyType_2;
+				bool stopIfReferenceProcessingError_2;
 
-                tie(key_2, referenceContentType_2, dependencyType_2) = dependencies[1];
+                tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+					= dependencies[1];
 
                 int64_t key_3;
                 MMSEngineDBFacade::ContentType referenceContentType_3;
                 Validator::DependencyType dependencyType_3;
+				bool stopIfReferenceProcessingError_3;
 
-                tie(key_3, referenceContentType_3, dependencyType_3) = dependencies[2];
+                tie(key_3, referenceContentType_3, dependencyType_3, stopIfReferenceProcessingError_3)
+					= dependencies[2];
 
                 if (referenceContentType_1 != MMSEngineDBFacade::ContentType::Video
 					|| referenceContentType_2 != MMSEngineDBFacade::ContentType::Video
@@ -4871,7 +5010,8 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 
 void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 	Json::Value parametersRoot, bool validateDependenciesToo,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
         
 	vector<string> mandatoryFields = {
@@ -5052,7 +5192,8 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 
 void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, bool validateDependenciesToo,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies)
 {
     // see sample in directory samples
 
@@ -5261,9 +5402,10 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value parametersRoot, 
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
-        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-        bool encodingProfileFieldsToBeManaged)
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies,
+	bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+	bool encodingProfileFieldsToBeManaged)
 {
     string field = "References";
     Json::Value referencesRoot = parametersRoot[field];
@@ -5272,10 +5414,11 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
     {
         Json::Value referenceRoot = referencesRoot[referenceIndex];
 
-		bool errorIfContentNotFound = true;
-        field = "ErrorIfContentNotFound";
-        if (JSONUtils::isMetadataPresent(referenceRoot, field))
-			errorIfContentNotFound = JSONUtils::asBool(referenceRoot, field, true);
+		bool stopIfReferenceProcessingError = false;
+		field = "StopIfReferenceProcessingError";
+		if (JSONUtils::isMetadataPresent(referenceRoot, field))
+			stopIfReferenceProcessingError =
+				JSONUtils::asBool(referenceRoot, field, stopIfReferenceProcessingError);
 
         int64_t referenceMediaItemKey = -1;
         int64_t referencePhysicalPathKey = -1;
@@ -5452,7 +5595,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 								);
 
                                 dependencies.push_back(make_tuple(referencePhysicalPathKey,
-									referenceContentType, DependencyType::PhysicalPathKey));
+									referenceContentType, DependencyType::PhysicalPathKey,
+									stopIfReferenceProcessingError));
 							}
                             else if (referenceMediaItemKey != -1)
 							{
@@ -5466,7 +5610,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 								);
 
                                 dependencies.push_back(make_tuple(referenceMediaItemKey,
-									referenceContentType, DependencyType::MediaItemKey));
+									referenceContentType, DependencyType::MediaItemKey,
+									stopIfReferenceProcessingError));
 							}
                             else    // referenceLabel
                                 ;
@@ -5493,7 +5638,9 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 									+ ", DependencyType::MediaItemKey"
 								);
 
-                                dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+                                dependencies.push_back(make_tuple(referenceMediaItemKey,
+									referenceContentType, DependencyType::MediaItemKey,
+									stopIfReferenceProcessingError));
 							}
                             else    // referenceLabel
                                 ;
@@ -5522,7 +5669,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				}
 				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
-					string referenceEncodingProfileLabel = referenceRoot.get(fieldEncodingProfileLabel, "").asString();
+					string referenceEncodingProfileLabel = referenceRoot.get(
+						fieldEncodingProfileLabel, "").asString();
 
 					referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
 						workspaceKey, referenceMediaItemKey, referenceContentType,
@@ -5545,7 +5693,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				+ ", referenceLabel: " + to_string(referenceLabel)
 				+ ", e.what: " + e.what()
 			;
-			if (errorIfContentNotFound)
+			if (stopIfReferenceProcessingError)
 			{
 				_logger->error(errorMessage);
 
@@ -5634,7 +5782,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 					+ ", DependencyType::PhysicalPathKey"
 				);
 
-                dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey));
+                dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType,
+					DependencyType::PhysicalPathKey, stopIfReferenceProcessingError));
 			}
             else if (referenceMediaItemKey != -1)
 			{
@@ -5644,7 +5793,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 					+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
 					+ ", DependencyType::MediaItemKey"
 				);
-                dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+                dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType,
+					DependencyType::MediaItemKey, stopIfReferenceProcessingError));
 			}
             else    // referenceLabel
                 ;

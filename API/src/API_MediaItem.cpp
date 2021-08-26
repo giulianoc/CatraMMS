@@ -480,10 +480,10 @@ void API::mediaItemsList(
 		/*
 		 * liveRecordingChunk:
 		 * -1: no condition in select
-		 *  0: look for NO liveRecordingChunk
+		 *  0: look for NO liveRecordingChunk (default)
 		 *  1: look for liveRecordingChunk
 		 */
-        int liveRecordingChunk = -1;
+        int liveRecordingChunk = 0;
         auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
         if (liveRecordingChunkIt != queryParameters.end() && liveRecordingChunkIt->second != "")
         {
@@ -525,6 +525,7 @@ void API::mediaItemsList(
 		vector<string> tagsIn;
 		vector<string> tagsNotIn;
 		vector<int64_t> otherMediaItemsKey;
+		if (requestBody != "")
 		{
 			Json::Value otherInputsRoot;
 			try

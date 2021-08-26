@@ -22,22 +22,14 @@
 			// the profiles will be removed.
 
 			// The below object could contain optionally:
-			// - "ErrorIfContentNotFound" boolean field to specify if the MMS has to continue
-			//		or not in case of a content not found. Default is true
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
 			//		a specific profile
+			// - StopIfReferenceProcessingError (in case of multiple References)
+			//		this boolean field specifies if the MMS has to continue or not
+			//		in case of an error during the processing. Default is false
 
 			{ "ReferenceMediaItemKey": 11 }
 		],
-
-		// Optional, default is false.
-		// In case of multiple input
-		// - if this flag is set to true, in case of an error, the Task returns without completing
-		//		the deletion of all the Contents 
-		// - if this flag is set to false, even in case of an error, the Task continue trying
-		//		to remove all the input contents. In this scenario an error during the deletion of the content,
-		//		is discarder
-		"MultipleInput_ReturnErrorInCaseOfOneFailure": false,
 
 		// Optional. This tag is used in the scenario where the Contents to be removed are the one specified
 		//	by the References tag and also the one inherit from the parent Task

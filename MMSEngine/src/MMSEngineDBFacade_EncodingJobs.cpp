@@ -2057,7 +2057,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						);
                         if (physicalPathResultSet->next())
                         {
-                            encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(
+							encodingItem->_encodeData->_contentType = MMSEngineDBFacade::toContentType(
 								physicalPathResultSet->getString("contentType"));
                             // encodingItem->_encodeData->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                             encodingItem->_encodeData->_mediaItemKey =

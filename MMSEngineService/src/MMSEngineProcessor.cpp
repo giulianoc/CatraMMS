@@ -1051,7 +1051,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
+                    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType,
+						bool>> dependencies;
+
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -1060,7 +1062,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 workspace->_workspaceKey, parametersRoot);                        
 						else
 							dependencies = validator.validateSingleTaskMetadata(
-                                workspace->_workspaceKey, ingestionType, parametersRoot);                        
+                                workspace->_workspaceKey, ingestionType, parametersRoot);
 
 						// Scenario: Live-Recording using HighAvailability, both main and backup contents are ingested (Add-Content)
 						//		and both potentially will have the tasks for onSuccess, onFailure and onComplete.
@@ -5401,13 +5403,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		+ ", binaryPathName: " + binaryPathName);
 
     string      metadataFileContent;
-    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
     Validator validator(_logger, _mmsEngineDBFacade, _configuration);
     try
     {
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies;
+
 		dependencies = validator.validateSingleTaskMetadata(
 			localAssetIngestionEvent.getWorkspace()->_workspaceKey,
-			localAssetIngestionEvent.getIngestionType(), parametersRoot);
+			localAssetIngestionEvent.getIngestionType(),
+			parametersRoot);
     }
     catch(runtime_error e)
     {
@@ -7997,10 +8002,11 @@ void MMSEngineProcessor::manageGroupOfTasks(
 }
 
 void MMSEngineProcessor::removeContentTask(
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+	int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace,
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies
 )
 {
     try
@@ -8016,22 +8022,20 @@ void MMSEngineProcessor::removeContentTask(
             throw runtime_error(errorMessage);
         }
 
-		bool multipleInput_ReturnErrorInCaseOfOneFailure = false;
-		string field = "MultipleInput_ReturnErrorInCaseOfOneFailure";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			multipleInput_ReturnErrorInCaseOfOneFailure = JSONUtils::asBool(parametersRoot, field, false);
-
 		int dependencyIndex = 0;
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-				dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
         {
+			bool stopIfReferenceProcessingError = false;
+
 			try
 			{
 				int64_t key;
 				MMSEngineDBFacade::ContentType referenceContentType;
 				Validator::DependencyType dependencyType;
 
-				tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
 				// check if there are ingestion dependencies on this media item
 				{
@@ -8048,12 +8052,13 @@ void MMSEngineProcessor::removeContentTask(
 						string localUserData;
 						string localIngestionDate;
 						int64_t localIngestionJobKey;
-						tie(localContentType, localTitle, localUserData, localIngestionDate, ignore, localIngestionJobKey)
+						tie(localContentType, localTitle, localUserData, localIngestionDate, ignore,
+							localIngestionJobKey)
 							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
 						int ingestionDependenciesNumber = 
 							_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-									localIngestionJobKey);
+								localIngestionJobKey);
 						if (ingestionDependenciesNumber > 0)
 						{
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
@@ -8129,7 +8134,7 @@ void MMSEngineProcessor::removeContentTask(
 
 				if (dependencies.size() > 1)
 				{
-					if (multipleInput_ReturnErrorInCaseOfOneFailure)
+					if (stopIfReferenceProcessingError)
 						throw runtime_error(errorMessage);
 				}
 				else
@@ -8147,7 +8152,7 @@ void MMSEngineProcessor::removeContentTask(
 
 				if (dependencies.size() > 1)
 				{
-					if (multipleInput_ReturnErrorInCaseOfOneFailure)
+					if (stopIfReferenceProcessingError)
 						throw runtime_error(errorMessage);
 				}
 				else
@@ -8197,7 +8202,8 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -8268,12 +8274,16 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
         string ftpPassword;
         string ftpRemoteDirectory;
 
-        tuple<string, int, string, string, string> ftp = _mmsEngineDBFacade->getFTPByConfigurationLabel(
-                workspace->_workspaceKey, configurationLabel);            
+        tuple<string, int, string, string, string> ftp =
+			_mmsEngineDBFacade->getFTPByConfigurationLabel(
+					workspace->_workspaceKey, configurationLabel);            
         tie(ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory) = ftp;
 
-        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-		// 		dependencies)
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
         for (int dependencyIndex = 0; dependencyIndex < dependencies.size(); dependencyIndex++)
         {
 			string mmsAssetPathName;
@@ -8283,14 +8293,16 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 			int64_t mediaItemKey;
 			int64_t physicalPathKey;
 
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType =
-				dependencies[dependencyIndex];
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = dependencies[dependencyIndex];
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -8371,7 +8383,8 @@ void MMSEngineProcessor::postOnFacebookTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -8449,8 +8462,13 @@ void MMSEngineProcessor::postOnFacebookTask(
             facebookNodeId = parametersRoot.get(field, "XXX").asString();
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-				dependencies)
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
         {
 			string mmsAssetPathName;
             int64_t sizeInBytes;
@@ -8466,8 +8484,10 @@ void MMSEngineProcessor::postOnFacebookTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
-            
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			bool stopIfReferenceProcessingError;
+
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -8600,7 +8620,8 @@ void MMSEngineProcessor::postOnYouTubeTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -8692,8 +8713,13 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 youTubePrivacy = "private";
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-				dependencies)
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
         {
 			string mmsAssetPathName;
             int64_t sizeInBytes;
@@ -8710,8 +8736,10 @@ void MMSEngineProcessor::postOnYouTubeTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -8834,7 +8862,8 @@ void MMSEngineProcessor::httpCallbackTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -9013,18 +9042,25 @@ void MMSEngineProcessor::httpCallbackTask(
             );
         }
 
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
 		// 2021-02: we do not have a requirement to send data in case of GET
         Json::Value callbackMedatada;
 		if (httpMethod == "POST")
         {
-            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-					dependencies)
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
             {
                 int64_t key;
                 MMSEngineDBFacade::ContentType referenceContentType;
                 Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
 
-                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+                tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
 				callbackMedatada["workspaceKey"] = (int64_t) (workspace->_workspaceKey);
 
@@ -9243,7 +9279,8 @@ void MMSEngineProcessor::localCopyContentTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -9315,8 +9352,13 @@ void MMSEngineProcessor::localCopyContentTask(
             }
         }
         
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType:
-				dependencies)
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
         {
 			string mmsAssetPathName;
 			/*
@@ -9332,8 +9374,10 @@ void MMSEngineProcessor::localCopyContentTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			int64_t physicalPathKey;
             if (dependencyType == Validator::DependencyType::MediaItemKey)
@@ -9433,7 +9477,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -9505,9 +9550,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			}
         }
         
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	l'encoding dovrebbe eseguire il processing in modo sequenziale e utilizzare il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
 
 			string mmsAssetPathName;
@@ -9527,8 +9575,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -9649,7 +9699,8 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -9706,9 +9757,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             deepLearnedModelTagsCommaSeparated = parametersRoot.get(field, "XXX").asString();
         }
         
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	l'encoding dovrebbe eseguire il processing in modo sequenziale e utilizzare il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
 
 			string mmsAssetPathName;
@@ -9726,8 +9780,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -11361,7 +11417,7 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 	string ingestionDate,
 	shared_ptr<Workspace> workspace,
 	Json::Value parametersRoot,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies
 )
 {
@@ -11401,10 +11457,12 @@ void MMSEngineProcessor::manageAwaitingTheBeginning(
 		{
             int64_t key;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
@@ -14071,7 +14129,8 @@ void MMSEngineProcessor::changeFileFormatThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies)
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies)
 
 {
     try 
@@ -14108,17 +14167,25 @@ void MMSEngineProcessor::changeFileFormatThread(
             outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
 
-        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>::iterator
-			it = dependencies.begin(); 
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	si dovrebbe lanciare un thread che esegue il processing in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
+        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
+			Validator::DependencyType, bool>>::iterator it = dependencies.begin(); 
 			it != dependencies.end(); ++it) 
         {
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = *it;
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = *it;
 
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			int64_t mediaItemKey;
 			string mmsSourceAssetPathName;
@@ -14943,8 +15010,8 @@ void MMSEngineProcessor::extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies)
-
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies)
 {
     try 
     {
@@ -15021,16 +15088,24 @@ void MMSEngineProcessor::extractTracksContentThread(
             outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
 
-        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>::iterator it = dependencies.begin(); 
-                it != dependencies.end(); ++it) 
+//	si dovrebbe lanciare un thread che esegue il processing in modo sequenziale e utilizza il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
+// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
+// la configurazione non prevede abbastanza numero di threads
+        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
+			Validator::DependencyType, bool>>::iterator it = dependencies.begin(); 
+			it != dependencies.end(); ++it) 
         {
-            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = *it;
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = *it;
 
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			string mmsAssetPathName;
 			/*
@@ -15639,7 +15714,8 @@ void MMSEngineProcessor::generateAndIngestFramesThread(
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
 )
 {
     try
@@ -15965,7 +16041,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -16061,7 +16138,8 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
     int64_t ingestionJobKey,
     MMSEngineDBFacade::IngestionType ingestionType,
     Json::Value parametersRoot,
-    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+		dependencies,
         
     int& periodInSeconds, double& startTimeInSeconds,
     int& maxFramesNumber, string& videoFilter,
@@ -16176,13 +16254,16 @@ int64_t MMSEngineProcessor::fillGenerateFramesParameters(
 
         // int64_t sourcePhysicalPathKey;
         // string sourcePhysicalPath;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType = dependencies.back();
 
         int64_t key;
         MMSEngineDBFacade::ContentType referenceContentType;
         Validator::DependencyType dependencyType;
+		bool stopIfReferenceProcessingError;
 
-        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+        tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+			= keyAndDependencyType;
 
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
@@ -16363,7 +16444,8 @@ void MMSEngineProcessor::manageSlideShowTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -16398,7 +16480,8 @@ void MMSEngineProcessor::manageSlideShowTask(
         vector<string> audiosSourcePhysicalPaths;
 		double shortestAudioDurationInSeconds = -1;
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
         {
             // int64_t encodingProfileKey = -1;
             // string sourcePhysicalPath = _mmsStorage->getPhysicalPathDetails(keyAndDependencyType.first, encodingProfileKey);
@@ -16410,8 +16493,10 @@ void MMSEngineProcessor::manageSlideShowTask(
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
         
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -16560,7 +16645,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
 )
 {
     try
@@ -16594,14 +16680,16 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 		bool firstMedia = true;
 		string lastUserData;
 
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
-				keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType: dependencies)
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17247,7 +17335,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
 )
 {
     try
@@ -17273,14 +17362,16 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		int64_t sourcePhysicalPathKey;
 		string sourcePhysicalPath;
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType
-				= dependencies.back();
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = dependencies.back();
 
 			int64_t key;
 			MMSEngineDBFacade::ContentType referenceContentType;
 			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
@@ -17977,18 +18068,18 @@ void MMSEngineProcessor::manageEncodeTask(
 	int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace,
 	Json::Value parametersRoot,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies
 )
 {
     try
-    {        
-        if (dependencies.size() != 1)
+    {
+        if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "Wrong media number to be encoded"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
+            string errorMessage = __FILEREF__ + "No media received to be encoded"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -18004,7 +18095,7 @@ void MMSEngineProcessor::manageEncodeTask(
         else
         {
             encodingPriority = MMSEngineDBFacade::toEncodingPriority(
-					parametersRoot.get(field, "XXX").asString());
+					parametersRoot.get(field, "").asString());
         }
 
 		// it is not possible to manage more than one encode because:
@@ -18032,53 +18123,57 @@ void MMSEngineProcessor::manageEncodeTask(
 		//	are generated dinamically as output of the parent task. In fact, in case the Encode Task
 		//	is received by the MMS with multiple References as input during the ingestion,
 		//	it will be automatically converted with a GroupOfTasks with all the Encode Tasks as children.
-		// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
-		// 		keyAndDependencyType: dependencies)
-        MMSEngineDBFacade::ContentType referenceContentType;
-		int64_t sourceMediaItemKey;
-		int64_t sourcePhysicalPathKey;
-        {
-            int64_t key;
-            Validator::DependencyType dependencyType;
-            
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
-				keyAndDependencyType	= dependencies[0];
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-
-			if (dependencyType == Validator::DependencyType::MediaItemKey)
+		// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+		// 	keyAndDependencyType: dependencies)
+		// {
+			MMSEngineDBFacade::ContentType referenceContentType;
+			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
 			{
-				sourceMediaItemKey = key;
-
-				sourcePhysicalPathKey = -1;
-			}
-			else
-			{
-				sourcePhysicalPathKey = key;
+				int64_t key;
+				Validator::DependencyType dependencyType;
+				bool stopIfReferenceProcessingError;
             
-				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-					workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+				tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+					keyAndDependencyType	= dependencies[0];
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
-				MMSEngineDBFacade::ContentType localContentType;
-				string localTitle;
-				string userData;
-                string ingestionDate;
-				int64_t localIngestionJobKey;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
+				{
+					sourceMediaItemKey = key;
+
+					sourcePhysicalPathKey = -1;
+				}
+				else
+				{
+					sourcePhysicalPathKey = key;
+
+					bool warningIfMissing = false;
+					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string,int64_t, string>
+						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, sourcePhysicalPathKey, warningIfMissing);
+
+					MMSEngineDBFacade::ContentType localContentType;
+					string localTitle;
+					string userData;
+					string ingestionDate;
+					int64_t localIngestionJobKey;
+					tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate,
 						localIngestionJobKey, ignore)
-                    = mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+						= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+				}
 			}
-		}
+		// }
 
-        // This task shall contain EncodingProfileKey or EncodingProfileLabel.
-        // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
-        //  having just EncodingProfileKey        
-        
-        string keyField = "EncodingProfileKey";
-        int64_t encodingProfileKey = -1;
-        string labelField = "EncodingProfileLabel";
+		// This task shall contain EncodingProfileKey or EncodingProfileLabel.
+		// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+		//  having just EncodingProfileKey        
+
+		string keyField = "EncodingProfileKey";
+		int64_t encodingProfileKey = -1;
+		string labelField = "EncodingProfileLabel";
         if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
         {
             encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
@@ -18179,7 +18274,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies
 )
 {
@@ -18242,10 +18337,12 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         {
             int64_t key;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
             
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType	= dependencies[0];
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
@@ -18274,6 +18371,9 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			}
 		}
 
+// 2021-08-26: si dovrebbe cambiare l'implementazione:
+//	aggiungere la gestione di multi-video-speed: l'encoding dovrebbe eseguire il processing in modo sequenziale e utilizzare il bool
+//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
 		_mmsEngineDBFacade->addEncoding_VideoSpeed (workspace, ingestionJobKey,
 			sourceMediaItemKey, sourcePhysicalPathKey,
 			videoSpeedType, videoSpeedSize, encodingPriority);
@@ -18307,7 +18407,8 @@ void MMSEngineProcessor::managePictureInPictureTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -18392,13 +18493,16 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType_1 = dependencies[0];
 
         int64_t key_1;
         MMSEngineDBFacade::ContentType referenceContentType_1;
         Validator::DependencyType dependencyType_1;
+		bool stopIfReferenceProcessingError_1;
 
-        tie(key_1, referenceContentType_1, dependencyType_1) = keyAndDependencyType_1;
+        tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+			= keyAndDependencyType_1;
 
         if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
         {
@@ -18431,13 +18535,16 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         int64_t sourceMediaItemKey_2;
         int64_t sourcePhysicalPathKey_2;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType_2 = dependencies[1];
 
         int64_t key_2;
         MMSEngineDBFacade::ContentType referenceContentType_2;
         Validator::DependencyType dependencyType_2;
+		bool stopIfReferenceProcessingError_2;
 
-        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_2;
+        tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+			= keyAndDependencyType_2;
 
         if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
         {
@@ -18535,7 +18642,8 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -18568,14 +18676,16 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		string introVideoAssetPathName;
 		int64_t introVideoDurationInMilliSeconds;
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType = dependencies[0];
 
 			int64_t key;
 			MMSEngineDBFacade::ContentType referenceContentType;
 			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType== Validator::DependencyType::MediaItemKey)
 			{
@@ -18616,14 +18726,16 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		string mainVideoAssetPathName;
 		int64_t mainVideoDurationInMilliSeconds;
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType = dependencies[1];
 
 			int64_t key;
 			MMSEngineDBFacade::ContentType referenceContentType;
 			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType== Validator::DependencyType::MediaItemKey)
 			{
@@ -18664,14 +18776,16 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		string outroVideoAssetPathName;
 		int64_t outroVideoDurationInMilliSeconds;
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType = dependencies[2];
 
 			int64_t key;
 			MMSEngineDBFacade::ContentType referenceContentType;
 			Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-			tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
 			if (dependencyType== Validator::DependencyType::MediaItemKey)
 			{
@@ -18815,7 +18929,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -18881,13 +18996,16 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType_1 = dependencies[0];
 
         int64_t key_1;
         MMSEngineDBFacade::ContentType referenceContentType_1;
         Validator::DependencyType dependencyType_1;
+		bool stopIfReferenceProcessingError_1;
 
-        tie(key_1, referenceContentType_1, dependencyType_1) = keyAndDependencyType_1;
+        tie(key_1, referenceContentType_1, dependencyType_1, stopIfReferenceProcessingError_1)
+			= keyAndDependencyType_1;
 
         if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
         {
@@ -18926,13 +19044,16 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         int64_t sourceMediaItemKey_2;
         int64_t sourcePhysicalPathKey_2;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType_2 = dependencies[1];
 
         int64_t key_2;
         MMSEngineDBFacade::ContentType referenceContentType_2;
         Validator::DependencyType dependencyType_2;
+		bool stopIfReferenceProcessingError_2;
 
-        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_2;
+        tie(key_2, referenceContentType_2, dependencyType_2, stopIfReferenceProcessingError_2)
+			= keyAndDependencyType_2;
 
         if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
         {
@@ -19004,7 +19125,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -19111,13 +19233,16 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+			keyAndDependencyType = dependencies[0];
 
         int64_t key;
         MMSEngineDBFacade::ContentType referenceContentType;
         Validator::DependencyType dependencyType;
+		bool stopIfReferenceProcessingError;
 
-        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+        tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+			= keyAndDependencyType;
 
         if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
@@ -19195,7 +19320,8 @@ void MMSEngineProcessor::emailNotificationThread(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
+			dependencies
 )
 {
     try
@@ -19220,14 +19346,16 @@ void MMSEngineProcessor::emailNotificationThread(
 		*/
         
         string sIngestionJobKeyDependency;
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType: dependencies)
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
         
             if (sIngestionJobKeyDependency == "")
                 sIngestionJobKeyDependency = to_string(key);
@@ -19239,14 +19367,16 @@ void MMSEngineProcessor::emailNotificationThread(
 		int64_t mediaItemKey;
 		if (dependencies.size() > 0)
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType
-				= dependencies[0];
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType = dependencies[0];
 
         	int64_t key;
         	MMSEngineDBFacade::ContentType referenceContentType;
         	Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-        	tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+        	tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
         	if (dependencyType == Validator::DependencyType::MediaItemKey)
         	{
@@ -19496,7 +19626,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
 )
 {
     try
@@ -19531,13 +19662,15 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         MMSEngineDBFacade::ContentType firstContentType;
 		int64_t firstMediaItemKey;
         {
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType = dependencies[0];
 
             int64_t key;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, firstContentType, dependencyType) = keyAndDependencyType;
+            tie(key, firstContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
@@ -19561,13 +19694,15 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
         MMSEngineDBFacade::ContentType secondContentType;
 		int64_t secondMediaItemKey;
         {
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
 				keyAndDependencyType = dependencies[1];
 
             int64_t key;
             Validator::DependencyType dependencyType;
+			bool stopIfReferenceProcessingError;
 
-            tie(key, secondContentType, dependencyType) = keyAndDependencyType;
+            tie(key, secondContentType, dependencyType, stopIfReferenceProcessingError)
+				= keyAndDependencyType;
 
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {

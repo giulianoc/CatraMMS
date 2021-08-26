@@ -22,10 +22,11 @@
 			// the profiles will be copied.
 
 			// The below object could contain optionally:
-			// - "ErrorIfContentNotFound" boolean field to specify if the MMS has to continue
-			//		or not in case of a content not found. Default is true
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
 			//		a specific profile
+			// - StopIfReferenceProcessingError in case of multiple References,
+			//		this boolean field specifies if the MMS has to continue or not
+			//		in case of an error during the processing. Default is false
 
 			{ "ReferenceMediaItemKey": 11 }
 		],

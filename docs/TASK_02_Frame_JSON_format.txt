@@ -8,6 +8,7 @@
 	"Parameters": {
 		// mandatory
 		"References": [
+
 			// mandatory. Just one Reference needed to identify the video by which
 			// retrieve the Frame (screenshot).
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
@@ -16,10 +17,14 @@
 			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
 			// The below object could contain optionally:
-			// - "ErrorIfContentNotFound" boolean field to specify if the MMS has to continue
-			//		or not in case of a content not found. Default is true
 			// - ReferenceEncodingProfileKey or ReferenceEncodingProfileLabel to specify
 			//		a specific profile
+			// - "StopIfContentNotFound" in case of multiple References,
+			//		this boolean field specifies if the MMS has to continue or not
+			//		in case of a content not found. Default is false
+			// - StopIfReferenceProcessingError (in case of multiple References)
+			//		this boolean field specifies if the MMS has to continue or not
+			//		in case of an error during the processing. Default is false
 
 			{ "ReferenceMediaItemKey": 11 }
 		],
