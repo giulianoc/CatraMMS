@@ -3284,8 +3284,8 @@ void FFMPEGEncoder::encodeContentThread(
     string api = "encodeContent";
 
     _logger->info(__FILEREF__ + "Received " + api
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-        + ", requestBody: " + requestBody
+		+ ", encodingJobKey: " + to_string(encodingJobKey)
+		+ ", requestBody: " + requestBody
     );
 
     try
@@ -3293,23 +3293,6 @@ void FFMPEGEncoder::encodeContentThread(
 		encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent(encodingJobKey);
 
-        /*
-        {
-            "mmsSourceAssetPathName": "...",
-            "durationInMilliSeconds": 111,
-            "encodedFileName": "...",
-            "stagingEncodedAssetPathName": "...",
-            "encodingProfileDetails": {
-                ....
-            },
-            "contentType": "...",
-            "physicalPathKey": 1111,
-            "workspaceDirectoryName": "...",
-            "relativePath": "...",
-            "encodingJobKey": 1111,
-            "ingestionJobKey": 1111,
-        }
-        */
         Json::Value encodingMedatada;
         try
         {
@@ -3318,8 +3301,8 @@ void FFMPEGEncoder::encodeContentThread(
             string errors;
 
             bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &encodingMedatada, &errors);
+				requestBody.c_str() + requestBody.size(), 
+				&encodingMedatada, &errors);
             delete reader;
 
             if (!parsingSuccessful)
@@ -3345,23 +3328,23 @@ void FFMPEGEncoder::encodeContentThread(
             throw runtime_error(errorMessage);
         }
 
-        string mmsSourceAssetPathName = encodingMedatada.get("mmsSourceAssetPathName", "XXX").asString();
-        int64_t durationInMilliSeconds = JSONUtils::asInt64(encodingMedatada, "durationInMilliSeconds", -1);
-        // string encodedFileName = encodingMedatada.get("encodedFileName", "XXX").asString();
-        string stagingEncodedAssetPathName = encodingMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
 		/*
-        string encodingProfileDetails;
-        {
-            Json::StreamWriterBuilder wbuilder;
-            
-            encodingProfileDetails = Json::writeString(wbuilder, encodingMedatada["encodingProfileDetails"]);
-        }
-		*/
-		Json::Value encodingProfileDetailsRoot = encodingMedatada["encodingProfileDetails"];
-        MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(encodingMedatada.get("contentType", "XXX").asString());
-        int64_t physicalPathKey = JSONUtils::asInt64(encodingMedatada, "physicalPathKey", -1);
-        string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "XXX").asString();
-        string relativePath = encodingMedatada.get("relativePath", "XXX").asString();
+			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "IntroOverlayDurationInSeconds", -1),
+		 */
+		Json::Value sourcesToBeEncodedRoot = encodingMedatada["encodingParametersRoot"]["sourcesToBeEncodedRoot"];
+		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
+
+        string mmsSourceAssetPathName = sourceToBeEncodedRoot.get("mmsSourceAssetPathName", "").asString();
+        int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
+				"sourceDurationInMilliSecs", -1);
+        string stagingEncodedAssetPathName = encodingMedatada.get("stagingEncodedAssetPathName", "").asString();
+		Json::Value encodingProfileDetailsRoot = encodingMedatada["encodingParametersRoot"]
+			["encodingProfileDetailsRoot"];
+        MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
+				encodingMedatada["encodingParametersRoot"].get("contentType", "").asString());
+        int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
+        string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "").asString();
+        string relativePath = sourceToBeEncodedRoot.get("sourceRelativePath", "").asString();
         int64_t encodingJobKey = JSONUtils::asInt64(encodingMedatada, "encodingJobKey", -1);
         int64_t ingestionJobKey = JSONUtils::asInt64(encodingMedatada, "ingestionJobKey", -1);
 

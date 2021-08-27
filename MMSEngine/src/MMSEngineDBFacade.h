@@ -584,6 +584,7 @@ public:
 
         shared_ptr<Workspace>                   _workspace;
 
+		/*
         struct EncodeData {
             string                                  _fileName;
             string                                  _relativePath;
@@ -593,6 +594,7 @@ public:
             MMSEngineDBFacade::DeliveryTechnology   _deliveryTechnology;
             string                                  _jsonProfile;
         };
+		*/
 
         struct OverlayImageOnVideoData {
             // unsigned long                           _mmsVideoPartitionNumber;
@@ -673,7 +675,7 @@ public:
             Json::Value								_encodingProfileDetailsRoot;
 		};
 
-        shared_ptr<EncodeData>                      _encodeData;
+        // shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
         shared_ptr<GenerateFramesData>              _generateFramesData;
@@ -1550,7 +1552,7 @@ public:
     tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> getMediaItemKeyDetails(
         int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
+    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
 		getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing);
     
@@ -1642,10 +1644,12 @@ public:
     void addEncodingJob (
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
-        int64_t destEncodingProfileKey,
-        int64_t sourceMediaItemKey,
-        int64_t sourcePhysicalPathKey,
-        EncodingPriority encodingPriority);
+		MMSEngineDBFacade::ContentType contentType,
+        EncodingPriority encodingPriority,
+        int64_t encodingProfileKey,
+		Json::Value encodingProfileDetailsRoot,
+        Json::Value sourcesToBeEncodedRoot
+	);
 
     void addEncoding_OverlayImageOnVideoJob (
         shared_ptr<Workspace> workspace,
@@ -1837,8 +1841,7 @@ public:
     int updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,
-        int64_t mediaItemKey,
-        int64_t encodedPhysicalPathKey,
+		bool isIngestionJobFinished,
         int64_t ingestionJobKey,
 		string ingestionErrorMessage = "",
 		bool forceEncodingToBeFailed = false);

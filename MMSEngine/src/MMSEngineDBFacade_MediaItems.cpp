@@ -3412,7 +3412,7 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
     }    
 }
 
-tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string>
+tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
 	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
 	int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing)
 {
@@ -3420,8 +3420,8 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string>
-		mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
+		mediaItemDetails;
 
     try
     {
@@ -3432,7 +3432,8 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, p.fileName, "
+                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, mi.ingestionJobKey, "
+				"p.fileName, p.relativePath, "
                 "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
                 "where mi.workspaceKey = ? and mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
@@ -3465,6 +3466,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
                     title = resultSet->getString("title");
 
                 string fileName = resultSet->getString("fileName");
+                string relativePath = resultSet->getString("relativePath");
 
                 string ingestionDate;
                 if (!resultSet->isNull("ingestionDate"))
@@ -3472,9 +3474,8 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
-                mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate,
-						ingestionJobKey, fileName);                
+                mediaItemDetails = make_tuple(mediaItemKey, contentType, title, userData, ingestionDate,
+						ingestionJobKey, fileName, relativePath);                
             }
             else
             {
@@ -3497,7 +3498,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
         _connectionPool->unborrow(conn);
 		conn = nullptr;
         
-        return mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+        return mediaItemDetails;
     }
     catch(sql::SQLException se)
     {
@@ -3580,7 +3581,7 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, 
         }
         
         throw e;
-    }    
+    }
 }
 
 void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(

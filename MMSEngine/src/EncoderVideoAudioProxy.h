@@ -207,10 +207,10 @@ private:
     int						_computerVisionDefaultMinNeighbors;
     bool					_computerVisionDefaultTryFlip;
 
-	string encodeContentImage();
-	int64_t processEncodedImage(string stagingEncodedAssetPathName);
+	void encodeContentImage();
+	void processEncodedImage();
 	void readingImageProfile(
-        string jsonProfile,
+        Json::Value encodingProfileRoot,
         string& newFormat,
         int& newWidth,
         int& newHeight,
@@ -220,9 +220,9 @@ private:
 	void encodingImageFormatValidation(string newFormat);
 	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
-    pair<string, bool> encodeContentVideoAudio();
-    pair<string, bool> encodeContent_VideoAudio_through_ffmpeg();
-    int64_t processEncodedContentVideoAudio(string stagingEncodedAssetPathName, bool killedByUser);    
+    void encodeContentVideoAudio();
+    bool encodeContent_VideoAudio_through_ffmpeg();
+    void processEncodedContentVideoAudio();    
 
     pair<string, bool> overlayImageOnVideo();
     pair<string, bool> overlayImageOnVideo_through_ffmpeg();

@@ -4,8 +4,7 @@
 	"Image": {
 		"Width": 40,
 		"Height": 0,
-		// if ulAspect is false, it means the aspect is preserved,
-		// the width is fixed and the height will be calculated
+		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
 		"AspectRatio": false,
 		"InterlaceType": "NoInterlace"
 	}

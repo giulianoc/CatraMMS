@@ -636,11 +636,9 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             );
             
-            int64_t mediaItemKey = -1;
-            int64_t encodedPhysicalPathKey = -1;
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey,
                     MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
-                    mediaItemKey, encodedPhysicalPathKey,
+                    false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
                     encodingItem->_ingestionJobKey);
         }
         catch(exception e)
@@ -654,11 +652,9 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
                 + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             );
-            int64_t mediaItemKey = -1;
-            int64_t encodedPhysicalPathKey = -1;
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
-                mediaItemKey, encodedPhysicalPathKey,
+                false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 				encodingItem->_ingestionJobKey, "addEncodingItem failed");
         }
 

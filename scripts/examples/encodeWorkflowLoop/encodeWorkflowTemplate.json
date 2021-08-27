@@ -1,0 +1,13 @@
+{
+        "Label": "Encode __REFERENCEPHYSICALPATHKEY__",
+        "Task": {
+                "Label": "Encode",
+                "Parameters": {
+                        "EncodingPriority": "Low",
+                        "EncodingProfileLabel": "MMS_H264_veryfast_360p25_aac_92",
+                        "References": [{"ReferencePhysicalPathKey": __REFERENCEPHYSICALPATHKEY__}]
+                },
+                "Type": "Encode"
+        },
+        "Type": "Workflow"
+}

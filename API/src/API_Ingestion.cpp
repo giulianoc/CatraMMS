@@ -1192,6 +1192,14 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 responseBody); 
 		}
+		else
+		{
+			_logger->info(__FILEREF__ + "No special management for Encode"
+				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
+				+ ", taskLabel: " + taskLabel
+				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
+		}
 	}
     else if (type == "Live-Recorder")
     {

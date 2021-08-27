@@ -528,11 +528,9 @@ void API::killOrCancelEncodingJob(
 									+ ", encodingJobKey: " + to_string(encodingJobKey)                           
 								);
 
-								int64_t mediaItemKey = -1;
-								int64_t encodedPhysicalPathKey = -1;
 								_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
 									MMSEngineDBFacade::EncodingError::KilledByUser,
-									mediaItemKey, encodedPhysicalPathKey,
+									false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 									ingestionJobKey, "killEncodingJob failed");
 							}
 						}
@@ -579,10 +577,9 @@ void API::killOrCancelEncodingJob(
 				{
 					MMSEngineDBFacade::EncodingError encodingError
 						= MMSEngineDBFacade::EncodingError::CanceledByUser;
-					int64_t mediaItemKey = 0;
-					int64_t encodedPhysicalPathKey = 0;
 					_mmsEngineDBFacade->updateEncodingJob(
-							encodingJobKey, encodingError, mediaItemKey, encodedPhysicalPathKey,
+							encodingJobKey, encodingError,
+							false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 							ingestionJobKey, "Canceled By User");
 				}
 			}
@@ -600,10 +597,9 @@ void API::killOrCancelEncodingJob(
 				{
 					MMSEngineDBFacade::EncodingError encodingError
 						= MMSEngineDBFacade::EncodingError::CanceledByUser;
-					int64_t mediaItemKey = 0;
-					int64_t encodedPhysicalPathKey = 0;
 					_mmsEngineDBFacade->updateEncodingJob(
-							encodingJobKey, encodingError, mediaItemKey, encodedPhysicalPathKey,
+							encodingJobKey, encodingError,
+							false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
 							ingestionJobKey, "Canceled By User");
 				}
 			}
