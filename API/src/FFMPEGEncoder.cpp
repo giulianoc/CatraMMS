@@ -12967,6 +12967,8 @@ void FFMPEGEncoder::stopMonitorThread()
 void FFMPEGEncoder::cpuUsageThread()
 {
 
+	int64_t counter = 0;
+
 	while(!_cpuUsageThreadShutdown)
 	{
 		this_thread::sleep_for(chrono::seconds(1));
@@ -12977,9 +12979,10 @@ void FFMPEGEncoder::cpuUsageThread()
 
 			*_cpuUsage = _getCpuUsage.getCpuUsage();
 
-			// _logger->info(__FILEREF__ + "cpuUsageThread"
-			// 	+ ", _cpuUsage: " + to_string(*_cpuUsage)
-			// );
+			if (++counter % 15 == 0)
+				_logger->info(__FILEREF__ + "cpuUsageThread"
+					+ ", _cpuUsage: " + to_string(*_cpuUsage)
+				);
 		}
 		catch(runtime_error e)
 		{
