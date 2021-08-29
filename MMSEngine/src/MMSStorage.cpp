@@ -2086,9 +2086,30 @@ string MMSStorage::moveAssetInMMSRepository(
                 + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
             );
 
-			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-            FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
-			chrono::system_clock::time_point endPoint = chrono::system_clock::now();                              
+			/*
+			 * 2021-08-29: sometimes the moveFile failed:
+			 * [2021-08-28 22:52:08.756] [mmsEngineService] [error] [tid 3114800] [MMSEngineProcessor.cpp:5992] _mmsStorage->moveAssetInMMSRepository failed, _processorIdentifier: 1, ingestionJobKey: 5477449, errorMessage: FileIO::moveFile failed: Class: ToolsErrors, Code: 211, File: /opt/catrasoftware/CatraLibraries/Tools/src/FileIO.cpp, Line: 5872, Msg: The write function failed. Errno: 5
+			 * It is not clear the reason of this error, I'll try again
+			 */
+			try
+			{
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
+				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "Move file filed, try again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", from: " + sourceAssetPathName
+					+ ", to: " + mmsAssetPathName
+					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+				);
+
+				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
+				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+			}
 
             unsigned long ulDestFileSizeInBytes;
 			{
