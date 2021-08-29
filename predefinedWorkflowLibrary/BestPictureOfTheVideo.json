@@ -55,7 +55,7 @@
     "ImageUserData": {
       "Position": 8,
 	  "IsNull": false,
-      "Type": "string",
+      "Type": "json",
 	  "Value": "",
       "Description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
     },
