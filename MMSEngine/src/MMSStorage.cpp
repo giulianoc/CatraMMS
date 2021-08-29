@@ -2101,12 +2101,15 @@ string MMSStorage::moveAssetInMMSRepository(
 			}
 			catch(runtime_error e)
 			{
-				_logger->error(__FILEREF__ + "Move file filed, try again"
+				_logger->error(__FILEREF__ + "Move file failed, try again"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", from: " + sourceAssetPathName
 					+ ", to: " + mmsAssetPathName
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
+
+				int milliSecondsToWait = 200;
+				this_thread::sleep_for(chrono::milliseconds(milliSecondsToWait));
 
 				startPoint = chrono::system_clock::now();
 				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
