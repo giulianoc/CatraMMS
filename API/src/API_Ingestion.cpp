@@ -447,7 +447,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								else
 									sValue = variableDetails.get(field, "").asString();
 							}
-							else if (variableType == "json")
+							else if (variableType == "jsonObject")
 							{
 								if (variableIsNull)
 									sValue = "null";
@@ -499,7 +499,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else if (variableType == "datetime-millisecs")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
-							else if (variableType == "json")
+							else if (variableType == "jsonObject")
 							{
 								if (variableIsNull)
 									sValue = "null";
