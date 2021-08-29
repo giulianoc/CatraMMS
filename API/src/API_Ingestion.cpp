@@ -385,10 +385,10 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						field = "IsNull";
 						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
 
-						if (variableType != "jsonObject")
-							variableToBeReplaced = string("${") + sKey + "}";
-						else
+						if (variableType == "jsonObject" || variableType == "jsonArray")
 							variableToBeReplaced = string("\"${") + sKey + "}\"";
+						else
+							variableToBeReplaced = string("${") + sKey + "}";
 
 						if (variablesValuesToBeUsedRoot == Json::nullValue)
 						{
@@ -457,6 +457,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 									sValue = Json::writeString(wbuilder, variableDetails[field]);
 								}
 							}
+							else if (variableType == "jsonArray")
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+								{
+									Json::StreamWriterBuilder wbuilder;
+									sValue = Json::writeString(wbuilder, variableDetails[field]);
+								}
+							}
 							else
 							{
 								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody"
@@ -500,6 +510,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 							else if (variableType == "datetime-millisecs")
 								sValue = variablesValuesToBeUsedRoot.get(sKey, "").asString();
 							else if (variableType == "jsonObject")
+							{
+								if (variableIsNull)
+									sValue = "null";
+								else
+								{
+									Json::StreamWriterBuilder wbuilder;
+									sValue = Json::writeString(wbuilder, variablesValuesToBeUsedRoot[sKey]);
+								}
+							}
+							else if (variableType == "jsonArray")
 							{
 								if (variableIsNull)
 									sValue = "null";
