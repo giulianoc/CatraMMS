@@ -385,7 +385,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						field = "IsNull";
 						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
 
-						if (variableType != "json")
+						if (variableType != "jsonObject")
 							variableToBeReplaced = string("${") + sKey + "}";
 						else
 							variableToBeReplaced = string("\"${") + sKey + "}\"";
