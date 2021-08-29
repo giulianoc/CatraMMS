@@ -6030,8 +6030,10 @@ void MMSEngineDBFacade::addTags(
 		// generally tagsRoot is an array of strings.
 		// In case it comes from a WorkflowAsLibrary, it will be a string
 		//	containing a json array of strings
+		//	2021-08-29: we added the jsonArray type, so we do not expect anymore a string
 		Json::Value localTagsRoot;
 
+		/*
 		if (tagsRoot.type() == Json::stringValue)
 		{
 			string sTags = tagsRoot.asString();
@@ -6071,6 +6073,7 @@ void MMSEngineDBFacade::addTags(
 			}
 		}
 		else
+		*/
 			localTagsRoot = tagsRoot;
 
 		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
