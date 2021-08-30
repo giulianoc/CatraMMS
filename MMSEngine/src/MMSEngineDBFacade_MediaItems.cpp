@@ -6085,25 +6085,57 @@ void MMSEngineDBFacade::addTags(
 			if (tag == "")
 				continue;
 
-			lastSQLCommand = 
-				"insert into MMS_Tag (mediaItemKey, name) values ("
-				"?, ?)";
+			lastSQLCommand = "select count(*) from MMS_Tag where "
+				"mediaITemKey = ? and name = ?";
 
-			shared_ptr<sql::PreparedStatement> preparedStatement (
-			conn->_sqlConnection->prepareStatement(lastSQLCommand));
-			int queryParameterIndex = 1;
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			preparedStatement->setString(queryParameterIndex++, tag);
-
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-       			preparedStatement->executeUpdate();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", tag: " + tag
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
 			);
+            if (resultSet->next())
+            {
+                if (resultSet->getInt64(1) == 0)
+				{
+					lastSQLCommand = 
+						"insert into MMS_Tag (mediaItemKey, name) values ("
+						"?, ?)";
+
+					shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+					int queryParameterIndex = 1;
+					preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+					preparedStatement->setString(queryParameterIndex++, tag);
+
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						preparedStatement->executeUpdate();
+					_logger->info(__FILEREF__ + "@SQL statistics@"
+						+ ", lastSQLCommand: " + lastSQLCommand
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", tag: " + tag
+						+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+							chrono::system_clock::now() - startSql).count()) + "@"
+					);
+				}
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
 		}
 	}
     catch(sql::SQLException se)
