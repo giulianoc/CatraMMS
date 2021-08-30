@@ -11,8 +11,8 @@
       "Position": 1,
 	  "IsNull": false,
       "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
-      "Type": "string",
-      "Value": "[ \"FACE\" ]"
+      "Type": "jsonArray",
+      "Value": [ "FACE" ]
     },
     "InstantInSeconds": {
       "Position": 2,
