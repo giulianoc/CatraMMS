@@ -9299,7 +9299,7 @@ long FFMPEGEncoder::liveRecorder_buildAndIngestVirtualVOD(
 		Json::Value addContentParametersRoot;
 
 		field = "FileFormat";
-		addContentParametersRoot[field] = "m3u8";
+		addContentParametersRoot[field] = "m3u8-tar.gz";
 
 		// 2021-05-30: changed from copy to move with the idea to have better performance
 		string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;

@@ -462,8 +462,13 @@ public:
 		string sourcePhysicalPath,
 		string destinationPathName);
 
-    static void encodingFileFormatValidation(string fileFormat,
-        shared_ptr<spdlog::logger> logger);
+	void streamingToFile(
+		int64_t ingestionJobKey,
+		string sourceReferenceURL,
+		string destinationPathName);
+
+	static void encodingFileFormatValidation(string fileFormat,
+		shared_ptr<spdlog::logger> logger);
 
     static void encodingAudioCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger);

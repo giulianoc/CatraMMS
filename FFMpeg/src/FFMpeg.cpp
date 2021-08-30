@@ -13142,6 +13142,107 @@ void FFMpeg::changeFileFormat(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::streamingToFile(
+	int64_t ingestionJobKey,
+	string sourceReferenceURL,
+	string destinationPathName)
+{
+	string ffmpegExecuteCommand;
+
+	_currentApiName = "streamingToFile";
+
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
+    try
+    {
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ ".streamingToFile.log"
+		;
+    
+		ffmpegExecuteCommand = 
+			_ffmpegPath + "/ffmpeg "
+			+ "-i " + sourceReferenceURL + " "
+			// -map 0:v and -map 0:a is to get all video-audio tracks
+            + "-map 0:v -c:v copy -map 0:a -c:a copy "
+			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
+			+ "-q 0 "
+			+ destinationPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
+
+		#ifdef __APPLE__
+			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=")
+					+ getenv("DYLD_LIBRARY_PATH") + "; ");
+		#endif
+
+        _logger->info(__FILEREF__ + "streamingToFile: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "streamingToFile: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "streamingToFile: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", destinationPathName: " + destinationPathName);
+        FileIO::remove(destinationPathName, exceptionInCaseOfError);
+
+        throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
 {
     try

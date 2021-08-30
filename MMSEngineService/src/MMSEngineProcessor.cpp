@@ -1618,8 +1618,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
 								if (externalReadOnlyStorage)
 								{
-									shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-										->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+									shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
+										_multiEventsSet->getEventsFactory()->
+										getFreeEvent<LocalAssetIngestionEvent>(
+											MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
 									localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
 									localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
@@ -1647,9 +1649,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								else
 								{
-									bool segmentedContent = false;
-									if (mediaFileFormat == "m3u8")
-										segmentedContent = true;
+									// 0: no m3u8
+									// 1: m3u8 by .tar.gz
+									// 2: m3u8 by streaming (it will be saved as .mp4)
+									int m3u8TarGzOrM3u8Streaming = 0;
+									if (mediaFileFormat == "m3u8-tar.gz")
+										m3u8TarGzOrM3u8Streaming = 1;
+									else if (mediaFileFormat == "m3u8-streaming")
+										m3u8TarGzOrM3u8Streaming = 2;
 
 									if (nextIngestionStatus ==
 										MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
@@ -1704,7 +1711,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 
 											thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace);
 											downloadMediaSource.detach();
 										}
 									}
@@ -1764,7 +1771,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
                                         
 											thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace);
 											moveMediaSource.detach();
 										}
 									}
@@ -1825,7 +1832,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 );
 
 											thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, segmentedContent, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace);
 											copyMediaSource.detach();
 										}
 									}
@@ -5272,13 +5279,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			;
 
 			binaryPathName = workspaceIngestionBinaryPathName;
-			/*
+
 			string field = "FileFormat";
 			string fileFormat = parametersRoot.get(field, "").asString();
-			if (fileFormat == "m3u8")
+			if (fileFormat == "m3u8-streaming")
 			{
+				binaryPathName += ".mp4";	// .mp4 used in downloadMediaSourceFileThread
 			}
-			*/
 		}
 		else
 		{
@@ -6158,7 +6165,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 	}
 
 	string m3u8FileName;
-	if (mediaFileFormat == "m3u8")
+	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case mmsAssetPathName refers a directory and we need to find out the m3u8 file name
 
@@ -6433,7 +6440,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             FFMpeg ffmpeg (_configuration, _logger);
             // tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo;
 
-			if (mediaFileFormat == "m3u8")
+			if (mediaFileFormat == "m3u8-tar.gz")
 				mediaInfoDetails = ffmpeg.getMediaInfo(localAssetIngestionEvent.getIngestionJobKey(),
 					mmsAssetPathName + "/" + m3u8FileName,
 					videoTracks, audioTracks);
@@ -7195,7 +7202,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long long sizeInBytes;
-		if (mediaFileFormat == "m3u8")
+		if (mediaFileFormat == "m3u8-tar.gz")
 			sizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
 		else
 			sizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName, inCaseOfLinkHasItToBeRead);   
@@ -20954,7 +20961,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
         string md5FileCheckSum, int fileSizeInBytes)
 {
 
-	if (mediaFileFormat == "m3u8")
+	if (mediaFileFormat == "m3u8-tar.gz")
 	{
 		// in this case it is a directory with segments inside
 		if (!FileIO::directoryExisting(mediaSourcePathName))
@@ -20989,7 +20996,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 	}
 
 	// we just simplify and md5FileCheck is not done in case of segments
-    if (mediaFileFormat != "m3u8" && md5FileCheckSum != "")
+    if (mediaFileFormat != "m3u8-tar.gz" && md5FileCheckSum != "")
     {
 		char buffer[MD5BUFFERSIZE];
 		unsigned char digest[MD5_DIGEST_LENGTH];
@@ -21045,7 +21052,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }
     
 	// we just simplify and file size check is not done in case of segments
-    if (mediaFileFormat != "m3u8" && fileSizeInBytes != -1)
+    if (mediaFileFormat != "m3u8-tar.gz" && fileSizeInBytes != -1)
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long downloadedFileSizeInBytes = 
@@ -21151,7 +21158,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 };
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
@@ -21159,6 +21166,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	_logger->info(__FILEREF__ + "downloadMediaSourceFileThread"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", m3u8TarGzOrM3u8Streaming: " + to_string(m3u8TarGzOrM3u8Streaming)
 		+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 	);
 /*
@@ -21193,7 +21201,7 @@ RESUMING FILE TRANSFERS
  */    
 
 	string localSourceReferenceURL = sourceReferenceURL;
-	bool localSegmentedContent = segmentedContent;
+	int localM3u8TarGzOrM3u8Streaming = m3u8TarGzOrM3u8Streaming;
 	// in case of youtube url, the real URL to be used has to be calcolated
 	{
 		string youTubePrefix1 ("https://www.youtube.com/");
@@ -21226,8 +21234,8 @@ RESUMING FILE TRANSFERS
 
 				localSourceReferenceURL = streamingYouTubeURL;
 
-				// for sure localSegmentedContent has to be false
-				localSegmentedContent = false;
+				// for sure localM3u8TarGzOrM3u8Streaming has to be false
+				localM3u8TarGzOrM3u8Streaming = 0;
 			}
 			catch(runtime_error e)
 			{
@@ -21280,546 +21288,623 @@ RESUMING FILE TRANSFERS
 		+ "/"
 		+ to_string(ingestionJobKey)
 		+ "_source";
-	if (localSegmentedContent)
+	// 0: no m3u8
+	// 1: m3u8 by .tar.gz
+	// 2: m3u8 by streaming (it will be saved as .mp4)
+	if (localM3u8TarGzOrM3u8Streaming == 1)
 		destBinaryPathName = destBinaryPathName + ".tar.gz";
+	else if (localM3u8TarGzOrM3u8Streaming == 2)
+		destBinaryPathName = destBinaryPathName + ".mp4";	// .mp4 used in handleLocalAssetIngestionEventThread
 
+	if (localM3u8TarGzOrM3u8Streaming == 2)
+	{
+		try
+		{
+			_logger->info(__FILEREF__ + "ffmpeg.streamingToFile"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceReferenceURL: " + sourceReferenceURL
+				+ ", destBinaryPathName: " + destBinaryPathName
+			);
 
-        
-    for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
-    {
-        bool downloadingStoppedByUser = false;
-        
-        try 
-        {
-            _logger->info(__FILEREF__ + "Downloading"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", localSourceReferenceURL: " + localSourceReferenceURL
-                + ", attempt: " + to_string(attemptIndex + 1)
-                + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
-            );
-            
-            if (attemptIndex == 0)
-            {
-                CurlDownloadData curlDownloadData;
-                curlDownloadData.currentChunkNumber = 0;
-                curlDownloadData.currentTotalSize = 0;
-                curlDownloadData.destBinaryPathName   = destBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
-                
-                // fstream mediaSourceFileStream(destBinaryPathName, ios::binary | ios::out);
-                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
-                // FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb");
+			FFMpeg ffmpeg (_configuration, _logger);
+			ffmpeg.streamingToFile(
+				ingestionJobKey,
+				sourceReferenceURL,
+				destBinaryPathName);
 
-                curlpp::Cleanup cleaner;
-                curlpp::Easy request;
+			downloadingCompleted = true;
 
-                // Set the writer callback to enable cURL 
-                // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
-                
-				// which timeout we have to use here???
-				// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", destBinaryPathName: " + destBinaryPathName
+				+ ", downloadingCompleted: " + to_string(downloadingCompleted)
+			);
+			_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
+				ingestionJobKey, downloadingCompleted);
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + "ffmpeg.streamingToFile failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourceReferenceURL: " + sourceReferenceURL
+				+ ", destBinaryPathName: " + destBinaryPathName
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-                curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
-                request.setOpt(curlDownloadCallbackFunction);
-                request.setOpt(curlDownloadDataData);
-
-                // Setting the URL to retrive.
-                request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
-                string httpsPrefix("https");
-                if (localSourceReferenceURL.size() >= httpsPrefix.size()
-						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
-                {
-                    // disconnect if we can't validate server's cert
-                    bool bSslVerifyPeer = false;
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                    request.setOpt(sslVerifyPeer);
-
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                    request.setOpt(sslVerifyHost);
-                }
-
-                chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
-                double lastPercentageUpdated = -1.0;
-                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
-                        ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
-                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
-                request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
-                request.setOpt(new curlpp::options::NoProgress(0L));
-                
-                _logger->info(__FILEREF__ + "Downloading media file"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", localSourceReferenceURL: " + localSourceReferenceURL
-                );
-                request.perform();
-                
-                (curlDownloadData.mediaSourceFileStream).close();
-
-                /*
-                string localPathFileName = curlDownloadData.destBinaryPathName
-                        + ".new";
-                if (curlDownloadData.currentChunkNumber >= 2)
-                {
-                    try
-                    {
-                        bool removeSrcFileAfterConcat = true;
-
-                        _logger->info(__FILEREF__ + "Concat file"
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                            + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-                        );
-
-                        FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
-                    }
-                    catch(runtime_error e)
-                    {
-                        string errorMessage = string("Error to concat file")
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                                + ", e.what(): " + e.what()
-                        ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);            
-                    }
-                    catch(exception e)
-                    {
-                        string errorMessage = string("Error to concat file")
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                        ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);            
-                    }
-                }
-                */
-            }
-            else
-            {
-                _logger->warn(__FILEREF__ + "Coming from a download failure, trying to Resume"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                );
-                
-                // FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb+");
-                long long fileSize;
-                {
-                    ofstream mediaSourceFileStream(destBinaryPathName, ofstream::binary | ofstream::app);
-                    fileSize = mediaSourceFileStream.tellp();
-                    mediaSourceFileStream.close();
-                }
-
-                CurlDownloadData curlDownloadData;
-                curlDownloadData.destBinaryPathName   = destBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
-
-                curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
-                // fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
-                curlDownloadData.currentTotalSize = fileSize;
-
-                curlpp::Cleanup cleaner;
-                curlpp::Easy request;
-
-                // Set the writer callback to enable cURL 
-                // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
-
-                curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
-                request.setOpt(curlDownloadCallbackFunction);
-                request.setOpt(curlDownloadDataData);
-
-				// which timeout we have to use here???
-				// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
-
-                // Setting the URL to retrive.
-                request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
-                string httpsPrefix("https");
-                if (localSourceReferenceURL.size() >= httpsPrefix.size()
-						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
-                {
-                    _logger->info(__FILEREF__ + "Setting SslEngineDefault"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    );
-                    request.setOpt(new curlpp::options::SslEngineDefault());
-                }
-
-                chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
-                double lastPercentageUpdated = -1.0;
-                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
-                        ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
-                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
-                request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
-                request.setOpt(new curlpp::options::NoProgress(0L));
-                
-                if (fileSize > 2 * 1000 * 1000 * 1000)
-                    request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
-                else
-                    request.setOpt(new curlpp::options::ResumeFrom(fileSize));
-                
-                _logger->info(__FILEREF__ + "Resume Download media file"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", localSourceReferenceURL: " + localSourceReferenceURL
-                    + ", resuming from fileSize: " + to_string(fileSize)
-                );
-                request.perform();
-                
-                (curlDownloadData.mediaSourceFileStream).close();
-
-                /*
-                string localPathFileName = curlDownloadData.destBinaryPathName
-                        + ".new";
-                if (curlDownloadData.currentChunkNumber >= 2)
-                {
-                    try
-                    {
-                        bool removeSrcFileAfterConcat = true;
-
-                        _logger->info(__FILEREF__ + "Concat file"
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                            + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-                        );
-
-                        FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
-                    }
-                    catch(runtime_error e)
-                    {
-                        string errorMessage = string("Error to concat file")
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                                + ", e.what(): " + e.what()
-                        ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);            
-                    }
-                    catch(exception e)
-                    {
-                        string errorMessage = string("Error to concat file")
-                            + ", localPathFileName: " + localPathFileName
-                            + ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
-                        ;
-                        _logger->error(__FILEREF__ + errorMessage);
-
-                        throw runtime_error(errorMessage);            
-                    }
-                }
-                 */
-            }
-
-			if (localSegmentedContent)
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_IngestionFailure"
+				+ ", errorMessage: " + errorMessage
+			);
+			try
 			{
-				try
-				{
-					// by a convention, the directory inside the tar file has to be named as 'content'
-					string sourcePathName = "/content.tar.gz";
-
-					_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
-						+ ", destBinaryPathName: " + destBinaryPathName
-						+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
-						+ ", sourcePathName: " + sourcePathName
-					);
-					manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
-						destBinaryPathName, workspaceIngestionRepository,
-						sourcePathName);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-						+ ", localSourceReferenceURL: " + localSourceReferenceURL 
-					;
-           
-					_logger->error(__FILEREF__ + errorMessage);
-           
-					throw runtime_error(errorMessage);
-				}
+				_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+					MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+					errorMessage);
+			}
+			catch(runtime_error& re)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + re.what()
+				);
+			}
+			catch(exception ex)
+			{
+				_logger->info(__FILEREF__ + "Update IngestionJob failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", errorMessage: " + ex.what()
+				);
 			}
 
-            downloadingCompleted = true;
+			return;
+		}
+	}
+	else
+	{
+		for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
+		{
+			bool downloadingStoppedByUser = false;
+        
+			try 
+			{
+				_logger->info(__FILEREF__ + "Downloading"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", localSourceReferenceURL: " + localSourceReferenceURL
+					+ ", attempt: " + to_string(attemptIndex + 1)
+					+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+				);
+            
+				if (attemptIndex == 0)
+				{
+					CurlDownloadData curlDownloadData;
+					curlDownloadData.currentChunkNumber = 0;
+					curlDownloadData.currentTotalSize = 0;
+					curlDownloadData.destBinaryPathName   = destBinaryPathName;
+					curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
+                
+					// fstream mediaSourceFileStream(destBinaryPathName, ios::binary | ios::out);
+					// mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+					// FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb");
 
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", destBinaryPathName: " + destBinaryPathName
-                + ", downloadingCompleted: " + to_string(downloadingCompleted)
-            );
-            _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
-                ingestionJobKey, downloadingCompleted);
-        }
-        catch (curlpp::LogicError & e) 
-        {
-            _logger->error(__FILEREF__ + "Download failed (LogicError)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                + ", exception: " + e.what()
-            );
+					curlpp::Cleanup cleaner;
+					curlpp::Easy request;
 
-            if (downloadingStoppedByUser)
-            {
-                downloadingCompleted = true;
-            }
-            else
-            {
-                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
-                {
-                    _logger->error(__FILEREF__ + "Reached the max number of download attempts"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
-                    );
-                    
-                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_IngestionFailure"
-                        + ", errorMessage: " + e.what()
-                    );                            
+					// Set the writer callback to enable cURL 
+					// to write result in a memory area
+					// request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                
+					// which timeout we have to use here???
+					// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
+					curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
+					curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
+					request.setOpt(curlDownloadCallbackFunction);
+					request.setOpt(curlDownloadDataData);
+
+					// Setting the URL to retrive.
+					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
+					string httpsPrefix("https");
+					if (localSourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+					{
+						// disconnect if we can't validate server's cert
+						bool bSslVerifyPeer = false;
+						curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+						request.setOpt(sslVerifyPeer);
+
+						curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+						request.setOpt(sslVerifyHost);
+					}
+
+					chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+					double lastPercentageUpdated = -1.0;
+					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
+                        ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
+                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+					request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+					request.setOpt(new curlpp::options::NoProgress(0L));
+                
+					_logger->info(__FILEREF__ + "Downloading media file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", localSourceReferenceURL: " + localSourceReferenceURL
+					);
+					request.perform();
+                
+					(curlDownloadData.mediaSourceFileStream).close();
+
+					/*
+					string localPathFileName = curlDownloadData.destBinaryPathName
+                        + ".new";
+					if (curlDownloadData.currentChunkNumber >= 2)
+					{
+						try
+						{
+							bool removeSrcFileAfterConcat = true;
+
+							_logger->info(__FILEREF__ + "Concat file"
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+								+ ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+							);
+
+							FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string("Error to concat file")
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+									+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);            
+						}
+						catch(exception e)
+						{
+							string errorMessage = string("Error to concat file")
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);            
+						}
+					}
+					*/
+				}
+				else
+				{
+					_logger->warn(__FILEREF__ + "Coming from a download failure, trying to Resume"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					);
+                
+					// FILE *mediaSourceFileStream = fopen(destBinaryPathName.c_str(), "wb+");
+					long long fileSize;
+					{
+						ofstream mediaSourceFileStream(destBinaryPathName, ofstream::binary | ofstream::app);
+						fileSize = mediaSourceFileStream.tellp();
+						mediaSourceFileStream.close();
+					}
+
+					CurlDownloadData curlDownloadData;
+					curlDownloadData.destBinaryPathName   = destBinaryPathName;
+					curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
+
+					curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
+					// fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
+					curlDownloadData.currentTotalSize = fileSize;
+
+					curlpp::Cleanup cleaner;
+					curlpp::Easy request;
+
+					// Set the writer callback to enable cURL 
+					// to write result in a memory area
+					// request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+
+					curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
+					curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
+					request.setOpt(curlDownloadCallbackFunction);
+					request.setOpt(curlDownloadDataData);
+
+					// which timeout we have to use here???
+					// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
+
+					// Setting the URL to retrive.
+					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
+					string httpsPrefix("https");
+					if (localSourceReferenceURL.size() >= httpsPrefix.size()
+						&& 0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+					{
+						_logger->info(__FILEREF__ + "Setting SslEngineDefault"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						);
+						request.setOpt(new curlpp::options::SslEngineDefault());
+					}
+
+					chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
+					double lastPercentageUpdated = -1.0;
+					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
+                        ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
+                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+					request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+					request.setOpt(new curlpp::options::NoProgress(0L));
+                
+					if (fileSize > 2 * 1000 * 1000 * 1000)
+						request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
+					else
+						request.setOpt(new curlpp::options::ResumeFrom(fileSize));
+                
+					_logger->info(__FILEREF__ + "Resume Download media file"
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", localSourceReferenceURL: " + localSourceReferenceURL
+						+ ", resuming from fileSize: " + to_string(fileSize)
+					);
+					request.perform();
+                
+					(curlDownloadData.mediaSourceFileStream).close();
+
+					/*
+					string localPathFileName = curlDownloadData.destBinaryPathName
+                        + ".new";
+					if (curlDownloadData.currentChunkNumber >= 2)
+					{
+						try
+						{
+							bool removeSrcFileAfterConcat = true;
+
+							_logger->info(__FILEREF__ + "Concat file"
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+								+ ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+							);
+
+							FileIO::concatFile(curlDownloadData.destBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = string("Error to concat file")
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+									+ ", e.what(): " + e.what()
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);            
+						}
+						catch(exception e)
+						{
+							string errorMessage = string("Error to concat file")
+								+ ", localPathFileName: " + localPathFileName
+								+ ", curlDownloadData.destBinaryPathName: " + curlDownloadData.destBinaryPathName
+							;
+							_logger->error(__FILEREF__ + errorMessage);
+
+							throw runtime_error(errorMessage);            
+						}
+					}
+					*/
+				}
+
+				if (localM3u8TarGzOrM3u8Streaming == 1)
+				{
 					try
 					{
-						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what());
-					}
-					catch(runtime_error& re)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + re.what()
-							);
-					}
-					catch(exception ex)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + ex.what()
-							);
-					}
+						// by a convention, the directory inside the tar file has to be named as 'content'
+						string sourcePathName = "/content.tar.gz";
 
-                    return;
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
-                    );
-                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
-                }
-            }
-        }
-        catch (curlpp::RuntimeError & e) 
-        {
-            _logger->error(__FILEREF__ + "Download failed (RuntimeError)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                + ", exception: " + e.what()
-            );
+						_logger->info(__FILEREF__ + "Calling manageTarFileInCaseOfIngestionOfSegments "
+							+ ", destBinaryPathName: " + destBinaryPathName
+							+ ", workspaceIngestionRepository: " + workspaceIngestionRepository
+							+ ", sourcePathName: " + sourcePathName
+						);
+						manageTarFileInCaseOfIngestionOfSegments(ingestionJobKey,
+							destBinaryPathName, workspaceIngestionRepository,
+							sourcePathName);
+					}
+					catch(runtime_error e)
+					{
+						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+						;
+           
+						_logger->error(__FILEREF__ + errorMessage);
+           
+						throw runtime_error(errorMessage);
+					}
+				}
 
-            if (downloadingStoppedByUser)
-            {
-                downloadingCompleted = true;
-            }
-            else
-            {
-                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
-                {
-                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
-                    );
-                    
-                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_IngestionFailure"
-                        + ", errorMessage: " + e.what()
-                    );                            
-					try
-					{
-						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what());
-					}
-					catch(runtime_error& re)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + re.what()
-							);
-					}
-					catch(exception ex)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
-							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + ex.what()
-							);
-					}
+				downloadingCompleted = true;
 
-                    return;
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
-                    );
-                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
-                }
-            }
-        }
-        catch (runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "Download failed (runtime_error)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                + ", exception: " + e.what()
-            );
+				_logger->info(__FILEREF__ + "Update IngestionJob"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", destBinaryPathName: " + destBinaryPathName
+					+ ", downloadingCompleted: " + to_string(downloadingCompleted)
+				);
+				_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
+					ingestionJobKey, downloadingCompleted);
+			}
+			catch (curlpp::LogicError & e) 
+			{
+				_logger->error(__FILEREF__ + "Download failed (LogicError)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+					+ ", exception: " + e.what()
+				);
 
-            if (downloadingStoppedByUser)
-            {
-                downloadingCompleted = true;
-            }
-            else
-            {
-                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
-                {
-                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
-                    );
-                    
-                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_IngestionFailure"
-                        + ", errorMessage: " + e.what()
-                    );                            
-					try
+				if (downloadingStoppedByUser)
+				{
+					downloadingCompleted = true;
+				}
+				else
+				{
+					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what());
-					}
-					catch(runtime_error& re)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+						_logger->error(__FILEREF__ + "Reached the max number of download attempts"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + re.what()
-							);
-					}
-					catch(exception ex)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+						);
+                    
+						_logger->info(__FILEREF__ + "Update IngestionJob"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + ex.what()
+							+ ", IngestionStatus: " + "End_IngestionFailure"
+							+ ", errorMessage: " + e.what()
+						);                            
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+								e.what());
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + re.what()
+								);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + ex.what()
 							);
-					}
-                    
-                    return;
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
-                    );
-                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
-                }
-            }
-        }
-        catch (exception e)
-        {
-            _logger->error(__FILEREF__ + "Download failed (exception)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                + ", exception: " + e.what()
-            );
+						}
 
-            if (downloadingStoppedByUser)
-            {
-                downloadingCompleted = true;
-            }
-            else
-            {
-                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
-                {
-                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
-                    );
-                    
-                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", IngestionStatus: " + "End_IngestionFailure"
-                        + ", errorMessage: " + e.what()
-                    );                            
-					try
-					{
-						_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what());
+						return;
 					}
-					catch(runtime_error& re)
+					else
 					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+						_logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+							+ ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+					}
+				}
+			}
+			catch (curlpp::RuntimeError & e) 
+			{
+				_logger->error(__FILEREF__ + "Download failed (RuntimeError)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+					+ ", exception: " + e.what()
+				);
+
+				if (downloadingStoppedByUser)
+				{
+					downloadingCompleted = true;
+				}
+				else
+				{
+					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+					{
+						_logger->info(__FILEREF__ + "Reached the max number of download attempts"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + re.what()
-							);
-					}
-					catch(exception ex)
-					{
-						_logger->info(__FILEREF__ + "Update IngestionJob failed"
+							+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+						);
+                    
+						_logger->info(__FILEREF__ + "Update IngestionJob"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", errorMessage: " + ex.what()
+							+ ", IngestionStatus: " + "End_IngestionFailure"
+							+ ", errorMessage: " + e.what()
+						);                            
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+								e.what());
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + re.what()
 							);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + ex.what()
+							);
+						}
+
+						return;
 					}
+					else
+					{
+						_logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+							+ ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+					}
+				}
+			}
+			catch (runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "Download failed (runtime_error)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+					+ ", exception: " + e.what()
+				);
+
+				if (downloadingStoppedByUser)
+				{
+					downloadingCompleted = true;
+				}
+				else
+				{
+					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+					{
+						_logger->info(__FILEREF__ + "Reached the max number of download attempts"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+						);
                     
-                    return;
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
-                        + ", localSourceReferenceURL: " + localSourceReferenceURL 
-                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
-                    );
-                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
-                }
-            }
-        }
-    }
+						_logger->info(__FILEREF__ + "Update IngestionJob"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_IngestionFailure"
+							+ ", errorMessage: " + e.what()
+						);                            
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+								e.what());
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + re.what()
+								);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + ex.what()
+							);
+						}
+                    
+						return;
+					}
+					else
+					{
+						_logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+							+ ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+					}
+				}
+			}
+			catch (exception e)
+			{
+				_logger->error(__FILEREF__ + "Download failed (exception)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+					+ ", exception: " + e.what()
+				);
+
+				if (downloadingStoppedByUser)
+				{
+					downloadingCompleted = true;
+				}
+				else
+				{
+					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+					{
+						_logger->info(__FILEREF__ + "Reached the max number of download attempts"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+						);
+                    
+						_logger->info(__FILEREF__ + "Update IngestionJob"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", IngestionStatus: " + "End_IngestionFailure"
+							+ ", errorMessage: " + e.what()
+						);                            
+						try
+						{
+							_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+								MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+								e.what());
+						}
+						catch(runtime_error& re)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + re.what()
+							);
+						}
+						catch(exception ex)
+						{
+							_logger->info(__FILEREF__ + "Update IngestionJob failed"
+								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", errorMessage: " + ex.what()
+							);
+						}
+                    
+						return;
+					}
+					else
+					{
+						_logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
+							+ ", localSourceReferenceURL: " + localSourceReferenceURL 
+							+ ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+						);
+						this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+					}
+				}
+			}
+		}
+	}
 }
 
 void MMSEngineProcessor::ftpUploadMediaSourceThread(
@@ -24548,7 +24633,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
 }
 
 void MMSEngineProcessor::moveMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
@@ -24566,7 +24651,10 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 			+ "/"
 			+ to_string(ingestionJobKey)
 			+ "_source";
-        if (segmentedContent)
+		// 0: no m3u8
+		// 1: m3u8 by .tar.gz
+		// 2: m3u8 by streaming (it will be saved as .mp4)
+        if (m3u8TarGzOrM3u8Streaming == 1)
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string movePrefix("move://");
@@ -24595,7 +24683,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         FileIO::moveFile(sourcePathName, destBinaryPathName);
         chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
-		if (segmentedContent)
+		if (m3u8TarGzOrM3u8Streaming)
 		{
 			try
 			{
@@ -24720,7 +24808,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 }
 
 void MMSEngineProcessor::copyMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool segmentedContent,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
@@ -24738,7 +24826,10 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 			+ "/"
 			+ to_string(ingestionJobKey)
 			+ "_source";
-        if (segmentedContent)
+		// 0: no m3u8
+		// 1: m3u8 by .tar.gz
+		// 2: m3u8 by streaming (it will be saved as .mp4)
+        if (m3u8TarGzOrM3u8Streaming == 1)
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string copyPrefix("copy://");
@@ -24767,7 +24858,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         FileIO::copyFile(sourcePathName, destBinaryPathName);
         chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
-		if (segmentedContent)
+        if (m3u8TarGzOrM3u8Streaming == 1)
 		{
 			try
 			{
