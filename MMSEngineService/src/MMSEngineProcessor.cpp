@@ -5284,7 +5284,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			string fileFormat = parametersRoot.get(field, "").asString();
 			if (fileFormat == "m3u8-streaming")
 			{
-				binaryPathName += ".mp4";	// .mp4 used in downloadMediaSourceFileThread
+				// .mp4 is used in
+				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
+				// 2. here, handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+				//		is built "consistent" with the above step no. 1)
+				// 3. handleLocalAssetIngestionEventThread (when the MMS file name is generated)
+				binaryPathName += ".mp4";
 			}
 		}
 		else
@@ -5944,7 +5949,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			mediaSourceFileName = localAssetIngestionEvent.getMMSSourceFileName();
 			if (mediaSourceFileName == "")
 			{
-				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName() + "." + mediaFileFormat;
+				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName();
+				// .mp4 is used in
+				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
+				// 2. handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+				//		is built "consistent" with the above step no. 1)
+				// 3. here, handleLocalAssetIngestionEventThread (when the MMS file name is generated)
+				if (mediaFileFormat == "m3u8-streaming")
+					mediaSourceFileName += ".mp4";
+				else
+					mediaSourceFileName += ("." + mediaFileFormat);
 			}
 
 			relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
@@ -21291,10 +21305,15 @@ RESUMING FILE TRANSFERS
 	// 0: no m3u8
 	// 1: m3u8 by .tar.gz
 	// 2: m3u8 by streaming (it will be saved as .mp4)
+		// .mp4 is used in
+		// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
+		// 2. handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+		//		is built "consistent" with the above step no. 1)
+		// 3. here, handleLocalAssetIngestionEventThread (when the MMS file name is generated)
 	if (localM3u8TarGzOrM3u8Streaming == 1)
 		destBinaryPathName = destBinaryPathName + ".tar.gz";
 	else if (localM3u8TarGzOrM3u8Streaming == 2)
-		destBinaryPathName = destBinaryPathName + ".mp4";	// .mp4 used in handleLocalAssetIngestionEventThread
+		destBinaryPathName = destBinaryPathName + ".mp4";
 
 	if (localM3u8TarGzOrM3u8Streaming == 2)
 	{
