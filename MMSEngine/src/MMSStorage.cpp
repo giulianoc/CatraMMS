@@ -358,7 +358,8 @@ tuple<int64_t, string, int, string, string, int64_t, string>
 		string title;
 		bool externalReadOnlyStorage;
 		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, 
-			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage) = storageDetails;
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage)
+			= storageDetails;
 
 		_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
 			+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)

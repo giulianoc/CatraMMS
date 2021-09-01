@@ -3328,9 +3328,9 @@ void FFMPEGEncoder::encodeContentThread(
             throw runtime_error(errorMessage);
         }
 
-		/*
-			JSONUtils::asInt64(introOutroOverlayMetadata["ingestedParametersRoot"], "IntroOverlayDurationInSeconds", -1),
-		 */
+        int videoTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"], "VideoTrackIndex", -1);
+        int audioTrackIndexToBeUsed = JSONUtils::asInt(encodingMedatada["ingestedParametersRoot"], "AudioTrackIndex", -1);
+
 		Json::Value sourcesToBeEncodedRoot = encodingMedatada["encodingParametersRoot"]["sourcesToBeEncodedRoot"];
 		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 
@@ -3367,6 +3367,7 @@ void FFMPEGEncoder::encodeContentThread(
                 contentType == MMSEngineDBFacade::ContentType::Video,
 				videoTracksRoot,
 				audioTracksRoot,
+				videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
                 physicalPathKey,
                 workspaceDirectoryName,
                 relativePath,

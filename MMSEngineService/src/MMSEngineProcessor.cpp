@@ -14184,7 +14184,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
                 throw runtime_error(errorMessage);
             }
-            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+            outputFileFormat = parametersRoot.get(field, "").asString();
         }
 
 // 2021-08-26: si dovrebbe cambiare l'implementazione:
@@ -14208,6 +14208,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				= keyAndDependencyType;
 
 			int64_t mediaItemKey;
+			int64_t physicalPathKey;
 			string mmsSourceAssetPathName;
 			string relativePath;
 
@@ -14218,120 +14219,49 @@ void MMSEngineProcessor::changeFileFormatThread(
                 
 				bool warningIfMissing = false;
 				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(ignore, mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+					physicalPathDetails
+					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, mediaItemKey,
+						encodingProfileKey, warningIfMissing);
+				tie(physicalPathKey, mmsSourceAssetPathName, ignore, relativePath,
+					ignore, ignore, ignore) = physicalPathDetails;
             }
             else
             {
+				physicalPathKey = key;
+
 				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, physicalPathKey);
 				tie(mmsSourceAssetPathName, ignore, relativePath, ignore, ignore, ignore)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
+					= physicalPathDetails;
 
 				bool warningIfMissing = false;
-				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string>
-					mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+				tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string,
+					int64_t, string, string> mediaItemDetails =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-						workspace->_workspaceKey, key, warningIfMissing);
+						workspace->_workspaceKey, physicalPathKey, warningIfMissing);
 				tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore)
-					= mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+					= mediaItemDetails;
             }
 
-			/*
-			 * 2019-10-11: next code is to create a new MediaItem. I commented it because this is not a new asset,
-			 * it is just another variant of the asset 
-            {
-                string localSourceFileName;
-                string changeFileFormatMediaPathName;
-                {
-                    localSourceFileName = to_string(ingestionJobKey)
-                            + "_" + to_string(key)
-                            + "_changeFileFormat"
-                            + "." + outputFileFormat
-                            ;
+			vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
+				string>> videoTracks;
+			vector<tuple<int64_t, int, int64_t, long, string, long, int,
+				string>> audioTracks;
 
-                    string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-                        workspace);
-                    changeFileFormatMediaPathName = workspaceIngestionRepository + "/" 
-                            + localSourceFileName;
-                }
-
-                FFMpeg ffmpeg (_configuration, _logger);
-
-                ffmpeg.changeFileFormat(
-                    ingestionJobKey,
-					key,
-                    mmsAssetPathName,
-                    changeFileFormatMediaPathName);
-
-                _logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", changeFileFormatMediaPathName: " + changeFileFormatMediaPathName
-                );
-
-                string title;
-				int64_t imageOfVideoMediaItemKey = -1;
-				int64_t cutOfVideoMediaItemKey = -1;
-				int64_t cutOfAudioMediaItemKey = -1;
-				double startTimeInSeconds = 0.0;
-				double endTimeInSeconds = 0.0;
-                string mediaMetaDataContent = generateMediaMetadataToIngest(
-                        ingestionJobKey,
-                        outputFileFormat,
-                        title,
-						imageOfVideoMediaItemKey,
-						cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
-                        parametersRoot
-                );
-
-                {
-                    shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                            ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-                    localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-                    localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-                    localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-					localAssetIngestionEvent->setExternalReadOnlyStorage(false);
-                    localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                    localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-                    localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
-                    localAssetIngestionEvent->setWorkspace(workspace);
-                    localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
-                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-                        it + 1 == dependencies.end() ? true : false);
-
-                    // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-                    // force the concat file to have the same avgFrameRate of the source media
-                    // Uncomment next statements in case the problem is still present event in case of the ExtractTracks task
-                    // if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
-                    //    localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
-
-                    localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
-
-                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-                    _multiEventsSet->addEvent(event);
-
-                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
-                }
-            }
-			*/
+			_mmsEngineDBFacade->getVideoDetails(mediaItemKey, physicalPathKey,
+				videoTracks, audioTracks);
 
 			// add the new file as a new variant of the MIK
 			{
 				string changeFormatFileName = to_string(ingestionJobKey)
 					+ "_" + to_string(mediaItemKey)
 					+ "_changeFileFormat"
-					+ "." + outputFileFormat
 				;
+				if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
+					changeFormatFileName +=	".m3u8";
+				else
+					changeFormatFileName +=	(string(".") + outputFileFormat);
 
 				string stagingChangeFileFormatAssetPathName;
 				{
@@ -14363,9 +14293,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					ffmpeg.changeFileFormat(
 						ingestionJobKey,
-						key,
-						mmsSourceAssetPathName,
-						stagingChangeFileFormatAssetPathName);
+						physicalPathKey,
+						mmsSourceAssetPathName, videoTracks, audioTracks,
+						stagingChangeFileFormatAssetPathName,
+						outputFileFormat);
 
 					_logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)

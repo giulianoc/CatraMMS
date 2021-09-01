@@ -101,6 +101,7 @@ public:
         bool isVideo,   // if false it means is audio
 		Json::Value videoTracksRoot,
 		Json::Value audioTracksRoot,
+		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -458,9 +459,13 @@ public:
 
 	void changeFileFormat(
 		int64_t ingestionJobKey,
-		int64_t sourceKey,
+		int64_t physicalPathKey,
 		string sourcePhysicalPath,
-		string destinationPathName);
+		vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
+			string>>& sourceVideoTracks,
+		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& sourceAudioTracks,
+		string destinationPathName,
+		string outputFileFormat);
 
 	void streamingToFile(
 		int64_t ingestionJobKey,

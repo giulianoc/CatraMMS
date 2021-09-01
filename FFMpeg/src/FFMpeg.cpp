@@ -85,6 +85,7 @@ void FFMpeg::encodeContent(
         bool isVideo,   // if false it means is audio
 		Json::Value videoTracksRoot,
 		Json::Value audioTracksRoot,
+		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -112,6 +113,8 @@ void FFMpeg::encodeContent(
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
 			+ ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
 			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
+			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)
+			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
 		);
 
 		if (!FileIO::fileExisting(mmsSourceAssetPathName)        
@@ -975,7 +978,7 @@ void FFMpeg::encodeContent(
         }
 		else if (httpStreamingFileFormat != "")
         {
-			// hls or dash
+			// hls or dash output
 
 			vector<string> ffmpegArgumentList;
 
@@ -1017,6 +1020,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -1165,6 +1180,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -1315,6 +1342,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -1487,6 +1526,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -1615,6 +1666,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -1739,6 +1802,18 @@ void FFMpeg::encodeContent(
 				ffmpegArgumentList.push_back("-i");
 				ffmpegArgumentList.push_back(mmsSourceAssetPathName);
 				// output options
+				if (videoTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:v:") + to_string(videoTrackIndexToBeUsed));
+				}
+				if (audioTrackIndexToBeUsed >= 0)
+				{
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:a:") + to_string(audioTrackIndexToBeUsed));
+				}
 				addToArguments(ffmpegVideoCodecParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoProfileParameter, ffmpegArgumentList);
 				addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
@@ -13025,9 +13100,14 @@ void FFMpeg::liveGrid(
 // destinationPathName will end with the new file format
 void FFMpeg::changeFileFormat(
 	int64_t ingestionJobKey,
-	int64_t sourceKey,
+	int64_t physicalPathKey,
 	string sourcePhysicalPath,
-	string destinationPathName)
+	vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
+		string>>& sourceVideoTracks,
+	vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& sourceAudioTracks,
+
+	string destinationPathName,
+	string outputFileFormat)
 {
 	string ffmpegExecuteCommand;
 
@@ -13062,21 +13142,61 @@ void FFMpeg::changeFileFormat(
 		_outputFfmpegPathFileName =
 			_ffmpegTempDir + "/"
 			+ to_string(ingestionJobKey)
-			+ "_" + to_string(sourceKey)
+			+ "_" + to_string(physicalPathKey)
 			+ ".changeFileFormat.log"
 			;
-    
-		ffmpegExecuteCommand = 
-			_ffmpegPath + "/ffmpeg "
-			+ "-i " + sourcePhysicalPath + " "
-			// -map 0:v and -map 0:a is to get all video-audio tracks
-            + "-map 0:v -c:v copy -map 0:a -c:a copy "
-			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
-			+ "-q 0 "
-			+ destinationPathName + " "
-			+ "> " + _outputFfmpegPathFileName + " "
-			+ "2>&1"
-		;
+
+		/*
+		if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
+		{
+			ffmpegExecuteCommand = 
+				_ffmpegPath + "/ffmpeg "
+				+ "-i " + sourcePhysicalPath + " "
+			;
+			for(tuple<int64_t, int, int64_t, int, int, string, string, long,
+				string> videoTrack: videoTracks)
+			{
+				int64_t videoTrackKey;
+				int trackIndex;
+				int64_t durationInMilliSeconds;
+				int width;
+				int height;
+				string avgFrameRate;
+				string codecName;
+				long bitRate;
+				string profile;
+
+				tie(videoTrackKey, trackIndex, durationInMilliSeconds, width, height,
+					avgFrameRate, codecName, bitRate, profile) = videoTrack;
+
+				ffmpegExecuteCommand +=
+					"0:v:" + to_string(trackIndex) -c:v copy 
+					  -hls_time 10 -hls_playlist_type vod  -hls_segment_filename beach/360p_%03d.ts beach/360p.m3u8 \
+
+			}
+				+ "-map 0:v -c:v copy -map 0:a -c:a copy "
+				//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
+				+ "-q 0 "
+				+ destinationPathName + " "
+				+ "> " + _outputFfmpegPathFileName + " "
+				+ "2>&1"
+			;
+		}
+		else
+		*/
+		{
+			ffmpegExecuteCommand = 
+				_ffmpegPath + "/ffmpeg "
+				+ "-i " + sourcePhysicalPath + " "
+				// -map 0:v and -map 0:a is to get all video-audio tracks
+				+ "-map 0:v -c:v copy -map 0:a -c:a copy "
+				//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
+				+ "-q 0 "
+				+ destinationPathName + " "
+				+ "> " + _outputFfmpegPathFileName + " "
+				+ "2>&1"
+			;
+		}
 
 		#ifdef __APPLE__
 			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=")
@@ -13085,7 +13205,7 @@ void FFMpeg::changeFileFormat(
 
         _logger->info(__FILEREF__ + "changeFileFormat: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", sourceKey: " + to_string(sourceKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
 
@@ -13108,7 +13228,7 @@ void FFMpeg::changeFileFormat(
 
         _logger->info(__FILEREF__ + "changeContainer: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", sourceKey: " + to_string(sourceKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );

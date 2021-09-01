@@ -43,6 +43,14 @@
 		"EncodingProfileKey": 1,
 		"EncodingProfileLabel": "Profile Logo",
 
+		// Optional: in case the source contents has more than one video track, this parameter
+		//	specifies the video track index to be used for the encoding (first track has index 0)
+		"VideoTrackIndex": -1
+
+		// Optional: in case the source contents has more than one audio track, this parameter
+		//	specifies the audio track index to be used for the encoding (first track has index 0)
+		"AudioTrackIndex": -1
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:
