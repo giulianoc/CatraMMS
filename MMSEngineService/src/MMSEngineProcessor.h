@@ -428,7 +428,7 @@ private:
 
     void downloadMediaSourceFileThread(
         shared_ptr<long> processorsThreadsNumber,
-        string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
+        string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
     void moveMediaSourceFileThread(shared_ptr<long> processorsThreadsNumber,
         string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,

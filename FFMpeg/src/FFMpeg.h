@@ -469,6 +469,7 @@ public:
 
 	void streamingToFile(
 		int64_t ingestionJobKey,
+		bool regenerateTimestamps,
 		string sourceReferenceURL,
 		string destinationPathName);
 

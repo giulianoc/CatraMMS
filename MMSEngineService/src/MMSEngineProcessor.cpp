@@ -1710,8 +1710,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                                 processorMMS
                                                 );
 
+											// 2021-09-02: regenerateTimestamps is used only
+											//	in case of m3u8-streaming
+											//	(see docs/TASK_01_Add_Content_JSON_Format.txt)
+											bool regenerateTimestamps = false;
+											if (mediaFileFormat == "m3u8-streaming")
+												regenerateTimestamps = JSONUtils::asBool(
+													parametersRoot, "RegenerateTimestamps", false);
+
 											thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
-												_processorsThreadsNumber, mediaSourceURL, m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace);
+												_processorsThreadsNumber, mediaSourceURL, regenerateTimestamps, m3u8TarGzOrM3u8Streaming,
+												ingestionJobKey, workspace);
 											downloadMediaSource.detach();
 										}
 									}
@@ -21103,7 +21112,8 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 };
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
-        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming,
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
+		bool regenerateTimestamps, int m3u8TarGzOrM3u8Streaming,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
@@ -21257,9 +21267,11 @@ RESUMING FILE TRANSFERS
 				+ ", destBinaryPathName: " + destBinaryPathName
 			);
 
+			// regenerateTimestamps (see docs/TASK_01_Add_Content_JSON_Format.txt)
 			FFMpeg ffmpeg (_configuration, _logger);
 			ffmpeg.streamingToFile(
 				ingestionJobKey,
+				regenerateTimestamps,
 				sourceReferenceURL,
 				destBinaryPathName);
 

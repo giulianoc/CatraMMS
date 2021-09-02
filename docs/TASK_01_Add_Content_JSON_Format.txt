@@ -28,6 +28,15 @@
 		//				the streamingURL
 		"FileFormat": "mp4",
 
+		// Optional, default is false. Used only in case of streaming, today we have only
+		//	the m3u8-streaming file format using it. This is in case the source streaming input
+		//	does not have "consistent timestamps", i.e. it is a HLS streaming where the segments
+		//	are taken randomily from a full HLS, in particular it was the HLS streaming
+		//	of the highlights of a football match. The highlights was just built using the segments
+		//	of the full match with EXT-X-DISCONTINUITY before each segment.
+		//  In this scenario the transcoder has to regenerate correctly all the timestamps.
+		"RegenerateTimestamps": false,
+
 		// optional for both the below parameters. It is possible to add/ingest a new variant/profile of a content (mediaItemKey).
 		//	There are two options:
 		//		- the content is already present inside the MMS repository.

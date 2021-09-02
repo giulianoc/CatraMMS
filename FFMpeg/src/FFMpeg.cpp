@@ -13264,6 +13264,7 @@ void FFMpeg::changeFileFormat(
 
 void FFMpeg::streamingToFile(
 	int64_t ingestionJobKey,
+	bool regenerateTimestamps,
 	string sourceReferenceURL,
 	string destinationPathName)
 {
@@ -13289,9 +13290,11 @@ void FFMpeg::streamingToFile(
 			+ ".streamingToFile.log"
 		;
     
-		ffmpegExecuteCommand = 
-			_ffmpegPath + "/ffmpeg "
-			+ "-i \"" + sourceReferenceURL + "\" "
+		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
+		if (regenerateTimestamps)
+			ffmpegExecuteCommand += "-fflags +genpts ";
+		ffmpegExecuteCommand +=
+			string("-i \"" + sourceReferenceURL + "\" ")
 			// -map 0:v and -map 0:a is to get all video-audio tracks
             + "-map 0:v -c:v copy -map 0:a -c:a copy "
 			//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
