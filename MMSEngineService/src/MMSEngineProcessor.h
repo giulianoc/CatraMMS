@@ -158,19 +158,18 @@ private:
 
 	// void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
 
-    void removeContentTask(
-        int64_t ingestionJobKey,
+    void removeContentThread(
+		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
     
-    void ftpDeliveryContentTask(
-        int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+    void ftpDeliveryContentThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
     void postOnFacebookTask(
@@ -457,14 +456,12 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-    void ftpUploadMediaSourceThread(
-        shared_ptr<long> processorsThreadsNumber,
+    void ftpUploadMediaSource(
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
 		int64_t mediaItemKey, int64_t physicalPathKey,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
-        string ftpRemoteDirectory, string ftpRemoteFileName,
-		bool updateIngestionJobToBeDone);
+        string ftpRemoteDirectory, string ftpRemoteFileName);
 
     void postVideoOnFacebookThread(
         shared_ptr<long> processorsThreadsNumber,

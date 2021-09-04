@@ -1882,15 +1882,58 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+								/*
                                 removeContentTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage removeContentThread, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread removeContentThread(&MMSEngineProcessor::removeContentThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    removeContentThread.detach();
+                                }
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "removeContentTask failed"
+                                _logger->error(__FILEREF__ + "removeContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1934,7 +1977,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "removeContentTask failed"
+                                _logger->error(__FILEREF__ + "removeContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1983,17 +2026,58 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-								// threads check is done inside ftpDeliveryContentTask
+								/*
                                 ftpDeliveryContentTask(
                                         ingestionJobKey, 
                                         ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
+								*/
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because,
+								 *		in case handleCheckIngestionEvent gets 20 events,
+								 *		we have still to postpone all the events overcoming the thread limit
+								 */
+                                if (_processorsThreadsNumber.use_count() >
+									_processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage ftpDeliveryContentThread, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+									thread ftpDeliveryContentThread(&MMSEngineProcessor::ftpDeliveryContentThread,
+										this, _processorsThreadsNumber, ingestionJobKey, 
+										workspace, parametersRoot,
+										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+									);
+                                    ftpDeliveryContentThread.detach();
+                                }
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
+                                _logger->error(__FILEREF__ + "ftpDeliveryContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2037,7 +2121,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
+                                _logger->error(__FILEREF__ + "ftpDeliveryContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -8031,25 +8115,31 @@ void MMSEngineProcessor::manageGroupOfTasks(
     }
 }
 
-void MMSEngineProcessor::removeContentTask(
-	int64_t ingestionJobKey,
+void MMSEngineProcessor::removeContentThread(
+	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace,
 	Json::Value parametersRoot,
-	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 		dependencies
 )
 {
     try
     {
+		_logger->info(__FILEREF__ + "removeContentThread"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		);
+
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be removed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
+			string errorMessage = __FILEREF__ + "No configured any media to be removed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", dependencies.size: " + to_string(dependencies.size());
+			_logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
         }
 
 		int dependencyIndex = 0;
@@ -8203,35 +8293,93 @@ void MMSEngineProcessor::removeContentTask(
 	}
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "removeContentTask failed"
+        _logger->error(__FILEREF__ + "removeContentThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
         
-        // Update IngestionJob done in the calling method
-        
-        throw e;
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "removeContentTask failed"
+        _logger->error(__FILEREF__ + "removeContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
 }
 
-void MMSEngineProcessor::ftpDeliveryContentTask(
+void MMSEngineProcessor::ftpDeliveryContentThread(
+		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
-        MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies
 )
 {
@@ -8246,40 +8394,6 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
-        }
-
-		/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
-		* 2021-06-19: we still have to check the thread limit because,
-		*		in case handleCheckIngestionEvent gets 20 events,
-		*		we have still to postpone all the events overcoming the thread limit
-		*/
-        if (_processorsThreadsNumber.use_count() + dependencies.size() >
-				_processorThreads + _maxAdditionalProcessorThreads)
-        {
-            _logger->warn(__FILEREF__ + "Not enough available threads to manage ftpUploadMediaSourceThread, activity is postponed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
-                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
-            );
-
-            string errorMessage = "";
-            string processorMMS = "";
-
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    ingestionStatus, 
-                    errorMessage,
-                    processorMMS
-                    );
-            
-            return;
         }
 
         string configurationLabel;
@@ -8308,79 +8422,116 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 					workspace->_workspaceKey, configurationLabel);            
         tie(ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory) = ftp;
 
-// 2021-08-26: si dovrebbe cambiare l'implementazione:
-//	si dovrebbe lanciare un thread che esegue l'ftp in modo sequenziale e utilizza il bool
-//	stopIfReferenceProcessingError per decidere se interrompere in caso di errore
-// L'attuale implementazione potrebbe lanciare troppi threads o non partire mai se
-// la configurazione non prevede abbastanza numero di threads
-        for (int dependencyIndex = 0; dependencyIndex < dependencies.size(); dependencyIndex++)
+		int dependencyIndex = 0;
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
+				keyAndDependencyType: dependencies)
         {
-			string mmsAssetPathName;
-			string fileName;
-			int64_t sizeInBytes;
-			string deliveryFileName;
-			int64_t mediaItemKey;
-			int64_t physicalPathKey;
+			bool stopIfReferenceProcessingError = false;
 
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>&
-				keyAndDependencyType = dependencies[dependencyIndex];
+			try
+			{
+				int64_t key;
+				MMSEngineDBFacade::ContentType referenceContentType;
+				Validator::DependencyType dependencyType;
             
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-            
-            tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
-				= keyAndDependencyType;
+				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
+					= keyAndDependencyType;
 
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
-				mediaItemKey = key;
-
-                int64_t encodingProfileKey = -1;
-               
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string>
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
-					= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
-				tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
-					= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
-            }
-            else
-            {
-				physicalPathKey = key;
-
+				string mmsAssetPathName;
+				string fileName;
+				int64_t sizeInBytes;
+				string deliveryFileName;
+				int64_t mediaItemKey;
+				int64_t physicalPathKey;
+				if (dependencyType == Validator::DependencyType::MediaItemKey)
 				{
+					mediaItemKey = key;
+
+					int64_t encodingProfileKey = -1;
+               
 					bool warningIfMissing = false;
-					tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-						_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-							workspace->_workspaceKey, physicalPathKey, warningIfMissing);            
-					tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+					tuple<int64_t, string, int, string, string, int64_t, string>
+						physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName
+						= _mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key, encodingProfileKey, warningIfMissing);
+					tie(physicalPathKey, mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
+						= physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				}
+				else
+				{
+					physicalPathKey = key;
+
+					{
+						bool warningIfMissing = false;
+						tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string,int64_t, string, string>
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
+							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+								workspace->_workspaceKey, physicalPathKey, warningIfMissing);            
+						tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+							mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
+					}
+
+					tuple<string, int, string, string, int64_t, string>
+						physicalPathFileNameSizeInBytesAndDeliveryFileName =
+						_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
+					tie(mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
+						= physicalPathFileNameSizeInBytesAndDeliveryFileName;
 				}
 
-				tuple<string, int, string, string, int64_t, string>
-					physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(_mmsEngineDBFacade, key);
-				tie(mmsAssetPathName, ignore, ignore, fileName, sizeInBytes, deliveryFileName)
-					= physicalPathFileNameSizeInBytesAndDeliveryFileName;
-            }
+				ftpUploadMediaSource(mmsAssetPathName, fileName, sizeInBytes,
+					ingestionJobKey, workspace, mediaItemKey, physicalPathKey,
+					ftpServer, ftpPort, ftpUserName, ftpPassword,
+					ftpRemoteDirectory, deliveryFileName);
+			}
+			catch(runtime_error e)
+			{
+				string errorMessage = __FILEREF__ + "FTP Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex)
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-			bool updateIngestionJobToBeDone;
-			if (dependencyIndex + 1 >= dependencies.size())
-				updateIngestionJobToBeDone = true;
-			else
-				updateIngestionJobToBeDone = false;
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+			catch (exception e)
+			{
+				string errorMessage = __FILEREF__ + "FTP Content failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", dependencyIndex: " + to_string(dependencyIndex);
+					+ ", dependencies.size(): " + to_string(dependencies.size())
+				;
+				_logger->error(errorMessage);
 
-            // check on thread availability was done at the beginning in this method
-			thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
-				_processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes,
-				ingestionJobKey, workspace, mediaItemKey, physicalPathKey,
-				ftpServer, ftpPort, ftpUserName, ftpPassword,
-				ftpRemoteDirectory, deliveryFileName, updateIngestionJobToBeDone);
-			ftpUploadMediaSource.detach();
+				if (dependencies.size() > 1)
+				{
+					if (stopIfReferenceProcessingError)
+						throw runtime_error(errorMessage);
+				}
+				else
+					throw runtime_error(errorMessage);
+			}
+
+			dependencyIndex++;
 		}
+
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", IngestionStatus: " + "End_TaskSuccess"
+				+ ", errorMessage: " + ""
+		);
+		_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+			"" // errorMessage
+		);
     }
     catch(runtime_error e)
     {
@@ -8390,9 +8541,38 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             + ", e.what(): " + e.what()
         );
  
-        // Update IngestionJob done in the calling method
-        
-        throw e;
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
+
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
     catch(exception e)
     {
@@ -8401,9 +8581,38 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        // Update IngestionJob done in the calling method
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what());
+		}
+		catch(runtime_error& re)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + re.what()
+				);
+		}
+		catch(exception ex)
+		{
+			_logger->info(__FILEREF__ + "Update IngestionJob failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", errorMessage: " + ex.what()
+				);
+		}
 
-        throw e;
+		// it's a thread, no throw
+        // throw e;
+		return;
     }
 }
 
@@ -21869,14 +22078,12 @@ RESUMING FILE TRANSFERS
 	}
 }
 
-void MMSEngineProcessor::ftpUploadMediaSourceThread(
-        shared_ptr<long> processorsThreadsNumber,
-        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
-        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-		int64_t mediaItemKey, int64_t physicalPathKey,
-        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
-        string ftpRemoteDirectory, string ftpRemoteFileName,
-		bool updateIngestionJobToBeDone)
+void MMSEngineProcessor::ftpUploadMediaSource(
+	string mmsAssetPathName, string fileName, int64_t sizeInBytes,
+	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+	int64_t mediaItemKey, int64_t physicalPathKey,
+	string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
+	string ftpRemoteDirectory, string ftpRemoteFileName)
 {
 
     // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
@@ -21884,10 +22091,9 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
     try 
     {
-		_logger->info(__FILEREF__ + "ftpUploadMediaSourceThread"
+		_logger->info(__FILEREF__ + "ftpUploadMediaSource"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
         string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
@@ -22008,139 +22214,42 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 			_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
 				mediaItemKey, physicalPathKey, liveRecordingIngestionJobKey);
 		}
-
-		if (updateIngestionJobToBeDone)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", IngestionStatus: " + "End_TaskSuccess"
-				+ ", errorMessage: " + ""
-			);
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "" // errorMessage
-			);
-		}
     }
     catch (curlpp::LogicError & e) 
     {
-        _logger->error(__FILEREF__ + "Download failed (LogicError)"
+        string errorMessage = __FILEREF__ + "Download failed (LogicError)"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", mmsAssetPathName: " + mmsAssetPathName 
             + ", exception: " + e.what()
-        );
+        ;
+		_logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
-    }
+        throw runtime_error(errorMessage);
+	}
     catch (curlpp::RuntimeError & e) 
     {
-        _logger->error(__FILEREF__ + "Download failed (RuntimeError)"
+        string errorMessage = __FILEREF__ + "Download failed (RuntimeError)"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", mmsAssetPathName: " + mmsAssetPathName 
             + ", exception: " + e.what()
-        );
+        ;
+		_logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Download failed (exception)"
+        string errorMessage = __FILEREF__ + "Download failed (exception)"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", mmsAssetPathName: " + mmsAssetPathName 
             + ", exception: " + e.what()
-        );
+        ;
+		_logger->error(errorMessage);
 
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what());
-		}
-		catch(runtime_error& re)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + re.what()
-				);
-		}
-		catch(exception ex)
-		{
-			_logger->info(__FILEREF__ + "Update IngestionJob failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", errorMessage: " + ex.what()
-				);
-		}
-
-        return;
+        throw runtime_error(errorMessage);
     }
 }
 
