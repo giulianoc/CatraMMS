@@ -214,7 +214,8 @@ private:
     // string                      _ingestionRootRepository;
     // string                      _profilesRootRepository;
 
-	int								_freeSpaceToLeaveInEachPartitionInMB;
+	int						_waitingNFSSync_maxMillisecondsToWait;
+	int						_freeSpaceToLeaveInEachPartitionInMB;
 
 	struct PartitionInfo {
 		// it is without / at the end

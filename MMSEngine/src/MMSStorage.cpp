@@ -18,6 +18,12 @@ MMSStorage::MMSStorage(
 
 		_hostName = System::getHostName();
 
+		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+			"waitingNFSSync_maxMillisecondsToWait", 60000);
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
+		);
+
 		_storage = configuration["storage"].get("path", "XXX").asString();
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", storage->path: " + _storage
@@ -2091,6 +2097,11 @@ string MMSStorage::moveAssetInMMSRepository(
 			 * 2021-08-29: sometimes the moveFile failed:
 			 * [2021-08-28 22:52:08.756] [mmsEngineService] [error] [tid 3114800] [MMSEngineProcessor.cpp:5992] _mmsStorage->moveAssetInMMSRepository failed, _processorIdentifier: 1, ingestionJobKey: 5477449, errorMessage: FileIO::moveFile failed: Class: ToolsErrors, Code: 211, File: /opt/catrasoftware/CatraLibraries/Tools/src/FileIO.cpp, Line: 5872, Msg: The write function failed. Errno: 5
 			 * It is not clear the reason of this error, I'll try again
+			 * 2021-09-05: I had again this error. Looking at the log, I saw that the size of the file
+			 *	logged just before the starting of the move was 5923184964 and the move failed when
+			 *	it already written bytes 6208068844. So May be the nfs was still writing the file
+			 *	and we started to copy/move.
+			 *	I'll increase the delay before to copy again.
 			 */
 			chrono::system_clock::time_point startPoint;
 			chrono::system_clock::time_point endPoint;
@@ -2102,15 +2113,33 @@ string MMSStorage::moveAssetInMMSRepository(
 			}
 			catch(runtime_error e)
 			{
-				_logger->error(__FILEREF__ + "Move file failed, try again"
+				_logger->error(__FILEREF__ + "Move file failed, wait a bit, retrieve again the size and try again"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", from: " + sourceAssetPathName
+					+ ", to: " + mmsAssetPathName
+					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+					+ ", _waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
+					+ ", e.what: " + e.what()
+				);
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait));
+
+				{
+					unsigned long ulFileSizeInBytes;
+					bool inCaseOfLinkHasItToBeRead = false;
+
+
+					ulFileSizeInBytes = FileIO::getFileSizeInBytes(sourceAssetPathName, inCaseOfLinkHasItToBeRead);
+
+					ullFSEntrySizeInBytes = ulFileSizeInBytes;
+				}
+
+				_logger->info(__FILEREF__ + "Move file again"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", from: " + sourceAssetPathName
 					+ ", to: " + mmsAssetPathName
 					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
-
-				int milliSecondsToWait = 200;
-				this_thread::sleep_for(chrono::milliseconds(milliSecondsToWait));
 
 				startPoint = chrono::system_clock::now();
 				FileIO::moveFile(sourceAssetPathName, mmsAssetPathName);
