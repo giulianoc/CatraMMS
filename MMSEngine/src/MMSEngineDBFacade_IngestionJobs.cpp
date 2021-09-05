@@ -7,7 +7,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 		IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs,
-		bool tasksNotInvolvingMMSEngineThreads
+		bool onlyTasksNotInvolvingMMSEngineThreads
 )
 {
     string      lastSQLCommand;
@@ -324,11 +324,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							"DATE_FORMAT(convert_tz(ir.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
 							"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 							"where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null ";
-					if (tasksNotInvolvingMMSEngineThreads)
+					if (onlyTasksNotInvolvingMMSEngineThreads)
 					{
 						string tasksNotInvolvingMMSEngineThreadsList =
 							"'GroupOfTask'"
-							", 'RemoveContent'"
 							", 'Encode'"
 							", 'VideoSpeed'"
 							", 'PictureInPicture'"
@@ -343,6 +342,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							", 'MediaCrossReference'"
 							", 'FaceRecognition'"
 							", 'FaceIdentification'"
+							// ", 'LiveRecorder'"	already asked before
+							// ", 'LiveProxy'"	already asked before
 							", 'AwaitingTheBeginning'"
 							", 'LiveGrid'"
 						;
@@ -350,15 +351,17 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
 					else
 					{
-						lastSQLCommand += "and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') ";
+						// everythink but Live-Recorder, Live-Proxy already asked before
+						lastSQLCommand +=
+							"and (ij.ingestionType != 'Live-Recorder' and ij.ingestionType != 'Live-Proxy') ";
 					}
 					lastSQLCommand +=
-							"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-							"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
-							"order by ij.priority asc, ij.processingStartingFrom asc "
-							"limit ? offset ?"
-							// "limit ? offset ? for update"
-							;
+						"and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+						"and ij.processingStartingFrom <= NOW() and NOW() <= DATE_ADD(ij.processingStartingFrom, INTERVAL ? DAY) "
+						"order by ij.priority asc, ij.processingStartingFrom asc "
+						"limit ? offset ?"
+						// "limit ? offset ? for update"
+					;
 					shared_ptr<sql::PreparedStatement> preparedStatement (
 						conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndexIngestionJob = 1;

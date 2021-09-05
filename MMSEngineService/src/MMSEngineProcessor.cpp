@@ -766,7 +766,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			//		but it has to return ONLY tasks that do not involve creation of threads (a lot of important tasks
 			//		do not involve threads in MMS Engine)
 			//	That is to avoid to block every thing in case we reached the max number of threads in MMS Engine
-			bool tasksNotInvolvingMMSEngineThreads = false;
+			bool onlyTasksNotInvolvingMMSEngineThreads = false;
 
 			if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
 			{
@@ -777,11 +777,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						+ to_string(_processorThreads + _maxAdditionalProcessorThreads)
 				);
 
-				tasksNotInvolvingMMSEngineThreads = true;
+				onlyTasksNotInvolvingMMSEngineThreads = true;
 			}
 
 			_mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-				_processorMMS, _maxIngestionJobsPerEvent, tasksNotInvolvingMMSEngineThreads
+				_processorMMS, _maxIngestionJobsPerEvent, onlyTasksNotInvolvingMMSEngineThreads
             );
 
             _logger->info(__FILEREF__ + "getIngestionsToBeManaged result"
@@ -14123,7 +14123,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 						}
 
 						// it is not the next chunk
-						string errorMessage = string("Next chunk was not found")
+						string errorMessage = string("#Chunks check. Next chunk was not found")
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcPreviousUtcChunkEndTime: " + to_string(utcPreviousUtcChunkEndTime) + " (" + previousUtcChunkEndTime + ")"
@@ -14159,7 +14159,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 							firstRequestedChunk = false;
 
 							// it is not the first chunk
-							string errorMessage = string("First chunk was not found")
+							string errorMessage = string("#Chunks check. First chunk was not found")
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", first utcChunkStart: " + to_string(currentUtcChunkStartTime) + " (" + currentChunkStartTime + ")"
@@ -14243,7 +14243,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 		if (!firstRequestedChunk || !lastRequestedChunk)
 		{
-			string errorMessage = string("Chunks not available")
+			string errorMessage = string("#Chunks check. Chunks not available")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
